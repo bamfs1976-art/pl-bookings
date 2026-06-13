@@ -1,0 +1,12 @@
+# OS and editor
+.DS_Store
+Thumbs.db
+*.log
+
+# Netlify / test artifacts
+.netlify/
+.playwright-mcp/
+*-preview.png
+
+# Working data, not needed for deploy (baked into index.html)
+data/*.json
