@@ -7,10 +7,11 @@ A single-file, stats-based tool for Premier League player-bookings markets, read
 - One `index.html`, vanilla JavaScript, Tailwind via CDN, no build step, no API keys.
 - All player, club and referee data is baked in.
 - Logged picks save to your browser under `pl_desk_v1`.
+- Light theme by default with a dark mode toggle. Club colours and crests throughout.
 
 ## Tabs
 
-- **Players** sortable table of every squad player by booking risk, filter by club and position, search, hide low sample.
+- **Players** sortable table of every squad player by booking risk, filter by club and position, search, hide low sample. Share card exports the current view (a club's risks, or the league top 10) as a publishable social image.
 - **Clubs** the 20 clubs by cards received per game, with a discipline tier and each club's top booking risk.
 - **Referees** 2025-26 officials by yellows per game, with reds and penalties per game.
 - **Tracker** log each pick with odds and stake, settle won, lost or void, see hit-rate, staked, P/L and ROI.
