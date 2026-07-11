@@ -1,0 +1,5 @@
+{
+ "note": "2026-27 in-season player stats, written by fetch_stats.py after each matchday. Empty pre-season: the model then runs purely on the 2025-26 prior.",
+ "as_of_matchday": 0,
+ "players": []
+}

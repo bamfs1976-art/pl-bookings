@@ -1,0 +1,27 @@
+{
+ "season": "2026-27",
+ "source": "premierleague.com / Sky Sports fixture release (web, July 2026); refreshed by fetch_fixtures.py",
+ "note": "Kick-off times are the announced UK broadcast picks and can move; the weekly refresh overwrites this file. Matchweeks 3-38 arrive via fetch_fixtures.py once an API token is configured.",
+ "fixtures": [
+  {"id": "2627-01-ARS-COV", "mw": 1, "kickoff": "2026-08-21T19:00:00Z", "home": "ARS", "away": "COV"},
+  {"id": "2627-01-HUL-MUN", "mw": 1, "kickoff": "2026-08-22T11:30:00Z", "home": "HUL", "away": "MUN"},
+  {"id": "2627-01-EVE-CRY", "mw": 1, "kickoff": "2026-08-22T14:00:00Z", "home": "EVE", "away": "CRY"},
+  {"id": "2627-01-IPS-SUN", "mw": 1, "kickoff": "2026-08-22T14:00:00Z", "home": "IPS", "away": "SUN"},
+  {"id": "2627-01-NFO-LEE", "mw": 1, "kickoff": "2026-08-22T14:00:00Z", "home": "NFO", "away": "LEE"},
+  {"id": "2627-01-BRE-TOT", "mw": 1, "kickoff": "2026-08-22T16:30:00Z", "home": "BRE", "away": "TOT"},
+  {"id": "2627-01-BHA-AVL", "mw": 1, "kickoff": "2026-08-23T13:00:00Z", "home": "BHA", "away": "AVL"},
+  {"id": "2627-01-MCI-BOU", "mw": 1, "kickoff": "2026-08-23T13:00:00Z", "home": "MCI", "away": "BOU"},
+  {"id": "2627-01-NEW-LIV", "mw": 1, "kickoff": "2026-08-23T15:30:00Z", "home": "NEW", "away": "LIV"},
+  {"id": "2627-01-FUL-CHE", "mw": 1, "kickoff": "2026-08-24T19:00:00Z", "home": "FUL", "away": "CHE"},
+  {"id": "2627-02-CRY-MCI", "mw": 2, "kickoff": "2026-08-28T19:00:00Z", "home": "CRY", "away": "MCI"},
+  {"id": "2627-02-LIV-NFO", "mw": 2, "kickoff": "2026-08-29T11:30:00Z", "home": "LIV", "away": "NFO"},
+  {"id": "2627-02-BOU-EVE", "mw": 2, "kickoff": "2026-08-29T14:00:00Z", "home": "BOU", "away": "EVE"},
+  {"id": "2627-02-COV-HUL", "mw": 2, "kickoff": "2026-08-29T14:00:00Z", "home": "COV", "away": "HUL"},
+  {"id": "2627-02-TOT-NEW", "mw": 2, "kickoff": "2026-08-29T16:30:00Z", "home": "TOT", "away": "NEW"},
+  {"id": "2627-02-CHE-BHA", "mw": 2, "kickoff": "2026-08-30T13:00:00Z", "home": "CHE", "away": "BHA"},
+  {"id": "2627-02-LEE-BRE", "mw": 2, "kickoff": "2026-08-30T13:00:00Z", "home": "LEE", "away": "BRE"},
+  {"id": "2627-02-SUN-FUL", "mw": 2, "kickoff": "2026-08-30T13:00:00Z", "home": "SUN", "away": "FUL"},
+  {"id": "2627-02-MUN-IPS", "mw": 2, "kickoff": "2026-08-30T15:30:00Z", "home": "MUN", "away": "IPS"},
+  {"id": "2627-02-AVL-ARS", "mw": 2, "kickoff": "2026-08-31T19:00:00Z", "home": "AVL", "away": "ARS"}
+ ]
+}

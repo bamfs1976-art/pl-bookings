@@ -1,45 +1,112 @@
 # Premier League Bookings Desk
 
-A single-file, stats-based tool for Premier League player-bookings markets, ready for the 2026-27 season. Player card risk, club discipline and a referee watchlist, built on 2025-26 form.
+Per-game booking forecasts for the Premier League, every matchday of 2026-27.
+A static site (one `index.html` + one generated `app-data.js`) backed by a
+small Python pipeline that refreshes data weekly, freezes each matchweek's
+forecasts before kick-off and scores them after.
 
-## What it is
+## What it does
 
-- One `index.html`, vanilla JavaScript, Tailwind via CDN, no build step, no API keys.
-- All player, club and referee data is baked in.
-- Logged picks save to your browser under `pl_desk_v1`.
-- Light theme by default with a dark mode toggle. Club colours and crests throughout.
+- **Fixtures** — every game of the matchweek priced: the five most bookable
+  players per side with P(card) and fair odds. Set the referee when PGMOL
+  announce appointments and every probability re-prices live. Derby heat and
+  a suspension watch (players one yellow from a 5/10/15 ban) included.
+- **Players** — all ~530 squad players with raw rates (YC/90, fouls/90) and
+  model outputs (risk, neutral-fixture P(card)). Share-card PNG export.
+- **Clubs / Referees** — discipline tiers and the referee watchlist, with the
+  exact card factor each official applies to forecasts.
+- **Tracker** — log picks (one tap from a fixture card), auto-settled against
+  booked lists when results land. Hit-rate, P/L, ROI.
+- **Model** — the published-forecast Brier score and calibration table, so
+  the desk proves its accuracy instead of claiming it.
 
-## Tabs
+## The model
 
-- **Players** sortable table of every squad player by booking risk, filter by club and position, search, hide low sample. Share card exports the current view (a club's risks, or the league top 10) as a publishable social image.
-- **Clubs** the 20 clubs by cards received per game, with a discipline tier and each club's top booking risk.
-- **Referees** 2025-26 officials by yellows per game, with reds and penalties per game.
-- **Tracker** log each pick with odds and stake, settle won, lost or void, see hit-rate, staked, P/L and ROI.
-- **Guide** the method, the risk formula, the tiers and the known limits.
+```
+lambda  = yellows/90 (blended, shrunk)
+          x expected minutes / 90
+          x referee factor x venue factor x derby factor
+P(card) = 1 - exp(-lambda)
+```
 
-## Booking risk
+- **Blending** — current-season counts plus last season capped at 900 minutes
+  of evidence (450 for the promoted clubs' Championship form), so live form
+  takes over as the season runs.
+- **Shrinkage** — empirical Bayes: 900 pseudo-minutes of the position's
+  league rate are mixed into every player, so a 1-minute cameo can't produce
+  a 90-fouls-per-90 artefact.
+- **Referee factor** — official's yellows/game over league average, clamped
+  0.70–1.40 (see the Referees tab). TBC games use 1.00.
+- **Venue / derby** — home 0.95, away 1.08; listed rivalries up to +18%.
+- Constants live in `pipeline/model.py` and are baked into `app-data.js` so
+  the client and pipeline always agree.
 
-    risk = yellow cards per 90 × 2 + fouls committed per 90
+## Repo layout
 
-Yellow rate is weighted double because the market pays on cards. Fouls per 90 carries the volume signal. Both are 2025-26 rates. Players under 450 minutes are flagged low sample.
+```
+index.html                  the app (vanilla JS, Tailwind CDN, no build step)
+app-data.js                 generated dataset — do not edit by hand
+pipeline/
+  model.py                  pure model functions (tested)
+  build_dataset.py          sources -> app-data.js
+  score_forecasts.py        freeze matchweek forecasts / score vs results
+  fetch_fixtures.py         football-data.org or fixturedownload.com
+  fetch_stats.py            ScoutingStats in-season player stats
+  fetch_results.py          API-Football results + booked players
+  sources/                  tracked JSON inputs (prior season, fixtures, ...)
+  store/                    forecast log + scores (written by the pipeline)
+  tests/                    pytest suite
+.github/workflows/refresh-data.yml   weekly cron + manual refresh
+```
 
-## 2026-27 lineup and data basis
+## The weekly loop
 
-- 20 confirmed clubs: 17 staying up, plus Coventry, Ipswich and Hull (promoted). Burnley, West Ham and Wolves went down.
-- Stats are 2025-26 form, the pre-season basis for an August launch. 17 clubs from Premier League data, the 3 promoted clubs from their 2025-26 Championship data, flagged EFL.
-- Club team rates are shown for Premier League clubs only. Championship data mixes cup minutes, so the promoted clubs' team rate is not comparable and is omitted, though their players still appear with per-90 rates.
-- Referee figures are 2025-26 season averages from public data (tips.gg, with two lenient officials added from search data).
+Every Tuesday (or on manual dispatch) the GitHub Action:
 
-## Deploy to Netlify
+1. fetches fixtures, in-season stats and results (each step no-ops if its
+   secret isn't configured — the site keeps running on the last good data),
+2. **scores** the previous matchweek's frozen forecasts (Brier +
+   calibration → Model tab),
+3. **freezes** the coming matchweek's forecasts into
+   `pipeline/store/forecast_log.json`,
+4. runs the test suite, rebuilds `app-data.js`, commits and pushes.
 
-Drag the project root to drop.netlify.com, or connect the `pl-bookings` repo. Publish directory is the root, no build command. The `data` folder is gitignored, the app has its data baked in.
+Netlify redeploys on push; publish directory is the root, no build command.
 
-## Data and pipeline
+### Secrets (Settings → Secrets and variables → Actions)
 
-The `data` folder holds the build script and the raw harvests (gitignored):
-- `build_pl_data.py` builds `pl_data.js` (CLUBS, PL_PLAYERS, REFS) from the harvested JSON.
-- Harvested from the ScoutingStats API: `/api/league/8/player-stats` (PL) and `/api/league/9/player-stats` (Championship), plus referee data from tips.gg.
+| Secret | Used by | Purpose |
+|---|---|---|
+| `FOOTBALL_DATA_TOKEN` | fetch_fixtures | full 380-game schedule + kickoff moves |
+| `API_FOOTBALL_KEY` | fetch_results | finished games + booked players (auto-settle + scoring) |
+| `SCOUTINGSTATS_BASE` / `SCOUTINGSTATS_COOKIE` / `SCOUTINGSTATS_SEASON` | fetch_stats | 2026-27 player minutes/cards/fouls |
+| `AS_OF_MATCHDAY` (repo **variable**) | fetch_stats | matchday just completed |
 
-## Source data note
+Referee appointments have no API: edit
+`pipeline/sources/ref_appointments.json` (fixture id → referee name) when
+PGMOL publish, or pick the referee in the UI per game.
 
-Player and club form via ScoutingStats (Sportmonks). Referee data from public sources. Built for research, not a betting guarantee.
+## Running locally
+
+```
+python3 -m pytest pipeline/tests -q     # 28 tests
+python3 pipeline/build_dataset.py       # regenerate app-data.js
+python3 -m http.server                  # then open http://localhost:8000
+```
+
+## Data basis
+
+2026-27 lineup: 17 continuing clubs plus Coventry, Ipswich and Hull
+(promoted). Pre-season the model runs on 2025-26 form via ScoutingStats
+(Sportmonks) — the promoted trio on Championship form, flagged EFL — and
+referee averages from public data. Matchweeks 1–2 fixtures are baked from
+the June 2026 fixture release; the fetcher fills the rest.
+
+**Known data gap:** the 2025-26 Championship harvest for the promoted clubs
+was faulty — it contains only six distinct players (3 Coventry, 2 Hull,
+1 Ipswich), each duplicated 12 times. The pipeline dedupes them, so those
+fixture cards show short candidate lists until either the Championship data
+is re-harvested into `pipeline/sources/players_2526.json` or real 2026-27
+minutes arrive via `fetch_stats.py`.
+
+Built for research, not a betting guarantee. Stake responsibly.

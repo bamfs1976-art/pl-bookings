@@ -1,0 +1,98 @@
+[
+ {
+  "n": "Stuart Attwell",
+  "region": "Warwickshire",
+  "matches": 20,
+  "ypg": 4.7,
+  "red": 0.1,
+  "pen": 0.4
+ },
+ {
+  "n": "Darren England",
+  "region": "Doncaster",
+  "matches": 19,
+  "ypg": 4.32,
+  "red": null,
+  "pen": 0.16
+ },
+ {
+  "n": "Robert Jones",
+  "region": "Merseyside",
+  "matches": 15,
+  "ypg": 4.2,
+  "red": null,
+  "pen": 0.27
+ },
+ {
+  "n": "Anthony Taylor",
+  "region": "Cheshire",
+  "matches": 24,
+  "ypg": 4,
+  "red": 0.08,
+  "pen": 0.17
+ },
+ {
+  "n": "Thomas Bramall",
+  "region": "Sheffield",
+  "matches": 18,
+  "ypg": 4,
+  "red": 0.06,
+  "pen": 0.33
+ },
+ {
+  "n": "Peter Bankes",
+  "region": "Merseyside",
+  "matches": 22,
+  "ypg": 3.91,
+  "red": 0.09,
+  "pen": 0.27
+ },
+ {
+  "n": "Chris Kavanagh",
+  "region": "Lancashire",
+  "matches": 23,
+  "ypg": 3.74,
+  "red": 0.09,
+  "pen": 0.3
+ },
+ {
+  "n": "Jarred Gillett",
+  "region": "Australia",
+  "matches": 18,
+  "ypg": 3.67,
+  "red": 0.06,
+  "pen": 0.28
+ },
+ {
+  "n": "Samuel Barrott",
+  "region": "England",
+  "matches": 19,
+  "ypg": 3.58,
+  "red": 0.05,
+  "pen": 0.32
+ },
+ {
+  "n": "Tony Harrington",
+  "region": "Cleveland",
+  "matches": 12,
+  "ypg": 3.3,
+  "red": null,
+  "pen": null
+ },
+ {
+  "n": "Michael Oliver",
+  "region": "Northumberland",
+  "matches": 23,
+  "ypg": 2.91,
+  "red": 0.04,
+  "pen": 0.04
+ },
+ {
+  "n": "Craig Pawson",
+  "region": "South Yorkshire",
+  "matches": null,
+  "ypg": 2.5,
+  "red": null,
+  "pen": null
+ }
+]

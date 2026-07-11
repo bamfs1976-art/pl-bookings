@@ -1,0 +1,16 @@
+{
+ "note": "Rivalry pairs that historically run hotter on cards. Order-independent. factor multiplies the card intensity for both sides.",
+ "derbies": [
+  {"pair": ["ARS", "TOT"], "name": "North London derby", "factor": 1.15},
+  {"pair": ["LIV", "EVE"], "name": "Merseyside derby", "factor": 1.15},
+  {"pair": ["MUN", "MCI"], "name": "Manchester derby", "factor": 1.12},
+  {"pair": ["NEW", "SUN"], "name": "Tyne-Wear derby", "factor": 1.18},
+  {"pair": ["MUN", "LIV"], "name": "North-West derby", "factor": 1.12},
+  {"pair": ["CHE", "TOT"], "name": "London derby", "factor": 1.1},
+  {"pair": ["ARS", "CHE"], "name": "London derby", "factor": 1.08},
+  {"pair": ["CRY", "BHA"], "name": "M23 derby", "factor": 1.12},
+  {"pair": ["MUN", "LEE"], "name": "Roses rivalry", "factor": 1.12},
+  {"pair": ["AVL", "COV"], "name": "West Midlands derby", "factor": 1.1},
+  {"pair": ["FUL", "CHE"], "name": "West London derby", "factor": 1.08}
+ ]
+}

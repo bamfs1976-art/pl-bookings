@@ -1,0 +1,4 @@
+{
+ "note": "Referee appointments per fixture id. PGMOL publishes these midweek; fill by hand or via a scraper until an API exists. Names must match refs_2526.json / the current refs file.",
+ "appointments": {}
+}

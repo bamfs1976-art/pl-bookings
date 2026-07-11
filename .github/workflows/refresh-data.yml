@@ -1,0 +1,91 @@
+# Weekly matchday refresh: pull new fixtures, stats and results, score last
+# week's frozen forecasts, freeze the next matchweek's, rebuild app-data.js
+# and commit. Netlify redeploys on push.
+#
+# Secrets (all optional — each fetcher no-ops without its key and the site
+# keeps running on the last good data):
+#   FOOTBALL_DATA_TOKEN    api.football-data.org v4 (fixtures)
+#   API_FOOTBALL_KEY       api-sports.io (results + booked players)
+#   SCOUTINGSTATS_BASE     ScoutingStats host (in-season player stats)
+#   SCOUTINGSTATS_COOKIE   session cookie for the above, if needed
+#   SCOUTINGSTATS_SEASON   Sportmonks season id for PL 2026-27
+#
+# AS_OF_MATCHDAY is supplied on manual runs; scheduled runs skip the stats
+# fetch unless a repository variable AS_OF_MATCHDAY is maintained.
+
+name: Refresh matchday data
+
+on:
+  schedule:
+    - cron: "0 6 * * 2"   # Tuesday 06:00 UTC, after the matchweek completes
+  workflow_dispatch:
+    inputs:
+      as_of_matchday:
+        description: "Matchday just completed (drives the stats fetch)"
+        required: false
+      log_matchweek:
+        description: "Matchweek to freeze forecasts for (default: next)"
+        required: false
+
+permissions:
+  contents: write
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install test deps
+        run: pip install --quiet pytest
+
+      - name: Fetch fixtures
+        env:
+          FOOTBALL_DATA_TOKEN: ${{ secrets.FOOTBALL_DATA_TOKEN }}
+        run: python pipeline/fetch_fixtures.py
+
+      - name: Fetch in-season player stats
+        env:
+          SCOUTINGSTATS_BASE: ${{ secrets.SCOUTINGSTATS_BASE }}
+          SCOUTINGSTATS_COOKIE: ${{ secrets.SCOUTINGSTATS_COOKIE }}
+          SCOUTINGSTATS_SEASON: ${{ secrets.SCOUTINGSTATS_SEASON }}
+          AS_OF_MATCHDAY: ${{ inputs.as_of_matchday || vars.AS_OF_MATCHDAY }}
+        run: python pipeline/fetch_stats.py
+
+      - name: Fetch results and booked players
+        env:
+          API_FOOTBALL_KEY: ${{ secrets.API_FOOTBALL_KEY }}
+        run: python pipeline/fetch_results.py
+
+      - name: Score last week's frozen forecasts
+        run: python pipeline/score_forecasts.py score
+
+      - name: Freeze forecasts for the next matchweek
+        run: |
+          if [ -n "${{ inputs.log_matchweek }}" ]; then
+            python pipeline/score_forecasts.py log --mw "${{ inputs.log_matchweek }}"
+          else
+            python pipeline/score_forecasts.py log
+          fi
+
+      - name: Run model tests
+        run: python -m pytest pipeline/tests -q
+
+      - name: Build app-data.js
+        run: python pipeline/build_dataset.py
+
+      - name: Commit refreshed data
+        run: |
+          git config user.name "bookings-desk-bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add -A app-data.js pipeline/sources pipeline/store
+          if git diff --cached --quiet; then
+            echo "no data changes"
+          else
+            git commit -m "Data refresh: $(date -u +%Y-%m-%d)"
+            git push
+          fi

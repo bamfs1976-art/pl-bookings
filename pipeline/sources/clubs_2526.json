@@ -1,0 +1,182 @@
+[
+ {
+  "short": "TOT",
+  "name": "Tottenham Hotspur",
+  "img": "https://cdn.sportmonks.com/images/soccer/teams/6/6.png",
+  "basis": "PL",
+  "ca": 2.63,
+  "fm": 12.2,
+  "squad": 31
+ },
+ {
+  "short": "CHE",
+  "name": "Chelsea",
+  "img": "https://cdn.sportmonks.com/images/soccer/teams/18/18.png",
+  "basis": "PL",
+  "ca": 2.5,
+  "fm": 11.2,
+  "squad": 30
+ },
+ {
+  "short": "BOU",
+  "name": "AFC Bournemouth",
+  "img": "https://cdn.sportmonks.com/images/soccer/teams/20/52.png",
+  "basis": "PL",
+  "ca": 2.32,
+  "fm": 12.1,
+  "squad": 26
+ },
+ {
+  "short": "BHA",
+  "name": "Brighton & Hove Albion",
+  "img": "https://cdn.sportmonks.com/images/soccer/teams/14/78.png",
+  "basis": "PL",
+  "ca": 2.26,
+  "fm": 12,
+  "squad": 27
+ },
+ {
+  "short": "SUN",
+  "name": "Sunderland",
+  "img": "https://cdn.sportmonks.com/images/soccer/teams/3/3.png",
+  "basis": "PL",
+  "ca": 2.21,
+  "fm": 10.9,
+  "squad": 29
+ },
+ {
+  "short": "FUL",
+  "name": "Fulham",
+  "img": "https://cdn.sportmonks.com/images/soccer/teams/11/11.png",
+  "basis": "PL",
+  "ca": 1.97,
+  "fm": 11,
+  "squad": 24
+ },
+ {
+  "short": "CRY",
+  "name": "Crystal Palace",
+  "img": "https://cdn.sportmonks.com/images/soccer/teams/19/51.png",
+  "basis": "PL",
+  "ca": 1.97,
+  "fm": 10.5,
+  "squad": 29
+ },
+ {
+  "short": "EVE",
+  "name": "Everton",
+  "img": "https://cdn.sportmonks.com/images/soccer/teams/13/13.png",
+  "basis": "PL",
+  "ca": 1.89,
+  "fm": 10.8,
+  "squad": 22
+ },
+ {
+  "short": "BRE",
+  "name": "Brentford",
+  "img": "https://cdn.sportmonks.com/images/soccer/teams/12/236.png",
+  "basis": "PL",
+  "ca": 1.84,
+  "fm": 10.3,
+  "squad": 26
+ },
+ {
+  "short": "MCI",
+  "name": "Manchester City",
+  "img": "https://cdn.sportmonks.com/images/soccer/teams/9/9.png",
+  "basis": "PL",
+  "ca": 1.74,
+  "fm": 9.7,
+  "squad": 27
+ },
+ {
+  "short": "NEW",
+  "name": "Newcastle United",
+  "img": "https://cdn.sportmonks.com/images/soccer/teams/20/20.png",
+  "basis": "PL",
+  "ca": 1.71,
+  "fm": 10.2,
+  "squad": 26
+ },
+ {
+  "short": "MUN",
+  "name": "Manchester United",
+  "img": "https://cdn.sportmonks.com/images/soccer/teams/14/14.png",
+  "basis": "PL",
+  "ca": 1.66,
+  "fm": 10.3,
+  "squad": 25
+ },
+ {
+  "short": "LEE",
+  "name": "Leeds United",
+  "img": "https://cdn.sportmonks.com/images/soccer/teams/7/71.png",
+  "basis": "PL",
+  "ca": 1.66,
+  "fm": 10.5,
+  "squad": 24
+ },
+ {
+  "short": "NFO",
+  "name": "Nottingham Forest",
+  "img": "https://cdn.sportmonks.com/images/soccer/teams/31/63.png",
+  "basis": "PL",
+  "ca": 1.58,
+  "fm": 10.7,
+  "squad": 31
+ },
+ {
+  "short": "AVL",
+  "name": "Aston Villa",
+  "img": "https://cdn.sportmonks.com/images/soccer/teams/15/15.png",
+  "basis": "PL",
+  "ca": 1.55,
+  "fm": 10,
+  "squad": 30
+ },
+ {
+  "short": "LIV",
+  "name": "Liverpool",
+  "img": "https://cdn.sportmonks.com/images/soccer/teams/8/8.png",
+  "basis": "PL",
+  "ca": 1.5,
+  "fm": 10.2,
+  "squad": 24
+ },
+ {
+  "short": "ARS",
+  "name": "Arsenal",
+  "img": "https://cdn.sportmonks.com/images/soccer/teams/19/19.png",
+  "basis": "PL",
+  "ca": 1.32,
+  "fm": 10.3,
+  "squad": 25
+ },
+ {
+  "short": "HUL",
+  "name": "Hull City",
+  "img": "https://cdn.sportmonks.com/images/soccer/teams/22/22.png",
+  "basis": "EFL",
+  "ca": null,
+  "fm": null,
+  "squad": 24
+ },
+ {
+  "short": "COV",
+  "name": "Coventry City",
+  "img": "https://cdn.sportmonks.com/images/soccer/teams/21/117.png",
+  "basis": "EFL",
+  "ca": null,
+  "fm": null,
+  "squad": 36
+ },
+ {
+  "short": "IPS",
+  "name": "Ipswich Town",
+  "img": "https://cdn.sportmonks.com/images/soccer/teams/20/116.png",
+  "basis": "EFL",
+  "ca": null,
+  "fm": null,
+  "squad": 12
+ }
+]
