@@ -120,6 +120,14 @@ def shrink_rate_per90(events: float, minutes: float, prior_per90: float,
     return eff_events / eff_minutes * 90.0
 
 
+def expected_minutes_from_apps(minutes: float, apps: float) -> float:
+    """Expected minutes from real appearance data (API-Football in-season):
+    plain average minutes per appearance, clamped to the model bounds."""
+    if not apps or apps <= 0:
+        return EXP_MIN_FLOOR
+    return max(EXP_MIN_FLOOR, min(EXP_MIN_CEIL, minutes / apps))
+
+
 def expected_minutes(minutes: float, possible_minutes: float) -> float:
     """Heuristic expected minutes per appearance from season minutes share.
 

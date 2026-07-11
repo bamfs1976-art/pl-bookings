@@ -75,12 +75,21 @@ Netlify redeploys on push; publish directory is the root, no build command.
 
 ### Secrets (Settings → Secrets and variables → Actions)
 
+**One free key is enough.** Register at [api-football](https://www.api-football.com/)
+(free tier, no card) and add it as `API_FOOTBALL_KEY` — it powers both the
+in-season player stats (minutes, appearances, yellows, fouls) and the
+results/booked-players feed. No paid stats subscription is needed anywhere.
+
 | Secret | Used by | Purpose |
 |---|---|---|
-| `FOOTBALL_DATA_TOKEN` | fetch_fixtures | full 380-game schedule + kickoff moves |
-| `API_FOOTBALL_KEY` | fetch_results | finished games + booked players (auto-settle + scoring) |
-| `SCOUTINGSTATS_BASE` / `SCOUTINGSTATS_COOKIE` / `SCOUTINGSTATS_SEASON` | fetch_stats | 2026-27 player minutes/cards/fouls |
-| `AS_OF_MATCHDAY` (repo **variable**) | fetch_stats | matchday just completed |
+| `API_FOOTBALL_KEY` | fetch_stats + fetch_results | 2026-27 player stats, finished games, booked players |
+| `FOOTBALL_DATA_TOKEN` | fetch_fixtures | optional; the keyless fixturedownload.com fallback also works |
+| `SCOUTINGSTATS_*` | fetch_stats | optional legacy path (normal login cookie), only used if `API_FOOTBALL_KEY` is absent |
+
+`AS_OF_MATCHDAY` is derived automatically from fetched results.
+
+With real appearance data from API-Football, expected minutes switches from
+the pre-season share heuristic to actual average minutes per appearance.
 
 Referee appointments have no API: edit
 `pipeline/sources/ref_appointments.json` (fixture id → referee name) when

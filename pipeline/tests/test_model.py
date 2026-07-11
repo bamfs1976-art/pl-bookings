@@ -87,6 +87,13 @@ def test_expected_minutes_fringe():
     assert em < 35
 
 
+def test_expected_minutes_from_apps():
+    assert model.expected_minutes_from_apps(900, 10) == 86.0  # capped at ceil
+    assert model.expected_minutes_from_apps(300, 10) == 30.0
+    assert model.expected_minutes_from_apps(500, 0) == model.EXP_MIN_FLOOR
+    assert model.expected_minutes_from_apps(5, 10) == model.EXP_MIN_FLOOR
+
+
 def test_expected_minutes_bounds():
     assert model.expected_minutes(0, 3420) >= model.EXP_MIN_FLOOR
     assert model.expected_minutes(5000, 3420) <= model.EXP_MIN_CEIL

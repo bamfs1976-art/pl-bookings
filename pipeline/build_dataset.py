@@ -102,9 +102,13 @@ def build_players(prior_players: list[dict], current: dict) -> list[dict]:
         ys = model.shrink_rate_per90(yc_e, yc_m, y_priors.get(pos, y_priors[""]))
         fs = model.shrink_rate_per90(fl_e, fl_m, f_priors.get(pos, f_priors[""]))
 
-        possible = season_possible if season_possible is not None else (
-            EFL_POSSIBLE if p.get("b") == "EFL" else PL_POSSIBLE)
-        em = model.expected_minutes(p.get("min") or 0, possible)
+        if p.get("apps"):
+            # real appearance data (API-Football) beats the share heuristic
+            em = model.expected_minutes_from_apps(p.get("min") or 0, p["apps"])
+        else:
+            possible = season_possible if season_possible is not None else (
+                EFL_POSSIBLE if p.get("b") == "EFL" else PL_POSSIBLE)
+            em = model.expected_minutes(p.get("min") or 0, possible)
 
         row = {
             "c": p["c"], "n": p["n"], "p": pos,

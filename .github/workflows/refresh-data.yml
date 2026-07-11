@@ -3,15 +3,16 @@
 # and commit. Netlify redeploys on push.
 #
 # Secrets (all optional — each fetcher no-ops without its key and the site
-# keeps running on the last good data):
-#   FOOTBALL_DATA_TOKEN    api.football-data.org v4 (fixtures)
-#   API_FOOTBALL_KEY       api-sports.io (results + booked players)
-#   SCOUTINGSTATS_BASE     ScoutingStats host (in-season player stats)
-#   SCOUTINGSTATS_COOKIE   session cookie for the above, if needed
-#   SCOUTINGSTATS_SEASON   Sportmonks season id for PL 2026-27
+# keeps running on the last good data). A single free API_FOOTBALL_KEY
+# powers both in-season player stats AND results; no paid stats account
+# is needed anywhere:
+#   API_FOOTBALL_KEY       api-sports.io free tier (player stats + results)
+#   FOOTBALL_DATA_TOKEN    api.football-data.org v4 (fixtures; the keyless
+#                          fixturedownload.com fallback also works)
+#   SCOUTINGSTATS_BASE / SCOUTINGSTATS_COOKIE / SCOUTINGSTATS_SEASON
+#                          legacy stats path, only used without the above key
 #
-# AS_OF_MATCHDAY is supplied on manual runs; scheduled runs skip the stats
-# fetch unless a repository variable AS_OF_MATCHDAY is maintained.
+# AS_OF_MATCHDAY is optional everywhere: it is derived from fetched results.
 
 name: Refresh matchday data
 
@@ -48,18 +49,19 @@ jobs:
           FOOTBALL_DATA_TOKEN: ${{ secrets.FOOTBALL_DATA_TOKEN }}
         run: python pipeline/fetch_fixtures.py
 
+      - name: Fetch results and booked players
+        env:
+          API_FOOTBALL_KEY: ${{ secrets.API_FOOTBALL_KEY }}
+        run: python pipeline/fetch_results.py
+
       - name: Fetch in-season player stats
         env:
+          API_FOOTBALL_KEY: ${{ secrets.API_FOOTBALL_KEY }}
           SCOUTINGSTATS_BASE: ${{ secrets.SCOUTINGSTATS_BASE }}
           SCOUTINGSTATS_COOKIE: ${{ secrets.SCOUTINGSTATS_COOKIE }}
           SCOUTINGSTATS_SEASON: ${{ secrets.SCOUTINGSTATS_SEASON }}
           AS_OF_MATCHDAY: ${{ inputs.as_of_matchday || vars.AS_OF_MATCHDAY }}
         run: python pipeline/fetch_stats.py
-
-      - name: Fetch results and booked players
-        env:
-          API_FOOTBALL_KEY: ${{ secrets.API_FOOTBALL_KEY }}
-        run: python pipeline/fetch_results.py
 
       - name: Score last week's frozen forecasts
         run: python pipeline/score_forecasts.py score
