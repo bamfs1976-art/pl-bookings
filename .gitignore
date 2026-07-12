@@ -10,3 +10,4 @@ Thumbs.db
 
 # Raw harvests, not needed for deploy (index.html loads the generated data/pl_data.js)
 data/*.json
+__pycache__/
