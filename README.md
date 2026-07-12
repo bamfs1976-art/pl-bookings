@@ -12,11 +12,11 @@ A single-file, stats-based tool for Premier League player-bookings markets, read
 
 ## Tabs
 
-- **Players** sortable table of every squad player by booking risk, filter by club and position, search, hide low sample. Injury/suspension/doubt flags from the live feed, and a **suspension watch** strip for anyone one booking from a ban (5 yellows to GW19, 10 to GW32, 15 all season). Share card exports the current view (a club's risks, or the league top 10) as a publishable social image.
+- **Players** sortable table of every squad player by booking risk, filter by club and position, search, hide low sample. Star any player onto a **watchlist** and flip the ★ filter to see just your shortlist. Injury/suspension/doubt flags from the live feed, and a **suspension watch** strip for anyone one booking from a ban (5 yellows to GW19, 10 to GW32, 15 all season). Share card exports the current view (a club's risks, or the league top 10) as a publishable social image.
 - **Clubs** the 20 clubs by cards received per game, with a discipline tier and each club's top booking risk.
 - **Referees** 2025-26 officials by yellows per game, with reds and penalties per game.
 - **Fixtures** the 2026-27 schedule by gameweek from the FPL API, each match with a booking-heat rating (both clubs' cards-against combined), combustibility flame and the fixture's top booking risks.
-- **Tracker** log each pick with odds and stake, settle won, lost or void, see hit-rate, staked, P/L and ROI. Signed in, picks sync to the cloud and merge across devices.
+- **Tracker** log each pick with odds and stake, settle won, lost or void, see hit-rate, staked, P/L and ROI. Signed in, picks sync to the cloud and merge across devices. An optional **AI review** (ported from Booking Analytics Pro) reads your settled picks and points at what's working — see below.
 - **Guide** the method, the risk formula, the tiers and the known limits.
 
 ## Live data
@@ -30,6 +30,10 @@ Live card counts overlay the baked squads by club + normalized-name matching. On
 Sign-in is optional and everything works signed out. The app uses the same Supabase project as Gameweek Edge (the publishable key is public-safe; RLS does the protecting). Picks live in `plb_picks`, locked to `auth.uid() = user_id` on every policy. On first sign-in, local and cloud picks merge (a settled result beats pending), then the merged set is pushed back up.
 
 One-time setup in the Supabase project: run `supabase/plb_picks.sql` in the SQL editor, and add the deployed site URL to Authentication → URL Configuration → Redirect URLs so confirmation and reset emails return here. Until the table exists, sign-in still works and picks simply stay local.
+
+## AI review of picks (optional)
+
+The one feature worth keeping from Booking Analytics Pro, ported with the key handled properly. With three or more settled picks, the Tracker tab can send them to `netlify/functions/insights.js` (routed at `/api/insights`), which calls the Anthropic API **server-side** with `ANTHROPIC_API_KEY` from the Netlify environment and returns a short performance read — strongest and weakest markets, odds and staking patterns, three concrete adjustments. The key never reaches the browser, the prompts are fixed in the function, and only whitelisted pick fields are sent. Without the environment variable the function answers 501 and the app explains the feature is off; nothing else depends on it.
 
 ## Booking risk
 
@@ -46,7 +50,7 @@ Yellow rate is weighted double because the market pays on cards. Fouls per 90 ca
 
 ## Deploy to Netlify
 
-Connect the `pl-bookings` repo (preferred — the `/api/fpl/*` proxy needs the Netlify Function, which a drag-and-drop deploy of the root also carries in `netlify/functions/`). Publish directory is the root, no build command. The `data` folder is gitignored, the app has its baked data inline. No environment variables are required.
+Connect the `pl-bookings` repo (preferred — the `/api/fpl/*` proxy needs the Netlify Function, which a drag-and-drop deploy of the root also carries in `netlify/functions/`). Publish directory is the root, no build command. The `data` folder is gitignored, the app has its baked data inline. No environment variables are required — optionally set `ANTHROPIC_API_KEY` to switch on the AI review of tracker picks.
 
 ## Install as an app
 
