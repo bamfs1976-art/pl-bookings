@@ -50,7 +50,7 @@ Yellow rate is weighted double because the market pays on cards. Fouls per 90 ca
 
 ## Deploy to Netlify
 
-Connect the `pl-bookings` repo (preferred — the `/api/fpl/*` proxy needs the Netlify Function, which a drag-and-drop deploy of the root also carries in `netlify/functions/`). Publish directory is the root, no build command. The `data` folder is gitignored, the app has its baked data inline. No environment variables are required — optionally set `ANTHROPIC_API_KEY` to switch on the AI review of tracker picks.
+Connect the `pl-bookings` repo (preferred — the `/api/fpl/*` proxy needs the Netlify Function, which a drag-and-drop deploy of the root also carries in `netlify/functions/`). Publish directory is the root, no build command. Only the raw harvest JSON in `data/` is gitignored — the generated `data/pl_data.js` is committed and deployed, and `index.html` loads it directly. No environment variables are required — optionally set `ANTHROPIC_API_KEY` to switch on the AI review of tracker picks.
 
 ## Install as an app
 

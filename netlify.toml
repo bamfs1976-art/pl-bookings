@@ -14,3 +14,8 @@
     X-Content-Type-Options = "nosniff"
     Referrer-Policy = "strict-origin-when-cross-origin"
     Permissions-Policy = "geolocation=(), microphone=(), camera=()"
+
+[[headers]]
+  for = "/data/pl_data.js"
+  [headers.values]
+    Cache-Control = "public, max-age=300, must-revalidate"

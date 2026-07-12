@@ -8,5 +8,5 @@ Thumbs.db
 .playwright-mcp/
 *-preview.png
 
-# Working data, not needed for deploy (baked into index.html)
+# Raw harvests, not needed for deploy (index.html loads the generated data/pl_data.js)
 data/*.json

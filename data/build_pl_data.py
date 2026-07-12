@@ -7,7 +7,9 @@ Inputs (harvested from ScoutingStats, logged in):
   champ_promoted.json 2025-26 Championship players for the 3 promoted clubs
   pl_refs.json        2025-26 PL referee card rates (tips.gg)
 
-Output: pl_data.js with PL_PLAYERS, CLUBS and REFS.
+Output: pl_data.js with PL_PLAYERS, CLUBS and REFS. index.html loads this file
+directly via <script src="data/pl_data.js"> — there is no hand-copy step, so
+regenerating this file is all a data refresh needs. Keep the const names stable.
 
 2026-27 lineup: 17 continuing PL clubs (drop Burnley, West Ham, Wolves) plus
 Coventry, Ipswich, Hull (promoted, 2025-26 Championship form, flagged EFL).

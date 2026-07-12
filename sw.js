@@ -3,10 +3,11 @@
    cache-first. Live FPL data (/api/fpl/*) and Supabase calls are never
    touched here — the app's own data layer decides what is fresh vs cached. */
 
-const VERSION = 'plb-v1';
+const VERSION = 'plb-v2';
 const SHELL = [
   '/',
   '/index.html',
+  '/data/pl_data.js',
   '/manifest.webmanifest',
   '/favicon.svg',
   '/logo.svg',
@@ -37,10 +38,12 @@ self.addEventListener('fetch', (e) => {
   if (url.pathname.startsWith('/api/')) return;
   if (url.origin !== self.location.origin) return;
 
-  /* The page/app shell: network-first so deploys reach the app
-     immediately, falling back to cache when offline. */
+  /* The page/app shell (and the dataset, which changes with data updates):
+     network-first so deploys reach the app immediately, falling back to
+     cache when offline. */
   const isShell = req.mode === 'navigate' ||
     url.pathname === '/' || url.pathname === '/index.html' ||
+    url.pathname === '/data/pl_data.js' ||
     url.pathname === '/manifest.webmanifest';
 
   if (isShell) {
