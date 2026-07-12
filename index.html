@@ -303,6 +303,7 @@
       </ul>
       <p class="faint" style="font-size:.8rem">Built for research, not a betting guarantee. Stake responsibly.</p>
     </div>
+    <div id="trackRecord" class="surface" style="border-radius:12px;padding:1.2rem;line-height:1.6;max-width:760px;margin-top:1rem"></div>
   </section>
 </main>
 
@@ -739,12 +740,12 @@ async function loadLive(){
     status.hidden=false; status.className="chip tier-target";
     status.textContent="● Live FPL data";
     status.title="Availability"+(LIVE.seasonStarted?" and 2026-27 card counts":"")+" from the official FPL API. "+LIVE.matchedCount+" players matched.";
-    renderPlayers(); renderClubs(); renderSuspWatch(); initFixturesUI();
+    renderPlayers(); renderClubs(); renderSuspWatch(); initFixturesUI(); updateAccuracy();
   }catch(e){
     status.hidden=false; status.className="chip tier-fade";
     status.textContent="Baked 2025-26 form";
     status.title="Live FPL feed unreachable — showing the baked 2025-26 basis.";
-    initFixturesUI();
+    initFixturesUI(); renderTrackRecord();
   }
 }
 
@@ -781,6 +782,64 @@ function renderSuspWatch(){
     +strictWatch.slice(0,10).map(({p,ref})=>`<span class="chip tier-target" title="Watchlisted — next fixture has ${esc(ref.n)} assigned (${ref.ypg.toFixed(2)} yellows/game)">★ ${esc(p.n)} · strict ref (${esc(ref.n.split(" ").pop())})</span>`).join("")
     +'</div>'
     +'<p class="faint" style="margin:.45rem 0 0;font-size:.74rem">One booking from a ban — a card to burn is a lean, a protected threshold often isn\'t. 5 yellows to GW19, 10 to GW32, 15 all season. Live counts from the FPL feed. ★ marks watchlisted players whose next fixture has a strict official assigned in the Fixtures tab.</p>';
+}
+
+// ---- model accuracy self-tracking ----
+// Each session, if a snapshotted gameweek has since finished, score how
+// many of the model's top-20 risks picked up a card (delta in live yellow
+// counts), then snapshot the current top 20 for the next gameweek.
+// Best-effort: gameweeks with missing data are skipped, results persist
+// in this browser under pl_desk_acc_v1.
+const ACC_KEY="pl_desk_acc_v1";
+let ACC=(()=>{ try{ const a=JSON.parse(localStorage.getItem(ACC_KEY))||{}; return {snap:a.snap||null,results:a.results||[],hist:a.hist||[]}; }catch(e){ return {snap:null,results:[],hist:[]}; } })();
+function saveAcc(){ try{ localStorage.setItem(ACC_KEY,JSON.stringify(ACC)); }catch(e){} }
+function liveYcByKey(){ const m={}; PL_PLAYERS.forEach(p=>{ if(p.live) m[watchKey(p)]=p.live.yc; }); return m; }
+function topRiskPlayers(n){
+  return PL_PLAYERS.filter(p=>rEff(p)!=null&&!p.ls&&!(p.live&&"isu".includes(p.live.st)))
+    .sort((a,b)=>rEff(b)-rEff(a)).slice(0,n);
+}
+function updateAccuracy(){
+  if(!LIVE||!LIVE.seasonStarted){ renderTrackRecord(); return; }
+  try{
+    const events=LIVE.bootstrap.events||[];
+    const finished=new Set(events.filter(e=>e.finished).map(e=>e.id));
+    const cur=liveYcByKey();
+    // score the pending snapshot once its gameweek has finished
+    if(ACC.snap&&finished.has(ACC.snap.gw)){
+      let hits=0,total=0;
+      (ACC.snap.players||[]).forEach(sp=>{ const now=cur[sp.k]; if(now==null) return; total++; if(now>sp.yc) hits++; });
+      if(total>=10){ ACC.results.push({gw:ACC.snap.gw,hits,total,ts:Date.now()}); ACC.results=ACC.results.slice(-38); }
+      ACC.snap=null;
+    }
+    // per-gameweek card-count history (feeds the last-5-GW form trend)
+    const lastFin=events.filter(e=>e.finished).reduce((m,e)=>Math.max(m,e.id),0);
+    if(lastFin>0&&Object.keys(cur).length&&(!ACC.hist.length||ACC.hist[ACC.hist.length-1].gw<lastFin)){
+      ACC.hist.push({gw:lastFin,ts:Date.now(),yc:cur});
+      if(ACC.hist.length>6) ACC.hist=ACC.hist.slice(-6);
+    }
+    // snapshot the model's current top 20 for the next unfinished gameweek
+    const next=events.find(e=>!e.finished&&(e.is_current||e.is_next))||events.find(e=>!e.finished);
+    if(!ACC.snap&&next){
+      const top=topRiskPlayers(20);
+      if(top.length>=10) ACC.snap={gw:next.id,ts:Date.now(),players:top.map(p=>({k:watchKey(p),yc:p.live?p.live.yc:0}))};
+    }
+    saveAcc();
+  }catch(e){ /* best-effort — never let self-scoring break the app */ }
+  renderTrackRecord();
+}
+function renderTrackRecord(){
+  const el=$("trackRecord"); if(!el) return;
+  const rs=ACC.results;
+  if(!rs.length){
+    el.innerHTML='<h3 style="margin-top:0">Model track record</h3>'
+      +'<p class="muted" style="margin:0;font-size:.88rem">Each finished gameweek, the desk checks how many of its top-20 booking risks actually picked up a card, and logs the hit rate here — self-scoring you can hold it to. Tracking starts once the season begins; no gameweeks scored yet.</p>';
+    return;
+  }
+  const totHits=rs.reduce((s,r)=>s+r.hits,0), tot=rs.reduce((s,r)=>s+r.total,0);
+  const rows=rs.slice(-10).reverse().map(r=>`<tr><td style="padding:.3rem .6rem">GW${r.gw}</td><td class="num" style="text-align:right;padding:.3rem .6rem">${r.hits}/${r.total}</td><td class="num" style="text-align:right;padding:.3rem .6rem">${(100*r.hits/r.total).toFixed(0)}%</td></tr>`).join("");
+  el.innerHTML='<h3 style="margin-top:0">Model track record</h3>'
+    +`<p class="muted" style="font-size:.88rem;margin:.2rem 0 .6rem">Of the model's top-20 booking risks at each snapshot, the share that picked up a card that gameweek. Cumulative: <strong class="num">${totHits}/${tot} (${tot?(100*totHits/tot).toFixed(0):0}%)</strong> over ${rs.length} gameweek${rs.length===1?"":"s"}. Best-effort deltas from live counts in this browser — an honest self-score, not a marketing number.</p>`
+    +`<table style="max-width:340px"><thead><tr><th scope="col" style="text-align:left;padding:.3rem .6rem">GW</th><th scope="col" style="text-align:right;padding:.3rem .6rem">Carded</th><th scope="col" style="text-align:right;padding:.3rem .6rem">Hit rate</th></tr></thead><tbody>${rows}</tbody></table>`;
 }
 
 // ---- referee assignment ----
@@ -1019,6 +1078,7 @@ if("serviceWorker" in navigator&&(location.protocol==="https:"||location.hostnam
 
 // init
 $("guideBaseRate").textContent=(CALIB.baseRate*100).toFixed(1);
+renderTrackRecord();
 fillClubFilter();
 renderPlayers();
 renderClubs();
