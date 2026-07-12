@@ -1,0 +1,4 @@
+{
+ "note": "Per-fixture win probabilities exported from PLsimulator. Keyed by our fixture id; home_win/draw/away_win should sum to ~1. The model turns each side's win probability into a chase factor (underdogs foul more). Fixtures absent here price neutrally. Export from the simulator with any script that writes this shape.",
+ "fixtures": {}
+}

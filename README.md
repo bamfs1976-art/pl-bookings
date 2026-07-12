@@ -101,6 +101,22 @@ results/booked-players feed. No paid stats subscription is needed anywhere.
 With real appearance data from API-Football, expected minutes switches from
 the pre-season share heuristic to actual average minutes per appearance.
 
+### PLsimulator integration
+
+The model consumes simulated match outcomes as a **game-state (chase)
+factor**: export PLsimulator's per-fixture win probabilities to
+`pipeline/sources/sim_predictions.json` —
+
+```json
+{"fixtures": {"2627-01-ARS-COV": {"home_win": 0.75, "draw": 0.15, "away_win": 0.10}}}
+```
+
+— and rebuild. A 10% underdog prices up to ×1.20 on cards (chasing,
+tactical fouls), a dominant favourite down to ×0.85; fixtures without an
+entry stay neutral. The factor shows as *chase ×N* on fixture cards and
+flows into the frozen forecast log, so the Model tab's Brier score will
+tell you whether the simulator's input actually improves accuracy.
+
 Referee appointments have no API: edit
 `pipeline/sources/ref_appointments.json` (fixture id → referee name) when
 PGMOL publish, or pick the referee in the UI per game.

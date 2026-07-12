@@ -45,6 +45,13 @@ AWAY_FACTOR = 1.08
 REF_FACTOR_MIN = 0.70
 REF_FACTOR_MAX = 1.40
 
+# Game-state (chase) factor from simulated win probabilities: sides likely
+# to trail commit more tactical fouls, dominant favourites fewer. Linear
+# around 50% win probability, clamped.
+CHASE_SLOPE = 0.30
+CHASE_FACTOR_MIN = 0.85
+CHASE_FACTOR_MAX = 1.20
+
 # Expected-minutes heuristic (no appearance data yet): map share of possible
 # minutes to expected minutes on the pitch. Replaced by real appearance data
 # when the stats fetcher supplies it.
@@ -161,6 +168,19 @@ def opponent_factor(opp_fouls_drawn_pg: float | None,
     if not opp_fouls_drawn_pg or not league_avg_fouls_drawn_pg:
         return 1.0
     return max(0.75, min(1.35, opp_fouls_drawn_pg / league_avg_fouls_drawn_pg))
+
+
+def chase_factor(win_prob: float | None) -> float:
+    """Card-intensity multiplier from a side's simulated win probability.
+
+    50% win probability is neutral; a 10% underdog gets ~×1.12 (chasing,
+    tactical fouls), an 80% favourite ~×0.91. Neutral when no simulation
+    output is available for the fixture.
+    """
+    if win_prob is None:
+        return 1.0
+    f = 1.0 + (0.5 - win_prob) * CHASE_SLOPE
+    return max(CHASE_FACTOR_MIN, min(CHASE_FACTOR_MAX, f))
 
 
 def card_lambda(y90: float, exp_min: float, ref_f: float = 1.0,

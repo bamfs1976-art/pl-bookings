@@ -170,9 +170,14 @@ def main():
                 r["sn"], r["o45"], r["btc"] = d["n"], d["o45"], d["btc"]
                 break
 
+    sims = read("sim_predictions.json", {"fixtures": {}})["fixtures"]
     for fx in fixtures["fixtures"]:
         ref = appointments.get("appointments", {}).get(fx["id"])
         fx["ref"] = ref or None
+        sim = sims.get(fx["id"])
+        if sim:
+            fx["gs"] = {"home": round(model.chase_factor(sim.get("home_win")), 3),
+                        "away": round(model.chase_factor(sim.get("away_win")), 3)}
 
     data = {
         "meta": {

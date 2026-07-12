@@ -109,6 +109,17 @@ def test_ref_factor_clamped_and_neutral():
     assert model.ref_factor(1.0, 3.6) == model.REF_FACTOR_MIN
 
 
+def test_chase_factor_direction_and_bounds():
+    assert model.chase_factor(None) == 1.0
+    assert model.chase_factor(0.5) == 1.0
+    assert model.chase_factor(0.1) > 1.0    # underdog chases → more cards
+    assert model.chase_factor(0.8) < 1.0    # favourite controls → fewer
+    assert model.chase_factor(0.0) <= model.CHASE_FACTOR_MAX
+    assert model.chase_factor(1.0) >= model.CHASE_FACTOR_MIN
+    assert math.isclose(model.chase_factor(0.1), 1.12)
+    assert math.isclose(model.chase_factor(0.9), 0.88)
+
+
 def test_opponent_factor_neutral_without_data():
     assert model.opponent_factor(None, 11.0) == 1.0
     assert model.opponent_factor(12.0, None) == 1.0

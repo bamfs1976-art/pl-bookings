@@ -59,6 +59,12 @@ def build_context():
     fixtures = load(SRC / "fixtures.json", {"fixtures": []})["fixtures"]
     appts = load(SRC / "ref_appointments.json", {"appointments": {}})["appointments"]
     derbies = load(SRC / "derbies.json", {"derbies": []})["derbies"]
+    sims = load(SRC / "sim_predictions.json", {"fixtures": {}})["fixtures"]
+    for fx in fixtures:
+        sim = sims.get(fx["id"])
+        if sim:
+            fx["gs"] = {"home": model.chase_factor(sim.get("home_win")),
+                        "away": model.chase_factor(sim.get("away_win"))}
     avg = build_dataset.league_avg_ypg(refs)
     return players, refs, fixtures, appts, derbies, avg
 
@@ -76,11 +82,13 @@ def forecast_fixture(fx, players, refs, appts, derbies, avg):
     rf = model.ref_factor(ref["ypg"] if ref else None, avg)
     df = derby_factor(derbies, fx["home"], fx["away"])
     rows = []
-    for side, venue_f in ((fx["home"], model.HOME_FACTOR), (fx["away"], model.AWAY_FACTOR)):
+    gs = fx.get("gs") or {}
+    for side, venue_f, gs_f in ((fx["home"], model.HOME_FACTOR, gs.get("home", 1.0)),
+                                (fx["away"], model.AWAY_FACTOR, gs.get("away", 1.0))):
         for p in players:
             if p["c"] != side:
                 continue
-            lam = model.card_lambda(p["ys"], p["em"], rf, 1.0, venue_f, df)
+            lam = model.card_lambda(p["ys"], p["em"], rf, 1.0, venue_f * gs_f, df)
             rows.append({
                 "fixture_id": fx["id"], "mw": fx["mw"], "kickoff": fx["kickoff"],
                 "club": p["c"], "player": p["n"],

@@ -291,6 +291,7 @@
         <li><strong>Shrinkage</strong> — every player gets 900 pseudo-minutes at his position's league rate mixed in. Big samples keep their rate; one-minute cameos return the position mean instead of a 90-fouls-per-90 artefact.</li>
         <li><strong>Referee</strong> — the official's yellows per game over league average, clamped 0.70–1.40. TBC games use 1.00.</li>
         <li><strong>Venue &amp; derby</strong> — home 0.95, away 1.08; listed rivalries add up to +18%.</li>
+        <li><strong>Game state</strong> — when simulator win probabilities are supplied, likely-chasing underdogs get up to ×1.20 (tactical fouls) and dominant favourites down to ×0.85, shown as <em>chase</em> on the fixture card. Neutral without simulation data.</li>
       </ul>
       <p class="muted" style="font-size:.88rem">Before each matchweek the pipeline freezes every probability into a forecast log; after results land it scores them. The Brier score above is the mean squared error of those frozen forecasts (lower is better — 0.25 is coin-flip guessing on a 50/50 event; a well-calibrated card model typically sits near 0.15). The calibration table shows whether players priced at, say, 20–30% really get carded 20–30% of the time.</p>
     </div>
@@ -367,7 +368,7 @@ function derbyInfo(h,a){ return DERBIES.find(d=>(d.pair[0]===h&&d.pair[1]===a)||
 function pCard(pl,opts,emOverride){ opts=opts||{};
   const vf=opts.venue==="home"?MODEL.home_factor:opts.venue==="away"?MODEL.away_factor:1;
   const em=emOverride!=null?emOverride:(pl.em||60);
-  const lam=(pl.ys||0)*(em/90)*refFactor(opts.refYpg??null)*vf*(opts.derbyF||1);
+  const lam=(pl.ys||0)*(em/90)*refFactor(opts.refYpg??null)*vf*(opts.derbyF||1)*(opts.gsF||1);
   return 1-Math.exp(-lam);
 }
 // confirmed-lineup status: "xi", "bench", "out", or null when no lineup yet
@@ -461,12 +462,12 @@ function renderFixtures(){
       </div>
       <div class="cands">
         <div>
-          <div class="faint" style="font-size:.68rem;text-transform:uppercase;letter-spacing:.05em;font-weight:700;margin-bottom:.25rem">${esc(fx.home)} · home ×${MODEL.home_factor}</div>
-          ${candidates(fx.home,{...opts,venue:"home"},lu).map(c=>candRow(c,fx)).join("")}
+          <div class="faint" style="font-size:.68rem;text-transform:uppercase;letter-spacing:.05em;font-weight:700;margin-bottom:.25rem">${esc(fx.home)} · home ×${MODEL.home_factor}${fx.gs?` · chase ×${fx.gs.home.toFixed(2)}`:""}</div>
+          ${candidates(fx.home,{...opts,venue:"home",gsF:fx.gs?fx.gs.home:1},lu).map(c=>candRow(c,fx)).join("")}
         </div>
         <div>
-          <div class="faint" style="font-size:.68rem;text-transform:uppercase;letter-spacing:.05em;font-weight:700;margin-bottom:.25rem">${esc(fx.away)} · away ×${MODEL.away_factor}</div>
-          ${candidates(fx.away,{...opts,venue:"away"},lu).map(c=>candRow(c,fx)).join("")}
+          <div class="faint" style="font-size:.68rem;text-transform:uppercase;letter-spacing:.05em;font-weight:700;margin-bottom:.25rem">${esc(fx.away)} · away ×${MODEL.away_factor}${fx.gs?` · chase ×${fx.gs.away.toFixed(2)}`:""}</div>
+          ${candidates(fx.away,{...opts,venue:"away",gsF:fx.gs?fx.gs.away:1},lu).map(c=>candRow(c,fx)).join("")}
         </div>
       </div>`;
     wrap.appendChild(card);

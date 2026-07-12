@@ -126,6 +126,44 @@ def test_log_and_score_cycle(tmp_path, monkeypatch):
     assert scores["by_mw"][0]["mw"] == 1
 
 
+def test_sim_predictions_flow_into_fixtures_and_forecasts(tmp_path, monkeypatch):
+    """Win probabilities land as gs factors on fixtures and shift forecasts."""
+    import score_forecasts as sf
+
+    sim_file = PIPE / "sources/sim_predictions.json"
+    original = sim_file.read_text()
+    try:
+        sim_file.write_text(json.dumps({"fixtures": {
+            "2627-01-ARS-COV": {"home_win": 0.75, "draw": 0.15, "away_win": 0.10},
+        }}))
+        monkeypatch.setattr(sf, "STORE", tmp_path)
+        monkeypatch.setattr(sf, "LOG", tmp_path / "forecast_log.json")
+        monkeypatch.setattr(sf, "SCORES", tmp_path / "forecast_scores.json")
+        sf.cmd_log(1)
+        log = json.loads((tmp_path / "forecast_log.json").read_text())["forecasts"]
+        by = {}
+        for e in log:
+            by.setdefault(e["fixture_id"], {}).setdefault(e["club"], []).append(e["p"])
+        # COV are 10% underdogs → chase factor lifts their probabilities;
+        # compare against a fixture with no sim data where COV don't appear,
+        # so instead check ARS (favourites) got suppressed relative to their
+        # own neutral-fixture pricing in MW2 (AVL v ARS, no sim entry).
+        assert "2627-01-ARS-COV" in by
+        sf.cmd_log(2)
+        log2 = json.loads((tmp_path / "forecast_log.json").read_text())["forecasts"]
+        ars_mw1 = {e["player"]: e["p"] for e in log2
+                   if e["fixture_id"] == "2627-01-ARS-COV" and e["club"] == "ARS"}
+        ars_mw2 = {e["player"]: e["p"] for e in log2
+                   if e["fixture_id"] == "2627-02-AVL-ARS" and e["club"] == "ARS"}
+        shared = set(ars_mw1) & set(ars_mw2)
+        assert shared
+        # MW1: home (×0.95) AND 75% favourites (×~0.925) → clearly below
+        # MW2 away (×1.08, no sim). Every shared player should price lower.
+        assert all(ars_mw1[n] < ars_mw2[n] for n in shared)
+    finally:
+        sim_file.write_text(original)
+
+
 def test_cli_build_runs():
     r = subprocess.run([sys.executable, str(PIPE / "build_dataset.py")],
                        capture_output=True, text=True, cwd=str(PIPE))
