@@ -172,11 +172,12 @@
           <th scope="col" style="text-align:right;padding:.6rem .4rem"><button data-sort="y" type="button">YC/90</button></th>
           <th scope="col" style="text-align:right;padding:.6rem .4rem"><button data-sort="f" type="button">Fouls/90</button></th>
           <th scope="col" style="text-align:right;padding:.6rem .6rem"><button data-sort="r" type="button">Risk</button></th>
+          <th scope="col" style="text-align:right;padding:.6rem .6rem" title="Model-implied chance of a card in a match, and the fair decimal odds"><button data-sort="ip" type="button">P(card)</button></th>
         </tr></thead>
         <tbody id="playerRows"></tbody>
       </table>
     </div>
-    <p class="faint" style="font-size:.78rem;margin-top:.6rem">Risk = yellow rate per 90 weighted double plus fouls per 90, from 2025-26 form. The EFL chip marks the three promoted clubs, whose form is from the Championship. Low sample is under 450 minutes.</p>
+    <p class="faint" style="font-size:.78rem;margin-top:.6rem">Risk = yellow rate per 90 weighted double plus fouls per 90, from 2025-26 form. P(card) is the model-implied chance of a booking in a match with its fair decimal odds — click it to compare a bookmaker price (an estimate, see the Guide). The EFL chip marks the three promoted clubs, whose form is from the Championship. Low sample is under 450 minutes.</p>
   </section>
 
   <!-- CLUBS -->
@@ -275,6 +276,9 @@
       <h3>Player booking risk</h3>
       <p class="surface-2" style="padding:.6rem .8rem;border-radius:8px;font-family:monospace;font-size:.85rem">risk = yellow cards per 90 &times; 2 + fouls committed per 90</p>
       <p>Yellow rate is weighted double because the bet pays on cards, not fouls. Fouls per 90 carries the volume signal, the players who keep giving the referee a decision. Both are 2025-26 rates. Players under 450 minutes are flagged low sample.</p>
+      <h3>Implied probability and value</h3>
+      <p>The desk turns each risk score into a model-implied chance of the player being carded in a match, using a logistic curve calibrated on the baked season data: the league base booking rate is total yellows per player-match (about <span id="guideBaseRate">—</span>% here), and the curve is anchored so the minutes-weighted league-average player lands exactly on that base rate. The <strong>P(card)</strong> column shows the probability and its fair decimal odds (1 ÷ probability); click it to paste a bookmaker's price and see the edge, (odds × probability − 1). Positive edge means the price pays more than the model thinks the chance is worth.</p>
+      <p>Be honest with it: this is a season-average <em>estimate</em> from form data, not a market price. It knows nothing about a specific matchup beyond the risk score, referees and derbies adjust fixture heat but not this per-player number, and bookmaker odds carry margin. Use the edge as a screen for further research, never as a guarantee.</p>
       <h3>Club discipline</h3>
       <p>Clubs are tiered on cards received per game, target 2.0 and above, mid 1.5 to 1.9, fade below 1.5. The flame marks a combustible side, 2.0 plus cards and 12.0 plus fouls.</p>
       <h3>Live data</h3>
@@ -312,6 +316,7 @@
 </div>
 
 <script src="data/pl_data.js"></script>
+<script src="assets/core.js"></script>
 <script>
 const STORE_KEY="pl_desk_v1", THEME_KEY="pl_desk_theme";
 const $=(id)=>document.getElementById(id);
@@ -330,6 +335,10 @@ function tierLabel(t){ return {target:"Target",mid:"Mid",fade:"Fade",efl:"EFL ba
 function combustible(c){ return c.ca!=null && c.fm!=null && c.ca>=2.0 && c.fm>=12.0; }
 function crest(c){ const club=CLUBMAP[c]; if(!club||!club.img) return ""; return `<img class="crest" src="${club.img}" alt="" loading="lazy" onerror="this.style.display='none'">`; }
 function clubName(c){ return CLUBMAP[c]?CLUBMAP[c].name:c; }
+// Implied booking probability: logistic mapping over the risk score,
+// calibrated once on the baked season data (see PLDCore.calibrate).
+const CALIB=PLDCore.calibrate(PL_PLAYERS);
+function pImp(p){ return PLDCore.impliedProb(rEff(p),CALIB); }
 // Watchlist keys are club|name — names repeat across clubs, the pair doesn't.
 function watchKey(p){ return p.c+"|"+p.n; }
 function isWatched(p){ return state.watch.includes(watchKey(p)); }
@@ -363,7 +372,7 @@ function currentPlayers(){
 function renderPlayers(){
   const rows=currentPlayers();
   const tb=$("playerRows"); tb.innerHTML="";
-  if(!rows.length){ tb.innerHTML='<tr><td colspan="9" class="muted" style="padding:1rem;text-align:center">'+($("watchOnly").checked?"Your watchlist is empty — tap the ☆ star on any player to pin them here.":"No players match.")+'</td></tr>'; return; }
+  if(!rows.length){ tb.innerHTML='<tr><td colspan="10" class="muted" style="padding:1rem;text-align:center">'+($("watchOnly").checked?"Your watchlist is empty — tap the ☆ star on any player to pin them here.":"No players match.")+'</td></tr>'; return; }
   const frag=document.createDocumentFragment();
   rows.slice(0,400).forEach(p=>{
     const tr=document.createElement("tr");
@@ -386,12 +395,50 @@ function renderPlayers(){
       `<td style="text-align:right" class="num muted">${yc}</td>`+
       `<td style="text-align:right" class="num">${y==null?'—':y.toFixed(2)+liveDot}</td>`+
       `<td style="text-align:right" class="num">${p.f==null?'—':p.f.toFixed(2)}</td>`+
-      `<td style="text-align:right;padding:.45rem .6rem">${r==null?'<span class="faint">—</span>':`<span class="riskbadge display" style="font-size:1.05rem;color:${riskColour(r)}">${r.toFixed(2)}</span><div class="barwrap" style="width:60px;margin-left:auto"><div class="bar" style="width:${Math.min(100,Math.round(r/3.8*100))}%;background:${riskColour(r)}"></div></div>`}</td>`;
+      `<td style="text-align:right;padding:.45rem .6rem">${r==null?'<span class="faint">—</span>':`<span class="riskbadge display" style="font-size:1.05rem;color:${riskColour(r)}">${r.toFixed(2)}</span><div class="barwrap" style="width:60px;margin-left:auto"><div class="bar" style="width:${Math.min(100,Math.round(r/3.8*100))}%;background:${riskColour(r)}"></div></div>`}</td>`+
+      valueCell(p);
     frag.appendChild(tr);
   });
   tb.appendChild(frag);
-  if(rows.length>400){ const tr=document.createElement("tr"); tr.innerHTML=`<td colspan="9" class="faint" style="padding:.6rem;text-align:center">Showing top 400 of ${rows.length}. Filter to narrow.</td>`; tb.appendChild(tr); }
+  if(rows.length>400){ const tr=document.createElement("tr"); tr.innerHTML=`<td colspan="10" class="faint" style="padding:.6rem;text-align:center">Showing top 400 of ${rows.length}. Filter to narrow.</td>`; tb.appendChild(tr); }
 }
+
+// ---- odds / value layer ----
+function valueCell(p){
+  const prob=pImp(p);
+  if(prob==null) return `<td style="text-align:right;padding:.45rem .6rem"><span class="faint">—</span></td>`;
+  const fair=PLDCore.fairOdds(prob);
+  return `<td style="text-align:right;padding:.45rem .6rem"><button class="val-btn" type="button" data-p="${prob}" title="Model estimate of a card this match — click to check a bookmaker price" style="background:none;border:0;cursor:pointer;font:inherit;color:var(--text);padding:0;text-align:right"><span class="num" style="font-weight:700">${(prob*100).toFixed(0)}%</span><div class="faint num" style="font-size:.72rem">fair ${fair.toFixed(2)}</div></button></td>`;
+}
+$("playerRows").addEventListener("click",e=>{
+  const b=e.target.closest(".val-btn"); if(!b) return;
+  const tr=b.closest("tr"), nxt=tr.nextElementSibling;
+  if(nxt&&nxt.classList.contains("value-row")){ nxt.remove(); return; }
+  document.querySelectorAll("#playerRows .value-row").forEach(r=>r.remove());
+  const prob=Number(b.dataset.p), fair=PLDCore.fairOdds(prob);
+  const row=document.createElement("tr"); row.className="value-row";
+  row.innerHTML=`<td colspan="10" style="padding:.55rem .7rem;background:var(--surface-2)">
+    <div style="display:flex;gap:.7rem;align-items:center;flex-wrap:wrap;font-size:.82rem">
+      <strong style="font-family:'Bricolage Grotesque',sans-serif">Value check</strong>
+      <span class="muted num">model ${(prob*100).toFixed(1)}% · fair ${fair.toFixed(2)}</span>
+      <label class="muted">Bookmaker odds <input class="val-odds" type="number" step="0.01" min="1.01" placeholder="2.50" data-p="${prob}" style="width:92px;padding:.25rem .4rem"></label>
+      <span class="val-out" aria-live="polite"></span>
+    </div>
+    <p class="faint" style="margin:.35rem 0 0;font-size:.72rem">Season-average model estimate, not a guarantee — use the edge as a screen, then do the matchup research.</p>
+  </td>`;
+  tr.after(row);
+  row.querySelector(".val-odds").focus();
+});
+$("playerRows").addEventListener("input",e=>{
+  const i=e.target.closest(".val-odds"); if(!i) return;
+  const out=i.closest("td").querySelector(".val-out");
+  const o=Number(i.value), prob=Number(i.dataset.p);
+  if(!isFinite(o)||o<=1){ out.textContent=""; return; }
+  const edge=PLDCore.edgePct(o,prob);
+  const col=edge>=2?"var(--good)":edge<=-2?"var(--danger)":"var(--text-2)";
+  const verdict=edge>=2?"value":edge<=-2?"no value":"marginal";
+  out.innerHTML=`edge <strong class="num" style="color:${col}">${edge>=0?"+":""}${edge.toFixed(1)}%</strong> — ${verdict}`;
+});
 
 // ---- clubs ----
 function topRiskFor(short){
@@ -431,19 +478,17 @@ function renderRefs(){
 
 // ---- pick tracker ----
 const STATUSES=["pending","won","lost","void"];
-function pickPL(p){ if(p.status==="won") return (Number(p.stake)||0)*((Number(p.odds)||0)-1); if(p.status==="lost") return -(Number(p.stake)||0); return 0; }
+const pickPL=PLDCore.pickPL;
 function statCell(label,val,sub,col){ return `<div class="surface" style="border-radius:10px;padding:.6rem .8rem"><div class="faint" style="font-size:.7rem;text-transform:uppercase;letter-spacing:.04em">${esc(label)}</div><div class="display" style="font-size:1.4rem;margin:.1rem 0;color:${col||'var(--text)'}">${esc(String(val))}</div><div class="muted" style="font-size:.72rem">${esc(sub||'')}</div></div>`; }
 function renderTracker(){
-  const picks=state.picks, settled=picks.filter(p=>p.status==="won"||p.status==="lost");
-  const won=picks.filter(p=>p.status==="won").length, lost=picks.filter(p=>p.status==="lost").length;
-  const hit=settled.length?(100*won/settled.length):null;
-  const staked=settled.reduce((s,p)=>s+(Number(p.stake)||0),0), pl=picks.reduce((s,p)=>s+pickPL(p),0);
-  const roi=staked?(100*pl/staked):null, plCol=pl>0?"var(--good)":pl<0?"var(--danger)":"var(--text-2)";
+  const picks=state.picks;
+  const sum=PLDCore.summarisePicks(picks);
+  const plCol=sum.pl>0?"var(--good)":sum.pl<0?"var(--danger)":"var(--text-2)";
   $("trackerSummary").innerHTML=[
-    statCell("Picks",picks.length,`${picks.filter(p=>p.status==="pending").length} pending`),
-    statCell("Hit rate",hit==null?"—":hit.toFixed(0)+"%",`${won}W ${lost}L of ${settled.length}`),
-    statCell("Staked",staked.toFixed(2),"settled"),
-    statCell("P/L",(pl>=0?"+":"")+pl.toFixed(2),roi==null?"":`ROI ${roi>=0?"+":""}${roi.toFixed(1)}%`,plCol),
+    statCell("Picks",sum.count,`${sum.pending} pending`),
+    statCell("Hit rate",sum.hit==null?"—":sum.hit.toFixed(0)+"%",`${sum.won}W ${sum.lost}L of ${sum.settled}`),
+    statCell("Staked",sum.staked.toFixed(2),"settled"),
+    statCell("P/L",(sum.pl>=0?"+":"")+sum.pl.toFixed(2),sum.roi==null?"":`ROI ${sum.roi>=0?"+":""}${sum.roi.toFixed(1)}%`,plCol),
   ].join("");
   const tb=$("pickRows"); tb.innerHTML="";
   if(!picks.length){ tb.innerHTML='<tr><td colspan="8" class="muted" style="padding:1rem;text-align:center">No picks logged yet. Add one above.</td></tr>'; return; }
@@ -601,7 +646,7 @@ function yEff(p){ return p.yLive!=null?p.yLive:p.y; }
 function rEff(p){ return p.rLive!=null?p.rLive:p.r; }
 function sortVal(p,k){
   if(k==="y"){ const v=yEff(p); return v==null?-Infinity:v; }
-  if(k==="r"){ const v=rEff(p); return v==null?-Infinity:v; }
+  if(k==="r"||k==="ip"){ const v=rEff(p); return v==null?-Infinity:v; } // implied prob is monotonic in risk
   if(k==="yc"&&LIVE&&LIVE.seasonStarted&&p.live) return p.live.yc;
   return p[k]==null?-Infinity:p[k];
 }
@@ -634,7 +679,7 @@ async function fetchFPL(path,reduce){
   }
 }
 
-function normName(s){ return String(s||"").normalize("NFD").replace(/[̀-ͯ]/g,"").toLowerCase().replace(/[^a-z]+/g," ").trim(); }
+const normName=PLDCore.normName;
 function buildTeamMap(teams){
   const byName={}; CLUBS.forEach(c=>byName[normName(c.name)]=c.short);
   const map={};
@@ -670,7 +715,7 @@ function attachLive(bootstrap,teamMap){
     let p=m[full]||m[web]||m["last:"+(normName(el.second_name).split(" ").pop()||"")]||m["last:"+(web.split(" ").pop()||"")]||null;
     if(!p||p.live) return;
     p.live={yc:el.yellow_cards||0,rc:el.red_cards||0,min:el.minutes||0,st:el.status||"a",news:el.news||""};
-    if(p.live.min>=450&&p.f!=null){ p.yLive=p.live.yc/(p.live.min/90); p.rLive=p.yLive*2+p.f; p.liveRate=true; }
+    if(p.live.min>=450&&p.f!=null){ p.yLive=p.live.yc/(p.live.min/90); p.rLive=PLDCore.riskScore(p.yLive,p.f); p.liveRate=true; }
     matched++;
   });
   return matched;
@@ -814,7 +859,7 @@ function renderFixtures(){
     const lbl=heat>=4.2?"Hot":heat>=3.5?"Warm":"Cool";
     const comb=(combustible(CLUBMAP[h]||{})||combustible(CLUBMAP[a]||{}))?' <span title="Combustible side involved">🔥</span>':'';
     const heatTitle=ref?`Cards received per game, both clubs combined (${base.toFixed(1)}), scaled ×${rf.toFixed(2)} for ${esc(ref.n)}'s card rate`:"Cards received per game, both clubs combined (2025-26 form)";
-    const risks=fixtureRisks(h,a).map(p=>`<span class="chip surface-2" style="border:1px solid var(--border)">${esc(p.n)} <span class="num" style="color:${riskColour(rEff(p))}">${rEff(p).toFixed(2)}</span></span>`).join(" ");
+    const risks=fixtureRisks(h,a).map(p=>`<span class="chip surface-2" style="border:1px solid var(--border)" title="Risk score, and the model-implied chance of a card">${esc(p.n)} <span class="num" style="color:${riskColour(rEff(p))}">${rEff(p).toFixed(2)}</span>${pImp(p)!=null?` <span class="faint num" style="font-size:.68rem">${(pImp(p)*100).toFixed(0)}%</span>`:""}</span>`).join(" ");
     const score=f.finished?` <span class="num muted" style="font-weight:700;font-size:.82rem">FT ${f.hs==null?"":f.hs}–${f.as==null?"":f.as}</span>`:"";
     return `<div class="fixrow">
       <div class="faint" style="min-width:132px;font-size:.8rem">${f.kickoff_time?fmtKO(f.kickoff_time):"TBC"}</div>
@@ -973,6 +1018,7 @@ if("serviceWorker" in navigator&&(location.protocol==="https:"||location.hostnam
 }
 
 // init
+$("guideBaseRate").textContent=(CALIB.baseRate*100).toFixed(1);
 fillClubFilter();
 renderPlayers();
 renderClubs();
