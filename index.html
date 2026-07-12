@@ -226,7 +226,7 @@
       <span id="gwDeadline" class="faint" style="font-size:.8rem"></span>
     </div>
     <div id="fixtureList" class="surface" style="border-radius:14px;overflow:hidden"></div>
-    <p class="faint" style="font-size:.78rem;margin-top:.6rem">Booking heat adds both clubs' cards received per game from 2025-26 form (promoted clubs use the league median until they build Premier League data). Hot is 4.2 plus, warm 3.5 plus. The flame marks a combustible side. Top risks are each fixture's highest-risk available players. Referee appointments are not published in the FPL feed — check them on the day. Schedule via the official FPL API.</p>
+    <p class="faint" style="font-size:.78rem;margin-top:.6rem">Booking heat adds both clubs' cards received per game from 2025-26 form (promoted clubs use the league median until they build Premier League data). Hot is 4.2 plus, warm 3.5 plus. The flame marks a combustible side. Top risks are each fixture's highest-risk available players. Referee appointments are not published in the FPL feed — once the PGMOL announcement is out, assign the official with each fixture's Ref control (saved in this browser) and the booking heat scales to his card rate, clamped. Schedule via the official FPL API.</p>
   </section>
 
   <!-- TRACKER -->
@@ -295,7 +295,7 @@
         <li>Fouls are not in the FPL feed, so the fouls half of the risk score stays on 2025-26 form all season.</li>
         <li>Promoted clubs are Championship form, a different and rougher division, so treat their numbers as indicative. Their team rate is not shown because the Championship data mixes cup minutes.</li>
         <li>Ipswich have thinner data than most, fewer players met the minutes floor.</li>
-        <li>Referee appointments are not in the FPL feed, so fixtures can't yet show the official.</li>
+        <li>Referee appointments are not in the FPL feed. Assign the official on each fixture card once appointments are published (usually a few days out) — the assignment saves to this browser and folds the referee's card rate into that fixture's booking heat, and watchlisted players get a strict-ref flag above the players table.</li>
       </ul>
       <p class="faint" style="font-size:.8rem">Built for research, not a betting guarantee. Stake responsibly.</p>
     </div>
@@ -716,15 +716,63 @@ function renderSuspWatch(){
     const t=nextThreshold(p.live.yc,gw);
     if(t&&p.live.yc===t.n-1) close.push({p,t});
   });
-  if(!close.length&&!banned.length){ el.hidden=true; return; }
+  // Watchlist tie-in: starred players whose next fixture has a strict
+  // official assigned (Fixtures tab) get flagged here.
+  const strictWatch=[];
+  PL_PLAYERS.forEach(p=>{
+    if(!isWatched(p)) return;
+    const f=nextFixtureFor(p.c); if(!f) return;
+    const ref=refFor(f.id);
+    if(refIsStrict(ref)) strictWatch.push({p,ref});
+  });
+  if(!close.length&&!banned.length&&!strictWatch.length){ el.hidden=true; return; }
   close.sort((a,b)=>rEff(b.p)-rEff(a.p));
+  strictWatch.sort((a,b)=>rEff(b.p)-rEff(a.p));
   el.hidden=false;
   el.innerHTML='<div style="display:flex;flex-wrap:wrap;gap:.45rem;align-items:center">'
     +'<strong style="font-family:\'Bricolage Grotesque\',sans-serif;font-size:.9rem;margin-right:.3rem">⚠️ Suspension watch</strong>'
     +close.slice(0,12).map(({p,t})=>`<span class="chip tier-mid" title="${p.live.yc} yellows — banned at ${t.n} (rule runs to GW${t.gw})">${esc(p.n)} · ${p.live.yc} YC</span>`).join("")
     +banned.slice(0,8).map(p=>`<span class="chip" style="color:var(--danger);background:color-mix(in srgb,var(--danger) 12%,transparent);border:1px solid color-mix(in srgb,var(--danger) 35%,transparent)" title="${esc(p.live.news||"Suspended")}">${esc(p.n)} · banned</span>`).join("")
+    +strictWatch.slice(0,10).map(({p,ref})=>`<span class="chip tier-target" title="Watchlisted — next fixture has ${esc(ref.n)} assigned (${ref.ypg.toFixed(2)} yellows/game)">★ ${esc(p.n)} · strict ref (${esc(ref.n.split(" ").pop())})</span>`).join("")
     +'</div>'
-    +'<p class="faint" style="margin:.45rem 0 0;font-size:.74rem">One booking from a ban — a card to burn is a lean, a protected threshold often isn\'t. 5 yellows to GW19, 10 to GW32, 15 all season. Live counts from the FPL feed.</p>';
+    +'<p class="faint" style="margin:.45rem 0 0;font-size:.74rem">One booking from a ban — a card to burn is a lean, a protected threshold often isn\'t. 5 yellows to GW19, 10 to GW32, 15 all season. Live counts from the FPL feed. ★ marks watchlisted players whose next fixture has a strict official assigned in the Fixtures tab.</p>';
+}
+
+// ---- referee assignment ----
+// Appointments aren't in the FPL feed, so they're assigned by hand per
+// fixture (persisted locally, keyed by season + fixture id). An assigned
+// official folds his yellows-per-game into the fixture's booking heat.
+const REF_KEY="pl_desk_refs_v1", SEASON="2026-27";
+let refAssign=(()=>{ try{ return JSON.parse(localStorage.getItem(REF_KEY))||{}; }catch(e){ return {}; } })();
+function saveRefs(){ try{ localStorage.setItem(REF_KEY,JSON.stringify(refAssign)); }catch(e){} }
+const REF_AVG_YPG=(()=>{ const v=REFS.map(r=>r.ypg).filter(x=>x!=null); return v.length?v.reduce((a,b)=>a+b,0)/v.length:3.7; })();
+function refByName(n){ return REFS.find(r=>r.n===n)||null; }
+function refFor(fid){ const n=refAssign[SEASON+"|"+fid]; return n?refByName(n):null; }
+// Heat multiplier: the official's yellows/game against the league average, clamped.
+function refFactor(ref){ if(!ref||ref.ypg==null) return 1; return Math.min(1.3,Math.max(0.75,ref.ypg/REF_AVG_YPG)); }
+function refIsStrict(ref){ return !!(ref&&ref.ypg!=null&&ref.ypg>=4.0); }
+function refStrictness(ref){
+  if(!ref||ref.ypg==null) return null;
+  if(ref.ypg>=4.0) return {label:"strict",col:"var(--danger)"};
+  if(ref.ypg<=3.2) return {label:"lenient",col:"var(--fade)"};
+  return {label:"average",col:"var(--warn)"};
+}
+function refChip(ref){
+  const s=refStrictness(ref); if(!s) return "";
+  return ` <span class="chip" style="color:${s.col};background:color-mix(in srgb,${s.col} 12%,transparent);border:1px solid color-mix(in srgb,${s.col} 35%,transparent)" title="${esc(ref.n)} — ${ref.ypg.toFixed(2)} yellows/game (league avg ${REF_AVG_YPG.toFixed(2)})">${esc(ref.n.split(" ").pop())} · ${s.label}</span>`;
+}
+function refSelect(fid){
+  const cur=refAssign[SEASON+"|"+fid]||"";
+  const opts=['<option value="">Ref: unknown</option>']
+    .concat([...REFS].sort((a,b)=>a.n.localeCompare(b.n)).map(r=>`<option value="${esc(r.n)}"${r.n===cur?" selected":""}>${esc(r.n)}${r.ypg!=null?` (${r.ypg.toFixed(1)})`:""}</option>`));
+  return `<select class="ref-sel" data-fid="${fid}" aria-label="Assign referee" style="padding:.25rem .35rem;font-size:.74rem;max-width:170px">${opts.join("")}</select>`;
+}
+// Next unfinished fixture for a club (for the watchlist strict-ref alert).
+function nextFixtureFor(short){
+  if(!LIVE) return null;
+  return LIVE.fixtures
+    .filter(f=>!f.finished&&(LIVE.teamMap[f.team_h]===short||LIVE.teamMap[f.team_a]===short))
+    .sort((a,b)=>String(a.kickoff_time||"9").localeCompare(String(b.kickoff_time||"9")))[0]||null;
 }
 
 // ---- fixtures ----
@@ -759,20 +807,31 @@ function renderFixtures(){
   list.innerHTML=fx.map(f=>{
     const h=LIVE.teamMap[f.team_h], a=LIVE.teamMap[f.team_a];
     if(!h||!a) return "";
-    const heat=Number((clubCA(h)+clubCA(a)).toFixed(1)); // classify on the shown value
+    const base=clubCA(h)+clubCA(a);
+    const ref=refFor(f.id), rf=refFactor(ref);
+    const heat=Number((base*rf).toFixed(1)); // classify on the shown value
     const cls=heat>=4.2?"tier-target":heat>=3.5?"tier-mid":"tier-fade";
     const lbl=heat>=4.2?"Hot":heat>=3.5?"Warm":"Cool";
     const comb=(combustible(CLUBMAP[h]||{})||combustible(CLUBMAP[a]||{}))?' <span title="Combustible side involved">🔥</span>':'';
+    const heatTitle=ref?`Cards received per game, both clubs combined (${base.toFixed(1)}), scaled ×${rf.toFixed(2)} for ${esc(ref.n)}'s card rate`:"Cards received per game, both clubs combined (2025-26 form)";
     const risks=fixtureRisks(h,a).map(p=>`<span class="chip surface-2" style="border:1px solid var(--border)">${esc(p.n)} <span class="num" style="color:${riskColour(rEff(p))}">${rEff(p).toFixed(2)}</span></span>`).join(" ");
     const score=f.finished?` <span class="num muted" style="font-weight:700;font-size:.82rem">FT ${f.hs==null?"":f.hs}–${f.as==null?"":f.as}</span>`:"";
     return `<div class="fixrow">
       <div class="faint" style="min-width:132px;font-size:.8rem">${f.kickoff_time?fmtKO(f.kickoff_time):"TBC"}</div>
       <div style="min-width:200px;font-weight:600">${crest(h)} ${h} <span class="faint">v</span> ${crest(a)} ${a}${score}</div>
-      <div><span class="chip ${cls}" title="Cards received per game, both clubs combined (2025-26 form)"><span class="heat">${heat.toFixed(1)}</span>&nbsp;${lbl}</span>${comb}</div>
+      <div><span class="chip ${cls}" title="${heatTitle}"><span class="heat">${heat.toFixed(1)}</span>&nbsp;${lbl}</span>${comb}</div>
+      <div style="display:flex;align-items:center;gap:.35rem;flex-wrap:wrap">${refSelect(f.id)}${refChip(ref)}</div>
       <div style="display:flex;gap:.35rem;flex-wrap:wrap;flex:1;justify-content:flex-end">${risks}</div>
     </div>`;
   }).join("");
 }
+// Assigning an official re-renders the affected views.
+$("fixtureList").addEventListener("change",e=>{
+  const s=e.target.closest(".ref-sel"); if(!s) return;
+  const k=SEASON+"|"+s.dataset.fid;
+  if(s.value) refAssign[k]=s.value; else delete refAssign[k];
+  saveRefs(); renderFixtures(); renderSuspWatch();
+});
 
 // ═══════════════════════════════════════════════════════════
 // ACCOUNTS (Supabase)
