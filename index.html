@@ -227,7 +227,7 @@
       <span id="gwDeadline" class="faint" style="font-size:.8rem"></span>
     </div>
     <div id="fixtureList" class="surface" style="border-radius:14px;overflow:hidden"></div>
-    <p class="faint" style="font-size:.78rem;margin-top:.6rem">Booking heat adds both clubs' cards received per game from 2025-26 form (promoted clubs use the league median until they build Premier League data). Hot is 4.2 plus, warm 3.5 plus. The flame marks a combustible side. Top risks are each fixture's highest-risk available players. Referee appointments are not published in the FPL feed — once the PGMOL announcement is out, assign the official with each fixture's Ref control (saved in this browser) and the booking heat scales to his card rate, clamped. Schedule via the official FPL API.</p>
+    <p class="faint" style="font-size:.78rem;margin-top:.6rem">Booking heat adds both clubs' cards received per game from 2025-26 form (promoted clubs use the league median until they build Premier League data). Hot is 4.2 plus, warm 3.5 plus. The flame marks a combustible side; recognised derbies get a ×1.15 heat boost and a derby chip. Top risks are each fixture's highest-risk available players. Referee appointments are not published in the FPL feed — once the PGMOL announcement is out, assign the official with each fixture's Ref control (saved in this browser) and the booking heat scales to his card rate, clamped. Schedule via the official FPL API.</p>
   </section>
 
   <!-- TRACKER -->
@@ -283,6 +283,8 @@
       <p>Clubs are tiered on cards received per game, target 2.0 and above, mid 1.5 to 1.9, fade below 1.5. The flame marks a combustible side, 2.0 plus cards and 12.0 plus fouls.</p>
       <h3>Live data</h3>
       <p>The desk pulls the official FPL feed through its own proxy: the 2026-27 schedule for the Fixtures tab, each player's live yellow and red card count, and availability flags (injured, suspended, doubtful). Once a player has 450 minutes of 2026-27 football, his yellow rate in the risk score switches from last season's form to this season's live rate — rows carry a green dot when live rates are in use. If the feed is unreachable the desk falls back to the baked 2025-26 form and says so in the top bar.</p>
+      <h3>Matchup context</h3>
+      <p>Derby fixtures — the recognised rivalries among the 20 clubs, North London to Tyne–Wear, plus the promoted clubs' regional rivalries — get a booking-heat boost and a 🔥 derby chip on the Fixtures tab, since rivalry games run hotter with the referee. Once at least two finished gameweeks have been recorded, the players table adds a small ▲ card-form trend beside the yellow count: cards picked up over the recent recorded window (up to the last five gameweeks). Home/away splits and opponent fouls-drawn would sharpen matchup calls further, but they need richer source data than the FPL feed carries — deferred until a fuller data pipeline exists.</p>
       <h3>Suspension watch</h3>
       <p>Premier League bans trigger at 5 yellows (up to gameweek 19), 10 (up to gameweek 32) and 15 (all season). The strip above the players table flags anyone one booking from a ban — a player with a card to burn is a lean, one protecting a threshold often isn't — and lists players currently suspended or injured so you don't back an absentee.</p>
       <h3>Watchlist</h3>
@@ -393,7 +395,7 @@ function renderPlayers(){
       `<td style="padding:.45rem .5rem" class="muted">${crest(p.c)} <span class="num" style="font-size:.85rem">${p.c}</span></td>`+
       `<td style="text-align:center" class="faint num">${esc(p.p||"")}</td>`+
       `<td style="text-align:right" class="num muted">${p.min}</td>`+
-      `<td style="text-align:right" class="num muted">${yc}</td>`+
+      `<td style="text-align:right" class="num muted">${yc}${formBadge(p)}</td>`+
       `<td style="text-align:right" class="num">${y==null?'—':y.toFixed(2)+liveDot}</td>`+
       `<td style="text-align:right" class="num">${p.f==null?'—':p.f.toFixed(2)}</td>`+
       `<td style="text-align:right;padding:.45rem .6rem">${r==null?'<span class="faint">—</span>':`<span class="riskbadge display" style="font-size:1.05rem;color:${riskColour(r)}">${r.toFixed(2)}</span><div class="barwrap" style="width:60px;margin-left:auto"><div class="bar" style="width:${Math.min(100,Math.round(r/3.8*100))}%;background:${riskColour(r)}"></div></div>`}</td>`+
@@ -794,6 +796,19 @@ const ACC_KEY="pl_desk_acc_v1";
 let ACC=(()=>{ try{ const a=JSON.parse(localStorage.getItem(ACC_KEY))||{}; return {snap:a.snap||null,results:a.results||[],hist:a.hist||[]}; }catch(e){ return {snap:null,results:[],hist:[]}; } })();
 function saveAcc(){ try{ localStorage.setItem(ACC_KEY,JSON.stringify(ACC)); }catch(e){} }
 function liveYcByKey(){ const m={}; PL_PLAYERS.forEach(p=>{ if(p.live) m[watchKey(p)]=p.live.yc; }); return m; }
+// Card form over the recorded history window (up to the last 5 finished
+// gameweeks, once >=2 snapshots exist).
+function cardForm(p){
+  if(!ACC.hist||ACC.hist.length<2) return null;
+  const k=watchKey(p), a=ACC.hist[0], b=ACC.hist[ACC.hist.length-1];
+  const va=a.yc?a.yc[k]:null, vb=b.yc?b.yc[k]:null;
+  if(va==null||vb==null) return null;
+  return {d:vb-va,span:Math.max(1,b.gw-a.gw)};
+}
+function formBadge(p){
+  const f=cardForm(p); if(!f||f.d<=0) return "";
+  return ` <span class="num" style="font-size:.66rem;color:var(--warn)" title="${f.d} card${f.d===1?"":"s"} in the last ${f.span} finished gameweek${f.span===1?"":"s"}">▲${f.d}</span>`;
+}
 function topRiskPlayers(n){
   return PL_PLAYERS.filter(p=>rEff(p)!=null&&!p.ls&&!(p.live&&"isu".includes(p.live.st)))
     .sort((a,b)=>rEff(b)-rEff(a)).slice(0,n);
@@ -879,6 +894,29 @@ function nextFixtureFor(short){
     .sort((a,b)=>String(a.kickoff_time||"9").localeCompare(String(b.kickoff_time||"9")))[0]||null;
 }
 
+// ---- derbies ----
+// Recognised rivalries among the 2026-27 clubs. Derby cards run hotter,
+// so a derby fixture gets a heat boost and a chip. Includes the promoted
+// clubs' regional rivalries where the other side is in the league
+// (Coventry-Villa in the West Midlands, Hull-Leeds across Yorkshire).
+const DERBIES=[
+  ["ARS","TOT"], // North London
+  ["LIV","EVE"], // Merseyside
+  ["LIV","MUN"], // North-West
+  ["MUN","MCI"], // Manchester
+  ["MUN","LEE"], // Roses
+  ["CHE","TOT"],
+  ["CHE","ARS"],
+  ["CHE","FUL"], // West London
+  ["CRY","BHA"], // M23
+  ["NEW","SUN"], // Tyne-Wear
+  ["AVL","COV"], // West Midlands
+  ["LEE","HUL"], // Yorkshire
+];
+const DERBY_SET=new Set(DERBIES.map(d=>[...d].sort().join("|")));
+function isDerby(h,a){ return DERBY_SET.has([h,a].sort().join("|")); }
+const DERBY_BOOST=1.15;
+
 // ---- fixtures ----
 const CA_MEDIAN=1.87; // league median cards-against, stands in for promoted clubs
 let gwInit=false;
@@ -912,18 +950,19 @@ function renderFixtures(){
     const h=LIVE.teamMap[f.team_h], a=LIVE.teamMap[f.team_a];
     if(!h||!a) return "";
     const base=clubCA(h)+clubCA(a);
-    const ref=refFor(f.id), rf=refFactor(ref);
-    const heat=Number((base*rf).toFixed(1)); // classify on the shown value
+    const ref=refFor(f.id), rf=refFactor(ref), derby=isDerby(h,a);
+    const heat=Number((base*rf*(derby?DERBY_BOOST:1)).toFixed(1)); // classify on the shown value
     const cls=heat>=4.2?"tier-target":heat>=3.5?"tier-mid":"tier-fade";
     const lbl=heat>=4.2?"Hot":heat>=3.5?"Warm":"Cool";
     const comb=(combustible(CLUBMAP[h]||{})||combustible(CLUBMAP[a]||{}))?' <span title="Combustible side involved">🔥</span>':'';
+    const derbyChip=derby?` <span class="chip tier-target" title="Recognised rivalry — booking heat boosted ×${DERBY_BOOST}">🔥 derby</span>`:"";
     const heatTitle=ref?`Cards received per game, both clubs combined (${base.toFixed(1)}), scaled ×${rf.toFixed(2)} for ${esc(ref.n)}'s card rate`:"Cards received per game, both clubs combined (2025-26 form)";
     const risks=fixtureRisks(h,a).map(p=>`<span class="chip surface-2" style="border:1px solid var(--border)" title="Risk score, and the model-implied chance of a card">${esc(p.n)} <span class="num" style="color:${riskColour(rEff(p))}">${rEff(p).toFixed(2)}</span>${pImp(p)!=null?` <span class="faint num" style="font-size:.68rem">${(pImp(p)*100).toFixed(0)}%</span>`:""}</span>`).join(" ");
     const score=f.finished?` <span class="num muted" style="font-weight:700;font-size:.82rem">FT ${f.hs==null?"":f.hs}–${f.as==null?"":f.as}</span>`:"";
     return `<div class="fixrow">
       <div class="faint" style="min-width:132px;font-size:.8rem">${f.kickoff_time?fmtKO(f.kickoff_time):"TBC"}</div>
       <div style="min-width:200px;font-weight:600">${crest(h)} ${h} <span class="faint">v</span> ${crest(a)} ${a}${score}</div>
-      <div><span class="chip ${cls}" title="${heatTitle}"><span class="heat">${heat.toFixed(1)}</span>&nbsp;${lbl}</span>${comb}</div>
+      <div><span class="chip ${cls}" title="${heatTitle}"><span class="heat">${heat.toFixed(1)}</span>&nbsp;${lbl}</span>${comb}${derbyChip}</div>
       <div style="display:flex;align-items:center;gap:.35rem;flex-wrap:wrap">${refSelect(f.id)}${refChip(ref)}</div>
       <div style="display:flex;gap:.35rem;flex-wrap:wrap;flex:1;justify-content:flex-end">${risks}</div>
     </div>`;
