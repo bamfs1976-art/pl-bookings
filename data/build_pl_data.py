@@ -12,6 +12,13 @@ Output: pl_data.js with PL_PLAYERS, CLUBS and REFS.
 2026-27 lineup: 17 continuing PL clubs (drop Burnley, West Ham, Wolves) plus
 Coventry, Ipswich, Hull (promoted, 2025-26 Championship form, flagged EFL).
 Booking risk = yc_p90*2 + fouls_p90, the same metric as the WC desk.
+
+The r shipped here is the RAW risk. The app shrinks each player's yellow and
+foul rates toward his positional mean in proportion to minutes at load time
+(empirical Bayes; see the shrinkage block in index.html) and overwrites r
+with the shrunk value, so keep this output raw — shrinking here too would
+apply the prior twice. That is why yc and min travel alongside the per-90
+rates: the app needs the raw counts to rebuild the rates exactly.
 """
 
 import json
@@ -59,7 +66,16 @@ def build_players():
         rows.append(mk(p, "PL"))
     for p in load("champ_promoted.json"):
         rows.append(mk(p, "EFL"))
-    return [r for r in rows if r]
+    # The Championship harvest repeats each player once per query page, so
+    # dedupe on (club, name), keeping the row with the most minutes.
+    best = {}
+    for r in rows:
+        if not r:
+            continue
+        key = (r["c"], r["n"])
+        if key not in best or r["min"] > best[key]["min"]:
+            best[key] = r
+    return list(best.values())
 
 
 def mk(p, basis):

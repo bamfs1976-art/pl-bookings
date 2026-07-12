@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data: https://cdn.sportmonks.com; connect-src 'self'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data: https://cdn.sportmonks.com; connect-src 'self' https://plsimulation.netlify.app">
 <title>Bookings Desk · Premier League</title>
 <meta name="description" content="Premier League 2026-27 player-bookings analysis. Player card risk, club discipline and a referee watchlist, on 2025-26 form.">
 <link rel="icon" href="favicon.svg" type="image/svg+xml">
@@ -106,6 +106,7 @@
 <main id="main" style="max-width:1180px;margin:0 auto;padding:1rem 1.1rem 4rem">
   <div role="tablist" aria-label="Sections" class="tabs" style="margin:.4rem 0 1.1rem">
     <button class="tabbtn" role="tab" id="tab-players" aria-controls="panel-players" aria-selected="true">Players</button>
+    <button class="tabbtn" role="tab" id="tab-gw" aria-controls="panel-gw" aria-selected="false" tabindex="-1">Gameweek</button>
     <button class="tabbtn" role="tab" id="tab-clubs" aria-controls="panel-clubs" aria-selected="false" tabindex="-1">Clubs</button>
     <button class="tabbtn" role="tab" id="tab-refs" aria-controls="panel-refs" aria-selected="false" tabindex="-1">Referees</button>
     <button class="tabbtn" role="tab" id="tab-tracker" aria-controls="panel-tracker" aria-selected="false" tabindex="-1">Tracker</button>
@@ -145,7 +146,21 @@
         <tbody id="playerRows"></tbody>
       </table>
     </div>
-    <p class="faint" style="font-size:.78rem;margin-top:.6rem">Risk = yellow rate per 90 weighted double plus fouls per 90, from 2025-26 form. The EFL chip marks the three promoted clubs, whose form is from the Championship. Low sample is under 450 minutes.</p>
+    <p class="faint" style="font-size:.78rem;margin-top:.6rem">Risk = yellow rate per 90 weighted double plus fouls per 90, from 2025-26 form, with both rates shrunk toward the positional average in proportion to minutes played (see Guide). YC/90 and Fouls/90 columns show the raw rates. The EFL chip marks the three promoted clubs, whose form is from the Championship. Low sample is under 450 minutes.</p>
+  </section>
+
+  <!-- GAMEWEEK -->
+  <section id="panel-gw" role="tabpanel" aria-labelledby="tab-gw" hidden>
+    <div style="display:flex;gap:.6rem;flex-wrap:wrap;align-items:center;margin-bottom:.8rem">
+      <label class="muted" style="font-size:.85rem">Matchday
+        <select id="gwMatchday" aria-label="Select matchday"></select>
+      </label>
+      <span id="gwDate" class="muted" style="font-size:.85rem"></span>
+      <span style="flex:1"></span>
+      <span id="gwStatus" class="faint" style="font-size:.75rem"></span>
+    </div>
+    <div id="gwFixtures" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(330px,1fr));gap:.8rem"></div>
+    <p class="faint" style="font-size:.78rem;margin-top:.8rem">Win/draw/away percentages and match heat come from the PL Simulator's calibrated Poisson model (<a href="https://plsimulation.netlify.app" rel="noopener">plsimulation.netlify.app</a>), fetched live with a bundled snapshot as fallback. GW risk is a player's booking risk scaled by his side's heat. Est. cards is both clubs' cards-per-game rates scaled by heat and, when the appointment is known, the referee's yellows-per-game relative to the league norm. Referee appointments fill in weekly once announced.</p>
   </section>
 
   <!-- CLUBS -->
@@ -192,7 +207,7 @@
     <details class="surface" style="border-radius:12px;padding:1rem;margin-bottom:1rem" open>
       <summary style="cursor:pointer;font-weight:600;font-family:'Bricolage Grotesque',sans-serif">Log a pick</summary>
       <form id="pickForm" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:.7rem;margin-top:.9rem;align-items:end">
-        <label style="display:flex;flex-direction:column;gap:.25rem;font-size:.8rem" class="muted">Fixture<input id="pkFixture" required placeholder="Arsenal v Chelsea"></label>
+        <label style="display:flex;flex-direction:column;gap:.25rem;font-size:.8rem" class="muted">Fixture<input id="pkFixture" required placeholder="Arsenal v Chelsea" list="fixlist"><datalist id="fixlist"></datalist></label>
         <label style="display:flex;flex-direction:column;gap:.25rem;font-size:.8rem" class="muted">Selection<input id="pkSelection" required placeholder="Saša Lukić to be carded"></label>
         <label style="display:flex;flex-direction:column;gap:.25rem;font-size:.8rem" class="muted">Market<input id="pkMarket" placeholder="Player booking" list="mkts">
           <datalist id="mkts"><option>Player booking</option><option>Team over cards</option><option>Match over cards</option><option>Referee total cards</option></datalist></label>
@@ -215,7 +230,8 @@
         </tr></thead><tbody id="pickRows"></tbody>
       </table>
     </div>
-    <p class="faint" style="font-size:.78rem;margin-top:.6rem">Set a result to settle a pick. Hit-rate counts settled picks only, void excluded. Picks save to this browser under pl_desk_v1.</p>
+    <div id="trackerByMd"></div>
+    <p class="faint" style="font-size:.78rem;margin-top:.6rem">Set a result to settle a pick. Hit-rate counts settled picks only, void excluded. Picks save to this browser under pl_desk_v1. Picks whose fixture matches the 2026-27 calendar are tagged with their matchday automatically.</p>
   </section>
 
   <!-- GUIDE -->
@@ -226,6 +242,17 @@
       <h3>Player booking risk</h3>
       <p class="surface-2" style="padding:.6rem .8rem;border-radius:8px;font-family:monospace;font-size:.85rem">risk = yellow cards per 90 &times; 2 + fouls committed per 90</p>
       <p>Yellow rate is weighted double because the bet pays on cards, not fouls. Fouls per 90 carries the volume signal, the players who keep giving the referee a decision. Both are 2025-26 rates. Players under 450 minutes are flagged low sample.</p>
+      <h3>Minutes shrinkage</h3>
+      <p>Raw per-90 rates are unreliable on few minutes, a player with one yellow in 90 minutes is not a 1.0-per-90 booking machine. So before ranking, each player's yellow and foul rates are shrunk toward the average for his position, weighted by minutes played: a rate on 3,000 minutes barely moves, a rate on 100 minutes lands close to the positional norm. The prior counts for 450 minutes, the same floor as the low-sample flag. The YC/90 and Fouls/90 columns stay raw, the Risk column and every ranking use the shrunk rates.</p>
+      <h3>Gameweek view and match heat</h3>
+      <p>The Gameweek tab joins this desk to the <a href="https://plsimulation.netlify.app" rel="noopener">PL Simulator</a>, which publishes its calibrated model as a machine-readable bundle, the official 2026-27 fixture list, attack and defence ratings fitted to three seasons of results, season-outcome probabilities from a 20,000-season Monte Carlo run, and referee appointments as they are announced. Each fixture's win, draw and away percentages are computed here with the same Poisson and Dixon-Coles maths as the simulator, then folded into a per-side heat multiplier:</p>
+      <p class="surface-2" style="padding:.6rem .8rem;border-radius:8px;font-family:monospace;font-size:.85rem">heat = closeness &times; chasing &times; stakes</p>
+      <ul>
+        <li><strong>Closeness</strong>, 1 + 0.20 &times; (evenness &minus; 0.5). Evenly matched games are more contested, mismatches cool off. Range 0.90 to 1.10.</li>
+        <li><strong>Chasing</strong>, 1 + 0.12 &times; (opponent win % &minus; own win %). The side likely to be trailing commits the tactical fouls.</li>
+        <li><strong>Stakes</strong>, up to 1.08 from matchday 25 on, when the club's title, top-four or relegation race is still genuinely open per the Monte Carlo probabilities.</li>
+      </ul>
+      <p>A player's GW risk is his booking risk times his side's heat. Estimated match cards are both clubs' cards-per-game scaled by their heat and by the referee's yellows-per-game against the league norm once the appointment is known. Heat is a research weighting on 2025-26 rates, not a priced model; treat a 1.10 as one notch of extra intent, not ten percent of anything bankable.</p>
       <h3>Club discipline</h3>
       <p>Clubs are tiered on cards received per game, target 2.0 and above, mid 1.5 to 1.9, fade below 1.5. The flame marks a combustible side, 2.0 plus cards and 12.0 plus fouls.</p>
       <h3>Where the numbers come from</h3>
@@ -235,7 +262,8 @@
         <li>The 2026-27 season has not started, so this is last season's form as the pre-season basis. It refreshes as new games are played.</li>
         <li>Promoted clubs are Championship form, a different and rougher division, so treat their numbers as indicative. Their team rate is not shown because the Championship data mixes cup minutes.</li>
         <li>Ipswich have thinner data than most, fewer players met the minutes floor.</li>
-        <li>A fixture and referee-to-game view will be added once the 2026-27 schedule and appointments are released.</li>
+        <li>Referee appointments are announced only days before each matchday, so the Gameweek referee column reads TBA until the simulator bundle carries the week's officials.</li>
+        <li>Match heat is a transparent weighting, not a fitted cards model. The coefficients are set by judgement; a team-level backtest harness ships in the repo (data/backtest_cards.py) to validate them against real season card counts.</li>
       </ul>
       <p class="faint" style="font-size:.8rem">Your logged picks save in this browser only, under pl_desk_v1. Built for research, not a betting guarantee. Stake responsibly.</p>
     </div>
@@ -267,9 +295,9 @@ const CLUBS = [
   {short:"AVL",name:"Aston Villa",img:"https://cdn.sportmonks.com/images/soccer/teams/15/15.png",basis:"PL",ca:1.55,fm:10.0,squad:30},
   {short:"LIV",name:"Liverpool",img:"https://cdn.sportmonks.com/images/soccer/teams/8/8.png",basis:"PL",ca:1.5,fm:10.2,squad:24},
   {short:"ARS",name:"Arsenal",img:"https://cdn.sportmonks.com/images/soccer/teams/19/19.png",basis:"PL",ca:1.32,fm:10.3,squad:25},
-  {short:"HUL",name:"Hull City",img:"https://cdn.sportmonks.com/images/soccer/teams/22/22.png",basis:"EFL",ca:null,fm:null,squad:24},
-  {short:"COV",name:"Coventry City",img:"https://cdn.sportmonks.com/images/soccer/teams/21/117.png",basis:"EFL",ca:null,fm:null,squad:36},
-  {short:"IPS",name:"Ipswich Town",img:"https://cdn.sportmonks.com/images/soccer/teams/20/116.png",basis:"EFL",ca:null,fm:null,squad:12},
+  {short:"HUL",name:"Hull City",img:"https://cdn.sportmonks.com/images/soccer/teams/22/22.png",basis:"EFL",ca:null,fm:null,squad:2},
+  {short:"COV",name:"Coventry City",img:"https://cdn.sportmonks.com/images/soccer/teams/21/117.png",basis:"EFL",ca:null,fm:null,squad:3},
+  {short:"IPS",name:"Ipswich Town",img:"https://cdn.sportmonks.com/images/soccer/teams/20/116.png",basis:"EFL",ca:null,fm:null,squad:1},
 ];
 const PL_PLAYERS = [
   {c:"ARS",n:"Gabriel Jesus",p:"FW",min:421,yc:2,rc:0,y:0.428,f:1.92,r:2.776,ls:true,b:"PL"},
@@ -437,40 +465,7 @@ const PL_PLAYERS = [
   {c:"CHE",n:"Mamadou Sarr",p:"DF",min:101,yc:0,rc:0,y:0.0,f:0.0,r:0.0,ls:true,b:"PL"},
   {c:"CHE",n:"Shumaira Mheuka",p:"FW",min:1,yc:0,rc:0,y:0.0,f:0.0,r:0.0,ls:true,b:"PL"},
   {c:"COV",n:"Haji Wright",p:"FW",min:2594,yc:4,rc:0,y:0.139,f:1.08,r:1.358,ls:false,b:"EFL"},
-  {c:"COV",n:"Haji Wright",p:"FW",min:2594,yc:4,rc:0,y:0.139,f:1.08,r:1.358,ls:false,b:"EFL"},
-  {c:"COV",n:"Haji Wright",p:"FW",min:2594,yc:4,rc:0,y:0.139,f:1.08,r:1.358,ls:false,b:"EFL"},
-  {c:"COV",n:"Haji Wright",p:"FW",min:2594,yc:4,rc:0,y:0.139,f:1.08,r:1.358,ls:false,b:"EFL"},
-  {c:"COV",n:"Haji Wright",p:"FW",min:2594,yc:4,rc:0,y:0.139,f:1.08,r:1.358,ls:false,b:"EFL"},
-  {c:"COV",n:"Haji Wright",p:"FW",min:2594,yc:4,rc:0,y:0.139,f:1.08,r:1.358,ls:false,b:"EFL"},
-  {c:"COV",n:"Haji Wright",p:"FW",min:2594,yc:4,rc:0,y:0.139,f:1.08,r:1.358,ls:false,b:"EFL"},
-  {c:"COV",n:"Haji Wright",p:"FW",min:2594,yc:4,rc:0,y:0.139,f:1.08,r:1.358,ls:false,b:"EFL"},
-  {c:"COV",n:"Haji Wright",p:"FW",min:2594,yc:4,rc:0,y:0.139,f:1.08,r:1.358,ls:false,b:"EFL"},
-  {c:"COV",n:"Haji Wright",p:"FW",min:2594,yc:4,rc:0,y:0.139,f:1.08,r:1.358,ls:false,b:"EFL"},
-  {c:"COV",n:"Haji Wright",p:"FW",min:2594,yc:4,rc:0,y:0.139,f:1.08,r:1.358,ls:false,b:"EFL"},
-  {c:"COV",n:"Haji Wright",p:"FW",min:2594,yc:4,rc:0,y:0.139,f:1.08,r:1.358,ls:false,b:"EFL"},
   {c:"COV",n:"Ellis Simms",p:"FW",min:1636,yc:1,rc:0,y:0.055,f:1.05,r:1.16,ls:false,b:"EFL"},
-  {c:"COV",n:"Ellis Simms",p:"FW",min:1636,yc:1,rc:0,y:0.055,f:1.05,r:1.16,ls:false,b:"EFL"},
-  {c:"COV",n:"Ellis Simms",p:"FW",min:1636,yc:1,rc:0,y:0.055,f:1.05,r:1.16,ls:false,b:"EFL"},
-  {c:"COV",n:"Ellis Simms",p:"FW",min:1636,yc:1,rc:0,y:0.055,f:1.05,r:1.16,ls:false,b:"EFL"},
-  {c:"COV",n:"Ellis Simms",p:"FW",min:1636,yc:1,rc:0,y:0.055,f:1.05,r:1.16,ls:false,b:"EFL"},
-  {c:"COV",n:"Ellis Simms",p:"FW",min:1636,yc:1,rc:0,y:0.055,f:1.05,r:1.16,ls:false,b:"EFL"},
-  {c:"COV",n:"Ellis Simms",p:"FW",min:1636,yc:1,rc:0,y:0.055,f:1.05,r:1.16,ls:false,b:"EFL"},
-  {c:"COV",n:"Ellis Simms",p:"FW",min:1636,yc:1,rc:0,y:0.055,f:1.05,r:1.16,ls:false,b:"EFL"},
-  {c:"COV",n:"Ellis Simms",p:"FW",min:1636,yc:1,rc:0,y:0.055,f:1.05,r:1.16,ls:false,b:"EFL"},
-  {c:"COV",n:"Ellis Simms",p:"FW",min:1636,yc:1,rc:0,y:0.055,f:1.05,r:1.16,ls:false,b:"EFL"},
-  {c:"COV",n:"Ellis Simms",p:"FW",min:1636,yc:1,rc:0,y:0.055,f:1.05,r:1.16,ls:false,b:"EFL"},
-  {c:"COV",n:"Ellis Simms",p:"FW",min:1636,yc:1,rc:0,y:0.055,f:1.05,r:1.16,ls:false,b:"EFL"},
-  {c:"COV",n:"Brandon Thomas-Asante",p:"FW",min:1865,yc:0,rc:0,y:0.0,f:1.11,r:1.11,ls:false,b:"EFL"},
-  {c:"COV",n:"Brandon Thomas-Asante",p:"FW",min:1865,yc:0,rc:0,y:0.0,f:1.11,r:1.11,ls:false,b:"EFL"},
-  {c:"COV",n:"Brandon Thomas-Asante",p:"FW",min:1865,yc:0,rc:0,y:0.0,f:1.11,r:1.11,ls:false,b:"EFL"},
-  {c:"COV",n:"Brandon Thomas-Asante",p:"FW",min:1865,yc:0,rc:0,y:0.0,f:1.11,r:1.11,ls:false,b:"EFL"},
-  {c:"COV",n:"Brandon Thomas-Asante",p:"FW",min:1865,yc:0,rc:0,y:0.0,f:1.11,r:1.11,ls:false,b:"EFL"},
-  {c:"COV",n:"Brandon Thomas-Asante",p:"FW",min:1865,yc:0,rc:0,y:0.0,f:1.11,r:1.11,ls:false,b:"EFL"},
-  {c:"COV",n:"Brandon Thomas-Asante",p:"FW",min:1865,yc:0,rc:0,y:0.0,f:1.11,r:1.11,ls:false,b:"EFL"},
-  {c:"COV",n:"Brandon Thomas-Asante",p:"FW",min:1865,yc:0,rc:0,y:0.0,f:1.11,r:1.11,ls:false,b:"EFL"},
-  {c:"COV",n:"Brandon Thomas-Asante",p:"FW",min:1865,yc:0,rc:0,y:0.0,f:1.11,r:1.11,ls:false,b:"EFL"},
-  {c:"COV",n:"Brandon Thomas-Asante",p:"FW",min:1865,yc:0,rc:0,y:0.0,f:1.11,r:1.11,ls:false,b:"EFL"},
-  {c:"COV",n:"Brandon Thomas-Asante",p:"FW",min:1865,yc:0,rc:0,y:0.0,f:1.11,r:1.11,ls:false,b:"EFL"},
   {c:"COV",n:"Brandon Thomas-Asante",p:"FW",min:1865,yc:0,rc:0,y:0.0,f:1.11,r:1.11,ls:false,b:"EFL"},
   {c:"CRY",n:"Kaden Rodney",p:"MF",min:3,yc:0,rc:0,y:0.0,f:30.0,r:30.0,ls:true,b:"PL"},
   {c:"CRY",n:"Borna Sosa",p:"DF",min:98,yc:1,rc:0,y:0.918,f:3.67,r:5.506,ls:true,b:"PL"},
@@ -548,40 +543,7 @@ const PL_PLAYERS = [
   {c:"FUL",n:"Samuel Chukwueze",p:"FW",min:1074,yc:0,rc:0,y:0.0,f:0.5,r:0.5,ls:false,b:"PL"},
   {c:"FUL",n:"Bernd Leno",p:"GK",min:3420,yc:3,rc:0,y:0.079,f:0.0,r:0.158,ls:false,b:"PL"},
   {c:"HUL",n:"Oliver McBurnie",p:"FW",min:3176,yc:8,rc:0,y:0.227,f:1.56,r:2.014,ls:false,b:"EFL"},
-  {c:"HUL",n:"Oliver McBurnie",p:"FW",min:3176,yc:8,rc:0,y:0.227,f:1.56,r:2.014,ls:false,b:"EFL"},
-  {c:"HUL",n:"Oliver McBurnie",p:"FW",min:3176,yc:8,rc:0,y:0.227,f:1.56,r:2.014,ls:false,b:"EFL"},
-  {c:"HUL",n:"Oliver McBurnie",p:"FW",min:3176,yc:8,rc:0,y:0.227,f:1.56,r:2.014,ls:false,b:"EFL"},
-  {c:"HUL",n:"Oliver McBurnie",p:"FW",min:3176,yc:8,rc:0,y:0.227,f:1.56,r:2.014,ls:false,b:"EFL"},
-  {c:"HUL",n:"Oliver McBurnie",p:"FW",min:3176,yc:8,rc:0,y:0.227,f:1.56,r:2.014,ls:false,b:"EFL"},
-  {c:"HUL",n:"Oliver McBurnie",p:"FW",min:3176,yc:8,rc:0,y:0.227,f:1.56,r:2.014,ls:false,b:"EFL"},
-  {c:"HUL",n:"Oliver McBurnie",p:"FW",min:3176,yc:8,rc:0,y:0.227,f:1.56,r:2.014,ls:false,b:"EFL"},
-  {c:"HUL",n:"Oliver McBurnie",p:"FW",min:3176,yc:8,rc:0,y:0.227,f:1.56,r:2.014,ls:false,b:"EFL"},
-  {c:"HUL",n:"Oliver McBurnie",p:"FW",min:3176,yc:8,rc:0,y:0.227,f:1.56,r:2.014,ls:false,b:"EFL"},
-  {c:"HUL",n:"Oliver McBurnie",p:"FW",min:3176,yc:8,rc:0,y:0.227,f:1.56,r:2.014,ls:false,b:"EFL"},
-  {c:"HUL",n:"Oliver McBurnie",p:"FW",min:3176,yc:8,rc:0,y:0.227,f:1.56,r:2.014,ls:false,b:"EFL"},
   {c:"HUL",n:"Joe Gelhardt",p:"FW",min:2939,yc:6,rc:0,y:0.184,f:1.13,r:1.498,ls:false,b:"EFL"},
-  {c:"HUL",n:"Joe Gelhardt",p:"FW",min:2939,yc:6,rc:0,y:0.184,f:1.13,r:1.498,ls:false,b:"EFL"},
-  {c:"HUL",n:"Joe Gelhardt",p:"FW",min:2939,yc:6,rc:0,y:0.184,f:1.13,r:1.498,ls:false,b:"EFL"},
-  {c:"HUL",n:"Joe Gelhardt",p:"FW",min:2939,yc:6,rc:0,y:0.184,f:1.13,r:1.498,ls:false,b:"EFL"},
-  {c:"HUL",n:"Joe Gelhardt",p:"FW",min:2939,yc:6,rc:0,y:0.184,f:1.13,r:1.498,ls:false,b:"EFL"},
-  {c:"HUL",n:"Joe Gelhardt",p:"FW",min:2939,yc:6,rc:0,y:0.184,f:1.13,r:1.498,ls:false,b:"EFL"},
-  {c:"HUL",n:"Joe Gelhardt",p:"FW",min:2939,yc:6,rc:0,y:0.184,f:1.13,r:1.498,ls:false,b:"EFL"},
-  {c:"HUL",n:"Joe Gelhardt",p:"FW",min:2939,yc:6,rc:0,y:0.184,f:1.13,r:1.498,ls:false,b:"EFL"},
-  {c:"HUL",n:"Joe Gelhardt",p:"FW",min:2939,yc:6,rc:0,y:0.184,f:1.13,r:1.498,ls:false,b:"EFL"},
-  {c:"HUL",n:"Joe Gelhardt",p:"FW",min:2939,yc:6,rc:0,y:0.184,f:1.13,r:1.498,ls:false,b:"EFL"},
-  {c:"HUL",n:"Joe Gelhardt",p:"FW",min:2939,yc:6,rc:0,y:0.184,f:1.13,r:1.498,ls:false,b:"EFL"},
-  {c:"HUL",n:"Joe Gelhardt",p:"FW",min:2939,yc:6,rc:0,y:0.184,f:1.13,r:1.498,ls:false,b:"EFL"},
-  {c:"IPS",n:"Jack Clarke",p:"FW",min:2380,yc:4,rc:0,y:0.151,f:1.51,r:1.812,ls:false,b:"EFL"},
-  {c:"IPS",n:"Jack Clarke",p:"FW",min:2380,yc:4,rc:0,y:0.151,f:1.51,r:1.812,ls:false,b:"EFL"},
-  {c:"IPS",n:"Jack Clarke",p:"FW",min:2380,yc:4,rc:0,y:0.151,f:1.51,r:1.812,ls:false,b:"EFL"},
-  {c:"IPS",n:"Jack Clarke",p:"FW",min:2380,yc:4,rc:0,y:0.151,f:1.51,r:1.812,ls:false,b:"EFL"},
-  {c:"IPS",n:"Jack Clarke",p:"FW",min:2380,yc:4,rc:0,y:0.151,f:1.51,r:1.812,ls:false,b:"EFL"},
-  {c:"IPS",n:"Jack Clarke",p:"FW",min:2380,yc:4,rc:0,y:0.151,f:1.51,r:1.812,ls:false,b:"EFL"},
-  {c:"IPS",n:"Jack Clarke",p:"FW",min:2380,yc:4,rc:0,y:0.151,f:1.51,r:1.812,ls:false,b:"EFL"},
-  {c:"IPS",n:"Jack Clarke",p:"FW",min:2380,yc:4,rc:0,y:0.151,f:1.51,r:1.812,ls:false,b:"EFL"},
-  {c:"IPS",n:"Jack Clarke",p:"FW",min:2380,yc:4,rc:0,y:0.151,f:1.51,r:1.812,ls:false,b:"EFL"},
-  {c:"IPS",n:"Jack Clarke",p:"FW",min:2380,yc:4,rc:0,y:0.151,f:1.51,r:1.812,ls:false,b:"EFL"},
-  {c:"IPS",n:"Jack Clarke",p:"FW",min:2380,yc:4,rc:0,y:0.151,f:1.51,r:1.812,ls:false,b:"EFL"},
   {c:"IPS",n:"Jack Clarke",p:"FW",min:2380,yc:4,rc:0,y:0.151,f:1.51,r:1.812,ls:false,b:"EFL"},
   {c:"LEE",n:"Facundo Buonanotte",p:"MF",min:36,yc:1,rc:0,y:2.5,f:2.5,r:7.5,ls:true,b:"PL"},
   {c:"LEE",n:"Sam Byram",p:"DF",min:17,yc:0,rc:0,y:0.0,f:5.29,r:5.29,ls:true,b:"PL"},
@@ -820,6 +782,123 @@ const STORE_KEY="pl_desk_v1", THEME_KEY="pl_desk_theme";
 const $=(id)=>document.getElementById(id);
 const CLUBMAP={}; CLUBS.forEach(c=>CLUBMAP[c.short]=c);
 
+// ---- minutes shrinkage: empirical Bayes toward positional means ----
+// Raw per-90 rates on few minutes are noise. Shrink each player's yellow and
+// foul rates toward the mean for his position (computed from players at 450+
+// minutes), with the prior worth PRIOR_90S matches. yc/min are raw counts so
+// the rates rebuild exactly; y and f columns stay raw, r becomes the shrunk
+// risk used everywhere the app ranks or displays risk (raw kept as rRaw).
+const PRIOR_90S=5; // 450 minutes of prior, the same floor as the low-sample flag
+(function(){
+  const groups={};
+  PL_PLAYERS.forEach(p=>{
+    if(p.min>=450&&p.y!=null&&p.f!=null){
+      const g=groups[p.p]||(groups[p.p]={n90:0,yc:0,fouls:0});
+      g.n90+=p.min/90; g.yc+=p.yc||0; g.fouls+=p.f*p.min/90;
+    }
+  });
+  const all={n90:0,yc:0,fouls:0};
+  Object.values(groups).forEach(g=>{ all.n90+=g.n90; all.yc+=g.yc; all.fouls+=g.fouls; });
+  const prior=pos=>{ const g=groups[pos]; const s=(g&&g.n90>0)?g:all; return {y:s.yc/s.n90,f:s.fouls/s.n90}; };
+  PL_PLAYERS.forEach(p=>{
+    p.rRaw=p.r;
+    if(p.y==null||p.f==null||!(p.min>0)) return;
+    const pr=prior(p.p), n=p.min/90;
+    const ya=((p.yc||0)+PRIOR_90S*pr.y)/(n+PRIOR_90S);
+    const fa=(p.f*n+PRIOR_90S*pr.f)/(n+PRIOR_90S);
+    p.ya=Math.round(ya*1000)/1000; p.fa=Math.round(fa*1000)/1000;
+    p.r=Math.round((ya*2+fa)*1000)/1000;
+  });
+})();
+
+// ---- PL Simulator shared model bundle ----
+// Live from plsimulation.netlify.app (CORS-open, refreshed weekly); the baked
+// snapshot below keeps the Gameweek tab working offline or if the fetch fails.
+const MODEL_URL="https://plsimulation.netlify.app/model.json";
+const FALLBACK_MODEL={"version":"2026-07-12","constants":{"BASE_H":1.62,"BASE_A":1.32,"DC_RHO":-0.074,"ELO_HOME":60,"ELO_SCALE":0.45},"teams":{"Arsenal":{"attack":1.1961,"defence":0.715,"home":1.0012,"elo":1869.6},"Manchester City":{"attack":1.2323,"defence":0.8065,"home":1.0953,"elo":1840.9},"Liverpool":{"attack":1.2318,"defence":0.9741,"home":0.9614,"elo":1750.9},"Manchester United":{"attack":1.1126,"defence":0.9574,"home":1.0288,"elo":1786.6},"Chelsea":{"attack":1.0806,"defence":0.9664,"home":0.9078,"elo":1694.3},"Aston Villa":{"attack":1.0254,"defence":0.9577,"home":1.0655,"elo":1759.1},"Newcastle United":{"attack":0.9749,"defence":0.9989,"home":1.2016,"elo":1685.4},"Tottenham Hotspur":{"attack":0.9729,"defence":1.0826,"home":0.931,"elo":1609.9},"Crystal Palace":{"attack":0.8932,"defence":0.9842,"home":0.9058,"elo":1664.2},"Brighton":{"attack":1.0252,"defence":0.9448,"home":0.9883,"elo":1712.3},"Nottingham Forest":{"attack":1.0893,"defence":0.9337,"home":0.7829,"elo":1688.8},"Bournemouth":{"attack":1.1019,"defence":0.9501,"home":0.8927,"elo":1760.6},"Brentford":{"attack":1.0104,"defence":0.9808,"home":1.0893,"elo":1710.5},"Fulham":{"attack":0.8812,"defence":0.9592,"home":1.0811,"elo":1688.9},"Everton":{"attack":0.8828,"defence":0.939,"home":1.0408,"elo":1674.2},"Sunderland":{"attack":0.7501,"defence":0.9755,"home":0.9953,"elo":1707.2},"Leeds United":{"attack":0.8912,"defence":0.9704,"home":1.1274,"elo":1743.7},"Coventry City":{"attack":0.8447,"defence":1.2011,"home":1.0084,"elo":1779.5},"Ipswich Town":{"attack":0.8024,"defence":1.2529,"home":0.9474,"elo":1716.5},"Hull City":{"attack":0.6806,"defence":1.4496,"home":0.948,"elo":1656.9}},"fixtures":[[["Arsenal","Coventry City"],["Hull City","Manchester United"],["Ipswich Town","Sunderland"],["Nottingham Forest","Leeds United"],["Everton","Crystal Palace"],["Brentford","Tottenham Hotspur"],["Manchester City","Bournemouth"],["Brighton","Aston Villa"],["Newcastle United","Liverpool"],["Fulham","Chelsea"]],[["Liverpool","Nottingham Forest"],["Manchester United","Ipswich Town"],["Sunderland","Fulham"],["Crystal Palace","Manchester City"],["Chelsea","Brighton"],["Aston Villa","Arsenal"],["Tottenham Hotspur","Newcastle United"],["Leeds United","Brentford"],["Bournemouth","Everton"],["Coventry City","Hull City"]],[["Nottingham Forest","Tottenham Hotspur"],["Manchester City","Coventry City"],["Brighton","Leeds United"],["Brentford","Sunderland"],["Ipswich Town","Liverpool"],["Everton","Manchester United"],["Fulham","Crystal Palace"],["Hull City","Aston Villa"],["Arsenal","Chelsea"],["Newcastle United","Bournemouth"]],[["Crystal Palace","Ipswich Town"],["Liverpool","Fulham"],["Aston Villa","Nottingham Forest"],["Tottenham Hotspur","Everton"],["Bournemouth","Brentford"],["Sunderland","Arsenal"],["Coventry City","Brighton"],["Leeds United","Newcastle United"],["Manchester United","Manchester City"],["Chelsea","Hull City"]],[["Bournemouth","Liverpool"],["Fulham","Manchester United"],["Everton","Ipswich Town"],["Leeds United","Crystal Palace"],["Brighton","Arsenal"],["Tottenham Hotspur","Aston Villa"],["Newcastle United","Hull City"],["Nottingham Forest","Coventry City"],["Manchester City","Sunderland"],["Brentford","Chelsea"]],[["Sunderland","Brighton"],["Arsenal","Leeds United"],["Hull City","Everton"],["Chelsea","Bournemouth"],["Crystal Palace","Nottingham Forest"],["Coventry City","Newcastle United"],["Liverpool","Manchester City"],["Ipswich Town","Fulham"],["Manchester United","Tottenham Hotspur"],["Aston Villa","Brentford"]],[["Fulham","Hull City"],["Everton","Chelsea"],["Bournemouth","Sunderland"],["Leeds United","Manchester United"],["Tottenham Hotspur","Coventry City"],["Newcastle United","Aston Villa"],["Nottingham Forest","Arsenal"],["Brighton","Crystal Palace"],["Manchester City","Ipswich Town"],["Brentford","Liverpool"]],[["Liverpool","Brighton"],["Crystal Palace","Newcastle United"],["Aston Villa","Manchester City"],["Manchester United","Bournemouth"],["Arsenal","Everton"],["Chelsea","Tottenham Hotspur"],["Coventry City","Fulham"],["Hull City","Brentford"],["Ipswich Town","Nottingham Forest"],["Sunderland","Leeds United"]],[["Newcastle United","Everton"],["Manchester City","Brighton"],["Bournemouth","Leeds United"],["Coventry City","Sunderland"],["Chelsea","Manchester United"],["Tottenham Hotspur","Crystal Palace"],["Aston Villa","Fulham"],["Hull City","Ipswich Town"],["Brentford","Nottingham Forest"],["Liverpool","Arsenal"]],[["Arsenal","Hull City"],["Nottingham Forest","Manchester City"],["Leeds United","Tottenham Hotspur"],["Fulham","Newcastle United"],["Everton","Coventry City"],["Crystal Palace","Liverpool"],["Sunderland","Chelsea"],["Ipswich Town","Bournemouth"],["Brighton","Brentford"],["Manchester United","Aston Villa"]],[["Chelsea","Leeds United"],["Manchester City","Fulham"],["Aston Villa","Sunderland"],["Liverpool","Manchester United"],["Hull City","Brighton"],["Bournemouth","Nottingham Forest"],["Tottenham Hotspur","Ipswich Town"],["Brentford","Everton"],["Coventry City","Crystal Palace"],["Newcastle United","Arsenal"]],[["Leeds United","Coventry City"],["Ipswich Town","Aston Villa"],["Arsenal","Manchester City"],["Manchester United","Brentford"],["Everton","Liverpool"],["Fulham","Bournemouth"],["Nottingham Forest","Chelsea"],["Brighton","Newcastle United"],["Sunderland","Tottenham Hotspur"],["Crystal Palace","Hull City"]],[["Tottenham Hotspur","Fulham"],["Liverpool","Sunderland"],["Hull City","Nottingham Forest"],["Chelsea","Crystal Palace"],["Aston Villa","Everton"],["Brentford","Arsenal"],["Coventry City","Ipswich Town"],["Manchester City","Leeds United"],["Newcastle United","Manchester United"],["Bournemouth","Brighton"]],[["Tottenham Hotspur","Arsenal"],["Manchester United","Coventry City"],["Leeds United","Ipswich Town"],["Newcastle United","Sunderland"],["Chelsea","Liverpool"],["Brentford","Manchester City"],["Bournemouth","Hull City"],["Aston Villa","Crystal Palace"],["Nottingham Forest","Brighton"],["Everton","Fulham"]],[["Sunderland","Nottingham Forest"],["Crystal Palace","Manchester United"],["Hull City","Tottenham Hotspur"],["Brighton","Everton"],["Ipswich Town","Newcastle United"],["Coventry City","Aston Villa"],["Arsenal","Bournemouth"],["Manchester City","Chelsea"],["Liverpool","Leeds United"],["Fulham","Brentford"]],[["Leeds United","Fulham"],["Brighton","Ipswich Town"],["Nottingham Forest","Everton"],["Brentford","Newcastle United"],["Manchester City","Hull City"],["Sunderland","Crystal Palace"],["Bournemouth","Coventry City"],["Arsenal","Manchester United"],["Liverpool","Tottenham Hotspur"],["Chelsea","Aston Villa"]],[["Aston Villa","Leeds United"],["Manchester United","Nottingham Forest"],["Crystal Palace","Arsenal"],["Everton","Sunderland"],["Coventry City","Chelsea"],["Newcastle United","Manchester City"],["Fulham","Brighton"],["Tottenham Hotspur","Bournemouth"],["Hull City","Liverpool"],["Ipswich Town","Brentford"]],[["Fulham","Arsenal"],["Coventry City","Brentford"],["Aston Villa","Liverpool"],["Newcastle United","Nottingham Forest"],["Hull City","Leeds United"],["Manchester United","Sunderland"],["Ipswich Town","Chelsea"],["Tottenham Hotspur","Brighton"],["Everton","Manchester City"],["Crystal Palace","Bournemouth"]],[["Bournemouth","Aston Villa"],["Brentford","Crystal Palace"],["Leeds United","Everton"],["Arsenal","Ipswich Town"],["Sunderland","Hull City"],["Liverpool","Coventry City"],["Chelsea","Newcastle United"],["Nottingham Forest","Fulham"],["Brighton","Manchester United"],["Manchester City","Tottenham Hotspur"]],[["Arsenal","Brentford"],["Leeds United","Manchester City"],["Manchester United","Newcastle United"],["Brighton","Bournemouth"],["Nottingham Forest","Hull City"],["Fulham","Tottenham Hotspur"],["Everton","Aston Villa"],["Sunderland","Liverpool"],["Crystal Palace","Chelsea"],["Ipswich Town","Coventry City"]],[["Bournemouth","Ipswich Town"],["Manchester City","Nottingham Forest"],["Chelsea","Sunderland"],["Brentford","Brighton"],["Aston Villa","Manchester United"],["Tottenham Hotspur","Leeds United"],["Coventry City","Everton"],["Liverpool","Crystal Palace"],["Hull City","Arsenal"],["Newcastle United","Fulham"]],[["Ipswich Town","Hull City"],["Everton","Brentford"],["Sunderland","Coventry City"],["Nottingham Forest","Bournemouth"],["Arsenal","Newcastle United"],["Leeds United","Chelsea"],["Fulham","Aston Villa"],["Manchester United","Liverpool"],["Brighton","Manchester City"],["Crystal Palace","Tottenham Hotspur"]],[["Tottenham Hotspur","Sunderland"],["Brentford","Manchester United"],["Newcastle United","Brighton"],["Hull City","Crystal Palace"],["Coventry City","Leeds United"],["Bournemouth","Fulham"],["Chelsea","Nottingham Forest"],["Liverpool","Everton"],["Manchester City","Arsenal"],["Aston Villa","Ipswich Town"]],[["Arsenal","Liverpool"],["Brighton","Hull City"],["Sunderland","Aston Villa"],["Crystal Palace","Coventry City"],["Ipswich Town","Tottenham Hotspur"],["Everton","Newcastle United"],["Fulham","Manchester City"],["Leeds United","Bournemouth"],["Manchester United","Chelsea"],["Nottingham Forest","Brentford"]],[["Everton","Leeds United"],["Coventry City","Liverpool"],["Hull City","Sunderland"],["Aston Villa","Bournemouth"],["Crystal Palace","Brentford"],["Newcastle United","Chelsea"],["Fulham","Nottingham Forest"],["Tottenham Hotspur","Manchester City"],["Manchester United","Brighton"],["Ipswich Town","Arsenal"]],[["Manchester City","Newcastle United"],["Bournemouth","Crystal Palace"],["Brentford","Coventry City"],["Chelsea","Ipswich Town"],["Liverpool","Hull City"],["Arsenal","Fulham"],["Nottingham Forest","Manchester United"],["Brighton","Tottenham Hotspur"],["Sunderland","Everton"],["Leeds United","Aston Villa"]],[["Crystal Palace","Sunderland"],["Manchester United","Arsenal"],["Ipswich Town","Brighton"],["Coventry City","Bournemouth"],["Everton","Nottingham Forest"],["Fulham","Leeds United"],["Aston Villa","Chelsea"],["Tottenham Hotspur","Liverpool"],["Newcastle United","Brentford"],["Hull City","Manchester City"]],[["Nottingham Forest","Newcastle United"],["Bournemouth","Tottenham Hotspur"],["Manchester City","Everton"],["Arsenal","Crystal Palace"],["Leeds United","Hull City"],["Sunderland","Manchester United"],["Liverpool","Aston Villa"],["Brighton","Fulham"],["Brentford","Ipswich Town"],["Chelsea","Coventry City"]],[["Leeds United","Brighton"],["Tottenham Hotspur","Nottingham Forest"],["Crystal Palace","Fulham"],["Liverpool","Ipswich Town"],["Coventry City","Manchester City"],["Bournemouth","Newcastle United"],["Chelsea","Arsenal"],["Aston Villa","Hull City"],["Manchester United","Everton"],["Sunderland","Brentford"]],[["Brentford","Bournemouth"],["Brighton","Coventry City"],["Manchester City","Manchester United"],["Ipswich Town","Crystal Palace"],["Arsenal","Sunderland"],["Fulham","Liverpool"],["Hull City","Chelsea"],["Nottingham Forest","Aston Villa"],["Everton","Tottenham Hotspur"],["Newcastle United","Leeds United"]],[["Sunderland","Ipswich Town"],["Leeds United","Nottingham Forest"],["Manchester United","Hull City"],["Chelsea","Fulham"],["Liverpool","Newcastle United"],["Coventry City","Arsenal"],["Bournemouth","Manchester City"],["Crystal Palace","Everton"],["Tottenham Hotspur","Brentford"],["Aston Villa","Brighton"]],[["Brighton","Chelsea"],["Fulham","Sunderland"],["Brentford","Leeds United"],["Nottingham Forest","Liverpool"],["Hull City","Coventry City"],["Arsenal","Aston Villa"],["Ipswich Town","Manchester United"],["Manchester City","Crystal Palace"],["Newcastle United","Tottenham Hotspur"],["Everton","Bournemouth"]],[["Chelsea","Manchester City"],["Bournemouth","Arsenal"],["Tottenham Hotspur","Hull City"],["Manchester United","Crystal Palace"],["Everton","Brighton"],["Nottingham Forest","Sunderland"],["Newcastle United","Ipswich Town"],["Aston Villa","Coventry City"],["Brentford","Fulham"],["Leeds United","Liverpool"]],[["Sunderland","Newcastle United"],["Brighton","Nottingham Forest"],["Coventry City","Manchester United"],["Hull City","Bournemouth"],["Manchester City","Brentford"],["Fulham","Everton"],["Liverpool","Chelsea"],["Arsenal","Tottenham Hotspur"],["Crystal Palace","Aston Villa"],["Ipswich Town","Leeds United"]],[["Manchester City","Liverpool"],["Leeds United","Arsenal"],["Fulham","Ipswich Town"],["Nottingham Forest","Crystal Palace"],["Brentford","Aston Villa"],["Newcastle United","Coventry City"],["Brighton","Sunderland"],["Tottenham Hotspur","Chelsea"],["Everton","Hull City"],["Bournemouth","Manchester United"]],[["Hull City","Fulham"],["Manchester United","Leeds United"],["Crystal Palace","Brighton"],["Aston Villa","Newcastle United"],["Chelsea","Everton"],["Coventry City","Tottenham Hotspur"],["Sunderland","Bournemouth"],["Liverpool","Brentford"],["Ipswich Town","Manchester City"],["Arsenal","Nottingham Forest"]],[["Brentford","Hull City"],["Newcastle United","Crystal Palace"],["Tottenham Hotspur","Manchester United"],["Leeds United","Sunderland"],["Brighton","Liverpool"],["Nottingham Forest","Ipswich Town"],["Bournemouth","Chelsea"],["Fulham","Coventry City"],["Everton","Arsenal"],["Manchester City","Aston Villa"]],[["Ipswich Town","Everton"],["Arsenal","Brighton"],["Liverpool","Bournemouth"],["Coventry City","Nottingham Forest"],["Aston Villa","Tottenham Hotspur"],["Hull City","Newcastle United"],["Manchester United","Fulham"],["Sunderland","Manchester City"],["Chelsea","Brentford"],["Crystal Palace","Leeds United"]]],"fixture_dates":{"1":"2026-08-21","2":"2026-08-29","3":"2026-09-05","4":"2026-09-12","5":"2026-09-19","6":"2026-10-10","7":"2026-10-17","8":"2026-10-24","9":"2026-10-31","10":"2026-11-07","11":"2026-11-21","12":"2026-11-28","13":"2026-12-02","14":"2026-12-05","15":"2026-12-12","16":"2026-12-19","17":"2026-12-26","18":"2026-12-30","19":"2027-01-02","20":"2027-01-06","21":"2027-01-16","22":"2027-01-23","23":"2027-01-30","24":"2027-02-06","25":"2027-02-10","26":"2027-02-20","27":"2027-02-27","28":"2027-03-03","29":"2027-03-13","30":"2027-03-20","31":"2027-04-10","32":"2027-04-17","33":"2027-04-24","34":"2027-05-01","35":"2027-05-08","36":"2027-05-15","37":"2027-05-23","38":"2027-05-30"},"stakes":{"sims":20000,"seed":20262027,"model":"poisson","dixon_coles":true,"rho":-0.0841,"clubs":{"Arsenal":{"title":0.392,"top4":0.8619,"top6":0.9416,"rel":0.0001,"pos":2.56,"pts":70.9},"Manchester City":{"title":0.3836,"top4":0.8489,"top6":0.9314,"rel":0.0001,"pos":2.65,"pts":70.5},"Liverpool":{"title":0.0669,"top4":0.4409,"top6":0.6332,"rel":0.0031,"pos":5.92,"pts":61.4},"Manchester United":{"title":0.0377,"top4":0.3265,"top6":0.5175,"rel":0.0067,"pos":7.02,"pts":59.1},"Chelsea":{"title":0.0141,"top4":0.1648,"top6":0.3142,"rel":0.0208,"pos":9.14,"pts":55.1},"Aston Villa":{"title":0.0194,"top4":0.2122,"top6":0.3822,"rel":0.0132,"pos":8.33,"pts":56.6},"Newcastle United":{"title":0.0147,"top4":0.1845,"top6":0.3421,"rel":0.0179,"pos":8.8,"pts":55.7},"Tottenham Hotspur":{"title":0.0011,"top4":0.0261,"top6":0.0713,"rel":0.1406,"pos":13.29,"pts":47.3},"Crystal Palace":{"title":0.0009,"top4":0.0259,"top6":0.0673,"rel":0.1389,"pos":13.36,"pts":47.1},"Brighton":{"title":0.0162,"top4":0.1779,"top6":0.3325,"rel":0.0191,"pos":8.9,"pts":55.5},"Nottingham Forest":{"title":0.008,"top4":0.1247,"top6":0.2517,"rel":0.0315,"pos":9.96,"pts":53.6},"Bournemouth":{"title":0.0176,"top4":0.1988,"top6":0.355,"rel":0.0162,"pos":8.65,"pts":56.0},"Brentford":{"title":0.0154,"top4":0.1797,"top6":0.3358,"rel":0.0209,"pos":8.86,"pts":55.6},"Fulham":{"title":0.0041,"top4":0.0692,"top6":0.1573,"rel":0.057,"pos":11.3,"pts":51.1},"Everton":{"title":0.004,"top4":0.0682,"top6":0.1535,"rel":0.0598,"pos":11.34,"pts":51.0},"Sunderland":{"title":0.0001,"top4":0.0069,"top6":0.0222,"rel":0.2819,"pos":15.19,"pts":43.3},"Leeds United":{"title":0.004,"top4":0.0807,"top6":0.1814,"rel":0.0469,"pos":10.87,"pts":51.9},"Coventry City":{"title":0.0,"top4":0.0018,"top6":0.0084,"rel":0.4538,"pos":16.42,"pts":40.2},"Ipswich Town":{"title":0.0,"top4":0.0002,"top6":0.0013,"rel":0.7009,"pos":17.82,"pts":35.8},"Hull City":{"title":0.0,"top4":0.0,"top6":0.0,"rel":0.9708,"pos":19.64,"pts":26.1}}},"referees":null,"meta":{"rho":-0.0841}};
+const MODEL_SHORT={"Arsenal":"ARS","Manchester City":"MCI","Liverpool":"LIV","Manchester United":"MUN","Chelsea":"CHE","Aston Villa":"AVL","Newcastle United":"NEW","Tottenham Hotspur":"TOT","Crystal Palace":"CRY","Brighton":"BHA","Nottingham Forest":"NFO","Bournemouth":"BOU","Brentford":"BRE","Fulham":"FUL","Everton":"EVE","Sunderland":"SUN","Leeds United":"LEE","Coventry City":"COV","Ipswich Town":"IPS","Hull City":"HUL"};
+let model=FALLBACK_MODEL, modelSource="bundled snapshot";
+const mShort=name=>MODEL_SHORT[name]||null;
+
+// Same Poisson + Dixon-Coles maths as the simulator, from the bundle's
+// constants and ratings, so both products quote identical percentages.
+function poissonProbs(h,a){
+  const T=model.teams,C=model.constants;
+  if(!T||!T[h]||!T[a]) return null;
+  const lh=C.BASE_H*T[h].attack*T[a].defence*(T[h].home||1);
+  const la=C.BASE_A*T[a].attack*T[h].defence;
+  const rho=(model.meta&&model.meta.rho!=null)?model.meta.rho:C.DC_RHO;
+  const ph=[],pa=[];
+  let eh=Math.exp(-lh),ea=Math.exp(-la);
+  for(let k=0;k<=10;k++){ ph.push(eh); pa.push(ea); eh*=lh/(k+1); ea*=la/(k+1); }
+  let pH=0,pD=0,pA=0;
+  for(let i=0;i<=10;i++)for(let j=0;j<=10;j++){
+    let p=ph[i]*pa[j];
+    if(i<2&&j<2){
+      if(i===0&&j===0)p*=1-lh*la*rho;
+      else if(i===0&&j===1)p*=1+lh*rho;
+      else if(i===1&&j===0)p*=1+la*rho;
+      else p*=1-rho;
+    }
+    if(i>j)pH+=p; else if(i===j)pD+=p; else pA+=p;
+  }
+  const s=pH+pD+pA;
+  return {pH:pH/s,pD:pD/s,pA:pA/s,lh,la};
+}
+
+// Match heat: closeness x chasing x stakes, per side (see Guide).
+function contested(name){
+  const s=model.stakes&&model.stakes.clubs&&model.stakes.clubs[name];
+  if(!s) return 0;
+  return Math.max(4*s.title*(1-s.title),4*s.top4*(1-s.top4),4*s.rel*(1-s.rel));
+}
+function heatFor(md,pr,ownWin,oppWin,ownName){
+  const closeness=1-Math.abs(pr.pH-pr.pA);
+  const ramp=Math.min(1,Math.max(0,(md-25)/13));
+  return (1+0.20*(closeness-0.5))*(1+0.12*(oppWin-ownWin))*(1+0.08*contested(ownName)*ramp);
+}
+
+const LEAGUE_CA=(()=>{ const v=CLUBS.filter(c=>c.ca!=null); return v.reduce((s,c)=>s+c.ca,0)/v.length; })();
+const REF_AVG_YPG=(()=>{ const v=REFS.filter(r=>r.ypg!=null&&r.matches); const m=v.reduce((s,r)=>s+r.matches,0); return v.reduce((s,r)=>s+r.ypg*r.matches,0)/m; })();
+function estCards(caH,caA,heatH,heatA,refStats){
+  const base=(caH!=null?caH:LEAGUE_CA)*heatH+(caA!=null?caA:LEAGUE_CA)*heatA;
+  return base*(refStats&&refStats.ypg?refStats.ypg/REF_AVG_YPG:1);
+}
+
+function findRef(name){
+  if(!name) return null;
+  const low=name.trim().toLowerCase();
+  let r=REFS.find(x=>x.n.toLowerCase()===low);
+  if(r) return r;
+  const sur=low.split(/\s+/).pop();
+  const hits=REFS.filter(x=>x.n.toLowerCase().split(/\s+/).pop()===sur);
+  return hits.length===1?hits[0]:null;
+}
+function refFor(homeName,awayName){
+  const R=model.referees;
+  if(!R||!R.matches) return null;
+  const m=R.matches.find(x=>x.home===homeName&&x.away===awayName);
+  return m?{name:m.ref,stats:findRef(m.ref)}:null;
+}
+
+// Fixture calendar: datalist for the tracker + "Fixture v Fixture" -> matchday.
+let FIXTURE_MD={};
+function rebuildCalendar(){
+  FIXTURE_MD={};
+  const dl=$("fixlist"); dl.innerHTML="";
+  (model.fixtures||[]).forEach((pairs,i)=>{
+    const md=i+1;
+    pairs.forEach(([h,a])=>{
+      const hs=mShort(h),as=mShort(a);
+      const label=`${hs?clubName(hs):h} v ${as?clubName(as):a}`;
+      FIXTURE_MD[label.toLowerCase()]=md;
+      FIXTURE_MD[`${h} v ${a}`.toLowerCase()]=md;
+      const o=document.createElement("option"); o.value=label; o.label=`MD${md}`;
+      dl.appendChild(o);
+    });
+  });
+}
+
 // ---- state ----
 let state=loadState();
 function loadState(){ try{ const s=JSON.parse(localStorage.getItem(STORE_KEY))||{}; return {picks:s.picks||[]}; }catch(e){ return {picks:[]}; } }
@@ -919,6 +998,87 @@ function renderRefs(){
   });
 }
 
+// ---- gameweek ----
+let gwMd=null;
+function gwDefaultMd(){
+  const d=model.fixture_dates;
+  if(!d) return 1;
+  const today=new Date(); today.setHours(0,0,0,0);
+  for(let md=1;md<=38;md++){
+    const s=d[String(md)];
+    if(s&&new Date(s+"T23:59:59")>=today) return md;
+  }
+  return 38;
+}
+function gwInitSelect(){
+  const sel=$("gwMatchday"); sel.innerHTML="";
+  const n=(model.fixtures||[]).length||38;
+  for(let md=1;md<=n;md++){
+    const o=document.createElement("option"); o.value=md;
+    const d=model.fixture_dates&&model.fixture_dates[String(md)];
+    o.textContent=`MD ${md}`+(d?` · ${new Date(d+"T12:00:00").toLocaleDateString("en-GB",{day:"numeric",month:"short"})}`:"");
+    sel.appendChild(o);
+  }
+  if(gwMd==null||gwMd>n) gwMd=Math.min(gwDefaultMd(),n);
+  sel.value=gwMd;
+}
+function topRisks(short,n){
+  let ps=PL_PLAYERS.filter(p=>p.c===short&&p.r!=null&&!p.ls);
+  if(ps.length<n) ps=PL_PLAYERS.filter(p=>p.c===short&&p.r!=null);
+  return [...ps].sort((a,b)=>b.r-a.r).slice(0,n);
+}
+function heatChip(v,side){
+  const cls=v>=1.04?"tier-target":v<=0.96?"tier-fade":"tier-mid";
+  return `<span class="chip ${cls}" title="${side} match heat: closeness x chasing x stakes">${side} ${v.toFixed(2)}</span>`;
+}
+function gwRiskLine(p,heat){
+  const gw=p.r*heat;
+  return `<li style="display:flex;justify-content:space-between;gap:.5rem;align-items:baseline"><span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(p.n)}</span><span class="num" style="font-weight:700;color:${riskColour(gw)}" title="risk ${p.r.toFixed(2)} x heat ${heat.toFixed(2)}">${gw.toFixed(2)}</span></li>`;
+}
+function renderGW(){
+  const wrap=$("gwFixtures"); wrap.innerHTML="";
+  $("gwStatus").textContent=`model ${model.version||"?"} · ${modelSource}`;
+  const fx=model.fixtures&&model.fixtures[gwMd-1];
+  const d=model.fixture_dates&&model.fixture_dates[String(gwMd)];
+  $("gwDate").textContent=d?`· weekend of ${new Date(d+"T12:00:00").toLocaleDateString("en-GB",{weekday:"short",day:"numeric",month:"long",year:"numeric"})}`:"";
+  if(!fx){ wrap.innerHTML='<p class="muted" style="padding:.5rem">No fixture list available.</p>'; return; }
+  const frag=document.createDocumentFragment();
+  fx.forEach(([h,a])=>{
+    const hs=mShort(h),as=mShort(a);
+    const cH=CLUBMAP[hs],cA=CLUBMAP[as];
+    const pr=poissonProbs(h,a);
+    const heatH=pr?heatFor(gwMd,pr,pr.pH,pr.pA,h):1;
+    const heatA=pr?heatFor(gwMd,pr,pr.pA,pr.pH,a):1;
+    const ref=refFor(h,a);
+    const est=estCards(cH&&cH.ca,cA&&cA.ca,heatH,heatA,ref&&ref.stats);
+    const bar=pr?
+      `<div style="display:flex;height:8px;border-radius:999px;overflow:hidden;margin:.5rem 0 .25rem;background:var(--surface-3)">`+
+        `<div style="width:${(pr.pH*100).toFixed(1)}%;background:${clubColour(hs)}"></div>`+
+        `<div style="width:${(pr.pD*100).toFixed(1)}%"></div>`+
+        `<div style="width:${(pr.pA*100).toFixed(1)}%;background:${clubColour(as)}"></div></div>`+
+      `<div class="faint num" style="display:flex;justify-content:space-between;font-size:.72rem"><span>${Math.round(pr.pH*100)}%</span><span>draw ${Math.round(pr.pD*100)}%</span><span>${Math.round(pr.pA*100)}%</span></div>`
+      :'<p class="faint" style="font-size:.75rem">No model ratings for this pairing.</p>';
+    const refHtml=ref?
+      `<span title="referee yellows per game, 2025-26">🟨 ${esc(ref.name)}${ref.stats&&ref.stats.ypg!=null?` <strong class="num">${ref.stats.ypg.toFixed(2)}</strong>/gm`:""}</span>`
+      :'<span class="faint">ref TBA</span>';
+    const card=document.createElement("div");
+    card.className="surface"; card.style.cssText="border-radius:14px;padding:.9rem 1rem";
+    card.innerHTML=
+      `<div style="display:flex;align-items:center;justify-content:space-between;gap:.5rem;font-weight:700">`+
+        `<span>${crest(hs)} ${esc(hs||h)}</span><span class="faint" style="font-size:.72rem">v</span><span>${esc(as||a)} ${crest(as)}</span></div>`+
+      bar+
+      `<div class="muted" style="display:flex;align-items:center;gap:.4rem;flex-wrap:wrap;margin:.55rem 0;font-size:.76rem">`+
+        heatChip(heatH,"H")+heatChip(heatA,"A")+
+        `<span title="expected total match cards">est cards <strong class="num">${est.toFixed(1)}</strong></span> · ${refHtml}`+
+        `<span style="flex:1"></span><button type="button" class="btn btn-ghost gw-track" data-h="${hs||""}" data-a="${as||""}" style="font-size:.72rem;padding:.25rem .55rem">+ Track</button></div>`+
+      `<div style="display:grid;grid-template-columns:1fr 1fr;gap:.7rem;font-size:.8rem">`+
+        `<ul style="list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:.22rem">${topRisks(hs,3).map(p=>gwRiskLine(p,heatH)).join("")||'<li class="faint">no data</li>'}</ul>`+
+        `<ul style="list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:.22rem">${topRisks(as,3).map(p=>gwRiskLine(p,heatA)).join("")||'<li class="faint">no data</li>'}</ul></div>`;
+    frag.appendChild(card);
+  });
+  wrap.appendChild(frag);
+}
+
 // ---- pick tracker ----
 const STATUSES=["pending","won","lost","void"]; let pickSeq=1;
 function pickPL(p){ if(p.status==="won") return (Number(p.stake)||0)*((Number(p.odds)||0)-1); if(p.status==="lost") return -(Number(p.stake)||0); return 0; }
@@ -942,7 +1102,7 @@ function renderTracker(){
     const col=p.status==="won"?"var(--good)":p.status==="lost"?"var(--danger)":"var(--text-2)";
     const sel=STATUSES.map(s=>`<option value="${s}"${p.status===s?" selected":""}>${s}</option>`).join("");
     tr.innerHTML=
-      `<td style="padding:.45rem .7rem">${esc(p.fixture)}</td><td style="padding:.45rem .5rem">${esc(p.selection)}</td>`+
+      `<td style="padding:.45rem .7rem">${esc(p.fixture)}${p.md?` <span class="chip tier-fade" style="font-size:.6rem">MD${p.md}</span>`:""}</td><td style="padding:.45rem .5rem">${esc(p.selection)}</td>`+
       `<td style="padding:.45rem .5rem" class="muted">${esc(p.market||"")}</td>`+
       `<td style="text-align:right" class="num">${p.odds?Number(p.odds).toFixed(2):"—"}</td>`+
       `<td style="text-align:right" class="num">${p.stake?Number(p.stake).toFixed(2):"—"}</td>`+
@@ -951,6 +1111,19 @@ function renderTracker(){
       `<td style="text-align:center"><button class="pk-del" data-id="${p.id}" aria-label="Remove pick" title="Remove" style="background:none;border:0;cursor:pointer;color:var(--danger);font-size:1rem">✕</button></td>`;
     tb.appendChild(tr);
   });
+  renderTrackerByMd();
+}
+function renderTrackerByMd(){
+  const box=$("trackerByMd");
+  const withMd=state.picks.filter(p=>p.md);
+  if(!withMd.length){ box.innerHTML=""; return; }
+  const by={};
+  withMd.forEach(p=>{ const b=by[p.md]||(by[p.md]={n:0,pl:0}); b.n++; b.pl+=pickPL(p); });
+  box.innerHTML='<div class="surface muted" style="border-radius:10px;padding:.55rem .8rem;margin-top:.7rem;font-size:.78rem">P/L by matchday: '+
+    Object.keys(by).sort((a,b)=>a-b).map(md=>{
+      const b=by[md], col=b.pl>0?"var(--good)":b.pl<0?"var(--danger)":"var(--text-2)";
+      return `<span class="num" style="margin-right:.9rem">MD${md} · ${b.n} pick${b.n>1?"s":""} · <span style="color:${col}">${b.pl>=0?"+":""}${b.pl.toFixed(2)}</span></span>`;
+    }).join("")+'</div>';
 }
 
 // ---- social PNG export ----
@@ -985,7 +1158,7 @@ async function exportPNG(){
   x.fillText(title,P,126);
   // subtitle
   x.fillStyle="#586275"; x.font=`600 22px ${body}`;
-  x.fillText("Booking risk = yellows/90 ×2 + fouls/90 · 2025-26 form",P,200);
+  x.fillText("Booking risk = yellows/90 ×2 + fouls/90, minutes-shrunk · 2025-26 form",P,200);
   // column hint
   x.fillStyle="#8b94a5"; x.font=`700 16px ${body}`;
   x.textAlign="right"; x.fillText("RISK",W-P,200); x.textAlign="left";
@@ -1033,8 +1206,16 @@ tabs.forEach((tab,i)=>{
 $("exportBtn").addEventListener("click",exportPNG);
 document.querySelectorAll("th [data-sort]").forEach(b=>b.addEventListener("click",()=>{ const k=b.dataset.sort; if(sortKey===k) sortDir*=-1; else { sortKey=k; sortDir=(k==="n"||k==="p")?1:-1; } renderPlayers(); }));
 $("pickForm").addEventListener("submit",e=>{ e.preventDefault();
-  const p={id:"p"+(pickSeq++)+"_"+state.picks.length,fixture:$("pkFixture").value.trim(),selection:$("pkSelection").value.trim(),market:$("pkMarket").value.trim(),odds:$("pkOdds").value,stake:$("pkStake").value,status:"pending"};
+  const fixture=$("pkFixture").value.trim();
+  const p={id:"p"+(pickSeq++)+"_"+state.picks.length,fixture,selection:$("pkSelection").value.trim(),market:$("pkMarket").value.trim(),odds:$("pkOdds").value,stake:$("pkStake").value,status:"pending",md:FIXTURE_MD[fixture.toLowerCase()]||null};
   if(!p.fixture||!p.selection) return; state.picks.push(p); saveState(); renderTracker(); e.target.reset(); $("pkFixture").focus();
+});
+$("gwMatchday").addEventListener("change",e=>{ gwMd=Number(e.target.value); renderGW(); });
+$("gwFixtures").addEventListener("click",e=>{
+  const b=e.target.closest(".gw-track"); if(!b) return;
+  $("pkFixture").value=`${clubName(b.dataset.h)} v ${clubName(b.dataset.a)}`;
+  selectTab(tabs.find(t=>t.id==="tab-tracker"));
+  $("pkSelection").focus();
 });
 $("pickRows").addEventListener("change",e=>{ const s=e.target.closest(".pk-status"); if(!s) return; const p=state.picks.find(x=>x.id===s.dataset.id); if(p){ p.status=s.value; saveState(); renderTracker(); } });
 $("pickRows").addEventListener("click",e=>{ const b=e.target.closest(".pk-del"); if(!b) return; state.picks=state.picks.filter(x=>x.id!==b.dataset.id); saveState(); renderTracker(); });
@@ -1047,10 +1228,22 @@ applyTheme((()=>{ try{ return localStorage.getItem(THEME_KEY)||"light"; }catch(e
 
 // init
 fillClubFilter();
+rebuildCalendar();
+gwInitSelect();
 renderPlayers();
 renderClubs();
 renderRefs();
 renderTracker();
+renderGW();
+// Upgrade to the live weekly bundle when reachable; the snapshot already rendered.
+fetch(MODEL_URL,{cache:"no-cache"})
+  .then(r=>r.ok?r.json():Promise.reject(new Error("HTTP "+r.status)))
+  .then(m=>{
+    if(!m||!m.teams||!m.fixtures) throw new Error("bad bundle");
+    model=m; modelSource="live";
+    rebuildCalendar(); gwInitSelect(); renderGW(); renderTracker();
+  })
+  .catch(()=>{ modelSource="bundled snapshot (live fetch unavailable)"; renderGW(); });
 </script>
 </body>
 </html>
