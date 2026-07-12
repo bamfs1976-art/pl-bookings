@@ -261,7 +261,7 @@
     <p class="faint" style="font-size:.78rem;margin-top:.6rem">Set a result to settle a pick. Hit-rate counts settled picks only, void excluded. <span id="trackerSyncNote">Picks save to this browser under pl_desk_v1 — sign in (top right) to sync them across devices.</span></p>
     <details class="surface" style="border-radius:12px;padding:1rem;margin-top:1rem">
       <summary style="cursor:pointer;font-weight:600;font-family:'Bricolage Grotesque',sans-serif">✨ AI review of your picks</summary>
-      <p class="muted" style="font-size:.82rem;margin:.7rem 0">Optional. Your settled picks go to this site's own <code>/api/insights</code> function, which holds the AI key server-side, and you get back a short read on which markets are working and what to change. Needs at least 3 settled picks. Not available if the deploy hasn't switched it on.</p>
+      <p class="muted" style="font-size:.82rem;margin:.7rem 0">Optional. Your settled picks go to this site's own <code>/api/insights</code> function, which holds the AI key server-side, and you get back a short read on which markets are working and what to change. Needs at least 3 settled picks and a signed-in account (the review is rate-limited per user per day). Not available if the deploy hasn't switched it on.</p>
       <button id="insightsBtn" class="btn btn-ghost" type="button">Analyse my picks</button>
       <div id="insightsOut" class="muted" style="font-size:.86rem;line-height:1.55;margin-top:.7rem;white-space:pre-wrap"></div>
     </details>
@@ -284,7 +284,7 @@
       <h3>Watchlist</h3>
       <p>Tap the ☆ star on any player row to pin him, and tick <strong>★ Watchlist</strong> in the filter bar to see only your starred players — low-sample players included, since you starred them on purpose. The list saves to this browser.</p>
       <h3>AI review of your picks</h3>
-      <p>Optional, in the Tracker tab. Once you have three or more settled picks, the review sends them to the desk's own server function and returns a short read on which markets are paying, whether your odds range shows a pattern, and what to change. The AI key lives on the server, never in your browser. If the deploy hasn't enabled it, the desk simply says so — nothing else depends on it.</p>
+      <p>Optional, in the Tracker tab. Once you have three or more settled picks, the review sends them to the desk's own server function and returns a short read on which markets are paying, whether your odds range shows a pattern, and what to change. The AI key lives on the server, never in your browser. You need to be signed in — the review is tied to your account and capped per day so the shared budget can't be drained. If the deploy hasn't enabled it, the desk simply says so — nothing else depends on it.</p>
       <h3>Where the numbers come from</h3>
       <p>Player and club form is 2025-26 from ScoutingStats, refreshed in season with live card counts from the official FPL API. Seventeen clubs are on Premier League data. The three promoted clubs, Coventry, Ipswich and Hull, carry their 2025-26 Championship form, flagged EFL, since that is their only recent record. Referee figures are 2025-26 season averages from public data.</p>
       <h3>Accounts and sync</h3>
@@ -558,19 +558,25 @@ $("pickRows").addEventListener("click",e=>{ const b=e.target.closest(".pk-del");
 // Ported from Booking Analytics Pro. The Anthropic key never reaches the
 // browser: /api/insights is this site's own Netlify Function, which holds
 // the key in its environment and answers 501 when it isn't configured.
+// The function requires a signed-in Supabase session (and rate-limits per
+// user per day), so the session token rides along on the request.
 async function runInsights(){
   const out=$("insightsOut"), btn=$("insightsBtn");
   const settled=state.picks.filter(p=>p.status==="won"||p.status==="lost"||p.status==="void");
   if(settled.length<3){ out.textContent="Settle at least 3 picks first — the review works off results, not intentions."; return; }
+  if(!SESSION||!SESSION.access_token){ out.textContent="Sign in to use the AI review — the server only spends AI budget on signed-in users. Sign in (top right) and try again."; return; }
   btn.disabled=true; out.textContent="Analysing your picks…";
   try{
-    const res=await fetch("/api/insights",{method:"POST",headers:{"Content-Type":"application/json"},
+    const res=await fetch("/api/insights",{method:"POST",
+      headers:{"Content-Type":"application/json","Authorization":"Bearer "+SESSION.access_token,"X-Supabase-Key":SUPA.key},
       body:JSON.stringify({picks:settled.map(p=>({fixture:p.fixture,selection:p.selection,market:p.market,odds:p.odds,stake:p.stake,status:p.status}))})});
     if(res.status===501){ out.textContent="Not switched on for this deploy — set ANTHROPIC_API_KEY in the Netlify environment to enable the AI review. Everything else works without it."; return; }
     const data=await res.json().catch(()=>({}));
-    if(!res.ok) throw new Error(data.error||("insights "+res.status));
+    if(res.status===401){ out.textContent="Sign in to use the AI review — your session may have expired. Sign in again (top right)."; return; }
+    if(res.status===429){ out.textContent=data.detail||"You've reached today's AI review limit — try again tomorrow."; return; }
+    if(!res.ok) throw new Error(data.detail||data.error||("insights "+res.status));
     out.textContent=data.text||"No analysis returned.";
-  }catch(e){ out.textContent="The review is unavailable right now — try again in a minute."; }
+  }catch(e){ out.textContent="The review is unavailable right now — try again in a minute."+(e&&e.message&&!/^insights \d+$/.test(e.message)?" ("+e.message+")":""); }
   finally{ btn.disabled=false; }
 }
 $("insightsBtn").addEventListener("click",runInsights);
