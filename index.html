@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data: https://cdn.sportmonks.com; connect-src 'self' https://knodunjnsxelmpziupwk.supabase.co">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data: https://cdn.sportmonks.com; connect-src 'self' https://knodunjnsxelmpziupwk.supabase.co">
 <title>Bookings Desk · Premier League</title>
 <meta name="description" content="Premier League 2026-27 player-bookings analysis. Player card risk, club discipline, referees, fixtures and a suspension watch, on live FPL data.">
 <link rel="icon" href="favicon.svg" type="image/svg+xml">
@@ -12,7 +12,17 @@
 <meta name="theme-color" content="#3d195b">
 <meta property="og:title" content="Bookings Desk · Premier League">
 <meta property="og:description" content="Stats-based Premier League player-bookings analysis for 2026-27.">
-<script src="https://cdn.tailwindcss.com"></script>
+<meta property="og:type" content="website">
+<meta property="og:image" content="/og.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Bookings Desk — player bookings research for the Premier League">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Bookings Desk · Premier League">
+<meta name="twitter:description" content="Player bookings research for the Premier League — card risk, referees, fixtures and value checks.">
+<meta name="twitter:image" content="/og.png">
+<!-- Purged Tailwind build (preflight + used utilities), self-hosted: no CDN, no render-blocking third-party script. Rebuild with: npx tailwindcss@3 -i <input with @tailwind directives> -o assets/tw.css --content index.html --minify -->
+<link rel="stylesheet" href="assets/tw.css">
 <!-- Supabase client for optional account sync. Deferred, so the app never
      waits on it; if it fails to load, sign-in is simply unavailable. -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js" defer></script>
