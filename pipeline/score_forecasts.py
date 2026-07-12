@@ -143,8 +143,9 @@ def cmd_score():
         m = by_fixture.get(e["fixture_id"])
         if not m:
             continue
-        booked = {b.lower() for b in m.get("booked", [])}
-        scored.append({**e, "outcome": 1 if e["player"].lower() in booked else 0})
+        booked = m.get("booked", [])
+        hit = any(model.names_match(e["player"], b) for b in booked)
+        scored.append({**e, "outcome": 1 if hit else 0})
 
     fcs = [model.Forecast(p=s["p"], outcome=s["outcome"]) for s in scored]
     by_mw = {}

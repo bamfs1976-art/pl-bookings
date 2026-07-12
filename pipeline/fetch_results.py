@@ -78,11 +78,19 @@ def main():
             continue
         ev = api(f"fixtures/events?fixture={fx['id']}", key)
         booked = []
+        cards = {"home": 0, "away": 0, "total": 0}
         for e in ev.get("response", []):
-            if e.get("type") == "Card":
-                nm = (e.get("player") or {}).get("name")
-                if nm and nm not in booked:
-                    booked.append(nm)
+            if e.get("type") != "Card":
+                continue
+            nm = (e.get("player") or {}).get("name")
+            if nm and nm not in booked:
+                booked.append(nm)
+            side = short((e.get("team") or {}).get("name") or "")
+            cards["total"] += 1
+            if side == h:
+                cards["home"] += 1
+            elif side == a:
+                cards["away"] += 1
         matches.append({
             "fixture_id": fid, "mw": mw,
             "kickoff": fx.get("date"),
@@ -90,6 +98,7 @@ def main():
             "score": f'{item["goals"]["home"]}-{item["goals"]["away"]}',
             "referee": fx.get("referee"),
             "booked": booked,
+            "cards": cards,
         })
         fetched += 1
         time.sleep(0.4)  # stay friendly to the free-tier rate limit

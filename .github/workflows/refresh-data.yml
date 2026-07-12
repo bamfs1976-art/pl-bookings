@@ -18,7 +18,12 @@ name: Refresh matchday data
 
 on:
   schedule:
-    - cron: "0 6 * * 2"   # Tuesday 06:00 UTC, after the matchweek completes
+    # after each round of games, so picks settle the same night the whistle
+    # goes rather than days later, plus the Tuesday full sweep
+    - cron: "0 23 * * 6"  # Saturday night UTC
+    - cron: "0 23 * * 0"  # Sunday night UTC
+    - cron: "0 23 * * 1"  # Monday night UTC (MNF)
+    - cron: "0 6 * * 2"   # Tuesday 06:00 UTC full sweep
   workflow_dispatch:
     inputs:
       as_of_matchday:

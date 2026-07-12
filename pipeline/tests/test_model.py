@@ -143,6 +143,54 @@ def test_fair_odds():
     assert math.isclose(model.fair_odds(0.25), 4.0)
 
 
+# ---- name matching --------------------------------------------------------
+
+def test_names_match_abbreviated_feeds():
+    assert model.names_match("Declan Rice", "D. Rice")
+    assert model.names_match("D. Rice", "Declan Rice")
+    assert model.names_match("Martín Ødegaard", "M. Odegaard")  # accents fold
+    assert model.names_match("Evanilson", "Evanilson")
+
+
+def test_names_match_rejects_different_players():
+    assert not model.names_match("Declan Rice", "T. Rice")   # wrong initial
+    assert not model.names_match("Declan Rice", "D. Price")  # wrong surname
+    assert not model.names_match("", "D. Rice")
+    assert not model.names_match(None, None)
+
+
+# ---- hit rates -------------------------------------------------------------
+
+def match(ref=None, booked=(), home=0, away=0):
+    total = home + away
+    m = {"booked": list(booked), "referee": ref}
+    if home or away:
+        m["cards"] = {"home": home, "away": away, "total": total}
+    return m
+
+
+def test_recent_club_hits_window_and_matching():
+    ms = [match(booked=["D. Rice"]), match(), match(booked=["Declan Rice"])]
+    hits, n = model.recent_club_hits(ms, "Declan Rice", n=10)
+    assert (hits, n) == (2, 3)
+    # window trims oldest-first
+    hits, n = model.recent_club_hits(ms, "Declan Rice", n=2)
+    assert (hits, n) == (1, 2)
+
+
+def test_ref_hit_rates():
+    ms = [
+        match(ref="A. Taylor", home=3, away=2),   # 5 cards, both carded
+        match(ref="A. Taylor", home=2, away=0),   # 2 cards, one side only
+        match(ref="M. Oliver", booked=["A", "B"]),  # falls back to booked count
+    ]
+    rates = model.ref_hit_rates(ms)
+    t = rates["A. Taylor"]
+    assert t["n"] == 2 and t["o45"] == 0.5 and t["btc"] == 0.5
+    o = rates["M. Oliver"]
+    assert o["n"] == 1 and o["o45"] == 0.0 and o["btc"] is None  # no side counts
+
+
 # ---- evaluation -----------------------------------------------------------
 
 def test_brier_perfect_and_worst():

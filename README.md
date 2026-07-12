@@ -8,13 +8,18 @@ forecasts before kick-off and scores them after.
 ## What it does
 
 - **Fixtures** — every game of the matchweek priced: the five most bookable
-  players per side with P(card) and fair odds. Set the referee when PGMOL
-  announce appointments and every probability re-prices live. Derby heat and
-  a suspension watch (players one yellow from a 5/10/15 ban) included.
+  players per side with P(card), fair odds, and a per-player odds box that
+  shows the edge (EV) against your bookmaker's price. Set the referee when
+  PGMOL announce appointments and every probability re-prices live. Derby
+  heat, "carded in X of last 10" evidence, rotation-risk flags, confirmed
+  lineups near kick-off (XI / bench chips, non-squad players drop out) and
+  a suspension watch included. Opt-in alerts (off by default) flag settled
+  picks and referee announcements when you next open the desk.
 - **Players** — all ~530 squad players with raw rates (YC/90, fouls/90) and
   model outputs (risk, neutral-fixture P(card)). Share-card PNG export.
 - **Clubs / Referees** — discipline tiers and the referee watchlist, with the
-  exact card factor each official applies to forecasts.
+  exact card factor each official applies to forecasts plus in-season
+  O4.5-cards and both-teams-carded hit rates.
 - **Tracker** — log picks (one tap from a fixture card), auto-settled against
   booked lists when results land. Hit-rate, P/L, ROI.
 - **Model** — the published-forecast Brier score and calibration table, so
@@ -51,8 +56,9 @@ pipeline/
   build_dataset.py          sources -> app-data.js
   score_forecasts.py        freeze matchweek forecasts / score vs results
   fetch_fixtures.py         football-data.org or fixturedownload.com
-  fetch_stats.py            ScoutingStats in-season player stats
-  fetch_results.py          API-Football results + booked players
+  fetch_stats.py            API-Football in-season player stats
+  fetch_results.py          API-Football results, booked players, card counts
+  fetch_lineups.py          API-Football confirmed lineups near kick-off
   sources/                  tracked JSON inputs (prior season, fixtures, ...)
   store/                    forecast log + scores (written by the pipeline)
   tests/                    pytest suite
@@ -61,7 +67,11 @@ pipeline/
 
 ## The weekly loop
 
-Every Tuesday (or on manual dispatch) the GitHub Action:
+The refresh Action runs after each round of games (Sat/Sun/Mon nights, so
+picks settle the same night) plus a Tuesday full sweep, and on manual
+dispatch. A second hourly workflow (`lineups-refresh.yml`, Fri–Mon around
+kick-off windows) pulls confirmed XIs so imminent fixtures re-price on real
+team news. Each run the main Action:
 
 1. fetches fixtures, in-season stats and results (each step no-ops if its
    secret isn't configured — the site keeps running on the last good data),

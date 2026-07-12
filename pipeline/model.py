@@ -19,6 +19,7 @@ toward his position's league mean, so 1-minute cameos can't produce
 from __future__ import annotations
 
 import math
+import unicodedata
 from dataclasses import dataclass
 
 # ---------------------------------------------------------------------------
@@ -176,6 +177,87 @@ def fair_odds(p: float) -> float | None:
     if p <= 0.0:
         return None
     return 1.0 / p
+
+
+# ---------------------------------------------------------------------------
+# Name matching: feeds abbreviate ("D. Rice") while our data says
+# "Declan Rice". Surname must match exactly (accent/case-insensitive);
+# the first token only needs a matching initial.
+# ---------------------------------------------------------------------------
+
+# Letters NFKD can't decompose (stroked/special forms, not combining accents)
+_FOLD = str.maketrans({"ø": "o", "Ø": "O", "đ": "d", "Đ": "D", "ł": "l",
+                       "Ł": "L", "ð": "d", "Ð": "D", "þ": "th", "Þ": "Th",
+                       "æ": "ae", "Æ": "Ae", "œ": "oe", "Œ": "Oe", "ß": "ss",
+                       "ı": "i", "İ": "I"})
+
+
+def normalize_name(s: str | None) -> str:
+    s = (s or "").translate(_FOLD)
+    s = unicodedata.normalize("NFKD", s)
+    s = "".join(ch for ch in s if not unicodedata.combining(ch))
+    return " ".join(s.lower().replace(".", " ").split())
+
+
+def names_match(a: str | None, b: str | None) -> bool:
+    na, nb = normalize_name(a), normalize_name(b)
+    if not na or not nb:
+        return False
+    if na == nb:
+        return True
+    ta, tb = na.split(), nb.split()
+    if ta[-1] != tb[-1]:
+        return False
+    return ta[0][0] == tb[0][0]
+
+
+# ---------------------------------------------------------------------------
+# Hit rates from finished matches (the FootyMetrics-style evidence windows)
+# ---------------------------------------------------------------------------
+
+def recent_club_hits(club_matches: list[dict], player_name: str,
+                     n: int = 10) -> tuple[int, int]:
+    """(times carded, window) across the club's last n finished matches.
+
+    club_matches must be ordered oldest-first and carry booked name lists.
+    The window counts club games, not player appearances — per-match minutes
+    aren't in the results feed.
+    """
+    last = club_matches[-n:]
+    hits = sum(1 for m in last
+               if any(names_match(player_name, b) for b in m.get("booked") or []))
+    return hits, len(last)
+
+
+def ref_hit_rates(matches: list[dict]) -> dict[str, dict]:
+    """Per-referee card-market hit rates from finished matches.
+
+    Returns {raw referee string: {n, o45, btc}} where o45 is the share of
+    matches with 5+ total cards and btc the share where both sides picked up
+    at least one card (None when per-side counts are unavailable).
+    """
+    acc: dict[str, dict] = {}
+    for m in matches:
+        ref = m.get("referee")
+        if not ref:
+            continue
+        d = acc.setdefault(ref, {"n": 0, "o45": 0, "btc": 0, "btc_n": 0})
+        d["n"] += 1
+        cards = m.get("cards") or {}
+        total = cards.get("total")
+        if total is None:
+            total = len(m.get("booked") or [])
+        if total >= 5:
+            d["o45"] += 1
+        h, a = cards.get("home"), cards.get("away")
+        if h is not None and a is not None:
+            d["btc_n"] += 1
+            if h > 0 and a > 0:
+                d["btc"] += 1
+    return {ref: {"n": d["n"],
+                  "o45": round(d["o45"] / d["n"], 3),
+                  "btc": round(d["btc"] / d["btc_n"], 3) if d["btc_n"] else None}
+            for ref, d in acc.items()}
 
 
 # ---------------------------------------------------------------------------

@@ -82,9 +82,11 @@
   .fixhead{display:flex;align-items:center;justify-content:space-between;gap:.6rem;padding:.7rem .9rem;border-bottom:1px solid var(--border);flex-wrap:wrap}
   .fixteams{font-family:'Bricolage Grotesque',sans-serif;font-weight:700;font-size:1.02rem;display:flex;align-items:center;gap:.45rem;flex-wrap:wrap}
   .cands{display:grid;grid-template-columns:1fr 1fr;gap:0}
-  .cands>div{padding:.55rem .7rem}
+  .cands>div{padding:.55rem .7rem;min-width:0}
   .cands>div:first-child{border-right:1px solid var(--border)}
-  .cand{display:flex;align-items:center;justify-content:space-between;gap:.4rem;padding:.22rem 0;font-size:.85rem}
+  .cand{display:flex;align-items:center;justify-content:space-between;gap:.35rem;padding:.22rem 0;font-size:.85rem;flex-wrap:wrap}
+  .cand>span:last-child{margin-left:auto}
+  .bko{width:52px !important}
   .cand .nm{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
   .pbadge{font-weight:800;font-variant-numeric:tabular-nums;font-size:.9rem}
   .odds{color:var(--text-3);font-size:.72rem;font-variant-numeric:tabular-nums}
@@ -143,8 +145,17 @@
       <label class="muted" style="font-size:.85rem">Matchweek
         <select id="mwSelect" aria-label="Select matchweek"></select>
       </label>
-      <span class="faint" style="font-size:.78rem">Pick the referee on each game when PGMOL announce appointments — probabilities update live. TBC uses the league-average official.</span>
+      <span class="faint" style="font-size:.78rem;flex:1;min-width:200px">Pick the referee on each game when PGMOL announce appointments — probabilities update live. TBC uses the league-average official. Type a bookmaker price in a player's odds box to see the model's edge (EV).</span>
+      <details id="alertsBox" style="position:relative">
+        <summary class="btn btn-ghost" style="list-style:none;cursor:pointer">🔔 Alerts</summary>
+        <div class="surface" style="position:absolute;right:0;margin-top:.3rem;z-index:30;border-radius:10px;padding:.8rem;width:280px;font-size:.8rem">
+          <label style="display:flex;gap:.4rem;align-items:center"><input type="checkbox" id="alSettled"> Picks auto-settled</label>
+          <label style="display:flex;gap:.4rem;align-items:center;margin-top:.35rem"><input type="checkbox" id="alRefs"> Referee announced on tracked games</label>
+          <p class="faint" style="margin:.5rem 0 0;font-size:.7rem">Checked each time you open the desk after a data refresh; a browser notification also fires if you allow it. Everything stays in this browser — no server, no spam.</p>
+        </div>
+      </details>
     </div>
+    <div id="alertBanner"></div>
     <div id="susWatch" style="margin-bottom:.9rem"></div>
     <div id="fixtureCards" class="fixgrid"></div>
     <p class="faint" style="font-size:.78rem;margin-top:.8rem">P(card) is the model probability the player is shown a card: a Poisson rate from blended, shrunk yellows/90, scaled by expected minutes, referee, venue and derby heat. Fair odds are 1 ÷ P — value sits where a bookmaker's price is longer. ＋ logs the player to the Tracker; logged picks auto-settle when results land.</p>
@@ -176,6 +187,7 @@
           <th scope="col" style="text-align:center;padding:.6rem .4rem"><button data-sort="p" type="button">Pos</button></th>
           <th scope="col" style="text-align:right;padding:.6rem .4rem"><button data-sort="min" type="button">Mins</button></th>
           <th scope="col" style="text-align:right;padding:.6rem .4rem"><button data-sort="yc" type="button">YC</button></th>
+          <th scope="col" style="text-align:right;padding:.6rem .4rem" title="Carded in X of the club's last N games (in-season)">L10</th>
           <th scope="col" style="text-align:right;padding:.6rem .4rem"><button data-sort="y" type="button">YC/90</button></th>
           <th scope="col" style="text-align:right;padding:.6rem .4rem"><button data-sort="f" type="button">Fouls/90</button></th>
           <th scope="col" style="text-align:right;padding:.6rem .4rem"><button data-sort="rs" type="button">Risk</button></th>
@@ -219,12 +231,14 @@
           <th scope="col" style="text-align:right;padding:.6rem .5rem">Yellows /game</th>
           <th scope="col" style="text-align:right;padding:.6rem .5rem">Reds /game</th>
           <th scope="col" style="text-align:right;padding:.6rem .5rem">Pens /game</th>
+          <th scope="col" style="text-align:right;padding:.6rem .5rem" title="Share of this season's games with 5+ total cards">O4.5 cards</th>
+          <th scope="col" style="text-align:right;padding:.6rem .5rem" title="Share of this season's games where both teams were carded">BTC</th>
           <th scope="col" style="text-align:right;padding:.6rem .7rem">Card factor</th>
         </tr></thead>
         <tbody id="refRows"></tbody>
       </table>
     </div>
-    <p class="faint" style="font-size:.78rem;margin-top:.6rem">Card factor is the multiplier the model applies when this referee takes a game: yellows per game over the league average, clamped to 0.70–1.40.</p>
+    <p class="faint" style="font-size:.78rem;margin-top:.6rem">Card factor is the multiplier the model applies when this referee takes a game: yellows per game over the league average, clamped to 0.70–1.40. O4.5 cards and BTC (both teams carded) are 2026-27 hit rates from the results feed — they fill in as the official takes games.</p>
   </section>
 
   <!-- TRACKER -->
@@ -296,7 +310,8 @@
       <h3>Known limits</h3>
       <ul>
         <li>Pre-season forecasts are last season's form; treat promoted-club numbers as indicative until real PL minutes arrive.</li>
-        <li>Expected minutes is a heuristic from season minutes share until appearance data lands — it can't see this week's team news. Check lineups an hour out.</li>
+        <li>Expected minutes is a heuristic (minutes share pre-season, minutes per appearance in-season) until lineups drop. Once the lineup fetcher runs near kick-off, cards show <em>XI confirmed</em>: starters price at full minutes, bench players at cameo minutes, everyone else drops out.</li>
+        <li>The odds box on each candidate is your bookmaker's price; EV = odds × P − 1. Odds typed before logging a pick are saved with it, so the tracker records the price you actually saw.</li>
         <li>Opponent style (how much a side draws fouls) ships neutral until that harvest is switched on; the wiring is already in place.</li>
         <li>No probability is a guarantee. A 35% chance misses two times in three.</li>
       </ul>
@@ -314,7 +329,8 @@
 const DATA=window.DATA||{};
 const CLUBS=DATA.clubs||[], PL_PLAYERS=DATA.players||[], REFS=DATA.refs||[],
       FIXTURES=DATA.fixtures||[], DERBIES=DATA.derbies||[], RESULTS=DATA.results||[],
-      META=DATA.meta||{model:{}}, EVAL=DATA.eval||{n:0,brier:null,bins:[],by_mw:[]};
+      LINEUPS=DATA.lineups||{}, META=DATA.meta||{model:{}},
+      EVAL=DATA.eval||{n:0,brier:null,bins:[],by_mw:[]};
 const MODEL=META.model||{home_factor:.95,away_factor:1.08,ref_factor_min:.7,ref_factor_max:1.4};
 const LEAGUE_YPG=META.league_avg_ypg||3.6;
 
@@ -340,14 +356,26 @@ function clubName(c){ return CLUBMAP[c]?CLUBMAP[c].name:c; }
 function newId(){ return "p"+Date.now().toString(36)+Math.random().toString(36).slice(2,7); }
 function fmtPct(p){ return Math.round(p*100)+"%"; }
 function fmtOdds(p){ if(!p||p<=0) return "—"; const o=1/p; return o>=51?"51+":o.toFixed(o>=10?1:2); }
+// mirrors pipeline/model.py names_match: feeds say "D. Rice", we say "Declan Rice"
+const NAME_FOLD={"ø":"o","đ":"d","ł":"l","ð":"d","þ":"th","æ":"ae","œ":"oe","ß":"ss","ı":"i"};
+function normName(s){ return (s||"").toLowerCase().replace(/[øđłðþæœßı]/g,ch=>NAME_FOLD[ch]).normalize("NFKD").replace(/[̀-ͯ]/g,"").replace(/\./g," ").trim().replace(/\s+/g," "); }
+function namesMatch(a,b){ const na=normName(a),nb=normName(b); if(!na||!nb) return false; if(na===nb) return true; const ta=na.split(" "),tb=nb.split(" "); if(ta[ta.length-1]!==tb[tb.length-1]) return false; return ta[0][0]===tb[0][0]; }
 
 // ---- the forecast model (mirrors pipeline/model.py) ----
 function refFactor(ypg){ if(ypg==null||!LEAGUE_YPG) return 1; return Math.max(MODEL.ref_factor_min, Math.min(MODEL.ref_factor_max, ypg/LEAGUE_YPG)); }
 function derbyInfo(h,a){ return DERBIES.find(d=>(d.pair[0]===h&&d.pair[1]===a)||(d.pair[0]===a&&d.pair[1]===h))||null; }
-function pCard(pl,opts){ opts=opts||{};
+function pCard(pl,opts,emOverride){ opts=opts||{};
   const vf=opts.venue==="home"?MODEL.home_factor:opts.venue==="away"?MODEL.away_factor:1;
-  const lam=(pl.ys||0)*((pl.em||60)/90)*refFactor(opts.refYpg??null)*vf*(opts.derbyF||1);
+  const em=emOverride!=null?emOverride:(pl.em||60);
+  const lam=(pl.ys||0)*(em/90)*refFactor(opts.refYpg??null)*vf*(opts.derbyF||1);
   return 1-Math.exp(-lam);
+}
+// confirmed-lineup status: "xi", "bench", "out", or null when no lineup yet
+function lineupStatus(lu,name){
+  if(!lu) return null;
+  if((lu.starters||[]).some(b=>namesMatch(name,b))) return "xi";
+  if((lu.subs||[]).some(b=>namesMatch(name,b))) return "bench";
+  return "out";
 }
 PL_PLAYERS.forEach(p=>{ p.pc=pCard(p); });
 
@@ -371,18 +399,33 @@ function koLabel(iso){
   const d=new Date(iso); if(isNaN(d)) return "TBC";
   return d.toLocaleString("en-GB",{weekday:"short",day:"numeric",month:"short",hour:"2-digit",minute:"2-digit"});
 }
-function candidates(short,opts){
+const bkOdds={}; // bookmaker odds typed per fixture|player, session-local
+function candidates(short,opts,lu){
   return PL_PLAYERS.filter(p=>p.c===short)
-    .map(p=>({p, prob:pCard(p,opts)}))
+    .map(p=>{
+      const st=lineupStatus(lu,p.n);
+      if(st==="out") return null;
+      const em=st==="xi"?86:st==="bench"?20:null;
+      return {p, st, prob:pCard(p,opts,em)};
+    }).filter(Boolean)
     .sort((a,b)=>b.prob-a.prob).slice(0,5);
 }
+function evColour(ev){ return ev==null?"var(--text-3)":ev>0?"var(--good)":"var(--danger)"; }
 function candRow(c,fx){
-  const {p,prob}=c;
+  const {p,prob,st}=c;
   const logged=state.picks.some(k=>k.meta&&k.meta.fixtureId===fx.id&&k.meta.player===p.n);
+  const key=fx.id+"|"+p.n, bo=bkOdds[key]||"";
+  const ev=bo?((Number(bo)*prob-1)*100):null;
+  const luChip=st==="xi"?'<span class="chip tier-target" style="font-size:.6rem">XI</span>'
+    :st==="bench"?'<span class="chip tier-fade" style="font-size:.6rem">bench</span>'
+    :(p.em<60&&p.min>=450?'<span class="chip tier-mid" style="font-size:.6rem" title="Not a nailed starter — check team news">rot?</span>':'');
+  const l10=p.h10?` <span class="faint num" style="font-size:.68rem" title="Carded in ${p.h10[0]} of ${p.c}'s last ${p.h10[1]} games">${p.h10[0]}/${p.h10[1]}</span>`:'';
   return `<div class="cand">
-    <span class="nm">${esc(p.n)} <span class="faint" style="font-size:.72rem">${esc(p.p||"")}</span></span>
-    <span style="display:inline-flex;align-items:center;gap:.45rem;flex:none">
-      <span class="odds">${fmtOdds(prob)}</span>
+    <span class="nm">${esc(p.n)} <span class="faint" style="font-size:.72rem">${esc(p.p||"")}</span> ${luChip}${l10}</span>
+    <span style="display:inline-flex;align-items:center;gap:.4rem;flex:none">
+      <input class="bko" data-key="${esc(key)}" type="number" min="1.01" step="0.01" placeholder="odds" value="${bo}" aria-label="Bookmaker odds for ${esc(p.n)}" style="width:60px;padding:.15rem .3rem;font-size:.72rem;box-shadow:none">
+      <span class="ev num" style="font-size:.7rem;font-weight:700;min-width:36px;text-align:right;color:${evColour(ev)}">${ev==null?"":(ev>0?"+":"")+ev.toFixed(0)+"%"}</span>
+      <span class="odds" title="Fair (break-even) odds">${fmtOdds(prob)}</span>
       <span class="pbadge num" style="color:${pColour(prob)}">${fmtPct(prob)}</span>
       <button class="logbtn" data-fx="${fx.id}" data-player="${esc(p.n)}" data-p="${prob.toFixed(4)}" title="Log to tracker" ${logged?"disabled":""}>${logged?"✓":"＋"}</button>
     </span>
@@ -399,6 +442,7 @@ function renderFixtures(){
     const ref=REFMAP[refName]||null;
     const opts={refYpg:ref?ref.ypg:null,derbyF:derby?derby.factor:1};
     const res=RESULTMAP[fx.id];
+    const lu=LINEUPS[fx.id]||null;
     const options='<option value="">Referee TBC — league avg</option>'+[...REFS].sort((a,b)=>(b.ypg||0)-(a.ypg||0))
       .map(r=>`<option value="${esc(r.n)}"${r.n===refName?" selected":""}>${esc(r.n)}${r.ypg!=null?` (${r.ypg.toFixed(1)}/gm)`:""}</option>`).join("");
     const card=document.createElement("div");
@@ -408,6 +452,7 @@ function renderFixtures(){
         <div>
           <div class="fixteams">${crest(fx.home)} ${esc(clubName(fx.home))} <span class="faint">v</span> ${esc(clubName(fx.away))} ${crest(fx.away)}
             ${derby?`<span class="chip tier-mid" title="${esc(derby.name)} ×${derby.factor}">🔥 ${esc(derby.name)}</span>`:""}
+            ${lu?'<span class="chip tier-target" title="Confirmed lineups loaded — starters at full minutes, bench at cameo minutes">XI confirmed</span>':""}
             ${res?`<span class="chip tier-fade">FT ${esc(res.score||"")}</span>`:""}
           </div>
           <div class="faint" style="font-size:.75rem;margin-top:.15rem">${koLabel(fx.kickoff)}${ref?` · ref factor ×${refFactor(ref.ypg).toFixed(2)}`:""}</div>
@@ -417,11 +462,11 @@ function renderFixtures(){
       <div class="cands">
         <div>
           <div class="faint" style="font-size:.68rem;text-transform:uppercase;letter-spacing:.05em;font-weight:700;margin-bottom:.25rem">${esc(fx.home)} · home ×${MODEL.home_factor}</div>
-          ${candidates(fx.home,{...opts,venue:"home"}).map(c=>candRow(c,fx)).join("")}
+          ${candidates(fx.home,{...opts,venue:"home"},lu).map(c=>candRow(c,fx)).join("")}
         </div>
         <div>
           <div class="faint" style="font-size:.68rem;text-transform:uppercase;letter-spacing:.05em;font-weight:700;margin-bottom:.25rem">${esc(fx.away)} · away ×${MODEL.away_factor}</div>
-          ${candidates(fx.away,{...opts,venue:"away"}).map(c=>candRow(c,fx)).join("")}
+          ${candidates(fx.away,{...opts,venue:"away"},lu).map(c=>candRow(c,fx)).join("")}
         </div>
       </div>`;
     wrap.appendChild(card);
@@ -467,7 +512,7 @@ function currentPlayers(){
 function renderPlayers(){
   const rows=currentPlayers();
   const tb=$("playerRows"); tb.innerHTML="";
-  if(!rows.length){ tb.innerHTML='<tr><td colspan="9" class="muted" style="padding:1rem;text-align:center">No players match.</td></tr>'; return; }
+  if(!rows.length){ tb.innerHTML='<tr><td colspan="10" class="muted" style="padding:1rem;text-align:center">No players match.</td></tr>'; return; }
   const frag=document.createDocumentFragment();
   rows.slice(0,400).forEach(p=>{
     const tr=document.createElement("tr");
@@ -479,6 +524,7 @@ function renderPlayers(){
       `<td style="text-align:center" class="faint num">${esc(p.p||"")}</td>`+
       `<td style="text-align:right" class="num muted">${p.min}</td>`+
       `<td style="text-align:right" class="num muted">${p.yc==null?'—':p.yc}</td>`+
+      `<td style="text-align:right" class="num muted">${p.h10?`<span title="Carded in ${p.h10[0]} of ${p.c}'s last ${p.h10[1]} games">${p.h10[0]}/${p.h10[1]}</span>`:'—'}</td>`+
       `<td style="text-align:right" class="num">${p.y==null?'—':p.y.toFixed(2)}</td>`+
       `<td style="text-align:right" class="num">${p.f==null?'—':p.f.toFixed(2)}</td>`+
       `<td style="text-align:right" class="num">${p.rs==null?'—':`<span style="color:${riskColour(p.rs)};font-weight:700">${p.rs.toFixed(2)}</span>`}</td>`+
@@ -486,7 +532,7 @@ function renderPlayers(){
     frag.appendChild(tr);
   });
   tb.appendChild(frag);
-  if(rows.length>400){ const tr=document.createElement("tr"); tr.innerHTML=`<td colspan="9" class="faint" style="padding:.6rem;text-align:center">Showing top 400 of ${rows.length}. Filter to narrow.</td>`; tb.appendChild(tr); }
+  if(rows.length>400){ const tr=document.createElement("tr"); tr.innerHTML=`<td colspan="10" class="faint" style="padding:.6rem;text-align:center">Showing top 400 of ${rows.length}. Filter to narrow.</td>`; tb.appendChild(tr); }
 }
 
 // ---- clubs ----
@@ -522,6 +568,8 @@ function renderRefs(){
       `<td style="text-align:right"><span class="display num" style="font-size:1.05rem;color:${col}">${r.ypg==null?'—':r.ypg.toFixed(2)}</span></td>`+
       `<td style="text-align:right" class="num muted">${r.red==null?'—':r.red.toFixed(2)}</td>`+
       `<td style="text-align:right" class="num muted">${r.pen==null?'—':r.pen.toFixed(2)}</td>`+
+      `<td style="text-align:right" class="num muted">${r.o45==null?'—':`<span title="${r.sn} games this season">${Math.round(r.o45*100)}%</span>`}</td>`+
+      `<td style="text-align:right" class="num muted">${r.btc==null?'—':`<span title="${r.sn} games this season">${Math.round(r.btc*100)}%</span>`}</td>`+
       `<td style="text-align:right;padding:.55rem .7rem" class="num">${rf==null?'—':'×'+rf.toFixed(2)}</td>`;
     tb.appendChild(tr);
   });
@@ -536,8 +584,7 @@ function autoSettle(){
   state.picks.forEach(p=>{
     if(p.status!=="pending"||!p.meta||!p.meta.fixtureId||!p.meta.player) return;
     const res=RESULTMAP[p.meta.fixtureId]; if(!res) return;
-    const booked=(res.booked||[]).map(n=>n.toLowerCase());
-    p.status=booked.includes(p.meta.player.toLowerCase())?"won":"lost";
+    p.status=(res.booked||[]).some(b=>namesMatch(p.meta.player,b))?"won":"lost";
     p.auto=true; changed=true;
   });
   if(changed) saveState();
@@ -688,13 +735,23 @@ $("fixtureCards").addEventListener("change",e=>{
   const s=e.target.closest(".refsel"); if(!s) return;
   refSel[s.dataset.fx]=s.value; renderFixtures();
 });
+$("fixtureCards").addEventListener("input",e=>{
+  const i=e.target.closest(".bko"); if(!i) return;
+  bkOdds[i.dataset.key]=i.value;
+  const row=i.closest(".cand"), btn=row.querySelector(".logbtn");
+  const p=Number(btn.dataset.p), ev=i.value?(Number(i.value)*p-1)*100:null;
+  const el=row.querySelector(".ev");
+  el.textContent=ev==null?"":(ev>0?"+":"")+ev.toFixed(0)+"%";
+  el.style.color=evColour(ev);
+});
 $("fixtureCards").addEventListener("click",e=>{
   const b=e.target.closest(".logbtn"); if(!b||b.disabled) return;
   const fx=FIXTURES.find(f=>f.id===b.dataset.fx); if(!fx) return;
   state.picks.push({
     id:newId(), fixture:`${clubName(fx.home)} v ${clubName(fx.away)}`,
     selection:`${b.dataset.player} to be carded`, market:"Player booking",
-    odds:"", stake:"", status:"pending", modelP:Number(b.dataset.p),
+    odds:bkOdds[fx.id+"|"+b.dataset.player]||"", stake:"", status:"pending",
+    modelP:Number(b.dataset.p),
     meta:{fixtureId:fx.id, player:b.dataset.player},
   });
   saveState(); renderTracker(); b.disabled=true; b.textContent="✓";
@@ -706,6 +763,45 @@ $("pickForm").addEventListener("submit",e=>{ e.preventDefault();
 $("pickRows").addEventListener("change",e=>{ const s=e.target.closest(".pk-status"); if(!s) return; const p=state.picks.find(x=>x.id===s.dataset.id); if(p){ p.status=s.value; delete p.auto; saveState(); renderTracker(); } });
 $("pickRows").addEventListener("click",e=>{ const b=e.target.closest(".pk-del"); if(!b) return; state.picks=state.picks.filter(x=>x.id!==b.dataset.id); saveState(); renderTracker(); });
 
+// ---- opt-in alerts: diffed on open, nothing server-side ----
+const ALERT_KEY="pl_desk_alerts", SEEN_KEY="pl_desk_seen";
+let alertPrefs=(()=>{ try{ return JSON.parse(localStorage.getItem(ALERT_KEY))||{}; }catch(e){ return {}; } })();
+let seen=(()=>{ try{ return JSON.parse(localStorage.getItem(SEEN_KEY))||{}; }catch(e){ return {}; } })();
+function saveAlerts(){ try{ localStorage.setItem(ALERT_KEY,JSON.stringify(alertPrefs)); localStorage.setItem(SEEN_KEY,JSON.stringify(seen)); }catch(e){} }
+function checkAlerts(){
+  const msgs=[];
+  if(alertPrefs.settled){
+    state.picks.forEach(p=>{
+      if(p.auto&&(p.status==="won"||p.status==="lost")&&!(seen.settled||[]).includes(p.id))
+        msgs.push(`Pick ${p.status.toUpperCase()}: ${p.selection} (${p.fixture})`);
+    });
+  }
+  if(alertPrefs.refs){
+    FIXTURES.forEach(fx=>{
+      if(fx.ref&&state.picks.some(k=>k.meta&&k.meta.fixtureId===fx.id)&&(seen.refs||{})[fx.id]!==fx.ref)
+        msgs.push(`Referee announced: ${fx.ref} takes ${clubName(fx.home)} v ${clubName(fx.away)}`);
+    });
+  }
+  if(msgs.length){
+    $("alertBanner").innerHTML=`<div class="surface" style="border-radius:10px;padding:.7rem .9rem;margin-bottom:.9rem;font-size:.85rem;border-left:3px solid var(--accent-2)">
+      <strong>Since your last visit</strong>
+      <ul style="margin:.3rem 0 0;padding-left:1.2rem">${msgs.map(m=>`<li>${esc(m)}</li>`).join("")}</ul>
+      <button class="btn btn-ghost" style="margin-top:.5rem;padding:.25rem .6rem;font-size:.75rem" onclick="this.parentElement.remove()">Dismiss</button></div>`;
+    if("Notification" in window&&Notification.permission==="granted")
+      try{ new Notification("Bookings Desk",{body:msgs.slice(0,4).join("\n")}); }catch(e){}
+  }
+  seen.settled=state.picks.filter(p=>p.auto&&(p.status==="won"||p.status==="lost")).map(p=>p.id);
+  const refsSeen={}; FIXTURES.forEach(fx=>{ if(fx.ref) refsSeen[fx.id]=fx.ref; }); seen.refs=refsSeen;
+  saveAlerts();
+}
+$("alSettled").checked=!!alertPrefs.settled;
+$("alRefs").checked=!!alertPrefs.refs;
+["alSettled","alRefs"].forEach(id=>$(id).addEventListener("change",e=>{
+  alertPrefs[id==="alSettled"?"settled":"refs"]=e.target.checked; saveAlerts();
+  if(e.target.checked&&"Notification" in window&&Notification.permission==="default")
+    Notification.requestPermission();
+}));
+
 // theme
 const themeToggle=$("themeToggle");
 function applyTheme(t){ document.documentElement.setAttribute("data-theme",t); themeToggle.setAttribute("aria-pressed",t==="light"); $("themeLabel").textContent=t==="light"?"Light":"Dark"; themeToggle.querySelector("span[aria-hidden]").textContent=t==="light"?"☀️":"🌙"; }
@@ -715,6 +811,7 @@ applyTheme((()=>{ try{ return localStorage.getItem(THEME_KEY)||"light"; }catch(e
 // init
 $("dataBadge").textContent=META.built_at?`data ${new Date(META.built_at).toLocaleDateString("en-GB",{day:"numeric",month:"short"})}${META.as_of_matchday?` · MD ${META.as_of_matchday}`:" · pre-season"}`:"data —";
 autoSettle();
+checkAlerts();
 fillMwSelect();
 fillClubFilter();
 renderFixtures();

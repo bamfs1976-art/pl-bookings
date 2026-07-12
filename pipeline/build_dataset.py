@@ -145,9 +145,30 @@ def main():
     derbies = read("derbies.json", {"derbies": []})
     current = read("players_current.json", {"players": [], "as_of_matchday": 0})
     results = read("results.json", {"matches": []})["matches"]
+    lineups = read("lineups.json", {"lineups": {}})["lineups"]
     scores = read_store("forecast_scores.json", None)
 
     players = build_players(prior_players, current)
+
+    # "carded in X of the club's last N games" evidence windows
+    results = sorted(results, key=lambda m: (m["mw"], m["fixture_id"]))
+    by_club: dict[str, list[dict]] = {}
+    for m in results:
+        by_club.setdefault(m["home"], []).append(m)
+        by_club.setdefault(m["away"], []).append(m)
+    for p in players:
+        ms = by_club.get(p["c"])
+        if ms:
+            hits, n = model.recent_club_hits(ms, p["n"])
+            p["h10"] = [hits, n]
+
+    # in-season referee hit rates (O4.5 cards, both teams carded)
+    rates = model.ref_hit_rates(results)
+    for r in refs:
+        for raw, d in rates.items():
+            if model.names_match(r["n"], raw):
+                r["sn"], r["o45"], r["btc"] = d["n"], d["o45"], d["btc"]
+                break
 
     for fx in fixtures["fixtures"]:
         ref = appointments.get("appointments", {}).get(fx["id"])
@@ -176,6 +197,7 @@ def main():
         "refs": refs,
         "fixtures": fixtures["fixtures"],
         "derbies": derbies["derbies"],
+        "lineups": lineups,
         # last ~2 matchweeks of finished games; the tracker auto-settles
         # picks made from fixture cards against these booked lists
         "results": [{"fixture_id": m["fixture_id"], "mw": m["mw"],

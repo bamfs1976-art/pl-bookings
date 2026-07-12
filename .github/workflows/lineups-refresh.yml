@@ -1,0 +1,45 @@
+# Grab confirmed lineups shortly before kick-off and re-price the site.
+# API-Football publishes XIs ~40-60 minutes out, so this runs hourly through
+# the usual PL kick-off windows (Fri-Mon) plus on demand; the fetcher itself
+# no-ops when no fixture is imminent or lineups aren't out yet.
+
+name: Fetch confirmed lineups
+
+on:
+  schedule:
+    - cron: "0 11-20 * * 5,6,0,1"   # Fri-Mon, hourly across kick-off windows
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  lineups:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Fetch lineups for imminent fixtures
+        env:
+          API_FOOTBALL_KEY: ${{ secrets.API_FOOTBALL_KEY }}
+          LINEUP_WINDOW_H: "6"
+        run: python pipeline/fetch_lineups.py
+
+      - name: Rebuild app-data.js
+        run: python pipeline/build_dataset.py
+
+      - name: Commit
+        run: |
+          git config user.name "bookings-desk-bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add app-data.js pipeline/sources/lineups.json
+          if git diff --cached --quiet; then
+            echo "no lineup changes"
+          else
+            git commit -m "Lineups: $(date -u +%Y-%m-%dT%H:%M)"
+            git push
+          fi
