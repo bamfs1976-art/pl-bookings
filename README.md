@@ -1,21 +1,35 @@
 # Premier League Bookings Desk
 
-A single-file, stats-based tool for Premier League player-bookings markets, ready for the 2026-27 season. Player card risk, club discipline and a referee watchlist, built on 2025-26 form.
+A single-file, stats-based tool for Premier League player-bookings markets, ready for the 2026-27 season. Player card risk, club discipline, a referee watchlist and a live fixtures view, built on 2025-26 form and refreshed in season from the official FPL API.
 
 ## What it is
 
-- One `index.html`, vanilla JavaScript, Tailwind via CDN, no build step, no API keys.
-- All player, club and referee data is baked in.
-- Logged picks save to your browser under `pl_desk_v1`.
+- One `index.html`, vanilla JavaScript, Tailwind via CDN, no build step, no API keys in the client.
+- All player, club and referee data is baked in; live card counts, availability and the fixture schedule overlay it from the official FPL API (via a Netlify Function proxy, pattern shared with Gameweek Edge).
+- Installable PWA with an offline app shell (manifest + service worker + icons).
+- Logged picks save to your browser under `pl_desk_v1`; optional sign-in syncs them across devices (Supabase, same account as Gameweek Edge).
 - Light theme by default with a dark mode toggle. Club colours and crests throughout.
 
 ## Tabs
 
-- **Players** sortable table of every squad player by booking risk, filter by club and position, search, hide low sample. Share card exports the current view (a club's risks, or the league top 10) as a publishable social image.
+- **Players** sortable table of every squad player by booking risk, filter by club and position, search, hide low sample. Injury/suspension/doubt flags from the live feed, and a **suspension watch** strip for anyone one booking from a ban (5 yellows to GW19, 10 to GW32, 15 all season). Share card exports the current view (a club's risks, or the league top 10) as a publishable social image.
 - **Clubs** the 20 clubs by cards received per game, with a discipline tier and each club's top booking risk.
 - **Referees** 2025-26 officials by yellows per game, with reds and penalties per game.
-- **Tracker** log each pick with odds and stake, settle won, lost or void, see hit-rate, staked, P/L and ROI.
+- **Fixtures** the 2026-27 schedule by gameweek from the FPL API, each match with a booking-heat rating (both clubs' cards-against combined), combustibility flame and the fixture's top booking risks.
+- **Tracker** log each pick with odds and stake, settle won, lost or void, see hit-rate, staked, P/L and ROI. Signed in, picks sync to the cloud and merge across devices.
 - **Guide** the method, the risk formula, the tiers and the known limits.
+
+## Live data
+
+The official FPL API has no CORS, so the app calls it through `netlify/functions/fpl.js` — a whitelisted proxy (`bootstrap-static`, `fixtures`, `event-status`) routed at `/api/fpl/*`. The client caches reduced extracts in `localStorage` for 30 minutes and falls back to stale cache, then to the baked 2025-26 data, whenever the feed is unreachable — the top-bar pill says which basis is showing.
+
+Live card counts overlay the baked squads by club + normalized-name matching. Once a player has 450 minutes of 2026-27 football, the yellow-rate half of his risk score switches to the live rate (rows show a green dot). Fouls are not in the FPL feed, so the fouls half stays on 2025-26 form.
+
+## Accounts and pick sync (Supabase)
+
+Sign-in is optional and everything works signed out. The app uses the same Supabase project as Gameweek Edge (the publishable key is public-safe; RLS does the protecting). Picks live in `plb_picks`, locked to `auth.uid() = user_id` on every policy. On first sign-in, local and cloud picks merge (a settled result beats pending), then the merged set is pushed back up.
+
+One-time setup in the Supabase project: run `supabase/plb_picks.sql` in the SQL editor, and add the deployed site URL to Authentication → URL Configuration → Redirect URLs so confirmation and reset emails return here. Until the table exists, sign-in still works and picks simply stay local.
 
 ## Booking risk
 
@@ -32,7 +46,11 @@ Yellow rate is weighted double because the market pays on cards. Fouls per 90 ca
 
 ## Deploy to Netlify
 
-Drag the project root to drop.netlify.com, or connect the `pl-bookings` repo. Publish directory is the root, no build command. The `data` folder is gitignored, the app has its data baked in.
+Connect the `pl-bookings` repo (preferred — the `/api/fpl/*` proxy needs the Netlify Function, which a drag-and-drop deploy of the root also carries in `netlify/functions/`). Publish directory is the root, no build command. The `data` folder is gitignored, the app has its baked data inline. No environment variables are required.
+
+## Install as an app
+
+The site is a PWA: on iPhone open it in Safari → Share → Add to Home Screen; Chrome on Android offers Install app. It launches full-screen with an offline app shell (live data still needs a connection).
 
 ## Data and pipeline
 

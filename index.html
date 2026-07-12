@@ -3,15 +3,19 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data: https://cdn.sportmonks.com; connect-src 'self'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data: https://cdn.sportmonks.com; connect-src 'self' https://knodunjnsxelmpziupwk.supabase.co">
 <title>Bookings Desk · Premier League</title>
-<meta name="description" content="Premier League 2026-27 player-bookings analysis. Player card risk, club discipline and a referee watchlist, on 2025-26 form.">
+<meta name="description" content="Premier League 2026-27 player-bookings analysis. Player card risk, club discipline, referees, fixtures and a suspension watch, on live FPL data.">
 <link rel="icon" href="favicon.svg" type="image/svg+xml">
-<link rel="apple-touch-icon" href="favicon.svg">
+<link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
+<link rel="manifest" href="/manifest.webmanifest">
 <meta name="theme-color" content="#3d195b">
 <meta property="og:title" content="Bookings Desk · Premier League">
 <meta property="og:description" content="Stats-based Premier League player-bookings analysis for 2026-27.">
 <script src="https://cdn.tailwindcss.com"></script>
+<!-- Supabase client for optional account sync. Deferred, so the app never
+     waits on it; if it fails to load, sign-in is simply unavailable. -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js" defer></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400..800&family=Hanken+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -76,6 +80,18 @@
   .skip{position:absolute;left:-999px;top:0;background:var(--accent);color:var(--on-accent);padding:.5rem .8rem;border-radius:0 0 8px 0;z-index:50}
   .skip:focus{left:0}
   .brandbar{height:4px;background:linear-gradient(90deg,var(--accent),var(--accent-2))}
+  /* account modal + toast */
+  .modal-back{position:fixed;inset:0;background:rgba(8,10,20,.55);display:none;align-items:center;justify-content:center;z-index:60;padding:1rem}
+  .modal-back.show{display:flex}
+  .modal{max-width:380px;width:100%;border-radius:16px;padding:1.3rem;box-shadow:var(--shadow)}
+  .modal input{width:100%}
+  .modal-err{color:var(--danger);font-size:.8rem;min-height:1.1rem;margin:.5rem 0 0}
+  .acct-link{background:none;border:0;color:var(--accent-2);cursor:pointer;font:inherit;font-size:.8rem;padding:0;margin-top:.7rem}
+  .toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%) translateY(16px);opacity:0;transition:.25s;background:var(--accent);color:var(--on-accent);padding:.55rem 1rem;border-radius:10px;font-weight:600;font-size:.88rem;z-index:70;pointer-events:none}
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+  .fixrow{display:flex;align-items:center;gap:.8rem;flex-wrap:wrap;padding:.7rem .9rem;border-top:1px solid var(--border)}
+  .fixrow:first-child{border-top:0}
+  .heat{min-width:3.2ch;text-align:right;font-weight:800;font-variant-numeric:tabular-nums}
 </style>
 </head>
 <body>
@@ -97,9 +113,15 @@
         <p class="muted" style="margin:.1rem 0 0;font-size:.78rem;font-weight:600;letter-spacing:.02em"><span style="color:var(--accent-2)">PREMIER LEAGUE</span> · 2026-27</p>
       </div>
     </div>
-    <button id="themeToggle" class="btn btn-ghost" aria-pressed="false" title="Toggle theme">
-      <span aria-hidden="true">🌙</span> <span id="themeLabel">Dark</span>
-    </button>
+    <div style="display:flex;align-items:center;gap:.5rem;flex-wrap:wrap">
+      <span id="liveStatus" class="chip tier-fade" hidden></span>
+      <button id="acctBtn" class="btn btn-ghost" title="Account and sync">
+        <span aria-hidden="true">👤</span> <span id="acctLabel">Sign in</span>
+      </button>
+      <button id="themeToggle" class="btn btn-ghost" aria-pressed="false" title="Toggle theme">
+        <span aria-hidden="true">🌙</span> <span id="themeLabel">Dark</span>
+      </button>
+    </div>
   </div>
 </header>
 
@@ -108,12 +130,14 @@
     <button class="tabbtn" role="tab" id="tab-players" aria-controls="panel-players" aria-selected="true">Players</button>
     <button class="tabbtn" role="tab" id="tab-clubs" aria-controls="panel-clubs" aria-selected="false" tabindex="-1">Clubs</button>
     <button class="tabbtn" role="tab" id="tab-refs" aria-controls="panel-refs" aria-selected="false" tabindex="-1">Referees</button>
+    <button class="tabbtn" role="tab" id="tab-fixtures" aria-controls="panel-fixtures" aria-selected="false" tabindex="-1">Fixtures</button>
     <button class="tabbtn" role="tab" id="tab-tracker" aria-controls="panel-tracker" aria-selected="false" tabindex="-1">Tracker</button>
     <button class="tabbtn" role="tab" id="tab-guide" aria-controls="panel-guide" aria-selected="false" tabindex="-1">Guide</button>
   </div>
 
   <!-- PLAYERS -->
   <section id="panel-players" role="tabpanel" aria-labelledby="tab-players">
+    <div id="suspWatch" class="surface" style="border-radius:12px;padding:.8rem 1rem;margin-bottom:.8rem" hidden></div>
     <div style="display:flex;gap:.6rem;flex-wrap:wrap;align-items:center;margin-bottom:.8rem">
       <input id="search" type="search" placeholder="Search player" aria-label="Search player" style="flex:1;min-width:160px">
       <label class="muted" style="font-size:.85rem">Club
@@ -186,6 +210,18 @@
     </div>
   </section>
 
+  <!-- FIXTURES -->
+  <section id="panel-fixtures" role="tabpanel" aria-labelledby="tab-fixtures" hidden>
+    <div style="display:flex;gap:.6rem;flex-wrap:wrap;align-items:center;margin-bottom:.8rem">
+      <label class="muted" style="font-size:.85rem">Gameweek
+        <select id="gwSelect" aria-label="Choose gameweek"></select>
+      </label>
+      <span id="gwDeadline" class="faint" style="font-size:.8rem"></span>
+    </div>
+    <div id="fixtureList" class="surface" style="border-radius:14px;overflow:hidden"></div>
+    <p class="faint" style="font-size:.78rem;margin-top:.6rem">Booking heat adds both clubs' cards received per game from 2025-26 form (promoted clubs use the league median until they build Premier League data). Hot is 4.2 plus, warm 3.5 plus. The flame marks a combustible side. Top risks are each fixture's highest-risk available players. Referee appointments are not published in the FPL feed — check them on the day. Schedule via the official FPL API.</p>
+  </section>
+
   <!-- TRACKER -->
   <section id="panel-tracker" role="tabpanel" aria-labelledby="tab-tracker" hidden>
     <div id="trackerSummary" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:.7rem;margin-bottom:1rem"></div>
@@ -215,7 +251,7 @@
         </tr></thead><tbody id="pickRows"></tbody>
       </table>
     </div>
-    <p class="faint" style="font-size:.78rem;margin-top:.6rem">Set a result to settle a pick. Hit-rate counts settled picks only, void excluded. Picks save to this browser under pl_desk_v1.</p>
+    <p class="faint" style="font-size:.78rem;margin-top:.6rem">Set a result to settle a pick. Hit-rate counts settled picks only, void excluded. <span id="trackerSyncNote">Picks save to this browser under pl_desk_v1 — sign in (top right) to sync them across devices.</span></p>
   </section>
 
   <!-- GUIDE -->
@@ -228,23 +264,35 @@
       <p>Yellow rate is weighted double because the bet pays on cards, not fouls. Fouls per 90 carries the volume signal, the players who keep giving the referee a decision. Both are 2025-26 rates. Players under 450 minutes are flagged low sample.</p>
       <h3>Club discipline</h3>
       <p>Clubs are tiered on cards received per game, target 2.0 and above, mid 1.5 to 1.9, fade below 1.5. The flame marks a combustible side, 2.0 plus cards and 12.0 plus fouls.</p>
+      <h3>Live data</h3>
+      <p>The desk pulls the official FPL feed through its own proxy: the 2026-27 schedule for the Fixtures tab, each player's live yellow and red card count, and availability flags (injured, suspended, doubtful). Once a player has 450 minutes of 2026-27 football, his yellow rate in the risk score switches from last season's form to this season's live rate — rows carry a green dot when live rates are in use. If the feed is unreachable the desk falls back to the baked 2025-26 form and says so in the top bar.</p>
+      <h3>Suspension watch</h3>
+      <p>Premier League bans trigger at 5 yellows (up to gameweek 19), 10 (up to gameweek 32) and 15 (all season). The strip above the players table flags anyone one booking from a ban — a player with a card to burn is a lean, one protecting a threshold often isn't — and lists players currently suspended or injured so you don't back an absentee.</p>
       <h3>Where the numbers come from</h3>
-      <p>Player and club data is 2025-26 form from ScoutingStats. Seventeen clubs are on Premier League data. The three promoted clubs, Coventry, Ipswich and Hull, carry their 2025-26 Championship form, flagged EFL, since that is their only recent record. Referee figures are 2025-26 season averages from public data.</p>
+      <p>Player and club form is 2025-26 from ScoutingStats, refreshed in season with live card counts from the official FPL API. Seventeen clubs are on Premier League data. The three promoted clubs, Coventry, Ipswich and Hull, carry their 2025-26 Championship form, flagged EFL, since that is their only recent record. Referee figures are 2025-26 season averages from public data.</p>
+      <h3>Accounts and sync</h3>
+      <p>Sign-in is optional. Signed out, picks save to this browser only. Sign in (top right) and your tracker picks sync to the cloud and follow you across devices — on first sign-in, local and cloud picks are merged so nothing is lost. The same account works on Gameweek Edge.</p>
       <h3>Known limits</h3>
       <ul>
-        <li>The 2026-27 season has not started, so this is last season's form as the pre-season basis. It refreshes as new games are played.</li>
+        <li>Until the 2026-27 season starts, risk scores are last season's form as the pre-season basis. Live card rates take over per player at 450 minutes.</li>
+        <li>Fouls are not in the FPL feed, so the fouls half of the risk score stays on 2025-26 form all season.</li>
         <li>Promoted clubs are Championship form, a different and rougher division, so treat their numbers as indicative. Their team rate is not shown because the Championship data mixes cup minutes.</li>
         <li>Ipswich have thinner data than most, fewer players met the minutes floor.</li>
-        <li>A fixture and referee-to-game view will be added once the 2026-27 schedule and appointments are released.</li>
+        <li>Referee appointments are not in the FPL feed, so fixtures can't yet show the official.</li>
       </ul>
-      <p class="faint" style="font-size:.8rem">Your logged picks save in this browser only, under pl_desk_v1. Built for research, not a betting guarantee. Stake responsibly.</p>
+      <p class="faint" style="font-size:.8rem">Built for research, not a betting guarantee. Stake responsibly.</p>
     </div>
   </section>
 </main>
 
 <footer class="muted" style="max-width:1180px;margin:0 auto;padding:0 1.1rem 2rem;font-size:.78rem">
-  Premier League Bookings Desk. Player and club form via ScoutingStats, referee data from public sources. Research, not a betting guarantee. Stake responsibly.
+  Premier League Bookings Desk. Player and club form via ScoutingStats, live data via the official FPL API, referee data from public sources. Research, not a betting guarantee. Stake responsibly.
 </footer>
+
+<!-- Account modal (optional sign-in for cross-device pick sync) -->
+<div id="acctModal" class="modal-back" role="dialog" aria-modal="true" aria-labelledby="acctTitle">
+  <div class="modal surface"><div id="acctBody"></div></div>
+</div>
 
 <script>
 // Auto-generated by build_pl_data.py. ScoutingStats 2025-26 form.
@@ -437,40 +485,7 @@ const PL_PLAYERS = [
   {c:"CHE",n:"Mamadou Sarr",p:"DF",min:101,yc:0,rc:0,y:0.0,f:0.0,r:0.0,ls:true,b:"PL"},
   {c:"CHE",n:"Shumaira Mheuka",p:"FW",min:1,yc:0,rc:0,y:0.0,f:0.0,r:0.0,ls:true,b:"PL"},
   {c:"COV",n:"Haji Wright",p:"FW",min:2594,yc:4,rc:0,y:0.139,f:1.08,r:1.358,ls:false,b:"EFL"},
-  {c:"COV",n:"Haji Wright",p:"FW",min:2594,yc:4,rc:0,y:0.139,f:1.08,r:1.358,ls:false,b:"EFL"},
-  {c:"COV",n:"Haji Wright",p:"FW",min:2594,yc:4,rc:0,y:0.139,f:1.08,r:1.358,ls:false,b:"EFL"},
-  {c:"COV",n:"Haji Wright",p:"FW",min:2594,yc:4,rc:0,y:0.139,f:1.08,r:1.358,ls:false,b:"EFL"},
-  {c:"COV",n:"Haji Wright",p:"FW",min:2594,yc:4,rc:0,y:0.139,f:1.08,r:1.358,ls:false,b:"EFL"},
-  {c:"COV",n:"Haji Wright",p:"FW",min:2594,yc:4,rc:0,y:0.139,f:1.08,r:1.358,ls:false,b:"EFL"},
-  {c:"COV",n:"Haji Wright",p:"FW",min:2594,yc:4,rc:0,y:0.139,f:1.08,r:1.358,ls:false,b:"EFL"},
-  {c:"COV",n:"Haji Wright",p:"FW",min:2594,yc:4,rc:0,y:0.139,f:1.08,r:1.358,ls:false,b:"EFL"},
-  {c:"COV",n:"Haji Wright",p:"FW",min:2594,yc:4,rc:0,y:0.139,f:1.08,r:1.358,ls:false,b:"EFL"},
-  {c:"COV",n:"Haji Wright",p:"FW",min:2594,yc:4,rc:0,y:0.139,f:1.08,r:1.358,ls:false,b:"EFL"},
-  {c:"COV",n:"Haji Wright",p:"FW",min:2594,yc:4,rc:0,y:0.139,f:1.08,r:1.358,ls:false,b:"EFL"},
-  {c:"COV",n:"Haji Wright",p:"FW",min:2594,yc:4,rc:0,y:0.139,f:1.08,r:1.358,ls:false,b:"EFL"},
   {c:"COV",n:"Ellis Simms",p:"FW",min:1636,yc:1,rc:0,y:0.055,f:1.05,r:1.16,ls:false,b:"EFL"},
-  {c:"COV",n:"Ellis Simms",p:"FW",min:1636,yc:1,rc:0,y:0.055,f:1.05,r:1.16,ls:false,b:"EFL"},
-  {c:"COV",n:"Ellis Simms",p:"FW",min:1636,yc:1,rc:0,y:0.055,f:1.05,r:1.16,ls:false,b:"EFL"},
-  {c:"COV",n:"Ellis Simms",p:"FW",min:1636,yc:1,rc:0,y:0.055,f:1.05,r:1.16,ls:false,b:"EFL"},
-  {c:"COV",n:"Ellis Simms",p:"FW",min:1636,yc:1,rc:0,y:0.055,f:1.05,r:1.16,ls:false,b:"EFL"},
-  {c:"COV",n:"Ellis Simms",p:"FW",min:1636,yc:1,rc:0,y:0.055,f:1.05,r:1.16,ls:false,b:"EFL"},
-  {c:"COV",n:"Ellis Simms",p:"FW",min:1636,yc:1,rc:0,y:0.055,f:1.05,r:1.16,ls:false,b:"EFL"},
-  {c:"COV",n:"Ellis Simms",p:"FW",min:1636,yc:1,rc:0,y:0.055,f:1.05,r:1.16,ls:false,b:"EFL"},
-  {c:"COV",n:"Ellis Simms",p:"FW",min:1636,yc:1,rc:0,y:0.055,f:1.05,r:1.16,ls:false,b:"EFL"},
-  {c:"COV",n:"Ellis Simms",p:"FW",min:1636,yc:1,rc:0,y:0.055,f:1.05,r:1.16,ls:false,b:"EFL"},
-  {c:"COV",n:"Ellis Simms",p:"FW",min:1636,yc:1,rc:0,y:0.055,f:1.05,r:1.16,ls:false,b:"EFL"},
-  {c:"COV",n:"Ellis Simms",p:"FW",min:1636,yc:1,rc:0,y:0.055,f:1.05,r:1.16,ls:false,b:"EFL"},
-  {c:"COV",n:"Brandon Thomas-Asante",p:"FW",min:1865,yc:0,rc:0,y:0.0,f:1.11,r:1.11,ls:false,b:"EFL"},
-  {c:"COV",n:"Brandon Thomas-Asante",p:"FW",min:1865,yc:0,rc:0,y:0.0,f:1.11,r:1.11,ls:false,b:"EFL"},
-  {c:"COV",n:"Brandon Thomas-Asante",p:"FW",min:1865,yc:0,rc:0,y:0.0,f:1.11,r:1.11,ls:false,b:"EFL"},
-  {c:"COV",n:"Brandon Thomas-Asante",p:"FW",min:1865,yc:0,rc:0,y:0.0,f:1.11,r:1.11,ls:false,b:"EFL"},
-  {c:"COV",n:"Brandon Thomas-Asante",p:"FW",min:1865,yc:0,rc:0,y:0.0,f:1.11,r:1.11,ls:false,b:"EFL"},
-  {c:"COV",n:"Brandon Thomas-Asante",p:"FW",min:1865,yc:0,rc:0,y:0.0,f:1.11,r:1.11,ls:false,b:"EFL"},
-  {c:"COV",n:"Brandon Thomas-Asante",p:"FW",min:1865,yc:0,rc:0,y:0.0,f:1.11,r:1.11,ls:false,b:"EFL"},
-  {c:"COV",n:"Brandon Thomas-Asante",p:"FW",min:1865,yc:0,rc:0,y:0.0,f:1.11,r:1.11,ls:false,b:"EFL"},
-  {c:"COV",n:"Brandon Thomas-Asante",p:"FW",min:1865,yc:0,rc:0,y:0.0,f:1.11,r:1.11,ls:false,b:"EFL"},
-  {c:"COV",n:"Brandon Thomas-Asante",p:"FW",min:1865,yc:0,rc:0,y:0.0,f:1.11,r:1.11,ls:false,b:"EFL"},
-  {c:"COV",n:"Brandon Thomas-Asante",p:"FW",min:1865,yc:0,rc:0,y:0.0,f:1.11,r:1.11,ls:false,b:"EFL"},
   {c:"COV",n:"Brandon Thomas-Asante",p:"FW",min:1865,yc:0,rc:0,y:0.0,f:1.11,r:1.11,ls:false,b:"EFL"},
   {c:"CRY",n:"Kaden Rodney",p:"MF",min:3,yc:0,rc:0,y:0.0,f:30.0,r:30.0,ls:true,b:"PL"},
   {c:"CRY",n:"Borna Sosa",p:"DF",min:98,yc:1,rc:0,y:0.918,f:3.67,r:5.506,ls:true,b:"PL"},
@@ -548,40 +563,7 @@ const PL_PLAYERS = [
   {c:"FUL",n:"Samuel Chukwueze",p:"FW",min:1074,yc:0,rc:0,y:0.0,f:0.5,r:0.5,ls:false,b:"PL"},
   {c:"FUL",n:"Bernd Leno",p:"GK",min:3420,yc:3,rc:0,y:0.079,f:0.0,r:0.158,ls:false,b:"PL"},
   {c:"HUL",n:"Oliver McBurnie",p:"FW",min:3176,yc:8,rc:0,y:0.227,f:1.56,r:2.014,ls:false,b:"EFL"},
-  {c:"HUL",n:"Oliver McBurnie",p:"FW",min:3176,yc:8,rc:0,y:0.227,f:1.56,r:2.014,ls:false,b:"EFL"},
-  {c:"HUL",n:"Oliver McBurnie",p:"FW",min:3176,yc:8,rc:0,y:0.227,f:1.56,r:2.014,ls:false,b:"EFL"},
-  {c:"HUL",n:"Oliver McBurnie",p:"FW",min:3176,yc:8,rc:0,y:0.227,f:1.56,r:2.014,ls:false,b:"EFL"},
-  {c:"HUL",n:"Oliver McBurnie",p:"FW",min:3176,yc:8,rc:0,y:0.227,f:1.56,r:2.014,ls:false,b:"EFL"},
-  {c:"HUL",n:"Oliver McBurnie",p:"FW",min:3176,yc:8,rc:0,y:0.227,f:1.56,r:2.014,ls:false,b:"EFL"},
-  {c:"HUL",n:"Oliver McBurnie",p:"FW",min:3176,yc:8,rc:0,y:0.227,f:1.56,r:2.014,ls:false,b:"EFL"},
-  {c:"HUL",n:"Oliver McBurnie",p:"FW",min:3176,yc:8,rc:0,y:0.227,f:1.56,r:2.014,ls:false,b:"EFL"},
-  {c:"HUL",n:"Oliver McBurnie",p:"FW",min:3176,yc:8,rc:0,y:0.227,f:1.56,r:2.014,ls:false,b:"EFL"},
-  {c:"HUL",n:"Oliver McBurnie",p:"FW",min:3176,yc:8,rc:0,y:0.227,f:1.56,r:2.014,ls:false,b:"EFL"},
-  {c:"HUL",n:"Oliver McBurnie",p:"FW",min:3176,yc:8,rc:0,y:0.227,f:1.56,r:2.014,ls:false,b:"EFL"},
-  {c:"HUL",n:"Oliver McBurnie",p:"FW",min:3176,yc:8,rc:0,y:0.227,f:1.56,r:2.014,ls:false,b:"EFL"},
   {c:"HUL",n:"Joe Gelhardt",p:"FW",min:2939,yc:6,rc:0,y:0.184,f:1.13,r:1.498,ls:false,b:"EFL"},
-  {c:"HUL",n:"Joe Gelhardt",p:"FW",min:2939,yc:6,rc:0,y:0.184,f:1.13,r:1.498,ls:false,b:"EFL"},
-  {c:"HUL",n:"Joe Gelhardt",p:"FW",min:2939,yc:6,rc:0,y:0.184,f:1.13,r:1.498,ls:false,b:"EFL"},
-  {c:"HUL",n:"Joe Gelhardt",p:"FW",min:2939,yc:6,rc:0,y:0.184,f:1.13,r:1.498,ls:false,b:"EFL"},
-  {c:"HUL",n:"Joe Gelhardt",p:"FW",min:2939,yc:6,rc:0,y:0.184,f:1.13,r:1.498,ls:false,b:"EFL"},
-  {c:"HUL",n:"Joe Gelhardt",p:"FW",min:2939,yc:6,rc:0,y:0.184,f:1.13,r:1.498,ls:false,b:"EFL"},
-  {c:"HUL",n:"Joe Gelhardt",p:"FW",min:2939,yc:6,rc:0,y:0.184,f:1.13,r:1.498,ls:false,b:"EFL"},
-  {c:"HUL",n:"Joe Gelhardt",p:"FW",min:2939,yc:6,rc:0,y:0.184,f:1.13,r:1.498,ls:false,b:"EFL"},
-  {c:"HUL",n:"Joe Gelhardt",p:"FW",min:2939,yc:6,rc:0,y:0.184,f:1.13,r:1.498,ls:false,b:"EFL"},
-  {c:"HUL",n:"Joe Gelhardt",p:"FW",min:2939,yc:6,rc:0,y:0.184,f:1.13,r:1.498,ls:false,b:"EFL"},
-  {c:"HUL",n:"Joe Gelhardt",p:"FW",min:2939,yc:6,rc:0,y:0.184,f:1.13,r:1.498,ls:false,b:"EFL"},
-  {c:"HUL",n:"Joe Gelhardt",p:"FW",min:2939,yc:6,rc:0,y:0.184,f:1.13,r:1.498,ls:false,b:"EFL"},
-  {c:"IPS",n:"Jack Clarke",p:"FW",min:2380,yc:4,rc:0,y:0.151,f:1.51,r:1.812,ls:false,b:"EFL"},
-  {c:"IPS",n:"Jack Clarke",p:"FW",min:2380,yc:4,rc:0,y:0.151,f:1.51,r:1.812,ls:false,b:"EFL"},
-  {c:"IPS",n:"Jack Clarke",p:"FW",min:2380,yc:4,rc:0,y:0.151,f:1.51,r:1.812,ls:false,b:"EFL"},
-  {c:"IPS",n:"Jack Clarke",p:"FW",min:2380,yc:4,rc:0,y:0.151,f:1.51,r:1.812,ls:false,b:"EFL"},
-  {c:"IPS",n:"Jack Clarke",p:"FW",min:2380,yc:4,rc:0,y:0.151,f:1.51,r:1.812,ls:false,b:"EFL"},
-  {c:"IPS",n:"Jack Clarke",p:"FW",min:2380,yc:4,rc:0,y:0.151,f:1.51,r:1.812,ls:false,b:"EFL"},
-  {c:"IPS",n:"Jack Clarke",p:"FW",min:2380,yc:4,rc:0,y:0.151,f:1.51,r:1.812,ls:false,b:"EFL"},
-  {c:"IPS",n:"Jack Clarke",p:"FW",min:2380,yc:4,rc:0,y:0.151,f:1.51,r:1.812,ls:false,b:"EFL"},
-  {c:"IPS",n:"Jack Clarke",p:"FW",min:2380,yc:4,rc:0,y:0.151,f:1.51,r:1.812,ls:false,b:"EFL"},
-  {c:"IPS",n:"Jack Clarke",p:"FW",min:2380,yc:4,rc:0,y:0.151,f:1.51,r:1.812,ls:false,b:"EFL"},
-  {c:"IPS",n:"Jack Clarke",p:"FW",min:2380,yc:4,rc:0,y:0.151,f:1.51,r:1.812,ls:false,b:"EFL"},
   {c:"IPS",n:"Jack Clarke",p:"FW",min:2380,yc:4,rc:0,y:0.151,f:1.51,r:1.812,ls:false,b:"EFL"},
   {c:"LEE",n:"Facundo Buonanotte",p:"MF",min:36,yc:1,rc:0,y:2.5,f:2.5,r:7.5,ls:true,b:"PL"},
   {c:"LEE",n:"Sam Byram",p:"DF",min:17,yc:0,rc:0,y:0.0,f:5.29,r:5.29,ls:true,b:"PL"},
@@ -855,7 +837,7 @@ function currentPlayers(){
   rows.sort((a,b)=>{
     let av,bv;
     if(sortKey==="n"||sortKey==="p"){ av=a[sortKey]||""; bv=b[sortKey]||""; return sortDir*String(av).localeCompare(String(bv)); }
-    av=a[sortKey]==null?-Infinity:a[sortKey]; bv=b[sortKey]==null?-Infinity:b[sortKey]; return sortDir*(av-bv);
+    av=sortVal(a,sortKey); bv=sortVal(b,sortKey); return sortDir*(av-bv);
   });
   return rows;
 }
@@ -868,15 +850,22 @@ function renderPlayers(){
     const tr=document.createElement("tr");
     const ls=p.ls?'<span class="chip tier-mid" style="margin-left:.35rem;font-size:.62rem">low</span>':'';
     const efl=p.b==="EFL"?'<span class="chip tier-efl" style="margin-left:.35rem;font-size:.62rem">EFL</span>':'';
+    const avail=availChip(p);
+    if(p.live&&"isu".includes(p.live.st)) tr.style.opacity=".55";
+    const yc=(LIVE&&LIVE.seasonStarted&&p.live)
+      ?`<span title="2026-27 live count">${p.live.yc}</span>`
+      :(p.yc==null?'—':p.yc);
+    const y=yEff(p), r=rEff(p);
+    const liveDot=p.liveRate?'<span title="Live 2026-27 yellow rate" style="color:var(--good)"> •</span>':'';
     tr.innerHTML=
-      `<td style="padding:.45rem .7rem"><strong>${esc(p.n)}</strong>${ls}${efl}</td>`+
+      `<td style="padding:.45rem .7rem"><strong>${esc(p.n)}</strong>${ls}${efl}${avail}</td>`+
       `<td style="padding:.45rem .5rem" class="muted">${crest(p.c)} <span class="num" style="font-size:.85rem">${p.c}</span></td>`+
       `<td style="text-align:center" class="faint num">${esc(p.p||"")}</td>`+
       `<td style="text-align:right" class="num muted">${p.min}</td>`+
-      `<td style="text-align:right" class="num muted">${p.yc==null?'—':p.yc}</td>`+
-      `<td style="text-align:right" class="num">${p.y==null?'—':p.y.toFixed(2)}</td>`+
+      `<td style="text-align:right" class="num muted">${yc}</td>`+
+      `<td style="text-align:right" class="num">${y==null?'—':y.toFixed(2)+liveDot}</td>`+
       `<td style="text-align:right" class="num">${p.f==null?'—':p.f.toFixed(2)}</td>`+
-      `<td style="text-align:right;padding:.45rem .6rem">${p.r==null?'<span class="faint">—</span>':`<span class="riskbadge display" style="font-size:1.05rem;color:${riskColour(p.r)}">${p.r.toFixed(2)}</span><div class="barwrap" style="width:60px;margin-left:auto"><div class="bar" style="width:${Math.min(100,Math.round(p.r/3.8*100))}%;background:${riskColour(p.r)}"></div></div>`}</td>`;
+      `<td style="text-align:right;padding:.45rem .6rem">${r==null?'<span class="faint">—</span>':`<span class="riskbadge display" style="font-size:1.05rem;color:${riskColour(r)}">${r.toFixed(2)}</span><div class="barwrap" style="width:60px;margin-left:auto"><div class="bar" style="width:${Math.min(100,Math.round(r/3.8*100))}%;background:${riskColour(r)}"></div></div>`}</td>`;
     frag.appendChild(tr);
   });
   tb.appendChild(frag);
@@ -885,8 +874,8 @@ function renderPlayers(){
 
 // ---- clubs ----
 function topRiskFor(short){
-  const ps=PL_PLAYERS.filter(p=>p.c===short && p.r!=null && !p.ls).sort((a,b)=>b.r-a.r);
-  return ps[0]||PL_PLAYERS.filter(p=>p.c===short && p.r!=null).sort((a,b)=>b.r-a.r)[0]||null;
+  const ps=PL_PLAYERS.filter(p=>p.c===short && rEff(p)!=null && !p.ls).sort((a,b)=>rEff(b)-rEff(a));
+  return ps[0]||PL_PLAYERS.filter(p=>p.c===short && rEff(p)!=null).sort((a,b)=>rEff(b)-rEff(a))[0]||null;
 }
 function renderClubs(){
   const tb=$("clubRows"); tb.innerHTML="";
@@ -898,7 +887,7 @@ function renderClubs(){
       `<td style="text-align:right" class="num"><strong>${c.ca==null?'—':c.ca.toFixed(2)}</strong></td>`+
       `<td style="text-align:right" class="num muted">${c.fm==null?'—':c.fm.toFixed(1)}</td>`+
       `<td><span class="chip tier-${tier}">${tierLabel(tier)}</span></td>`+
-      `<td style="padding:.45rem .7rem">${tp?`${esc(tp.n)} <span class="num" style="color:${riskColour(tp.r)}">${tp.r.toFixed(2)}</span>`:'—'}</td>`;
+      `<td style="padding:.45rem .7rem">${tp?`${esc(tp.n)} <span class="num" style="color:${riskColour(rEff(tp))}">${rEff(tp).toFixed(2)}</span>`:'—'}</td>`;
     tb.appendChild(tr);
   });
 }
@@ -920,7 +909,7 @@ function renderRefs(){
 }
 
 // ---- pick tracker ----
-const STATUSES=["pending","won","lost","void"]; let pickSeq=1;
+const STATUSES=["pending","won","lost","void"];
 function pickPL(p){ if(p.status==="won") return (Number(p.stake)||0)*((Number(p.odds)||0)-1); if(p.status==="lost") return -(Number(p.stake)||0); return 0; }
 function statCell(label,val,sub,col){ return `<div class="surface" style="border-radius:10px;padding:.6rem .8rem"><div class="faint" style="font-size:.7rem;text-transform:uppercase;letter-spacing:.04em">${esc(label)}</div><div class="display" style="font-size:1.4rem;margin:.1rem 0;color:${col||'var(--text)'}">${esc(String(val))}</div><div class="muted" style="font-size:.72rem">${esc(sub||'')}</div></div>`; }
 function renderTracker(){
@@ -969,7 +958,7 @@ function drawCardsMark(x,cx,cy,h){ // brand mark: fanned red + yellow cards cent
 async function exportPNG(){
   try{ if(document.fonts&&document.fonts.ready) await document.fonts.ready; }catch(e){}
   const cf=$("clubFilter").value;
-  const list=currentPlayers().filter(p=>p.r!=null).slice(0,10);
+  const list=currentPlayers().filter(p=>rEff(p)!=null).slice(0,10);
   const W=1080,H=1350,P=64, c=document.createElement("canvas"); c.width=W;c.height=H;
   const x=c.getContext("2d");
   const disp="'Bricolage Grotesque',sans-serif", body="'Hanken Grotesk',sans-serif";
@@ -1005,13 +994,13 @@ async function exportPNG(){
     let nm=p.n; while(x.measureText(nm).width>W-P-430) nm=nm.slice(0,-1);
     x.fillText(nm + (nm!==p.n?"…":""),P+108,y+50);
     x.fillStyle="#586275"; x.font=`600 19px ${body}`;
-    x.fillText(`${p.p||""}  ·  ${p.y!=null?p.y.toFixed(2):"—"} yc  ·  ${p.f!=null?p.f.toFixed(2):"—"} fouls`+(p.b==="EFL"?"  · EFL":""),P+108,y+78);
+    x.fillText(`${p.p||""}  ·  ${yEff(p)!=null?yEff(p).toFixed(2):"—"} yc  ·  ${p.f!=null?p.f.toFixed(2):"—"} fouls`+(p.b==="EFL"?"  · EFL":""),P+108,y+78);
     // risk number + bar
-    const rc=riskHexAbs(p.r);
-    x.fillStyle=rc; x.font=`800 44px ${disp}`; x.textAlign="right"; x.fillText(p.r.toFixed(2),W-P,y+50); x.textAlign="left";
+    const pr=rEff(p), rc=riskHexAbs(pr);
+    x.fillStyle=rc; x.font=`800 44px ${disp}`; x.textAlign="right"; x.fillText(pr.toFixed(2),W-P,y+50); x.textAlign="left";
     const bw=200, bx=W-P-bw, by=y+64;
     x.fillStyle="#e3e7ee"; roundRect(x,bx,by,bw,8,4); x.fill();
-    x.fillStyle=rc; roundRect(x,bx,by,bw*Math.min(1,p.r/3.8),8,4); x.fill();
+    x.fillStyle=rc; roundRect(x,bx,by,bw*Math.min(1,pr/3.8),8,4); x.fill();
   });
   // footer
   x.fillStyle="#8b94a5"; x.font=`600 18px ${body}`;
@@ -1033,11 +1022,11 @@ tabs.forEach((tab,i)=>{
 $("exportBtn").addEventListener("click",exportPNG);
 document.querySelectorAll("th [data-sort]").forEach(b=>b.addEventListener("click",()=>{ const k=b.dataset.sort; if(sortKey===k) sortDir*=-1; else { sortKey=k; sortDir=(k==="n"||k==="p")?1:-1; } renderPlayers(); }));
 $("pickForm").addEventListener("submit",e=>{ e.preventDefault();
-  const p={id:"p"+(pickSeq++)+"_"+state.picks.length,fixture:$("pkFixture").value.trim(),selection:$("pkSelection").value.trim(),market:$("pkMarket").value.trim(),odds:$("pkOdds").value,stake:$("pkStake").value,status:"pending"};
-  if(!p.fixture||!p.selection) return; state.picks.push(p); saveState(); renderTracker(); e.target.reset(); $("pkFixture").focus();
+  const p={id:"p"+Date.now().toString(36)+Math.random().toString(36).slice(2,6),ts:Date.now(),fixture:$("pkFixture").value.trim(),selection:$("pkSelection").value.trim(),market:$("pkMarket").value.trim(),odds:$("pkOdds").value,stake:$("pkStake").value,status:"pending"};
+  if(!p.fixture||!p.selection) return; state.picks.push(p); saveState(); cloudPickUpsert(p); renderTracker(); e.target.reset(); $("pkFixture").focus();
 });
-$("pickRows").addEventListener("change",e=>{ const s=e.target.closest(".pk-status"); if(!s) return; const p=state.picks.find(x=>x.id===s.dataset.id); if(p){ p.status=s.value; saveState(); renderTracker(); } });
-$("pickRows").addEventListener("click",e=>{ const b=e.target.closest(".pk-del"); if(!b) return; state.picks=state.picks.filter(x=>x.id!==b.dataset.id); saveState(); renderTracker(); });
+$("pickRows").addEventListener("change",e=>{ const s=e.target.closest(".pk-status"); if(!s) return; const p=state.picks.find(x=>x.id===s.dataset.id); if(p){ p.status=s.value; saveState(); cloudPickUpsert(p); renderTracker(); } });
+$("pickRows").addEventListener("click",e=>{ const b=e.target.closest(".pk-del"); if(!b) return; state.picks=state.picks.filter(x=>x.id!==b.dataset.id); saveState(); cloudPickDel(b.dataset.id); renderTracker(); });
 
 // theme
 const themeToggle=$("themeToggle");
@@ -1045,12 +1034,343 @@ function applyTheme(t){ document.documentElement.setAttribute("data-theme",t); t
 themeToggle.addEventListener("click",()=>{ const next=document.documentElement.getAttribute("data-theme")==="light"?"dark":"light"; try{ localStorage.setItem(THEME_KEY,next); }catch(e){} applyTheme(next); });
 applyTheme((()=>{ try{ return localStorage.getItem(THEME_KEY)||"light"; }catch(e){ return "light"; } })());
 
+// ═══════════════════════════════════════════════════════════
+// LIVE FPL DATA
+// Pulled from the official FPL API through the Netlify proxy at /api/fpl/*
+// (pattern shared with Gameweek Edge). Everything is progressive
+// enhancement: if the feed is unreachable the desk runs exactly as before
+// on the baked 2025-26 form, and the top bar says which basis is showing.
+// ═══════════════════════════════════════════════════════════
+const FPL_CACHE_KEY="plb_fpl_v1", FPL_TTL=30*60*1000;
+let LIVE=null;
+
+function yEff(p){ return p.yLive!=null?p.yLive:p.y; }
+function rEff(p){ return p.rLive!=null?p.rLive:p.r; }
+function sortVal(p,k){
+  if(k==="y"){ const v=yEff(p); return v==null?-Infinity:v; }
+  if(k==="r"){ const v=rEff(p); return v==null?-Infinity:v; }
+  if(k==="yc"&&LIVE&&LIVE.seasonStarted&&p.live) return p.live.yc;
+  return p[k]==null?-Infinity:p[k];
+}
+function availChip(p){
+  if(!p.live) return "";
+  const st=p.live.st, t=esc(p.live.news||"");
+  const mk=(txt,col)=>` <span class="chip" style="margin-left:.35rem;font-size:.62rem;color:${col};background:color-mix(in srgb,${col} 12%,transparent);border:1px solid color-mix(in srgb,${col} 35%,transparent)" title="${t}">${txt}</span>`;
+  if(st==="s") return mk("susp","var(--danger)");
+  if(st==="i") return mk("inj","var(--danger)");
+  if(st==="u") return mk("out","var(--fade)");
+  if(st==="d") return mk("doubt","var(--warn)");
+  return "";
+}
+
+async function fetchFPL(path,reduce){
+  let cache={}; try{ cache=JSON.parse(localStorage.getItem(FPL_CACHE_KEY))||{}; }catch(e){}
+  const hit=cache[path];
+  if(hit&&Date.now()-hit.t<FPL_TTL) return hit.data;
+  try{
+    const res=await fetch("/api/fpl/"+path,{headers:{Accept:"application/json"}});
+    if(!res.ok) throw new Error("fpl "+res.status);
+    let data=await res.json();
+    if(reduce) data=reduce(data);
+    cache[path]={t:Date.now(),data};
+    try{ localStorage.setItem(FPL_CACHE_KEY,JSON.stringify(cache)); }catch(e){ try{ localStorage.removeItem(FPL_CACHE_KEY); }catch(_){} }
+    return data;
+  }catch(e){
+    if(hit) return hit.data; // stale beats nothing
+    throw e;
+  }
+}
+
+function normName(s){ return String(s||"").normalize("NFD").replace(/[̀-ͯ]/g,"").toLowerCase().replace(/[^a-z]+/g," ").trim(); }
+function buildTeamMap(teams){
+  const byName={}; CLUBS.forEach(c=>byName[normName(c.name)]=c.short);
+  const map={};
+  teams.forEach(t=>{
+    if(CLUBMAP[t.short_name]) map[t.id]=t.short_name;
+    else if(byName[normName(t.name)]) map[t.id]=byName[normName(t.name)];
+  });
+  return map;
+}
+
+/* Match FPL players to the baked squads by club + normalized name
+   (full name, web name, then unique surname), and overlay live season
+   card counts, minutes and availability. Once a player has 450 live
+   minutes, his yellow rate in the risk score switches to the live rate. */
+function attachLive(bootstrap,teamMap){
+  const byClub={};
+  PL_PLAYERS.forEach(p=>{ delete p.live; delete p.yLive; delete p.rLive; p.liveRate=false;
+    (byClub[p.c]=byClub[p.c]||[]).push(p); });
+  const index={}; // club -> normalized-name lookup; null marks an ambiguous key
+  Object.keys(byClub).forEach(c=>{
+    const m={};
+    byClub[c].forEach(p=>{
+      const k=normName(p.n); m[k]=(k in m)?null:p;
+      const lk="last:"+(k.split(" ").pop()||""); m[lk]=(lk in m)?null:p;
+    });
+    index[c]=m;
+  });
+  let matched=0;
+  bootstrap.elements.forEach(el=>{
+    const c=teamMap[el.team]; if(!c||!index[c]) return;
+    const m=index[c];
+    const full=normName(el.first_name+" "+el.second_name), web=normName(el.web_name);
+    let p=m[full]||m[web]||m["last:"+(normName(el.second_name).split(" ").pop()||"")]||m["last:"+(web.split(" ").pop()||"")]||null;
+    if(!p||p.live) return;
+    p.live={yc:el.yellow_cards||0,rc:el.red_cards||0,min:el.minutes||0,st:el.status||"a",news:el.news||""};
+    if(p.live.min>=450&&p.f!=null){ p.yLive=p.live.yc/(p.live.min/90); p.rLive=p.yLive*2+p.f; p.liveRate=true; }
+    matched++;
+  });
+  return matched;
+}
+
+async function loadLive(){
+  const status=$("liveStatus");
+  try{
+    const [bs,fx]=await Promise.all([
+      fetchFPL("bootstrap-static",d=>({
+        teams:(d.teams||[]).map(t=>({id:t.id,short_name:t.short_name,name:t.name})),
+        events:(d.events||[]).map(e=>({id:e.id,name:e.name,is_current:e.is_current,is_next:e.is_next,finished:e.finished,deadline_time:e.deadline_time})),
+        elements:(d.elements||[]).map(el=>({id:el.id,team:el.team,first_name:el.first_name,second_name:el.second_name,web_name:el.web_name,status:el.status,news:el.news,minutes:el.minutes,yellow_cards:el.yellow_cards,red_cards:el.red_cards}))
+      })),
+      fetchFPL("fixtures",d=>(d||[]).map(f=>({id:f.id,event:f.event,kickoff_time:f.kickoff_time,team_h:f.team_h,team_a:f.team_a,finished:f.finished,started:f.started,hs:f.team_h_score,as:f.team_a_score})))
+    ]);
+    const teamMap=buildTeamMap(bs.teams);
+    const cur=bs.events.find(e=>e.is_current)||bs.events.find(e=>e.is_next)||bs.events[0]||null;
+    LIVE={bootstrap:bs,fixtures:fx,teamMap,currentGW:cur?cur.id:1,seasonStarted:bs.elements.some(el=>(el.minutes||0)>0)};
+    LIVE.matchedCount=attachLive(bs,teamMap);
+    status.hidden=false; status.className="chip tier-target";
+    status.textContent="● Live FPL data";
+    status.title="Availability"+(LIVE.seasonStarted?" and 2026-27 card counts":"")+" from the official FPL API. "+LIVE.matchedCount+" players matched.";
+    renderPlayers(); renderClubs(); renderSuspWatch(); initFixturesUI();
+  }catch(e){
+    status.hidden=false; status.className="chip tier-fade";
+    status.textContent="Baked 2025-26 form";
+    status.title="Live FPL feed unreachable — showing the baked 2025-26 basis.";
+    initFixturesUI();
+  }
+}
+
+// ---- suspension watch ----
+// PL bans: 5 yellows up to GW19, 10 up to GW32, 15 all season.
+const SUSP_THRESHOLDS=[{n:5,gw:19},{n:10,gw:32},{n:15,gw:38}];
+function nextThreshold(yc,gw){ for(const t of SUSP_THRESHOLDS){ if(yc<t.n&&gw<=t.gw) return t; } return null; }
+function renderSuspWatch(){
+  const el=$("suspWatch"); if(!LIVE){ el.hidden=true; return; }
+  const gw=LIVE.currentGW, close=[], banned=[];
+  PL_PLAYERS.forEach(p=>{
+    if(!p.live) return;
+    if(p.live.st==="s"){ banned.push(p); return; }
+    const t=nextThreshold(p.live.yc,gw);
+    if(t&&p.live.yc===t.n-1) close.push({p,t});
+  });
+  if(!close.length&&!banned.length){ el.hidden=true; return; }
+  close.sort((a,b)=>rEff(b.p)-rEff(a.p));
+  el.hidden=false;
+  el.innerHTML='<div style="display:flex;flex-wrap:wrap;gap:.45rem;align-items:center">'
+    +'<strong style="font-family:\'Bricolage Grotesque\',sans-serif;font-size:.9rem;margin-right:.3rem">⚠️ Suspension watch</strong>'
+    +close.slice(0,12).map(({p,t})=>`<span class="chip tier-mid" title="${p.live.yc} yellows — banned at ${t.n} (rule runs to GW${t.gw})">${esc(p.n)} · ${p.live.yc} YC</span>`).join("")
+    +banned.slice(0,8).map(p=>`<span class="chip" style="color:var(--danger);background:color-mix(in srgb,var(--danger) 12%,transparent);border:1px solid color-mix(in srgb,var(--danger) 35%,transparent)" title="${esc(p.live.news||"Suspended")}">${esc(p.n)} · banned</span>`).join("")
+    +'</div>'
+    +'<p class="faint" style="margin:.45rem 0 0;font-size:.74rem">One booking from a ban — a card to burn is a lean, a protected threshold often isn\'t. 5 yellows to GW19, 10 to GW32, 15 all season. Live counts from the FPL feed.</p>';
+}
+
+// ---- fixtures ----
+const CA_MEDIAN=1.87; // league median cards-against, stands in for promoted clubs
+let gwInit=false;
+function initFixturesUI(){
+  const sel=$("gwSelect"), list=$("fixtureList");
+  if(!LIVE){
+    list.innerHTML='<p class="muted" style="padding:1rem;margin:0;font-size:.88rem">Fixtures come from the live FPL feed, which is unreachable right now. The deployed site serves it through the /api/fpl proxy — check back once you\'re online.</p>';
+    return;
+  }
+  if(!gwInit){
+    gwInit=true;
+    LIVE.bootstrap.events.forEach(e=>{ const o=document.createElement("option"); o.value=e.id; o.textContent=e.name; sel.appendChild(o); });
+    sel.value=String((LIVE.bootstrap.events.find(e=>e.is_current&&!e.finished)||LIVE.bootstrap.events.find(e=>e.is_next)||LIVE.bootstrap.events[0]||{id:1}).id);
+    sel.addEventListener("input",renderFixtures);
+  }
+  renderFixtures();
+}
+function clubCA(short){ const c=CLUBMAP[short]; return c&&c.ca!=null?c.ca:CA_MEDIAN; }
+function fixtureRisks(h,a){
+  return PL_PLAYERS.filter(p=>(p.c===h||p.c===a)&&rEff(p)!=null&&!p.ls&&!(p.live&&"isu".includes(p.live.st)))
+    .sort((x,y)=>rEff(y)-rEff(x)).slice(0,3);
+}
+function fmtKO(iso){ try{ return new Date(iso).toLocaleString("en-GB",{weekday:"short",day:"numeric",month:"short",hour:"2-digit",minute:"2-digit"}); }catch(e){ return ""; } }
+function renderFixtures(){
+  const list=$("fixtureList"), gw=Number($("gwSelect").value);
+  const ev=LIVE.bootstrap.events.find(e=>e.id===gw);
+  $("gwDeadline").textContent=ev&&ev.deadline_time?("Deadline "+fmtKO(ev.deadline_time)):"";
+  const fx=LIVE.fixtures.filter(f=>f.event===gw).sort((a,b)=>String(a.kickoff_time||"").localeCompare(String(b.kickoff_time||"")));
+  if(!fx.length){ list.innerHTML='<p class="muted" style="padding:1rem;margin:0">No fixtures scheduled for this gameweek yet.</p>'; return; }
+  list.innerHTML=fx.map(f=>{
+    const h=LIVE.teamMap[f.team_h], a=LIVE.teamMap[f.team_a];
+    if(!h||!a) return "";
+    const heat=Number((clubCA(h)+clubCA(a)).toFixed(1)); // classify on the shown value
+    const cls=heat>=4.2?"tier-target":heat>=3.5?"tier-mid":"tier-fade";
+    const lbl=heat>=4.2?"Hot":heat>=3.5?"Warm":"Cool";
+    const comb=(combustible(CLUBMAP[h]||{})||combustible(CLUBMAP[a]||{}))?' <span title="Combustible side involved">🔥</span>':'';
+    const risks=fixtureRisks(h,a).map(p=>`<span class="chip surface-2" style="border:1px solid var(--border)">${esc(p.n)} <span class="num" style="color:${riskColour(rEff(p))}">${rEff(p).toFixed(2)}</span></span>`).join(" ");
+    const score=f.finished?` <span class="num muted" style="font-weight:700;font-size:.82rem">FT ${f.hs==null?"":f.hs}–${f.as==null?"":f.as}</span>`:"";
+    return `<div class="fixrow">
+      <div class="faint" style="min-width:132px;font-size:.8rem">${f.kickoff_time?fmtKO(f.kickoff_time):"TBC"}</div>
+      <div style="min-width:200px;font-weight:600">${crest(h)} ${h} <span class="faint">v</span> ${crest(a)} ${a}${score}</div>
+      <div><span class="chip ${cls}" title="Cards received per game, both clubs combined (2025-26 form)"><span class="heat">${heat.toFixed(1)}</span>&nbsp;${lbl}</span>${comb}</div>
+      <div style="display:flex;gap:.35rem;flex-wrap:wrap;flex:1;justify-content:flex-end">${risks}</div>
+    </div>`;
+  }).join("");
+}
+
+// ═══════════════════════════════════════════════════════════
+// ACCOUNTS (Supabase)
+// Optional sign-in, same project and pattern as Gameweek Edge: signed out,
+// everything works locally; signed in, tracker picks sync to plb_picks
+// (RLS keeps each user to their own rows) and follow you across devices.
+// ═══════════════════════════════════════════════════════════
+const SUPA={url:"https://knodunjnsxelmpziupwk.supabase.co",key:"sb_publishable_xCECe0czArDwwIBtR8Mzxg_tuhyGYu-"};
+let sb=null,SESSION=null,SYNCED_UID=null;
+function uid(){ return SESSION&&SESSION.user?SESSION.user.id:null; }
+function initAuth(){
+  if(!(window.supabase&&window.supabase.createClient)) return;
+  try{ sb=window.supabase.createClient(SUPA.url,SUPA.key,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}}); }catch(e){ return; }
+  sb.auth.getSession().then(({data})=>onAuthChange(data&&data.session)).catch(()=>{});
+  sb.auth.onAuthStateChange((_e,s)=>onAuthChange(s));
+}
+function onAuthChange(session){
+  SESSION=session||null; updateAcctUI();
+  if(uid()&&uid()!==SYNCED_UID) syncOnLogin();
+  if(!uid()) SYNCED_UID=null;
+}
+function updateAcctUI(){
+  $("acctLabel").textContent=SESSION?(SESSION.user.email||"Account"):"Sign in";
+  $("trackerSyncNote").textContent=SESSION
+    ?"Signed in — picks sync to your account and follow you across devices."
+    :"Picks save to this browser under pl_desk_v1 — sign in (top right) to sync them across devices.";
+}
+
+function pickRow(p){
+  const num=v=>{ const n=Number(v); return v===""||v==null||!isFinite(n)?null:n; };
+  return {user_id:uid(),id:p.id,fixture:p.fixture||"",selection:p.selection||"",market:p.market||"",odds:num(p.odds),stake:num(p.stake),status:p.status||"pending",updated_at:new Date().toISOString()};
+}
+/* Cloud writers (fire-and-forget; local storage stays the working copy). */
+function cloudPickUpsert(p){ if(sb&&uid()) sb.from("plb_picks").upsert(pickRow(p)).then(()=>{},()=>{}); }
+function cloudPickDel(id){ if(sb&&uid()) sb.from("plb_picks").delete().eq("user_id",uid()).eq("id",id).then(()=>{},()=>{}); }
+
+/* On first sign-in, merge local and cloud picks so nothing is lost, then
+   push the merged set back to the cloud. A settled result beats pending. */
+async function syncOnLogin(){
+  const id=uid(); if(!id||!sb) return; SYNCED_UID=id;
+  try{
+    const {data:rows,error}=await sb.from("plb_picks").select("*").eq("user_id",id);
+    if(error) throw error;
+    const local={}; state.picks.forEach(p=>local[p.id]=p);
+    let base=1; state.picks.forEach(p=>{ if(!p.ts) p.ts=base++; });
+    const cloudOnly=[];
+    (rows||[]).forEach(r=>{
+      const c={id:r.id,fixture:r.fixture||"",selection:r.selection||"",market:r.market||"",odds:r.odds==null?"":String(r.odds),stake:r.stake==null?"":String(r.stake),status:r.status||"pending",ts:r.created_at?Date.parse(r.created_at):0};
+      const l=local[r.id];
+      if(!l) cloudOnly.push(c);
+      else if(l.status==="pending"&&c.status!=="pending") l.status=c.status;
+    });
+    state.picks=[...state.picks,...cloudOnly].sort((a,b)=>(a.ts||0)-(b.ts||0));
+    saveState();
+    if(state.picks.length) await sb.from("plb_picks").upsert(state.picks.map(pickRow));
+    renderTracker(); toast("Signed in — picks synced");
+  }catch(e){ toast("Signed in — cloud sync unavailable"); }
+}
+
+// ---- account modal ----
+function acctErr(m){ const e=$("acctErr"); if(e) e.textContent=m; }
+function openAccount(){
+  const body=$("acctBody");
+  if(SESSION){
+    body.innerHTML=
+      '<h2 id="acctTitle" style="margin:0 0 .3rem;font-size:1.15rem">You\'re signed in</h2>'+
+      '<p class="muted" style="margin:0 0 .4rem;font-size:.85rem">'+esc(SESSION.user.email||"")+'</p>'+
+      '<p class="faint" style="margin:0 0 1rem;font-size:.8rem">Your tracker picks sync to this account on every device you sign in on. The same account works on Gameweek Edge.</p>'+
+      '<button class="btn btn-primary" id="acctSignout" style="width:100%;justify-content:center">Sign out</button>'+
+      '<div style="text-align:right;margin-top:.7rem"><button class="btn btn-ghost" data-acct-close>Close</button></div>';
+    $("acctSignout").addEventListener("click",doSignOut);
+  }else{
+    body.innerHTML=
+      '<h2 id="acctTitle" style="margin:0 0 .3rem;font-size:1.15rem">Sign in to sync</h2>'+
+      '<p class="faint" style="margin:0 0 .9rem;font-size:.8rem">Optional — the desk works without it. Sign in and your tracker picks follow you across devices.</p>'+
+      '<input id="acctEmail" type="email" inputmode="email" autocomplete="email" placeholder="Email" style="margin-bottom:.6rem">'+
+      '<input id="acctPass" type="password" autocomplete="current-password" placeholder="Password (min 6 characters)">'+
+      '<div class="modal-err" id="acctErr" role="alert"></div>'+
+      '<div style="display:flex;gap:.6rem;justify-content:flex-end;margin-top:.8rem">'+
+        '<button class="btn btn-ghost" id="acctCreate">Create account</button>'+
+        '<button class="btn btn-primary" id="acctSignin">Sign in</button></div>'+
+      '<button class="acct-link" id="acctReset">Forgot password?</button>';
+    $("acctSignin").addEventListener("click",()=>doAuth("in"));
+    $("acctCreate").addEventListener("click",()=>doAuth("up"));
+    $("acctReset").addEventListener("click",doReset);
+    $("acctPass").addEventListener("keydown",e=>{ if(e.key==="Enter") doAuth("in"); });
+  }
+  $("acctModal").classList.add("show");
+  setTimeout(()=>{ const f=$("acctModal").querySelector("input,button"); if(f) f.focus(); },60);
+}
+function closeAccount(){ $("acctModal").classList.remove("show"); }
+async function doAuth(mode){
+  if(!sb){ acctErr("Accounts are unavailable right now."); return; }
+  const email=($("acctEmail").value||"").trim(), pass=$("acctPass").value||"";
+  if(!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)){ acctErr("Enter a valid email."); return; }
+  if(pass.length<6){ acctErr("Password must be at least 6 characters."); return; }
+  acctErr("");
+  const btn=$(mode==="in"?"acctSignin":"acctCreate"), label=btn.textContent;
+  btn.disabled=true; btn.textContent="…";
+  try{
+    if(mode==="in"){
+      const {error}=await sb.auth.signInWithPassword({email,password:pass});
+      if(error) throw error;
+      closeAccount(); toast("Signed in");
+    }else{
+      const {data,error}=await sb.auth.signUp({email,password:pass,options:{emailRedirectTo:location.origin}});
+      if(error) throw error;
+      if(data.session) closeAccount();
+      else acctErr("Account created — check your email to confirm, then sign in.");
+    }
+  }catch(e){ acctErr((e&&e.message)||"Something went wrong."); }
+  finally{ btn.disabled=false; btn.textContent=label; }
+}
+async function doReset(){
+  if(!sb) return;
+  const email=($("acctEmail").value||"").trim();
+  if(!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)){ acctErr("Enter your email above first."); return; }
+  try{ await sb.auth.resetPasswordForEmail(email,{redirectTo:location.origin}); acctErr("Password reset link sent — check your email."); }
+  catch(e){ acctErr((e&&e.message)||"Could not send reset email."); }
+}
+async function doSignOut(){
+  if(sb) try{ await sb.auth.signOut(); }catch(e){}
+  SESSION=null; SYNCED_UID=null; updateAcctUI(); closeAccount(); toast("Signed out");
+}
+$("acctBtn").addEventListener("click",openAccount);
+$("acctModal").addEventListener("click",e=>{ if(e.target.id==="acctModal"||e.target.closest("[data-acct-close]")) closeAccount(); });
+document.addEventListener("keydown",e=>{ if(e.key==="Escape") closeAccount(); });
+
+function toast(msg){
+  let t=document.getElementById("plbToast");
+  if(!t){ t=document.createElement("div"); t.id="plbToast"; t.className="toast"; t.setAttribute("role","status"); t.setAttribute("aria-live","polite"); document.body.appendChild(t); }
+  t.textContent=msg; t.classList.add("show");
+  clearTimeout(t._timer); t._timer=setTimeout(()=>t.classList.remove("show"),2600);
+}
+
+// PWA: offline app shell. Live data and Supabase are never cached by the SW.
+if("serviceWorker" in navigator&&(location.protocol==="https:"||location.hostname==="localhost")){
+  window.addEventListener("load",()=>{ navigator.serviceWorker.register("/sw.js").catch(()=>{}); });
+}
+
 // init
 fillClubFilter();
 renderPlayers();
 renderClubs();
 renderRefs();
 renderTracker();
+loadLive();
+// The Supabase client loads deferred from the CDN, so wire auth up once
+// the DOM (and deferred scripts) are ready.
+if(document.readyState==="loading") document.addEventListener("DOMContentLoaded",initAuth);
+else initAuth();
 </script>
 </body>
 </html>

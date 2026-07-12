@@ -1,7 +1,11 @@
 # Premier League Bookings Desk. Single static index.html, no build step.
+# Live FPL data is proxied through the fpl Netlify Function at /api/fpl/*.
 [build]
   publish = "."
   command = ""
+
+[functions]
+  directory = "netlify/functions"
 
 [[headers]]
   for = "/*"

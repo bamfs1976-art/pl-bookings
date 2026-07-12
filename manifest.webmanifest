@@ -1,0 +1,15 @@
+{
+  "name": "Bookings Desk · Premier League",
+  "short_name": "Bookings Desk",
+  "description": "Stats-based Premier League player-bookings analysis: player card risk, club discipline, referees and fixtures.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#eef1f6",
+  "theme_color": "#3d195b",
+  "categories": ["sports"],
+  "icons": [
+    { "src": "/icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable" },
+    { "src": "/icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+  ]
+}
