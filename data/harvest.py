@@ -15,9 +15,8 @@ Writes (both gitignored):
   data/champ_promoted.json   league 9 (Championship) player stats
                              (build_pl_data.py keeps only the promoted clubs)
 
-If data/pl_refs.json is missing, it is reconstructed from the REFS block of
-the existing data/pl_data.js so the build can always run; referee numbers
-only change when you refresh them by hand (tips.gg has no API).
+If data/pl_refs.json is missing, build_refs.py is run to produce it from the
+free football-data.co.uk mirror (no login needed for referees).
 
 Optional env: SS_SEASON_PL / SS_SEASON_CH to pin a season id (e.g. 25583 was
 2025-26); unset, the API returns its current season.
@@ -25,17 +24,13 @@ Optional env: SS_SEASON_PL / SS_SEASON_CH to pin a season id (e.g. 25583 was
 
 import json
 import os
-import re
+import subprocess
 import sys
 import urllib.request
 from pathlib import Path
 
 DATA = Path(__file__).resolve().parent
 BASE = "https://scoutingstats.ai/api/league/{league}/player-stats"
-
-# Names appended by build_pl_data.py itself — keep them out of a
-# reconstructed pl_refs.json or they would be duplicated at build time.
-EXTRA_REF_NAMES = {"Craig Pawson", "Tony Harrington"}
 
 
 def fetch(league, season, cookie):
@@ -64,27 +59,6 @@ def fetch(league, season, cookie):
     return data, len(players)
 
 
-def reconstruct_refs_from_pl_data():
-    """Rebuild pl_refs.json from the REFS block in pl_data.js (fallback only)."""
-    src = (DATA / "pl_data.js").read_text(encoding="utf-8")
-    block = re.search(r"const REFS = \[(.*?)\];", src, re.S)
-    if not block:
-        sys.exit("ERROR: no pl_refs.json and no REFS block in pl_data.js to fall back on.")
-    refs = []
-    for m in re.finditer(r"\{n:(\".*?\"),region:(\".*?\"),matches:(null|[\d.]+),"
-                         r"ypg:(null|[\d.]+),red:(null|[\d.]+),pen:(null|[\d.]+)\}", block.group(1)):
-        name = json.loads(m.group(1))
-        if name in EXTRA_REF_NAMES:
-            continue
-        num = lambda s: None if s == "null" else float(s)
-        refs.append({"name": name, "region": json.loads(m.group(2)),
-                     "matches": num(m.group(3)), "yellows": None,
-                     "ypg": num(m.group(4)), "red_pg": num(m.group(5)),
-                     "pen_pg": num(m.group(6))})
-    if not refs:
-        sys.exit("ERROR: could not parse any referees out of pl_data.js.")
-    (DATA / "pl_refs.json").write_text(json.dumps({"refs": refs}, indent=1), encoding="utf-8")
-    print(f"pl_refs.json reconstructed from pl_data.js ({len(refs)} referees)")
 
 
 def main():
@@ -102,7 +76,7 @@ def main():
     print(f"champ_promoted.json written ({n_ch} players)")
 
     if not (DATA / "pl_refs.json").exists():
-        reconstruct_refs_from_pl_data()
+        subprocess.run([sys.executable, str(DATA / "build_refs.py")], check=True)
 
     print("Harvest complete. Now run: python3 data/build_pl_data.py")
 

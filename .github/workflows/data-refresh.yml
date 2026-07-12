@@ -1,12 +1,22 @@
 name: Data refresh
 
-# Re-harvests player stats from ScoutingStats and regenerates data/pl_data.js.
-# Run it from the Actions tab (Run workflow). Needs one repository secret:
-#   SS_COOKIE — the cookie header from a logged-in scoutingstats.ai browser
-#   session (Settings -> Secrets and variables -> Actions -> New secret).
+# Refreshes the app's baked data and regenerates data/pl_data.js.
+# Run it from the Actions tab (Run workflow).
+#
+# Referees are always refreshed — free source, no secret needed
+# (football-data.co.uk mirror at github.com/datasets/football-datasets).
+#
+# Player/club stats need the SS_COOKIE repository secret: the cookie header
+# from a logged-in scoutingstats.ai browser session (Settings -> Secrets and
+# variables -> Actions -> New secret). Without it, that part is skipped and
+# only the referee data updates.
 on:
   workflow_dispatch:
     inputs:
+      refs_season:
+        description: "football-data season code for referees (e.g. 2526)"
+        required: false
+        default: "2526"
       season_pl:
         description: "ScoutingStats season id for the Premier League (blank = current)"
         required: false
@@ -25,14 +35,19 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Harvest from ScoutingStats
+      - name: Refresh referees (free source, always runs)
+        run: python3 data/build_refs.py --season "${{ inputs.refs_season }}"
+
+      - name: Harvest players from ScoutingStats
+        if: ${{ secrets.SS_COOKIE != '' }}
         env:
           SS_COOKIE: ${{ secrets.SS_COOKIE }}
           SS_SEASON_PL: ${{ inputs.season_pl }}
           SS_SEASON_CH: ${{ inputs.season_ch }}
         run: python3 data/harvest.py
 
-      - name: Rebuild pl_data.js
+      - name: Rebuild pl_data.js from the harvest
+        if: ${{ secrets.SS_COOKIE != '' }}
         run: python3 data/build_pl_data.py
 
       - name: Guard the dataset
@@ -48,6 +63,6 @@ jobs:
             echo "No data changes."
           else
             git add data/pl_data.js
-            git commit -m "Refresh player data from ScoutingStats"
+            git commit -m "Refresh data (referees from football-data.co.uk mirror${{ secrets.SS_COOKIE != '' && ', players from ScoutingStats' || '' }})"
             git push
           fi

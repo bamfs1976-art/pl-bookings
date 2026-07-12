@@ -5,7 +5,8 @@ Build the Premier League Bookings Desk dataset for 2026-27.
 Inputs (harvested from ScoutingStats, logged in):
   pl_players.json     2025-26 Premier League players (league 8, season 25583)
   champ_promoted.json 2025-26 Championship players for the 3 promoted clubs
-  pl_refs.json        2025-26 PL referee card rates (tips.gg)
+  pl_refs.json        PL referee card rates (build_refs.py, from the free
+                      football-data.co.uk mirror at datasets/football-datasets)
 
 Output: pl_data.js with PL_PLAYERS, CLUBS and REFS. index.html loads this file
 directly via <script src="data/pl_data.js"> — there is no hand-copy step, so
@@ -34,11 +35,6 @@ SHORT = {
     "Nottingham Forest": "NFO", "Sunderland": "SUN", "Tottenham Hotspur": "TOT",
     "Coventry City": "COV", "Ipswich Town": "IPS", "Hull City": "HUL",
 }
-# extra referees from public search data (lenient end), flagged source
-EXTRA_REFS = [
-    {"name": "Craig Pawson", "region": "South Yorkshire", "matches": None, "yellows": None, "ypg": 2.5, "red_pg": None, "pen_pg": None},
-    {"name": "Tony Harrington", "region": "Cleveland", "matches": 12, "yellows": 38, "ypg": 3.3, "red_pg": None, "pen_pg": None},
-]
 
 
 def num(v):
@@ -115,7 +111,7 @@ def build_clubs(players):
 
 def build_refs():
     d = json.loads((DATA / "pl_refs.json").read_text(encoding="utf-8"))
-    refs = list(d["refs"]) + EXTRA_REFS
+    refs = list(d["refs"])
     refs.sort(key=lambda r: -(r.get("ypg") or 0))
     return refs
 

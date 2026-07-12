@@ -52,7 +52,7 @@ The desk maps each risk score to a model-implied chance of a card in a match wit
 - 20 confirmed clubs: 17 staying up, plus Coventry, Ipswich and Hull (promoted). Burnley, West Ham and Wolves went down.
 - Stats are 2025-26 form, the pre-season basis for an August launch. 17 clubs from Premier League data, the 3 promoted clubs from their 2025-26 Championship data, flagged EFL.
 - Club team rates are shown for Premier League clubs only. Championship data mixes cup minutes, so the promoted clubs' team rate is not comparable and is omitted, though their players still appear with per-90 rates.
-- Referee figures are 2025-26 season averages from public data (tips.gg, with two lenient officials added from search data).
+- Referee figures are computed from the full 2025-26 match records (all 380 games) in the free football-data.co.uk mirror at [datasets/football-datasets](https://github.com/datasets/football-datasets) — yellows and reds per game for every official with 3+ matches. Penalty rates carry over from earlier public data where available (not in this source).
 
 ## Deploy to Netlify
 
@@ -66,7 +66,8 @@ The site is a PWA: on iPhone open it in Safari → Share → Add to Home Screen;
 
 The `data` folder holds the build script and the raw harvests (harvest JSON gitignored):
 - `build_pl_data.py` builds `pl_data.js` (CLUBS, PL_PLAYERS, REFS) from the harvested JSON. `index.html` loads that file directly, so regenerating it is the whole refresh — there is no hand-copy step, and CI (`scripts/check-data.mjs`) fails if an inline dataset ever reappears in `index.html` or the counts go wrong.
-- Harvested from the ScoutingStats API: `/api/league/8/player-stats` (PL) and `/api/league/9/player-stats` (Championship), plus referee data from tips.gg.
+- Player/club form is harvested from the ScoutingStats API: `/api/league/8/player-stats` (PL) and `/api/league/9/player-stats` (Championship).
+- `build_refs.py` builds the referee data from the football-data.co.uk mirror — free, no login: `python3 data/build_refs.py` (add `--season 2627` once the new season has matches). It writes `pl_refs.json` and patches the REFS block of `pl_data.js` in place.
 - `harvest.py` automates the harvest. ScoutingStats needs a logged-in session, so it authenticates with a browser cookie: log in at scoutingstats.ai, copy the `cookie` request header from DevTools, then `SS_COOKIE='…' python3 data/harvest.py && python3 data/build_pl_data.py`. If `pl_refs.json` is absent it is reconstructed from the shipped `pl_data.js` (referee figures only change when refreshed by hand).
 - The **Data refresh** GitHub Action (`.github/workflows/data-refresh.yml`) runs the whole pipeline in one click from the Actions tab — harvest → rebuild → guards → commit. It needs one repository secret, `SS_COOKIE`, holding that same cookie value; re-set it whenever the session expires.
 
