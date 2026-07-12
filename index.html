@@ -92,6 +92,9 @@
   .fixrow{display:flex;align-items:center;gap:.8rem;flex-wrap:wrap;padding:.7rem .9rem;border-top:1px solid var(--border)}
   .fixrow:first-child{border-top:0}
   .heat{min-width:3.2ch;text-align:right;font-weight:800;font-variant-numeric:tabular-nums}
+  .watch-btn{background:none;border:0;cursor:pointer;font-size:1.05rem;line-height:1;color:var(--text-3);padding:.15rem .25rem}
+  .watch-btn[aria-pressed="true"]{color:var(--warn)}
+  .watch-btn:hover{color:var(--warn)}
 </style>
 </head>
 <body>
@@ -151,12 +154,16 @@
       <label class="muted" style="font-size:.85rem;display:inline-flex;align-items:center;gap:.35rem">
         <input type="checkbox" id="hideLow" checked> Hide low sample
       </label>
+      <label class="muted" style="font-size:.85rem;display:inline-flex;align-items:center;gap:.35rem" title="Show only players you have starred">
+        <input type="checkbox" id="watchOnly"> <span aria-hidden="true">★</span> Watchlist
+      </label>
       <button id="exportBtn" class="btn btn-primary" title="Export a shareable card of this view">⬇ Share card</button>
     </div>
     <div class="surface" style="border-radius:14px;overflow:auto;max-height:74vh">
       <table>
         <caption class="visually-hidden">Premier League players by booking risk</caption>
         <thead><tr>
+          <th scope="col" style="text-align:center;padding:.6rem .2rem" title="Watchlist"><span aria-hidden="true">★</span><span class="visually-hidden">Watchlist</span></th>
           <th scope="col" style="text-align:left;padding:.6rem .7rem"><button data-sort="n" type="button">Player</button></th>
           <th scope="col" style="text-align:left;padding:.6rem .5rem">Club</th>
           <th scope="col" style="text-align:center;padding:.6rem .4rem"><button data-sort="p" type="button">Pos</button></th>
@@ -252,6 +259,12 @@
       </table>
     </div>
     <p class="faint" style="font-size:.78rem;margin-top:.6rem">Set a result to settle a pick. Hit-rate counts settled picks only, void excluded. <span id="trackerSyncNote">Picks save to this browser under pl_desk_v1 — sign in (top right) to sync them across devices.</span></p>
+    <details class="surface" style="border-radius:12px;padding:1rem;margin-top:1rem">
+      <summary style="cursor:pointer;font-weight:600;font-family:'Bricolage Grotesque',sans-serif">✨ AI review of your picks</summary>
+      <p class="muted" style="font-size:.82rem;margin:.7rem 0">Optional. Your settled picks go to this site's own <code>/api/insights</code> function, which holds the AI key server-side, and you get back a short read on which markets are working and what to change. Needs at least 3 settled picks. Not available if the deploy hasn't switched it on.</p>
+      <button id="insightsBtn" class="btn btn-ghost" type="button">Analyse my picks</button>
+      <div id="insightsOut" class="muted" style="font-size:.86rem;line-height:1.55;margin-top:.7rem;white-space:pre-wrap"></div>
+    </details>
   </section>
 
   <!-- GUIDE -->
@@ -268,6 +281,10 @@
       <p>The desk pulls the official FPL feed through its own proxy: the 2026-27 schedule for the Fixtures tab, each player's live yellow and red card count, and availability flags (injured, suspended, doubtful). Once a player has 450 minutes of 2026-27 football, his yellow rate in the risk score switches from last season's form to this season's live rate — rows carry a green dot when live rates are in use. If the feed is unreachable the desk falls back to the baked 2025-26 form and says so in the top bar.</p>
       <h3>Suspension watch</h3>
       <p>Premier League bans trigger at 5 yellows (up to gameweek 19), 10 (up to gameweek 32) and 15 (all season). The strip above the players table flags anyone one booking from a ban — a player with a card to burn is a lean, one protecting a threshold often isn't — and lists players currently suspended or injured so you don't back an absentee.</p>
+      <h3>Watchlist</h3>
+      <p>Tap the ☆ star on any player row to pin him, and tick <strong>★ Watchlist</strong> in the filter bar to see only your starred players — low-sample players included, since you starred them on purpose. The list saves to this browser.</p>
+      <h3>AI review of your picks</h3>
+      <p>Optional, in the Tracker tab. Once you have three or more settled picks, the review sends them to the desk's own server function and returns a short read on which markets are paying, whether your odds range shows a pattern, and what to change. The AI key lives on the server, never in your browser. If the deploy hasn't enabled it, the desk simply says so — nothing else depends on it.</p>
       <h3>Where the numbers come from</h3>
       <p>Player and club form is 2025-26 from ScoutingStats, refreshed in season with live card counts from the official FPL API. Seventeen clubs are on Premier League data. The three promoted clubs, Coventry, Ipswich and Hull, carry their 2025-26 Championship form, flagged EFL, since that is their only recent record. Referee figures are 2025-26 season averages from public data.</p>
       <h3>Accounts and sync</h3>
@@ -804,7 +821,7 @@ const CLUBMAP={}; CLUBS.forEach(c=>CLUBMAP[c.short]=c);
 
 // ---- state ----
 let state=loadState();
-function loadState(){ try{ const s=JSON.parse(localStorage.getItem(STORE_KEY))||{}; return {picks:s.picks||[]}; }catch(e){ return {picks:[]}; } }
+function loadState(){ try{ const s=JSON.parse(localStorage.getItem(STORE_KEY))||{}; return {picks:s.picks||[],watch:s.watch||[]}; }catch(e){ return {picks:[],watch:[]}; } }
 function saveState(){ try{ localStorage.setItem(STORE_KEY, JSON.stringify(state)); }catch(e){} }
 
 // ---- helpers ----
@@ -815,6 +832,9 @@ function tierLabel(t){ return {target:"Target",mid:"Mid",fade:"Fade",efl:"EFL ba
 function combustible(c){ return c.ca!=null && c.fm!=null && c.ca>=2.0 && c.fm>=12.0; }
 function crest(c){ const club=CLUBMAP[c]; if(!club||!club.img) return ""; return `<img class="crest" src="${club.img}" alt="" loading="lazy" onerror="this.style.display='none'">`; }
 function clubName(c){ return CLUBMAP[c]?CLUBMAP[c].name:c; }
+// Watchlist keys are club|name — names repeat across clubs, the pair doesn't.
+function watchKey(p){ return p.c+"|"+p.n; }
+function isWatched(p){ return state.watch.includes(watchKey(p)); }
 
 // ---- players ----
 let sortKey="r", sortDir=-1;
@@ -826,12 +846,13 @@ function fillClubFilter(){
 }
 function currentPlayers(){
   const q=$("search").value.trim().toLowerCase();
-  const cf=$("clubFilter").value, pf=$("posFilter").value, hide=$("hideLow").checked;
+  const cf=$("clubFilter").value, pf=$("posFilter").value, hide=$("hideLow").checked, wo=$("watchOnly").checked;
   let rows=PL_PLAYERS.filter(p=>{
     if(q && !(p.n||"").toLowerCase().includes(q)) return false;
     if(cf!=="all" && p.c!==cf) return false;
     if(pf!=="all" && p.p!==pf) return false;
-    if(hide && p.ls) return false;
+    if(wo && !isWatched(p)) return false;
+    if(!wo && hide && p.ls) return false; // the watchlist shows everything you starred, low sample included
     return true;
   });
   rows.sort((a,b)=>{
@@ -844,7 +865,7 @@ function currentPlayers(){
 function renderPlayers(){
   const rows=currentPlayers();
   const tb=$("playerRows"); tb.innerHTML="";
-  if(!rows.length){ tb.innerHTML='<tr><td colspan="8" class="muted" style="padding:1rem;text-align:center">No players match.</td></tr>'; return; }
+  if(!rows.length){ tb.innerHTML='<tr><td colspan="9" class="muted" style="padding:1rem;text-align:center">'+($("watchOnly").checked?"Your watchlist is empty — tap the ☆ star on any player to pin them here.":"No players match.")+'</td></tr>'; return; }
   const frag=document.createDocumentFragment();
   rows.slice(0,400).forEach(p=>{
     const tr=document.createElement("tr");
@@ -857,7 +878,9 @@ function renderPlayers(){
       :(p.yc==null?'—':p.yc);
     const y=yEff(p), r=rEff(p);
     const liveDot=p.liveRate?'<span title="Live 2026-27 yellow rate" style="color:var(--good)"> •</span>':'';
+    const w=isWatched(p);
     tr.innerHTML=
+      `<td style="text-align:center;padding:.45rem .2rem"><button class="watch-btn" data-w="${esc(watchKey(p))}" aria-pressed="${w}" title="${w?'Remove from watchlist':'Add to watchlist'}" aria-label="${w?'Remove':'Add'} ${esc(p.n)} ${w?'from':'to'} watchlist">${w?'★':'☆'}</button></td>`+
       `<td style="padding:.45rem .7rem"><strong>${esc(p.n)}</strong>${ls}${efl}${avail}</td>`+
       `<td style="padding:.45rem .5rem" class="muted">${crest(p.c)} <span class="num" style="font-size:.85rem">${p.c}</span></td>`+
       `<td style="text-align:center" class="faint num">${esc(p.p||"")}</td>`+
@@ -869,7 +892,7 @@ function renderPlayers(){
     frag.appendChild(tr);
   });
   tb.appendChild(frag);
-  if(rows.length>400){ const tr=document.createElement("tr"); tr.innerHTML=`<td colspan="8" class="faint" style="padding:.6rem;text-align:center">Showing top 400 of ${rows.length}. Filter to narrow.</td>`; tb.appendChild(tr); }
+  if(rows.length>400){ const tr=document.createElement("tr"); tr.innerHTML=`<td colspan="9" class="faint" style="padding:.6rem;text-align:center">Showing top 400 of ${rows.length}. Filter to narrow.</td>`; tb.appendChild(tr); }
 }
 
 // ---- clubs ----
@@ -1018,7 +1041,12 @@ tabs.forEach((tab,i)=>{
 });
 
 // ---- events ----
-["search","clubFilter","posFilter","hideLow"].forEach(id=>$(id).addEventListener("input",renderPlayers));
+["search","clubFilter","posFilter","hideLow","watchOnly"].forEach(id=>$(id).addEventListener("input",renderPlayers));
+$("playerRows").addEventListener("click",e=>{ const b=e.target.closest(".watch-btn"); if(!b) return;
+  const k=b.dataset.w, i=state.watch.indexOf(k);
+  if(i>=0) state.watch.splice(i,1); else state.watch.push(k);
+  saveState(); renderPlayers();
+});
 $("exportBtn").addEventListener("click",exportPNG);
 document.querySelectorAll("th [data-sort]").forEach(b=>b.addEventListener("click",()=>{ const k=b.dataset.sort; if(sortKey===k) sortDir*=-1; else { sortKey=k; sortDir=(k==="n"||k==="p")?1:-1; } renderPlayers(); }));
 $("pickForm").addEventListener("submit",e=>{ e.preventDefault();
@@ -1027,6 +1055,27 @@ $("pickForm").addEventListener("submit",e=>{ e.preventDefault();
 });
 $("pickRows").addEventListener("change",e=>{ const s=e.target.closest(".pk-status"); if(!s) return; const p=state.picks.find(x=>x.id===s.dataset.id); if(p){ p.status=s.value; saveState(); cloudPickUpsert(p); renderTracker(); } });
 $("pickRows").addEventListener("click",e=>{ const b=e.target.closest(".pk-del"); if(!b) return; state.picks=state.picks.filter(x=>x.id!==b.dataset.id); saveState(); cloudPickDel(b.dataset.id); renderTracker(); });
+
+// ---- AI review of picks ----
+// Ported from Booking Analytics Pro. The Anthropic key never reaches the
+// browser: /api/insights is this site's own Netlify Function, which holds
+// the key in its environment and answers 501 when it isn't configured.
+async function runInsights(){
+  const out=$("insightsOut"), btn=$("insightsBtn");
+  const settled=state.picks.filter(p=>p.status==="won"||p.status==="lost"||p.status==="void");
+  if(settled.length<3){ out.textContent="Settle at least 3 picks first — the review works off results, not intentions."; return; }
+  btn.disabled=true; out.textContent="Analysing your picks…";
+  try{
+    const res=await fetch("/api/insights",{method:"POST",headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({picks:settled.map(p=>({fixture:p.fixture,selection:p.selection,market:p.market,odds:p.odds,stake:p.stake,status:p.status}))})});
+    if(res.status===501){ out.textContent="Not switched on for this deploy — set ANTHROPIC_API_KEY in the Netlify environment to enable the AI review. Everything else works without it."; return; }
+    const data=await res.json().catch(()=>({}));
+    if(!res.ok) throw new Error(data.error||("insights "+res.status));
+    out.textContent=data.text||"No analysis returned.";
+  }catch(e){ out.textContent="The review is unavailable right now — try again in a minute."; }
+  finally{ btn.disabled=false; }
+}
+$("insightsBtn").addEventListener("click",runInsights);
 
 // theme
 const themeToggle=$("themeToggle");

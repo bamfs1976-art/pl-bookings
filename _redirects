@@ -1,2 +1,3 @@
-/api/fpl/*    /.netlify/functions/fpl   200
+/api/fpl/*    /.netlify/functions/fpl        200
+/api/insights /.netlify/functions/insights   200
 /*    /index.html   200
