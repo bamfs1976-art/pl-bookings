@@ -67,6 +67,8 @@ The site is a PWA: on iPhone open it in Safari → Share → Add to Home Screen;
 The `data` folder holds the build script and the raw harvests (harvest JSON gitignored):
 - `build_pl_data.py` builds `pl_data.js` (CLUBS, PL_PLAYERS, REFS) from the harvested JSON. `index.html` loads that file directly, so regenerating it is the whole refresh — there is no hand-copy step, and CI (`scripts/check-data.mjs`) fails if an inline dataset ever reappears in `index.html` or the counts go wrong.
 - Harvested from the ScoutingStats API: `/api/league/8/player-stats` (PL) and `/api/league/9/player-stats` (Championship), plus referee data from tips.gg.
+- `harvest.py` automates the harvest. ScoutingStats needs a logged-in session, so it authenticates with a browser cookie: log in at scoutingstats.ai, copy the `cookie` request header from DevTools, then `SS_COOKIE='…' python3 data/harvest.py && python3 data/build_pl_data.py`. If `pl_refs.json` is absent it is reconstructed from the shipped `pl_data.js` (referee figures only change when refreshed by hand).
+- The **Data refresh** GitHub Action (`.github/workflows/data-refresh.yml`) runs the whole pipeline in one click from the Actions tab — harvest → rebuild → guards → commit. It needs one repository secret, `SS_COOKIE`, holding that same cookie value; re-set it whenever the session expires.
 
 ## Tests and CI
 

@@ -1,0 +1,53 @@
+name: Data refresh
+
+# Re-harvests player stats from ScoutingStats and regenerates data/pl_data.js.
+# Run it from the Actions tab (Run workflow). Needs one repository secret:
+#   SS_COOKIE — the cookie header from a logged-in scoutingstats.ai browser
+#   session (Settings -> Secrets and variables -> Actions -> New secret).
+on:
+  workflow_dispatch:
+    inputs:
+      season_pl:
+        description: "ScoutingStats season id for the Premier League (blank = current)"
+        required: false
+        default: ""
+      season_ch:
+        description: "ScoutingStats season id for the Championship (blank = current)"
+        required: false
+        default: ""
+
+permissions:
+  contents: write
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Harvest from ScoutingStats
+        env:
+          SS_COOKIE: ${{ secrets.SS_COOKIE }}
+          SS_SEASON_PL: ${{ inputs.season_pl }}
+          SS_SEASON_CH: ${{ inputs.season_ch }}
+        run: python3 data/harvest.py
+
+      - name: Rebuild pl_data.js
+        run: python3 data/build_pl_data.py
+
+      - name: Guard the dataset
+        run: |
+          node scripts/check-data.mjs
+          node tests/test-core.mjs
+
+      - name: Commit and push if changed
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          if git diff --quiet -- data/pl_data.js; then
+            echo "No data changes."
+          else
+            git add data/pl_data.js
+            git commit -m "Refresh player data from ScoutingStats"
+            git push
+          fi
