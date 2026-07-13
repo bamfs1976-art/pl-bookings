@@ -10,7 +10,9 @@ A single-file, stats-based tool for Premier League player-bookings markets, read
 - Logged picks save to your browser under `pl_desk_v1`; optional sign-in syncs them across devices (Supabase, same account as Gameweek Edge).
 - Light theme by default with a dark mode toggle. Club colours and crests throughout.
 
-## Tabs
+## Layout and sections
+
+The desk uses the same app shell as Gameweek Edge: on desktop a fixed sidebar with the brand, a live gameweek strip (current GW and deadline from the FPL feed) and grouped navigation — **Desk** (Players · Clubs · Referees), **Fixtures**, **Tracker**, **Guide** — plus a sticky topbar with a breadcrumb. On mobile the sidebar becomes an off-canvas drawer behind a hamburger, and a fixed bottom tab bar (one item per area, safe-area aware) handles quick switching, so installed as a PWA it behaves like a native app.
 
 - **Players** sortable table of every squad player by booking risk, filter by club and position, search, hide low sample. A **P(card)** column turns each risk score into a model-implied chance of a booking with fair decimal odds — click it and paste a bookmaker's price to get an edge % and a value verdict (an estimate, framed honestly in the Guide). Once the season is under way, a small ▲ shows recent card form. Star any player onto a **watchlist** and flip the ★ filter to see just your shortlist. Injury/suspension/doubt flags from the live feed, and a **suspension watch** strip for anyone one booking from a ban (5 yellows to GW19, 10 to GW32, 15 all season). Share card exports the current view (a club's risks, or the league top 10) as a publishable social image.
 - **Clubs** the 20 clubs by cards received per game, with a discipline tier and each club's top booking risk.
