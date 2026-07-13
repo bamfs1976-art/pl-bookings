@@ -180,6 +180,16 @@
   .heat{min-width:3.2ch;text-align:right;font-weight:800;font-variant-numeric:tabular-nums}
   .chip-x{background:none;border:0;cursor:pointer;color:inherit;font-size:.68rem;padding:0 .05rem;line-height:1}
   .chip-x:hover{color:var(--danger)}
+  /* Phone-first player cards: replace the wide table under 700px. */
+  .pcard{display:flex;align-items:center;gap:.55rem;padding:.6rem .75rem;border-top:1px solid var(--border);cursor:pointer;width:100%;background:none;border-left:0;border-right:0;border-bottom:0;color:inherit;font:inherit;text-align:left}
+  .pcard:first-child{border-top:0}
+  .pcard:active{background:var(--surface-2)}
+  .pcard-main{flex:1;min-width:0}
+  .pcard-name{font-weight:700;font-size:.92rem;display:flex;align-items:center;gap:.3rem;flex-wrap:wrap}
+  .pcard-sub{font-size:.74rem;color:var(--text-2);margin-top:.15rem}
+  .pcard-risk{text-align:right;min-width:64px;flex:none}
+  @media(min-width:701px){#playerCards{display:none!important}}
+  @media(max-width:700px){#playersTableWrap{display:none}}
   .watch-btn{background:none;border:0;cursor:pointer;font-size:1.05rem;line-height:1;color:var(--text-3);padding:.15rem .25rem}
   .watch-btn[aria-pressed="true"]{color:var(--warn)}
   .watch-btn:hover{color:var(--warn)}
@@ -299,7 +309,8 @@
       <button id="csvBtn" class="btn btn-ghost" title="Download the current view as CSV">⬇ CSV</button>
     </div>
     <div id="filterChips" style="display:flex;gap:.4rem;flex-wrap:wrap;align-items:center;margin-bottom:.8rem" hidden></div>
-    <div class="surface" style="border-radius:14px;overflow:auto;max-height:74vh">
+    <div id="playerCards" class="surface" style="border-radius:14px" hidden></div>
+    <div id="playersTableWrap" class="surface" style="border-radius:14px;overflow:auto;max-height:74vh">
       <table>
         <caption class="visually-hidden">Premier League players by booking risk</caption>
         <thead><tr>
@@ -486,6 +497,11 @@
   <div class="modal surface"><div id="acctBody"></div></div>
 </div>
 
+<!-- Player profile (drill-down from any player row or card) -->
+<div id="playerModal" class="modal-back" role="dialog" aria-modal="true" aria-labelledby="ppTitle">
+  <div class="modal surface" style="max-width:460px"><div id="ppBody"></div></div>
+</div>
+
 <script src="data/pl_data.js"></script>
 <script src="data/ref_history.js"></script>
 <script src="assets/core.js"></script>
@@ -577,14 +593,18 @@ function exportCSV(){
   toast("CSV downloaded — "+rows.length+" players");
 }
 
+const MOBILE_MQ=window.matchMedia("(max-width:700px)");
 function renderPlayers(){
   renderFilterChips();
   const rows=currentPlayers();
+  renderPlayerCards(rows);
   const tb=$("playerRows"); tb.innerHTML="";
   if(!rows.length){ tb.innerHTML='<tr><td colspan="10" class="muted" style="padding:1rem;text-align:center">'+($("watchOnly").checked?"Your watchlist is empty — tap the ☆ star on any player to pin them here.":"No players match.")+'</td></tr>'; return; }
+  if(MOBILE_MQ.matches) return; // phones use the card list; skip the heavy table
   const frag=document.createDocumentFragment();
   rows.slice(0,400).forEach(p=>{
     const tr=document.createElement("tr");
+    tr.dataset.pk=watchKey(p); tr.style.cursor="pointer"; tr.title="Open "+p.n+"'s profile";
     const ls=p.ls?'<span class="chip tier-mid" style="margin-left:.35rem;font-size:.62rem">low</span>':'';
     const efl=p.b==="EFL"?'<span class="chip tier-efl" style="margin-left:.35rem;font-size:.62rem">EFL</span>':'';
     const avail=availChip(p);
@@ -611,6 +631,44 @@ function renderPlayers(){
   tb.appendChild(frag);
   if(rows.length>400){ const tr=document.createElement("tr"); tr.innerHTML=`<td colspan="10" class="faint" style="padding:.6rem;text-align:center">Showing top 400 of ${rows.length}. Filter to narrow.</td>`; tb.appendChild(tr); }
 }
+
+/* Phone layout: the same view as touch-friendly cards instead of a wide
+   table — name, availability, rates, risk and P(card) at a glance, star to
+   watch, tap for the full profile. */
+function renderPlayerCards(rows){
+  const el=$("playerCards");
+  if(!MOBILE_MQ.matches){ el.hidden=true; el.innerHTML=""; return; }
+  el.hidden=false;
+  if(!rows.length){ el.innerHTML='<p class="muted" style="padding:1rem;margin:0;text-align:center;font-size:.88rem">'+($("watchOnly").checked?"Your watchlist is empty — tap the ☆ star on any player to pin them here.":"No players match.")+'</p>'; return; }
+  el.innerHTML=rows.slice(0,150).map(p=>{
+    const r=rEff(p), pc=pImp(p), w=isWatched(p);
+    const dim=(p.live&&"isu".includes(p.live.st))?"opacity:.55;":"";
+    return `<div class="pcard" style="${dim}" data-pk="${esc(watchKey(p))}" role="button" tabindex="0" aria-label="Open ${esc(p.n)}'s profile">
+      <button class="watch-btn" data-w="${esc(watchKey(p))}" aria-pressed="${w}" title="${w?'Remove from watchlist':'Add to watchlist'}">${w?'★':'☆'}</button>
+      <div class="pcard-main">
+        <div class="pcard-name">${esc(p.n)}${p.ls?'<span class="chip tier-mid" style="font-size:.58rem">low</span>':''}${p.b==="EFL"?'<span class="chip tier-efl" style="font-size:.58rem">EFL</span>':''}${availChip(p)}</div>
+        <div class="pcard-sub num">${crest(p.c)} ${p.c} · ${esc(p.p||"")} · ${yEff(p)==null?"—":yEff(p).toFixed(2)} yc/90 · ${p.f==null?"—":p.f.toFixed(2)} f/90</div>
+      </div>
+      <div class="pcard-risk">
+        ${r==null?'<span class="faint">—</span>':`<span class="riskbadge display" style="font-size:1.1rem;color:${riskColour(r)}">${r.toFixed(2)}</span><div class="barwrap"><div class="bar" style="width:${Math.min(100,Math.round(r/3.8*100))}%;background:${riskColour(r)}"></div></div>`}
+        ${pc!=null?`<div class="faint num" style="font-size:.68rem;margin-top:.15rem">${(pc*100).toFixed(0)}% · fair ${(1/pc).toFixed(2)}</div>`:""}
+      </div>
+    </div>`;
+  }).join("")
+  +(rows.length>150?`<p class="faint" style="padding:.6rem;margin:0;text-align:center;font-size:.74rem">Showing top 150 of ${rows.length}. Filter to narrow.</p>`:"");
+}
+MOBILE_MQ.addEventListener?MOBILE_MQ.addEventListener("change",renderPlayers):MOBILE_MQ.addListener(renderPlayers);
+$("playerCards").addEventListener("click",e=>{
+  const b=e.target.closest(".watch-btn");
+  if(b){ const k=b.dataset.w,i=state.watch.indexOf(k); if(i>=0)state.watch.splice(i,1); else state.watch.push(k); saveState(); renderPlayers(); return; }
+  const card=e.target.closest(".pcard[data-pk]");
+  if(card) openPlayerProfile(card.dataset.pk);
+});
+$("playerCards").addEventListener("keydown",e=>{
+  if(e.key!=="Enter"&&e.key!==" ") return;
+  const card=e.target.closest(".pcard[data-pk]");
+  if(card){ e.preventDefault(); openPlayerProfile(card.dataset.pk); }
+});
 
 // ---- odds / value layer ----
 function valueCell(p){
@@ -969,6 +1027,82 @@ $("filterChips").addEventListener("click",e=>{
   renderPlayers(); writeHash();
 });
 $("csvBtn").addEventListener("click",exportCSV);
+// ---- player profile drill-down ----
+function playerByKey(k){ return PL_PLAYERS.find(p=>watchKey(p)===k)||null; }
+function nextFixtureFor(short){
+  if(!LIVE) return null;
+  return LIVE.fixtures
+    .filter(f=>!f.finished&&(LIVE.teamMap[f.team_h]===short||LIVE.teamMap[f.team_a]===short))
+    .sort((a,b)=>String(a.kickoff_time||"9").localeCompare(String(b.kickoff_time||"9")))[0]||null;
+}
+function openPlayerProfile(k){
+  const p=playerByKey(k); if(!p) return;
+  const r=rEff(p), pc=pImp(p), w=isWatched(p), club=CLUBMAP[p.c];
+  const liveYC=(LIVE&&LIVE.seasonStarted&&p.live)?p.live.yc:null;
+  let h=`<div style="display:flex;align-items:center;gap:.6rem;margin-bottom:.7rem">
+    ${crest(p.c)}
+    <div style="min-width:0"><h2 id="ppTitle" style="margin:0;font-size:1.15rem">${esc(p.n)}</h2>
+    <p class="muted" style="margin:.1rem 0 0;font-size:.8rem">${esc(club?club.name:p.c)} · ${esc(p.p||"")}${p.b==="EFL"?' · Championship basis':''}${availChip(p)}</p></div>
+    <button class="watch-btn" style="margin-left:auto;font-size:1.4rem" data-w="${esc(k)}" aria-pressed="${w}" title="${w?'Remove from watchlist':'Add to watchlist'}">${w?'★':'☆'}</button>
+  </div>
+  <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:.5rem;margin-bottom:.7rem">
+    ${statCell("Risk",r==null?"—":r.toFixed(2),"yc/90 ×2 + f/90",riskColour(r))}
+    ${statCell("P(card)",pc==null?"—":(pc*100).toFixed(0)+"%",pc?"fair "+(1/pc).toFixed(2):"model estimate")}
+    ${statCell("Minutes",p.min,p.ls?"low sample":"2025-26")}
+    ${statCell("Yellows",liveYC!=null?liveYC:(p.yc==null?"—":p.yc),liveYC!=null?"live 2026-27":"2025-26")}
+    ${statCell("YC / 90",yEff(p)==null?"—":yEff(p).toFixed(2),p.liveRate?"live rate":"2025-26 rate")}
+    ${statCell("Fouls / 90",p.f==null?"—":p.f.toFixed(2),"2025-26 form")}
+  </div>`;
+  if(p.live&&LIVE){
+    if(p.live.st==="s") h+=`<p style="font-size:.82rem;color:var(--danger);margin:.2rem 0 .6rem">Currently suspended${p.live.news?" — "+esc(p.live.news):""}.</p>`;
+    else{
+      const t=nextThreshold(p.live.yc,LIVE.currentGW);
+      if(t){ const left=t.n-p.live.yc;
+        h+=`<p class="muted" style="font-size:.82rem;margin:.2rem 0 .6rem">${left} booking${left===1?"":"s"} from a ban (${t.n} yellows by GW${t.gw}).${left===1?' <b style="color:var(--warn)">One card from a suspension.</b>':""}</p>`; }
+    }
+  }
+  const cf=cardForm(p);
+  if(cf&&cf.d>0) h+=`<p class="muted" style="font-size:.82rem;margin:.2rem 0 .6rem">▲ ${cf.d} card${cf.d===1?"":"s"} in the last ${cf.span} finished gameweek${cf.span===1?"":"s"}.</p>`;
+  const fx=nextFixtureFor(p.c);
+  if(fx){
+    const hS=LIVE.teamMap[fx.team_h], aS=LIVE.teamMap[fx.team_a];
+    const home=hS===p.c, opp=home?aS:hS;
+    const base=clubCAH(hS)+clubCAA(aS);
+    const ref=refFor(fx.id), rf=refFactor(ref), derby=isDerby(hS,aS);
+    const heat=Number((base*rf*(derby?DERBY_BOOST:1)).toFixed(1));
+    const cls=heat>=4.2?"tier-target":heat>=3.5?"tier-mid":"tier-fade";
+    h+=`<div class="surface-2" style="border-radius:10px;padding:.6rem .8rem;margin-bottom:.8rem">
+      <div class="faint" style="font-size:.68rem;text-transform:uppercase;letter-spacing:.04em">Next fixture</div>
+      <div style="display:flex;align-items:center;gap:.45rem;flex-wrap:wrap;margin-top:.25rem;font-size:.88rem;font-weight:600">
+        ${crest(hS)} ${hS} <span class="faint">v</span> ${crest(aS)} ${aS}
+        <span class="chip ${cls}" title="Booking heat — home side's home card rate + away side's away rate, ref- and derby-adjusted"><span class="heat">${heat.toFixed(1)}</span></span>
+        ${derby?'<span title="Derby">🔥</span>':""}${refChip(ref)||""}
+      </div>
+      <div class="faint" style="font-size:.74rem;margin-top:.2rem">${fx.kickoff_time?fmtKO(fx.kickoff_time):"Kick-off TBC"} · ${home?"home":"away"} v ${esc(clubName(opp))}</div>
+    </div>`;
+  } else if(!LIVE){
+    h+='<p class="faint" style="font-size:.76rem;margin:.2rem 0 .6rem">Next-fixture context needs the live FPL feed, which is unreachable right now.</p>';
+  }
+  h+='<div style="display:flex;justify-content:flex-end"><button class="btn btn-ghost" data-pp-close>Close</button></div>';
+  $("ppBody").innerHTML=h;
+  $("playerModal").classList.add("show");
+}
+function closePlayerProfile(){ $("playerModal").classList.remove("show"); }
+$("playerModal").addEventListener("click",e=>{
+  if(e.target.id==="playerModal"||e.target.closest("[data-pp-close]")){ closePlayerProfile(); return; }
+  const b=e.target.closest(".watch-btn");
+  if(b){ const k=b.dataset.w, i=state.watch.indexOf(k);
+    if(i>=0) state.watch.splice(i,1); else state.watch.push(k);
+    saveState(); renderPlayers(); openPlayerProfile(k); }
+});
+document.addEventListener("keydown",e=>{ if(e.key==="Escape") closePlayerProfile(); });
+
+$("playerRows").addEventListener("click",e=>{
+  if(e.target.closest(".val-btn")||e.target.closest(".value-row")||e.target.closest("input,select,a")) return;
+  if(e.target.closest(".watch-btn")) return; // handled below
+  const tr=e.target.closest("tr[data-pk]");
+  if(tr) openPlayerProfile(tr.dataset.pk);
+});
 $("playerRows").addEventListener("click",e=>{ const b=e.target.closest(".watch-btn"); if(!b) return;
   const k=b.dataset.w, i=state.watch.indexOf(k);
   if(i>=0) state.watch.splice(i,1); else state.watch.push(k);
