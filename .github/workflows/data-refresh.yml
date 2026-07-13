@@ -50,6 +50,11 @@ jobs:
         if: ${{ secrets.SS_COOKIE != '' }}
         run: python3 data/build_pl_data.py
 
+      # After build_pl_data regenerates CLUBS, re-add the home/away
+      # cards-against splits (same free source as the referees step).
+      - name: Refresh club home/away splits
+        run: python3 data/build_club_splits.py --season "${{ inputs.refs_season }}"
+
       - name: Guard the dataset
         run: |
           node scripts/check-data.mjs
