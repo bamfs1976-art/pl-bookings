@@ -178,6 +178,8 @@
   .fixrow{display:flex;align-items:center;gap:.8rem;flex-wrap:wrap;padding:.7rem .9rem;border-top:1px solid var(--border)}
   .fixrow:first-child{border-top:0}
   .heat{min-width:3.2ch;text-align:right;font-weight:800;font-variant-numeric:tabular-nums}
+  .chip-x{background:none;border:0;cursor:pointer;color:inherit;font-size:.68rem;padding:0 .05rem;line-height:1}
+  .chip-x:hover{color:var(--danger)}
   .watch-btn{background:none;border:0;cursor:pointer;font-size:1.05rem;line-height:1;color:var(--text-3);padding:.15rem .25rem}
   .watch-btn[aria-pressed="true"]{color:var(--warn)}
   .watch-btn:hover{color:var(--warn)}
@@ -225,6 +227,7 @@
           <span aria-hidden="true">🌙</span> <span id="themeLabel">Dark</span>
         </button>
       </div>
+      <a href="https://gameweekedge.netlify.app" rel="noopener" class="faint" style="font-size:.72rem;font-weight:600">Part of the Edge family · Gameweek Edge ↗</a>
       <p class="sb-foot-legal">Player and club form via ScoutingStats, live data via the official FPL API, referee data from football-data.co.uk records. Research, not a betting guarantee. Stake responsibly.</p>
     </div>
   </aside>
@@ -293,7 +296,9 @@
         <input type="checkbox" id="watchOnly"> <span aria-hidden="true">★</span> Watchlist
       </label>
       <button id="exportBtn" class="btn btn-primary" title="Export a shareable card of this view">⬇ Share card</button>
+      <button id="csvBtn" class="btn btn-ghost" title="Download the current view as CSV">⬇ CSV</button>
     </div>
+    <div id="filterChips" style="display:flex;gap:.4rem;flex-wrap:wrap;align-items:center;margin-bottom:.8rem" hidden></div>
     <div class="surface" style="border-radius:14px;overflow:auto;max-height:74vh">
       <table>
         <caption class="visually-hidden">Premier League players by booking risk</caption>
@@ -536,7 +541,44 @@ function currentPlayers(){
   });
   return rows;
 }
+// Active-filter chips: the current data slice, explicit and one-tap clearable.
+function renderFilterChips(){
+  const el=$("filterChips"); if(!el) return;
+  const chips=[];
+  const cf=$("clubFilter").value; if(cf!=="all") chips.push(["club",clubName(cf)]);
+  const pf=$("posFilter").value; if(pf!=="all") chips.push(["pos",pf]);
+  const s=$("search").value.trim(); if(s) chips.push(["q","“"+s+"”"]);
+  if($("watchOnly").checked) chips.push(["watch","★ Watchlist"]);
+  if(!$("hideLow").checked) chips.push(["low","incl. low sample"]);
+  if(!chips.length){ el.hidden=true; el.innerHTML=""; return; }
+  el.hidden=false;
+  el.innerHTML='<span class="faint" style="font-size:.72rem">Showing:</span>'
+    +chips.map(([k,label])=>`<span class="chip surface-2" style="border:1px solid var(--border)">${esc(label)} <button class="chip-x" data-clear="${k}" aria-label="Clear this filter" title="Clear">✕</button></span>`).join("")
+    +'<button id="chipsReset" class="btn btn-ghost" style="padding:.15rem .6rem;font-size:.72rem" type="button">Reset all</button>';
+}
+
+// CSV of the current (filtered, sorted) players view — the whole set, not
+// just the 400 rows the table caps at.
+function exportCSV(){
+  const rows=currentPlayers();
+  const head=["player","club","position","minutes","yellows","reds","yc_per90","fouls_per90","risk","implied_p_card","fair_odds","basis","low_sample"];
+  const cell=v=>{ v=v==null?"":String(v); return /[",\n]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v; };
+  const lines=[head.join(",")].concat(rows.map(p=>{
+    const r=rEff(p), pc=pImp(p), yc=(LIVE&&LIVE.seasonStarted&&p.live)?p.live.yc:p.yc;
+    return [p.n,p.c,p.p||"",p.min,yc==null?"":yc,p.rc==null?"":p.rc,
+      yEff(p)==null?"":yEff(p).toFixed(3),p.f==null?"":p.f.toFixed(2),
+      r==null?"":r.toFixed(3),pc==null?"":pc.toFixed(3),pc?(1/pc).toFixed(2):"",
+      p.b||"",p.ls?1:0].map(cell).join(",");
+  }));
+  const blob=new Blob([lines.join("\n")],{type:"text/csv"});
+  const u=URL.createObjectURL(blob), a=document.createElement("a");
+  a.href=u; a.download="pl-bookings-players.csv"; a.click();
+  setTimeout(()=>URL.revokeObjectURL(u),2000);
+  toast("CSV downloaded — "+rows.length+" players");
+}
+
 function renderPlayers(){
+  renderFilterChips();
   const rows=currentPlayers();
   const tb=$("playerRows"); tb.innerHTML="";
   if(!rows.length){ tb.innerHTML='<tr><td colspan="10" class="muted" style="padding:1rem;text-align:center">'+($("watchOnly").checked?"Your watchlist is empty — tap the ☆ star on any player to pin them here.":"No players match.")+'</td></tr>'; return; }
@@ -858,6 +900,7 @@ function openPanel(panelId){
   $("tbArea").textContent=PANELMAP[panelId].areaLabel;
   $("tbTitle").textContent=PANELMAP[panelId].label;
   syncNav(); closeSidebar(); window.scrollTo({top:0});
+  writeHash();
 }
 function syncNav(){
   const activeArea=PANELMAP[currentPanel].areaId;
@@ -881,8 +924,51 @@ $("hamburger").addEventListener("click",()=>{ $("sidebar").classList.contains("o
 $("navOverlay").addEventListener("click",closeSidebar);
 document.addEventListener("keydown",e=>{ if(e.key==="Escape") closeSidebar(); });
 
+// ---- URL state ----
+// The current panel and key filters live in the hash so any view can be
+// bookmarked or shared. replaceState keeps the history clean.
+let HASH_READY=false, PENDING_GW=null;
+function writeHash(){
+  if(!HASH_READY) return;
+  const q=new URLSearchParams();
+  if(currentPanel!=="panel-players") q.set("p",currentPanel.replace(/^panel-/,""));
+  const cf=$("clubFilter").value, pf=$("posFilter").value, s=$("search").value.trim();
+  if(cf!=="all") q.set("club",cf);
+  if(pf!=="all") q.set("pos",pf);
+  if(s) q.set("q",s);
+  if(!$("hideLow").checked) q.set("low","1");
+  if($("watchOnly").checked) q.set("watch","1");
+  if(currentPanel==="panel-fixtures"&&$("gwSelect").value) q.set("gw",$("gwSelect").value);
+  const str=q.toString();
+  history.replaceState(null,"",str?"#"+str:location.pathname+location.search);
+}
+function applyHash(){
+  const q=new URLSearchParams(location.hash.slice(1));
+  const club=q.get("club");
+  if(club&&[...$("clubFilter").options].some(o=>o.value===club)) $("clubFilter").value=club;
+  const pos=q.get("pos");
+  if(pos&&[...$("posFilter").options].some(o=>o.value===pos)) $("posFilter").value=pos;
+  if(q.get("q")) $("search").value=q.get("q");
+  if(q.get("low")==="1") $("hideLow").checked=false;
+  if(q.get("watch")==="1") $("watchOnly").checked=true;
+  PENDING_GW=q.get("gw"); // applied once the fixtures list has loaded
+  const panel="panel-"+(q.get("p")||"players");
+  if(PANELMAP[panel]) openPanel(panel);
+}
+// Following a link that only changes the hash doesn't reload the page, so
+// re-apply the state (writeHash uses replaceState and never re-triggers this).
+window.addEventListener("hashchange",()=>{ applyHash(); renderPlayers(); if(LIVE&&gwInit&&PENDING_GW){ if([...$("gwSelect").options].some(o=>o.value===PENDING_GW)) $("gwSelect").value=PENDING_GW; PENDING_GW=null; renderFixtures(); } });
+
 // ---- events ----
-["search","clubFilter","posFilter","hideLow","watchOnly"].forEach(id=>$(id).addEventListener("input",renderPlayers));
+["search","clubFilter","posFilter","hideLow","watchOnly"].forEach(id=>$(id).addEventListener("input",()=>{ renderPlayers(); writeHash(); }));
+$("filterChips").addEventListener("click",e=>{
+  const x=e.target.closest(".chip-x"), reset=e.target.closest("#chipsReset");
+  if(!x&&!reset) return;
+  const clear=k=>{ if(k==="club")$("clubFilter").value="all"; if(k==="pos")$("posFilter").value="all"; if(k==="q")$("search").value=""; if(k==="watch")$("watchOnly").checked=false; if(k==="low")$("hideLow").checked=true; };
+  if(reset) ["club","pos","q","watch","low"].forEach(clear); else clear(x.dataset.clear);
+  renderPlayers(); writeHash();
+});
+$("csvBtn").addEventListener("click",exportCSV);
 $("playerRows").addEventListener("click",e=>{ const b=e.target.closest(".watch-btn"); if(!b) return;
   const k=b.dataset.w, i=state.watch.indexOf(k);
   if(i>=0) state.watch.splice(i,1); else state.watch.push(k);
@@ -1035,8 +1121,9 @@ async function loadLive(){
     LIVE={bootstrap:bs,fixtures:fx,teamMap,currentGW:cur?cur.id:1,seasonStarted:bs.elements.some(el=>(el.minutes||0)>0)};
     LIVE.matchedCount=attachLive(bs,teamMap);
     status.hidden=false; status.className="chip tier-target";
-    status.textContent="● Live FPL data";
-    status.title="Availability"+(LIVE.seasonStarted?" and 2026-27 card counts":"")+" from the official FPL API. "+LIVE.matchedCount+" players matched.";
+    const fetchedAt=(()=>{ try{ const c=JSON.parse(localStorage.getItem(FPL_CACHE_KEY))||{}; const h=c["bootstrap-static"]; return h?new Date(h.t):null; }catch(e){ return null; } })();
+    status.textContent="● Live FPL data"+(fetchedAt?" · "+fetchedAt.toLocaleTimeString("en-GB",{hour:"2-digit",minute:"2-digit"}):"");
+    status.title="Availability"+(LIVE.seasonStarted?" and 2026-27 card counts":"")+" from the official FPL API"+(fetchedAt?", fetched "+fetchedAt.toLocaleString("en-GB",{weekday:"short",hour:"2-digit",minute:"2-digit"})+" (30-min cache)":"")+". "+LIVE.matchedCount+" players matched.";
     const curEv=bs.events.find(e=>e.id===LIVE.currentGW);
     $("gwNum").textContent=LIVE.currentGW;
     $("gwSideDeadline").innerHTML=curEv&&curEv.deadline_time?("Deadline <b>"+fmtKO(curEv.deadline_time)+"</b>"):"Schedule live";
@@ -1229,7 +1316,8 @@ function initFixturesUI(){
     gwInit=true;
     LIVE.bootstrap.events.forEach(e=>{ const o=document.createElement("option"); o.value=e.id; o.textContent=e.name; sel.appendChild(o); });
     sel.value=String((LIVE.bootstrap.events.find(e=>e.is_current&&!e.finished)||LIVE.bootstrap.events.find(e=>e.is_next)||LIVE.bootstrap.events[0]||{id:1}).id);
-    sel.addEventListener("input",renderFixtures);
+    if(PENDING_GW&&[...sel.options].some(o=>o.value===PENDING_GW)){ sel.value=PENDING_GW; PENDING_GW=null; }
+    sel.addEventListener("input",()=>{ renderFixtures(); writeHash(); });
   }
   renderFixtures();
 }
@@ -1430,6 +1518,9 @@ openPanel("panel-players");
 $("guideBaseRate").textContent=(CALIB.baseRate*100).toFixed(1);
 renderTrackRecord();
 fillClubFilter();
+applyHash();          // restore a shared/bookmarked view (needs the club filter filled)
+HASH_READY=true;
+writeHash();
 renderPlayers();
 renderClubs();
 renderRefs();
