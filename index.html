@@ -70,11 +70,88 @@
   tbody tr:hover{background:var(--surface-2)}
   .num{font-variant-numeric:tabular-nums}
   .crest{width:20px;height:20px;border-radius:4px;object-fit:contain;vertical-align:-5px;display:inline-block}
-  /* segmented tabs */
-  .tabs{display:inline-flex;gap:.2rem;background:var(--surface-2);border:1px solid var(--border);padding:.25rem;border-radius:12px;flex-wrap:wrap}
-  .tabbtn{padding:.45rem .9rem;border-radius:9px;border:0;background:none;color:var(--text-2);font-weight:600;cursor:pointer;font-size:.9rem;transition:.15s}
-  .tabbtn:hover{color:var(--text)}
-  .tabbtn[aria-selected="true"]{background:var(--surface);color:var(--text);box-shadow:var(--shadow-sm);font-weight:700}
+  /* App shell — layout ported from Gameweek Edge (sidebar + topbar +
+     mobile drawer + bottom nav), recoloured to the desk's own tokens. */
+  :root{--sidebar-w:248px;--topbar-h:60px;--bottomnav-h:66px}
+  .shell{display:flex;min-height:100vh}
+  .sidebar{width:var(--sidebar-w);background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;position:fixed;left:0;top:0;bottom:0;z-index:200;transition:transform .32s ease}
+  .sb-brand{display:flex;align-items:center;gap:11px;padding:18px 18px 16px;border-bottom:1px solid var(--border)}
+  .brand-text{display:flex;flex-direction:column;line-height:1.1}
+  .brand-name{font-family:'Bricolage Grotesque',sans-serif;font-size:1.04rem;letter-spacing:-.02em;font-weight:800;margin:0}
+  .brand-tag{font-size:.62rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--accent-2);margin-top:3px}
+  .sb-gw{padding:13px 18px;border-bottom:1px solid var(--border);background:linear-gradient(150deg,color-mix(in srgb,var(--accent) 10%,transparent) 0%,transparent 72%)}
+  .gw-row{display:flex;align-items:baseline;justify-content:space-between}
+  .gw-label{font-size:.62rem;font-weight:700;letter-spacing:.11em;text-transform:uppercase;color:var(--accent-2)}
+  .gw-num{font-family:'Bricolage Grotesque',sans-serif;font-size:1.5rem;font-weight:800;letter-spacing:-.03em}
+  .gw-deadline{font-size:.72rem;color:var(--text-3);margin-top:3px}
+  .gw-deadline b{color:var(--warn);font-weight:600}
+  .live-dot{display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--good);margin-right:5px;vertical-align:middle}
+  @media(prefers-reduced-motion:no-preference){.live-dot{animation:plbpulse 2.4s ease infinite}}
+  @keyframes plbpulse{0%,100%{opacity:1}50%{opacity:.4}}
+  .sb-nav{flex:1;overflow-y:auto;padding:8px 10px 16px}
+  .nav-area{margin-bottom:2px}
+  .nav-area-btn{display:flex;align-items:center;gap:11px;width:100%;padding:10px 12px;border-radius:8px;border:0;background:none;cursor:pointer;color:var(--text-2);font:inherit;font-size:.86rem;font-weight:600;transition:background .14s,color .14s}
+  .nav-area-btn:hover{background:var(--surface-3);color:var(--text)}
+  .nav-area-btn.active{background:color-mix(in srgb,var(--accent) 12%,transparent);color:var(--accent)}
+  .nav-area-ic{width:20px;height:20px;flex-shrink:0;display:flex;align-items:center;justify-content:center}
+  .nav-area-ic svg{width:18px;height:18px}
+  .nav-area-label{flex:1;text-align:left}
+  .nav-chevron{width:14px;height:14px;flex-shrink:0;color:var(--text-3);transition:transform .2s;display:flex;align-items:center}
+  .nav-chevron svg{width:14px;height:14px}
+  .nav-area-btn.expanded .nav-chevron{transform:rotate(90deg)}
+  .nav-sub{overflow:hidden;max-height:0;transition:max-height .28s ease}
+  .nav-sub.open{max-height:520px}
+  .nav-sub-btn{display:flex;align-items:center;gap:9px;width:100%;padding:8px 12px 8px 43px;border-radius:8px;border:0;background:none;cursor:pointer;color:var(--text-3);font:inherit;font-size:.81rem;font-weight:500;transition:background .12s,color .12s;position:relative}
+  .nav-sub-btn:hover{background:var(--surface-3);color:var(--text-2)}
+  .nav-sub-btn.active{color:var(--accent);font-weight:700;background:color-mix(in srgb,var(--accent) 12%,transparent)}
+  .nav-sub-btn.active::before{content:'';position:absolute;left:24px;top:50%;transform:translateY(-50%);width:5px;height:5px;border-radius:50%;background:var(--accent)}
+  .sb-foot{padding:12px 18px;border-top:1px solid var(--border);display:flex;flex-direction:column;gap:10px}
+  .sb-foot-row{display:flex;align-items:center;justify-content:space-between;gap:.5rem}
+  .sb-foot-v{font-size:.66rem;color:var(--text-3)}
+  .sb-foot-legal{font-size:.62rem;line-height:1.45;color:var(--text-3);margin:0}
+  .main{margin-left:var(--sidebar-w);flex:1;display:flex;flex-direction:column;min-height:100vh;min-width:0}
+  .topbar{position:sticky;top:0;z-index:100;height:var(--topbar-h);padding:0 26px;background:color-mix(in srgb,var(--bg) 88%,transparent);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;gap:.6rem}
+  .tb-left{display:flex;align-items:center;gap:13px;min-width:0}
+  .hamburger{display:none;width:38px;height:38px;align-items:center;justify-content:center;border-radius:8px;background:var(--surface-2);border:1px solid var(--border);cursor:pointer;color:var(--text);flex:none}
+  .hamburger svg{width:18px;height:18px}
+  .tb-logo{display:flex;align-items:center;gap:9px;flex-shrink:0;color:var(--text)}
+  .tb-logo-mark{width:30px;height:30px;flex-shrink:0;border-radius:8px;box-shadow:var(--shadow-sm)}
+  .tb-logo-text{display:flex;flex-direction:column;line-height:1.04;white-space:nowrap}
+  .tb-name{font-family:'Bricolage Grotesque',sans-serif;font-size:.96rem;letter-spacing:-.02em;font-weight:800;margin:0}
+  .tb-tag{font-size:.56rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--accent-2);margin-top:1px}
+  .tb-divider{width:1px;height:24px;background:var(--border-2);flex-shrink:0}
+  .tb-crumb{display:flex;flex-direction:column;min-width:0}
+  .tb-area{font-size:.64rem;font-weight:700;letter-spacing:.09em;text-transform:uppercase;color:var(--text-3)}
+  .tb-title{font-family:'Bricolage Grotesque',sans-serif;font-size:1.04rem;font-weight:700;letter-spacing:-.02em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .tb-right{display:flex;align-items:center;gap:9px;flex-wrap:wrap;justify-content:flex-end}
+  .page{display:none;padding:24px 26px 40px;flex:1}
+  .page.active{display:block}
+  @media(prefers-reduced-motion:no-preference){.page.active{animation:plbfade .32s ease}}
+  @keyframes plbfade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+  .page-head{margin-bottom:18px}
+  .page-head h2{font-family:'Bricolage Grotesque',sans-serif;font-size:1.5rem;font-weight:800;letter-spacing:-.03em;margin:0}
+  .page-head p{font-size:.85rem;color:var(--text-3);margin:.25rem 0 0}
+  .overlay{display:none;position:fixed;inset:0;z-index:190;background:rgba(8,10,20,.5);backdrop-filter:blur(2px);border:0;padding:0}
+  .overlay.show{display:block}
+  .bottom-nav{display:none}
+  @media(max-width:900px){
+    .sidebar{transform:translateX(-100%)}
+    .sidebar.open{transform:translateX(0);box-shadow:var(--shadow)}
+    .main{margin-left:0}
+    .hamburger{display:flex}
+    .page{padding:18px 16px calc(var(--bottomnav-h) + 24px)}
+    .bottom-nav{display:flex;position:fixed;bottom:0;left:0;right:0;z-index:150;height:var(--bottomnav-h);background:var(--surface);border-top:1px solid var(--border);padding:0 4px env(safe-area-inset-bottom);align-items:center;justify-content:space-around;box-shadow:0 -2px 16px rgba(0,0,0,.18)}
+    .bn-item{display:flex;flex-direction:column;align-items:center;gap:3px;flex:1;max-width:84px;padding:7px 4px;border-radius:8px;border:0;background:none;cursor:pointer;color:var(--text-3);font:inherit;transition:color .14s}
+    .bn-item.active{color:var(--accent)}
+    .bn-ic{width:40px;height:26px;display:flex;align-items:center;justify-content:center;border-radius:8px;transition:background .14s}
+    .bn-ic svg{width:19px;height:19px}
+    .bn-item.active .bn-ic{background:color-mix(in srgb,var(--accent) 12%,transparent)}
+    .bn-label{font-size:.6rem;font-weight:700;letter-spacing:.02em}
+    .toast{bottom:calc(var(--bottomnav-h) + 18px)}
+    .tb-divider,.tb-crumb{display:none}
+    .page-head h2{font-size:1.3rem}
+  }
+  @supports(padding:max(0px)){.bottom-nav{padding-bottom:max(4px,env(safe-area-inset-bottom))}}
   select,textarea,input{background:var(--surface); color:var(--text); border:1px solid var(--border-2); border-radius:9px; padding:.5rem .65rem; font:inherit; box-shadow:var(--shadow-sm)}
   input[type=checkbox]{box-shadow:none;accent-color:var(--accent)}
   .btn{display:inline-flex;align-items:center;gap:.4rem;border-radius:9px;padding:.5rem .9rem;font-weight:700;font-size:.88rem;cursor:pointer;border:1px solid transparent}
@@ -89,7 +166,6 @@
   .visually-hidden{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);border:0}
   .skip{position:absolute;left:-999px;top:0;background:var(--accent);color:var(--on-accent);padding:.5rem .8rem;border-radius:0 0 8px 0;z-index:50}
   .skip:focus{left:0}
-  .brandbar{height:4px;background:linear-gradient(90deg,var(--accent),var(--accent-2))}
   /* account modal + toast */
   .modal-back{position:fixed;inset:0;background:rgba(8,10,20,.55);display:none;align-items:center;justify-content:center;z-index:60;padding:1rem}
   .modal-back.show{display:flex}
@@ -109,47 +185,96 @@
 </head>
 <body>
 <a href="#main" class="skip">Skip to content</a>
-<div class="brandbar"></div>
-<header class="surface" style="border-left:0;border-right:0;border-top:0;box-shadow:none;position:sticky;top:0;z-index:20;backdrop-filter:saturate(1.2)">
-  <div style="max-width:1180px;margin:0 auto;padding:.9rem 1.1rem;display:flex;align-items:center;justify-content:space-between;gap:1rem;flex-wrap:wrap">
-    <div style="display:flex;align-items:center;gap:.65rem">
-      <svg width="40" height="40" viewBox="0 0 64 64" aria-hidden="true" style="border-radius:11px;box-shadow:var(--shadow-sm);flex:none">
-        <defs><linearGradient id="hdrbg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#4a1e6b"/><stop offset="1" stop-color="#23103a"/></linearGradient></defs>
-        <rect width="64" height="64" rx="15" fill="url(#hdrbg)"/>
+
+<div class="shell">
+
+  <!-- ═══ SIDEBAR ═══ -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sb-brand">
+      <svg width="38" height="38" viewBox="0 0 64 64" aria-hidden="true" style="border-radius:11px;box-shadow:var(--shadow-sm);flex:none">
+        <defs><linearGradient id="sbbg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#4a1e6b"/><stop offset="1" stop-color="#23103a"/></linearGradient></defs>
+        <rect width="64" height="64" rx="15" fill="url(#sbbg)"/>
         <g transform="translate(33 34)">
           <rect x="-6" y="-17" width="21" height="32" rx="4.5" fill="#e11d48" transform="rotate(16)"/>
           <rect x="-15" y="-16" width="21" height="32" rx="4.5" fill="#f7c600" stroke="#23103a" stroke-width="1.4" transform="rotate(-10)"/>
         </g>
       </svg>
-      <div>
-        <h1 style="margin:0;font-size:1.32rem;line-height:1.05;letter-spacing:-.03em">Bookings Desk</h1>
-        <p class="muted" style="margin:.1rem 0 0;font-size:.78rem;font-weight:600;letter-spacing:.02em"><span style="color:var(--accent-2)">PREMIER LEAGUE</span> · 2026-27</p>
+      <div class="brand-text">
+        <div class="brand-name">Bookings Desk</div>
+        <div class="brand-tag">Premier League</div>
       </div>
     </div>
-    <div style="display:flex;align-items:center;gap:.5rem;flex-wrap:wrap">
-      <span id="liveStatus" class="chip tier-fade" hidden></span>
-      <button id="acctBtn" class="btn btn-ghost" title="Account and sync">
-        <span aria-hidden="true">👤</span> <span id="acctLabel">Sign in</span>
-      </button>
-      <button id="themeToggle" class="btn btn-ghost" aria-pressed="false" title="Toggle theme">
-        <span aria-hidden="true">🌙</span> <span id="themeLabel">Dark</span>
-      </button>
-    </div>
-  </div>
-</header>
 
-<main id="main" style="max-width:1180px;margin:0 auto;padding:1rem 1.1rem 4rem">
-  <div role="tablist" aria-label="Sections" class="tabs" style="margin:.4rem 0 1.1rem">
-    <button class="tabbtn" role="tab" id="tab-players" aria-controls="panel-players" aria-selected="true">Players</button>
-    <button class="tabbtn" role="tab" id="tab-clubs" aria-controls="panel-clubs" aria-selected="false" tabindex="-1">Clubs</button>
-    <button class="tabbtn" role="tab" id="tab-refs" aria-controls="panel-refs" aria-selected="false" tabindex="-1">Referees</button>
-    <button class="tabbtn" role="tab" id="tab-fixtures" aria-controls="panel-fixtures" aria-selected="false" tabindex="-1">Fixtures</button>
-    <button class="tabbtn" role="tab" id="tab-tracker" aria-controls="panel-tracker" aria-selected="false" tabindex="-1">Tracker</button>
-    <button class="tabbtn" role="tab" id="tab-guide" aria-controls="panel-guide" aria-selected="false" tabindex="-1">Guide</button>
-  </div>
+    <!-- Gameweek strip (live from the FPL feed) -->
+    <div class="sb-gw">
+      <div class="gw-row">
+        <span class="gw-label"><span class="live-dot"></span>Gameweek</span>
+        <span class="gw-num" id="gwNum">—</span>
+      </div>
+      <div class="gw-deadline" id="gwSideDeadline">Waiting for the live feed…</div>
+    </div>
+
+    <!-- Navigation (built by JS) -->
+    <nav class="sb-nav" id="sbNav" aria-label="App areas"></nav>
+
+    <!-- Footer -->
+    <div class="sb-foot">
+      <div class="sb-foot-row">
+        <span class="sb-foot-v">Bookings Desk · 2026-27</span>
+        <button id="themeToggle" class="btn btn-ghost" aria-pressed="false" title="Toggle theme" style="padding:.3rem .6rem;font-size:.72rem">
+          <span aria-hidden="true">🌙</span> <span id="themeLabel">Dark</span>
+        </button>
+      </div>
+      <p class="sb-foot-legal">Player and club form via ScoutingStats, live data via the official FPL API, referee data from football-data.co.uk records. Research, not a betting guarantee. Stake responsibly.</p>
+    </div>
+  </aside>
+
+  <button class="overlay" id="navOverlay" aria-label="Close navigation" tabindex="-1"></button>
+
+  <!-- ═══ MAIN ═══ -->
+  <div class="main">
+
+    <header class="topbar">
+      <div class="tb-left">
+        <button class="hamburger" id="hamburger" aria-label="Open navigation" aria-expanded="false">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M3 6h18M3 12h18M3 18h18"/></svg>
+        </button>
+        <span class="tb-logo">
+          <svg class="tb-logo-mark" viewBox="0 0 64 64" aria-hidden="true">
+            <defs><linearGradient id="tbbg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#4a1e6b"/><stop offset="1" stop-color="#23103a"/></linearGradient></defs>
+            <rect width="64" height="64" rx="15" fill="url(#tbbg)"/>
+            <g transform="translate(33 34)">
+              <rect x="-6" y="-17" width="21" height="32" rx="4.5" fill="#e11d48" transform="rotate(16)"/>
+              <rect x="-15" y="-16" width="21" height="32" rx="4.5" fill="#f7c600" stroke="#23103a" stroke-width="1.4" transform="rotate(-10)"/>
+            </g>
+          </svg>
+          <span class="tb-logo-text">
+            <h1 class="tb-name">Bookings Desk</h1>
+            <span class="tb-tag">Premier League</span>
+          </span>
+        </span>
+        <span class="tb-divider" aria-hidden="true"></span>
+        <div class="tb-crumb">
+          <span class="tb-area" id="tbArea">Desk</span>
+          <span class="tb-title" id="tbTitle">Players</span>
+        </div>
+      </div>
+      <div class="tb-right">
+        <span id="liveStatus" class="chip tier-fade" hidden></span>
+        <button id="acctBtn" class="btn btn-ghost" title="Account and sync">
+          <span aria-hidden="true">👤</span> <span id="acctLabel">Sign in</span>
+        </button>
+      </div>
+    </header>
+
+    <main id="main">
 
   <!-- PLAYERS -->
-  <section id="panel-players" role="tabpanel" aria-labelledby="tab-players">
+  <section id="panel-players" class="page active">
+    <div class="page-head">
+      <h2>Players</h2>
+      <p>Every squad player ranked by booking risk — yellows per 90 weighted double, plus fouls per 90.</p>
+    </div>
     <div id="suspWatch" class="surface" style="border-radius:12px;padding:.8rem 1rem;margin-bottom:.8rem" hidden></div>
     <div style="display:flex;gap:.6rem;flex-wrap:wrap;align-items:center;margin-bottom:.8rem">
       <input id="search" type="search" placeholder="Search player" aria-label="Search player" style="flex:1;min-width:160px">
@@ -191,7 +316,11 @@
   </section>
 
   <!-- CLUBS -->
-  <section id="panel-clubs" role="tabpanel" aria-labelledby="tab-clubs" hidden>
+  <section id="panel-clubs" class="page">
+    <div class="page-head">
+      <h2>Clubs</h2>
+      <p>The 20 clubs by cards received per game, tiered for targeting, with each club's top booking risk.</p>
+    </div>
     <div class="surface" style="border-radius:12px;overflow:auto;margin-bottom:1rem">
       <table>
         <caption class="visually-hidden">Premier League club discipline</caption>
@@ -209,7 +338,11 @@
   </section>
 
   <!-- REFEREES -->
-  <section id="panel-refs" role="tabpanel" aria-labelledby="tab-refs" hidden>
+  <section id="panel-refs" class="page">
+    <div class="page-head">
+      <h2>Referees</h2>
+      <p>2025-26 officials by yellows per game — the busiest whistles carry the most booking value.</p>
+    </div>
     <div class="surface" style="border-radius:12px;padding:1rem;margin-bottom:1rem">
       <p class="muted" style="margin:0;font-size:.88rem">2025-26 Premier League officials by yellows per game. The busiest officials carry the most booking value. Figures are season averages from public data, appointments for 2026-27 fixtures fill in once the season starts.</p>
     </div>
@@ -229,7 +362,11 @@
   </section>
 
   <!-- FIXTURES -->
-  <section id="panel-fixtures" role="tabpanel" aria-labelledby="tab-fixtures" hidden>
+  <section id="panel-fixtures" class="page">
+    <div class="page-head">
+      <h2>Fixtures</h2>
+      <p>The 2026-27 schedule by gameweek, with booking heat and each match's top risks.</p>
+    </div>
     <div style="display:flex;gap:.6rem;flex-wrap:wrap;align-items:center;margin-bottom:.8rem">
       <label class="muted" style="font-size:.85rem">Gameweek
         <select id="gwSelect" aria-label="Choose gameweek"></select>
@@ -241,7 +378,11 @@
   </section>
 
   <!-- TRACKER -->
-  <section id="panel-tracker" role="tabpanel" aria-labelledby="tab-tracker" hidden>
+  <section id="panel-tracker" class="page">
+    <div class="page-head">
+      <h2>My Picks</h2>
+      <p>Log picks with odds and stake, settle results, and track hit-rate, P/L and ROI.</p>
+    </div>
     <div id="trackerSummary" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:.7rem;margin-bottom:1rem"></div>
     <details class="surface" style="border-radius:12px;padding:1rem;margin-bottom:1rem" open>
       <summary style="cursor:pointer;font-weight:600;font-family:'Bricolage Grotesque',sans-serif">Log a pick</summary>
@@ -279,7 +420,11 @@
   </section>
 
   <!-- GUIDE -->
-  <section id="panel-guide" role="tabpanel" aria-labelledby="tab-guide" hidden>
+  <section id="panel-guide" class="page">
+    <div class="page-head">
+      <h2>Guide</h2>
+      <p>The method, the risk formula, the tiers and the known limits.</p>
+    </div>
     <div class="surface" style="border-radius:12px;padding:1.2rem;line-height:1.6;max-width:760px">
       <h2 style="margin-top:0">How to use the desk</h2>
       <p>A stats-based filter for Premier League player-bookings markets. It ranks players by how often they get carded and give away fouls, so your per-fixture research starts in the right place. It does not pick players or price markets.</p>
@@ -317,11 +462,17 @@
     </div>
     <div id="trackRecord" class="surface" style="border-radius:12px;padding:1.2rem;line-height:1.6;max-width:760px;margin-top:1rem"></div>
   </section>
-</main>
+    </main>
 
-<footer class="muted" style="max-width:1180px;margin:0 auto;padding:0 1.1rem 2rem;font-size:.78rem">
-  Premier League Bookings Desk. Player and club form via ScoutingStats, live data via the official FPL API, referee data from football-data.co.uk records. Research, not a betting guarantee. Stake responsibly.
-</footer>
+    <footer class="muted" style="padding:0 26px 2rem;font-size:.78rem">
+      Premier League Bookings Desk. Player and club form via ScoutingStats, live data via the official FPL API, referee data from football-data.co.uk records. Research, not a betting guarantee. Stake responsibly.
+    </footer>
+
+  </div><!-- /.main -->
+</div><!-- /.shell -->
+
+<!-- ═══ BOTTOM NAV (mobile) ═══ -->
+<nav class="bottom-nav" id="bottomNav" aria-label="Quick navigation"></nav>
 
 <!-- Account modal (optional sign-in for cross-device pick sync) -->
 <div id="acctModal" class="modal-back" role="dialog" aria-modal="true" aria-labelledby="acctTitle">
@@ -588,13 +739,96 @@ async function exportPNG(){
   c.toBlob(blob=>{ const u=URL.createObjectURL(blob),a=document.createElement("a"); a.href=u; a.download=`pl-bookings-${cf==="all"?"top":cf.toLowerCase()}.png`; a.click(); setTimeout(()=>URL.revokeObjectURL(u),2000); },"image/png");
 }
 
-// ---- tabs ----
-const tabs=[...document.querySelectorAll('[role=tab]')];
-function selectTab(tab){ tabs.forEach(t=>{ const sel=t===tab; t.setAttribute("aria-selected",sel); t.tabIndex=sel?0:-1; $(t.getAttribute("aria-controls")).hidden=!sel; }); tab.focus(); }
-tabs.forEach((tab,i)=>{
-  tab.addEventListener("click",()=>selectTab(tab));
-  tab.addEventListener("keydown",e=>{ if(e.key==="ArrowRight"||e.key==="ArrowLeft"){ e.preventDefault(); selectTab(tabs[(i+(e.key==="ArrowRight"?1:-1)+tabs.length)%tabs.length]); } });
-});
+// ---- navigation (shell ported from Gameweek Edge) ----
+// Sidebar with grouped areas + sub-panels on desktop; off-canvas drawer with
+// overlay plus a fixed bottom nav (one item per area) on mobile.
+const NICON={
+  desk:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>',
+  fixtures:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>',
+  tracker:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8.5"/><circle cx="12" cy="12" r="3.5"/></svg>',
+  guide:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5a2 2 0 0 1 2-2h14v18H6a2 2 0 0 0-2 2z"/><path d="M4 19a2 2 0 0 1 2-2h14"/></svg>',
+  chevron:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg>'
+};
+const NAV=[
+  {id:"desk",label:"Desk",icon:"desk",panels:[
+    {id:"panel-players",label:"Players"},
+    {id:"panel-clubs",label:"Clubs"},
+    {id:"panel-refs",label:"Referees"}
+  ]},
+  {id:"fixtures",label:"Fixtures",icon:"fixtures",panels:[{id:"panel-fixtures",label:"Fixtures"}]},
+  {id:"tracker",label:"Tracker",icon:"tracker",panels:[{id:"panel-tracker",label:"My Picks"}]},
+  {id:"guide",label:"Guide",icon:"guide",panels:[{id:"panel-guide",label:"How to use"}]}
+];
+const PANELMAP={};
+NAV.forEach(a=>a.panels.forEach(p=>PANELMAP[p.id]={...p,areaId:a.id,areaLabel:a.label}));
+let currentPanel="panel-players",expandedArea="desk";
+
+function buildNav(){
+  const nav=$("sbNav"); nav.innerHTML="";
+  NAV.forEach(area=>{
+    const wrap=document.createElement("div"); wrap.className="nav-area";
+    const single=area.panels.length===1;
+    const btn=document.createElement("button");
+    btn.className="nav-area-btn"; btn.dataset.area=area.id; btn.type="button";
+    if(!single) btn.setAttribute("aria-expanded","false");
+    btn.innerHTML='<span class="nav-area-ic">'+NICON[area.icon]+'</span>'
+      +'<span class="nav-area-label">'+area.label+'</span>'
+      +(single?'':'<span class="nav-chevron">'+NICON.chevron+'</span>');
+    btn.addEventListener("click",()=>{ if(single) openPanel(area.panels[0].id); else toggleArea(area.id); });
+    wrap.appendChild(btn);
+    if(!single){
+      const sub=document.createElement("div"); sub.className="nav-sub"; sub.dataset.sub=area.id;
+      area.panels.forEach(p=>{
+        const sb2=document.createElement("button");
+        sb2.className="nav-sub-btn"; sb2.dataset.panel=p.id; sb2.type="button";
+        sb2.innerHTML="<span>"+p.label+"</span>";
+        sb2.addEventListener("click",()=>openPanel(p.id));
+        sub.appendChild(sb2);
+      });
+      wrap.appendChild(sub);
+    }
+    nav.appendChild(wrap);
+  });
+}
+function buildBottomNav(){
+  const bn=$("bottomNav"); bn.innerHTML="";
+  NAV.forEach(area=>{
+    const item=document.createElement("button");
+    item.className="bn-item"; item.dataset.area=area.id; item.type="button";
+    item.innerHTML='<span class="bn-ic">'+NICON[area.icon]+'</span><span class="bn-label">'+area.label+'</span>';
+    item.addEventListener("click",()=>openPanel(area.panels[0].id));
+    bn.appendChild(item);
+  });
+}
+function toggleArea(areaId){ expandedArea=(expandedArea===areaId)?null:areaId; syncNav(); }
+function openPanel(panelId){
+  currentPanel=panelId; expandedArea=PANELMAP[panelId].areaId;
+  document.querySelectorAll(".page").forEach(s=>s.classList.toggle("active",s.id===panelId));
+  $("tbArea").textContent=PANELMAP[panelId].areaLabel;
+  $("tbTitle").textContent=PANELMAP[panelId].label;
+  syncNav(); closeSidebar(); window.scrollTo({top:0});
+}
+function syncNav(){
+  const activeArea=PANELMAP[currentPanel].areaId;
+  document.querySelectorAll(".nav-area-btn").forEach(btn=>{
+    const a=btn.dataset.area;
+    btn.classList.toggle("expanded",a===expandedArea);
+    btn.classList.toggle("active",a===activeArea);
+    if(btn.hasAttribute("aria-expanded")) btn.setAttribute("aria-expanded",a===expandedArea?"true":"false");
+  });
+  document.querySelectorAll(".nav-sub").forEach(sub=>sub.classList.toggle("open",sub.dataset.sub===expandedArea));
+  document.querySelectorAll(".nav-sub-btn").forEach(btn=>{
+    const on=btn.dataset.panel===currentPanel;
+    btn.classList.toggle("active",on);
+    if(on) btn.setAttribute("aria-current","page"); else btn.removeAttribute("aria-current");
+  });
+  document.querySelectorAll(".bn-item").forEach(item=>item.classList.toggle("active",item.dataset.area===activeArea));
+}
+function openSidebar(){ $("sidebar").classList.add("open"); $("navOverlay").classList.add("show"); $("hamburger").setAttribute("aria-expanded","true"); }
+function closeSidebar(){ $("sidebar").classList.remove("open"); $("navOverlay").classList.remove("show"); $("hamburger").setAttribute("aria-expanded","false"); }
+$("hamburger").addEventListener("click",()=>{ $("sidebar").classList.contains("open")?closeSidebar():openSidebar(); });
+$("navOverlay").addEventListener("click",closeSidebar);
+document.addEventListener("keydown",e=>{ if(e.key==="Escape") closeSidebar(); });
 
 // ---- events ----
 ["search","clubFilter","posFilter","hideLow","watchOnly"].forEach(id=>$(id).addEventListener("input",renderPlayers));
@@ -752,11 +986,15 @@ async function loadLive(){
     status.hidden=false; status.className="chip tier-target";
     status.textContent="● Live FPL data";
     status.title="Availability"+(LIVE.seasonStarted?" and 2026-27 card counts":"")+" from the official FPL API. "+LIVE.matchedCount+" players matched.";
+    const curEv=bs.events.find(e=>e.id===LIVE.currentGW);
+    $("gwNum").textContent=LIVE.currentGW;
+    $("gwSideDeadline").innerHTML=curEv&&curEv.deadline_time?("Deadline <b>"+fmtKO(curEv.deadline_time)+"</b>"):"Schedule live";
     renderPlayers(); renderClubs(); renderSuspWatch(); initFixturesUI(); updateAccuracy();
   }catch(e){
     status.hidden=false; status.className="chip tier-fade";
     status.textContent="Baked 2025-26 form";
     status.title="Live FPL feed unreachable — showing the baked 2025-26 basis.";
+    $("gwSideDeadline").textContent="Live feed offline";
     initFixturesUI(); renderTrackRecord();
   }
 }
@@ -1126,6 +1364,9 @@ if("serviceWorker" in navigator&&(location.protocol==="https:"||location.hostnam
 }
 
 // init
+buildNav();
+buildBottomNav();
+openPanel("panel-players");
 $("guideBaseRate").textContent=(CALIB.baseRate*100).toFixed(1);
 renderTrackRecord();
 fillClubFilter();
