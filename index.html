@@ -346,6 +346,7 @@
     <div class="surface" style="border-radius:12px;padding:1rem;margin-bottom:1rem">
       <p class="muted" style="margin:0;font-size:.88rem">2025-26 Premier League officials by yellows per game. The busiest officials carry the most booking value. Figures are season averages from public data, appointments for 2026-27 fixtures fill in once the season starts.</p>
     </div>
+    <div id="refHistoryCard" class="surface" style="border-radius:12px;padding:1rem;margin-bottom:1rem" hidden></div>
     <div class="surface" style="border-radius:12px;overflow:auto">
       <table>
         <caption class="visually-hidden">Premier League referee card rates</caption>
@@ -354,7 +355,8 @@
           <th scope="col" style="text-align:right;padding:.6rem .5rem">Matches</th>
           <th scope="col" style="text-align:right;padding:.6rem .5rem">Yellows /game</th>
           <th scope="col" style="text-align:right;padding:.6rem .5rem">Reds /game</th>
-          <th scope="col" style="text-align:right;padding:.6rem .7rem">Pens /game</th>
+          <th scope="col" style="text-align:right;padding:.6rem .5rem">Pens /game</th>
+          <th scope="col" style="text-align:right;padding:.6rem .7rem" title="Career yellows per game in the 1992–2018 historical record">Career to '18</th>
         </tr></thead>
         <tbody id="refRows"></tbody>
       </table>
@@ -447,7 +449,7 @@
       <h3>AI review of your picks</h3>
       <p>Optional, in the Tracker tab. Once you have three or more settled picks, the review sends them to the desk's own server function and returns a short read on which markets are paying, whether your odds range shows a pattern, and what to change. The AI key lives on the server, never in your browser. You need to be signed in — the review is tied to your account and capped per day so the shared budget can't be drained. If the deploy hasn't enabled it, the desk simply says so — nothing else depends on it.</p>
       <h3>Where the numbers come from</h3>
-      <p>Player and club form is 2025-26 from ScoutingStats, refreshed in season with live card counts from the official FPL API. Seventeen clubs are on Premier League data. The three promoted clubs, Coventry, Ipswich and Hull, carry their 2025-26 Championship form, flagged EFL, since that is their only recent record. Referee figures are 2025-26 season averages from public data.</p>
+      <p>Player and club form is 2025-26 from ScoutingStats, refreshed in season with live card counts from the official FPL API. Seventeen clubs are on Premier League data. The three promoted clubs, Coventry, Ipswich and Hull, carry their 2025-26 Championship form, flagged EFL, since that is their only recent record. Referee figures are 2025-26 season averages from public data, with each official's long-run record (and the league's 26-season card trend) from the MIT-licensed epldata package — unofficial, cautions only, frozen at May 2018, so it contextualises rather than prices.</p>
       <h3>Accounts and sync</h3>
       <p>Sign-in is optional. Signed out, picks save to this browser only. Sign in (top right) and your tracker picks sync to the cloud and follow you across devices — on first sign-in, local and cloud picks are merged so nothing is lost. The same account works on Gameweek Edge.</p>
       <h3>Known limits</h3>
@@ -480,6 +482,7 @@
 </div>
 
 <script src="data/pl_data.js"></script>
+<script src="data/ref_history.js"></script>
 <script src="assets/core.js"></script>
 <script>
 const STORE_KEY="pl_desk_v1", THEME_KEY="pl_desk_theme";
@@ -639,19 +642,53 @@ $("clubRows").addEventListener("click",e=>{ const tr=e.target.closest("tr[data-c
 $("clubRows").addEventListener("keydown",e=>{ if(e.key!=="Enter"&&e.key!==" ") return; const tr=e.target.closest("tr[data-club]"); if(tr){ e.preventDefault(); openClubPlayers(tr.dataset.club); } });
 
 // ---- referees ----
+// Historical record (1992-2018, epldata) keyed by initial+surname — the
+// same key build_refs.py uses to carry details across name formats.
+function refHistKey(name){ const p=String(name||"").trim().split(/[\s.]+/).filter(Boolean); return p.length<2?"":(p[0][0]+" "+p[p.length-1]).toLowerCase(); }
+const REF_HIST_MAP={};
+if(typeof REF_HISTORY!=="undefined") REF_HISTORY.refs.forEach(r=>{ REF_HIST_MAP[refHistKey(r.n)]=r; });
+
 function renderRefs(){
   const tb=$("refRows"); tb.innerHTML="";
   [...REFS].sort((a,b)=>(b.ypg||0)-(a.ypg||0)).forEach(r=>{
     const col=r.ypg>=4?"var(--danger)":r.ypg>=3.5?"var(--warn)":r.ypg>=3?"var(--good)":"var(--text-2)";
+    const h=REF_HIST_MAP[refHistKey(r.n)];
+    const hist=h?`<span class="num" title="${h.matches} matches, ${h.first}–${h.last} (epldata, yellows only)">${h.ypg.toFixed(2)}</span> <span class="faint" style="font-size:.72rem">${h.matches}g</span>`:'<span class="faint">—</span>';
     const tr=document.createElement("tr");
     tr.innerHTML=
       `<td style="padding:.55rem .7rem">${esc(r.n)}${r.region?` <span class="faint" style="font-size:.72rem">${esc(r.region)}</span>`:''}</td>`+
       `<td style="text-align:right" class="num muted">${r.matches==null?'—':r.matches}</td>`+
       `<td style="text-align:right"><span class="display num" style="font-size:1.05rem;color:${col}">${r.ypg==null?'—':r.ypg.toFixed(2)}</span></td>`+
       `<td style="text-align:right" class="num muted">${r.red==null?'—':r.red.toFixed(2)}</td>`+
-      `<td style="text-align:right" class="num muted">${r.pen==null?'—':r.pen.toFixed(2)}</td>`;
+      `<td style="text-align:right" class="num muted">${r.pen==null?'—':r.pen.toFixed(2)}</td>`+
+      `<td style="text-align:right;padding:.55rem .7rem">${hist}</td>`;
     tb.appendChild(tr);
   });
+  renderRefHistory();
+}
+
+// The long view: league cautions-per-game trend 1992-2018 as a sparkline,
+// with the era shift spelled out. Shown only when the dataset loaded.
+function renderRefHistory(){
+  const el=$("refHistoryCard");
+  if(!el||typeof REF_HISTORY==="undefined"){ if(el) el.hidden=true; return; }
+  const S=REF_HISTORY.seasons, first=S[0], last=S[S.length-1];
+  const curAvg=(()=>{ const v=REFS.filter(r=>r.ypg!=null); return v.length?v.reduce((s,r)=>s+r.ypg,0)/v.length:null; })();
+  const W=280,H=44,min=Math.min(...S.map(s=>s.ypg)),max=Math.max(...S.map(s=>s.ypg));
+  const pts=S.map((s,i)=>`${(i/(S.length-1)*W).toFixed(1)},${(H-4-((s.ypg-min)/(max-min)*(H-8))).toFixed(1)}`).join(" ");
+  const matched=REFS.filter(r=>REF_HIST_MAP[refHistKey(r.n)]).length;
+  el.hidden=false;
+  el.innerHTML=
+    `<div style="display:flex;gap:1rem;flex-wrap:wrap;align-items:center;justify-content:space-between">
+      <div style="min-width:220px;flex:1">
+        <strong style="font-family:'Bricolage Grotesque',sans-serif;font-size:.9rem">The long view · ${REF_HISTORY.span}</strong>
+        <p class="muted" style="margin:.35rem 0 0;font-size:.82rem">League yellows per game climbed from <b class="num">${first.ypg.toFixed(2)}</b> (${first.s}) to <b class="num">${last.ypg.toFixed(2)}</b> (${last.s})${curAvg?`, and today's officials average <b class="num">${curAvg.toFixed(2)}</b>`:""} — so judge an official against his era, not across eras. Strictness is a stable trait: the Career column shows each current official's own long-run rate where the record has him (${matched} matched).</p>
+      </div>
+      <svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" aria-label="League yellows per game by season, ${REF_HISTORY.span}" style="flex:none;max-width:100%">
+        <polyline points="${pts}" fill="none" stroke="var(--accent-2)" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+      </svg>
+    </div>
+    <p class="faint" style="margin:.5rem 0 0;font-size:.72rem">Historical record from the MIT-licensed <a href="https://github.com/pssguy/epldata" rel="noopener">epldata</a> package — unofficial data compiled from public sources, cautions only, frozen at May 2018.</p>`;
 }
 
 // ---- pick tracker ----

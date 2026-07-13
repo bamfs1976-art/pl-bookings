@@ -22,10 +22,23 @@ assert.ok(Array.isArray(REFS) && REFS.length >= 10,
 const efl = PL_PLAYERS.filter((p) => p.b === 'EFL').length;
 assert.ok(efl >= 50, `expected >=50 promoted-club (EFL) rows, got ${efl}`);
 
+const histSrc = readFileSync(join(root, 'data', 'ref_history.js'), 'utf8');
+const hctx = {};
+vm.createContext(hctx);
+vm.runInContext(histSrc, hctx);
+const REF_HISTORY = vm.runInContext('REF_HISTORY', hctx);
+assert.equal(REF_HISTORY.seasons.length, 26,
+  `expected 26 historical seasons (1992/93-2017/18), got ${REF_HISTORY.seasons.length}`);
+assert.ok(REF_HISTORY.refs.length >= 40,
+  `expected >=40 historical referees, got ${REF_HISTORY.refs.length}`);
+
 const html = readFileSync(join(root, 'index.html'), 'utf8');
 assert.ok(!/const\s+PL_PLAYERS\s*=\s*\[/.test(html),
   'index.html contains an inline PL_PLAYERS literal — the dataset must ship only in data/pl_data.js');
 assert.ok(/<script\s+src="data\/pl_data\.js"><\/script>/.test(html),
   'index.html no longer loads data/pl_data.js');
+assert.ok(/<script\s+src="data\/ref_history\.js"><\/script>/.test(html),
+  'index.html no longer loads data/ref_history.js');
 
-console.log(`data guard OK: ${PL_PLAYERS.length} players (${efl} EFL), ${CLUBS.length} clubs, ${REFS.length} refs, no inline dataset`);
+console.log(`data guard OK: ${PL_PLAYERS.length} players (${efl} EFL), ${CLUBS.length} clubs, ${REFS.length} refs, ` +
+  `${REF_HISTORY.refs.length} historical refs over ${REF_HISTORY.seasons.length} seasons, no inline dataset`);
