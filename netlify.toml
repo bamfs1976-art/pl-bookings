@@ -4,6 +4,13 @@
   publish = "."
   command = ""
 
+[build.environment]
+  # The Supabase project URL is public client configuration — it ships in
+  # index.html by design (Supabase's model: RLS + anon key in the client),
+  # so the secrets scanner must not fail the build on it. Real secrets
+  # (service-role key, Anthropic key) are still scanned.
+  SECRETS_SCAN_OMIT_KEYS = "SUPABASE_URL"
+
 [functions]
   directory = "netlify/functions"
 
