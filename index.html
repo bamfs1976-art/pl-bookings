@@ -222,6 +222,9 @@
   .conf-dot{width:9px;height:9px;border-radius:50%;flex:none}
   .fx-more{width:100%;border:0;border-top:1px solid var(--border);background:none;color:var(--accent-2);font:inherit;font-weight:700;font-size:.78rem;padding:.5rem;cursor:pointer}
   .fx-more:hover{background:var(--surface-2)}
+  .fx-foot{border-top:1px solid var(--border);padding:.45rem .6rem;display:flex;justify-content:flex-end;margin-top:auto}
+  .fx-share{border:0;background:none;color:var(--text-2);font:inherit;font-weight:700;font-size:.74rem;padding:.3rem .55rem;border-radius:8px;cursor:pointer;display:inline-flex;align-items:center;gap:.3rem}
+  .fx-share:hover{background:var(--surface-2);color:var(--accent)}
   .fx-empty{padding:.7rem .9rem;font-size:.82rem;color:var(--text-3)}
   .wl-row{display:flex;align-items:center;gap:.55rem;padding:.45rem .9rem;border-top:1px solid var(--border);cursor:pointer;width:100%;text-align:left;background:none;border-left:0;border-right:0;border-bottom:0;color:inherit;font:inherit}
   .wl-row:first-of-type{border-top:0}
@@ -330,8 +333,12 @@
       </div>
       <div id="gwWatch" class="surface" style="border-radius:14px;overflow:hidden"></div>
     </div>
+    <div id="gwToolbar" style="display:flex;align-items:center;justify-content:space-between;gap:.6rem;margin-bottom:.6rem;flex-wrap:wrap" hidden>
+      <h3 style="margin:0;font-size:1.05rem;font-family:'Bricolage Grotesque',sans-serif">Fixtures <span class="faint" style="font-weight:600;font-size:.78rem">· hottest first</span></h3>
+      <button class="btn btn-primary" id="gwShareBtn" style="padding:.35rem .8rem;font-size:.8rem" type="button" title="Download a shareable card of this gameweek's fixtures by booking heat">⬇ Share gameweek</button>
+    </div>
     <div id="gwFixtures"></div>
-    <p class="faint" style="font-size:.78rem;margin-top:.8rem">Each fixture's booking candidates are its highest-risk available players, ranked by a <strong>fixture-aware booking probability</strong>: the season model chance scaled by the assigned referee's card rate (the ×factor) and a small derby bump. Bands: <span style="color:var(--danger);font-weight:700">High</span> 50%+, <span style="color:var(--warn);font-weight:700">Watch</span> 30–50%. The dot is sample confidence (minutes played). Assign referees on each card once appointments are published. An estimate for research, not a price — see the Guide.</p>
+    <p class="faint" style="font-size:.78rem;margin-top:.8rem">Fixtures are ordered <strong>hottest to coolest</strong> by booking heat. Each fixture's booking candidates are its highest-risk available players, ranked by a <strong>fixture-aware booking probability</strong>: the season model chance scaled by the assigned referee's card rate (the ×factor) and a small derby bump. Bands: <span style="color:var(--danger);font-weight:700">High</span> 50%+, <span style="color:var(--warn);font-weight:700">Watch</span> 30–50%. The dot is sample confidence (minutes played). Assign referees on each card once appointments are published. An estimate for research, not a price — see the Guide.</p>
   </section>
 
   <!-- PLAYERS -->
@@ -442,6 +449,7 @@
         <select id="gwSelect" aria-label="Choose gameweek"></select>
       </label>
       <span id="gwDeadline" class="faint" style="font-size:.8rem"></span>
+      <button class="btn btn-primary" id="fxShareBtn" style="padding:.4rem .8rem;font-size:.82rem;margin-left:auto" type="button" title="Download a shareable card of this gameweek's fixtures by booking heat">⬇ Share gameweek</button>
     </div>
     <div id="fixtureList"></div>
     <p class="faint" style="font-size:.78rem;margin-top:.6rem">Booking heat is venue-aware: the home side's home card rate plus the away side's away card rate, from 2025-26 form (promoted clubs use the league median until they build Premier League data). Hot is 4.2 plus, warm 3.5 plus. The flame marks a combustible side; recognised derbies get a ×1.15 heat boost and a derby chip. Top risks are each fixture's highest-risk available players. Referee appointments are not published in the FPL feed — once the PGMOL announcement is out, assign the official with each fixture's Ref control (saved in this browser) and the booking heat scales to his card rate, clamped. Schedule via the official FPL API.</p>
@@ -499,7 +507,7 @@
       <h2 style="margin-top:0">How to use the desk</h2>
       <p>A stats-based filter for Premier League player-bookings markets. It ranks players by how often they get carded and give away fouls, so your per-fixture research starts in the right place. It does not pick players or price markets.</p>
       <h3>This Gameweek — the default view</h3>
-      <p>The desk opens on <strong>This Gameweek</strong>: a card per fixture, each led by its referee and listing the highest-risk available players from both sides, banded by a <strong>fixture-aware booking probability</strong>. That number is the season model chance of a card (below) scaled by two match factors: the assigned referee's card rate — shown inline as the <span class="num">×factor</span> on each row and at the top of the card — and a small boost for recognised derbies. Bands are <span style="color:var(--danger);font-weight:700">High</span> (50%+) and <span style="color:var(--warn);font-weight:700">Watch</span> (30–50%); lower-risk names fold away behind a toggle. The coloured dot on each row is <strong>sample confidence</strong> from minutes played (green high, amber medium, grey low). Your starred players surface in a <strong>My watchlist</strong> card at the top, sorted by their next fixture's probability. Referee appointments aren't in the live feed, so assign the official on each card once PGMOL publishes them — every player's number then scales to his whistle. It's an estimate layered on season form, not a market price.</p>
+      <p>The desk opens on <strong>This Gameweek</strong>: a card per fixture, each led by its referee and listing the highest-risk available players from both sides, banded by a <strong>fixture-aware booking probability</strong>. That number is the season model chance of a card (below) scaled by two match factors: the assigned referee's card rate — shown inline as the <span class="num">×factor</span> on each row and at the top of the card — and a small boost for recognised derbies. Bands are <span style="color:var(--danger);font-weight:700">High</span> (50%+) and <span style="color:var(--warn);font-weight:700">Watch</span> (30–50%); lower-risk names fold away behind a toggle. The coloured dot on each row is <strong>sample confidence</strong> from minutes played (green high, amber medium, grey low). Your starred players surface in a <strong>My watchlist</strong> card at the top, sorted by their next fixture's probability. Referee appointments aren't in the live feed, so assign the official on each card once PGMOL publishes them — every player's number then scales to his whistle. Fixtures are ordered <strong>hottest to coolest</strong> by booking heat. Every match card has a <strong>⬇ Share match</strong> button that exports it as an image, and <strong>⬇ Share gameweek</strong> exports the whole round's fixtures ranked by heat — both handy for FPL and tipster content. It's an estimate layered on season form, not a market price.</p>
       <h3>Player booking risk</h3>
       <p class="surface-2" style="padding:.6rem .8rem;border-radius:8px;font-family:monospace;font-size:.85rem">risk = yellow cards per 90 &times; 2 + fouls committed per 90</p>
       <p>Yellow rate is weighted double because the bet pays on cards, not fouls. Fouls per 90 carries the volume signal, the players who keep giving the referee a decision. Both are 2025-26 rates. Players under 450 minutes are flagged low sample.</p>
@@ -950,6 +958,110 @@ async function exportPNG(){
   x.fillText("Player form via ScoutingStats · 2026-27 squads · research, not a betting guarantee",P,H-50);
   x.fillStyle="#3d195b"; x.font=`800 20px ${disp}`; x.textAlign="right"; x.fillText("PL BOOKINGS DESK",W-P,H-50); x.textAlign="left";
   c.toBlob(blob=>{ const u=URL.createObjectURL(blob),a=document.createElement("a"); a.href=u; a.download=`pl-bookings-${cf==="all"?"top":cf.toLowerCase()}.png`; a.click(); setTimeout(()=>URL.revokeObjectURL(u),2000); },"image/png");
+}
+
+// ---- fixture & gameweek share cards ----
+// Same brand-band canvas as the players export. Heat colours match the
+// on-screen chips (green = hot/target, amber = warm, grey = cool).
+function heatHex(heat){ return heat>=4.2?"#16a34a":heat>=3.5?"#d97706":"#64748b"; }
+function probHex(p){ return p>=0.50?"#dc2626":p>=0.30?"#d97706":"#64748b"; }
+function dlBlob(blob,name){ const u=URL.createObjectURL(blob),a=document.createElement("a"); a.href=u; a.download=name; a.click(); setTimeout(()=>URL.revokeObjectURL(u),2000); toast("Card downloaded — "+name); }
+function shareBrandBand(x,W,P,body,disp,title,subtitle){
+  const g=x.createLinearGradient(0,0,W,0); g.addColorStop(0,"#3d195b"); g.addColorStop(1,"#e90052");
+  x.fillStyle=g; x.fillRect(0,0,W,168);
+  drawCardsMark(x,W-P-30,84,86);
+  x.fillStyle="rgba(255,255,255,.82)"; x.font=`700 22px ${body}`; x.fillText("BOOKINGS DESK · PREMIER LEAGUE",P,66);
+  x.fillStyle="#ffffff"; x.font=`800 46px ${disp}`;
+  let t=title; while(x.measureText(t).width>W-P-150&&t.length>4) t=t.slice(0,-1);
+  x.fillText(t+(t!==title?"…":""),P,126);
+  x.fillStyle="#586275"; x.font=`600 22px ${body}`; x.fillText(subtitle,P,210);
+}
+function shareFooter(x,W,P,H,body,disp,note){
+  x.fillStyle="#8b94a5"; x.font=`600 18px ${body}`; x.fillText(note,P,H-50);
+  x.fillStyle="#3d195b"; x.font=`800 20px ${disp}`; x.textAlign="right"; x.fillText("PL BOOKINGS DESK",W-P,H-50); x.textAlign="left";
+}
+// One match: teams, referee, heat and the fixture-aware booking candidates.
+async function exportFixturePNG(fid){
+  if(!LIVE){ toast("Live data needed to build a match card"); return; }
+  const f=LIVE.fixtures.find(x=>x.id===fid), M=f&&fixtureMeta(f);
+  if(!M){ toast("Couldn't build that match card"); return; }
+  const {h,a,ref,rf,derby,heat,lbl}=M;
+  const cands=gwCandidates(h,a,ref,derby).slice(0,8);
+  try{ if(document.fonts&&document.fonts.ready) await document.fonts.ready; }catch(e){}
+  const W=1080,H=1350,P=64, c=document.createElement("canvas"); c.width=W;c.height=H;
+  const x=c.getContext("2d");
+  const disp="'Bricolage Grotesque',sans-serif", body="'Hanken Grotesk',sans-serif";
+  x.fillStyle="#ffffff"; x.fillRect(0,0,W,H);
+  const gwName=(LIVE.bootstrap.events.find(e=>e.id===f.event)||{}).name||("GW"+f.event);
+  shareBrandBand(x,W,P,body,disp,`${clubName(h)} v ${clubName(a)}`,`${gwName}${f.kickoff_time?" · "+fmtKO(f.kickoff_time):""}`);
+  // referee + heat row
+  const ry=256;
+  x.fillStyle="#0c1322"; x.font=`700 22px ${body}`;
+  x.fillText(ref?`Referee: ${ref.n}${ref.ypg!=null?" · "+ref.ypg.toFixed(2)+" c/g (×"+rf.toFixed(2)+")":""}`:"Referee: not yet assigned",P,ry);
+  const hc=heatHex(heat), ht=`${heat.toFixed(1)} ${lbl}${derby?" · Derby":""}`;
+  x.font=`800 22px ${disp}`; const hw=x.measureText(ht).width+40;
+  x.fillStyle=hc; roundRect(x,W-P-hw,ry-28,hw,38,19); x.fill();
+  x.fillStyle="#fff"; x.textAlign="center"; x.fillText(ht,W-P-hw/2,ry-1); x.textAlign="left";
+  const top=322;
+  x.fillStyle="#8b94a5"; x.font=`700 16px ${body}`;
+  x.fillText("BOOKING CANDIDATE",P,top-16);
+  x.textAlign="right"; x.fillText("P(CARD)",W-P,top-16); x.textAlign="left";
+  if(!cands.length){ x.fillStyle="#586275"; x.font=`600 24px ${body}`; x.fillText("No rated available players yet.",P,top+40); }
+  const rh=Math.min(118,(H-top-120)/Math.max(1,cands.length));
+  cands.forEach((cd,i)=>{
+    const p=cd.p, prob=cd.prob, y=top+i*rh, mid=y+rh/2;
+    if(i%2===0){ x.fillStyle="#f4f6fa"; roundRect(x,P-16,y+6,W-2*(P-16),rh-10,14); x.fill(); }
+    const col=clubColour(p.c); x.fillStyle=col; roundRect(x,P,mid-20,52,40,9); x.fill();
+    x.fillStyle=textOn(col); x.font=`800 17px ${body}`; x.textAlign="center"; x.fillText(p.c,P+26,mid+6); x.textAlign="left";
+    x.fillStyle="#0c1322"; x.font=`700 30px ${disp}`;
+    let nm=p.n; while(x.measureText(nm).width>W-P-430&&nm.length>3) nm=nm.slice(0,-1);
+    x.fillText(nm+(nm!==p.n?"…":""),P+72,mid-2);
+    x.fillStyle="#586275"; x.font=`600 18px ${body}`;
+    x.fillText(`${p.p||""} · base ${(pImp(p)*100).toFixed(0)}%${ref&&Math.abs(rf-1)>=0.02?" · ×"+rf.toFixed(2)+" ref":""}`,P+72,mid+24);
+    const pc=probHex(prob);
+    x.fillStyle=pc; x.font=`800 40px ${disp}`; x.textAlign="right"; x.fillText((prob*100).toFixed(0)+"%",W-P,mid-4); x.textAlign="left";
+    const bw=210,bx=W-P-bw,by=mid+12;
+    x.fillStyle="#e3e7ee"; roundRect(x,bx,by,bw,8,4); x.fill();
+    x.fillStyle=pc; roundRect(x,bx,by,bw*Math.min(1,prob),8,4); x.fill();
+  });
+  shareFooter(x,W,P,H,body,disp,"Fixture-aware, referee-adjusted booking model · research, not a guarantee");
+  c.toBlob(blob=>dlBlob(blob,`pl-bookings-${h.toLowerCase()}-${a.toLowerCase()}.png`),"image/png");
+}
+// Whole gameweek: every fixture by booking heat, hottest first, with its top risk.
+async function exportGameweekPNG(gw){
+  if(!LIVE){ toast("Live data needed to build a gameweek card"); return; }
+  const fx=sortFixturesByHeat(LIVE.fixtures.filter(f=>f.event===gw));
+  if(!fx.length){ toast("No fixtures to share for this gameweek"); return; }
+  const ev=LIVE.bootstrap.events.find(e=>e.id===gw)||{};
+  try{ if(document.fonts&&document.fonts.ready) await document.fonts.ready; }catch(e){}
+  const W=1080,H=1350,P=64, c=document.createElement("canvas"); c.width=W;c.height=H;
+  const x=c.getContext("2d");
+  const disp="'Bricolage Grotesque',sans-serif", body="'Hanken Grotesk',sans-serif";
+  x.fillStyle="#ffffff"; x.fillRect(0,0,W,H);
+  shareBrandBand(x,W,P,body,disp,`${ev.name||("GW"+gw)} · Booking Heat`,`Hottest fixtures first${ev.deadline_time?" · deadline "+fmtKO(ev.deadline_time):""}`);
+  const top=272;
+  x.fillStyle="#8b94a5"; x.font=`700 16px ${body}`;
+  x.fillText("FIXTURE",P+92,top-16); x.fillText("TOP RISK",P+430,top-16);
+  x.textAlign="right"; x.fillText("HEAT",W-P,top-16); x.textAlign="left";
+  const rows=fx.slice(0,10), rh=Math.min(98,(H-top-110)/Math.max(1,rows.length));
+  const badge=(x,cx,mid,short)=>{ const col=clubColour(short); x.fillStyle=col; roundRect(x,cx,mid-16,46,32,7); x.fill(); x.fillStyle=textOn(col); x.font=`800 14px ${body}`; x.textAlign="center"; x.fillText(short,cx+23,mid+5); x.textAlign="left"; };
+  rows.forEach((f,i)=>{
+    const M=fixtureMeta(f); if(!M) return;
+    const {h,a,ref,derby,heat,lbl}=M, y=top+i*rh, mid=y+rh/2;
+    if(i%2===0){ x.fillStyle="#f4f6fa"; roundRect(x,P-16,y+6,W-2*(P-16),rh-10,14); x.fill(); }
+    x.fillStyle="#c2c8d4"; x.font=`800 26px ${disp}`; x.textAlign="right"; x.fillText(String(i+1),P+12,mid+8); x.textAlign="left";
+    badge(x,P+30,mid,h); x.fillStyle="#586275"; x.font=`600 18px ${body}`; x.fillText("v",P+84,mid+6); badge(x,P+102,mid,a);
+    if(derby){ x.fillStyle="#e90052"; x.font=`700 14px ${body}`; x.fillText("derby",P+158,mid+6); }
+    const t1=gwCandidates(h,a,ref,derby)[0];
+    if(t1){ x.fillStyle="#0c1322"; x.font=`700 22px ${disp}`; let nm=t1.p.n; while(x.measureText(nm).width>250&&nm.length>3) nm=nm.slice(0,-1); x.fillText(nm+(nm!==t1.p.n?"…":""),P+430,mid-2);
+      x.fillStyle=probHex(t1.prob); x.font=`700 17px ${body}`; x.fillText((t1.prob*100).toFixed(0)+"% card",P+430,mid+22);
+    }else{ x.fillStyle="#8b94a5"; x.font=`600 18px ${body}`; x.fillText("—",P+430,mid+6); }
+    const hc=heatHex(heat);
+    x.fillStyle=hc; x.font=`800 36px ${disp}`; x.textAlign="right"; x.fillText(heat.toFixed(1),W-P,mid-2);
+    x.font=`700 15px ${body}`; x.fillText(lbl,W-P,mid+22); x.textAlign="left";
+  });
+  shareFooter(x,W,P,H,body,disp,"Booking heat = venue card rates × referee × derby · research, not a guarantee");
+  c.toBlob(blob=>dlBlob(blob,`pl-bookings-gw${gw}.png`),"image/png");
 }
 
 // ---- navigation (shell ported from Gameweek Edge) ----
@@ -1540,7 +1652,7 @@ function renderFixtures(){
   if(!LIVE||!$("gwSelect").options.length) return;
   const ev=LIVE.bootstrap.events.find(e=>e.id===gw);
   $("gwDeadline").textContent=ev&&ev.deadline_time?("Deadline "+fmtKO(ev.deadline_time)):"";
-  const fx=LIVE.fixtures.filter(f=>f.event===gw).sort((a,b)=>String(a.kickoff_time||"").localeCompare(String(b.kickoff_time||"")));
+  const fx=sortFixturesByHeat(LIVE.fixtures.filter(f=>f.event===gw));
   if(!fx.length){ list.innerHTML='<p class="muted" style="padding:1rem;margin:0">No fixtures scheduled for this gameweek yet.</p>'; return; }
   list.innerHTML='<div class="fx-grid">'+fx.map(f=>fixtureCardHtml(f,{expanded:GW_EXPANDED.has(f.id)})).join("")+'</div>';
 }
@@ -1603,15 +1715,32 @@ function candRowHtml(c,ref){
     </span>
   </button>`;
 }
-function fixtureCardHtml(f,opts){
-  opts=opts||{};
+// Everything the card, the heat sort and the share exports need for one
+// fixture, computed once so they can't drift apart.
+function fixtureMeta(f){
+  if(!LIVE) return null;
   const h=LIVE.teamMap[f.team_h], a=LIVE.teamMap[f.team_a];
-  if(!h||!a) return "";
+  if(!h||!a) return null;
   const ref=refFor(f.id), rf=refFactor(ref), derby=isDerby(h,a);
   const base=clubCAH(h)+clubCAA(a);
   const heat=Number((base*rf*(derby?DERBY_BOOST:1)).toFixed(1));
   const cls=heat>=4.2?"tier-target":heat>=3.5?"tier-mid":"tier-fade";
   const lbl=heat>=4.2?"Hot":heat>=3.5?"Warm":"Cool";
+  return {f,h,a,ref,rf,derby,base,heat,cls,lbl};
+}
+// Fixtures ordered hottest → coolest, kickoff time breaking ties.
+function sortFixturesByHeat(fx){
+  return [...fx].sort((p,q)=>{
+    const mp=fixtureMeta(p), mq=fixtureMeta(q);
+    const hp=mp?mp.heat:-1, hq=mq?mq.heat:-1;
+    if(hq!==hp) return hq-hp;
+    return String(p.kickoff_time||"").localeCompare(String(q.kickoff_time||""));
+  });
+}
+function fixtureCardHtml(f,opts){
+  opts=opts||{};
+  const M=fixtureMeta(f); if(!M) return "";
+  const {h,a,ref,rf,derby,base,heat,cls,lbl}=M;
   const comb=(combustible(CLUBMAP[h]||{})||combustible(CLUBMAP[a]||{}))?' <span title="Combustible side involved">🔥</span>':'';
   const derbyChip=derby?' <span class="chip tier-target" style="font-size:.58rem" title="Recognised rivalry — heat ×'+DERBY_BOOST+'">derby</span>':'';
   const score=f.finished?` <span class="num muted" style="font-weight:700;font-size:.8rem">FT ${f.hs==null?"":f.hs}–${f.as==null?"":f.as}</span>`:"";
@@ -1655,6 +1784,7 @@ function fixtureCardHtml(f,opts){
     </div>
     ${refBar}
     ${body}
+    <div class="fx-foot"><button class="fx-share" data-share-fid="${f.id}" type="button" title="Download a shareable card of this match">⬇ Share match</button></div>
   </div>`;
 }
 // Cumulative self-score for the hero (honest live tracking, not a backtest).
@@ -1729,7 +1859,8 @@ function renderGameweek(){
     return;
   }
   const gw=LIVE.currentGW;
-  const fx=LIVE.fixtures.filter(f=>f.event===gw).sort((a,b)=>String(a.kickoff_time||"").localeCompare(String(b.kickoff_time||"")));
+  const fx=sortFixturesByHeat(LIVE.fixtures.filter(f=>f.event===gw));
+  $("gwToolbar").hidden=!fx.length;
   if(!fx.length){ el.innerHTML='<div class="surface" style="border-radius:14px;padding:1rem"><p class="muted" style="margin:0">No fixtures scheduled for GW'+gw+' yet — check back once the schedule firms up.</p></div>'; return; }
   el.innerHTML='<div class="fx-grid">'+fx.map(f=>fixtureCardHtml(f,{expanded:GW_EXPANDED.has(f.id)})).join("")+'</div>';
 }
@@ -1738,6 +1869,8 @@ function renderGameweek(){
 function wireFixtureGrid(id,rerender){
   const el=$(id); if(!el) return;
   el.addEventListener("click",e=>{
+    const share=e.target.closest("[data-share-fid]");
+    if(share){ exportFixturePNG(Number(share.dataset.shareFid)); return; }
     const more=e.target.closest(".fx-more");
     if(more){ const fid=Number(more.dataset.expand); GW_EXPANDED.has(fid)?GW_EXPANDED.delete(fid):GW_EXPANDED.add(fid); rerender(); return; }
     const cand=e.target.closest(".cand[data-pk]");
@@ -1756,6 +1889,9 @@ function wireFixtureGrid(id,rerender){
 wireFixtureGrid("gwFixtures",renderGameweek);
 wireFixtureGrid("fixtureList",renderFixtures);
 $("gwWatch").addEventListener("click",e=>{ const row=e.target.closest(".wl-row[data-pk]"); if(row) openPlayerProfile(row.dataset.pk); });
+// Gameweek share cards: the current GW from the landing view, the selected GW from the Fixtures tab.
+$("gwShareBtn").addEventListener("click",()=>{ if(LIVE) exportGameweekPNG(LIVE.currentGW); });
+$("fxShareBtn").addEventListener("click",()=>{ const gw=Number($("gwSelect").value); if(LIVE&&gw) exportGameweekPNG(gw); });
 
 // ═══════════════════════════════════════════════════════════
 // ACCOUNTS (Supabase)
