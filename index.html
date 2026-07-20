@@ -193,6 +193,40 @@
   .watch-btn{background:none;border:0;cursor:pointer;font-size:1.05rem;line-height:1;color:var(--text-3);padding:.15rem .25rem}
   .watch-btn[aria-pressed="true"]{color:var(--warn)}
   .watch-btn:hover{color:var(--warn)}
+  /* ═══ This Gameweek — the fixture-first landing view ═══ */
+  .gw-hero{display:flex;flex-wrap:wrap;gap:1rem 1.4rem;align-items:center;justify-content:space-between;border-radius:16px;padding:1.05rem 1.3rem;margin-bottom:1rem;background:linear-gradient(135deg,color-mix(in srgb,var(--accent) 18%,var(--surface)) 0%,var(--surface) 62%);border:1px solid var(--border);box-shadow:var(--shadow-sm)}
+  .gw-hero-l{display:flex;align-items:center;gap:.9rem;min-width:0}
+  .gw-hero-badge{font-size:.6rem;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:var(--accent-2)}
+  .gw-hero-num{font-family:'Bricolage Grotesque',sans-serif;font-size:2.5rem;font-weight:800;letter-spacing:-.04em;line-height:.9}
+  .gw-hero-dl{font-size:.86rem;color:var(--text-2);margin-top:.15rem}
+  .gw-hero-dl b{color:var(--warn);font-weight:700}
+  .gw-hero-r{display:flex;flex-direction:column;gap:.3rem;align-items:flex-end;text-align:right}
+  .fx-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(330px,1fr));gap:1rem}
+  .fx-card{border-radius:14px;overflow:hidden;display:flex;flex-direction:column;background:var(--surface);border:1px solid var(--border);box-shadow:var(--shadow-sm)}
+  .fx-head{padding:.7rem .9rem;display:flex;align-items:flex-start;justify-content:space-between;gap:.5rem;background:var(--surface-2);border-bottom:1px solid var(--border)}
+  .fx-teams{font-family:'Bricolage Grotesque',sans-serif;font-weight:700;font-size:1.02rem;display:flex;align-items:center;gap:.35rem;flex-wrap:wrap;min-width:0}
+  .fx-when{font-size:.72rem;color:var(--text-3);text-align:right;white-space:nowrap;flex:none;padding-top:.15rem}
+  .fx-refbar{display:flex;align-items:center;gap:.5rem;flex-wrap:wrap;padding:.5rem .9rem;border-bottom:1px solid var(--border);font-size:.8rem}
+  .fx-ref-av{width:28px;height:28px;border-radius:50%;flex:none;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:.68rem;color:#fff;letter-spacing:.02em}
+  .fx-ref-name{font-weight:700;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .fx-band{padding:.32rem .9rem;font-size:.64rem;font-weight:800;letter-spacing:.05em;text-transform:uppercase;display:flex;align-items:center;gap:.4rem;background:var(--surface-2);color:var(--text-2)}
+  .fx-band .dot{width:8px;height:8px;border-radius:50%;flex:none}
+  .cand{display:flex;align-items:center;gap:.55rem;padding:.45rem .9rem;border-top:1px solid var(--border);cursor:pointer;width:100%;text-align:left;background:none;border-left:0;border-right:0;border-bottom:0;color:inherit;font:inherit}
+  .cand:hover{background:var(--surface-2)}
+  .cand-main{flex:1;min-width:0}
+  .cand-name{font-weight:600;font-size:.9rem;display:flex;align-items:center;gap:.3rem;flex-wrap:wrap}
+  .cand-sub{font-size:.7rem;color:var(--text-3);margin-top:.12rem;display:flex;align-items:center;gap:.35rem;flex-wrap:wrap}
+  .cand-prob{text-align:right;flex:none;width:76px}
+  .cand-prob-n{font-family:'Bricolage Grotesque',sans-serif;font-weight:800;font-size:1.18rem;font-variant-numeric:tabular-nums;line-height:1}
+  .cand-barwrap{height:6px;border-radius:999px;background:var(--surface-3);overflow:hidden;margin-top:.28rem;width:70px;margin-left:auto}
+  .conf-dot{width:9px;height:9px;border-radius:50%;flex:none}
+  .fx-more{width:100%;border:0;border-top:1px solid var(--border);background:none;color:var(--accent-2);font:inherit;font-weight:700;font-size:.78rem;padding:.5rem;cursor:pointer}
+  .fx-more:hover{background:var(--surface-2)}
+  .fx-empty{padding:.7rem .9rem;font-size:.82rem;color:var(--text-3)}
+  .wl-row{display:flex;align-items:center;gap:.55rem;padding:.45rem .9rem;border-top:1px solid var(--border);cursor:pointer;width:100%;text-align:left;background:none;border-left:0;border-right:0;border-bottom:0;color:inherit;font:inherit}
+  .wl-row:first-of-type{border-top:0}
+  .wl-row:hover{background:var(--surface-2)}
+  @media(max-width:700px){.fx-grid{grid-template-columns:1fr}.gw-hero-num{font-size:2.1rem}}
 </style>
 </head>
 <body>
@@ -282,11 +316,29 @@
 
     <main id="main">
 
-  <!-- PLAYERS -->
-  <section id="panel-players" class="page active">
+  <!-- THIS GAMEWEEK (fixture-first landing) -->
+  <section id="panel-gameweek" class="page active">
     <div class="page-head">
-      <h2>Players</h2>
-      <p>Every squad player ranked by booking risk — yellows per 90 weighted double, plus fouls per 90.</p>
+      <h2>This Gameweek</h2>
+      <p>Who's most likely to be booked — fixture by fixture, with the referee folded in.</p>
+    </div>
+    <div id="gwHero" class="gw-hero" aria-live="polite"></div>
+    <div id="gwWatchWrap" style="margin-bottom:1rem" hidden>
+      <div style="display:flex;align-items:baseline;justify-content:space-between;margin-bottom:.5rem">
+        <h3 style="margin:0;font-size:1.05rem;font-family:'Bricolage Grotesque',sans-serif">★ My watchlist</h3>
+        <button class="btn btn-ghost" id="gwWatchManage" style="padding:.25rem .6rem;font-size:.74rem" type="button">Season table ›</button>
+      </div>
+      <div id="gwWatch" class="surface" style="border-radius:14px;overflow:hidden"></div>
+    </div>
+    <div id="gwFixtures"></div>
+    <p class="faint" style="font-size:.78rem;margin-top:.8rem">Each fixture's booking candidates are its highest-risk available players, ranked by a <strong>fixture-aware booking probability</strong>: the season model chance scaled by the assigned referee's card rate (the ×factor) and a small derby bump. Bands: <span style="color:var(--danger);font-weight:700">High</span> 50%+, <span style="color:var(--warn);font-weight:700">Watch</span> 30–50%. The dot is sample confidence (minutes played). Assign referees on each card once appointments are published. An estimate for research, not a price — see the Guide.</p>
+  </section>
+
+  <!-- PLAYERS -->
+  <section id="panel-players" class="page">
+    <div class="page-head">
+      <h2>Season table</h2>
+      <p>Every squad player ranked by season-long booking risk — yellows per 90 weighted double, plus fouls per 90. For this weekend's picks, see <a href="#" id="toGameweek">This Gameweek</a>.</p>
     </div>
     <div id="suspWatch" class="surface" style="border-radius:12px;padding:.8rem 1rem;margin-bottom:.8rem" hidden></div>
     <div style="display:flex;gap:.6rem;flex-wrap:wrap;align-items:center;margin-bottom:.8rem">
@@ -391,7 +443,7 @@
       </label>
       <span id="gwDeadline" class="faint" style="font-size:.8rem"></span>
     </div>
-    <div id="fixtureList" class="surface" style="border-radius:14px;overflow:hidden"></div>
+    <div id="fixtureList"></div>
     <p class="faint" style="font-size:.78rem;margin-top:.6rem">Booking heat is venue-aware: the home side's home card rate plus the away side's away card rate, from 2025-26 form (promoted clubs use the league median until they build Premier League data). Hot is 4.2 plus, warm 3.5 plus. The flame marks a combustible side; recognised derbies get a ×1.15 heat boost and a derby chip. Top risks are each fixture's highest-risk available players. Referee appointments are not published in the FPL feed — once the PGMOL announcement is out, assign the official with each fixture's Ref control (saved in this browser) and the booking heat scales to his card rate, clamped. Schedule via the official FPL API.</p>
   </section>
 
@@ -446,6 +498,8 @@
     <div class="surface" style="border-radius:12px;padding:1.2rem;line-height:1.6;max-width:760px">
       <h2 style="margin-top:0">How to use the desk</h2>
       <p>A stats-based filter for Premier League player-bookings markets. It ranks players by how often they get carded and give away fouls, so your per-fixture research starts in the right place. It does not pick players or price markets.</p>
+      <h3>This Gameweek — the default view</h3>
+      <p>The desk opens on <strong>This Gameweek</strong>: a card per fixture, each led by its referee and listing the highest-risk available players from both sides, banded by a <strong>fixture-aware booking probability</strong>. That number is the season model chance of a card (below) scaled by two match factors: the assigned referee's card rate — shown inline as the <span class="num">×factor</span> on each row and at the top of the card — and a small boost for recognised derbies. Bands are <span style="color:var(--danger);font-weight:700">High</span> (50%+) and <span style="color:var(--warn);font-weight:700">Watch</span> (30–50%); lower-risk names fold away behind a toggle. The coloured dot on each row is <strong>sample confidence</strong> from minutes played (green high, amber medium, grey low). Your starred players surface in a <strong>My watchlist</strong> card at the top, sorted by their next fixture's probability. Referee appointments aren't in the live feed, so assign the official on each card once PGMOL publishes them — every player's number then scales to his whistle. It's an estimate layered on season form, not a market price.</p>
       <h3>Player booking risk</h3>
       <p class="surface-2" style="padding:.6rem .8rem;border-radius:8px;font-family:monospace;font-size:.85rem">risk = yellow cards per 90 &times; 2 + fouls committed per 90</p>
       <p>Yellow rate is weighted double because the bet pays on cards, not fouls. Fouls per 90 carries the volume signal, the players who keep giving the referee a decision. Both are 2025-26 rates. Players under 450 minutes are flagged low sample.</p>
@@ -461,7 +515,7 @@
       <h3>Suspension watch</h3>
       <p>Premier League bans trigger at 5 yellows (up to gameweek 19), 10 (up to gameweek 32) and 15 (all season). The strip above the players table flags anyone one booking from a ban — a player with a card to burn is a lean, one protecting a threshold often isn't — and lists players currently suspended or injured so you don't back an absentee.</p>
       <h3>Watchlist</h3>
-      <p>Tap the ☆ star on any player row to pin him, and tick <strong>★ Watchlist</strong> in the filter bar to see only your starred players — low-sample players included, since you starred them on purpose. The list saves to this browser.</p>
+      <p>Tap the ☆ star on any player row to pin him. Your starred players get a <strong>My watchlist</strong> card at the top of This Gameweek — each with his next fixture, the assigned referee and his fixture-aware booking probability, sorted so the likeliest bookings sit first; tap any to open the profile. On the Season table, tick <strong>★ Watchlist</strong> in the filter bar to see only your starred players — low-sample included, since you starred them on purpose. The list saves to this browser.</p>
       <h3>AI review of your picks</h3>
       <p>Optional, in the Tracker tab. Once you have three or more settled picks, the review sends them to the desk's own server function and returns a short read on which markets are paying, whether your odds range shows a pattern, and what to change. The AI key lives on the server, never in your browser. You need to be signed in — the review is tied to your account and capped per day so the shared budget can't be drained. If the deploy hasn't enabled it, the desk simply says so — nothing else depends on it.</p>
       <h3>Where the numbers come from</h3>
@@ -472,8 +526,8 @@
       <ul>
         <li>Until the 2026-27 season starts, risk scores are last season's form as the pre-season basis. Live card rates take over per player at 450 minutes.</li>
         <li>Fouls are not in the FPL feed, so the fouls half of the risk score stays on 2025-26 form all season.</li>
-        <li>Promoted clubs are Championship form, a different and rougher division, so treat their numbers as indicative. Their team rate is not shown because the Championship data mixes cup minutes.</li>
-        <li>Ipswich have thinner data than most, fewer players met the minutes floor.</li>
+        <li>Promoted clubs (Coventry, Hull, Ipswich) are on Championship form, a different and rougher division, so treat their numbers as indicative. They're flagged EFL throughout and their team rate is not shown, because the Championship data mixes cup minutes.</li>
+        <li>The promoted clubs carry only a handful of players who cleared the minutes floor, so their squads look sparse here until 2026-27 Premier League form accrues. They're kept separate rather than padded.</li>
         <li>Referee appointments are not in the FPL feed. Assign the official on each fixture card once appointments are published (usually a few days out) — the assignment saves to this browser and folds the referee's card rate into that fixture's booking heat, and watchlisted players get a strict-ref flag above the players table.</li>
       </ul>
       <p class="faint" style="font-size:.8rem">Built for research, not a betting guarantee. Stake responsibly.</p>
@@ -509,6 +563,14 @@
 const STORE_KEY="pl_desk_v1", THEME_KEY="pl_desk_theme";
 const $=(id)=>document.getElementById(id);
 const CLUBMAP={}; CLUBS.forEach(c=>CLUBMAP[c.short]=c);
+// Safety net against duplicate rows (the data guard already blocks them at
+// build time): a prediction product must never show the same player twice.
+// De-dupe in place on club|name so live-matching and rendering stay clean.
+(function dedupePlayers(){
+  const seen=new Set(), keep=[];
+  for(const p of PL_PLAYERS){ const k=p.c+"|"+p.n; if(seen.has(k)) continue; seen.add(k); keep.push(p); }
+  if(keep.length!==PL_PLAYERS.length) PL_PLAYERS.length=0, PL_PLAYERS.push(...keep);
+})();
 
 // ---- state ----
 let state=loadState();
@@ -894,6 +956,7 @@ async function exportPNG(){
 // Sidebar with grouped areas + sub-panels on desktop; off-canvas drawer with
 // overlay plus a fixed bottom nav (one item per area) on mobile.
 const NICON={
+  gameweek:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>',
   desk:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>',
   fixtures:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>',
   tracker:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8.5"/><circle cx="12" cy="12" r="3.5"/></svg>',
@@ -901,18 +964,19 @@ const NICON={
   chevron:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg>'
 };
 const NAV=[
+  {id:"gameweek",label:"Gameweek",icon:"gameweek",panels:[{id:"panel-gameweek",label:"This Gameweek"}]},
   {id:"desk",label:"Desk",icon:"desk",panels:[
-    {id:"panel-players",label:"Players"},
+    {id:"panel-players",label:"Season table"},
     {id:"panel-clubs",label:"Clubs"},
     {id:"panel-refs",label:"Referees"}
   ]},
-  {id:"fixtures",label:"Fixtures",icon:"fixtures",panels:[{id:"panel-fixtures",label:"Fixtures"}]},
+  {id:"fixtures",label:"Fixtures",icon:"fixtures",panels:[{id:"panel-fixtures",label:"All fixtures"}]},
   {id:"tracker",label:"Tracker",icon:"tracker",panels:[{id:"panel-tracker",label:"My Picks"}]},
   {id:"guide",label:"Guide",icon:"guide",panels:[{id:"panel-guide",label:"How to use"}]}
 ];
 const PANELMAP={};
 NAV.forEach(a=>a.panels.forEach(p=>PANELMAP[p.id]={...p,areaId:a.id,areaLabel:a.label}));
-let currentPanel="panel-players",expandedArea="desk";
+let currentPanel="panel-gameweek",expandedArea="gameweek";
 
 function buildNav(){
   const nav=$("sbNav"); nav.innerHTML="";
@@ -957,6 +1021,9 @@ function openPanel(panelId){
   document.querySelectorAll(".page").forEach(s=>s.classList.toggle("active",s.id===panelId));
   $("tbArea").textContent=PANELMAP[panelId].areaLabel;
   $("tbTitle").textContent=PANELMAP[panelId].label;
+  // Re-render the gameweek view on entry so the watchlist dashboard reflects
+  // stars set on other tabs.
+  if(panelId==="panel-gameweek"&&typeof renderGameweek==="function") renderGameweek();
   syncNav(); closeSidebar(); window.scrollTo({top:0});
   writeHash();
 }
@@ -989,7 +1056,7 @@ let HASH_READY=false, PENDING_GW=null;
 function writeHash(){
   if(!HASH_READY) return;
   const q=new URLSearchParams();
-  if(currentPanel!=="panel-players") q.set("p",currentPanel.replace(/^panel-/,""));
+  if(currentPanel!=="panel-gameweek") q.set("p",currentPanel.replace(/^panel-/,""));
   const cf=$("clubFilter").value, pf=$("posFilter").value, s=$("search").value.trim();
   if(cf!=="all") q.set("club",cf);
   if(pf!=="all") q.set("pos",pf);
@@ -1010,7 +1077,7 @@ function applyHash(){
   if(q.get("low")==="1") $("hideLow").checked=false;
   if(q.get("watch")==="1") $("watchOnly").checked=true;
   PENDING_GW=q.get("gw"); // applied once the fixtures list has loaded
-  const panel="panel-"+(q.get("p")||"players");
+  const panel="panel-"+(q.get("p")||"gameweek");
   if(PANELMAP[panel]) openPanel(panel);
 }
 // Following a link that only changes the hash doesn't reload the page, so
@@ -1027,6 +1094,9 @@ $("filterChips").addEventListener("click",e=>{
   renderPlayers(); writeHash();
 });
 $("csvBtn").addEventListener("click",exportCSV);
+// Cross-links between the gameweek view and the season table.
+$("toGameweek").addEventListener("click",e=>{ e.preventDefault(); openPanel("panel-gameweek"); });
+$("gwWatchManage").addEventListener("click",()=>{ $("watchOnly").checked=true; openPanel("panel-players"); renderPlayers(); writeHash(); });
 // ---- player profile drill-down ----
 function playerByKey(k){ return PL_PLAYERS.find(p=>watchKey(p)===k)||null; }
 function nextFixtureFor(short){
@@ -1261,13 +1331,13 @@ async function loadLive(){
     const curEv=bs.events.find(e=>e.id===LIVE.currentGW);
     $("gwNum").textContent=LIVE.currentGW;
     $("gwSideDeadline").innerHTML=curEv&&curEv.deadline_time?("Deadline <b>"+fmtKO(curEv.deadline_time)+"</b>"):"Schedule live";
-    renderPlayers(); renderClubs(); renderSuspWatch(); initFixturesUI(); updateAccuracy();
+    renderPlayers(); renderClubs(); renderSuspWatch(); initFixturesUI(); updateAccuracy(); renderGameweek();
   }catch(e){
     status.hidden=false; status.className="chip tier-fade";
     status.textContent="Baked 2025-26 form";
     status.title="Live FPL feed unreachable — showing the baked 2025-26 basis.";
     $("gwSideDeadline").textContent="Live feed offline";
-    initFixturesUI(); renderTrackRecord();
+    initFixturesUI(); renderTrackRecord(); renderGameweek();
   }
 }
 
@@ -1467,44 +1537,225 @@ function fixtureRisks(h,a){
 function fmtKO(iso){ try{ return new Date(iso).toLocaleString("en-GB",{weekday:"short",day:"numeric",month:"short",hour:"2-digit",minute:"2-digit"}); }catch(e){ return ""; } }
 function renderFixtures(){
   const list=$("fixtureList"), gw=Number($("gwSelect").value);
+  if(!LIVE||!$("gwSelect").options.length) return;
   const ev=LIVE.bootstrap.events.find(e=>e.id===gw);
   $("gwDeadline").textContent=ev&&ev.deadline_time?("Deadline "+fmtKO(ev.deadline_time)):"";
   const fx=LIVE.fixtures.filter(f=>f.event===gw).sort((a,b)=>String(a.kickoff_time||"").localeCompare(String(b.kickoff_time||"")));
   if(!fx.length){ list.innerHTML='<p class="muted" style="padding:1rem;margin:0">No fixtures scheduled for this gameweek yet.</p>'; return; }
-  list.innerHTML=fx.map(f=>{
-    const h=LIVE.teamMap[f.team_h], a=LIVE.teamMap[f.team_a];
-    if(!h||!a) return "";
-    // Venue-aware base: the home side's home card rate plus the away side's
-    // away card rate — away sides run hotter, so like-for-like fixtures
-    // differ by venue.
-    const base=clubCAH(h)+clubCAA(a);
-    const splitUsed=(CLUBMAP[h]&&CLUBMAP[h].caH!=null)||(CLUBMAP[a]&&CLUBMAP[a].caA!=null);
-    const ref=refFor(f.id), rf=refFactor(ref), derby=isDerby(h,a);
-    const heat=Number((base*rf*(derby?DERBY_BOOST:1)).toFixed(1)); // classify on the shown value
-    const cls=heat>=4.2?"tier-target":heat>=3.5?"tier-mid":"tier-fade";
-    const lbl=heat>=4.2?"Hot":heat>=3.5?"Warm":"Cool";
-    const comb=(combustible(CLUBMAP[h]||{})||combustible(CLUBMAP[a]||{}))?' <span title="Combustible side involved">🔥</span>':'';
-    const derbyChip=derby?` <span class="chip tier-target" title="Recognised rivalry — booking heat boosted ×${DERBY_BOOST}">🔥 derby</span>`:"";
-    const baseDesc=splitUsed?`home side's home card rate + away side's away rate (${base.toFixed(1)})`:`both clubs' cards received per game (${base.toFixed(1)})`;
-    const heatTitle=ref?`${baseDesc}, scaled ×${rf.toFixed(2)} for ${esc(ref.n)}'s card rate`:baseDesc+", 2025-26 form";
-    const risks=fixtureRisks(h,a).map(p=>`<span class="chip surface-2" style="border:1px solid var(--border)" title="Risk score, and the model-implied chance of a card">${esc(p.n)} <span class="num" style="color:${riskColour(rEff(p))}">${rEff(p).toFixed(2)}</span>${pImp(p)!=null?` <span class="faint num" style="font-size:.68rem">${(pImp(p)*100).toFixed(0)}%</span>`:""}</span>`).join(" ");
-    const score=f.finished?` <span class="num muted" style="font-weight:700;font-size:.82rem">FT ${f.hs==null?"":f.hs}–${f.as==null?"":f.as}</span>`:"";
-    return `<div class="fixrow">
-      <div class="faint" style="min-width:132px;font-size:.8rem">${f.kickoff_time?fmtKO(f.kickoff_time):"TBC"}</div>
-      <div style="min-width:200px;font-weight:600">${crest(h)} ${h} <span class="faint">v</span> ${crest(a)} ${a}${score}</div>
-      <div><span class="chip ${cls}" title="${heatTitle}"><span class="heat">${heat.toFixed(1)}</span>&nbsp;${lbl}</span>${comb}${derbyChip}</div>
-      <div style="display:flex;align-items:center;gap:.35rem;flex-wrap:wrap">${refSelect(f.id)}${refChip(ref)}</div>
-      <div style="display:flex;gap:.35rem;flex-wrap:wrap;flex:1;justify-content:flex-end">${risks}</div>
+  list.innerHTML='<div class="fx-grid">'+fx.map(f=>fixtureCardHtml(f,{expanded:GW_EXPANDED.has(f.id)})).join("")+'</div>';
+}
+
+// ═══════════════════════════════════════════════════════════
+// THIS GAMEWEEK — the fixture-first landing view.
+// One headline number per player per fixture: a fixture-aware booking
+// probability that folds the assigned referee's card rate (visibly, as a
+// ×factor) into the season model chance. Referee is the edge of a bookings
+// model, so it sits at the top of every card and modulates every row.
+// ═══════════════════════════════════════════════════════════
+const GW_EXPANDED=new Set();
+
+// Sample-size confidence from minutes played (live once the season is under way).
+function confidence(p){
+  const m=(LIVE&&LIVE.seasonStarted&&p.live&&p.live.min>=450)?p.live.min:p.min;
+  if(m>=1500) return {col:"var(--good)",label:"High confidence — "+m+" mins played"};
+  if(m>=700) return {col:"var(--warn)",label:"Medium confidence — "+m+" mins played"};
+  return {col:"var(--text-3)",label:"Low sample — only "+m+" mins played"};
+}
+// Fixture-aware booking chance: the season model P(card) scaled by the
+// referee's heat factor (0.75–1.3, clamped) and a small derby bump. An
+// approximation layered on the season estimate — honest, and framed as such.
+function fixtureProb(p,ref,derby){
+  const base=pImp(p); if(base==null) return null;
+  const rf=ref?refFactor(ref):1, df=derby?1.06:1;
+  return Math.min(0.95,Math.max(0.005,base*rf*df));
+}
+// One-booking-from-a-ban / banned flag, from the live feed.
+function suspFlagInline(p){
+  if(!(LIVE&&p.live)) return "";
+  if(p.live.st==="s") return ' <span class="chip" style="font-size:.54rem;color:var(--danger);background:color-mix(in srgb,var(--danger) 12%,transparent);border:1px solid color-mix(in srgb,var(--danger) 35%,transparent)">banned</span>';
+  const t=nextThreshold(p.live.yc,LIVE.currentGW);
+  if(t&&p.live.yc===t.n-1) return ` <span title="One booking from a ban (${p.live.yc}/${t.n} yellows)" style="color:var(--warn);font-weight:800;font-size:.66rem">⚠${p.live.yc}YC</span>`;
+  return "";
+}
+function gwCandidates(h,a,ref,derby){
+  return PL_PLAYERS
+    .filter(p=>(p.c===h||p.c===a)&&rEff(p)!=null&&pImp(p)!=null&&!p.ls&&!(p.live&&"isu".includes(p.live.st)))
+    .map(p=>({p,prob:fixtureProb(p,ref,derby)}))
+    .filter(c=>c.prob!=null)
+    .sort((x,y)=>y.prob-x.prob);
+}
+function candRowHtml(c,ref){
+  const p=c.p, prob=c.prob, baseP=pImp(p), conf=confidence(p);
+  const col=prob>=0.50?"var(--danger)":prob>=0.30?"var(--warn)":"var(--text-2)";
+  const rf=ref?refFactor(ref):1;
+  const delta=(ref&&Math.abs(rf-1)>=0.02)
+    ? `<span title="${esc(ref.n)} runs ${rf>1?"hotter":"cooler"} than the league average — booking chance ${rf>1?"lifted":"trimmed"} ×${rf.toFixed(2)}" style="color:${rf>1?"var(--warn)":"var(--fade)"};font-weight:700">×${rf.toFixed(2)} ref</span>`
+    : "";
+  return `<button class="cand" data-pk="${esc(watchKey(p))}" type="button" aria-label="Open ${esc(p.n)}'s profile">
+    <span class="conf-dot" style="background:${conf.col}" title="${esc(conf.label)}"></span>
+    <span class="cand-main">
+      <span class="cand-name">${esc(p.n)} <span class="faint num" style="font-weight:600;font-size:.7rem">${p.c}</span>${suspFlagInline(p)}</span>
+      <span class="cand-sub">${esc(p.p||"")} · base ${baseP!=null?(baseP*100).toFixed(0)+"%":"—"} ${delta}</span>
+    </span>
+    <span class="cand-prob">
+      <span class="cand-prob-n" style="color:${col}">${(prob*100).toFixed(0)}%</span>
+      <span class="cand-barwrap"><span style="display:block;height:100%;width:${Math.min(100,Math.round(prob*100))}%;background:${col}"></span></span>
+    </span>
+  </button>`;
+}
+function fixtureCardHtml(f,opts){
+  opts=opts||{};
+  const h=LIVE.teamMap[f.team_h], a=LIVE.teamMap[f.team_a];
+  if(!h||!a) return "";
+  const ref=refFor(f.id), rf=refFactor(ref), derby=isDerby(h,a);
+  const base=clubCAH(h)+clubCAA(a);
+  const heat=Number((base*rf*(derby?DERBY_BOOST:1)).toFixed(1));
+  const cls=heat>=4.2?"tier-target":heat>=3.5?"tier-mid":"tier-fade";
+  const lbl=heat>=4.2?"Hot":heat>=3.5?"Warm":"Cool";
+  const comb=(combustible(CLUBMAP[h]||{})||combustible(CLUBMAP[a]||{}))?' <span title="Combustible side involved">🔥</span>':'';
+  const derbyChip=derby?' <span class="chip tier-target" style="font-size:.58rem" title="Recognised rivalry — heat ×'+DERBY_BOOST+'">derby</span>':'';
+  const score=f.finished?` <span class="num muted" style="font-weight:700;font-size:.8rem">FT ${f.hs==null?"":f.hs}–${f.as==null?"":f.as}</span>`:"";
+  // Referee bar — the model's edge, at the top of every card.
+  const s=refStrictness(ref);
+  const initials=ref?esc(ref.n.split(/\s+/).map(x=>x[0]||"").join("").slice(0,2).toUpperCase()):"?";
+  const refInfo=ref
+    ? `<div class="fx-ref-av" style="background:${s?s.col:"var(--fade)"}">${initials}</div>
+       <div style="min-width:0;flex:1">
+         <div class="fx-ref-name">${esc(ref.n)}${s?` <span class="chip" style="font-size:.54rem;color:${s.col};background:color-mix(in srgb,${s.col} 12%,transparent);border:1px solid color-mix(in srgb,${s.col} 35%,transparent)">${s.label}</span>`:""}</div>
+         <div class="faint num" style="font-size:.68rem">${ref.ypg!=null?ref.ypg.toFixed(2)+" cards/game · ×"+rf.toFixed(2)+" on every player":"card rate n/a"}</div>
+       </div>`
+    : `<div class="fx-ref-av" style="background:var(--surface-3);color:var(--text-3)">?</div>
+       <div style="flex:1;min-width:0" class="muted" title="Assign the official once PGMOL publishes appointments — every player's chance then scales to his card rate">Referee not yet assigned</div>`;
+  const refBar=`<div class="fx-refbar">${refInfo}${refSelect(f.id)}</div>`;
+  // Candidates, banded by fixture-aware probability.
+  const cands=gwCandidates(h,a,ref,derby);
+  let body="";
+  if(!cands.length){
+    body='<div class="fx-empty">No rated available players for this fixture yet.</div>';
+  }else{
+    const high=cands.filter(c=>c.prob>=0.50), watch=cands.filter(c=>c.prob>=0.30&&c.prob<0.50), rest=cands.filter(c=>c.prob<0.30);
+    const band=(dot,label,list)=> list.length?`<div class="fx-band"><span class="dot" style="background:${dot}"></span>${label} · ${list.length}</div>`+list.map(c=>candRowHtml(c,ref)).join(""):"";
+    body+=band("var(--danger)","High risk (50%+)",high);
+    body+=band("var(--warn)","Watch (30–50%)",watch);
+    if(!high.length&&!watch.length){
+      body+='<div class="fx-band"><span class="dot" style="background:var(--text-3)"></span>Top candidates</div>'+rest.slice(0,4).map(c=>candRowHtml(c,ref)).join("");
+    }else if(rest.length){
+      if(opts.expanded){
+        body+='<div class="fx-band"><span class="dot" style="background:var(--text-3)"></span>Lower (under 30%)</div>'+rest.map(c=>candRowHtml(c,ref)).join("");
+        body+=`<button class="fx-more" data-expand="${f.id}" type="button">Show fewer ‹</button>`;
+      }else{
+        body+=`<button class="fx-more" data-expand="${f.id}" type="button">Show ${rest.length} lower-risk candidate${rest.length===1?"":"s"} ›</button>`;
+      }
+    }
+  }
+  return `<div class="fx-card" data-fid="${f.id}">
+    <div class="fx-head">
+      <div class="fx-teams">${crest(h)} ${h} <span class="faint" style="font-weight:400">v</span> ${crest(a)} ${a}${score}${comb}${derbyChip}</div>
+      <div class="fx-when">${f.kickoff_time?fmtKO(f.kickoff_time):"TBC"}<div style="margin-top:.3rem"><span class="chip ${cls}" title="Booking heat: ${base.toFixed(1)} base × ${rf.toFixed(2)} ref${derby?" × "+DERBY_BOOST+" derby":""}">${heat.toFixed(1)} ${lbl}</span></div></div>
+    </div>
+    ${refBar}
+    ${body}
+  </div>`;
+}
+// Cumulative self-score for the hero (honest live tracking, not a backtest).
+function trackRecordSummary(){
+  const rs=(typeof ACC!=="undefined"&&ACC.results)?ACC.results:[];
+  if(!rs.length) return null;
+  const hits=rs.reduce((s,r)=>s+r.hits,0), tot=rs.reduce((s,r)=>s+r.total,0);
+  return tot?`${(100*hits/tot).toFixed(0)}% carded · ${rs.length} GW`:null;
+}
+function deadlineHtml(){
+  if(!LIVE) return "Live feed offline — season basis";
+  const ev=LIVE.bootstrap.events.find(e=>e.id===LIVE.currentGW);
+  if(!ev||!ev.deadline_time) return "Schedule live";
+  const ms=new Date(ev.deadline_time)-new Date();
+  if(ms<=0) return "Deadline passed · gameweek underway";
+  const hrs=Math.floor(ms/3600000), mins=Math.floor((ms%3600000)/60000), days=Math.floor(hrs/24);
+  const human=days>=1?`${days}d ${hrs%24}h to lock`:hrs>=1?`${hrs}h ${mins}m to lock`:`${mins}m to lock`;
+  return `Deadline ${fmtKO(ev.deadline_time)} · <b>${human}</b>`;
+}
+function renderGwHero(){
+  const el=$("gwHero"); if(!el) return;
+  const gw=LIVE?LIVE.currentGW:"—";
+  const basis=LIVE?(LIVE.seasonStarted?"● Live FPL card counts":"Live schedule · pre-season form"):"Baked 2025-26 form";
+  const rec=trackRecordSummary();
+  el.innerHTML=`
+    <div class="gw-hero-l">
+      <div><div class="gw-hero-badge">Gameweek</div><div class="gw-hero-num">${gw}</div></div>
+      <div style="min-width:0">
+        <div class="gw-hero-dl">${deadlineHtml()}</div>
+        <div class="faint" style="font-size:.72rem;margin-top:.2rem">${basis}</div>
+      </div>
+    </div>
+    <div class="gw-hero-r">
+      ${rec
+        ? `<div class="faint" style="font-size:.66rem;letter-spacing:.06em;text-transform:uppercase">Model track record</div><div style="font-family:'Bricolage Grotesque',sans-serif;font-weight:800;font-size:1.15rem">${rec}</div><a href="#p=guide" class="faint" style="font-size:.72rem">How we calculate ›</a>`
+        : `<a href="#p=guide" class="btn btn-ghost" style="padding:.3rem .7rem;font-size:.74rem">How we calculate ›</a>`}
     </div>`;
+}
+function renderWatchDash(){
+  const wrap=$("gwWatchWrap"), el=$("gwWatch");
+  const watched=PL_PLAYERS.filter(isWatched);
+  if(!watched.length){ wrap.hidden=true; return; }
+  wrap.hidden=false;
+  const rows=watched.map(p=>{
+    let opp="—", ha="", gw="", prob=pImp(p), ref=null;
+    if(LIVE){
+      const f=nextFixtureFor(p.c);
+      if(f){ const H=LIVE.teamMap[f.team_h], A=LIVE.teamMap[f.team_a]; const home=(H===p.c); ref=refFor(f.id); prob=fixtureProb(p,ref,isDerby(H,A)); opp=home?A:H; ha=home?"H":"A"; gw=f.event?("GW"+f.event):""; }
+    }
+    return {p,opp,ha,gw,ref,prob:prob==null?-1:prob};
+  }).sort((x,y)=>y.prob-x.prob);
+  el.innerHTML=rows.map(({p,opp,ha,gw,ref,prob})=>{
+    const col=prob>=0.50?"var(--danger)":prob>=0.30?"var(--warn)":"var(--text-2)";
+    const sub=opp==="—"?'<span class="faint">next fixture TBC</span>'
+      :`vs ${esc(opp)} (${ha})${gw?" · "+gw:""}${ref?" · "+esc(ref.n.split(" ").pop()):""}${suspFlagInline(p)}`;
+    return `<button class="wl-row" data-pk="${esc(watchKey(p))}" type="button" aria-label="Open ${esc(p.n)}'s profile">
+      <span aria-hidden="true" style="color:var(--warn);font-size:.95rem">★</span>
+      <span style="flex:1;min-width:0">
+        <span style="font-weight:600;font-size:.9rem">${esc(p.n)} <span class="faint num" style="font-size:.7rem;font-weight:600">${p.c}</span></span>
+        <span class="cand-sub">${sub}</span>
+      </span>
+      <span style="font-family:'Bricolage Grotesque',sans-serif;font-weight:800;font-size:1.05rem;color:${col};flex:none">${prob<0?"—":(prob*100).toFixed(0)+"%"}</span>
+    </button>`;
   }).join("");
 }
-// Assigning an official re-renders the affected views.
-$("fixtureList").addEventListener("change",e=>{
-  const s=e.target.closest(".ref-sel"); if(!s) return;
-  const k=SEASON+"|"+s.dataset.fid;
-  if(s.value) refAssign[k]=s.value; else delete refAssign[k];
-  saveRefs(); renderFixtures(); renderSuspWatch();
-});
+function renderGameweek(){
+  renderGwHero();
+  renderWatchDash();
+  const el=$("gwFixtures"); if(!el) return;
+  if(!LIVE){
+    el.innerHTML='<div class="surface" style="border-radius:14px;padding:1rem"><p class="muted" style="margin:0;font-size:.9rem">This weekend\'s fixture cards come from the live FPL feed, which is unreachable right now. Your watchlist above still shows each player\'s season booking chance, and the <a href="#p=players">Season table</a> works fully offline.</p></div>';
+    return;
+  }
+  const gw=LIVE.currentGW;
+  const fx=LIVE.fixtures.filter(f=>f.event===gw).sort((a,b)=>String(a.kickoff_time||"").localeCompare(String(b.kickoff_time||"")));
+  if(!fx.length){ el.innerHTML='<div class="surface" style="border-radius:14px;padding:1rem"><p class="muted" style="margin:0">No fixtures scheduled for GW'+gw+' yet — check back once the schedule firms up.</p></div>'; return; }
+  el.innerHTML='<div class="fx-grid">'+fx.map(f=>fixtureCardHtml(f,{expanded:GW_EXPANDED.has(f.id)})).join("")+'</div>';
+}
+// Shared wiring for both fixture grids (This Gameweek + All fixtures):
+// expand/collapse lower-risk candidates, open a profile, assign a referee.
+function wireFixtureGrid(id,rerender){
+  const el=$(id); if(!el) return;
+  el.addEventListener("click",e=>{
+    const more=e.target.closest(".fx-more");
+    if(more){ const fid=Number(more.dataset.expand); GW_EXPANDED.has(fid)?GW_EXPANDED.delete(fid):GW_EXPANDED.add(fid); rerender(); return; }
+    const cand=e.target.closest(".cand[data-pk]");
+    if(cand) openPlayerProfile(cand.dataset.pk);
+  });
+  el.addEventListener("change",e=>{
+    const s=e.target.closest(".ref-sel"); if(!s) return;
+    const k=SEASON+"|"+s.dataset.fid;
+    if(s.value) refAssign[k]=s.value; else delete refAssign[k];
+    saveRefs();
+    renderGameweek();
+    if(gwInit) renderFixtures();
+    renderSuspWatch();
+  });
+}
+wireFixtureGrid("gwFixtures",renderGameweek);
+wireFixtureGrid("fixtureList",renderFixtures);
+$("gwWatch").addEventListener("click",e=>{ const row=e.target.closest(".wl-row[data-pk]"); if(row) openPlayerProfile(row.dataset.pk); });
 
 // ═══════════════════════════════════════════════════════════
 // ACCOUNTS (Supabase)
@@ -1648,7 +1899,7 @@ if("serviceWorker" in navigator&&(location.protocol==="https:"||location.hostnam
 // init
 buildNav();
 buildBottomNav();
-openPanel("panel-players");
+openPanel("panel-gameweek");
 $("guideBaseRate").textContent=(CALIB.baseRate*100).toFixed(1);
 renderTrackRecord();
 fillClubFilter();
@@ -1659,6 +1910,7 @@ renderPlayers();
 renderClubs();
 renderRefs();
 renderTracker();
+renderGameweek();   // paints the landing view immediately (offline/loading state until live data lands)
 loadLive();
 // The Supabase client loads deferred from the CDN, so wire auth up once
 // the DOM (and deferred scripts) are ready.

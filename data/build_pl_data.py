@@ -57,7 +57,19 @@ def build_players():
         rows.append(mk(p, "PL"))
     for p in load("champ_promoted.json"):
         rows.append(mk(p, "EFL"))
-    return [r for r in rows if r]
+    # De-duplicate on (club, name): a harvest that repeats a player (the
+    # promoted-club feeds have done this) must never fan out into the shipped
+    # data — duplicate rows in a prediction product erode trust instantly.
+    seen, deduped = set(), []
+    for r in rows:
+        if not r:
+            continue
+        key = (r["c"], r["n"])
+        if key in seen:
+            continue
+        seen.add(key)
+        deduped.append(r)
+    return deduped
 
 
 def mk(p, basis):

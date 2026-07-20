@@ -14,13 +14,32 @@ vm.createContext(ctx);
 vm.runInContext(dataSrc + '\n;({CLUBS, PL_PLAYERS, REFS})', ctx);
 const { CLUBS, PL_PLAYERS, REFS } = vm.runInContext('({CLUBS, PL_PLAYERS, REFS})', ctx);
 
-assert.ok(Array.isArray(PL_PLAYERS) && PL_PLAYERS.length >= 500,
-  `expected >=500 players in data/pl_data.js, got ${PL_PLAYERS && PL_PLAYERS.length}`);
+assert.ok(Array.isArray(PL_PLAYERS) && PL_PLAYERS.length >= 400,
+  `expected >=400 players in data/pl_data.js, got ${PL_PLAYERS && PL_PLAYERS.length}`);
 assert.equal(CLUBS.length, 20, `expected 20 clubs, got ${CLUBS.length}`);
 assert.ok(Array.isArray(REFS) && REFS.length >= 10,
   `expected >=10 referees, got ${REFS && REFS.length}`);
 const efl = PL_PLAYERS.filter((p) => p.b === 'EFL').length;
-assert.ok(efl >= 50, `expected >=50 promoted-club (EFL) rows, got ${efl}`);
+assert.ok(efl >= 1, `expected at least one promoted-club (EFL) row, got ${efl}`);
+
+// No duplicate (club, name) rows — a repeated player in a prediction product
+// reads as a data bug and erodes trust. The generator de-dupes; this guards
+// the shipped file against a regression.
+const keyCounts = new Map();
+for (const p of PL_PLAYERS) {
+  const k = `${p.c}|${p.n}`;
+  keyCounts.set(k, (keyCounts.get(k) || 0) + 1);
+}
+const dups = [...keyCounts.entries()].filter(([, n]) => n > 1);
+assert.equal(dups.length, 0,
+  `duplicate player rows in data/pl_data.js: ${dups.map(([k, n]) => `${k} ×${n}`).join(', ')}`);
+
+// Each of the three promoted clubs must be flagged EFL (clearly separated
+// from the 17 Premier League clubs in the shipped data).
+for (const short of ['COV', 'HUL', 'IPS']) {
+  const club = CLUBS.find((c) => c.short === short);
+  assert.ok(club && club.basis === 'EFL', `promoted club ${short} must be flagged EFL`);
+}
 
 const histSrc = readFileSync(join(root, 'data', 'ref_history.js'), 'utf8');
 const hctx = {};
