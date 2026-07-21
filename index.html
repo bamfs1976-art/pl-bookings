@@ -229,6 +229,35 @@
   .wl-row{display:flex;align-items:center;gap:.55rem;padding:.45rem .9rem;border-top:1px solid var(--border);cursor:pointer;width:100%;text-align:left;background:none;border-left:0;border-right:0;border-bottom:0;color:inherit;font:inherit}
   .wl-row:first-of-type{border-top:0}
   .wl-row:hover{background:var(--surface-2)}
+  /* ═══ Prototype language: mono labels, severity, pip meter, heat badge ═══ */
+  :root{--mono:ui-monospace,"SF Mono",SFMono-Regular,Menlo,Consolas,"Liberation Mono",monospace}
+  .mono{font-family:var(--mono)}
+  .live-pill{display:inline-flex;align-items:center;gap:.32rem;font-family:var(--mono);font-size:.6rem;font-weight:800;letter-spacing:.12em;padding:.18rem .5rem;border-radius:6px;border:1px solid var(--border-2);color:var(--good);text-transform:uppercase}
+  .live-pill.stale{color:var(--text-3)}
+  .live-pill .d{width:6px;height:6px;border-radius:50%;background:currentColor}
+  .seg{display:inline-flex;gap:.4rem;flex-wrap:wrap}
+  .seg-btn{font-family:var(--mono);font-size:.72rem;font-weight:700;letter-spacing:.04em;padding:.32rem .72rem;border-radius:9px;border:1px solid var(--border-2);background:var(--surface);color:var(--text-2);cursor:pointer}
+  .seg-btn:hover{color:var(--text)}
+  .seg-btn.on{background:var(--text);color:var(--bg);border-color:var(--text)}
+  .gw-seclabel{font-family:var(--mono);font-size:.68rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--text-3)}
+  .fxh2{display:flex;align-items:flex-start;justify-content:space-between;gap:.6rem;padding:.6rem .85rem;border-bottom:1px solid var(--border);background:color-mix(in srgb,var(--surface-2) 70%,var(--surface))}
+  .fxh2-teams{font-family:'Bricolage Grotesque',sans-serif;font-weight:800;font-size:1rem;letter-spacing:-.01em}
+  .heat-badge{font-family:var(--mono);font-weight:700;font-size:.82rem;padding:.14rem .48rem;border-radius:7px;background:var(--surface-3);color:var(--text-2);display:inline-block}
+  .heat-badge.hot{background:color-mix(in srgb,var(--warn) 22%,transparent);color:var(--warn)}
+  .fx-refrow{display:flex;align-items:center;gap:.5rem;padding:.4rem .85rem;border-bottom:1px solid var(--border)}
+  .cand2{display:flex;align-items:center;gap:.7rem;padding:.55rem .85rem;border-top:1px solid var(--border);width:100%;text-align:left;background:none;border-left:0;border-right:0;border-bottom:0;color:inherit;font:inherit;cursor:pointer}
+  .cand2:hover{background:var(--surface-2)}
+  .cbadge{width:44px;height:38px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-weight:700;font-size:.64rem;flex:none;background:var(--surface-2);border:1px solid var(--border-2);color:var(--text-2)}
+  .sev{font-family:var(--mono);font-size:.58rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;margin-top:.18rem}
+  .pips{display:inline-flex;gap:3px;margin-top:.32rem}
+  .pip{width:11px;height:11px;border-radius:3px;background:var(--surface-3)}
+  .pip.on{background:var(--warn)}
+  .cand2-prob{font-family:'Bricolage Grotesque',sans-serif;font-weight:800;font-size:1.35rem;line-height:1;font-variant-numeric:tabular-nums}
+  .gwsusp{display:flex;gap:.6rem;overflow-x:auto;padding-bottom:.3rem;margin-bottom:1rem;scrollbar-width:thin}
+  .gwsusp-card{flex:0 0 auto;min-width:190px;border:1px solid var(--border);border-left:3px solid var(--warn);border-radius:11px;padding:.55rem .75rem;background:var(--surface)}
+  .gwsusp-fx{font-family:var(--mono);font-size:.62rem;letter-spacing:.06em;color:var(--text-3);text-transform:uppercase}
+  .gwsusp-nm{font-weight:700;font-size:.95rem;margin:.15rem 0 .1rem}
+  .gwsusp-yc{font-family:var(--mono);font-size:.72rem;color:var(--warn)}
   @media(max-width:700px){.fx-grid{grid-template-columns:1fr}.gw-hero-num{font-size:2.1rem}}
 </style>
 </head>
@@ -326,6 +355,10 @@
       <p>Who's most likely to be booked — fixture by fixture, with the referee folded in.</p>
     </div>
     <div id="gwHero" class="gw-hero" aria-live="polite"></div>
+    <div id="gwSuspWrap" hidden>
+      <div class="gw-seclabel" style="margin-bottom:.5rem">⚠ Suspension watch</div>
+      <div id="gwSusp" class="gwsusp"></div>
+    </div>
     <div id="gwWatchWrap" style="margin-bottom:1rem" hidden>
       <div style="display:flex;align-items:baseline;justify-content:space-between;margin-bottom:.5rem">
         <h3 style="margin:0;font-size:1.05rem;font-family:'Bricolage Grotesque',sans-serif">★ My watchlist</h3>
@@ -333,9 +366,17 @@
       </div>
       <div id="gwWatch" class="surface" style="border-radius:14px;overflow:hidden"></div>
     </div>
-    <div id="gwToolbar" style="display:flex;align-items:center;justify-content:space-between;gap:.6rem;margin-bottom:.6rem;flex-wrap:wrap" hidden>
-      <h3 style="margin:0;font-size:1.05rem;font-family:'Bricolage Grotesque',sans-serif">Fixtures <span class="faint" style="font-weight:600;font-size:.78rem">· hottest first</span></h3>
-      <button class="btn btn-primary" id="gwShareBtn" style="padding:.35rem .8rem;font-size:.8rem" type="button" title="Download a shareable card of this gameweek's fixtures by booking heat">⬇ Share gameweek</button>
+    <div id="gwToolbar" hidden>
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:.6rem;margin-bottom:.55rem;flex-wrap:wrap">
+        <div class="gw-seclabel">Top probabilities <span style="color:var(--text-3);text-transform:none;letter-spacing:0">· hottest first</span></div>
+        <button class="btn btn-primary" id="gwShareBtn" style="padding:.32rem .75rem;font-size:.78rem" type="button" title="Download a shareable card of this gameweek's fixtures by booking heat">⬇ Share gameweek</button>
+      </div>
+      <div class="seg" id="gwPosSeg" role="tablist" aria-label="Filter candidates by position" style="margin-bottom:.7rem">
+        <button class="seg-btn on" data-pos="all" type="button">ALL</button>
+        <button class="seg-btn" data-pos="DF" type="button">DEF</button>
+        <button class="seg-btn" data-pos="MF" type="button">MID</button>
+        <button class="seg-btn" data-pos="FW" type="button">FWD</button>
+      </div>
     </div>
     <div id="gwFixtures"></div>
     <p class="faint" style="font-size:.78rem;margin-top:.8rem">Fixtures are ordered <strong>hottest to coolest</strong> by booking heat. Each fixture's booking candidates are its highest-risk available players, ranked by a <strong>fixture-aware booking probability</strong>: the season model chance scaled by the assigned referee's card rate (the ×factor) and a small derby bump. Bands: <span style="color:var(--danger);font-weight:700">High</span> 50%+, <span style="color:var(--warn);font-weight:700">Watch</span> 30–50%. The dot is sample confidence (minutes played). Assign referees on each card once appointments are published. An estimate for research, not a price — see the Guide.</p>
@@ -1647,6 +1688,10 @@ function fixtureRisks(h,a){
     .sort((x,y)=>rEff(y)-rEff(x)).slice(0,3);
 }
 function fmtKO(iso){ try{ return new Date(iso).toLocaleString("en-GB",{weekday:"short",day:"numeric",month:"short",hour:"2-digit",minute:"2-digit"}); }catch(e){ return ""; } }
+// Terse "SAT 16:30" for the prototype fixture header.
+function fmtKOShort(iso){ try{ const d=new Date(iso); return d.toLocaleDateString("en-GB",{weekday:"short"}).toUpperCase()+" "+d.toLocaleTimeString("en-GB",{hour:"2-digit",minute:"2-digit"}); }catch(e){ return "TBC"; } }
+// "Anthony Taylor" -> "A. Taylor"
+function refAbbr(name){ const p=String(name||"").trim().split(/\s+/); return p.length<2?String(name||""):p[0][0]+". "+p.slice(1).join(" "); }
 function renderFixtures(){
   const list=$("fixtureList"), gw=Number($("gwSelect").value);
   if(!LIVE||!$("gwSelect").options.length) return;
@@ -1665,6 +1710,7 @@ function renderFixtures(){
 // model, so it sits at the top of every card and modulates every row.
 // ═══════════════════════════════════════════════════════════
 const GW_EXPANDED=new Set();
+let gwPos="all"; // This Gameweek position filter (ALL / DF / MF / FW)
 
 // Sample-size confidence from minutes played (live once the season is under way).
 function confidence(p){
@@ -1696,22 +1742,36 @@ function gwCandidates(h,a,ref,derby){
     .filter(c=>c.prob!=null)
     .sort((x,y)=>y.prob-x.prob);
 }
+// Severity band from the fixture-aware probability (prototype language).
+function severity(prob){
+  if(prob>=0.45) return {label:"Critical",col:"var(--danger)"};
+  if(prob>=0.30) return {label:"High",col:"var(--warn)"};
+  if(prob>=0.18) return {label:"Moderate",col:"var(--text-2)"};
+  return {label:"Low",col:"var(--text-3)"};
+}
+// Five-square meter of a player's yellow-card rate (yc/90) — card propensity.
+function pipMeter(p){
+  const y=yEff(p); if(y==null) return "";
+  const n=Math.max(0,Math.min(5,Math.round(y/0.09)));
+  let s='<span class="pips" aria-hidden="true" title="Yellow-card rate '+y.toFixed(2)+' per 90">';
+  for(let i=0;i<5;i++) s+='<span class="pip'+(i<n?" on":"")+'"></span>';
+  return s+'</span>';
+}
 function candRowHtml(c,ref){
-  const p=c.p, prob=c.prob, baseP=pImp(p), conf=confidence(p);
-  const col=prob>=0.50?"var(--danger)":prob>=0.30?"var(--warn)":"var(--text-2)";
-  const rf=ref?refFactor(ref):1;
-  const delta=(ref&&Math.abs(rf-1)>=0.02)
-    ? `<span title="${esc(ref.n)} runs ${rf>1?"hotter":"cooler"} than the league average — booking chance ${rf>1?"lifted":"trimmed"} ×${rf.toFixed(2)}" style="color:${rf>1?"var(--warn)":"var(--fade)"};font-weight:700">×${rf.toFixed(2)} ref</span>`
-    : "";
-  return `<button class="cand" data-pk="${esc(watchKey(p))}" type="button" aria-label="Open ${esc(p.n)}'s profile">
-    <span class="conf-dot" style="background:${conf.col}" title="${esc(conf.label)}"></span>
-    <span class="cand-main">
-      <span class="cand-name">${esc(p.n)} <span class="faint num" style="font-weight:600;font-size:.7rem">${p.c}</span>${suspFlagInline(p)}</span>
-      <span class="cand-sub">${esc(p.p||"")} · base ${baseP!=null?(baseP*100).toFixed(0)+"%":"—"} ${delta}</span>
+  const p=c.p, prob=c.prob, sev=severity(prob), conf=confidence(p);
+  const live=(p.liveRate)?' <span title="Live 2026-27 yellow rate" style="color:var(--good)">●</span>':'';
+  return `<button class="cand2" data-pk="${esc(watchKey(p))}" type="button" aria-label="Open ${esc(p.n)}'s profile">
+    <span class="cbadge" title="${esc(conf.label)}">${esc(p.c)}</span>
+    <span style="flex:1;min-width:0">
+      <span class="cand-name">${esc(p.n)} <span class="mono" style="color:var(--text-3);font-size:.66rem;font-weight:600">${esc(p.p||"")}</span>${live}${suspFlagInline(p)}</span>
+      ${pipMeter(p)}
     </span>
-    <span class="cand-prob">
-      <span class="cand-prob-n" style="color:${col}">${(prob*100).toFixed(0)}%</span>
-      <span class="cand-barwrap"><span style="display:block;height:100%;width:${Math.min(100,Math.round(prob*100))}%;background:${col}"></span></span>
+    <span style="display:flex;align-items:center;gap:.55rem;flex:none">
+      <span style="text-align:right">
+        <span class="cand2-prob" style="color:${sev.col}">${(prob*100).toFixed(0)}%</span>
+        <div class="sev" style="color:${sev.col}">${sev.label}</div>
+      </span>
+      <span class="faint" aria-hidden="true" style="font-size:1.1rem;line-height:1">⌄</span>
     </span>
   </button>`;
 }
@@ -1740,49 +1800,38 @@ function sortFixturesByHeat(fx){
 function fixtureCardHtml(f,opts){
   opts=opts||{};
   const M=fixtureMeta(f); if(!M) return "";
-  const {h,a,ref,rf,derby,base,heat,cls,lbl}=M;
-  const comb=(combustible(CLUBMAP[h]||{})||combustible(CLUBMAP[a]||{}))?' <span title="Combustible side involved">🔥</span>':'';
-  const derbyChip=derby?' <span class="chip tier-target" style="font-size:.58rem" title="Recognised rivalry — heat ×'+DERBY_BOOST+'">derby</span>':'';
-  const score=f.finished?` <span class="num muted" style="font-weight:700;font-size:.8rem">FT ${f.hs==null?"":f.hs}–${f.as==null?"":f.as}</span>`:"";
-  // Referee bar — the model's edge, at the top of every card.
+  const {h,a,ref,rf,derby,base,heat}=M;
   const s=refStrictness(ref);
-  const initials=ref?esc(ref.n.split(/\s+/).map(x=>x[0]||"").join("").slice(0,2).toUpperCase()):"?";
-  const refInfo=ref
-    ? `<div class="fx-ref-av" style="background:${s?s.col:"var(--fade)"}">${initials}</div>
-       <div style="min-width:0;flex:1">
-         <div class="fx-ref-name">${esc(ref.n)}${s?` <span class="chip" style="font-size:.54rem;color:${s.col};background:color-mix(in srgb,${s.col} 12%,transparent);border:1px solid color-mix(in srgb,${s.col} 35%,transparent)">${s.label}</span>`:""}</div>
-         <div class="faint num" style="font-size:.68rem">${ref.ypg!=null?ref.ypg.toFixed(2)+" cards/game · ×"+rf.toFixed(2)+" on every player":"card rate n/a"}</div>
-       </div>`
-    : `<div class="fx-ref-av" style="background:var(--surface-3);color:var(--text-3)">?</div>
-       <div style="flex:1;min-width:0" class="muted" title="Assign the official once PGMOL publishes appointments — every player's chance then scales to his card rate">Referee not yet assigned</div>`;
-  const refBar=`<div class="fx-refbar">${refInfo}${refSelect(f.id)}</div>`;
-  // Candidates, banded by fixture-aware probability.
-  const cands=gwCandidates(h,a,ref,derby);
-  let body="";
+  const derbyChip=derby?' <span class="mono" style="font-size:.6rem;color:var(--accent-2);font-weight:800;letter-spacing:.06em">DERBY</span>':'';
+  const score=f.finished?` <span class="mono muted" style="font-weight:700;font-size:.72rem">FT ${f.hs==null?"":f.hs}–${f.as==null?"":f.as}</span>`:"";
+  const refLine=ref?`Ref ${esc(refAbbr(ref.n))}`:"Ref —";
+  const strictChip=s?` <span class="mono" style="font-size:.56rem;color:${s.col}">${s.label}</span>`:"";
+  const heatBadge=`<span class="heat-badge${heat>=4.2?" hot":""}" title="Booking heat: ${base.toFixed(1)} base × ${rf.toFixed(2)} ref${derby?" × "+DERBY_BOOST+" derby":""}">${heat.toFixed(1)}</span>`;
+  const refDelta=(ref&&Math.abs(rf-1)>=0.02)?` <span class="mono" style="font-size:.64rem;color:${rf>1?"var(--warn)":"var(--fade)"}" title="Every player's chance scaled ×${rf.toFixed(2)} by ${esc(ref.n)}">×${rf.toFixed(2)} on every player</span>`:"";
+  // Candidates, ranked by fixture-aware probability, position-filtered.
+  let cands=gwCandidates(h,a,ref,derby);
+  if(opts.pos&&opts.pos!=="all") cands=cands.filter(c=>c.p.p===opts.pos);
+  let body;
   if(!cands.length){
-    body='<div class="fx-empty">No rated available players for this fixture yet.</div>';
+    body='<div class="fx-empty">'+(opts.pos&&opts.pos!=="all"?"No available "+({DF:"defenders",MF:"midfielders",FW:"forwards"}[opts.pos]||"players")+" rated for this fixture.":"No rated available players for this fixture yet.")+'</div>';
   }else{
-    const high=cands.filter(c=>c.prob>=0.50), watch=cands.filter(c=>c.prob>=0.30&&c.prob<0.50), rest=cands.filter(c=>c.prob<0.30);
-    const band=(dot,label,list)=> list.length?`<div class="fx-band"><span class="dot" style="background:${dot}"></span>${label} · ${list.length}</div>`+list.map(c=>candRowHtml(c,ref)).join(""):"";
-    body+=band("var(--danger)","High risk (50%+)",high);
-    body+=band("var(--warn)","Watch (30–50%)",watch);
-    if(!high.length&&!watch.length){
-      body+='<div class="fx-band"><span class="dot" style="background:var(--text-3)"></span>Top candidates</div>'+rest.slice(0,4).map(c=>candRowHtml(c,ref)).join("");
-    }else if(rest.length){
-      if(opts.expanded){
-        body+='<div class="fx-band"><span class="dot" style="background:var(--text-3)"></span>Lower (under 30%)</div>'+rest.map(c=>candRowHtml(c,ref)).join("");
-        body+=`<button class="fx-more" data-expand="${f.id}" type="button">Show fewer ‹</button>`;
-      }else{
-        body+=`<button class="fx-more" data-expand="${f.id}" type="button">Show ${rest.length} lower-risk candidate${rest.length===1?"":"s"} ›</button>`;
-      }
-    }
+    const DEF_SHOW=4, shown=opts.expanded?cands:cands.slice(0,DEF_SHOW), hidden=cands.length-shown.length;
+    body=shown.map(c=>candRowHtml(c,ref)).join("");
+    if(opts.expanded&&cands.length>DEF_SHOW) body+=`<button class="fx-more" data-expand="${f.id}" type="button">Show fewer ‹</button>`;
+    else if(hidden>0) body+=`<button class="fx-more" data-expand="${f.id}" type="button">Show ${hidden} more candidate${hidden===1?"":"s"} ›</button>`;
   }
   return `<div class="fx-card" data-fid="${f.id}">
-    <div class="fx-head">
-      <div class="fx-teams">${crest(h)} ${h} <span class="faint" style="font-weight:400">v</span> ${crest(a)} ${a}${score}${comb}${derbyChip}</div>
-      <div class="fx-when">${f.kickoff_time?fmtKO(f.kickoff_time):"TBC"}<div style="margin-top:.3rem"><span class="chip ${cls}" title="Booking heat: ${base.toFixed(1)} base × ${rf.toFixed(2)} ref${derby?" × "+DERBY_BOOST+" derby":""}">${heat.toFixed(1)} ${lbl}</span></div></div>
+    <div class="fxh2">
+      <div style="min-width:0">
+        <div class="fxh2-teams">${esc(h)} <span class="faint mono" style="font-weight:500;font-size:.78rem">vs</span> ${esc(a)}${derbyChip}${score}</div>
+        <div class="mono" style="color:var(--text-3);font-size:.66rem;margin-top:.18rem">${f.kickoff_time?fmtKOShort(f.kickoff_time):"TBC"}</div>
+      </div>
+      <div style="text-align:right;flex:none">
+        <div class="mono" style="font-size:.66rem;color:var(--text-3)">${refLine}${strictChip}</div>
+        <div style="margin-top:.28rem">${heatBadge}</div>
+      </div>
     </div>
-    ${refBar}
+    <div class="fx-refrow">${refSelect(f.id)}${refDelta}</div>
     ${body}
     <div class="fx-foot"><button class="fx-share" data-share-fid="${f.id}" type="button" title="Download a shareable card of this match">⬇ Share match</button></div>
   </div>`;
@@ -1807,19 +1856,24 @@ function deadlineHtml(){
 function renderGwHero(){
   const el=$("gwHero"); if(!el) return;
   const gw=LIVE?LIVE.currentGW:"—";
-  const basis=LIVE?(LIVE.seasonStarted?"● Live FPL card counts":"Live schedule · pre-season form"):"Baked 2025-26 form";
+  const live=LIVE&&LIVE.seasonStarted;
+  const pill=LIVE
+    ? `<span class="live-pill${live?"":" stale"}"><span class="d"></span>${live?"LIVE":"SCHED"}</span>`
+    : `<span class="live-pill stale"><span class="d"></span>OFFLINE</span>`;
+  const basis=LIVE?(live?"Live FPL card counts":"Live schedule · pre-season form"):"Baked 2025-26 form";
   const rec=trackRecordSummary();
   el.innerHTML=`
     <div class="gw-hero-l">
-      <div><div class="gw-hero-badge">Gameweek</div><div class="gw-hero-num">${gw}</div></div>
+      <div><div class="gw-hero-badge mono">Bookings Desk</div><div class="gw-hero-num">GW ${gw}</div></div>
       <div style="min-width:0">
+        <div style="margin-bottom:.25rem">${pill}</div>
         <div class="gw-hero-dl">${deadlineHtml()}</div>
-        <div class="faint" style="font-size:.72rem;margin-top:.2rem">${basis}</div>
+        <div class="faint mono" style="font-size:.66rem;margin-top:.2rem">${basis}</div>
       </div>
     </div>
     <div class="gw-hero-r">
       ${rec
-        ? `<div class="faint" style="font-size:.66rem;letter-spacing:.06em;text-transform:uppercase">Model track record</div><div style="font-family:'Bricolage Grotesque',sans-serif;font-weight:800;font-size:1.15rem">${rec}</div><a href="#p=guide" class="faint" style="font-size:.72rem">How we calculate ›</a>`
+        ? `<div class="gw-seclabel">Model track record</div><div style="font-family:'Bricolage Grotesque',sans-serif;font-weight:800;font-size:1.15rem">${rec}</div><a href="#p=guide" class="faint mono" style="font-size:.66rem">How we calculate ›</a>`
         : `<a href="#p=guide" class="btn btn-ghost" style="padding:.3rem .7rem;font-size:.74rem">How we calculate ›</a>`}
     </div>`;
 }
@@ -1850,8 +1904,34 @@ function renderWatchDash(){
     </button>`;
   }).join("");
 }
+// Suspension-watch strip for the feed: players one booking from a ban, as
+// horizontal cards with the prototype's yellow spine.
+function renderGwSusp(){
+  const wrap=$("gwSuspWrap"), el=$("gwSusp");
+  if(!wrap||!el) return;
+  if(!LIVE){ wrap.hidden=true; return; }
+  const gw=LIVE.currentGW, close=[];
+  PL_PLAYERS.forEach(p=>{
+    if(!p.live||p.live.st==="s") return;
+    const t=nextThreshold(p.live.yc,gw);
+    if(t&&p.live.yc===t.n-1) close.push({p,t});
+  });
+  if(!close.length){ wrap.hidden=true; el.innerHTML=""; return; }
+  close.sort((x,y)=>rEff(y.p)-rEff(x.p));
+  wrap.hidden=false;
+  el.innerHTML=close.slice(0,12).map(({p,t})=>{
+    const f=nextFixtureFor(p.c); let opp="";
+    if(f){ const H=LIVE.teamMap[f.team_h],A=LIVE.teamMap[f.team_a]; opp=(H===p.c?A:H)+(H===p.c?" (H)":" (A)"); }
+    return `<button class="gwsusp-card" data-pk="${esc(watchKey(p))}" type="button" style="text-align:left;cursor:pointer;color:inherit;font:inherit" aria-label="Open ${esc(p.n)}'s profile">
+      <div class="gwsusp-fx">${p.c}${opp?" vs "+esc(opp.split(" ")[0]):""}</div>
+      <div class="gwsusp-nm">${esc(p.n)}</div>
+      <div class="gwsusp-yc">${p.live.yc} YC · one from ban</div>
+    </button>`;
+  }).join("");
+}
 function renderGameweek(){
   renderGwHero();
+  renderGwSusp();
   renderWatchDash();
   const el=$("gwFixtures"); if(!el) return;
   if(!LIVE){
@@ -1862,7 +1942,7 @@ function renderGameweek(){
   const fx=sortFixturesByHeat(LIVE.fixtures.filter(f=>f.event===gw));
   $("gwToolbar").hidden=!fx.length;
   if(!fx.length){ el.innerHTML='<div class="surface" style="border-radius:14px;padding:1rem"><p class="muted" style="margin:0">No fixtures scheduled for GW'+gw+' yet — check back once the schedule firms up.</p></div>'; return; }
-  el.innerHTML='<div class="fx-grid">'+fx.map(f=>fixtureCardHtml(f,{expanded:GW_EXPANDED.has(f.id)})).join("")+'</div>';
+  el.innerHTML='<div class="fx-grid">'+fx.map(f=>fixtureCardHtml(f,{expanded:GW_EXPANDED.has(f.id),pos:gwPos})).join("")+'</div>';
 }
 // Shared wiring for both fixture grids (This Gameweek + All fixtures):
 // expand/collapse lower-risk candidates, open a profile, assign a referee.
@@ -1889,6 +1969,14 @@ function wireFixtureGrid(id,rerender){
 wireFixtureGrid("gwFixtures",renderGameweek);
 wireFixtureGrid("fixtureList",renderFixtures);
 $("gwWatch").addEventListener("click",e=>{ const row=e.target.closest(".wl-row[data-pk]"); if(row) openPlayerProfile(row.dataset.pk); });
+$("gwSusp").addEventListener("click",e=>{ const c=e.target.closest(".gwsusp-card[data-pk]"); if(c) openPlayerProfile(c.dataset.pk); });
+// Position filter chips (ALL / DEF / MID / FWD) for the gameweek feed.
+$("gwPosSeg").addEventListener("click",e=>{
+  const b=e.target.closest(".seg-btn"); if(!b) return;
+  gwPos=b.dataset.pos;
+  document.querySelectorAll("#gwPosSeg .seg-btn").forEach(x=>{ const on=x===b; x.classList.toggle("on",on); x.setAttribute("aria-selected",on?"true":"false"); });
+  renderGameweek();
+});
 // Gameweek share cards: the current GW from the landing view, the selected GW from the Fixtures tab.
 $("gwShareBtn").addEventListener("click",()=>{ if(LIVE) exportGameweekPNG(LIVE.currentGW); });
 $("fxShareBtn").addEventListener("click",()=>{ const gw=Number($("gwSelect").value); if(LIVE&&gw) exportGameweekPNG(gw); });
