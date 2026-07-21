@@ -81,13 +81,22 @@ def mk(p, basis):
     yc = num(p.get("yc"))
     rc = num(p.get("rc"))
     fc90 = num(p.get("fc90"))
+    # Fouls won (fouls drawn) per 90. ScoutingStats key varies by export; try
+    # the parallels of fc90 in order. Absent in older harvests -> stays null,
+    # and the app hides the metric until a refresh populates it.
+    fw90 = num(p.get("fd90"))
+    if fw90 is None:
+        fw90 = num(p.get("fw90"))
+    if fw90 is None:
+        fw90 = num(p.get("fouls_drawn_p90"))
     yc90 = round(yc / mins * 90, 3) if (yc is not None and mins > 0) else None
     risk = round((yc90 * 2) + fc90, 3) if (yc90 is not None and fc90 is not None) else None
     return {
         "c": short, "n": p.get("n"), "p": POS.get(p.get("pos"), p.get("pos") or ""),
         "min": int(mins), "yc": int(yc) if yc is not None else None,
         "rc": int(rc) if rc is not None else None,
-        "y": yc90, "f": fc90, "r": risk,
+        "y": yc90, "f": fc90, "fw": (round(fw90, 3) if fw90 is not None else None),
+        "r": risk,
         "ls": (mins < LOW_MIN), "b": basis,
         "_club": club, "_tid": p.get("tid"), "_img": p.get("img"),
         "_fouls": (fc90 * mins / 90) if (fc90 is not None) else 0,
@@ -159,8 +168,8 @@ def main():
         lines.append("  {" + ",".join([
             f'c:{jsval(p["c"])}', f'n:{jsval(p["n"])}', f'p:{jsval(p["p"])}',
             f'min:{p["min"]}', f'yc:{jsval(p["yc"])}', f'rc:{jsval(p["rc"])}',
-            f'y:{jsval(p["y"])}', f'f:{jsval(p["f"])}', f'r:{jsval(p["r"])}',
-            f'ls:{jsval(p["ls"])}', f'b:{jsval(p["b"])}',
+            f'y:{jsval(p["y"])}', f'f:{jsval(p["f"])}', f'fw:{jsval(p["fw"])}',
+            f'r:{jsval(p["r"])}', f'ls:{jsval(p["ls"])}', f'b:{jsval(p["b"])}',
         ]) + "},")
     lines.append("];")
     lines.append("const REFS = [")

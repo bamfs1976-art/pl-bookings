@@ -34,6 +34,11 @@ const dups = [...keyCounts.entries()].filter(([, n]) => n > 1);
 assert.equal(dups.length, 0,
   `duplicate player rows in data/pl_data.js: ${dups.map(([k, n]) => `${k} ×${n}`).join(', ')}`);
 
+// Schema: every player carries the fouls-won slot (fw), null until a harvest
+// with the fouls-drawn field populates it. Guards generator/data drift.
+const missingFw = PL_PLAYERS.filter((p) => !('fw' in p)).length;
+assert.equal(missingFw, 0, `${missingFw} player rows missing the fw (fouls won) field`);
+
 // Each of the three promoted clubs must be flagged EFL (clearly separated
 // from the 17 Premier League clubs in the shipped data).
 for (const short of ['COV', 'HUL', 'IPS']) {

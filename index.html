@@ -560,7 +560,7 @@
       <h3>Live data</h3>
       <p>The desk pulls the official FPL feed through its own proxy: the 2026-27 schedule for the Fixtures tab, each player's live yellow and red card count, and availability flags (injured, suspended, doubtful). Once a player has 450 minutes of 2026-27 football, his yellow rate in the risk score switches from last season's form to this season's live rate — rows carry a green dot when live rates are in use. If the feed is unreachable the desk falls back to the baked 2025-26 form and says so in the top bar.</p>
       <h3>Matchup context</h3>
-      <p>Derby fixtures — the recognised rivalries among the 20 clubs, North London to Tyne–Wear, plus the promoted clubs' regional rivalries — get a booking-heat boost and a 🔥 derby chip on the Fixtures tab, since rivalry games run hotter with the referee. Once at least two finished gameweeks have been recorded, the players table adds a small ▲ card-form trend beside the yellow count: cards picked up over the recent recorded window (up to the last five gameweeks). Booking heat is also venue-aware: each club's cards-against is split into home and away rates (football-data.co.uk match data — away sides consistently pick up more cards), so the same two clubs read differently at each ground. Opponent fouls-drawn would sharpen matchup calls further, but needs richer source data than the current pipeline carries.</p>
+      <p>Derby fixtures — the recognised rivalries among the 20 clubs, North London to Tyne–Wear, plus the promoted clubs' regional rivalries — get a booking-heat boost and a 🔥 derby chip on the Fixtures tab, since rivalry games run hotter with the referee. Once at least two finished gameweeks have been recorded, the players table adds a small ▲ card-form trend beside the yellow count: cards picked up over the recent recorded window (up to the last five gameweeks). Booking heat is also venue-aware: each club's cards-against is split into home and away rates (football-data.co.uk match data — away sides consistently pick up more cards), so the same two clubs read differently at each ground. Each player now carries both <strong>fouls committed</strong> and <strong>fouls won</strong> per 90 (shown on the player profile, in the share cards and the CSV) — committed feeds the risk score today; fouls won is a new data slot that populates on the next ScoutingStats refresh (it isn't in the live FPL feed), and will sharpen opponent-aggression matchup calls once it's in.</p>
       <h3>Suspension watch</h3>
       <p>Premier League bans trigger at 5 yellows (up to gameweek 19), 10 (up to gameweek 32) and 15 (all season). The strip above the players table flags anyone one booking from a ban — a player with a card to burn is a lean, one protecting a threshold often isn't — and lists players currently suspended or injured so you don't back an absentee.</p>
       <h3>Watchlist</h3>
@@ -634,6 +634,18 @@ function tierLabel(t){ return {target:"Target",mid:"Mid",fade:"Fade",efl:"EFL ba
 function combustible(c){ return c.ca!=null && c.fm!=null && c.ca>=2.0 && c.fm>=12.0; }
 function crest(c){ const club=CLUBMAP[c]; if(!club||!club.img) return ""; return `<img class="crest" src="${club.img}" alt="" loading="lazy" onerror="this.style.display='none'">`; }
 function clubName(c){ return CLUBMAP[c]?CLUBMAP[c].name:c; }
+// Fouls: committed (p.f) ships today; won/drawn (p.fw) populates on the next
+// ScoutingStats refresh (not in the FPL feed). Raw totals derive from the
+// per-90 rate and minutes.
+function foulsWon90(p){ return (p&&p.fw!=null)?p.fw:null; }
+function foulsTotal(rate,p){ return (rate!=null&&p&&p.min)?Math.round(rate*p.min/90):null; }
+function foulsLine(p){
+  const fc=p.f, fw=foulsWon90(p), fct=foulsTotal(fc,p), fwt=foulsTotal(fw,p);
+  const comm=fc==null?"—":`<b class="num">${fc.toFixed(2)}</b>/90${fct!=null?` · ${fct} total`:""}`;
+  const won=fw==null?'<span class="faint">not yet in the dataset — populates on the next data refresh</span>'
+    :`<b class="num">${fw.toFixed(2)}</b>/90${fwt!=null?` · ${fwt} total`:""}`;
+  return `Committed ${comm}<br>Won ${won}`;
+}
 // Implied booking probability: logistic mapping over the risk score,
 // calibrated once on the baked season data (see PLDCore.calibrate).
 const CALIB=PLDCore.calibrate(PL_PLAYERS);
@@ -688,12 +700,12 @@ function renderFilterChips(){
 // just the 400 rows the table caps at.
 function exportCSV(){
   const rows=currentPlayers();
-  const head=["player","club","position","minutes","yellows","reds","yc_per90","fouls_per90","risk","implied_p_card","fair_odds","basis","low_sample"];
+  const head=["player","club","position","minutes","yellows","reds","yc_per90","fouls_committed_per90","fouls_won_per90","risk","implied_p_card","fair_odds","basis","low_sample"];
   const cell=v=>{ v=v==null?"":String(v); return /[",\n]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v; };
   const lines=[head.join(",")].concat(rows.map(p=>{
     const r=rEff(p), pc=pImp(p), yc=(LIVE&&LIVE.seasonStarted&&p.live)?p.live.yc:p.yc;
     return [p.n,p.c,p.p||"",p.min,yc==null?"":yc,p.rc==null?"":p.rc,
-      yEff(p)==null?"":yEff(p).toFixed(3),p.f==null?"":p.f.toFixed(2),
+      yEff(p)==null?"":yEff(p).toFixed(3),p.f==null?"":p.f.toFixed(2),p.fw==null?"":p.fw.toFixed(2),
       r==null?"":r.toFixed(3),pc==null?"":pc.toFixed(3),pc?(1/pc).toFixed(2):"",
       p.b||"",p.ls?1:0].map(cell).join(",");
   }));
@@ -986,7 +998,7 @@ async function exportPNG(){
     let nm=p.n; while(x.measureText(nm).width>W-P-430) nm=nm.slice(0,-1);
     x.fillText(nm + (nm!==p.n?"…":""),P+108,y+50);
     x.fillStyle="#586275"; x.font=`600 19px ${body}`;
-    x.fillText(`${p.p||""}  ·  ${yEff(p)!=null?yEff(p).toFixed(2):"—"} yc  ·  ${p.f!=null?p.f.toFixed(2):"—"} fouls`+(p.b==="EFL"?"  · EFL":""),P+108,y+78);
+    x.fillText(`${p.p||""}  ·  ${yEff(p)!=null?yEff(p).toFixed(2):"—"} yc  ·  ${p.f!=null?p.f.toFixed(2):"—"} fouls${p.fw!=null?"  ·  "+p.fw.toFixed(2)+" won":""}`+(p.b==="EFL"?"  · EFL":""),P+108,y+78);
     // risk number + bar
     const pr=rEff(p), rc=riskHexAbs(pr);
     x.fillStyle=rc; x.font=`800 44px ${disp}`; x.textAlign="right"; x.fillText(pr.toFixed(2),W-P,y+50); x.textAlign="left";
@@ -1058,7 +1070,7 @@ async function exportFixturePNG(fid){
     let nm=p.n; while(x.measureText(nm).width>W-P-430&&nm.length>3) nm=nm.slice(0,-1);
     x.fillText(nm+(nm!==p.n?"…":""),P+72,mid-2);
     x.fillStyle="#586275"; x.font=`600 18px ${body}`;
-    x.fillText(`${p.p||""} · base ${(pImp(p)*100).toFixed(0)}%${ref&&Math.abs(rf-1)>=0.02?" · ×"+rf.toFixed(2)+" ref":""}`,P+72,mid+24);
+    x.fillText(`${p.p||""} · base ${(pImp(p)*100).toFixed(0)}%${p.f!=null?" · "+p.f.toFixed(1)+" fls/90":""}${p.fw!=null?" · "+p.fw.toFixed(1)+" won":""}${ref&&Math.abs(rf-1)>=0.02?" · ×"+rf.toFixed(2)+" ref":""}`,P+72,mid+24);
     const pc=probHex(prob);
     x.fillStyle=pc; x.font=`800 40px ${disp}`; x.textAlign="right"; x.fillText((prob*100).toFixed(0)+"%",W-P,mid-4); x.textAlign="left";
     const bw=210,bx=W-P-bw,by=mid+12;
@@ -1274,7 +1286,11 @@ function openPlayerProfile(k){
     ${statCell("Minutes",p.min,p.ls?"low sample":"2025-26")}
     ${statCell("Yellows",liveYC!=null?liveYC:(p.yc==null?"—":p.yc),liveYC!=null?"live 2026-27":"2025-26")}
     ${statCell("YC / 90",yEff(p)==null?"—":yEff(p).toFixed(2),p.liveRate?"live rate":"2025-26 rate")}
-    ${statCell("Fouls / 90",p.f==null?"—":p.f.toFixed(2),"2025-26 form")}
+    ${statCell("Fouls won / 90",foulsWon90(p)==null?"—":foulsWon90(p).toFixed(2),foulsWon90(p)==null?"awaiting refresh":"2025-26 form")}
+  </div>
+  <div class="surface-2" style="border-radius:10px;padding:.55rem .8rem;margin-bottom:.7rem">
+    <div class="faint" style="font-size:.68rem;text-transform:uppercase;letter-spacing:.04em">Fouls (2025-26)</div>
+    <div style="font-size:.85rem;margin-top:.25rem;line-height:1.5">${foulsLine(p)}</div>
   </div>`;
   if(p.live&&LIVE){
     if(p.live.st==="s") h+=`<p style="font-size:.82rem;color:var(--danger);margin:.2rem 0 .6rem">Currently suspended${p.live.news?" — "+esc(p.live.news):""}.</p>`;
