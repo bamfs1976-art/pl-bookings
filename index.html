@@ -431,6 +431,49 @@
     <p class="faint" style="font-size:.78rem;margin-top:.6rem">Risk = yellow rate per 90 weighted double plus fouls per 90, from 2025-26 form. P(card) is the model-implied chance of a booking in a match with its fair decimal odds — click it to compare a bookmaker price (an estimate, see the Guide). The EFL chip marks the three promoted clubs, whose form is from the Championship. Low sample is under 450 minutes.</p>
   </section>
 
+  <!-- ALL PLAYERS (complete live FPL squad list) -->
+  <section id="panel-allplayers" class="page">
+    <div class="page-head">
+      <h2>All players</h2>
+      <p>Every current Premier League squad player from the live FPL feed — games played and discipline, with fouls where the ScoutingStats data has them.</p>
+    </div>
+    <div style="display:flex;gap:.6rem;flex-wrap:wrap;align-items:center;margin-bottom:.8rem">
+      <input id="apSearch" type="search" placeholder="Search player" aria-label="Search player" style="flex:1;min-width:160px">
+      <label class="muted" style="font-size:.85rem">Club
+        <select id="apClub" aria-label="Filter by club"><option value="all">All clubs</option></select>
+      </label>
+      <label class="muted" style="font-size:.85rem">Position
+        <select id="apPos" aria-label="Filter by position">
+          <option value="all">All</option><option value="GK">GK</option><option value="DF">DF</option><option value="MF">MF</option><option value="FW">FW</option>
+        </select>
+      </label>
+      <label class="muted" style="font-size:.85rem;display:inline-flex;align-items:center;gap:.35rem" title="Hide players with no minutes this season">
+        <input type="checkbox" id="apHide" checked> With minutes only
+      </label>
+      <button id="apCsvBtn" class="btn btn-ghost" title="Download the current view as CSV">⬇ CSV</button>
+    </div>
+    <div class="surface" style="border-radius:14px;overflow:auto;max-height:74vh">
+      <table>
+        <caption class="visually-hidden">All Premier League players — games played and discipline</caption>
+        <thead><tr>
+          <th scope="col" style="text-align:left;padding:.6rem .7rem"><button data-apsort="n" type="button">Player</button></th>
+          <th scope="col" style="text-align:left;padding:.6rem .5rem"><button data-apsort="c" type="button">Club</button></th>
+          <th scope="col" style="text-align:center;padding:.6rem .4rem"><button data-apsort="p" type="button">Pos</button></th>
+          <th scope="col" style="text-align:right;padding:.6rem .4rem" title="Minutes played this season"><button data-apsort="min" type="button">Mins</button></th>
+          <th scope="col" style="text-align:right;padding:.6rem .4rem" title="Starts this season"><button data-apsort="starts" type="button">Starts</button></th>
+          <th scope="col" style="text-align:right;padding:.6rem .4rem" title="Yellow cards this season"><button data-apsort="yc" type="button">YC</button></th>
+          <th scope="col" style="text-align:right;padding:.6rem .4rem" title="Red cards this season"><button data-apsort="rc" type="button">RC</button></th>
+          <th scope="col" style="text-align:right;padding:.6rem .4rem" title="Yellow cards per 90"><button data-apsort="y90" type="button">YC/90</button></th>
+          <th scope="col" style="text-align:right;padding:.6rem .4rem" title="Fouls committed per 90 (ScoutingStats)"><button data-apsort="f" type="button">Fouls/90</button></th>
+          <th scope="col" style="text-align:right;padding:.6rem .6rem" title="Fouls won per 90 (ScoutingStats, populates on refresh)"><button data-apsort="fw" type="button">Won/90</button></th>
+        </tr></thead>
+        <tbody id="apRows"><tr><td colspan="10" class="muted" style="padding:1.2rem;text-align:center">Loading the live squad list…</td></tr></tbody>
+      </table>
+    </div>
+    <p id="apNote" class="faint" style="font-size:.78rem;margin-top:.6rem"></p>
+    <p class="faint" style="font-size:.78rem">Games played (minutes, starts) and discipline (yellows, reds, per-90) are live from the official FPL API for every registered squad player. FPL carries no fouls, so Fouls/90 and Won/90 come from the baked ScoutingStats data where the player matches by club and name — blank for players outside that set. Suspended/injured/doubtful flags from the feed.</p>
+  </section>
+
   <!-- CLUBS -->
   <section id="panel-clubs" class="page">
     <div class="page-head">
@@ -1132,6 +1175,7 @@ const NAV=[
   {id:"gameweek",label:"Gameweek",icon:"gameweek",panels:[{id:"panel-gameweek",label:"This Gameweek"}]},
   {id:"desk",label:"Desk",icon:"desk",panels:[
     {id:"panel-players",label:"Season table"},
+    {id:"panel-allplayers",label:"All players"},
     {id:"panel-clubs",label:"Clubs"},
     {id:"panel-refs",label:"Referees"}
   ]},
@@ -1189,6 +1233,7 @@ function openPanel(panelId){
   // Re-render the gameweek view on entry so the watchlist dashboard reflects
   // stars set on other tabs.
   if(panelId==="panel-gameweek"&&typeof renderGameweek==="function") renderGameweek();
+  if(panelId==="panel-allplayers"&&typeof renderAllPlayers==="function") renderAllPlayers();
   syncNav(); closeSidebar(); window.scrollTo({top:0});
   writeHash();
 }
@@ -1259,6 +1304,19 @@ $("filterChips").addEventListener("click",e=>{
   renderPlayers(); writeHash();
 });
 $("csvBtn").addEventListener("click",exportCSV);
+// ---- All players view: filters, sort, CSV ----
+function fillApClubFilter(){
+  const sel=$("apClub"); if(!sel||sel.dataset.filled) return;
+  [...CLUBS].sort((a,b)=>a.name.localeCompare(b.name)).forEach(c=>{ const o=document.createElement("option"); o.value=c.short; o.textContent=c.name; sel.appendChild(o); });
+  sel.dataset.filled="1";
+}
+["apSearch","apClub","apPos","apHide"].forEach(id=>{ const el=$(id); if(el) el.addEventListener("input",renderAllPlayers); });
+$("apCsvBtn").addEventListener("click",exportAllPlayersCSV);
+document.querySelectorAll("th [data-apsort]").forEach(btn=>btn.addEventListener("click",()=>{
+  const k=btn.dataset.apsort;
+  if(apSortKey===k) apSortDir*=-1; else { apSortKey=k; apSortDir=(k==="n"||k==="p"||k==="c")?1:-1; }
+  renderAllPlayers();
+}));
 // Cross-links between the gameweek view and the season table.
 $("toGameweek").addEventListener("click",e=>{ e.preventDefault(); openPanel("panel-gameweek"); });
 $("gwWatchManage").addEventListener("click",()=>{ $("watchOnly").checked=true; openPanel("panel-players"); renderPlayers(); writeHash(); });
@@ -1478,6 +1536,118 @@ function attachLive(bootstrap,teamMap){
   return matched;
 }
 
+// ═══════════════════════════════════════════════════════════
+// ALL PLAYERS — the complete current squad list from the live FPL feed.
+// Games played (minutes, starts) and discipline (yellows, reds, per-90) come
+// from FPL for every registered player across all 20 clubs; fouls come from
+// the baked ScoutingStats data where a player matches (FPL carries no fouls).
+// ═══════════════════════════════════════════════════════════
+const POS_FPL={1:"GK",2:"DF",3:"MF",4:"FW"};
+// Club -> normalized-name -> baked player (null on an ambiguous key), so an
+// FPL element can pull its fouls/risk from the baked dataset by name.
+function bakedFoulIndex(){
+  const byClub={}, idx={};
+  PL_PLAYERS.forEach(p=>{ (byClub[p.c]=byClub[p.c]||[]).push(p); });
+  Object.keys(byClub).forEach(c=>{
+    const m={};
+    byClub[c].forEach(p=>{ const k=normName(p.n); m[k]=(k in m)?null:p;
+      const lk="last:"+(k.split(" ").pop()||""); m[lk]=(lk in m)?null:p; });
+    idx[c]=m;
+  });
+  return idx;
+}
+function buildAllPlayers(bootstrap,teamMap){
+  const idx=bakedFoulIndex(), out=[];
+  (bootstrap.elements||[]).forEach(el=>{
+    const c=teamMap[el.team]; if(!c) return;
+    const full=((el.first_name||"")+" "+(el.second_name||"")).trim();
+    const nf=normName(full), web=normName(el.web_name);
+    const m=idx[c]||{};
+    const baked=m[nf]||m[web]||m["last:"+(normName(el.second_name||"").split(" ").pop()||"")]||m["last:"+(web.split(" ").pop()||"")]||null;
+    const min=el.minutes||0, yc=el.yellow_cards||0, rc=el.red_cards||0;
+    out.push({
+      c, n:el.web_name||full||"—", full,
+      p:POS_FPL[el.element_type]||(baked?baked.p:""),
+      min, starts:el.starts||0, yc, rc,
+      y90: min>0?yc/(min/90):null, r90: min>0?rc/(min/90):null,
+      st:el.status||"a", news:el.news||"",
+      f: baked?baked.f:null, fw: baked&&baked.fw!=null?baked.fw:null, risk: baked?baked.r:null,
+    });
+  });
+  return out;
+}
+function availChipRaw(st,news){
+  const t=esc(news||"");
+  const mk=(txt,col)=>` <span class="chip" style="font-size:.6rem;color:${col};background:color-mix(in srgb,${col} 12%,transparent);border:1px solid color-mix(in srgb,${col} 35%,transparent)" title="${t}">${txt}</span>`;
+  if(st==="s") return mk("susp","var(--danger)");
+  if(st==="i") return mk("inj","var(--danger)");
+  if(st==="u") return mk("out","var(--fade)");
+  if(st==="d") return mk("doubt","var(--warn)");
+  return "";
+}
+let apSortKey="min", apSortDir=-1;
+function currentAllPlayers(){
+  if(!LIVE||!LIVE.allPlayers) return [];
+  const q=$("apSearch").value.trim().toLowerCase();
+  const cf=$("apClub").value, pf=$("apPos").value, hide=$("apHide").checked;
+  const rows=LIVE.allPlayers.filter(p=>{
+    if(q && !((p.n||"").toLowerCase().includes(q)||(p.full||"").toLowerCase().includes(q))) return false;
+    if(cf!=="all"&&p.c!==cf) return false;
+    if(pf!=="all"&&p.p!==pf) return false;
+    if(hide&&p.min<=0) return false;
+    return true;
+  });
+  const k=apSortKey;
+  rows.sort((a,b)=>{
+    if(k==="n"||k==="p"||k==="c") return apSortDir*String(a[k]||"").localeCompare(String(b[k]||""));
+    const av=a[k]==null?-Infinity:a[k], bv=b[k]==null?-Infinity:b[k];
+    return apSortDir*(av-bv);
+  });
+  return rows;
+}
+function renderAllPlayers(){
+  const tb=$("apRows"), note=$("apNote"); if(!tb) return;
+  if(!LIVE){
+    tb.innerHTML='<tr><td colspan="10" class="muted" style="padding:1.2rem;text-align:center">The complete player list is built from the live FPL feed, which is unreachable right now. It fills in once the feed is back — the <a href="#p=players">Season table</a> works offline.</td></tr>';
+    if(note) note.textContent=""; return;
+  }
+  const rows=currentAllPlayers();
+  if(note) note.textContent=rows.length+" player"+(rows.length===1?"":"s")+" · games & discipline from the live FPL feed"+(LIVE.seasonStarted?"":" (pre-season — minutes accrue once 2026-27 kicks off)")+" · fouls from ScoutingStats where matched.";
+  if(!rows.length){ tb.innerHTML='<tr><td colspan="10" class="muted" style="padding:1rem;text-align:center">No players match.</td></tr>'; return; }
+  const frag=document.createDocumentFragment();
+  rows.slice(0,800).forEach(p=>{
+    const tr=document.createElement("tr");
+    if("isu".includes(p.st)) tr.style.opacity=".6";
+    tr.innerHTML=
+      `<td style="padding:.4rem .7rem"><strong>${esc(p.n)}</strong>${availChipRaw(p.st,p.news)}</td>`+
+      `<td class="muted" style="padding:.4rem .5rem">${crest(p.c)} <span class="num" style="font-size:.82rem">${p.c}</span></td>`+
+      `<td class="faint num" style="text-align:center">${esc(p.p||"")}</td>`+
+      `<td class="num muted" style="text-align:right">${p.min}</td>`+
+      `<td class="num muted" style="text-align:right">${p.starts}</td>`+
+      `<td class="num" style="text-align:right">${p.yc}</td>`+
+      `<td class="num" style="text-align:right">${p.rc}</td>`+
+      `<td class="num" style="text-align:right">${p.y90==null?'<span class="faint">—</span>':p.y90.toFixed(2)}</td>`+
+      `<td class="num" style="text-align:right">${p.f==null?'<span class="faint">—</span>':p.f.toFixed(2)}</td>`+
+      `<td class="num" style="text-align:right">${p.fw==null?'<span class="faint">—</span>':p.fw.toFixed(2)}</td>`;
+    frag.appendChild(tr);
+  });
+  tb.innerHTML=""; tb.appendChild(frag);
+  if(rows.length>800){ const tr=document.createElement("tr"); tr.innerHTML='<td colspan="10" class="faint" style="padding:.6rem;text-align:center">Showing top 800 of '+rows.length+'. Filter to narrow.</td>'; tb.appendChild(tr); }
+}
+function exportAllPlayersCSV(){
+  const rows=currentAllPlayers();
+  if(!rows.length){ toast("No players to export"); return; }
+  const head=["player","club","position","minutes","starts","yellow_cards","red_cards","yc_per90","rc_per90","fouls_committed_per90","fouls_won_per90","status"];
+  const cell=v=>{ v=v==null?"":String(v); return /[",\n]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v; };
+  const lines=[head.join(",")].concat(rows.map(p=>[p.full||p.n,p.c,p.p||"",p.min,p.starts,p.yc,p.rc,
+    p.y90==null?"":p.y90.toFixed(3),p.r90==null?"":p.r90.toFixed(3),
+    p.f==null?"":p.f.toFixed(2),p.fw==null?"":p.fw.toFixed(2),p.st].map(cell).join(",")));
+  const blob=new Blob([lines.join("\n")],{type:"text/csv"});
+  const u=URL.createObjectURL(blob), a=document.createElement("a");
+  a.href=u; a.download="pl-all-players.csv"; a.click(); setTimeout(()=>URL.revokeObjectURL(u),2000);
+  toast("CSV downloaded — "+rows.length+" players");
+}
+
 async function loadLive(){
   const status=$("liveStatus");
   try{
@@ -1485,7 +1655,7 @@ async function loadLive(){
       fetchFPL("bootstrap-static",d=>({
         teams:(d.teams||[]).map(t=>({id:t.id,short_name:t.short_name,name:t.name})),
         events:(d.events||[]).map(e=>({id:e.id,name:e.name,is_current:e.is_current,is_next:e.is_next,finished:e.finished,deadline_time:e.deadline_time})),
-        elements:(d.elements||[]).map(el=>({id:el.id,team:el.team,first_name:el.first_name,second_name:el.second_name,web_name:el.web_name,status:el.status,news:el.news,minutes:el.minutes,yellow_cards:el.yellow_cards,red_cards:el.red_cards}))
+        elements:(d.elements||[]).map(el=>({id:el.id,team:el.team,element_type:el.element_type,first_name:el.first_name,second_name:el.second_name,web_name:el.web_name,status:el.status,news:el.news,minutes:el.minutes,starts:el.starts,yellow_cards:el.yellow_cards,red_cards:el.red_cards}))
       })),
       fetchFPL("fixtures",d=>(d||[]).map(f=>({id:f.id,event:f.event,kickoff_time:f.kickoff_time,team_h:f.team_h,team_a:f.team_a,finished:f.finished,started:f.started,hs:f.team_h_score,as:f.team_a_score})))
     ]);
@@ -1493,6 +1663,7 @@ async function loadLive(){
     const cur=bs.events.find(e=>e.is_current)||bs.events.find(e=>e.is_next)||bs.events[0]||null;
     LIVE={bootstrap:bs,fixtures:fx,teamMap,currentGW:cur?cur.id:1,seasonStarted:bs.elements.some(el=>(el.minutes||0)>0)};
     LIVE.matchedCount=attachLive(bs,teamMap);
+    LIVE.allPlayers=buildAllPlayers(bs,teamMap);
     status.hidden=false; status.className="chip tier-target";
     const fetchedAt=(()=>{ try{ const c=JSON.parse(localStorage.getItem(FPL_CACHE_KEY))||{}; const h=c["bootstrap-static"]; return h?new Date(h.t):null; }catch(e){ return null; } })();
     status.textContent="● Live FPL data"+(fetchedAt?" · "+fetchedAt.toLocaleTimeString("en-GB",{hour:"2-digit",minute:"2-digit"}):"");
@@ -1500,7 +1671,7 @@ async function loadLive(){
     const curEv=bs.events.find(e=>e.id===LIVE.currentGW);
     $("gwNum").textContent=LIVE.currentGW;
     $("gwSideDeadline").innerHTML=curEv&&curEv.deadline_time?("Deadline <b>"+fmtKO(curEv.deadline_time)+"</b>"):"Schedule live";
-    renderPlayers(); renderClubs(); renderSuspWatch(); initFixturesUI(); updateAccuracy(); renderGameweek();
+    renderPlayers(); renderClubs(); renderSuspWatch(); initFixturesUI(); updateAccuracy(); renderGameweek(); fillApClubFilter(); renderAllPlayers();
   }catch(e){
     status.hidden=false; status.className="chip tier-fade";
     status.textContent="Baked 2025-26 form";
@@ -2150,6 +2321,7 @@ renderPlayers();
 renderClubs();
 renderRefs();
 renderTracker();
+fillApClubFilter();
 renderGameweek();   // paints the landing view immediately (offline/loading state until live data lands)
 loadLive();
 // The Supabase client loads deferred from the CDN, so wire auth up once
