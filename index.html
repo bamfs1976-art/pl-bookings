@@ -696,23 +696,29 @@ function foulsLine(p){
 // GLM. See docs/modelling-review.md.
 const CALIB=PLDCore.calibrate(PL_PLAYERS);
 const MODEL=(typeof window!=="undefined"&&window.CARD_MODEL)||null;
+// Only use the v2 model if BOTH the parameters (data/model.js) AND the v2 pure
+// functions (assets/core.js) are present. Guards the case where a service
+// worker serves a stale core.js that predates these functions — the app then
+// falls back cleanly to the legacy logistic instead of throwing.
+const MODEL_OK=!!(MODEL&&PLDCore&&typeof PLDCore.shrinkRate==="function"&&typeof PLDCore.glmProb==="function"&&typeof PLDCore.contextProb==="function"&&typeof PLDCore.expectedFouls==="function"&&typeof PLDCore.nbTailProb==="function");
+if(MODEL&&!MODEL_OK) try{ console.warn("[Bookings Desk] model v2 params present but core.js is stale — using legacy model. Hard-refresh to update."); }catch(e){}
 function mpick(o,k,fb){ return o&&o[k]!=null?o[k]:fb; }
 // Effective (live-aware) yellow count/minutes for the yellow half of the model.
 function effMin(p){ return (p.liveRate&&p.live)?p.live.min:(p.min||0); }
 function effYc(p){ return (p.liveRate&&p.live)?p.live.yc:(p.yc||0); }
 // Shrunk per-90 rates: pull low-exposure rates toward the position mean.
-function shrunkY90(p){ if(!MODEL) return yEff(p); const S=MODEL.shrink; return PLDCore.shrinkRate(effYc(p),effMin(p),mpick(S.ycMean,p.p,S.ycLeague),S.strengthMatches); }
-function shrunkF90(p){ if(p.f==null) return null; if(!MODEL) return p.f; const S=MODEL.shrink; return PLDCore.shrinkRate(p.f*((p.min||0)/90),(p.min||0),mpick(S.foulMean,p.p,S.foulLeague),S.strengthMatches); }
+function shrunkY90(p){ if(!MODEL_OK) return yEff(p); const S=MODEL.shrink; return PLDCore.shrinkRate(effYc(p),effMin(p),mpick(S.ycMean,p.p,S.ycLeague),S.strengthMatches); }
+function shrunkF90(p){ if(p.f==null) return null; if(!MODEL_OK) return p.f; const S=MODEL.shrink; return PLDCore.shrinkRate(p.f*((p.min||0)/90),(p.min||0),mpick(S.foulMean,p.p,S.foulLeague),S.strengthMatches); }
 // Season base booking probability from the v2 model (fallback: legacy).
 function pModelBase(p){
-  if(!MODEL) return PLDCore.impliedProb(rEff(p),CALIB);
+  if(!MODEL_OK) return PLDCore.impliedProb(rEff(p),CALIB);
   const sf=shrunkF90(p); if(sf==null) return PLDCore.impliedProb(rEff(p),CALIB);
   return PLDCore.glmProb({yc90:shrunkY90(p),foul90:sf,DF:p.p==="DF"?1:0,MF:p.p==="MF"?1:0,FW:p.p==="FW"?1:0},MODEL.glm);
 }
 function pImp(p){ return pModelBase(p); }
 // Tier 3 fouls forecast: expected fouls this match and over/under a line.
-function expFoulsFor(p,expMin){ return PLDCore.expectedFouls(shrunkF90(p),expMin==null?90:expMin); }
-function pFoulsOver(p,line,expMin){ return MODEL?PLDCore.nbTailProb(expFoulsFor(p,expMin),MODEL.nbFouls.dispersion,line):null; }
+function expFoulsFor(p,expMin){ return MODEL_OK?PLDCore.expectedFouls(shrunkF90(p),expMin==null?90:expMin):null; }
+function pFoulsOver(p,line,expMin){ return MODEL_OK?PLDCore.nbTailProb(expFoulsFor(p,expMin),MODEL.nbFouls.dispersion,line):null; }
 // Watchlist keys are club|name — names repeat across clubs, the pair doesn't.
 function watchKey(p){ return p.c+"|"+p.n; }
 function isWatched(p){ return state.watch.includes(watchKey(p)); }
@@ -1371,7 +1377,7 @@ function openPlayerProfile(k){
     <div style="font-size:.85rem;margin-top:.25rem;line-height:1.5">${foulsLine(p)}</div>
   </div>`;
   // Tier 3 forecast: expected fouls + over/under lines, and a two-stage card cross-check.
-  if(MODEL&&p.f!=null){
+  if(MODEL_OK&&p.f!=null){
     const ef=expFoulsFor(p,90), po1=pFoulsOver(p,1,90), po2=pFoulsOver(p,2,90);
     const two=PLDCore.cardProbFromFouls(ef,MODEL.twoStage.baseHazard);
     h+=`<div class="surface-2" style="border-radius:10px;padding:.55rem .8rem;margin-bottom:.7rem">
@@ -1836,13 +1842,13 @@ function renderTrackRecord(){
   const rows=rs.slice(-10).reverse().map(r=>`<tr><td style="padding:.3rem .6rem">GW${r.gw}</td><td class="num" style="text-align:right;padding:.3rem .6rem">${r.hits}/${r.total}</td><td class="num" style="text-align:right;padding:.3rem .6rem">${(100*r.hits/r.total).toFixed(0)}%</td></tr>`).join("");
   // Real calibration once enough picks have been scored: Brier + log-loss vs the base-rate baseline.
   const cal=ACC.calib||[]; let metricsHtml="";
-  if(cal.length>=20){
+  if(cal.length>=20&&MODEL_OK&&typeof PLDCore.brier==="function"){
     const br=PLDCore.brier(cal), ll=PLDCore.logLoss(cal);
     const baseP=MODEL?MODEL.baseRate:0.17, baseBr=PLDCore.brier(cal.map(d=>({p:baseP,y:d.y})));
     const beats=br<baseBr;
     metricsHtml=`<p class="muted" style="font-size:.84rem;margin:.2rem 0 .6rem">Calibration over <strong>${cal.length}</strong> scored predictions — <strong>Brier ${br.toFixed(3)}</strong> vs base-rate ${baseBr.toFixed(3)} <span style="color:${beats?'var(--good)':'var(--warn)'}">(${beats?'model ahead':'not yet ahead'})</span>, <strong>log-loss ${ll.toFixed(3)}</strong>. Lower is better; beating the base-rate Brier means the model's confidence is earning its keep.</p>`;
   }
-  const basis=MODEL?`<span class="chip surface-2" style="border:1px solid var(--border);font-size:.62rem;margin-left:.4rem">model v2 · ${esc(MODEL.basis)}</span>`:"";
+  const basis=MODEL_OK?`<span class="chip surface-2" style="border:1px solid var(--border);font-size:.62rem;margin-left:.4rem">model v2 · ${esc(MODEL.basis)}</span>`:"";
   el.innerHTML='<h3 style="margin-top:0">Model track record'+basis+'</h3>'
     +`<p class="muted" style="font-size:.88rem;margin:.2rem 0 .6rem">Of the model's top-20 booking risks at each snapshot, the share that picked up a card that gameweek. Cumulative: <strong class="num">${totHits}/${tot} (${tot?(100*totHits/tot).toFixed(0):0}%)</strong> over ${rs.length} gameweek${rs.length===1?"":"s"}. Best-effort deltas from live counts in this browser — an honest self-score, not a marketing number.</p>`
     +metricsHtml
@@ -1975,7 +1981,8 @@ function confidence(p){
 function fixtureProb(p,ref,derby){
   const base=pImp(p); if(base==null) return null;
   const rf=ref?refFactor(ref):1, df=derby?1.08:1;
-  return PLDCore.contextProb(base,rf,df);
+  if(MODEL_OK&&typeof PLDCore.contextProb==="function") return PLDCore.contextProb(base,rf,df);
+  return Math.min(0.95,Math.max(0.005,base*rf*df)); // legacy fallback if core.js is stale
 }
 // One-booking-from-a-ban / banned flag, from the live feed.
 function suspFlagInline(p){

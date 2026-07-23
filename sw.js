@@ -3,12 +3,13 @@
    cache-first. Live FPL data (/api/fpl/*) and Supabase calls are never
    touched here — the app's own data layer decides what is fresh vs cached. */
 
-const VERSION = 'plb-v7';
+const VERSION = 'plb-v8';
 const SHELL = [
   '/',
   '/index.html',
   '/data/pl_data.js',
   '/data/ref_history.js',
+  '/data/model.js',
   '/assets/core.js',
   '/assets/tw.css',
   '/manifest.webmanifest',
@@ -41,15 +42,18 @@ self.addEventListener('fetch', (e) => {
   if (url.pathname.startsWith('/api/')) return;
   if (url.origin !== self.location.origin) return;
 
-  /* The page/app shell (and the dataset, which changes with data updates):
-     network-first so deploys reach the app immediately, falling back to
-     cache when offline. */
-  const isShell = req.mode === 'navigate' ||
-    url.pathname === '/' || url.pathname === '/index.html' ||
-    url.pathname === '/data/pl_data.js' ||
-    url.pathname === '/manifest.webmanifest';
+  /* Code and data (the page, the scripts, the dataset, the model, the CSS):
+     network-first so a deploy reaches the app immediately and index.html can
+     never end up newer than the core.js it depends on. Falls back to cache
+     when offline. Everything under /data or /assets, plus .js/.css/.html and
+     the manifest, is treated as code. */
+  const p = url.pathname;
+  const isCode = req.mode === 'navigate' ||
+    p === '/' || p === '/manifest.webmanifest' ||
+    p.startsWith('/data/') || p.startsWith('/assets/') ||
+    /\.(?:js|css|html|webmanifest)$/.test(p);
 
-  if (isShell) {
+  if (isCode) {
     e.respondWith(
       fetch(req).then((res) => {
         const copy = res.clone();
@@ -60,7 +64,7 @@ self.addEventListener('fetch', (e) => {
     return;
   }
 
-  /* Other static assets (icons, logos): cache-first, then network. */
+  /* Everything else (icons, logos, images): cache-first, then network. */
   e.respondWith(
     caches.match(req).then((hit) =>
       hit || fetch(req).then((res) => {
