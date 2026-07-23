@@ -1684,8 +1684,10 @@ function exportAllPlayersCSV(){
 
 async function loadLive(){
   const status=$("liveStatus");
+  // Stage 1 — the fetch. ONLY a fetch failure means the feed is offline.
+  let bs,fx;
   try{
-    const [bs,fx]=await Promise.all([
+    [bs,fx]=await Promise.all([
       fetchFPL("bootstrap-static",d=>({
         teams:(d.teams||[]).map(t=>({id:t.id,short_name:t.short_name,name:t.name})),
         events:(d.events||[]).map(e=>({id:e.id,name:e.name,is_current:e.is_current,is_next:e.is_next,finished:e.finished,deadline_time:e.deadline_time})),
@@ -1693,11 +1695,23 @@ async function loadLive(){
       })),
       fetchFPL("fixtures",d=>(d||[]).map(f=>({id:f.id,event:f.event,kickoff_time:f.kickoff_time,team_h:f.team_h,team_a:f.team_a,finished:f.finished,started:f.started,hs:f.team_h_score,as:f.team_a_score})))
     ]);
+  }catch(e){
+    console.warn("[Bookings Desk] FPL feed unreachable:",e);
+    status.hidden=false; status.className="chip tier-fade";
+    status.textContent="Baked 2025-26 form";
+    status.title="Live FPL feed unreachable — showing the baked 2025-26 basis. ("+((e&&e.message)||e)+")";
+    $("gwSideDeadline").textContent="Live feed offline";
+    initFixturesUI(); renderTrackRecord(); renderGameweek();
+    return;
+  }
+  // Stage 2 — processing & render. The feed IS up; a downstream error here must
+  // NOT flip the app to "offline". Each step is isolated and logged.
+  try{
     const teamMap=buildTeamMap(bs.teams);
-    const cur=bs.events.find(e=>e.is_current)||bs.events.find(e=>e.is_next)||bs.events[0]||null;
+    const cur=bs.events.find(e=>e.is_current&&!e.finished)||bs.events.find(e=>e.is_next)||bs.events.find(e=>!e.finished)||bs.events[bs.events.length-1]||bs.events[0]||null;
     LIVE={bootstrap:bs,fixtures:fx,teamMap,currentGW:cur?cur.id:1,seasonStarted:bs.elements.some(el=>(el.minutes||0)>0)};
-    LIVE.matchedCount=attachLive(bs,teamMap);
-    LIVE.allPlayers=buildAllPlayers(bs,teamMap);
+    try{ LIVE.matchedCount=attachLive(bs,teamMap); }catch(e){ console.warn("[Bookings Desk] attachLive:",e); LIVE.matchedCount=0; }
+    try{ LIVE.allPlayers=buildAllPlayers(bs,teamMap); }catch(e){ console.warn("[Bookings Desk] buildAllPlayers:",e); LIVE.allPlayers=[]; }
     status.hidden=false; status.className="chip tier-target";
     const fetchedAt=(()=>{ try{ const c=JSON.parse(localStorage.getItem(FPL_CACHE_KEY))||{}; const h=c["bootstrap-static"]; return h?new Date(h.t):null; }catch(e){ return null; } })();
     status.textContent="● Live FPL data"+(fetchedAt?" · "+fetchedAt.toLocaleTimeString("en-GB",{hour:"2-digit",minute:"2-digit"}):"");
@@ -1705,13 +1719,15 @@ async function loadLive(){
     const curEv=bs.events.find(e=>e.id===LIVE.currentGW);
     $("gwNum").textContent=LIVE.currentGW;
     $("gwSideDeadline").innerHTML=curEv&&curEv.deadline_time?("Deadline <b>"+fmtKO(curEv.deadline_time)+"</b>"):"Schedule live";
-    renderPlayers(); renderClubs(); renderSuspWatch(); initFixturesUI(); updateAccuracy(); renderGameweek(); fillApClubFilter(); renderAllPlayers();
+    // Each renderer isolated so one failing view can't blank the others or the live pill.
+    [renderPlayers,renderClubs,renderSuspWatch,initFixturesUI,updateAccuracy,renderGameweek,fillApClubFilter,renderAllPlayers].forEach(fn=>{
+      try{ fn(); }catch(e){ console.error("[Bookings Desk] render "+fn.name+":",e); }
+    });
   }catch(e){
-    status.hidden=false; status.className="chip tier-fade";
-    status.textContent="Baked 2025-26 form";
-    status.title="Live FPL feed unreachable — showing the baked 2025-26 basis.";
-    $("gwSideDeadline").textContent="Live feed offline";
-    initFixturesUI(); renderTrackRecord(); renderGameweek();
+    // Live data is present but a top-level processing step threw — stay LIVE, log it.
+    console.error("[Bookings Desk] live post-processing error (feed is up):",e);
+    status.hidden=false; status.className="chip tier-target"; status.textContent="● Live FPL data";
+    try{ renderGameweek(); }catch(_){}
   }
 }
 
