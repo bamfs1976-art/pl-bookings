@@ -20,7 +20,11 @@ jobs:
           node --check sw.js
           node --check assets/core.js
           node --check data/pl_data.js
+          node --check data/model.js
           node scripts/check-inline.mjs
+
+      - name: Model builder is reproducible (season prior regenerates cleanly)
+        run: node scripts/build-model.mjs
 
       - name: Data guard (pl_data.js counts, no inline dataset in index.html)
         run: node scripts/check-data.mjs

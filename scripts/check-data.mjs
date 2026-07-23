@@ -56,6 +56,20 @@ assert.equal(REF_HISTORY.seasons.length, 26,
 assert.ok(REF_HISTORY.refs.length >= 40,
   `expected >=40 historical referees, got ${REF_HISTORY.refs.length}`);
 
+// Card/fouls model (scripts/build-model.mjs). Assert the shape the app depends on.
+const mctx = {};
+vm.createContext(mctx);
+vm.runInContext(readFileSync(join(root, 'data', 'model.js'), 'utf8'), mctx);
+const MODEL = vm.runInContext('CARD_MODEL', mctx);
+assert.ok(MODEL && MODEL.glm && MODEL.glm.weights && MODEL.glm.intercept != null,
+  'data/model.js missing a glm {intercept, weights}');
+for (const key of ['yc90', 'foul90']) assert.ok(Number.isFinite(MODEL.glm.weights[key]), `model glm weight ${key} not finite`);
+assert.ok(MODEL.shrink && MODEL.shrink.strengthMatches > 0 && MODEL.shrink.ycMean && MODEL.shrink.foulMean,
+  'data/model.js missing shrinkage priors');
+assert.ok(MODEL.twoStage && MODEL.twoStage.baseHazard > 0, 'data/model.js missing twoStage.baseHazard');
+assert.ok(MODEL.nbFouls && MODEL.nbFouls.dispersion > 0, 'data/model.js missing nbFouls.dispersion');
+assert.ok(MODEL.baseRate > 0.05 && MODEL.baseRate < 0.4, `model baseRate ${MODEL.baseRate} implausible`);
+
 const html = readFileSync(join(root, 'index.html'), 'utf8');
 assert.ok(!/const\s+PL_PLAYERS\s*=\s*\[/.test(html),
   'index.html contains an inline PL_PLAYERS literal — the dataset must ship only in data/pl_data.js');
@@ -63,6 +77,8 @@ assert.ok(/<script\s+src="data\/pl_data\.js"><\/script>/.test(html),
   'index.html no longer loads data/pl_data.js');
 assert.ok(/<script\s+src="data\/ref_history\.js"><\/script>/.test(html),
   'index.html no longer loads data/ref_history.js');
+assert.ok(/<script\s+src="data\/model\.js"><\/script>/.test(html),
+  'index.html no longer loads data/model.js');
 
 console.log(`data guard OK: ${PL_PLAYERS.length} players (${efl} EFL), ${CLUBS.length} clubs, ${REFS.length} refs, ` +
   `${REF_HISTORY.refs.length} historical refs over ${REF_HISTORY.seasons.length} seasons, no inline dataset`);

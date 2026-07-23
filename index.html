@@ -596,7 +596,8 @@
       <p class="surface-2" style="padding:.6rem .8rem;border-radius:8px;font-family:monospace;font-size:.85rem">risk = yellow cards per 90 &times; 2 + fouls committed per 90</p>
       <p>Yellow rate is weighted double because the bet pays on cards, not fouls. Fouls per 90 carries the volume signal, the players who keep giving the referee a decision. Both are 2025-26 rates. Players under 450 minutes are flagged low sample.</p>
       <h3>Implied probability and value</h3>
-      <p>The desk turns each risk score into a model-implied chance of the player being carded in a match, using a logistic curve calibrated on the baked season data: the league base booking rate is total yellows per player-match (about <span id="guideBaseRate">—</span>% here), and the curve is anchored so the minutes-weighted league-average player lands exactly on that base rate. The <strong>P(card)</strong> column shows the probability and its fair decimal odds (1 ÷ probability); click it to paste a bookmaker's price and see the edge, (odds × probability − 1). Positive edge means the price pays more than the model thinks the chance is worth.</p>
+      <p>The desk turns form into a model-implied chance of the player being carded in a match. The league base booking rate is total yellows per player-match (about <span id="guideBaseRate">—</span>% here). The <strong>P(card)</strong> column shows the probability and its fair decimal odds (1 ÷ probability); click it to paste a bookmaker's price and see the edge, (odds × probability − 1). Positive edge means the price pays more than the model thinks the chance is worth.</p>
+      <p>The model (v2) does three things a naive score doesn't: it <strong>shrinks</strong> each player's per-90 rates toward the position average by how many minutes they've actually played (so one card in a few appearances doesn't read as an elite booker); it runs the shrunk rates through a fitted <strong>logistic</strong> and, per fixture, shifts that on the <strong>log-odds scale</strong> for the referee and derby (multiplying the odds, not the probability, so a strict ref lifts a 72% pick to ~77% rather than an implausible 94%); and it forecasts <strong>fouls</strong> directly — expected fouls and over/under lines from a Negative-Binomial count model, with a mechanistic fouls→card cross-check on each player's profile. The <strong>Model track record</strong> card scores the model out of sample (Brier, log-loss) against a base-rate baseline. Full write-up: <code>docs/modelling-review.md</code>. Still an estimate for research, not a market price.</p>
       <p>Be honest with it: this is a season-average <em>estimate</em> from form data, not a market price. It knows nothing about a specific matchup beyond the risk score, referees and derbies adjust fixture heat but not this per-player number, and bookmaker odds carry margin. Use the edge as a screen for further research, never as a guarantee.</p>
       <h3>Club discipline</h3>
       <p>Clubs are tiered on cards received per game, target 2.0 and above, mid 1.5 to 1.9, fade below 1.5. The flame marks a combustible side, 2.0 plus cards and 12.0 plus fouls.</p>
@@ -650,6 +651,7 @@
 
 <script src="data/pl_data.js"></script>
 <script src="data/ref_history.js"></script>
+<script src="data/model.js"></script>
 <script src="assets/core.js"></script>
 <script>
 const STORE_KEY="pl_desk_v1", THEME_KEY="pl_desk_theme";
@@ -689,10 +691,28 @@ function foulsLine(p){
     :`<b class="num">${fw.toFixed(2)}</b>/90${fwt!=null?` · ${fwt} total`:""}`;
   return `Committed ${comm}<br>Won ${won}`;
 }
-// Implied booking probability: logistic mapping over the risk score,
-// calibrated once on the baked season data (see PLDCore.calibrate).
+// Implied booking probability. Legacy logistic (kept as a fallback) plus the
+// v2 model (data/model.js): empirical-Bayes-shrunk rates through a logistic
+// GLM. See docs/modelling-review.md.
 const CALIB=PLDCore.calibrate(PL_PLAYERS);
-function pImp(p){ return PLDCore.impliedProb(rEff(p),CALIB); }
+const MODEL=(typeof window!=="undefined"&&window.CARD_MODEL)||null;
+function mpick(o,k,fb){ return o&&o[k]!=null?o[k]:fb; }
+// Effective (live-aware) yellow count/minutes for the yellow half of the model.
+function effMin(p){ return (p.liveRate&&p.live)?p.live.min:(p.min||0); }
+function effYc(p){ return (p.liveRate&&p.live)?p.live.yc:(p.yc||0); }
+// Shrunk per-90 rates: pull low-exposure rates toward the position mean.
+function shrunkY90(p){ if(!MODEL) return yEff(p); const S=MODEL.shrink; return PLDCore.shrinkRate(effYc(p),effMin(p),mpick(S.ycMean,p.p,S.ycLeague),S.strengthMatches); }
+function shrunkF90(p){ if(p.f==null) return null; if(!MODEL) return p.f; const S=MODEL.shrink; return PLDCore.shrinkRate(p.f*((p.min||0)/90),(p.min||0),mpick(S.foulMean,p.p,S.foulLeague),S.strengthMatches); }
+// Season base booking probability from the v2 model (fallback: legacy).
+function pModelBase(p){
+  if(!MODEL) return PLDCore.impliedProb(rEff(p),CALIB);
+  const sf=shrunkF90(p); if(sf==null) return PLDCore.impliedProb(rEff(p),CALIB);
+  return PLDCore.glmProb({yc90:shrunkY90(p),foul90:sf,DF:p.p==="DF"?1:0,MF:p.p==="MF"?1:0,FW:p.p==="FW"?1:0},MODEL.glm);
+}
+function pImp(p){ return pModelBase(p); }
+// Tier 3 fouls forecast: expected fouls this match and over/under a line.
+function expFoulsFor(p,expMin){ return PLDCore.expectedFouls(shrunkF90(p),expMin==null?90:expMin); }
+function pFoulsOver(p,line,expMin){ return MODEL?PLDCore.nbTailProb(expFoulsFor(p,expMin),MODEL.nbFouls.dispersion,line):null; }
 // Watchlist keys are club|name — names repeat across clubs, the pair doesn't.
 function watchKey(p){ return p.c+"|"+p.n; }
 function isWatched(p){ return state.watch.includes(watchKey(p)); }
@@ -1350,6 +1370,20 @@ function openPlayerProfile(k){
     <div class="faint" style="font-size:.68rem;text-transform:uppercase;letter-spacing:.04em">Fouls (2025-26)</div>
     <div style="font-size:.85rem;margin-top:.25rem;line-height:1.5">${foulsLine(p)}</div>
   </div>`;
+  // Tier 3 forecast: expected fouls + over/under lines, and a two-stage card cross-check.
+  if(MODEL&&p.f!=null){
+    const ef=expFoulsFor(p,90), po1=pFoulsOver(p,1,90), po2=pFoulsOver(p,2,90);
+    const two=PLDCore.cardProbFromFouls(ef,MODEL.twoStage.baseHazard);
+    h+=`<div class="surface-2" style="border-radius:10px;padding:.55rem .8rem;margin-bottom:.7rem">
+      <div class="faint" style="font-size:.68rem;text-transform:uppercase;letter-spacing:.04em">Match forecast · full 90</div>
+      <div style="font-size:.85rem;margin-top:.25rem;line-height:1.6">
+        Expected fouls <b class="num">${ef==null?"—":ef.toFixed(1)}</b>
+        · over 1.5 <b class="num">${po1==null?"—":(po1*100).toFixed(0)+"%"}</b>
+        · over 2.5 <b class="num">${po2==null?"—":(po2*100).toFixed(0)+"%"}</b><br>
+        <span class="faint">Two-stage card check (fouls→card): <b class="num">${two==null?"—":(two*100).toFixed(0)+"%"}</b> vs model ${pc==null?"—":(pc*100).toFixed(0)+"%"}. Referee scaling is applied per fixture.</span>
+      </div>
+    </div>`;
+  }
   if(p.live&&LIVE){
     if(p.live.st==="s") h+=`<p style="font-size:.82rem;color:var(--danger);margin:.2rem 0 .6rem">Currently suspended${p.live.news?" — "+esc(p.live.news):""}.</p>`;
     else{
@@ -1723,7 +1757,7 @@ function renderSuspWatch(){
 // Best-effort: gameweeks with missing data are skipped, results persist
 // in this browser under pl_desk_acc_v1.
 const ACC_KEY="pl_desk_acc_v1";
-let ACC=(()=>{ try{ const a=JSON.parse(localStorage.getItem(ACC_KEY))||{}; return {snap:a.snap||null,results:a.results||[],hist:a.hist||[]}; }catch(e){ return {snap:null,results:[],hist:[]}; } })();
+let ACC=(()=>{ try{ const a=JSON.parse(localStorage.getItem(ACC_KEY))||{}; return {snap:a.snap||null,results:a.results||[],hist:a.hist||[],calib:a.calib||[]}; }catch(e){ return {snap:null,results:[],hist:[],calib:[]}; } })();
 function saveAcc(){ try{ localStorage.setItem(ACC_KEY,JSON.stringify(ACC)); }catch(e){} }
 function liveYcByKey(){ const m={}; PL_PLAYERS.forEach(p=>{ if(p.live) m[watchKey(p)]=p.live.yc; }); return m; }
 // Card form over the recorded history window (up to the last 5 finished
@@ -1752,7 +1786,9 @@ function updateAccuracy(){
     // score the pending snapshot once its gameweek has finished
     if(ACC.snap&&finished.has(ACC.snap.gw)){
       let hits=0,total=0;
-      (ACC.snap.players||[]).forEach(sp=>{ const now=cur[sp.k]; if(now==null) return; total++; if(now>sp.yc) hits++; });
+      (ACC.snap.players||[]).forEach(sp=>{ const now=cur[sp.k]; if(now==null) return; total++; const carded=now>sp.yc; if(carded) hits++;
+        if(sp.p!=null) ACC.calib.push({p:sp.p,y:carded?1:0}); });
+      if(ACC.calib.length>600) ACC.calib=ACC.calib.slice(-600);
       if(total>=10){ ACC.results.push({gw:ACC.snap.gw,hits,total,ts:Date.now()}); ACC.results=ACC.results.slice(-38); }
       ACC.snap=null;
     }
@@ -1766,7 +1802,7 @@ function updateAccuracy(){
     const next=events.find(e=>!e.finished&&(e.is_current||e.is_next))||events.find(e=>!e.finished);
     if(!ACC.snap&&next){
       const top=topRiskPlayers(20);
-      if(top.length>=10) ACC.snap={gw:next.id,ts:Date.now(),players:top.map(p=>({k:watchKey(p),yc:p.live?p.live.yc:0}))};
+      if(top.length>=10) ACC.snap={gw:next.id,ts:Date.now(),players:top.map(p=>({k:watchKey(p),yc:p.live?p.live.yc:0,p:pImp(p)}))};
     }
     saveAcc();
   }catch(e){ /* best-effort — never let self-scoring break the app */ }
@@ -1782,8 +1818,18 @@ function renderTrackRecord(){
   }
   const totHits=rs.reduce((s,r)=>s+r.hits,0), tot=rs.reduce((s,r)=>s+r.total,0);
   const rows=rs.slice(-10).reverse().map(r=>`<tr><td style="padding:.3rem .6rem">GW${r.gw}</td><td class="num" style="text-align:right;padding:.3rem .6rem">${r.hits}/${r.total}</td><td class="num" style="text-align:right;padding:.3rem .6rem">${(100*r.hits/r.total).toFixed(0)}%</td></tr>`).join("");
-  el.innerHTML='<h3 style="margin-top:0">Model track record</h3>'
+  // Real calibration once enough picks have been scored: Brier + log-loss vs the base-rate baseline.
+  const cal=ACC.calib||[]; let metricsHtml="";
+  if(cal.length>=20){
+    const br=PLDCore.brier(cal), ll=PLDCore.logLoss(cal);
+    const baseP=MODEL?MODEL.baseRate:0.17, baseBr=PLDCore.brier(cal.map(d=>({p:baseP,y:d.y})));
+    const beats=br<baseBr;
+    metricsHtml=`<p class="muted" style="font-size:.84rem;margin:.2rem 0 .6rem">Calibration over <strong>${cal.length}</strong> scored predictions — <strong>Brier ${br.toFixed(3)}</strong> vs base-rate ${baseBr.toFixed(3)} <span style="color:${beats?'var(--good)':'var(--warn)'}">(${beats?'model ahead':'not yet ahead'})</span>, <strong>log-loss ${ll.toFixed(3)}</strong>. Lower is better; beating the base-rate Brier means the model's confidence is earning its keep.</p>`;
+  }
+  const basis=MODEL?`<span class="chip surface-2" style="border:1px solid var(--border);font-size:.62rem;margin-left:.4rem">model v2 · ${esc(MODEL.basis)}</span>`:"";
+  el.innerHTML='<h3 style="margin-top:0">Model track record'+basis+'</h3>'
     +`<p class="muted" style="font-size:.88rem;margin:.2rem 0 .6rem">Of the model's top-20 booking risks at each snapshot, the share that picked up a card that gameweek. Cumulative: <strong class="num">${totHits}/${tot} (${tot?(100*totHits/tot).toFixed(0):0}%)</strong> over ${rs.length} gameweek${rs.length===1?"":"s"}. Best-effort deltas from live counts in this browser — an honest self-score, not a marketing number.</p>`
+    +metricsHtml
     +`<table style="max-width:340px"><thead><tr><th scope="col" style="text-align:left;padding:.3rem .6rem">GW</th><th scope="col" style="text-align:right;padding:.3rem .6rem">Carded</th><th scope="col" style="text-align:right;padding:.3rem .6rem">Hit rate</th></tr></thead><tbody>${rows}</tbody></table>`;
 }
 
@@ -1906,13 +1952,14 @@ function confidence(p){
   if(m>=700) return {col:"var(--warn)",label:"Medium confidence — "+m+" mins played"};
   return {col:"var(--text-3)",label:"Low sample — only "+m+" mins played"};
 }
-// Fixture-aware booking chance: the season model P(card) scaled by the
-// referee's heat factor (0.75–1.3, clamped) and a small derby bump. An
-// approximation layered on the season estimate — honest, and framed as such.
+// Fixture-aware booking chance: the season model P(card) shifted on the
+// LOG-ODDS scale by the referee's card factor and a small derby bump (multiply
+// the odds, not the probability — so a 72% pick under a strict ref lands ~77%,
+// not the naive 94%). See docs/modelling-review.md.
 function fixtureProb(p,ref,derby){
   const base=pImp(p); if(base==null) return null;
-  const rf=ref?refFactor(ref):1, df=derby?1.06:1;
-  return Math.min(0.95,Math.max(0.005,base*rf*df));
+  const rf=ref?refFactor(ref):1, df=derby?1.08:1;
+  return PLDCore.contextProb(base,rf,df);
 }
 // One-booking-from-a-ban / banned flag, from the live feed.
 function suspFlagInline(p){
