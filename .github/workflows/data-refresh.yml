@@ -25,6 +25,11 @@ on:
         description: "ScoutingStats season id for the Championship (blank = current)"
         required: false
         default: ""
+      fit_model:
+        description: "Fit the card model on FPL per-match history (Tier 2). Keeps the season prior until enough matches exist."
+        type: boolean
+        required: false
+        default: true
 
 permissions:
   contents: write
@@ -34,6 +39,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
 
       - name: Refresh referees (free source, always runs)
         run: python3 data/build_refs.py --season "${{ inputs.refs_season }}"
@@ -55,6 +63,24 @@ jobs:
       - name: Refresh club home/away splits
         run: python3 data/build_club_splits.py --season "${{ inputs.refs_season }}"
 
+      # Keep the season-prior model in sync with any refreshed player data.
+      - name: Refresh the season-prior model
+        run: node scripts/build-model.mjs
+
+      # Tier 2: harvest per-match booking history from the public FPL
+      # element-summary endpoint and refit the logistic GLM by IRLS. Runs on
+      # GitHub's runners, which can reach the FPL API. build-model.mjs keeps the
+      # season prior automatically until >=200 real match rows exist, so this is
+      # a no-op early in the season and quietly flips the model to "match-fit"
+      # once games accumulate. Never fails the refresh.
+      - name: Fit the card model on match history (Tier 2)
+        if: ${{ inputs.fit_model }}
+        continue-on-error: true
+        run: |
+          python3 data/harvest_history.py
+          node scripts/build-model.mjs --fit data/match_history.json
+          node scripts/backtest.mjs || true
+
       - name: Guard the dataset
         run: |
           node scripts/check-data.mjs
@@ -64,10 +90,11 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          if git diff --quiet -- data/pl_data.js; then
-            echo "No data changes."
+          git add data/pl_data.js data/model.js
+          if git diff --cached --quiet; then
+            echo "No data or model changes."
           else
-            git add data/pl_data.js
-            git commit -m "Refresh data (referees from football-data.co.uk mirror${{ secrets.SS_COOKIE != '' && ', players from ScoutingStats' || '' }})"
+            basis=$(node -e "console.log(require('./data/model.js').basis)")
+            git commit -m "Refresh data + model (model basis: ${basis})"
             git push
           fi
