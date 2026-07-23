@@ -1390,9 +1390,9 @@ function openPlayerProfile(k){
       </div>
     </div>`;
   }
-  if(p.live&&LIVE){
+  if(p.live&&LIVE&&banWatchActive()){
     if(p.live.st==="s") h+=`<p style="font-size:.82rem;color:var(--danger);margin:.2rem 0 .6rem">Currently suspended${p.live.news?" — "+esc(p.live.news):""}.</p>`;
-    else{
+    else if(p.live.yc<=2*playedGW()){
       const t=nextThreshold(p.live.yc,LIVE.currentGW);
       if(t){ const left=t.n-p.live.yc;
         h+=`<p class="muted" style="font-size:.82rem;margin:.2rem 0 .6rem">${left} booking${left===1?"":"s"} from a ban (${t.n} yellows by GW${t.gw}).${left===1?' <b style="color:var(--warn)">One card from a suspension.</b>':""}</p>`; }
@@ -1741,14 +1741,30 @@ async function loadLive(){
 // PL bans: 5 yellows up to GW19, 10 up to GW32, 15 all season.
 const SUSP_THRESHOLDS=[{n:5,gw:19},{n:10,gw:32},{n:15,gw:38}];
 function nextThreshold(yc,gw){ for(const t of SUSP_THRESHOLDS){ if(yc<t.n&&gw<=t.gw) return t; } return null; }
+// Suspension bans reset each season — yellows do NOT carry over. So the count
+// must be THIS season's only. During the season rollover the FPL feed (or the
+// app's stale cache) can still serve last season's totals; these guards stop
+// those being shown as current ban progress:
+//  - banWatchActive: the current season is genuinely underway (>=1 gameweek
+//    finished) and not a completed/old season (not all events finished).
+//  - the per-player check rejects a yellow count too high to have been earned
+//    in the matches actually played so far (max ~2 per match).
+function playedGW(){ return LIVE?(LIVE.bootstrap.events||[]).filter(e=>e.finished).length:0; }
+function banWatchActive(){ if(!LIVE) return false; const ev=LIVE.bootstrap.events||[]; const f=ev.filter(e=>e.finished).length; return f>=1&&f<ev.length; }
+function oneFromBan(p){
+  if(!p||!p.live||!banWatchActive()) return null;
+  if(p.live.yc>2*playedGW()) return null; // count inconsistent with matches played -> stale/carryover
+  const t=nextThreshold(p.live.yc,LIVE.currentGW);
+  return (t&&p.live.yc===t.n-1)?t:null;
+}
 function renderSuspWatch(){
   const el=$("suspWatch"); if(!LIVE){ el.hidden=true; return; }
-  const gw=LIVE.currentGW, close=[], banned=[];
+  const gw=LIVE.currentGW, close=[], banned=[], active=banWatchActive();
   PL_PLAYERS.forEach(p=>{
     if(!p.live) return;
-    if(p.live.st==="s"){ banned.push(p); return; }
-    const t=nextThreshold(p.live.yc,gw);
-    if(t&&p.live.yc===t.n-1) close.push({p,t});
+    if(p.live.st==="s"){ if(active) banned.push(p); return; }
+    const t=oneFromBan(p);
+    if(t) close.push({p,t});
   });
   // Watchlist tie-in: starred players whose next fixture has a strict
   // official assigned (Fixtures tab) get flagged here.
@@ -1987,9 +2003,9 @@ function fixtureProb(p,ref,derby){
 // One-booking-from-a-ban / banned flag, from the live feed.
 function suspFlagInline(p){
   if(!(LIVE&&p.live)) return "";
-  if(p.live.st==="s") return ' <span class="chip" style="font-size:.54rem;color:var(--danger);background:color-mix(in srgb,var(--danger) 12%,transparent);border:1px solid color-mix(in srgb,var(--danger) 35%,transparent)">banned</span>';
-  const t=nextThreshold(p.live.yc,LIVE.currentGW);
-  if(t&&p.live.yc===t.n-1) return ` <span title="One booking from a ban (${p.live.yc}/${t.n} yellows)" style="color:var(--warn);font-weight:800;font-size:.66rem">⚠${p.live.yc}YC</span>`;
+  if(p.live.st==="s") return banWatchActive()?' <span class="chip" style="font-size:.54rem;color:var(--danger);background:color-mix(in srgb,var(--danger) 12%,transparent);border:1px solid color-mix(in srgb,var(--danger) 35%,transparent)">banned</span>':"";
+  const t=oneFromBan(p);
+  if(t) return ` <span title="One booking from a ban (${p.live.yc}/${t.n} yellows this season)" style="color:var(--warn);font-weight:800;font-size:.66rem">⚠${p.live.yc}YC</span>`;
   return "";
 }
 function gwCandidates(h,a,ref,derby){
@@ -2166,12 +2182,12 @@ function renderWatchDash(){
 function renderGwSusp(){
   const wrap=$("gwSuspWrap"), el=$("gwSusp");
   if(!wrap||!el) return;
-  if(!LIVE){ wrap.hidden=true; return; }
-  const gw=LIVE.currentGW, close=[];
+  if(!LIVE||!banWatchActive()){ wrap.hidden=true; el.innerHTML=""; return; }
+  const close=[];
   PL_PLAYERS.forEach(p=>{
     if(!p.live||p.live.st==="s") return;
-    const t=nextThreshold(p.live.yc,gw);
-    if(t&&p.live.yc===t.n-1) close.push({p,t});
+    const t=oneFromBan(p);
+    if(t) close.push({p,t});
   });
   if(!close.length){ wrap.hidden=true; el.innerHTML=""; return; }
   close.sort((x,y)=>rEff(y.p)-rEff(x.p));
