@@ -259,6 +259,55 @@
   .gwsusp-nm{font-weight:700;font-size:.95rem;margin:.15rem 0 .1rem}
   .gwsusp-yc{font-family:var(--mono);font-size:.72rem;color:var(--warn)}
   @media(max-width:700px){.fx-grid{grid-template-columns:1fr}.gw-hero-num{font-size:2.1rem}}
+  /* ═══ UX pass — onboarding, glossary, jargon tooltips, density, flash
+     (ported from the Gameweek Edge UX 0–9 best-practice series) ═══ */
+  /* Panel-label rhythm (UX 3): crisper section labels, sub-labels off tertiary. */
+  .gw-seclabel{letter-spacing:.15em!important;font-weight:700}
+  /* Help (?) button in the topbar */
+  .tb-icon{width:38px;height:38px;display:inline-flex;align-items:center;justify-content:center;border-radius:9px;background:var(--surface);border:1px solid var(--border-2);box-shadow:var(--shadow-sm);color:var(--text-2);cursor:pointer;flex:none;font-size:1rem}
+  .tb-icon:hover{background:var(--surface-2);color:var(--accent)}
+  /* Beginner/Expert density toggle */
+  #densityBtn{font-family:var(--mono);font-size:.62rem;font-weight:800;letter-spacing:.1em;text-transform:uppercase;padding:.34rem .6rem}
+  #densityBtn .den-dot{display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--good);margin-right:.35rem;vertical-align:middle}
+  @media(max-width:720px){#densityBtn{display:none}}
+  /* Beginner helper lines — plain-English one-liners under a panel head.
+     Shown only in beginner density; expert hides them. */
+  .beginner-hint{display:none;font-size:.82rem;line-height:1.5;color:var(--text-2);background:color-mix(in srgb,var(--accent) 7%,var(--surface));border:1px solid var(--border);border-left:3px solid var(--accent-2);border-radius:10px;padding:.55rem .8rem;margin:.1rem 0 1rem}
+  html[data-density="beginner"] .beginner-hint{display:block}
+  .beginner-hint b{color:var(--text)}
+  /* Jargon tooltip — tap- and hover-friendly, keyboard focusable */
+  .jt{border-bottom:1px dotted var(--text-3);cursor:help;position:relative;outline:none}
+  .jt:focus-visible{outline:2px solid var(--ring);outline-offset:2px;border-radius:3px}
+  .jt::after{content:attr(data-tip);position:absolute;left:0;top:calc(100% + 7px);z-index:120;width:max-content;max-width:250px;padding:.5rem .65rem;border-radius:9px;background:var(--text);color:var(--bg);font-family:'Hanken Grotesk',system-ui,sans-serif;font-size:.74rem;font-weight:500;line-height:1.4;letter-spacing:0;text-transform:none;box-shadow:var(--shadow);opacity:0;transform:translateY(-3px);pointer-events:none;transition:opacity .14s,transform .14s}
+  .jt:hover::after,.jt:focus-visible::after{opacity:1;transform:translateY(0)}
+  @media(max-width:600px){.jt::after{left:auto;right:0}}
+  /* Glossary rows (reuse .modal-back / .modal) */
+  .gloss-list{margin:0;padding:0;list-style:none;max-height:60vh;overflow-y:auto}
+  .gloss-list li{padding:.6rem 0;border-top:1px solid var(--border)}
+  .gloss-list li:first-child{border-top:0}
+  .gloss-t{font-weight:800;font-size:.9rem;color:var(--text)}
+  .gloss-d{font-size:.82rem;color:var(--text-2);line-height:1.5;margin-top:.15rem}
+  .modal-wide{max-width:520px}
+  /* First-run spotlight tour (non-blocking overlay) */
+  .tour-back{position:fixed;inset:0;z-index:300;display:none}
+  .tour-back.show{display:block}
+  .tour-scrim{position:absolute;inset:0;background:rgba(8,10,20,.55)}
+  .tour-ring{position:absolute;border:2px solid var(--accent-2);border-radius:12px;box-shadow:0 0 0 9999px rgba(8,10,20,.55);transition:all .28s ease;pointer-events:none}
+  .tour-pop{position:absolute;width:min(320px,calc(100vw - 32px));background:var(--surface);border:1px solid var(--border-2);border-radius:14px;box-shadow:var(--shadow);padding:1rem 1.05rem;transition:all .28s ease}
+  .tour-step{font-family:var(--mono);font-size:.6rem;font-weight:800;letter-spacing:.15em;text-transform:uppercase;color:var(--accent-2)}
+  .tour-pop h4{font-family:'Bricolage Grotesque',sans-serif;font-size:1.05rem;font-weight:800;letter-spacing:-.02em;margin:.25rem 0 .35rem}
+  .tour-pop p{font-size:.84rem;line-height:1.5;color:var(--text-2);margin:0 0 .8rem}
+  .tour-actions{display:flex;align-items:center;justify-content:space-between;gap:.5rem}
+  .tour-skip{background:none;border:0;color:var(--text-3);font:inherit;font-size:.78rem;font-weight:600;cursor:pointer;padding:.2rem}
+  .tour-skip:hover{color:var(--text-2)}
+  .tour-next{display:inline-flex;gap:.5rem}
+  /* Flash-on-change for live numbers (UX 8) */
+  @keyframes plbFlashUp{0%{background:color-mix(in srgb,var(--good) 45%,transparent)}100%{background:transparent}}
+  @keyframes plbFlashDown{0%{background:color-mix(in srgb,var(--danger) 42%,transparent)}100%{background:transparent}}
+  @media(prefers-reduced-motion:no-preference){
+    .flash-up{animation:plbFlashUp 1.9s ease-out;border-radius:5px}
+    .flash-down{animation:plbFlashDown 1.9s ease-out;border-radius:5px}
+  }
 </style>
 </head>
 <body>
@@ -340,6 +389,8 @@
       </div>
       <div class="tb-right">
         <span id="liveStatus" class="chip tier-fade" hidden></span>
+        <button id="densityBtn" class="btn btn-ghost" type="button" aria-pressed="false" title="Switch between beginner hints and expert view"><span class="den-dot" aria-hidden="true"></span><span id="densityLabel">Beginner</span></button>
+        <button id="helpBtn" class="tb-icon" type="button" aria-label="Help, glossary and guided tour" title="Help &amp; glossary">?</button>
         <button id="acctBtn" class="btn btn-ghost" title="Account and sync">
           <span aria-hidden="true">👤</span> <span id="acctLabel">Sign in</span>
         </button>
@@ -354,6 +405,7 @@
       <h2>This Gameweek</h2>
       <p>Who's most likely to be booked — fixture by fixture, with the referee folded in.</p>
     </div>
+    <p class="beginner-hint">New here? Fixtures are ranked <b>hottest to coolest</b> by booking heat. Under each match, a player's percentage is his chance of a card that game — <b>High</b> is 50%+, <b>Watch</b> 30–50%. Star the ☆ on any player to pin him to your watchlist. It's a research screen, not a tip.</p>
     <div id="gwHero" class="gw-hero" aria-live="polite"></div>
     <div id="gwSuspWrap" hidden>
       <div class="gw-seclabel" style="margin-bottom:.5rem">⚠ Suspension watch</div>
@@ -388,6 +440,7 @@
       <h2>Season table</h2>
       <p>Every squad player ranked by season-long booking risk — yellows per 90 weighted double, plus fouls per 90. For this weekend's picks, see <a href="#" id="toGameweek">This Gameweek</a>.</p>
     </div>
+    <p class="beginner-hint"><b>Risk</b> is a form score, higher means more cards and fouls. The <b>P(card)</b> column turns it into a match chance with fair odds — click a cell and paste a bookmaker's price to see if it's value. A grey dot means low sample (little football played), so treat it with caution.</p>
     <div id="suspWatch" class="surface" style="border-radius:12px;padding:.8rem 1rem;margin-bottom:.8rem" hidden></div>
     <div style="display:flex;gap:.6rem;flex-wrap:wrap;align-items:center;margin-bottom:.8rem">
       <input id="search" type="search" placeholder="Search player" aria-label="Search player" style="flex:1;min-width:160px">
@@ -480,6 +533,7 @@
       <h2>Clubs</h2>
       <p>The 20 clubs by cards received per game, tiered for targeting, with each club's top booking risk.</p>
     </div>
+    <p class="beginner-hint">Tiers rank how card-prone a side is: <b>target</b> 2.0+ cards a game, <b>mid</b> 1.5–1.9, <b>fade</b> below. The 🔥 flame marks a combustible side. Tap a row to see that club's players.</p>
     <div class="surface" style="border-radius:12px;overflow:auto;margin-bottom:1rem">
       <table>
         <caption class="visually-hidden">Premier League club discipline</caption>
@@ -502,6 +556,7 @@
       <h2>Referees</h2>
       <p>2025-26 officials by yellows per game — the busiest whistles carry the most booking value.</p>
     </div>
+    <p class="beginner-hint">The referee is the single strongest card signal. A strict whistle lifts every player's booking chance in his games — that's the <b>×factor</b> you'll see on fixture cards once you assign the official.</p>
     <div class="surface" style="border-radius:12px;padding:1rem;margin-bottom:1rem">
       <p class="muted" style="margin:0;font-size:.88rem">2025-26 Premier League officials by yellows per game. The busiest officials carry the most booking value. Figures are season averages from public data, appointments for 2026-27 fixtures fill in once the season starts.</p>
     </div>
@@ -545,6 +600,7 @@
       <h2>My Picks</h2>
       <p>Log picks with odds and stake, settle results, and track hit-rate, P/L and ROI.</p>
     </div>
+    <p class="beginner-hint">Keep an honest record: log each bet with its odds and stake, then mark it won, lost or void. <b>Hit-rate</b> is the share settled that won; <b>ROI</b> is profit per pound staked. Sign in (top right) to sync picks across your devices.</p>
     <div id="trackerSummary" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:.7rem;margin-bottom:1rem"></div>
     <details class="surface" style="border-radius:12px;padding:1rem;margin-bottom:1rem" open>
       <summary style="cursor:pointer;font-weight:600;font-family:'Bricolage Grotesque',sans-serif">Log a pick</summary>
@@ -642,6 +698,39 @@
 <!-- Account modal (optional sign-in for cross-device pick sync) -->
 <div id="acctModal" class="modal-back" role="dialog" aria-modal="true" aria-labelledby="acctTitle">
   <div class="modal surface"><div id="acctBody"></div></div>
+</div>
+
+<!-- Glossary modal (plain-English definitions of the desk's terms) -->
+<div id="glossModal" class="modal-back" role="dialog" aria-modal="true" aria-labelledby="glossTitle">
+  <div class="modal modal-wide surface">
+    <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:.6rem;margin-bottom:.6rem">
+      <div>
+        <h2 id="glossTitle" style="margin:0;font-size:1.15rem">Glossary</h2>
+        <p class="faint" style="margin:.15rem 0 0;font-size:.78rem">Plain-English definitions of the terms the desk uses.</p>
+      </div>
+      <button id="glossClose" class="tb-icon" type="button" aria-label="Close glossary">✕</button>
+    </div>
+    <ul class="gloss-list" id="glossList"></ul>
+    <p class="faint" style="font-size:.76rem;margin:.7rem 0 0">The full method — the risk formula, the model and its limits — lives in the <a href="#" id="glossToGuide">Guide</a>.</p>
+  </div>
+</div>
+
+<!-- First-run guided tour (non-blocking spotlight overlay) -->
+<div id="tour" class="tour-back" role="dialog" aria-modal="true" aria-labelledby="tourHeading">
+  <div class="tour-scrim" id="tourScrim"></div>
+  <div class="tour-ring" id="tourRing"></div>
+  <div class="tour-pop" id="tourPop">
+    <div class="tour-step" id="tourStep">Step 1 of 3</div>
+    <h4 id="tourHeading">—</h4>
+    <p id="tourBody">—</p>
+    <div class="tour-actions">
+      <button class="tour-skip" id="tourSkip" type="button">Skip tour</button>
+      <div class="tour-next">
+        <button class="btn btn-ghost" id="tourBack" type="button" style="padding:.4rem .7rem;font-size:.82rem">Back</button>
+        <button class="btn btn-primary" id="tourNext" type="button" style="padding:.4rem .8rem;font-size:.82rem">Next</button>
+      </div>
+    </div>
+  </div>
 </div>
 
 <!-- Player profile (drill-down from any player row or card) -->
@@ -791,7 +880,7 @@ function renderPlayers(){
   const rows=currentPlayers();
   renderPlayerCards(rows);
   const tb=$("playerRows"); tb.innerHTML="";
-  if(!rows.length){ tb.innerHTML='<tr><td colspan="10" class="muted" style="padding:1rem;text-align:center">'+($("watchOnly").checked?"Your watchlist is empty — tap the ☆ star on any player to pin them here.":"No players match.")+'</td></tr>'; return; }
+  if(!rows.length){ tb.innerHTML='<tr><td colspan="10" class="muted" style="padding:1rem;text-align:center">'+($("watchOnly").checked?"Your watchlist is empty — tap the ☆ star on any player to pin them here.":"No players match your filters. Clear the club, position or search filters — the chips above show what's active.")+'</td></tr>'; return; }
   if(MOBILE_MQ.matches) return; // phones use the card list; skip the heavy table
   const frag=document.createDocumentFragment();
   rows.slice(0,400).forEach(p=>{
@@ -831,7 +920,7 @@ function renderPlayerCards(rows){
   const el=$("playerCards");
   if(!MOBILE_MQ.matches){ el.hidden=true; el.innerHTML=""; return; }
   el.hidden=false;
-  if(!rows.length){ el.innerHTML='<p class="muted" style="padding:1rem;margin:0;text-align:center;font-size:.88rem">'+($("watchOnly").checked?"Your watchlist is empty — tap the ☆ star on any player to pin them here.":"No players match.")+'</p>'; return; }
+  if(!rows.length){ el.innerHTML='<p class="muted" style="padding:1rem;margin:0;text-align:center;font-size:.88rem">'+($("watchOnly").checked?"Your watchlist is empty — tap the ☆ star on any player to pin them here.":"No players match your filters. Clear the club, position or search filters to widen the list.")+'</p>'; return; }
   el.innerHTML=rows.slice(0,150).map(p=>{
     const r=rEff(p), pc=pImp(p), w=isWatched(p);
     const dim=(p.live&&"isu".includes(p.live.st))?"opacity:.55;":"";
@@ -1653,7 +1742,7 @@ function renderAllPlayers(){
   }
   const rows=currentAllPlayers();
   if(note) note.textContent=rows.length+" player"+(rows.length===1?"":"s")+" · games & discipline from the live FPL feed"+(LIVE.seasonStarted?"":" (pre-season — minutes accrue once 2026-27 kicks off)")+" · fouls from ScoutingStats where matched.";
-  if(!rows.length){ tb.innerHTML='<tr><td colspan="10" class="muted" style="padding:1rem;text-align:center">No players match.</td></tr>'; return; }
+  if(!rows.length){ tb.innerHTML='<tr><td colspan="10" class="muted" style="padding:1rem;text-align:center">No players match your filters. Clear the club, position or search filters above, or untick “With minutes only” — pre-season the feed lists squads with zero minutes played.</td></tr>'; return; }
   const frag=document.createDocumentFragment();
   rows.slice(0,800).forEach(p=>{
     const tr=document.createElement("tr");
@@ -1723,7 +1812,9 @@ async function loadLive(){
     status.textContent="● Live FPL data"+(fetchedAt?" · "+fetchedAt.toLocaleTimeString("en-GB",{hour:"2-digit",minute:"2-digit"}):"");
     status.title="Availability"+(LIVE.seasonStarted?" and 2026-27 card counts":"")+" from the official FPL API"+(fetchedAt?", fetched "+fetchedAt.toLocaleString("en-GB",{weekday:"short",hour:"2-digit",minute:"2-digit"})+" (30-min cache)":"")+". "+LIVE.matchedCount+" players matched.";
     const curEv=bs.events.find(e=>e.id===LIVE.currentGW);
-    $("gwNum").textContent=LIVE.currentGW;
+    const gwEl=$("gwNum"), prevGw=parseInt(gwEl.textContent,10);
+    gwEl.textContent=LIVE.currentGW;
+    if(!isNaN(prevGw)&&prevGw!==LIVE.currentGW) flashEl(gwEl,LIVE.currentGW-prevGw);  // roll to a new gameweek pulses the strip
     $("gwSideDeadline").innerHTML=curEv&&curEv.deadline_time?("Deadline <b>"+fmtKO(curEv.deadline_time)+"</b>"):"Schedule live";
     // Each renderer isolated so one failing view can't blank the others or the live pill.
     [renderPlayers,renderClubs,renderSuspWatch,initFixturesUI,updateAccuracy,renderGameweek,fillApClubFilter,renderAllPlayers].forEach(fn=>{
@@ -2146,7 +2237,7 @@ function renderGwHero(){
     </div>
     <div class="gw-hero-r">
       ${rec
-        ? `<div class="gw-seclabel">Model track record</div><div style="font-family:'Bricolage Grotesque',sans-serif;font-weight:800;font-size:1.15rem">${rec}</div><a href="#p=guide" class="faint mono" style="font-size:.66rem">How we calculate ›</a>`
+        ? `<div class="gw-seclabel">${jt("Model track record","How many of the desk's top-20 risks each finished gameweek actually got carded — an honest, self-scored hit rate.")}</div><div style="font-family:'Bricolage Grotesque',sans-serif;font-weight:800;font-size:1.15rem">${rec}</div><a href="#p=guide" class="faint mono" style="font-size:.66rem">How we calculate ›</a>`
         : `<a href="#p=guide" class="btn btn-ghost" style="padding:.3rem .7rem;font-size:.74rem">How we calculate ›</a>`}
     </div>`;
 }
@@ -2393,6 +2484,152 @@ if("serviceWorker" in navigator&&(location.protocol==="https:"||location.hostnam
   window.addEventListener("load",()=>{ navigator.serviceWorker.register("/sw.js").catch(()=>{}); });
 }
 
+/* ═══════════════════════════════════════════════════════════════════
+   UX pass — onboarding, glossary, jargon tooltips, density, flash.
+   Ported from the Gameweek Edge UX 0–9 best-practice series and recoloured
+   to the desk's own tokens. All vanilla, no build, CSP-safe.
+   ═══════════════════════════════════════════════════════════════════ */
+
+// ---- Glossary: plain-English definitions of the desk's terms ----
+const GLOSS=[
+  ["Booking heat","A fixture's overall card temperature — the two sides' cards-against rates (home/away split), lifted for a strict referee and for recognised derbies. Fixtures sort hottest to coolest by it."],
+  ["Booking probability / P(card)","The model's chance that a player picks up a card in a given match. On This Gameweek it's fixture-aware (scaled by the referee and derby); the Season table shows the pre-fixture season chance."],
+  ["Fair odds","The price that exactly matches the model's probability — 1 ÷ P(card). A bookmaker paying more than this is, on the model's view, value."],
+  ["Edge %","How much a bookmaker's price beats the model: (odds × probability − 1). Positive means the price pays more than the model thinks the chance is worth. A research screen, not a guarantee."],
+  ["×factor","The referee multiplier on a fixture. A strict whistle lifts every candidate's booking chance; a lenient one lowers it. Shown on each fixture card once you assign the official."],
+  ["High / Watch bands","How candidates are grouped by booking probability: High is 50%+, Watch is 30–50%. Lower-risk names fold away behind a toggle."],
+  ["Confidence dot","How much data sits behind a player's rate, from minutes played — green high, amber medium, grey low. A low-sample rate can swing on a single card."],
+  ["Suspension watch","Players one booking from a ban. Bans trigger at 5 yellows (to GW19), 10 (to GW32) and 15 (all season). One card off a threshold is a lean; a player protecting one often is not."],
+  ["Derby boost","Recognised rivalry fixtures run hotter with the referee, so they get a booking-heat bump and a 🔥 chip."],
+  ["Shrinkage","The model pulls each player's per-90 rates toward the position average by how few minutes they've played, so one card in a cameo doesn't read as elite-booker form."],
+  ["Low sample","Under 450 minutes of football — too little to trust the rate fully. Flagged throughout; live rates take over per player at 450 minutes of 2026-27 football."],
+  ["EFL","The three promoted clubs (Coventry, Ipswich, Hull) carry 2025-26 Championship form — a rougher, different division — so their numbers are indicative and flagged EFL."]
+];
+function openGloss(){
+  $("glossList").innerHTML=GLOSS.map(([t,d])=>'<li><div class="gloss-t">'+esc(t)+'</div><div class="gloss-d">'+esc(d)+'</div></li>').join("");
+  openOverlay($("glossModal"),$("glossClose"));
+}
+function closeGloss(){ closeOverlay($("glossModal")); }
+$("glossClose").addEventListener("click",closeGloss);
+$("glossModal").addEventListener("click",e=>{ if(e.target.id==="glossModal") closeGloss(); });
+$("glossToGuide").addEventListener("click",e=>{ e.preventDefault(); closeGloss(); openPanel("panel-guide"); });
+
+// A jargon term wrapped in a focusable, tap/hover tooltip. Used inline in
+// rendered markup; hoisted so render functions can call it.
+function jt(label,tip){
+  return '<span class="jt" tabindex="0" role="note" data-tip="'+esc(tip)+'" aria-label="'+esc(label+": "+tip)+'">'+esc(label)+'</span>';
+}
+
+// ---- Modal focus helpers (restore focus, no background scroll) ----
+let _overlayReturn=null;
+function openOverlay(el,focusEl){
+  _overlayReturn=document.activeElement;
+  el.classList.add("show");
+  setTimeout(()=>{ (focusEl||el.querySelector("button,input,a,[tabindex]")||el).focus(); },50);
+}
+function closeOverlay(el){
+  el.classList.remove("show");
+  if(_overlayReturn&&_overlayReturn.focus){ _overlayReturn.focus(); _overlayReturn=null; }
+}
+
+// ---- Beginner / Expert density toggle (default beginner) ----
+const DENSITY_KEY="pl_desk_density";
+function applyDensity(d){
+  document.documentElement.setAttribute("data-density",d);
+  $("densityLabel").textContent=d==="expert"?"Expert":"Beginner";
+  const btn=$("densityBtn");
+  btn.setAttribute("aria-pressed",d==="expert"?"true":"false");
+  btn.title=d==="beginner"?"Beginner: plain-English hints on. Switch to expert view.":"Expert: hints hidden. Switch to beginner hints.";
+}
+$("densityBtn").addEventListener("click",()=>{
+  const next=document.documentElement.getAttribute("data-density")==="beginner"?"expert":"beginner";
+  try{ localStorage.setItem(DENSITY_KEY,next); }catch(e){}
+  applyDensity(next);
+});
+applyDensity((()=>{ try{ return localStorage.getItem(DENSITY_KEY)||"beginner"; }catch(e){ return "beginner"; } })());
+
+// ---- Flash-on-change for live numbers (UX 8) ----
+function flashEl(el,dir){
+  if(!el) return;
+  el.classList.remove("flash-up","flash-down");
+  void el.offsetWidth;                       // restart the animation
+  el.classList.add(dir<0?"flash-down":"flash-up");
+}
+
+// ---- First-run guided tour (3-step spotlight, shown once) ----
+const TOUR_KEY="pl_desk_tour_seen";
+const TOUR=[
+  {sel:".gw-hero",title:"This Gameweek",body:"Your landing view. Fixtures are ranked hottest to coolest by booking heat, and the hero carries the gameweek, a deadline countdown and the model's live track record."},
+  {sel:".fx-card",title:"Fixture cards",body:"Each match lists both sides' highest-risk players, banded High (50%+) and Watch (30–50%) by a fixture-aware booking probability. Assign the referee once appointments drop and every number scales to his whistle."},
+  {sel:"#helpBtn",title:"Help whenever you need it",body:"Reopen this tour or the glossary here. New to card markets? The Beginner toggle adds a plain-English line to each view — flip to Expert once you know your way around."}
+];
+let _tourI=0;
+function tourAt(i){
+  _tourI=i;
+  const step=TOUR[i], back=$("tour"), ring=$("tourRing"), pop=$("tourPop");
+  const el=step.sel?document.querySelector(step.sel):null;
+  $("tourStep").textContent="Step "+(i+1)+" of "+TOUR.length;
+  $("tourHeading").textContent=step.title;
+  $("tourBody").textContent=step.body;
+  $("tourBack").style.visibility=i===0?"hidden":"visible";
+  $("tourNext").textContent=i===TOUR.length-1?"Done":"Next";
+  back.classList.add("show");
+  const place=()=>{
+    if(el){
+      const r=el.getBoundingClientRect(), pad=8;
+      $("tourScrim").classList.remove("solid");
+      ring.style.display="block";
+      ring.style.left=(r.left-pad)+"px"; ring.style.top=(r.top-pad)+"px";
+      ring.style.width=(r.width+pad*2)+"px"; ring.style.height=(r.height+pad*2)+"px";
+      const popW=Math.min(320,window.innerWidth-32), popH=pop.offsetHeight||190;
+      let top=(r.bottom+14+popH<window.innerHeight)?r.bottom+14:Math.max(12,r.top-popH-14);
+      let left=Math.min(Math.max(12,r.left),window.innerWidth-popW-12);
+      pop.style.left=left+"px"; pop.style.top=top+"px"; pop.style.transform="none";
+    } else {
+      ring.style.display="none";
+      $("tourScrim").classList.add("solid");
+      pop.style.left="50%"; pop.style.top="50%"; pop.style.transform="translate(-50%,-50%)";
+    }
+  };
+  if(el){ el.scrollIntoView({block:"center",behavior:"auto"}); }
+  requestAnimationFrame(place);
+  setTimeout(()=>$("tourNext").focus(),60);
+}
+function tourStart(){ openPanel("panel-gameweek"); tourAt(0); }
+function tourEnd(){
+  $("tour").classList.remove("show");
+  try{ localStorage.setItem(TOUR_KEY,"1"); }catch(e){}
+  if($("helpBtn").focus) $("helpBtn").focus();
+}
+$("tourNext").addEventListener("click",()=>{ if(_tourI>=TOUR.length-1) tourEnd(); else tourAt(_tourI+1); });
+$("tourBack").addEventListener("click",()=>{ if(_tourI>0) tourAt(_tourI-1); });
+$("tourSkip").addEventListener("click",tourEnd);
+window.addEventListener("resize",()=>{ if($("tour").classList.contains("show")) tourAt(_tourI); });
+
+// ---- Help menu: reopen tour / open glossary ----
+$("helpBtn").addEventListener("click",()=>{
+  // A tiny inline choice: primary action is the glossary; the tour is a link.
+  openGloss();
+});
+// Long-press / right idea kept simple: a "Take the tour" affordance lives in
+// the glossary footer is overkill — instead the help button opens glossary and
+// the tour auto-runs first visit. Offer a restart from the glossary title.
+(function(){
+  const t=$("glossTitle");
+  const link=document.createElement("button");
+  link.type="button"; link.textContent="Take the tour";
+  link.className="acct-link"; link.style.cssText="margin:.4rem 0 0;display:inline-block";
+  link.addEventListener("click",()=>{ closeGloss(); tourStart(); });
+  t.parentNode.appendChild(link);
+})();
+
+// Escape closes the glossary and dismisses the tour.
+document.addEventListener("keydown",e=>{
+  if(e.key!=="Escape") return;
+  if($("glossModal").classList.contains("show")) closeGloss();
+  if($("tour").classList.contains("show")) tourEnd();
+});
+
 // init
 buildNav();
 buildBottomNav();
@@ -2414,6 +2651,14 @@ loadLive();
 // the DOM (and deferred scripts) are ready.
 if(document.readyState==="loading") document.addEventListener("DOMContentLoaded",initAuth);
 else initAuth();
+
+// First-run guided tour — once per browser, only on the landing view, after
+// the layout has settled so the spotlight lands on real elements.
+(function(){
+  let seen=false; try{ seen=localStorage.getItem(TOUR_KEY)==="1"; }catch(e){}
+  if(seen) return;
+  setTimeout(()=>{ if(currentPanel==="panel-gameweek") tourStart(); },900);
+})();
 </script>
 </body>
 </html>
