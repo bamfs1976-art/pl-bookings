@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data: https://cdn.sportmonks.com; connect-src 'self' https://knodunjnsxelmpziupwk.supabase.co">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data: https://cdn.sportmonks.com https://resources.premierleague.com; connect-src 'self' https://knodunjnsxelmpziupwk.supabase.co">
 <title>Bookings Desk · Premier League</title>
 <meta name="description" content="Premier League 2026-27 player-bookings analysis. Player card risk, club discipline, referees, fixtures and a suspension watch, on live FPL data.">
 <link rel="icon" href="favicon.svg" type="image/svg+xml">
@@ -70,6 +70,10 @@
   tbody tr:hover{background:var(--surface-2)}
   .num{font-variant-numeric:tabular-nums}
   .crest{width:20px;height:20px;border-radius:4px;object-fit:contain;vertical-align:-5px;display:inline-block}
+  /* Official FPL player cutouts (head-and-shoulders), cropped to a circle. */
+  .pl-photo{object-fit:cover;object-position:center top;background:var(--surface-3);display:block;flex:none}
+  .pl-photo.avatar-lg{width:54px;height:54px;border-radius:50%;border:1px solid var(--border-2)}
+  .pl-photo.avatar-sm{width:34px;height:34px;border-radius:50%}
   /* App shell — layout ported from Gameweek Edge (sidebar + topbar +
      mobile drawer + bottom nav), recoloured to the desk's own tokens. */
   :root{--sidebar-w:248px;--topbar-h:60px;--bottomnav-h:66px}
@@ -658,7 +662,7 @@
       <h3>Club discipline</h3>
       <p>Clubs are tiered on cards received per game, target 2.0 and above, mid 1.5 to 1.9, fade below 1.5. The flame marks a combustible side, 2.0 plus cards and 12.0 plus fouls.</p>
       <h3>Live data</h3>
-      <p>The desk pulls the official FPL feed through its own proxy: the 2026-27 schedule for the Fixtures tab, each player's live yellow and red card count, and availability flags (injured, suspended, doubtful). Once a player has 450 minutes of 2026-27 football, his yellow rate in the risk score switches from last season's form to this season's live rate — rows carry a green dot when live rates are in use. If the feed is unreachable the desk falls back to the baked 2025-26 form and says so in the top bar.</p>
+      <p>The desk pulls the official FPL feed through its own proxy: the 2026-27 schedule for the Fixtures tab, each player's live yellow and red card count, and availability flags (injured, suspended, doubtful). Once a player has 450 minutes of 2026-27 football, his yellow rate in the risk score switches from last season's form to this season's live rate — rows carry a green dot when live rates are in use. If the feed is unreachable the desk falls back to the baked 2025-26 form and says so in the top bar. Player photos are the official cutouts from the same FPL feed; a player without one (pre-season, or unmatched) simply shows his club crest.</p>
       <h3>Matchup context</h3>
       <p>Derby fixtures — the recognised rivalries among the 20 clubs, North London to Tyne–Wear, plus the promoted clubs' regional rivalries — get a booking-heat boost and a 🔥 derby chip on the Fixtures tab, since rivalry games run hotter with the referee. Once at least two finished gameweeks have been recorded, the players table adds a small ▲ card-form trend beside the yellow count: cards picked up over the recent recorded window (up to the last five gameweeks). Booking heat is also venue-aware: each club's cards-against is split into home and away rates (football-data.co.uk match data — away sides consistently pick up more cards), so the same two clubs read differently at each ground. Each player now carries both <strong>fouls committed</strong> and <strong>fouls won</strong> per 90 (shown on the player profile, in the share cards and the CSV) — committed feeds the risk score today; fouls won is a new data slot that populates on the next ScoutingStats refresh (it isn't in the live FPL feed), and will sharpen opponent-aggression matchup calls once it's in.</p>
       <h3>Suspension watch</h3>
@@ -768,6 +772,11 @@ function tierOf(ca){ if(ca==null) return "efl"; if(ca>=2.0) return "target"; if(
 function tierLabel(t){ return {target:"Target",mid:"Mid",fade:"Fade",efl:"EFL basis"}[t]; }
 function combustible(c){ return c.ca!=null && c.fm!=null && c.ca>=2.0 && c.fm>=12.0; }
 function crest(c){ const club=CLUBMAP[c]; if(!club||!club.img) return ""; return `<img class="crest" src="${club.img}" alt="" loading="lazy" onerror="this.style.display='none'">`; }
+/* Official FPL player cutout, from the photo `code` on the live feed. Returns
+   "" when there's no code (pre-season / unmatched); a broken image hides
+   itself so a missing photo never leaves a gap or breaks a row. */
+function photoUrl(p,size){ if(!p||!p.code) return ""; return "https://resources.premierleague.com/premierleague/photos/players/"+(size===250?"250x250":"110x140")+"/p"+p.code+".png"; }
+function playerPhoto(p,cls,size){ const u=photoUrl(p,size); return u?`<img class="pl-photo ${cls||""}" src="${u}" alt="" loading="lazy" decoding="async" onerror="this.style.display='none'">`:""; }
 function clubName(c){ return CLUBMAP[c]?CLUBMAP[c].name:c; }
 // Fouls: committed (p.f) ships today; won/drawn (p.fw) populates on the next
 // ScoutingStats refresh (not in the FPL feed). Raw totals derive from the
@@ -1449,8 +1458,8 @@ function openPlayerProfile(k){
   const r=rEff(p), pc=pImp(p), w=isWatched(p), club=CLUBMAP[p.c];
   const liveYC=(LIVE&&LIVE.seasonStarted&&p.live)?p.live.yc:null;
   let h=`<div style="display:flex;align-items:center;gap:.6rem;margin-bottom:.7rem">
-    ${crest(p.c)}
-    <div style="min-width:0"><h2 id="ppTitle" style="margin:0;font-size:1.15rem">${esc(p.n)}</h2>
+    ${playerPhoto(p,"avatar-lg",250)||crest(p.c)}
+    <div style="min-width:0"><h2 id="ppTitle" style="margin:0;font-size:1.15rem;display:flex;align-items:center;gap:.35rem">${p.code?crest(p.c):""}${esc(p.n)}</h2>
     <p class="muted" style="margin:.1rem 0 0;font-size:.8rem">${esc(club?club.name:p.c)} · ${esc(p.p||"")}${p.b==="EFL"?' · Championship basis':''}${availChip(p)}</p></div>
     <button class="watch-btn" style="margin-left:auto;font-size:1.4rem" data-w="${esc(k)}" aria-pressed="${w}" title="${w?'Remove from watchlist':'Add to watchlist'}">${w?'★':'☆'}</button>
   </div>
@@ -1660,6 +1669,8 @@ function attachLive(bootstrap,teamMap){
     let p=m[full]||m[web]||m["last:"+(normName(el.second_name).split(" ").pop()||"")]||m["last:"+(web.split(" ").pop()||"")]||null;
     if(!p||p.live) return;
     p.live={yc:el.yellow_cards||0,rc:el.red_cards||0,min:el.minutes||0,st:el.status||"a",news:el.news||""};
+    if(el.code) p.code=el.code;   // FPL photo code — official player cutout
+    delete p._nophoto;            // a fresh feed may now have a working image
     if(p.live.min>=450&&p.f!=null){ p.yLive=p.live.yc/(p.live.min/90); p.rLive=PLDCore.riskScore(p.yLive,p.f); p.liveRate=true; }
     matched++;
   });
@@ -1787,7 +1798,7 @@ async function loadLive(){
       fetchFPL("bootstrap-static",d=>({
         teams:(d.teams||[]).map(t=>({id:t.id,short_name:t.short_name,name:t.name})),
         events:(d.events||[]).map(e=>({id:e.id,name:e.name,is_current:e.is_current,is_next:e.is_next,finished:e.finished,deadline_time:e.deadline_time})),
-        elements:(d.elements||[]).map(el=>({id:el.id,team:el.team,element_type:el.element_type,first_name:el.first_name,second_name:el.second_name,web_name:el.web_name,status:el.status,news:el.news,minutes:el.minutes,starts:el.starts,yellow_cards:el.yellow_cards,red_cards:el.red_cards}))
+        elements:(d.elements||[]).map(el=>({id:el.id,team:el.team,element_type:el.element_type,first_name:el.first_name,second_name:el.second_name,web_name:el.web_name,status:el.status,news:el.news,minutes:el.minutes,starts:el.starts,yellow_cards:el.yellow_cards,red_cards:el.red_cards,code:el.code}))
       })),
       fetchFPL("fixtures",d=>(d||[]).map(f=>({id:f.id,event:f.event,kickoff_time:f.kickoff_time,team_h:f.team_h,team_a:f.team_a,finished:f.finished,started:f.started,hs:f.team_h_score,as:f.team_a_score})))
     ]);
@@ -2147,6 +2158,7 @@ function candRowHtml(c,ref){
   const p=c.p, prob=c.prob, sev=severity(prob), conf=confidence(p);
   const live=(p.liveRate)?' <span title="Live 2026-27 yellow rate" style="color:var(--good)">●</span>':'';
   return `<button class="cand2" data-pk="${esc(watchKey(p))}" type="button" aria-label="Open ${esc(p.n)}'s profile">
+    ${playerPhoto(p,"avatar-sm")}
     <span class="cbadge" title="${esc(conf.label)}">${esc(p.c)}</span>
     <span style="flex:1;min-width:0">
       <span class="cand-name">${esc(p.n)} <span class="mono" style="color:var(--text-3);font-size:.66rem;font-weight:600">${esc(p.p||"")}</span>${live}${suspFlagInline(p)}</span>
@@ -2282,6 +2294,7 @@ function renderWatchDash(){
       :`vs ${esc(opp)} (${ha})${gw?" · "+gw:""}${ref?" · "+esc(ref.n.split(" ").pop()):""}${suspFlagInline(p)}`;
     return `<button class="wl-row" data-pk="${esc(watchKey(p))}" type="button" aria-label="Open ${esc(p.n)}'s profile">
       <span aria-hidden="true" style="color:var(--warn);font-size:.95rem">★</span>
+      ${playerPhoto(p,"avatar-sm")}
       <span style="flex:1;min-width:0">
         <span style="font-weight:600;font-size:.9rem">${esc(p.n)} <span class="faint num" style="font-size:.7rem;font-weight:600">${p.c}</span></span>
         <span class="cand-sub">${sub}</span>
