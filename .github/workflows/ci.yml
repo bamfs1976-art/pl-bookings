@@ -17,6 +17,8 @@ jobs:
         run: |
           node --check netlify/functions/fpl.js
           node --check netlify/functions/insights.js
+          node --check netlify/functions/log-predictions.js
+          node --check netlify/functions/model-calibration.js
           node --check sw.js
           node --check assets/core.js
           node --check data/pl_data.js

@@ -6,6 +6,7 @@ const CARD_MODEL = {
   "fitRows": 0,
   "slope": 1.1,
   "baseRate": 0.1723,
+  "recencyDecay": 0.97,
   "shrink": {
     "strengthMatches": 6,
     "ycMean": {
