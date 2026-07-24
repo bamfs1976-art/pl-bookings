@@ -682,6 +682,7 @@
       <p class="faint" style="font-size:.8rem">Built for research, not a betting guarantee. Stake responsibly.</p>
     </div>
     <div id="trackRecord" class="surface" style="border-radius:12px;padding:1.2rem;line-height:1.6;max-width:760px;margin-top:1rem"></div>
+    <div id="liveCalib" class="surface" style="border-radius:12px;padding:1.2rem;line-height:1.6;max-width:760px;margin-top:1rem" hidden></div>
   </section>
     </main>
 
@@ -1962,6 +1963,27 @@ function renderTrackRecord(){
     +`<table style="max-width:340px"><thead><tr><th scope="col" style="text-align:left;padding:.3rem .6rem">GW</th><th scope="col" style="text-align:right;padding:.3rem .6rem">Carded</th><th scope="col" style="text-align:right;padding:.3rem .6rem">Hit rate</th></tr></thead><tbody>${rows}</tbody></table>`;
 }
 
+/* Server-verified calibration: the scheduled logger grades the season model
+   in the open (netlify/functions/model-calibration). Unlike the browser
+   track record above — which each visitor scores in their own storage —
+   this is aggregated across everyone and backfilled from the FPL result
+   feed. Additive and best-effort: the card stays hidden until the deploy
+   has the loop switched on (Supabase env keys) and has graded a gameweek. */
+async function loadLiveCalibration(){
+  const el=$("liveCalib"); if(!el) return;
+  let d; try{ const r=await fetch("/api/model-calibration"); if(!r.ok) return; d=await r.json(); }catch(e){ return; }
+  if(!d||!d.n||!d.configured) return;     // unconfigured or nothing graded yet
+  const beats=d.baseBrier!=null&&d.brier<d.baseBrier;
+  const topPct=d.topTot?(100*d.topHits/d.topTot).toFixed(0):null;
+  el.innerHTML='<h3 style="margin-top:0">Live prediction accuracy'
+    +'<span class="chip surface-2" style="border:1px solid var(--border);font-size:.62rem;margin-left:.4rem">server-graded · '+esc(d.season||SEASON)+'</span></h3>'
+    +`<p class="muted" style="font-size:.88rem;margin:.2rem 0 .6rem">Every gameweek a scheduled job logs the model's season P(card) for each player, then backfills who was actually booked from the FPL result feed — the model graded in the open, shared across everyone (not just this browser). Over <strong class="num">${d.n.toLocaleString("en-GB")}</strong> forecasts across <strong>${d.gws}</strong> gameweek${d.gws===1?"":"s"}: observed booking rate <strong class="num">${(d.obsRate*100).toFixed(0)}%</strong>.</p>`
+    +`<p class="muted" style="font-size:.84rem;margin:.2rem 0 .6rem"><strong>Brier ${d.brier.toFixed(3)}</strong> vs base-rate ${d.baseBrier!=null?d.baseBrier.toFixed(3):"—"} <span style="color:${beats?'var(--good)':'var(--warn)'}">(${beats?'model ahead':'not yet ahead'})</span>, <strong>log-loss ${d.logloss.toFixed(3)}</strong>.`
+    +(topPct!=null?` Of the top-20 risks each gameweek, <strong class="num">${topPct}%</strong> were booked.`:"")
+    +` Lower Brier/log-loss is better; beating the base-rate Brier means the model's confidence earns its keep.</p>`;
+  el.hidden=false;
+}
+
 // ---- referee assignment ----
 // Appointments aren't in the FPL feed, so they're assigned by hand per
 // fixture (persisted locally, keyed by season + fixture id). An assigned
@@ -2647,6 +2669,7 @@ renderTracker();
 fillApClubFilter();
 renderGameweek();   // paints the landing view immediately (offline/loading state until live data lands)
 loadLive();
+loadLiveCalibration();   // server-verified accuracy on the Guide (best-effort, hidden until graded)
 // The Supabase client loads deferred from the CDN, so wire auth up once
 // the DOM (and deferred scripts) are ready.
 if(document.readyState==="loading") document.addEventListener("DOMContentLoaded",initAuth);

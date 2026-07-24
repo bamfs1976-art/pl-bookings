@@ -33,15 +33,16 @@ catch {
 const model = require('../data/model.js');
 const feats = (r) => ({ yc90: r.yc90, foul90: r.foul90, DF: r.pos === 'DF' ? 1 : 0, MF: r.pos === 'MF' ? 1 : 0, FW: r.pos === 'FW' ? 1 : 0 });
 
-// minimal IRLS (mirrors scripts/build-model.mjs) for the weekly refit
-function irls(X, y, iters = 40) {
+// minimal IRLS (mirrors scripts/build-model.mjs) for the weekly refit.
+// `sw` (optional) is a per-row recency weight so recent rounds count for more.
+function irls(X, y, iters = 40, sw = null) {
   const k = X[0].length, beta = new Array(k).fill(0);
   for (let it = 0; it < iters; it++) {
     const g = new Array(k).fill(0), H = Array.from({ length: k }, () => new Array(k).fill(0));
     for (let i = 0; i < X.length; i++) {
       let z = 0; for (let j = 0; j < k; j++) z += beta[j] * X[i][j];
-      const p = 1 / (1 + Math.exp(-z)), w = Math.max(1e-6, p * (1 - p));
-      for (let a = 0; a < k; a++) { g[a] += (y[i] - p) * X[i][a]; for (let b = 0; b < k; b++) H[a][b] += w * X[i][a] * X[i][b]; }
+      const p = 1 / (1 + Math.exp(-z)), swi = sw ? sw[i] : 1, w = swi * Math.max(1e-6, p * (1 - p));
+      for (let a = 0; a < k; a++) { g[a] += swi * (y[i] - p) * X[i][a]; for (let b = 0; b < k; b++) H[a][b] += w * X[i][a] * X[i][b]; }
     }
     for (let a = 0; a < k; a++) H[a][a] += 1e-6;
     const A = H.map((r, i) => [...r, g[i]]);
@@ -70,7 +71,10 @@ for (const R of rounds) {
   const test = rows.filter((r) => r.round === R);
   if (train.length < 200 || !test.length) continue;
   let fitCoef = null;
-  try { fitCoef = glmFromBeta(irls(train.map(design), train.map((r) => r.y))); } catch { fitCoef = model.glm; }
+  // Recency-weight the weekly refit (0.97^gameweeks-ago), mirroring build-model.
+  const decay = model.recencyDecay || 0.97;
+  const sw = train.map((r) => Math.pow(decay, Math.max(0, (R - 1) - (Number(r.round) || 0))));
+  try { fitCoef = glmFromBeta(irls(train.map(design), train.map((r) => r.y), 40, sw)); } catch { fitCoef = model.glm; }
   for (const r of test) {
     preds.base.push({ p: base, y: r.y });
     preds.prior.push({ p: core.glmProb(feats(r), model.glm), y: r.y });

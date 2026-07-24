@@ -21,6 +21,7 @@ const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const SLOPE = 1.1;             // logistic slope, kept from the shipped model
 const SHRINK_K = 6;            // empirical-Bayes prior strength, in matches
 const NB_DISPERSION = 6;       // NegBin size for match fouls (prior; refined on fit)
+const RECENCY_DECAY = 0.97;    // per-gameweek weight decay for the match fit (recent form counts more)
 const POS = ['GK', 'DF', 'MF', 'FW'];
 
 function loadData() {
@@ -40,7 +41,8 @@ function round(x, d = 4) { const f = 10 ** d; return x == null ? null : Math.rou
 
 // Newton-Raphson (IRLS) logistic regression. X: n×k with a leading 1 column
 // baked in by the caller; y in {0,1}. Returns the coefficient vector.
-function irls(X, y, iters = 50) {
+// `sw` (optional) is a per-row sample weight (recency); defaults to 1 each.
+function irls(X, y, iters = 50, sw = null) {
   const n = X.length, k = X[0].length;
   const beta = new Array(k).fill(0);
   for (let it = 0; it < iters; it++) {
@@ -48,9 +50,9 @@ function irls(X, y, iters = 50) {
     const H = Array.from({ length: k }, () => new Array(k).fill(0));
     for (let i = 0; i < n; i++) {
       let z = 0; for (let j = 0; j < k; j++) z += beta[j] * X[i][j];
-      const p = 1 / (1 + Math.exp(-z)), w = Math.max(1e-6, p * (1 - p));
+      const p = 1 / (1 + Math.exp(-z)), swi = sw ? sw[i] : 1, w = swi * Math.max(1e-6, p * (1 - p));
       for (let a = 0; a < k; a++) {
-        g[a] += (y[i] - p) * X[i][a];
+        g[a] += swi * (y[i] - p) * X[i][a];
         for (let b = 0; b < k; b++) H[a][b] += w * X[i][a] * X[i][b];
       }
     }
@@ -113,15 +115,23 @@ function main() {
   const fitArg = process.argv.indexOf('--fit');
   if (fitArg > -1 && process.argv[fitArg + 1]) {
     try {
-      const rows = JSON.parse(readFileSync(process.argv[fitArg + 1], 'utf8')); // [{yc90,foul90,pos,y}]
-      const X = [], y = [];
+      const rows = JSON.parse(readFileSync(process.argv[fitArg + 1], 'utf8')); // [{round,yc90,foul90,pos,y}]
+      // Recency weighting: weight each match by 0.97^(gameweeks in the past),
+      // so recent form counts for more than early-season noise. Keyed on the
+      // row's gameweek (round); uniform if no gameweek is present.
+      const gws = rows.map((r) => Number(r.round ?? r.gw)).filter((n) => Number.isFinite(n));
+      const latestGw = gws.length ? Math.max(...gws) : null;
+      const X = [], y = [], sw = [];
       rows.forEach((r) => {
         if (r.y !== 0 && r.y !== 1) return;
         X.push([1, r.yc90 || 0, r.foul90 || 0, r.pos === 'DF' ? 1 : 0, r.pos === 'MF' ? 1 : 0, r.pos === 'FW' ? 1 : 0]);
         y.push(r.y);
+        const gw = Number(r.round ?? r.gw);
+        const ago = (latestGw != null && Number.isFinite(gw)) ? Math.max(0, latestGw - gw) : 0;
+        sw.push(Math.pow(RECENCY_DECAY, ago));
       });
       if (X.length >= 200) {
-        const b = irls(X, y);
+        const b = irls(X, y, 50, sw);
         glm.intercept = round(b[0], 4);
         glm.weights = { yc90: round(b[1], 4), foul90: round(b[2], 4), DF: round(b[3], 4), MF: round(b[4], 4), FW: round(b[5], 4) };
         basis = 'match-fit'; fitN = X.length;
@@ -133,6 +143,7 @@ function main() {
 
   const model = {
     basis, fitRows: fitN, slope: SLOPE, baseRate: round(baseRate, 4),
+    recencyDecay: RECENCY_DECAY,
     shrink: { strengthMatches: SHRINK_K, ycMean, foulMean, ycLeague, foulLeague },
     glm,
     twoStage: { baseHazard: round(baseHazard, 4), refPivotYpg: round(refPivotYpg, 3) },

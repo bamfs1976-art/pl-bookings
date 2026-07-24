@@ -14,6 +14,12 @@
 [functions]
   directory = "netlify/functions"
 
+# The scheduled prediction logger runs hourly and reuses the shipped pure
+# maths + data, so bundle them alongside the function.
+[functions."log-predictions"]
+  schedule = "@hourly"
+  included_files = ["assets/core.js", "data/pl_data.js", "data/model.js"]
+
 [[headers]]
   for = "/*"
   [headers.values]

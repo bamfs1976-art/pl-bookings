@@ -260,4 +260,19 @@ t('gammaln matches known factorials', () => {
   assert.ok(Math.abs(core.gammaln(1)) < 1e-6);                 // 0! = 1 -> ln 1 = 0
 });
 
+/* ---- recency weight (GLM fit decay) ---- */
+console.log('recencyWeight');
+t('most-recent gameweek keeps full weight; older decays', () => {
+  assert.equal(core.recencyWeight(0, 0.97), 1);
+  assert.ok(Math.abs(core.recencyWeight(1, 0.97) - 0.97) < 1e-12);
+  assert.ok(Math.abs(core.recencyWeight(2, 0.97) - 0.9409) < 1e-12);
+  assert.ok(core.recencyWeight(10, 0.97) < core.recencyWeight(3, 0.97));
+});
+t('decay defaults to 0.97 and clamps degenerate inputs', () => {
+  assert.ok(Math.abs(core.recencyWeight(1) - 0.97) < 1e-12);   // default decay
+  assert.equal(core.recencyWeight(5, 1), 1);                    // no decay
+  assert.equal(core.recencyWeight(5, 0), 1);                    // invalid -> uniform
+  assert.equal(core.recencyWeight(-3, 0.9), 1);                 // future/neg clamps to 0 ago
+});
+
 console.log(`\n${passed} tests passed`);

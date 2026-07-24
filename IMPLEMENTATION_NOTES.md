@@ -2,6 +2,28 @@
 
 What was implemented from `AUDIT.md`, and what was deliberately deferred.
 
+## Modelling parity with gameweekedge.co.uk (2026-07-24)
+
+Two modelling best-practices ported from Gameweek Edge:
+
+1. **Recency-weighted GLM fit.** The match-level fit now weights each row by
+   `0.97^(gameweeks ago)` (`PLDCore.recencyWeight`, `data/model.js`
+   `recencyDecay`), in both `scripts/build-model.mjs` and the
+   `scripts/backtest.mjs` weekly refit. No-op on the season-prior basis (no
+   per-row gameweek), so nothing changes until a real `--fit` runs.
+
+2. **Server-verified calibration loop (P5 parity).** A scheduled logger grades
+   the model in the open, aggregated across everyone — see
+   `docs/modelling-review.md`. **Operator steps (cannot be done from the repo):**
+   - Run `supabase/plb_predictions.sql` in the Supabase SQL editor (idempotent,
+     RLS deny-all — service role only).
+   - Set `SUPABASE_URL` + `SUPABASE_SERVICE_ROLE_KEY` in the Netlify
+     environment (the same keys the AI cap already uses). Without the service
+     key the hourly logger no-ops and the "Live prediction accuracy" card stays
+     hidden; everything else works with no env at all.
+   - The `@hourly` schedule and `included_files` are declared in `netlify.toml`;
+     Netlify picks the schedule up on the next deploy.
+
 ## Implemented
 
 1. **Data divergence fixed + hand-copy step eliminated.** The stale inline

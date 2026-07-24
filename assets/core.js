@@ -208,12 +208,23 @@
     if (expFouls == null || perFoulHazard == null || !(perFoulHazard >= 0)) return null;
     return Math.min(0.95, Math.max(0.005, 1 - Math.exp(-expFouls * perFoulHazard)));
   }
+  /* Exponential recency weight for a match `gwsAgo` gameweeks in the past
+     (0 = the most recent). `decay` is the per-gameweek retention (0.97 keeps
+     97% of the weight each week back), matching the match-model recency
+     decay on gameweekedge.co.uk. Weights the GLM fit so recent form counts
+     for more than early-season noise. decay 1 = no decay (uniform). */
+  function recencyWeight(gwsAgo, decay) {
+    const d = (decay == null) ? 0.97 : decay;
+    const g = Math.max(0, Number(gwsAgo) || 0);
+    if (!(d > 0 && d <= 1)) return 1;
+    return Math.pow(d, g);
+  }
 
   const PLDCore = {
     riskScore, normName, pickPL, summarisePicks, calibrate, impliedProb, fairOdds, edgePct, LOGISTIC_SLOPE,
     shrinkRate, logit, invLogit, scaleOdds, contextProb,
     brier, logLoss, reliability, glmProb,
-    gammaln, expectedFouls, nbTailProb, cardProbFromFouls,
+    gammaln, expectedFouls, nbTailProb, cardProbFromFouls, recencyWeight,
   };
 
   if (typeof module !== 'undefined' && module.exports) module.exports = PLDCore;

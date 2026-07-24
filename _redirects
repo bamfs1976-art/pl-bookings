@@ -1,3 +1,4 @@
 /api/fpl/*    /.netlify/functions/fpl        200
 /api/insights /.netlify/functions/insights   200
+/api/model-calibration /.netlify/functions/model-calibration 200
 /*    /index.html   200
