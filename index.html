@@ -616,6 +616,8 @@
           <th scope="col" style="text-align:left;padding:.6rem .7rem">Referee</th>
           <th scope="col" style="text-align:right;padding:.6rem .5rem">Matches</th>
           <th scope="col" style="text-align:right;padding:.6rem .5rem">Yellows /game</th>
+          <th scope="col" style="text-align:right;padding:.6rem .5rem" title="Fouls (both sides) per game in his matches — how foul-heavy the games he takes are">Fouls /game</th>
+          <th scope="col" style="text-align:right;padding:.6rem .5rem" title="Yellows per foul — how readily he cards a foul, with the fixtures' foul volume divided out. The purer strictness signal.">Cards /foul</th>
           <th scope="col" style="text-align:right;padding:.6rem .5rem">Reds /game</th>
           <th scope="col" style="text-align:right;padding:.6rem .5rem">Pens /game</th>
           <th scope="col" style="text-align:right;padding:.6rem .7rem" title="Career yellows per game in the 1992–2018 historical record">Career to '18</th>
@@ -705,6 +707,8 @@
       <p>Be honest with it: this is a season-average <em>estimate</em> from form data, not a market price. It knows nothing about a specific matchup beyond the risk score, referees and derbies adjust fixture heat but not this per-player number, and bookmaker odds carry margin. Use the edge as a screen for further research, never as a guarantee.</p>
       <h3>Club discipline</h3>
       <p>Clubs are tiered on cards received per game, target 2.0 and above, mid 1.5 to 1.9, fade below 1.5. The flame marks a combustible side, 2.0 plus cards and 12.0 plus fouls.</p>
+      <h3>Referee strictness — two signals, not one</h3>
+      <p>A referee's <strong>×factor</strong> now blends two measures. <strong>Yellows per game</strong> is the obvious one, but it's contaminated: an official shows more cards partly because the fixtures he draws are more foul-heavy. <strong>Cards per foul</strong> divides that out — how readily he reaches for the card given the same provocation. Because the desk already models each club's foul and card propensity separately, leaning on yellows per game alone double-counts the teams. The two ratios (each against the league average) are combined as a weighted geometric mean, equal weight by default, and clamped to ×0.75–×1.30 so no single official can swamp the model. Both columns are on the <strong>Referees</strong> tab; cards per foul carries its % difference from the league average. Where an official has no fouls data yet, the factor stays on yellows per game exactly as before. Fouls come from the same public football-data.co.uk match records as the card counts, so this adds no new data source.</p>
       <h3>Live data</h3>
       <p>The desk pulls the official FPL feed through its own proxy: the 2026-27 schedule for the Fixtures tab, each player's live yellow and red card count, and availability flags (injured, suspended, doubtful). Once a player has 450 minutes of 2026-27 football, his yellow rate in the risk score switches from last season's form to this season's live rate — rows carry a green dot when live rates are in use. If the feed is unreachable the desk falls back to the baked 2025-26 form and says so in the top bar. Player photos are the official cutouts from the same FPL feed; a player without one (pre-season, or unmatched) simply shows his club crest.</p>
       <h3>Matchup context</h3>
@@ -1113,6 +1117,19 @@ function refHistKey(name){ const p=String(name||"").trim().split(/[\s.]+/).filte
 const REF_HIST_MAP={};
 if(typeof REF_HISTORY!=="undefined") REF_HISTORY.refs.forEach(r=>{ REF_HIST_MAP[refHistKey(r.n)]=r; });
 
+/* Cards per foul, shown against the league average so it reads at a glance:
+   above average = quicker to card the same foul. Blank until a refs refresh
+   has harvested fouls. */
+function cpfCell(r){
+  if(typeof r.cpf!=="number"||!(r.cpf>0)) return '<span class="faint">—</span>';
+  const v=r.cpf.toFixed(3);
+  if(!REF_AVG_CPF) return `<span class="muted">${v}</span>`;
+  const rel=r.cpf/REF_AVG_CPF;
+  const col=rel>=1.12?"var(--danger)":rel>=1.04?"var(--warn)":rel<=0.9?"var(--good)":"var(--text-2)";
+  const pct=Math.round((rel-1)*100);
+  return `<span style="color:${col}" title="${pct>=0?"+":""}${pct}% vs the league average of ${REF_AVG_CPF.toFixed(3)} yellows per foul">${v}</span>`
+    +` <span class="faint" style="font-size:.68rem">${pct>=0?"+":""}${pct}%</span>`;
+}
 function renderRefs(){
   const tb=$("refRows"); tb.innerHTML="";
   [...REFS].sort((a,b)=>(b.ypg||0)-(a.ypg||0)).forEach(r=>{
@@ -1124,6 +1141,8 @@ function renderRefs(){
       `<td style="padding:.55rem .7rem">${esc(r.n)}${r.region?` <span class="faint" style="font-size:.72rem">${esc(r.region)}</span>`:''}</td>`+
       `<td style="text-align:right" class="num muted">${r.matches==null?'—':r.matches}</td>`+
       `<td style="text-align:right"><span class="display num" style="font-size:1.05rem;color:${col}">${r.ypg==null?'—':r.ypg.toFixed(2)}</span></td>`+
+      `<td style="text-align:right" class="num muted">${r.fpg==null?'<span class="faint">—</span>':r.fpg.toFixed(1)}</td>`+
+      `<td style="text-align:right" class="num">${cpfCell(r)}</td>`+
       `<td style="text-align:right" class="num muted">${r.red==null?'—':r.red.toFixed(2)}</td>`+
       `<td style="text-align:right" class="num muted">${r.pen==null?'—':r.pen.toFixed(2)}</td>`+
       `<td style="text-align:right;padding:.55rem .7rem">${hist}</td>`;
@@ -2171,10 +2190,23 @@ const REF_KEY="pl_desk_refs_v1", SEASON="2026-27";
 let refAssign=(()=>{ try{ return JSON.parse(localStorage.getItem(REF_KEY))||{}; }catch(e){ return {}; } })();
 function saveRefs(){ try{ localStorage.setItem(REF_KEY,JSON.stringify(refAssign)); }catch(e){} }
 const REF_AVG_YPG=(()=>{ const v=REFS.map(r=>r.ypg).filter(x=>x!=null); return v.length?v.reduce((a,b)=>a+b,0)/v.length:3.7; })();
+// League-average cards per foul, for the second strictness signal. Null until
+// a refs refresh has harvested fouls (HF/AF), in which case the factor stays
+// on yellows-per-game exactly as before.
+const REF_AVG_CPF=(()=>{ const v=REFS.map(r=>r.cpf).filter(x=>typeof x==="number"&&x>0); return v.length?v.reduce((a,b)=>a+b,0)/v.length:null; })();
 function refByName(n){ return REFS.find(r=>r.n===n)||null; }
 function refFor(fid){ const n=refAssign[SEASON+"|"+fid]; return n?refByName(n):null; }
 // Heat multiplier: the official's yellows/game against the league average, clamped.
-function refFactor(ref){ if(!ref||ref.ypg==null) return 1; return Math.min(1.3,Math.max(0.75,ref.ypg/REF_AVG_YPG)); }
+/* Referee card multiplier: yellows-per-game blended with cards-per-foul,
+   which divides out how foul-heavy his fixtures happened to be. Pure maths in
+   PLDCore (unit-tested); falls back to the legacy ypg-only ratio when the
+   fouls data or the core function isn't there. */
+function refFactor(ref){
+  if(!ref||ref.ypg==null) return 1;
+  if(typeof PLDCore.refCardFactor==="function")
+    return PLDCore.refCardFactor(ref,{avgYpg:REF_AVG_YPG,avgCpf:REF_AVG_CPF});
+  return Math.min(1.3,Math.max(0.75,ref.ypg/REF_AVG_YPG));
+}
 function refIsStrict(ref){ return !!(ref&&ref.ypg!=null&&ref.ypg>=4.0); }
 function refStrictness(ref){
   if(!ref||ref.ypg==null) return null;

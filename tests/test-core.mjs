@@ -260,6 +260,44 @@ t('gammaln matches known factorials', () => {
   assert.ok(Math.abs(core.gammaln(1)) < 1e-6);                 // 0! = 1 -> ln 1 = 0
 });
 
+/* ---- referee card factor (ypg + cards-per-foul) ---- */
+console.log('refCardFactor');
+t('an average referee is neutral', () => {
+  const f = core.refCardFactor({ypg:4, cpf:0.15}, {avgYpg:4, avgCpf:0.15});
+  assert.ok(Math.abs(f - 1) < 1e-12, `got ${f}`);
+});
+t('separates a strict whistle from a busy one at equal yellows/game', () => {
+  const L = {avgYpg:4, avgCpf:0.176};
+  const strict = core.refCardFactor({ypg:3.94, cpf:0.219}, L);   // fewer fouls, quicker card
+  const busy   = core.refCardFactor({ypg:4.00, cpf:0.133}, L);   // foul-heavy games, slower card
+  assert.ok(strict > busy, `strict ${strict} should exceed busy ${busy}`);
+  assert.ok(strict > 1 && busy < 1);
+});
+t('falls back to ypg-only when cards-per-foul is missing', () => {
+  const L = {avgYpg:4, avgCpf:0.15};
+  assert.equal(core.refCardFactor({ypg:5, cpf:null}, L), core.refCardFactor({ypg:5}, L));
+  assert.ok(Math.abs(core.refCardFactor({ypg:5, cpf:null}, L) - 1.25) < 1e-12);
+});
+t('clamps hard and handles junk input', () => {
+  const L = {avgYpg:4, avgCpf:0.15};
+  assert.equal(core.refCardFactor({ypg:99, cpf:99}, L), 1.3);
+  assert.equal(core.refCardFactor({ypg:0.01, cpf:0.0001}, L), 0.75);
+  assert.equal(core.refCardFactor(null, L), 1);            // no referee assigned
+  assert.equal(core.refCardFactor({ypg:4}, {}), 1);        // no league baseline
+  assert.equal(core.refCardFactor({ypg:0, cpf:0}, L), 1);  // zero/invalid rates
+});
+t('cpfWeight moves the blend between the two signals', () => {
+  const L = {avgYpg:4, avgCpf:0.2};
+  const r = {ypg:4, cpf:0.24};                             // neutral ypg, strict cpf (inside the clamp)
+  const none = core.refCardFactor(r, L, {cpfWeight:0});
+  const half = core.refCardFactor(r, L, {cpfWeight:0.5});
+  const full = core.refCardFactor(r, L, {cpfWeight:1});
+  assert.ok(Math.abs(none - 1) < 1e-12, `got ${none}`);
+  assert.ok(Math.abs(full - 1.2) < 1e-12, `got ${full}`);
+  assert.ok(Math.abs(half - Math.sqrt(1.2)) < 1e-12, `got ${half}`);
+  assert.ok(half > none && half < full);
+});
+
 /* ---- recency weight (GLM fit decay) ---- */
 console.log('recencyWeight');
 t('most-recent gameweek keeps full weight; older decays', () => {
