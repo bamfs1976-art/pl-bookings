@@ -51,10 +51,26 @@ const hctx = {};
 vm.createContext(hctx);
 vm.runInContext(histSrc, hctx);
 const REF_HISTORY = vm.runInContext('REF_HISTORY', hctx);
-assert.equal(REF_HISTORY.seasons.length, 26,
-  `expected 26 historical seasons (1992/93-2017/18), got ${REF_HISTORY.seasons.length}`);
+// The history starts at the 26-season epldata baseline and GROWS as
+// data/extend_ref_history.py merges finished seasons, so assert a floor and
+// the invariants rather than an exact count.
+assert.ok(REF_HISTORY.seasons.length >= 26,
+  `expected >=26 historical seasons (the 1992/93-2017/18 baseline), got ${REF_HISTORY.seasons.length}`);
 assert.ok(REF_HISTORY.refs.length >= 40,
   `expected >=40 historical referees, got ${REF_HISTORY.refs.length}`);
+// Spread into host arrays and compare as strings: the objects come from a vm
+// realm, so deepStrictEqual would trip on prototype identity, not content.
+const histLabels = [...REF_HISTORY.seasons].map((s) => s.s);
+assert.equal(new Set(histLabels).size, histLabels.length,
+  'duplicate season in ref_history.js — the extend script should replace, not append');
+assert.equal(histLabels.join('|'), [...histLabels].sort().join('|'),
+  'ref_history.js seasons are not in chronological order');
+assert.equal(histLabels[0], '1992/93',
+  `history should still start at the 1992/93 baseline, got ${histLabels[0]}`);
+assert.ok(REF_HISTORY.seasons.every((s) => s.ypg > 0 && s.g > 0),
+  'a historical season has a non-positive cautions-per-game or game count');
+assert.ok(REF_HISTORY.span.endsWith(histLabels[histLabels.length - 1]),
+  `span "${REF_HISTORY.span}" does not match the last season ${histLabels[histLabels.length - 1]}`);
 
 // Card/fouls model (scripts/build-model.mjs). Assert the shape the app depends on.
 const mctx = {};
