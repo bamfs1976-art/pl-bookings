@@ -772,10 +772,23 @@ function tierOf(ca){ if(ca==null) return "efl"; if(ca>=2.0) return "target"; if(
 function tierLabel(t){ return {target:"Target",mid:"Mid",fade:"Fade",efl:"EFL basis"}[t]; }
 function combustible(c){ return c.ca!=null && c.fm!=null && c.ca>=2.0 && c.fm>=12.0; }
 function crest(c){ const club=CLUBMAP[c]; if(!club||!club.img) return ""; return `<img class="crest" src="${club.img}" alt="" loading="lazy" onerror="this.style.display='none'">`; }
-/* Official FPL player cutout, from the photo `code` on the live feed. Returns
-   "" when there's no code (pre-season / unmatched); a broken image hides
-   itself so a missing photo never leaves a gap or breaks a row. */
-function photoUrl(p,size){ if(!p||!p.code) return ""; return "https://resources.premierleague.com/premierleague/photos/players/"+(size===250?"250x250":"110x140")+"/p"+p.code+".png"; }
+/* Official FPL player cutout. The code comes from the live feed: first from a
+   strict attachLive match (p.photo), else a lenient club+name lookup in
+   PHOTO_IDX built from every FPL element — so an unmatched baked player still
+   gets his photo, the way gameweekedge.co.uk does by rendering elements
+   directly. Returns "" when nothing resolves; a broken image hides itself so a
+   missing photo never leaves a gap or breaks a row. */
+let PHOTO_IDX={};   // club -> { normalized-name/surname key -> photo string } (null key = ambiguous)
+function photoRef(p){
+  if(!p) return "";
+  if(p.photo) return p.photo;                       // strict attachLive match
+  const idx=PHOTO_IDX[p.c]; if(!idx) return "";
+  const k=(typeof normName==="function")?normName(p.n):(p.n||"").toLowerCase();
+  const sur="last:"+(k.split(" ").pop()||"");
+  const v=idx[k]||idx[sur];
+  return v||"";
+}
+function photoUrl(p,size){ const ref=photoRef(p); if(!ref) return ""; const id=String(ref).replace(/\.(png|jpg)$/i,""); return "https://resources.premierleague.com/premierleague/photos/players/"+(size===250?"250x250":"110x140")+"/p"+id+".png"; }
 function playerPhoto(p,cls,size){ const u=photoUrl(p,size); return u?`<img class="pl-photo ${cls||""}" src="${u}" alt="" loading="lazy" decoding="async" onerror="this.style.display='none'">`:""; }
 function clubName(c){ return CLUBMAP[c]?CLUBMAP[c].name:c; }
 // Fouls: committed (p.f) ships today; won/drawn (p.fw) populates on the next
@@ -1650,7 +1663,7 @@ function buildTeamMap(teams){
    minutes, his yellow rate in the risk score switches to the live rate. */
 function attachLive(bootstrap,teamMap){
   const byClub={};
-  PL_PLAYERS.forEach(p=>{ delete p.live; delete p.yLive; delete p.rLive; p.liveRate=false;
+  PL_PLAYERS.forEach(p=>{ delete p.live; delete p.yLive; delete p.rLive; delete p.photo; p.liveRate=false;
     (byClub[p.c]=byClub[p.c]||[]).push(p); });
   const index={}; // club -> normalized-name lookup; null marks an ambiguous key
   Object.keys(byClub).forEach(c=>{
@@ -1661,6 +1674,23 @@ function attachLive(bootstrap,teamMap){
     });
     index[c]=m;
   });
+  /* Lenient photo index over EVERY FPL element (not just risk-matched ones),
+     so an unmatched baked player still resolves a cutout — matching gameweek
+     -edge's near-full coverage. Full/web-name keys win first; surname keys
+     go null on collision so we never show the wrong face. Kept separate from
+     the strict risk match above, which must not loosen. */
+  PHOTO_IDX={};
+  bootstrap.elements.forEach(el=>{
+    const c=teamMap[el.team]; if(!c) return;
+    const ref=el.photo||(el.code!=null?String(el.code):""); if(!ref) return;
+    const idx=PHOTO_IDX[c]=PHOTO_IDX[c]||{};
+    const full=normName(el.first_name+" "+el.second_name), web=normName(el.web_name);
+    [full,web].forEach(k=>{ if(k&&!(k in idx)) idx[k]=ref; });
+    ["last:"+(normName(el.second_name).split(" ").pop()||""),"last:"+(web.split(" ").pop()||"")].forEach(k=>{
+      if(k==="last:") return;
+      if(k in idx){ if(idx[k]&&idx[k]!==ref) idx[k]=null; } else idx[k]=ref;
+    });
+  });
   let matched=0;
   bootstrap.elements.forEach(el=>{
     const c=teamMap[el.team]; if(!c||!index[c]) return;
@@ -1669,8 +1699,7 @@ function attachLive(bootstrap,teamMap){
     let p=m[full]||m[web]||m["last:"+(normName(el.second_name).split(" ").pop()||"")]||m["last:"+(web.split(" ").pop()||"")]||null;
     if(!p||p.live) return;
     p.live={yc:el.yellow_cards||0,rc:el.red_cards||0,min:el.minutes||0,st:el.status||"a",news:el.news||""};
-    if(el.code) p.code=el.code;   // FPL photo code — official player cutout
-    delete p._nophoto;            // a fresh feed may now have a working image
+    p.photo=el.photo||(el.code!=null?String(el.code):"");   // strict-match cutout ref
     if(p.live.min>=450&&p.f!=null){ p.yLive=p.live.yc/(p.live.min/90); p.rLive=PLDCore.riskScore(p.yLive,p.f); p.liveRate=true; }
     matched++;
   });
@@ -1798,7 +1827,7 @@ async function loadLive(){
       fetchFPL("bootstrap-static",d=>({
         teams:(d.teams||[]).map(t=>({id:t.id,short_name:t.short_name,name:t.name})),
         events:(d.events||[]).map(e=>({id:e.id,name:e.name,is_current:e.is_current,is_next:e.is_next,finished:e.finished,deadline_time:e.deadline_time})),
-        elements:(d.elements||[]).map(el=>({id:el.id,team:el.team,element_type:el.element_type,first_name:el.first_name,second_name:el.second_name,web_name:el.web_name,status:el.status,news:el.news,minutes:el.minutes,starts:el.starts,yellow_cards:el.yellow_cards,red_cards:el.red_cards,code:el.code}))
+        elements:(d.elements||[]).map(el=>({id:el.id,team:el.team,element_type:el.element_type,first_name:el.first_name,second_name:el.second_name,web_name:el.web_name,status:el.status,news:el.news,minutes:el.minutes,starts:el.starts,yellow_cards:el.yellow_cards,red_cards:el.red_cards,code:el.code,photo:el.photo}))
       })),
       fetchFPL("fixtures",d=>(d||[]).map(f=>({id:f.id,event:f.event,kickoff_time:f.kickoff_time,team_h:f.team_h,team_a:f.team_a,finished:f.finished,started:f.started,hs:f.team_h_score,as:f.team_a_score})))
     ]);
