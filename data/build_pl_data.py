@@ -178,6 +178,7 @@ def main():
             f'n:{jsval(r["name"])}', f'region:{jsval(r.get("region") or "")}',
             f'matches:{jsval(r.get("matches"))}', f'ypg:{jsval(r.get("ypg"))}',
             f'red:{jsval(r.get("red_pg"))}', f'pen:{jsval(r.get("pen_pg"))}',
+            f'fpg:{jsval(r.get("fouls_pg"))}', f'cpf:{jsval(r.get("cards_per_foul"))}',
         ]) + "},")
     lines.append("];")
     OUT.write_text("\n".join(lines), encoding="utf-8")

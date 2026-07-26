@@ -208,6 +208,34 @@
     if (expFouls == null || perFoulHazard == null || !(perFoulHazard >= 0)) return null;
     return Math.min(0.95, Math.max(0.005, 1 - Math.exp(-expFouls * perFoulHazard)));
   }
+  /* A referee's card multiplier, from two signals rather than one.
+
+     Yellows per game (ypg) is the obvious measure but it is contaminated: a
+     referee shows more cards partly because the fixtures he draws are more
+     foul-heavy. Cards per foul (cpf) divides that out and isolates how
+     readily HE reaches for the card given the same provocation — and since
+     the desk already models each club's foul and card propensity separately,
+     leaning on ypg alone double-counts the teams.
+
+     Both inputs are ratios against the league average, so they are combined
+     as a weighted geometric mean (the natural average of ratios, neutral at
+     1.0) and clamped. With cpf missing — an official with no fouls data yet —
+     it degrades to the shipped ypg-only behaviour, so nothing regresses. */
+  function refCardFactor(ref, league, opts) {
+    const o = opts || {};
+    const w = (o.cpfWeight == null) ? 0.5 : o.cpfWeight;
+    const lo = (o.lo == null) ? 0.75 : o.lo, hi = (o.hi == null) ? 1.3 : o.hi;
+    const L = league || {};
+    const pos = (x) => (typeof x === 'number' && isFinite(x) && x > 0);
+    const rY = (ref && pos(ref.ypg) && pos(L.avgYpg)) ? ref.ypg / L.avgYpg : null;
+    const rC = (ref && pos(ref.cpf) && pos(L.avgCpf)) ? ref.cpf / L.avgCpf : null;
+    let f;
+    if (rY != null && rC != null) f = Math.pow(rY, 1 - w) * Math.pow(rC, w);
+    else if (rY != null) f = rY;
+    else if (rC != null) f = rC;
+    else return 1;
+    return Math.min(hi, Math.max(lo, f));
+  }
   /* Exponential recency weight for a match `gwsAgo` gameweeks in the past
      (0 = the most recent). `decay` is the per-gameweek retention (0.97 keeps
      97% of the weight each week back), matching the match-model recency
@@ -224,7 +252,7 @@
     riskScore, normName, pickPL, summarisePicks, calibrate, impliedProb, fairOdds, edgePct, LOGISTIC_SLOPE,
     shrinkRate, logit, invLogit, scaleOdds, contextProb,
     brier, logLoss, reliability, glmProb,
-    gammaln, expectedFouls, nbTailProb, cardProbFromFouls, recencyWeight,
+    gammaln, expectedFouls, nbTailProb, cardProbFromFouls, recencyWeight, refCardFactor,
   };
 
   if (typeof module !== 'undefined' && module.exports) module.exports = PLDCore;

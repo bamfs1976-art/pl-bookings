@@ -115,10 +115,21 @@ def main():
         if not ref:
             skipped += 1
             continue
-        d = tally.setdefault(ref, {"matches": 0, "yellows": 0, "reds": 0})
+        # Fouls (HF/AF) are in the same source and are what turn a raw card
+        # count into a strictness rate — a referee showing many yellows may
+        # simply be getting foul-heavy fixtures. Optional: rows without them
+        # still count toward cards, they just don't feed fouls/cpf.
+        try:
+            fouls = int(r["HF"]) + int(r["AF"])
+        except (KeyError, TypeError, ValueError):
+            fouls = None
+        d = tally.setdefault(ref, {"matches": 0, "yellows": 0, "reds": 0, "fouls": 0, "foul_matches": 0})
         d["matches"] += 1
         d["yellows"] += hy + ay
         d["reds"] += hr + ar
+        if fouls is not None:
+            d["fouls"] += fouls
+            d["foul_matches"] += 1
 
     prev = previous_details()
     refs = []
@@ -128,6 +139,15 @@ def main():
         name = full_name(abbrev)
         key = (name.split()[0][0] + " " + name.split()[-1]).lower()
         old = prev.get(key, {})
+        # fouls/game and cards-per-foul, over the matches that carried fouls.
+        fm = d.get("foul_matches", 0)
+        fpg = round(d["fouls"] / fm, 2) if fm else None
+        # Cards per foul uses the same match subset as the fouls, so the two
+        # rates are consistent; yellows only (reds are a different decision).
+        cpf = None
+        if fm and d["fouls"] > 0:
+            yellows_in_fm = d["yellows"] * (fm / d["matches"])   # pro-rata when some rows lacked fouls
+            cpf = round(yellows_in_fm / d["fouls"], 4)
         refs.append({
             "name": name,
             "region": old.get("region", ""),
@@ -136,6 +156,8 @@ def main():
             "ypg": round(d["yellows"] / d["matches"], 2),
             "red_pg": round(d["reds"] / d["matches"], 2),
             "pen_pg": old.get("pen_pg"),
+            "fouls_pg": fpg,
+            "cards_per_foul": cpf,
         })
     refs.sort(key=lambda r: -r["ypg"])
 
@@ -155,6 +177,7 @@ def main():
             f'n:{jsval(r["name"])}', f'region:{jsval(r["region"])}',
             f'matches:{jsval(r["matches"])}', f'ypg:{jsval(r["ypg"])}',
             f'red:{jsval(r["red_pg"])}', f'pen:{jsval(r["pen_pg"])}',
+            f'fpg:{jsval(r["fouls_pg"])}', f'cpf:{jsval(r["cards_per_foul"])}',
         ]) + "},")
     lines.append("];")
     src = (DATA / "pl_data.js").read_text(encoding="utf-8")
@@ -168,8 +191,10 @@ def main():
           f"skipped {skipped} rows without card data)")
     for r in refs:
         pen = "  - " if r["pen_pg"] is None else f"{r['pen_pg']:.2f}"
+        fpg = "  -  " if r["fouls_pg"] is None else f"{r['fouls_pg']:>5.2f}"
+        cpf = "  -  " if r["cards_per_foul"] is None else f"{r['cards_per_foul']:.3f}"
         print(f"   {r['ypg']:>5}  {r['red_pg']:>4} red  {pen} pen  "
-              f"{r['matches']:>2}m  {r['name']}")
+              f"{fpg} fouls  {cpf} c/f  {r['matches']:>2}m  {r['name']}")
 
 
 if __name__ == "__main__":
