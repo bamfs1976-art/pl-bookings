@@ -52,6 +52,13 @@ jobs:
       - name: Refresh referees (free source, always runs)
         run: python3 data/build_refs.py --season "${{ inputs.refs_season }}"
 
+      # Extends the referee career history past the frozen epldata baseline
+      # (1992/93-2017/18) from the same free match records. Idempotent: the
+      # baseline is pristine in ref_history_base.json and the football-data era
+      # is always recomputed, so re-running cannot double-count.
+      - name: Extend the referee history (free source, always runs)
+        run: python3 data/extend_ref_history.py --to "${{ inputs.refs_season }}"
+
       - name: Harvest players from ScoutingStats
         if: ${{ env.SS_COOKIE != '' }}
         env:
@@ -95,7 +102,7 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add data/pl_data.js data/model.js
+          git add data/pl_data.js data/model.js data/ref_history.js
           if git diff --cached --quiet; then
             echo "No data or model changes."
           else

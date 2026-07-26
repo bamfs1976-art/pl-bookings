@@ -10,5 +10,9 @@ Thumbs.db
 
 # Raw harvests, not needed for deploy (index.html loads the generated data/pl_data.js)
 data/*.json
+# ...except the frozen epldata referee baseline, which is an INPUT that
+# data/extend_ref_history.py needs at runtime (including in the refresh
+# Action), not a raw harvest. Must stay committed.
+!data/ref_history_base.json
 data/epldata/
 __pycache__/

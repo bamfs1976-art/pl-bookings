@@ -620,7 +620,7 @@
           <th scope="col" style="text-align:right;padding:.6rem .5rem" title="Yellows per foul — how readily he cards a foul, with the fixtures' foul volume divided out. The purer strictness signal.">Cards /foul</th>
           <th scope="col" style="text-align:right;padding:.6rem .5rem">Reds /game</th>
           <th scope="col" style="text-align:right;padding:.6rem .5rem">Pens /game</th>
-          <th scope="col" style="text-align:right;padding:.6rem .7rem" title="Career yellows per game in the 1992–2018 historical record">Career to '18</th>
+          <th scope="col" style="text-align:right;padding:.6rem .7rem" id="refCareerTh" title="Career yellows per game in the historical record">Career</th>
         </tr></thead>
         <tbody id="refRows"></tbody>
       </table>
@@ -720,7 +720,7 @@
       <h3>AI review of your picks</h3>
       <p>Optional, in the Tracker tab. Once you have three or more settled picks, the review sends them to the desk's own server function and returns a short read on which markets are paying, whether your odds range shows a pattern, and what to change. The AI key lives on the server, never in your browser. You need to be signed in — the review is tied to your account and capped per day so the shared budget can't be drained. If the deploy hasn't enabled it, the desk simply says so — nothing else depends on it.</p>
       <h3>Where the numbers come from</h3>
-      <p>Player and club form is 2025-26 from ScoutingStats, refreshed in season with live card counts from the official FPL API. Seventeen clubs are on Premier League data. The three promoted clubs, Coventry, Ipswich and Hull, carry their 2025-26 Championship form, flagged EFL, since that is their only recent record. Referee figures are 2025-26 season averages from public data, with each official's long-run record (and the league's 26-season card trend) from the MIT-licensed epldata package — unofficial, cautions only, frozen at May 2018, so it contextualises rather than prices.</p>
+      <p>Player and club form is 2025-26 from ScoutingStats, refreshed in season with live card counts from the official FPL API. Seventeen clubs are on Premier League data. The three promoted clubs, Coventry, Ipswich and Hull, carry their 2025-26 Championship form, flagged EFL, since that is their only recent record. Referee figures are 2025-26 season averages from public data, with each official's long-run record (and the league's multi-decade card trend) from the MIT-licensed epldata package up to 2017/18 and the public-domain football-data.co.uk match records from 2018/19 onward — cautions only, so it contextualises rather than prices.</p>
       <h3>Accounts and sync</h3>
       <p>Sign-in is optional. Signed out, picks save to this browser only. Sign in (top right) and your tracker picks sync to the cloud and follow you across devices — on first sign-in, local and cloud picks are merged so nothing is lost. The same account works on Gameweek Edge.</p>
       <h3>Known limits</h3>
@@ -1116,6 +1116,15 @@ $("clubRows").addEventListener("keydown",e=>{ if(e.key!=="Enter"&&e.key!==" ") r
 function refHistKey(name){ const p=String(name||"").trim().split(/[\s.]+/).filter(Boolean); return p.length<2?"":(p[0][0]+" "+p[p.length-1]).toLowerCase(); }
 const REF_HIST_MAP={};
 if(typeof REF_HISTORY!=="undefined") REF_HISTORY.refs.forEach(r=>{ REF_HIST_MAP[refHistKey(r.n)]=r; });
+/* The career column's label follows the data: extending the history (see
+   data/extend_ref_history.py) moves it forward without a code change. */
+(function(){
+  const th=document.getElementById("refCareerTh");
+  if(!th||typeof REF_HISTORY==="undefined"||!REF_HISTORY.span) return;
+  const last=String(REF_HISTORY.span).split(/[–-]/).pop().trim();      // "2025/26"
+  th.textContent="Career to '"+(last.split("/")[1]||last);
+  th.title="Career yellows per game across the historical record ("+REF_HISTORY.span+")";
+})();
 
 /* Cards per foul, shown against the league average so it reads at a glance:
    above average = quicker to card the same foul. Blank until a refs refresh
@@ -1172,7 +1181,7 @@ function renderRefHistory(){
         <polyline points="${pts}" fill="none" stroke="var(--accent-2)" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
       </svg>
     </div>
-    <p class="faint" style="margin:.5rem 0 0;font-size:.72rem">Historical record from the MIT-licensed <a href="https://github.com/pssguy/epldata" rel="noopener">epldata</a> package — unofficial data compiled from public sources, cautions only, frozen at May 2018.</p>`;
+    <p class="faint" style="margin:.5rem 0 0;font-size:.72rem">Historical record: 1992/93–2017/18 from the MIT-licensed <a href="https://github.com/pssguy/epldata" rel="noopener">epldata</a> package (unofficial, compiled from public sources), 2018/19 onward recomputed from the public-domain <a href="https://github.com/datasets/football-datasets" rel="noopener">football-data.co.uk</a> match records — the same source as the season card rates. Cautions only.</p>`;
 }
 
 // ---- pick tracker ----
