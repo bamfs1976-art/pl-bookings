@@ -37,6 +37,12 @@ permissions:
 jobs:
   refresh:
     runs-on: ubuntu-latest
+    # The `secrets` context is NOT available in `if:` conditions — using it
+    # there makes the whole workflow fail to parse. Map it to a job-level env
+    # var, which `if:` can read, so the ScoutingStats steps can be skipped
+    # cleanly when the cookie isn't set.
+    env:
+      SS_COOKIE: ${{ secrets.SS_COOKIE }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -47,15 +53,14 @@ jobs:
         run: python3 data/build_refs.py --season "${{ inputs.refs_season }}"
 
       - name: Harvest players from ScoutingStats
-        if: ${{ secrets.SS_COOKIE != '' }}
+        if: ${{ env.SS_COOKIE != '' }}
         env:
-          SS_COOKIE: ${{ secrets.SS_COOKIE }}
           SS_SEASON_PL: ${{ inputs.season_pl }}
           SS_SEASON_CH: ${{ inputs.season_ch }}
         run: python3 data/harvest.py
 
       - name: Rebuild pl_data.js from the harvest
-        if: ${{ secrets.SS_COOKIE != '' }}
+        if: ${{ env.SS_COOKIE != '' }}
         run: python3 data/build_pl_data.py
 
       # After build_pl_data regenerates CLUBS, re-add the home/away
