@@ -76,10 +76,38 @@
   .pl-av{position:relative;display:inline-flex;align-items:center;justify-content:center;flex:none;border-radius:50%;overflow:hidden;vertical-align:middle}
   .pl-av>i{font-style:normal;font-weight:800;letter-spacing:.01em;line-height:1;user-select:none}
   .pl-av>img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center top;display:block}
+  /* The PL cutouts are transparent PNGs, so the initials would read through the
+     player. Once a photo actually loads, drop them and keep the club colour as
+     the backdrop. */
+  .pl-av.has-photo>i{display:none}
   .pl-av.avatar-lg{width:54px;height:54px;box-shadow:inset 0 0 0 1px rgba(0,0,0,.12)}
   .pl-av.avatar-lg>i{font-size:1.05rem}
   .pl-av.avatar-sm{width:34px;height:34px}
   .pl-av.avatar-sm>i{font-size:.72rem}
+  .pl-av.avatar-md{width:46px;height:46px}
+  .pl-av.avatar-md>i{font-size:.9rem}
+  /* ═══ All players — a card per player ═══ */
+  .ap-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(268px,1fr));gap:.8rem}
+  .ap-card{display:flex;flex-direction:column;gap:.55rem;text-align:left;font:inherit;color:inherit;background:var(--surface);border:1px solid var(--border);border-radius:14px;box-shadow:var(--shadow-sm);padding:.75rem .8rem;width:100%}
+  button.ap-card{cursor:pointer;transition:box-shadow .15s,border-color .15s,transform .15s}
+  button.ap-card:hover{box-shadow:var(--shadow);border-color:var(--border-2);transform:translateY(-1px)}
+  .ap-card.dim{opacity:.62}
+  .ap-top{display:flex;align-items:center;gap:.6rem;min-width:0}
+  .ap-id{flex:1;min-width:0;display:block;overflow:hidden}
+  .ap-name{display:block;font-weight:800;font-size:.95rem;line-height:1.2;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%}
+  .ap-sub{display:flex;align-items:center;gap:.3rem;flex-wrap:wrap;font-size:.72rem;color:var(--text-3);margin-top:.2rem}
+  .ap-pos{font-family:var(--mono);font-size:.6rem;font-weight:800;letter-spacing:.06em;padding:.1rem .34rem;border-radius:5px;background:var(--surface-3);color:var(--text-2)}
+  /* margin-top:auto pins the stat strip to the card's bottom, so a card with
+     an extra availability chip still lines its numbers up with its neighbours. */
+  .ap-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:.3rem;border-top:1px solid var(--border);padding-top:.5rem;margin-top:auto}
+  .ap-stat{text-align:center;min-width:0}
+  .ap-stat .v{font-family:var(--mono);font-weight:700;font-size:.88rem;font-variant-numeric:tabular-nums;line-height:1.1}
+  .ap-stat .l{font-size:.56rem;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--text-3);margin-top:.14rem}
+  .ap-cards-line{display:flex;align-items:center;gap:.45rem;font-size:.72rem;color:var(--text-2)}
+  .ap-pill{display:inline-flex;align-items:center;gap:.25rem;font-family:var(--mono);font-weight:700;font-size:.68rem;padding:.1rem .36rem;border-radius:5px}
+  .ap-pill.yc{background:color-mix(in srgb,#f7c600 26%,transparent);color:var(--text)}
+  .ap-pill.rc{background:color-mix(in srgb,var(--danger) 20%,transparent);color:var(--danger)}
+  .ap-open{margin-left:auto;font-size:.66rem;font-weight:700;color:var(--accent-2)}
   /* App shell — layout ported from Gameweek Edge (sidebar + topbar +
      mobile drawer + bottom nav), recoloured to the desk's own tokens. */
   :root{--sidebar-w:248px;--topbar-h:60px;--bottomnav-h:66px}
@@ -498,7 +526,7 @@
   <section id="panel-allplayers" class="page">
     <div class="page-head">
       <h2>All players</h2>
-      <p>Every current Premier League squad player from the live FPL feed — games played and discipline, with fouls where the ScoutingStats data has them.</p>
+      <p>Every current Premier League squad player from the live FPL feed — full name, photo, games played and discipline, with fouls where the ScoutingStats data has them. Switch between cards and the sortable table.</p>
     </div>
     <div style="display:flex;gap:.6rem;flex-wrap:wrap;align-items:center;margin-bottom:.8rem">
       <input id="apSearch" type="search" placeholder="Search player" aria-label="Search player" style="flex:1;min-width:160px">
@@ -513,9 +541,19 @@
       <label class="muted" style="font-size:.85rem;display:inline-flex;align-items:center;gap:.35rem" title="Hide players with no minutes this season">
         <input type="checkbox" id="apHide" checked> With minutes only
       </label>
+      <div class="seg" id="apViewSeg" role="group" aria-label="Choose how to show the list">
+        <button class="seg-btn" type="button" data-apview="cards" aria-pressed="true">▦ Cards</button>
+        <button class="seg-btn" type="button" data-apview="table" aria-pressed="false">☰ Table</button>
+      </div>
       <button id="apCsvBtn" class="btn btn-ghost" title="Download the current view as CSV">⬇ CSV</button>
     </div>
-    <div class="surface" style="border-radius:14px;overflow:auto;max-height:74vh">
+    <div id="apCardWrap">
+      <div id="apCards" class="ap-grid"></div>
+      <div style="display:flex;justify-content:center;margin-top:1rem">
+        <button id="apMoreBtn" class="btn btn-ghost" type="button" hidden></button>
+      </div>
+    </div>
+    <div id="apTableWrap" class="surface" style="border-radius:14px;overflow:auto;max-height:74vh" hidden>
       <table>
         <caption class="visually-hidden">All Premier League players — games played and discipline</caption>
         <thead><tr>
@@ -810,7 +848,7 @@ function playerAvatar(p,cls,size){
   const col=clubColour(p&&p.c), fg=textOn(col), u=photoUrl(p,size);
   return `<span class="pl-av ${cls||""}" style="background:${col};color:${fg}" aria-hidden="true">`
     +`<i>${esc(initials(p&&p.n))}</i>`
-    +(u?`<img src="${u}" alt="" loading="lazy" decoding="async" onerror="this.remove()">`:"")
+    +(u?`<img src="${u}" alt="" loading="lazy" decoding="async" onload="this.parentNode.classList.add('has-photo')" onerror="this.remove()">`:"")
     +`</span>`;
 }
 function clubName(c){ return CLUBMAP[c]?CLUBMAP[c].name:c; }
@@ -1471,8 +1509,13 @@ function fillApClubFilter(){
   [...CLUBS].sort((a,b)=>a.name.localeCompare(b.name)).forEach(c=>{ const o=document.createElement("option"); o.value=c.short; o.textContent=c.name; sel.appendChild(o); });
   sel.dataset.filled="1";
 }
-["apSearch","apClub","apPos","apHide"].forEach(id=>{ const el=$(id); if(el) el.addEventListener("input",renderAllPlayers); });
+// Changing a filter re-pages the card grid from the top.
+["apSearch","apClub","apPos","apHide"].forEach(id=>{ const el=$(id); if(el) el.addEventListener("input",()=>{ apShown=AP_PAGE; renderAllPlayers(); }); });
 $("apCsvBtn").addEventListener("click",exportAllPlayersCSV);
+document.querySelectorAll("#apViewSeg [data-apview]").forEach(b=>b.addEventListener("click",()=>setApView(b.dataset.apview)));
+$("apMoreBtn").addEventListener("click",()=>{ apShown+=AP_PAGE; renderAllPlayers(); });
+// A card opens the player's profile when he matched the baked risk set.
+$("apCards").addEventListener("click",e=>{ const c=e.target.closest(".ap-card[data-appk]"); if(c) openPlayerProfile(c.dataset.appk); });
 document.querySelectorAll("th [data-apsort]").forEach(btn=>btn.addEventListener("click",()=>{
   const k=btn.dataset.apsort;
   if(apSortKey===k) apSortDir*=-1; else { apSortKey=k; apSortDir=(k==="n"||k==="p"||k==="c")?1:-1; }
@@ -1765,6 +1808,8 @@ function buildAllPlayers(bootstrap,teamMap){
       y90: min>0?yc/(min/90):null, r90: min>0?rc/(min/90):null,
       st:el.status||"a", news:el.news||"",
       f: baked?baked.f:null, fw: baked&&baked.fw!=null?baked.fw:null, risk: baked?baked.r:null,
+      photo: el.photo||(el.code!=null?String(el.code):""),   // official cutout ref
+      pk: baked?watchKey(baked):null,                        // profile link when matched
     });
   });
   return out;
@@ -1798,15 +1843,86 @@ function currentAllPlayers(){
   });
   return rows;
 }
+/* One card per player: official cutout (club-colour tile fallback), the
+   player's FULL name, club, position, availability, and the season's games +
+   discipline. Cards open the player profile when the player matches the baked
+   risk set; otherwise they're static (the feed has no risk score for him). */
+const AP_PAGE=60;                 // cards rendered per batch (600+ players otherwise)
+let apShown=AP_PAGE, apView="cards";
+function apCardHtml(p){
+  const dim="isu".includes(p.st)?" dim":"";
+  const name=p.full||p.n;
+  const shortDiffers=p.n&&p.full&&p.n!==p.full;
+  const tag=p.pk?'<span class="ap-open">Open ›</span>':'';
+  const num=(v,d)=>v==null?'<span class="faint">—</span>':(d?v.toFixed(d):v);
+  return (p.pk?`<button class="ap-card${dim}" type="button" data-appk="${esc(p.pk)}" aria-label="Open ${esc(name)}'s profile">`
+               :`<div class="ap-card${dim}">`)
+    +`<div class="ap-top">`
+      +playerAvatar({c:p.c,n:name,photo:p.photo},"avatar-md")
+      +`<span class="ap-id">`
+        +`<span class="ap-name" title="${esc(name)}">${esc(name)}</span>`
+        +`<span class="ap-sub">${crest(p.c)}<span class="num">${esc(p.c)}</span>`
+          +(p.p?`<span class="ap-pos">${esc(p.p)}</span>`:"")
+          +(shortDiffers?`<span class="faint">“${esc(p.n)}”</span>`:"")
+          +availChipRaw(p.st,p.news)
+        +`</span>`
+      +`</span>`
+      +tag
+    +`</div>`
+    +`<div class="ap-cards-line">`
+      +`<span class="ap-pill yc">▮ ${p.yc} YC</span>`
+      +(p.rc?`<span class="ap-pill rc">▮ ${p.rc} RC</span>`:"")
+      +(p.risk!=null?`<span class="faint" style="margin-left:auto;font-size:.68rem">risk ${p.risk.toFixed(2)}</span>`:"")
+    +`</div>`
+    +`<div class="ap-stats">`
+      +`<span class="ap-stat"><span class="v">${p.min}</span><span class="l">Mins</span></span>`
+      +`<span class="ap-stat"><span class="v">${p.starts}</span><span class="l">Starts</span></span>`
+      +`<span class="ap-stat"><span class="v">${num(p.y90,2)}</span><span class="l">YC/90</span></span>`
+      +`<span class="ap-stat"><span class="v">${num(p.f,2)}</span><span class="l">Fouls/90</span></span>`
+    +`</div>`
+    +(p.pk?`</button>`:`</div>`);
+}
+function renderApCards(rows){
+  const el=$("apCards"), more=$("apMoreBtn"); if(!el) return;
+  const slice=rows.slice(0,apShown);
+  el.innerHTML=slice.map(apCardHtml).join("");
+  if(more){
+    const left=rows.length-slice.length;
+    more.hidden=left<=0;
+    more.textContent=left>0?("Show "+Math.min(AP_PAGE,left)+" more of "+rows.length):"";
+  }
+}
+function setApView(v){
+  apView=(v==="table")?"table":"cards";
+  const cw=$("apCardWrap"), tw=$("apTableWrap");
+  if(cw) cw.hidden=apView!=="cards";
+  if(tw) tw.hidden=apView!=="table";
+  document.querySelectorAll("#apViewSeg [data-apview]").forEach(b=>{
+    const on=b.dataset.apview===apView;
+    b.setAttribute("aria-pressed",on?"true":"false");
+    b.classList.toggle("active",on);
+  });
+  try{ localStorage.setItem("pl_desk_apview",apView); }catch(e){}
+  renderAllPlayers();
+}
 function renderAllPlayers(){
   const tb=$("apRows"), note=$("apNote"); if(!tb) return;
   if(!LIVE){
     tb.innerHTML='<tr><td colspan="10" class="muted" style="padding:1.2rem;text-align:center">The complete player list is built from the live FPL feed, which is unreachable right now. It fills in once the feed is back — the <a href="#p=players">Season table</a> works offline.</td></tr>';
+    const cw=$("apCards"); if(cw) cw.innerHTML='<p class="muted" style="grid-column:1/-1;padding:1.2rem;margin:0;text-align:center;font-size:.88rem">The complete player list is built from the live FPL feed, which is unreachable right now. It fills in once the feed is back — the <a href="#p=players">Season table</a> works offline.</p>';
+    const mb=$("apMoreBtn"); if(mb) mb.hidden=true;
     if(note) note.textContent=""; return;
   }
   const rows=currentAllPlayers();
   if(note) note.textContent=rows.length+" player"+(rows.length===1?"":"s")+" · games & discipline from the live FPL feed"+(LIVE.seasonStarted?"":" (pre-season — minutes accrue once 2026-27 kicks off)")+" · fouls from ScoutingStats where matched.";
-  if(!rows.length){ tb.innerHTML='<tr><td colspan="10" class="muted" style="padding:1rem;text-align:center">No players match your filters. Clear the club, position or search filters above, or untick “With minutes only” — pre-season the feed lists squads with zero minutes played.</td></tr>'; return; }
+  const EMPTY='No players match your filters. Clear the club, position or search filters above, or untick “With minutes only” — pre-season the feed lists squads with zero minutes played.';
+  if(!rows.length){
+    tb.innerHTML='<tr><td colspan="10" class="muted" style="padding:1rem;text-align:center">'+EMPTY+'</td></tr>';
+    const cw=$("apCards"); if(cw) cw.innerHTML='<p class="muted" style="grid-column:1/-1;padding:1rem;margin:0;text-align:center;font-size:.88rem">'+EMPTY+'</p>';
+    const mb=$("apMoreBtn"); if(mb) mb.hidden=true;
+    return;
+  }
+  if(apView==="cards") renderApCards(rows);
   const frag=document.createDocumentFragment();
   rows.slice(0,800).forEach(p=>{
     const tr=document.createElement("tr");
@@ -2732,6 +2848,7 @@ renderClubs();
 renderRefs();
 renderTracker();
 fillApClubFilter();
+setApView((()=>{ try{ return localStorage.getItem("pl_desk_apview")||"cards"; }catch(e){ return "cards"; } })());
 renderGameweek();   // paints the landing view immediately (offline/loading state until live data lands)
 loadLive();
 loadLiveCalibration();   // server-verified accuracy on the Guide (best-effort, hidden until graded)
