@@ -346,6 +346,34 @@
     .flash-up{animation:plbFlashUp 1.9s ease-out;border-radius:5px}
     .flash-down{animation:plbFlashDown 1.9s ease-out;border-radius:5px}
   }
+
+  /* ── Command palette (⌘K) + keyboard layer — ported from Gameweek Edge ── */
+  .cmdk-btn{display:none;align-items:center;gap:.3rem;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:.7rem;letter-spacing:.02em}
+  @media(min-width:721px){ .cmdk-btn{display:inline-flex} }
+  .cmdk{position:fixed;inset:0;z-index:600;display:flex;align-items:flex-start;justify-content:center;padding:12vh 16px 16px}
+  .cmdk[hidden]{display:none}
+  .cmdk-bg{position:absolute;inset:0;background:rgba(6,9,16,.55)}
+  .cmdk-panel{position:relative;width:100%;max-width:560px;background:var(--surface);border:1px solid var(--border-2);border-radius:14px;overflow:hidden;box-shadow:0 24px 80px rgba(0,0,0,.45)}
+  .cmdk-in{width:100%;padding:13px 15px;background:var(--surface);border:0;border-bottom:1px solid var(--border);color:var(--text);font-size:14px;outline:none}
+  .cmdk-in::placeholder{color:var(--text-3)}
+  .cmdk-list{max-height:min(50vh,420px);overflow-y:auto;padding:4px}
+  .cmdk-row{display:flex;align-items:center;gap:10px;width:100%;padding:8px 10px;border-radius:9px;color:var(--text-2);font-size:13px;text-align:left;background:none;border:0;cursor:pointer}
+  .cmdk-row .ck-ic{width:15px;height:15px;color:var(--text-3);flex-shrink:0;display:flex}
+  .cmdk-row .ck-ic svg{width:15px;height:15px}
+  .cmdk-row b{color:var(--text);font-weight:600}
+  .cmdk-row .ck-sub{margin-left:auto;font-size:10px;text-transform:uppercase;letter-spacing:.06em;color:var(--text-3);white-space:nowrap}
+  .cmdk-row.sel{background:var(--surface-2);color:var(--text)}
+  .cmdk-row.sel .ck-ic{color:var(--accent)}
+  .cmdk-foot{display:flex;gap:14px;padding:7px 12px;border-top:1px solid var(--border);font-size:10px;color:var(--text-3)}
+  .cmdk-foot kbd,.kbd-sheet kbd{border:1px solid var(--border-2);border-radius:3px;padding:0 4px;background:var(--surface-2);font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:10px}
+  .kbd-overlay{position:fixed;inset:0;z-index:600;display:flex;align-items:center;justify-content:center;padding:16px;background:rgba(6,9,16,.55)}
+  .kbd-overlay[hidden]{display:none}
+  .kbd-sheet{background:var(--surface);border:1px solid var(--border-2);border-radius:14px;padding:16px 18px;max-width:420px;width:100%}
+  .kbd-sheet h3{font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--text-2);margin:0 0 12px;font-weight:700}
+  .kbd-grid{display:grid;grid-template-columns:auto 1fr;gap:9px 14px;font-size:13px;color:var(--text-2);align-items:center}
+  .kbd-grid kbd{justify-self:start}
+  .row-sel{outline:2px solid var(--accent);outline-offset:-2px}
+  @media(prefers-reduced-motion:reduce){.cmdk-row{transition:none}}
 </style>
 </head>
 <body>
@@ -427,6 +455,7 @@
       </div>
       <div class="tb-right">
         <span id="liveStatus" class="chip tier-fade" hidden></span>
+        <button id="cmdkBtn" class="btn btn-ghost cmdk-btn" title="Command palette (Cmd/Ctrl-K)" aria-label="Open command palette" style="padding:.3rem .55rem">⌘K</button>
         <button id="densityBtn" class="btn btn-ghost" type="button" aria-pressed="false" title="Switch between beginner hints and expert view"><span class="den-dot" aria-hidden="true"></span><span id="densityLabel">Beginner</span></button>
         <button id="helpBtn" class="tb-icon" type="button" aria-label="Help, glossary and guided tour" title="Help &amp; glossary">?</button>
         <button id="acctBtn" class="btn btn-ghost" title="Account and sync">
@@ -789,6 +818,39 @@
 <!-- Player profile (drill-down from any player row or card) -->
 <div id="playerModal" class="modal-back" role="dialog" aria-modal="true" aria-labelledby="ppTitle">
   <div class="modal surface" style="max-width:460px"><div id="ppBody"></div></div>
+</div>
+
+<!-- ═══ COMMAND PALETTE (⌘K) ═══ -->
+<div class="cmdk" id="cmdk" role="dialog" aria-modal="true" aria-label="Command palette" hidden>
+  <div class="cmdk-bg" data-cmdk-close></div>
+  <div class="cmdk-panel">
+    <input id="cmdkInput" class="cmdk-in" placeholder="Search views, players, clubs, actions…"
+           autocomplete="off" spellcheck="false" aria-label="Command input">
+    <div id="cmdkList" class="cmdk-list" role="listbox"></div>
+    <div class="cmdk-foot"><span><kbd>↑↓</kbd> navigate</span><span><kbd>↵</kbd> open</span><span><kbd>esc</kbd> close</span></div>
+  </div>
+</div>
+
+<!-- ═══ SHORTCUT CHEATSHEET (?) ═══ -->
+<div class="kbd-overlay" id="kbdOverlay" role="dialog" aria-modal="true" aria-label="Keyboard shortcuts" hidden>
+  <div class="kbd-sheet">
+    <h3>Keyboard shortcuts</h3>
+    <div class="kbd-grid">
+      <kbd>⌘K / Ctrl-K</kbd><span>Command palette</span>
+      <kbd>g h</kbd><span>This Gameweek</span>
+      <kbd>g p</kbd><span>Season table</span>
+      <kbd>g a</kbd><span>All players</span>
+      <kbd>g c</kbd><span>Clubs</span>
+      <kbd>g r</kbd><span>Referees</span>
+      <kbd>g f</kbd><span>Fixtures</span>
+      <kbd>g t</kbd><span>My Picks (tracker)</span>
+      <kbd>g u</kbd><span>How to use (guide)</span>
+      <kbd>j / k</kbd><span>Next / previous row</span>
+      <kbd>↵</kbd><span>Open selected row</span>
+      <kbd>?</kbd><span>This cheatsheet</span>
+      <kbd>esc</kbd><span>Close</span>
+    </div>
+  </div>
 </div>
 
 <script src="data/pl_data.js"></script>
@@ -2723,6 +2785,116 @@ function toast(msg){
   clearTimeout(t._timer); t._timer=setTimeout(()=>t.classList.remove("show"),2600);
 }
 
+/* ── COMMAND PALETTE (⌘K) + KEYBOARD LAYER — ported from Gameweek Edge ──
+   The palette is a fuzzy jump across views, players, clubs and actions;
+   `g <key>` chords, j/k row-walking and `?` cheatsheet round out keyboard
+   nav. Vanilla — no dependency at this scale. */
+const CK_IC={
+  view:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>',
+  player:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 3.5-6 8-6s8 2 8 6"/></svg>',
+  club:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l7 3v5c0 4.5-3 8-7 10-4-2-7-5.5-7-10V6z"/></svg>',
+  action:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 8v4l3 2"/></svg>'
+};
+const CMDK={sel:0,items:[]};
+function cmdkOpen(){ const el=$("cmdk"); el.hidden=false; const inp=$("cmdkInput"); inp.value=""; CMDK.sel=0; cmdkRender(""); inp.focus(); }
+function cmdkClose(){ $("cmdk").hidden=true; }
+function cmdkScore(label,q){
+  const l=(label||"").toLowerCase();
+  if(l.startsWith(q))return 3;
+  if(l.includes(q))return 2;
+  let i=0; for(const ch of l){ if(ch===q[i])i++; if(i===q.length)return 1; }
+  return 0;
+}
+function cmdkToggleTheme(){ const next=document.documentElement.getAttribute("data-theme")==="light"?"dark":"light"; try{ localStorage.setItem(THEME_KEY,next); }catch(e){} applyTheme(next); }
+function cmdkItems(q){
+  const out=[];
+  Object.keys(PANELMAP).forEach(id=>{
+    const p=PANELMAP[id];
+    out.push({label:p.label,sub:p.areaLabel,icon:"view",run:()=>openPanel(id),
+      score:q?cmdkScore(p.label,q)*2+cmdkScore(p.areaLabel,q):1.4});
+  });
+  const verbs=[
+    {label:"Toggle light / dark theme",sub:"action",icon:"action",run:cmdkToggleTheme},
+    {label:"Export current view as CSV",sub:"action",icon:"action",run:()=>{ openPanel("panel-players"); exportCSV(); }},
+    {label:"Share card (PNG)",sub:"action",icon:"action",run:()=>{ openPanel("panel-players"); exportPNG(); }},
+    {label:"Keyboard shortcuts",sub:"action",icon:"action",run:()=>{ $("kbdOverlay").hidden=false; }},
+    {label:"Refresh data",sub:"action",icon:"action",run:()=>location.reload()}
+  ];
+  verbs.forEach(v=>out.push({...v,score:q?cmdkScore(v.label,q)*2:0.5}));
+  if(q&&q.length>=2&&typeof PL_PLAYERS!=="undefined"){
+    const seenClub={};
+    PL_PLAYERS.forEach(p=>{
+      const s=cmdkScore(p.n,q);
+      if(s)out.push({label:p.n,icon:"player",sub:p.c+" · "+(p.p||""),
+        run:()=>openPlayerProfile(watchKey(p)),score:s*2+Math.min(1,(rEff(p)||0)/6)});
+      if(p.c&&!seenClub[p.c]){ seenClub[p.c]=1;
+        const cs=cmdkScore(p.c,q);
+        if(cs)out.push({label:p.c,icon:"club",sub:"club",run:()=>openClubPlayers(p.c),score:cs*1.5});
+      }
+    });
+  }
+  return out.filter(x=>x.score>0).sort((a,c)=>c.score-a.score).slice(0,12);
+}
+function cmdkRender(q){
+  CMDK.items=cmdkItems(q.trim().toLowerCase());
+  CMDK.sel=Math.min(CMDK.sel,Math.max(0,CMDK.items.length-1));
+  $("cmdkList").innerHTML=CMDK.items.map((it,i)=>
+    '<button class="cmdk-row'+(i===CMDK.sel?" sel":"")+'" data-ck="'+i+'" role="option">'+
+    '<span class="ck-ic">'+(CK_IC[it.icon]||CK_IC.view)+'</span>'+
+    '<b>'+esc(it.label)+'</b><span class="ck-sub">'+esc(it.sub||"")+'</span></button>').join("")||
+    '<div class="cmdk-row" style="color:var(--text-3)">No matches.</div>';
+}
+function cmdkRun(i){ const it=CMDK.items[i]; if(!it)return; cmdkClose(); try{ it.run(); }catch(_){} }
+function initCmdk(){
+  const inp=$("cmdkInput");
+  inp.addEventListener("input",()=>{ CMDK.sel=0; cmdkRender(inp.value); });
+  inp.addEventListener("keydown",e=>{
+    if(e.key==="ArrowDown"){ e.preventDefault(); CMDK.sel=Math.min(CMDK.sel+1,CMDK.items.length-1); cmdkRender(inp.value); }
+    else if(e.key==="ArrowUp"){ e.preventDefault(); CMDK.sel=Math.max(CMDK.sel-1,0); cmdkRender(inp.value); }
+    else if(e.key==="Enter"){ e.preventDefault(); cmdkRun(CMDK.sel); }
+    else if(e.key==="Escape"){ cmdkClose(); }
+  });
+  $("cmdkList").addEventListener("click",e=>{ const row=e.target.closest("[data-ck]"); if(row)cmdkRun(+row.dataset.ck); });
+  document.addEventListener("click",e=>{ if(e.target.closest("[data-cmdk-close]"))cmdkClose(); });
+  const btn=$("cmdkBtn"); if(btn)btn.addEventListener("click",cmdkOpen);
+}
+/* Row navigation: j/k walk the active page's clickable rows/cards; enter
+   opens the selected one. Selection is a transient class — no state. */
+function rowNav(dir){
+  const rows=Array.from(document.querySelectorAll(".page.active [data-pk], .page.active tr[data-club]"));
+  if(!rows.length)return;
+  const cur=document.querySelector(".row-sel");
+  let i=rows.indexOf(cur)+dir;
+  i=Math.max(0,Math.min(rows.length-1,i));
+  if(cur)cur.classList.remove("row-sel");
+  rows[i].classList.add("row-sel"); rows[i].scrollIntoView({block:"nearest"});
+}
+const G_CHORDS={h:"panel-gameweek",p:"panel-players",a:"panel-allplayers",c:"panel-clubs",r:"panel-refs",f:"panel-fixtures",t:"panel-tracker",u:"panel-guide"};
+let _pendingG=0;
+function initKeys(){
+  document.addEventListener("keydown",e=>{
+    if((e.metaKey||e.ctrlKey)&&e.key.toLowerCase()==="k"){ e.preventDefault(); $("cmdk").hidden?cmdkOpen():cmdkClose(); return; }
+    if(e.metaKey||e.ctrlKey||e.altKey)return;
+    const t=e.target;
+    if(t&&(t.matches("input,textarea,select")||t.isContentEditable))return;
+    if(!$("cmdk").hidden)return;
+    const kbd=$("kbdOverlay");
+    if(e.key==="Escape"&&!kbd.hidden){ kbd.hidden=true; return; }
+    if(e.key==="?"){ kbd.hidden=!kbd.hidden; return; }
+    if(!kbd.hidden)return;
+    if(_pendingG&&Date.now()-_pendingG<900){
+      const id=G_CHORDS[e.key.toLowerCase()]; _pendingG=0;
+      if(id&&PANELMAP[id]){ e.preventDefault(); openPanel(id); }
+      return;
+    }
+    if(e.key.toLowerCase()==="g"){ _pendingG=Date.now(); return; }
+    if(e.key==="j"){ e.preventDefault(); rowNav(1); return; }
+    if(e.key==="k"){ e.preventDefault(); rowNav(-1); return; }
+    if(e.key==="Enter"){ const sel=document.querySelector(".row-sel"); if(sel){ e.preventDefault(); sel.click(); } }
+  });
+  $("kbdOverlay").addEventListener("click",e=>{ if(e.target.id==="kbdOverlay")e.target.hidden=true; });
+}
+
 // PWA: offline app shell. Live data and Supabase are never cached by the SW.
 if("serviceWorker" in navigator&&(location.protocol==="https:"||location.hostname==="localhost")){
   window.addEventListener("load",()=>{ navigator.serviceWorker.register("/sw.js").catch(()=>{}); });
@@ -2891,6 +3063,8 @@ renderTracker();
 fillApClubFilter();
 setApView((()=>{ try{ return localStorage.getItem("pl_desk_apview")||"cards"; }catch(e){ return "cards"; } })());
 renderGameweek();   // paints the landing view immediately (offline/loading state until live data lands)
+initCmdk();
+initKeys();
 loadLive();
 loadLiveCalibration();   // server-verified accuracy on the Guide (best-effort, hidden until graded)
 // The Supabase client loads deferred from the CDN, so wire auth up once
