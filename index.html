@@ -1458,7 +1458,7 @@ async function exportGameweekPNG(gw){
   x.fillStyle="#8b94a5"; x.font=`700 16px ${body}`;
   x.fillText("FIXTURE",P+92,top-16); x.fillText("TOP RISK",P+430,top-16);
   x.textAlign="right"; x.fillText("HEAT",W-P,top-16); x.textAlign="left";
-  const rows=fx.slice(0,10), rh=Math.min(98,(H-top-110)/Math.max(1,rows.length));
+  const rows=fx.slice(0,8), rh=Math.min(92,(1000-top)/Math.max(1,rows.length));
   const badge=(x,cx,mid,short)=>{ const col=clubColour(short); x.fillStyle=col; roundRect(x,cx,mid-16,46,32,7); x.fill(); x.fillStyle=textOn(col); x.font=`800 14px ${body}`; x.textAlign="center"; x.fillText(short,cx+23,mid+5); x.textAlign="left"; };
   rows.forEach((f,i)=>{
     const M=fixtureMeta(f); if(!M) return;
@@ -1475,7 +1475,35 @@ async function exportGameweekPNG(gw){
     x.fillStyle=hc; x.font=`800 36px ${disp}`; x.textAlign="right"; x.fillText(heat.toFixed(1),W-P,mid-2);
     x.font=`700 15px ${body}`; x.fillText(lbl,W-P,mid+22); x.textAlign="left";
   });
-  shareFooter(x,W,P,H,body,disp,"Booking heat = venue card rates × referee × derby · research, not a guarantee");
+  // ── ACCA BUILDER: best cross-match double & treble, one leg per fixture ──
+  // Each leg is a different match's most likely booking, so the legs are
+  // uncorrelated; combined chance = product, fair odds = 1 / combined chance.
+  const legPool=fx.map(f=>{ const M=fixtureMeta(f); if(!M) return null; const t=gwCandidates(M.h,M.a,M.ref,M.derby)[0]; return (t&&t.prob>0)?{p:t.p,prob:t.prob}:null; }).filter(Boolean).sort((p,q)=>q.prob-p.prob);
+  const ay=1034;
+  x.fillStyle="#8b94a5"; x.font=`700 16px ${body}`;
+  x.fillText("ACCA BUILDER · CROSS-MATCH",P,ay-18);
+  x.textAlign="right"; x.fillText("ALL BOOKED",W-P,ay-18); x.textAlign="left";
+  const accaRows=[];
+  if(legPool.length>=2) accaRows.push({tag:"DOUBLE",legs:legPool.slice(0,2)});
+  if(legPool.length>=3) accaRows.push({tag:"TREBLE",legs:legPool.slice(0,3)});
+  if(!accaRows.length){ x.fillStyle="#586275"; x.font=`600 22px ${body}`; x.fillText("Not enough rated players for a combo.",P,ay+34); }
+  const arh=118;
+  accaRows.forEach((row,i)=>{
+    const y=ay+i*arh, mid=y+arh/2;
+    x.fillStyle="#faf5ff"; roundRect(x,P-16,y+4,W-2*(P-16),arh-12,14); x.fill();
+    x.fillStyle="#3d195b"; roundRect(x,P,mid-18,104,36,9); x.fill();
+    x.fillStyle="#ffffff"; x.font=`800 18px ${body}`; x.textAlign="center"; x.fillText(row.tag,P+52,mid+6); x.textAlign="left";
+    const names=row.legs.map(c=>c.p.n).join(" + ");
+    x.fillStyle="#0c1322"; x.font=`700 26px ${disp}`;
+    let nm=names; while(x.measureText(nm).width>W-P-430&&nm.length>3) nm=nm.slice(0,-1);
+    x.fillText(nm+(nm!==names?"…":""),P+124,mid-2);
+    x.fillStyle="#586275"; x.font=`600 18px ${body}`;
+    x.fillText(row.legs.map(c=>c.p.c).join(" · "),P+124,mid+24);
+    const cp=row.legs.reduce((s,c)=>s*c.prob,1);
+    x.fillStyle=probHex(cp); x.font=`800 38px ${disp}`; x.textAlign="right"; x.fillText((cp*100).toFixed(0)+"%",W-P,mid-4);
+    x.fillStyle="#586275"; x.font=`600 18px ${body}`; x.fillText("~"+(1/cp).toFixed(1)+" fair odds",W-P,mid+24); x.textAlign="left";
+  });
+  shareFooter(x,W,P,H,body,disp,"Cross-match combos assume independent bookings · research, not a guarantee");
   c.toBlob(blob=>dlBlob(blob,`pl-bookings-gw${gw}.png`),"image/png");
 }
 
