@@ -1389,27 +1389,57 @@ async function exportFixturePNG(fid){
   x.fillStyle="#fff"; x.textAlign="center"; x.fillText(ht,W-P-hw/2,ry-1); x.textAlign="left";
   const top=322;
   x.fillStyle="#8b94a5"; x.font=`700 16px ${body}`;
-  x.fillText("BOOKING CANDIDATE",P,top-16);
+  x.fillText("MOST LIKELY BOOKED",P,top-16);
   x.textAlign="right"; x.fillText("P(CARD)",W-P,top-16); x.textAlign="left";
-  if(!cands.length){ x.fillStyle="#586275"; x.font=`600 24px ${body}`; x.fillText("No rated available players yet.",P,top+40); }
-  const rh=Math.min(118,(H-top-120)/Math.max(1,cands.length));
-  cands.forEach((cd,i)=>{
+  const listCands=cands.slice(0,5);
+  if(!listCands.length){ x.fillStyle="#586275"; x.font=`600 24px ${body}`; x.fillText("No rated available players yet.",P,top+40); }
+  const rh=Math.min(122,(958-top)/Math.max(1,listCands.length));
+  listCands.forEach((cd,i)=>{
     const p=cd.p, prob=cd.prob, y=top+i*rh, mid=y+rh/2;
     if(i%2===0){ x.fillStyle="#f4f6fa"; roundRect(x,P-16,y+6,W-2*(P-16),rh-10,14); x.fill(); }
-    const col=clubColour(p.c); x.fillStyle=col; roundRect(x,P,mid-20,52,40,9); x.fill();
-    x.fillStyle=textOn(col); x.font=`800 17px ${body}`; x.textAlign="center"; x.fillText(p.c,P+26,mid+6); x.textAlign="left";
+    x.fillStyle=i<3?"#3d195b":"#c2c8d4"; x.font=`800 26px ${disp}`; x.textAlign="center"; x.fillText(String(i+1),P+14,mid+8); x.textAlign="left";
+    const col=clubColour(p.c); x.fillStyle=col; roundRect(x,P+36,mid-20,52,40,9); x.fill();
+    x.fillStyle=textOn(col); x.font=`800 17px ${body}`; x.textAlign="center"; x.fillText(p.c,P+62,mid+6); x.textAlign="left";
     x.fillStyle="#0c1322"; x.font=`700 30px ${disp}`;
-    let nm=p.n; while(x.measureText(nm).width>W-P-430&&nm.length>3) nm=nm.slice(0,-1);
-    x.fillText(nm+(nm!==p.n?"…":""),P+72,mid-2);
+    let nm=p.n; while(x.measureText(nm).width>W-P-470&&nm.length>3) nm=nm.slice(0,-1);
+    x.fillText(nm+(nm!==p.n?"…":""),P+108,mid-2);
     x.fillStyle="#586275"; x.font=`600 18px ${body}`;
-    x.fillText(`${p.p||""} · base ${(pImp(p)*100).toFixed(0)}%${p.f!=null?" · "+p.f.toFixed(1)+" fls/90":""}${p.fw!=null?" · "+p.fw.toFixed(1)+" won":""}${ref&&Math.abs(rf-1)>=0.02?" · ×"+rf.toFixed(2)+" ref":""}`,P+72,mid+24);
+    x.fillText(`${p.p||""} · base ${(pImp(p)*100).toFixed(0)}%${p.f!=null?" · "+p.f.toFixed(1)+" fls/90":""}${p.fw!=null?" · "+p.fw.toFixed(1)+" won":""}${ref&&Math.abs(rf-1)>=0.02?" · ×"+rf.toFixed(2)+" ref":""}`,P+108,mid+24);
     const pc=probHex(prob);
     x.fillStyle=pc; x.font=`800 40px ${disp}`; x.textAlign="right"; x.fillText((prob*100).toFixed(0)+"%",W-P,mid-4); x.textAlign="left";
-    const bw=210,bx=W-P-bw,by=mid+12;
+    const bw=190,bx=W-P-bw,by=mid+12;
     x.fillStyle="#e3e7ee"; roundRect(x,bx,by,bw,8,4); x.fill();
     x.fillStyle=pc; roundRect(x,bx,by,bw*Math.min(1,prob),8,4); x.fill();
   });
-  shareFooter(x,W,P,H,body,disp,"Fixture-aware, referee-adjusted booking model · research, not a guarantee");
+  // ── ACCA BUILDER: best same-match double & treble from the top 3 ──
+  // Combined chance assumes independent bookings (a research estimate — real
+  // same-game legs are correlated); implied fair odds = 1 / combined chance.
+  const top3=cands.filter(c=>c.prob>0).slice(0,3);
+  const ay=1004;
+  x.fillStyle="#8b94a5"; x.font=`700 16px ${body}`;
+  x.fillText("ACCA BUILDER · SAME MATCH",P,ay-18);
+  x.textAlign="right"; x.fillText("ALL BOOKED",W-P,ay-18); x.textAlign="left";
+  const accaRows=[];
+  if(top3.length>=2) accaRows.push({tag:"DOUBLE",legs:top3.slice(0,2)});
+  if(top3.length>=3) accaRows.push({tag:"TREBLE",legs:top3.slice(0,3)});
+  if(!accaRows.length){ x.fillStyle="#586275"; x.font=`600 22px ${body}`; x.fillText("Not enough rated players for a combo.",P,ay+34); }
+  const arh=120;
+  accaRows.forEach((row,i)=>{
+    const y=ay+i*arh, mid=y+arh/2;
+    x.fillStyle="#faf5ff"; roundRect(x,P-16,y+4,W-2*(P-16),arh-12,14); x.fill();
+    x.fillStyle="#3d195b"; roundRect(x,P,mid-18,104,36,9); x.fill();
+    x.fillStyle="#ffffff"; x.font=`800 18px ${body}`; x.textAlign="center"; x.fillText(row.tag,P+52,mid+6); x.textAlign="left";
+    const names=row.legs.map(c=>c.p.n).join(" + ");
+    x.fillStyle="#0c1322"; x.font=`700 26px ${disp}`;
+    let nm=names; while(x.measureText(nm).width>W-P-430&&nm.length>3) nm=nm.slice(0,-1);
+    x.fillText(nm+(nm!==names?"…":""),P+124,mid-2);
+    x.fillStyle="#586275"; x.font=`600 18px ${body}`;
+    x.fillText(row.legs.map(c=>c.p.c).join(" · "),P+124,mid+24);
+    const cp=row.legs.reduce((s,c)=>s*c.prob,1);
+    x.fillStyle=probHex(cp); x.font=`800 38px ${disp}`; x.textAlign="right"; x.fillText((cp*100).toFixed(0)+"%",W-P,mid-4);
+    x.fillStyle="#586275"; x.font=`600 18px ${body}`; x.fillText("~"+(1/cp).toFixed(1)+" fair odds",W-P,mid+24); x.textAlign="left";
+  });
+  shareFooter(x,W,P,H,body,disp,"Same-match combos assume independent bookings · research, not a guarantee");
   c.toBlob(blob=>dlBlob(blob,`pl-bookings-${h.toLowerCase()}-${a.toLowerCase()}.png`),"image/png");
 }
 // Whole gameweek: every fixture by booking heat, hottest first, with its top risk.
