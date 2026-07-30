@@ -70,18 +70,29 @@
   tbody tr:hover{background:var(--surface-2)}
   .num{font-variant-numeric:tabular-nums}
   .crest{width:20px;height:20px;border-radius:4px;object-fit:contain;vertical-align:-5px;display:inline-block}
+  .crest-wrap{display:inline-flex;align-items:center;justify-content:center;overflow:hidden;flex:none}
+  .crest-wrap>img{width:100%;height:100%;object-fit:contain;display:block}
+  .crest-chip{border-radius:4px}
+  .crest-failed{background:var(--cc,var(--surface-3));border-radius:4px}
   /* Player avatar: club-colour tile with initials, official cutout layered on
      top. If the CDN has no photo the img removes itself and the tile shows —
      so the row never collapses or leaves a gap. */
-  .pl-av{position:relative;display:inline-flex;align-items:center;justify-content:center;flex:none;border-radius:50%;overflow:hidden;vertical-align:middle}
+  .pl-av{position:relative;display:inline-flex;align-items:center;justify-content:center;flex:none;border-radius:50%;vertical-align:middle}
   .pl-av>i{font-style:normal;font-weight:800;letter-spacing:.01em;line-height:1;user-select:none}
-  .pl-av>img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center top;display:block}
+  .pl-av>img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center top;display:block;border-radius:50%}
+  /* Club crest tucked onto the avatar — identifies the club without spending a
+     separate 44px column, which is what was squeezing names on phones. */
+  .pl-av-crest{position:absolute;right:-3px;bottom:-3px;width:46%;height:46%;border-radius:50%;
+    background:var(--surface);box-shadow:0 0 0 1.5px var(--surface);display:flex;align-items:center;justify-content:center;overflow:hidden}
+  .pl-av-crest .crest{width:100%;height:100%;border-radius:50%;vertical-align:0}
   /* The PL cutouts are transparent PNGs, so the initials would read through the
      player. Once a photo actually loads, drop them and keep the club colour as
      the backdrop. */
   .pl-av.has-photo>i{display:none}
   .pl-av.avatar-lg{width:54px;height:54px;box-shadow:inset 0 0 0 1px rgba(0,0,0,.12)}
   .pl-av.avatar-lg>i{font-size:1.05rem}
+  .pl-av.avatar-xs{width:26px;height:26px}
+  .pl-av.avatar-xs>i{font-size:.58rem}
   .pl-av.avatar-sm{width:34px;height:34px}
   .pl-av.avatar-sm>i{font-size:.72rem}
   .pl-av.avatar-md{width:46px;height:46px}
@@ -279,7 +290,7 @@
   .seg-btn.on{background:var(--text);color:var(--bg);border-color:var(--text)}
   .gw-seclabel{font-family:var(--mono);font-size:.68rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--text-3)}
   .fxh2{display:flex;align-items:flex-start;justify-content:space-between;gap:.6rem;padding:.6rem .85rem;border-bottom:1px solid var(--border);background:color-mix(in srgb,var(--surface-2) 70%,var(--surface))}
-  .fxh2-teams{font-family:'Bricolage Grotesque',sans-serif;font-weight:800;font-size:1rem;letter-spacing:-.01em}
+  .fxh2-teams{font-family:'Bricolage Grotesque',sans-serif;font-weight:800;font-size:1rem;letter-spacing:-.01em;display:flex;align-items:center;gap:.3rem;flex-wrap:wrap}
   .heat-badge{font-family:var(--mono);font-weight:700;font-size:.82rem;padding:.14rem .48rem;border-radius:7px;background:var(--surface-3);color:var(--text-2);display:inline-block}
   .heat-badge.hot{background:color-mix(in srgb,var(--warn) 22%,transparent);color:var(--warn)}
   .fx-refrow{display:flex;align-items:center;gap:.5rem;padding:.4rem .85rem;border-bottom:1px solid var(--border)}
@@ -294,9 +305,19 @@
   .gwsusp{display:flex;gap:.6rem;overflow-x:auto;padding-bottom:.3rem;margin-bottom:1rem;scrollbar-width:thin}
   .gwsusp-card{flex:0 0 auto;min-width:190px;border:1px solid var(--border);border-left:3px solid var(--warn);border-radius:11px;padding:.55rem .75rem;background:var(--surface)}
   .gwsusp-fx{font-family:var(--mono);font-size:.62rem;letter-spacing:.06em;color:var(--text-3);text-transform:uppercase}
-  .gwsusp-nm{font-weight:700;font-size:.95rem;margin:.15rem 0 .1rem}
+  .gwsusp-nm{font-weight:700;font-size:.95rem;margin:.15rem 0 .1rem;display:flex;align-items:center;gap:.35rem}
+  .name-cell{display:flex;align-items:center;gap:.45rem;min-width:0}
   .gwsusp-yc{font-family:var(--mono);font-size:.72rem;color:var(--warn)}
   @media(max-width:700px){.fx-grid{grid-template-columns:1fr}.gw-hero-num{font-size:2.1rem}}
+  /* Phones: the club crest rides on the avatar, so the separate club box is
+     redundant chrome — dropping it gives long names the width they need. */
+  @media(max-width:600px){
+    .cand2 .cbadge{display:none}
+    .cand2{gap:.55rem}
+    .cand-name{flex-wrap:nowrap;min-width:0}
+    .cand-name>span:first-child{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  }
+  .gw-hero-num{white-space:nowrap}
   /* ═══ UX pass — onboarding, glossary, jargon tooltips, density, flash
      (ported from the Gameweek Edge UX 0–9 best-practice series) ═══ */
   /* Panel-label rhythm (UX 3): crisper section labels, sub-labels off tertiary. */
@@ -881,7 +902,37 @@ function riskColour(r){ if(r==null) return "var(--text-3)"; if(r>=2.5) return "v
 function tierOf(ca){ if(ca==null) return "efl"; if(ca>=2.0) return "target"; if(ca>=1.5) return "mid"; return "fade"; }
 function tierLabel(t){ return {target:"Target",mid:"Mid",fade:"Fade",efl:"EFL basis"}[t]; }
 function combustible(c){ return c.ca!=null && c.fm!=null && c.ca>=2.0 && c.fm>=12.0; }
-function crest(c){ const club=CLUBMAP[c]; if(!club||!club.img) return ""; return `<img class="crest" src="${club.img}" alt="" loading="lazy" onerror="this.style.display='none'">`; }
+/* Club crest. Prefers the OFFICIAL Premier League badge (from the live feed's
+   team code, same CDN as the player cutouts and already allowed by the CSP),
+   falls back to the baked vendor crest, and finally to a club-colour chip — so
+   a club always carries a visual mark instead of collapsing to bare text. */
+const TEAM_CODE={};
+function crestUrl(c){
+  const code=TEAM_CODE[c];
+  if(code) return "https://resources.premierleague.com/premierleague/badges/50/t"+code+".png";
+  const club=CLUBMAP[c];
+  return (club&&club.img)?club.img:"";
+}
+function crestFallback(img){
+  const fb=img.getAttribute("data-fb");
+  if(fb){ img.removeAttribute("data-fb"); img.src=fb; return; }   // official -> baked
+  const wrap=img.parentNode;                                       // both gone: solid club chip
+  if(wrap&&wrap.classList) wrap.classList.add("crest-failed");
+  img.remove();
+}
+function crest(c,px){
+  const club=CLUBMAP[c]; if(!club&&!TEAM_CODE[c]) return "";
+  const code=TEAM_CODE[c];
+  const official=code?("https://resources.premierleague.com/premierleague/badges/50/t"+code+".png"):"";
+  const baked=(club&&club.img)?club.img:"";
+  const src=official||baked;
+  const size=px?`width:${px}px;height:${px}px;`:"";
+  if(!src) return `<span class="crest crest-chip" style="${size}background:${clubColour(c)}" title="${esc(club?club.name:c)}" aria-hidden="true"></span>`;
+  const fb=(official&&baked)?` data-fb="${esc(baked)}"`:"";
+  return `<span class="crest crest-wrap" style="${size}--cc:${clubColour(c)}" title="${esc(club?club.name:c)}">`
+    +`<img src="${src}"${fb} alt="" loading="lazy" decoding="async" onerror="crestFallback(this)">`
+    +`</span>`;
+}
 /* Official FPL player cutout. The code comes from the live feed: first from a
    strict attachLive match (p.photo), else a lenient club+name lookup in
    PHOTO_IDX built from every FPL element — so an unmatched baked player still
@@ -910,11 +961,13 @@ function initials(n){
    players (and gameweekedge.co.uk hits the same gaps with the same URL), so on
    error the <img> removes itself and the coloured tile remains — every row
    keeps its shape and reads as designed instead of leaving a hole. */
-function playerAvatar(p,cls,size){
+function playerAvatar(p,cls,size,opts){
   const col=clubColour(p&&p.c), fg=textOn(col), u=photoUrl(p,size);
+  const badge=(opts&&opts.crest&&p&&p.c)?`<span class="pl-av-crest">${crest(p.c)}</span>`:"";
   return `<span class="pl-av ${cls||""}" style="background:${col};color:${fg}" aria-hidden="true">`
     +`<i>${esc(initials(p&&p.n))}</i>`
     +(u?`<img src="${u}" alt="" loading="lazy" decoding="async" onload="this.parentNode.classList.add('has-photo')" onerror="this.remove()">`:"")
+    +badge
     +`</span>`;
 }
 function clubName(c){ return CLUBMAP[c]?CLUBMAP[c].name:c; }
@@ -1048,7 +1101,7 @@ function renderPlayers(){
     const w=isWatched(p);
     tr.innerHTML=
       `<td style="text-align:center;padding:.45rem .2rem"><button class="watch-btn" data-w="${esc(watchKey(p))}" aria-pressed="${w}" title="${w?'Remove from watchlist':'Add to watchlist'}" aria-label="${w?'Remove':'Add'} ${esc(p.n)} ${w?'from':'to'} watchlist">${w?'★':'☆'}</button></td>`+
-      `<td style="padding:.45rem .7rem"><strong>${esc(p.n)}</strong>${ls}${efl}${avail}</td>`+
+      `<td style="padding:.45rem .7rem"><span class="name-cell">${playerAvatar(p,"avatar-xs")}<span><strong>${esc(p.n)}</strong>${ls}${efl}${avail}</span></span></td>`+
       `<td style="padding:.45rem .5rem" class="muted">${crest(p.c)} <span class="num" style="font-size:.85rem">${p.c}</span></td>`+
       `<td style="text-align:center" class="faint num">${esc(p.p||"")}</td>`+
       `<td style="text-align:right" class="num muted">${p.min}</td>`+
@@ -1076,6 +1129,7 @@ function renderPlayerCards(rows){
     const dim=(p.live&&"isu".includes(p.live.st))?"opacity:.55;":"";
     return `<div class="pcard" style="${dim}" data-pk="${esc(watchKey(p))}" role="button" tabindex="0" aria-label="Open ${esc(p.n)}'s profile">
       <button class="watch-btn" data-w="${esc(watchKey(p))}" aria-pressed="${w}" title="${w?'Remove from watchlist':'Add to watchlist'}">${w?'★':'☆'}</button>
+      ${playerAvatar(p,"avatar-sm",null,{crest:true})}
       <div class="pcard-main">
         <div class="pcard-name">${esc(p.n)}${p.ls?'<span class="chip tier-mid" style="font-size:.58rem">low</span>':''}${p.b==="EFL"?'<span class="chip tier-efl" style="font-size:.58rem">EFL</span>':''}${availChip(p)}</div>
         <div class="pcard-sub num">${crest(p.c)} ${p.c} · ${esc(p.p||"")} · ${yEff(p)==null?"—":yEff(p).toFixed(2)} yc/90 · ${p.f==null?"—":p.f.toFixed(2)} f/90</div>
@@ -1809,6 +1863,8 @@ function buildTeamMap(teams){
   teams.forEach(t=>{
     if(CLUBMAP[t.short_name]) map[t.id]=t.short_name;
     else if(byName[normName(t.name)]) map[t.id]=byName[normName(t.name)];
+    const short=map[t.id];
+    if(short&&t.code) TEAM_CODE[short]=t.code;   // official PL badge id
   });
   return map;
 }
@@ -1948,7 +2004,7 @@ function apCardHtml(p){
   return (p.pk?`<button class="ap-card${dim}" type="button" data-appk="${esc(p.pk)}" aria-label="Open ${esc(name)}'s profile">`
                :`<div class="ap-card${dim}">`)
     +`<div class="ap-top">`
-      +playerAvatar({c:p.c,n:name,photo:p.photo},"avatar-md")
+      +playerAvatar({c:p.c,n:name,photo:p.photo},"avatar-md",null,{crest:true})
       +`<span class="ap-id">`
         +`<span class="ap-name" title="${esc(name)}">${esc(name)}</span>`
         +`<span class="ap-sub">${crest(p.c)}<span class="num">${esc(p.c)}</span>`
@@ -2018,7 +2074,7 @@ function renderAllPlayers(){
     const tr=document.createElement("tr");
     if("isu".includes(p.st)) tr.style.opacity=".6";
     tr.innerHTML=
-      `<td style="padding:.4rem .7rem"><strong>${esc(p.n)}</strong>${availChipRaw(p.st,p.news)}</td>`+
+      `<td style="padding:.4rem .7rem"><span class="name-cell">${playerAvatar({c:p.c,n:p.full||p.n,photo:p.photo},"avatar-xs")}<span><strong>${esc(p.n)}</strong>${availChipRaw(p.st,p.news)}</span></span></td>`+
       `<td class="muted" style="padding:.4rem .5rem">${crest(p.c)} <span class="num" style="font-size:.82rem">${p.c}</span></td>`+
       `<td class="faint num" style="text-align:center">${esc(p.p||"")}</td>`+
       `<td class="num muted" style="text-align:right">${p.min}</td>`+
@@ -2054,7 +2110,7 @@ async function loadLive(){
   try{
     [bs,fx]=await Promise.all([
       fetchFPL("bootstrap-static",d=>({
-        teams:(d.teams||[]).map(t=>({id:t.id,short_name:t.short_name,name:t.name})),
+        teams:(d.teams||[]).map(t=>({id:t.id,short_name:t.short_name,name:t.name,code:t.code})),
         events:(d.events||[]).map(e=>({id:e.id,name:e.name,is_current:e.is_current,is_next:e.is_next,finished:e.finished,deadline_time:e.deadline_time})),
         elements:(d.elements||[]).map(el=>({id:el.id,team:el.team,element_type:el.element_type,first_name:el.first_name,second_name:el.second_name,web_name:el.web_name,status:el.status,news:el.news,minutes:el.minutes,starts:el.starts,yellow_cards:el.yellow_cards,red_cards:el.red_cards,code:el.code,photo:el.photo}))
       })),
@@ -2429,7 +2485,7 @@ function candRowHtml(c,ref){
   const p=c.p, prob=c.prob, sev=severity(prob), conf=confidence(p);
   const live=(p.liveRate)?' <span title="Live 2026-27 yellow rate" style="color:var(--good)">●</span>':'';
   return `<button class="cand2" data-pk="${esc(watchKey(p))}" type="button" aria-label="Open ${esc(p.n)}'s profile">
-    ${playerAvatar(p,"avatar-sm")}
+    ${playerAvatar(p,"avatar-sm",null,{crest:true})}
     <span class="cbadge" title="${esc(conf.label)}">${esc(p.c)}</span>
     <span style="flex:1;min-width:0">
       <span class="cand-name">${esc(p.n)} <span class="mono" style="color:var(--text-3);font-size:.66rem;font-weight:600">${esc(p.p||"")}</span>${live}${suspFlagInline(p)}</span>
@@ -2492,7 +2548,7 @@ function fixtureCardHtml(f,opts){
   return `<div class="fx-card" data-fid="${f.id}">
     <div class="fxh2">
       <div style="min-width:0">
-        <div class="fxh2-teams">${esc(h)} <span class="faint mono" style="font-weight:500;font-size:.78rem">vs</span> ${esc(a)}${derbyChip}${score}</div>
+        <div class="fxh2-teams">${crest(h,22)} ${esc(h)} <span class="faint mono" style="font-weight:500;font-size:.78rem">vs</span> ${crest(a,22)} ${esc(a)}${derbyChip}${score}</div>
         <div class="mono" style="color:var(--text-3);font-size:.66rem;margin-top:.18rem">${f.kickoff_time?fmtKOShort(f.kickoff_time):"TBC"}</div>
       </div>
       <div style="text-align:right;flex:none">
@@ -2565,7 +2621,7 @@ function renderWatchDash(){
       :`vs ${esc(opp)} (${ha})${gw?" · "+gw:""}${ref?" · "+esc(ref.n.split(" ").pop()):""}${suspFlagInline(p)}`;
     return `<button class="wl-row" data-pk="${esc(watchKey(p))}" type="button" aria-label="Open ${esc(p.n)}'s profile">
       <span aria-hidden="true" style="color:var(--warn);font-size:.95rem">★</span>
-      ${playerAvatar(p,"avatar-sm")}
+      ${playerAvatar(p,"avatar-sm",null,{crest:true})}
       <span style="flex:1;min-width:0">
         <span style="font-weight:600;font-size:.9rem">${esc(p.n)} <span class="faint num" style="font-size:.7rem;font-weight:600">${p.c}</span></span>
         <span class="cand-sub">${sub}</span>
@@ -2593,8 +2649,8 @@ function renderGwSusp(){
     const f=nextFixtureFor(p.c); let opp="";
     if(f){ const H=LIVE.teamMap[f.team_h],A=LIVE.teamMap[f.team_a]; opp=(H===p.c?A:H)+(H===p.c?" (H)":" (A)"); }
     return `<button class="gwsusp-card" data-pk="${esc(watchKey(p))}" type="button" style="text-align:left;cursor:pointer;color:inherit;font:inherit" aria-label="Open ${esc(p.n)}'s profile">
-      <div class="gwsusp-fx">${p.c}${opp?" vs "+esc(opp.split(" ")[0]):""}</div>
-      <div class="gwsusp-nm">${esc(p.n)}</div>
+      <div class="gwsusp-fx">${crest(p.c,14)} ${p.c}${opp?" vs "+esc(opp.split(" ")[0]):""}</div>
+      <div class="gwsusp-nm">${playerAvatar(p,"avatar-xs")}<span>${esc(p.n)}</span></div>
       <div class="gwsusp-yc">${p.live.yc} YC · one from ban</div>
     </button>`;
   }).join("");
