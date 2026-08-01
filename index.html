@@ -145,15 +145,22 @@
   .nav-area-ic{width:20px;height:20px;flex-shrink:0;display:flex;align-items:center;justify-content:center}
   .nav-area-ic svg{width:18px;height:18px}
   .nav-area-label{flex:1;text-align:left}
-  .nav-chevron{width:14px;height:14px;flex-shrink:0;color:var(--text-3);transition:transform .2s;display:flex;align-items:center}
-  .nav-chevron svg{width:14px;height:14px}
-  .nav-area-btn.expanded .nav-chevron{transform:rotate(90deg)}
-  .nav-sub{overflow:hidden;max-height:0;transition:max-height .28s ease}
-  .nav-sub.open{max-height:520px}
-  .nav-sub-btn{display:flex;align-items:center;gap:9px;width:100%;padding:8px 12px 8px 43px;border-radius:8px;border:0;background:none;cursor:pointer;color:var(--text-3);font:inherit;font-size:.81rem;font-weight:500;transition:background .12s,color .12s;position:relative}
-  .nav-sub-btn:hover{background:var(--surface-3);color:var(--text-2)}
-  .nav-sub-btn.active{color:var(--accent);font-weight:700;background:color-mix(in srgb,var(--accent) 12%,transparent)}
-  .nav-sub-btn.active::before{content:'';position:absolute;left:24px;top:50%;transform:translateY(-50%);width:5px;height:5px;border-radius:50%;background:var(--accent)}
+  /* Area tabs — underlined, NOT pills, and that is deliberate. The players
+     panel stacks a row of lens pills (.seg-btn) beneath this strip, and two
+     rows of identical pills a few pixels apart read as one control with a
+     wrapping bug: you cannot tell that the top row changes the page and the
+     bottom row changes the view of it. An underline is the older, quieter
+     convention and it puts the two levels in an obvious order. */
+  .area-tabs{display:flex;gap:2px;overflow-x:auto;margin:0 0 16px;border-bottom:1px solid var(--border);-webkit-overflow-scrolling:touch;scrollbar-width:none}
+  .area-tabs::-webkit-scrollbar{display:none}
+  .area-tab{flex:0 0 auto;background:none;border:0;border-bottom:2px solid transparent;color:var(--text-2);
+    font:inherit;font-size:.85rem;font-weight:600;padding:9px 12px;cursor:pointer;white-space:nowrap;
+    transition:color .14s,border-color .14s}
+  .area-tab:hover{color:var(--text)}
+  .area-tab.on{color:var(--accent);border-bottom-color:var(--accent)}
+  /* Lens bar — the saved readings of a panel. Sits BELOW the area tabs in the
+     hierarchy, which is why it keeps the app's existing pill language. */
+  .lensbar{margin-bottom:.7rem}
   .sb-foot{padding:12px 18px;border-top:1px solid var(--border);display:flex;flex-direction:column;gap:10px}
   .sb-foot-row{display:flex;align-items:center;justify-content:space-between;gap:.5rem}
   .sb-foot-v{font-size:.66rem;color:var(--text-3)}
@@ -522,12 +529,23 @@
     <p class="faint" style="font-size:.78rem;margin-top:.8rem">Fixtures are ordered <strong>hottest to coolest</strong> by booking heat. Each fixture's booking candidates are its highest-risk available players, ranked by a <strong>fixture-aware booking probability</strong>: the season model chance scaled by the assigned referee's card rate (the ×factor) and a small derby bump. Bands: <span style="color:var(--danger);font-weight:700">High</span> 50%+, <span style="color:var(--warn);font-weight:700">Watch</span> 30–50%. The dot is sample confidence (minutes played). Assign referees on each card once appointments are published. An estimate for research, not a price — see the Guide.</p>
   </section>
 
-  <!-- PLAYERS -->
+  <!-- PLAYERS — one panel, two lenses.
+       The Season table and All players were two destinations listing the same
+       players with an overlapping half of the columns and a duplicated filter
+       bar. They are lenses on one panel now: the season risk model over the
+       minutes-qualified set, and the complete live squad from the FPL feed.
+       Both renderers are untouched — only which one owns the body changes. -->
   <section id="panel-players" class="page">
     <div class="page-head">
-      <h2>Season table</h2>
-      <p>Every squad player ranked by season-long booking risk — yellows per 90 weighted double, plus fouls per 90. For this weekend's picks, see <a href="#" id="toGameweek">This Gameweek</a>.</p>
+      <h2>Players</h2>
+      <p>Every Premier League player, two ways — ranked by our season booking risk, or the complete live squad list. For this weekend’s picks, see <a href="#" id="toGameweek">This Gameweek</a>.</p>
     </div>
+    <div class="seg lensbar" id="dkViews" role="tablist" aria-label="Choose a view of the player list">
+      <button class="seg-btn on" type="button" data-dkview="season" role="tab" aria-selected="true">Season risk</button>
+      <button class="seg-btn" type="button" data-dkview="all" role="tab" aria-selected="false">All players</button>
+    </div>
+    <p class="faint" id="dkNote" style="font-size:.8rem;margin:0 0 .8rem"></p>
+    <div id="dkSeason">
     <p class="beginner-hint"><b>Risk</b> is a form score, higher means more cards and fouls. The <b>P(card)</b> column turns it into a match chance with fair odds — click a cell and paste a bookmaker's price to see if it's value. A grey dot means low sample (little football played), so treat it with caution.</p>
     <div id="suspWatch" class="surface" style="border-radius:12px;padding:.8rem 1rem;margin-bottom:.8rem" hidden></div>
     <div style="display:flex;gap:.6rem;flex-wrap:wrap;align-items:center;margin-bottom:.8rem">
@@ -570,14 +588,8 @@
       </table>
     </div>
     <p class="faint" style="font-size:.78rem;margin-top:.6rem">Risk = yellow rate per 90 weighted double plus fouls per 90, from 2025-26 form. P(card) is the model-implied chance of a booking in a match with its fair decimal odds — click it to compare a bookmaker price (an estimate, see the Guide). The EFL chip marks the three promoted clubs, whose form is from the Championship. Low sample is under 450 minutes.</p>
-  </section>
-
-  <!-- ALL PLAYERS (complete live FPL squad list) -->
-  <section id="panel-allplayers" class="page">
-    <div class="page-head">
-      <h2>All players</h2>
-      <p>Every current Premier League squad player from the live FPL feed — full name, photo, games played and discipline, with fouls where the ScoutingStats data has them. Switch between cards and the sortable table.</p>
     </div>
+    <div id="dkAll" hidden>
     <div style="display:flex;gap:.6rem;flex-wrap:wrap;align-items:center;margin-bottom:.8rem">
       <input id="apSearch" type="search" placeholder="Search player" aria-label="Search player" style="flex:1;min-width:160px">
       <label class="muted" style="font-size:.85rem">Club
@@ -623,6 +635,7 @@
     </div>
     <p id="apNote" class="faint" style="font-size:.78rem;margin-top:.6rem"></p>
     <p class="faint" style="font-size:.78rem">Games played (minutes, starts) and discipline (yellows, reds, per-90) are live from the official FPL API for every registered squad player. FPL carries no fouls, so Fouls/90 and Won/90 come from the baked ScoutingStats data where the player matches by club and name — blank for players outside that set. Suspended/injured/doubtful flags from the feed.</p>
+    </div>
   </section>
 
   <!-- CLUBS -->
@@ -1511,14 +1524,18 @@ const NICON={
   desk:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>',
   fixtures:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>',
   tracker:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8.5"/><circle cx="12" cy="12" r="3.5"/></svg>',
-  guide:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5a2 2 0 0 1 2-2h14v18H6a2 2 0 0 0-2 2z"/><path d="M4 19a2 2 0 0 1 2-2h14"/></svg>',
-  chevron:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg>'
+  guide:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5a2 2 0 0 1 2-2h14v18H6a2 2 0 0 0-2 2z"/><path d="M4 19a2 2 0 0 1 2-2h14"/></svg>'
+
 };
 const NAV=[
   {id:"gameweek",label:"Gameweek",icon:"gameweek",panels:[{id:"panel-gameweek",label:"This Gameweek"}]},
   {id:"desk",label:"Desk",icon:"desk",panels:[
-    {id:"panel-players",label:"Season table"},
-    {id:"panel-allplayers",label:"All players"},
+    // "All players" used to sit here as its own destination. It listed the
+    // same players as the season table with an overlapping half of the
+    // columns and its own copy of the filter bar, so it is a lens on this
+    // panel now — see DK_VIEWS, and PANEL_VIEW, which keeps #p=allplayers
+    // landing on the view it always showed.
+    {id:"panel-players",label:"Players"},
     {id:"panel-clubs",label:"Clubs"},
     {id:"panel-refs",label:"Referees"}
   ]},
@@ -1528,34 +1545,85 @@ const NAV=[
 ];
 const PANELMAP={};
 NAV.forEach(a=>a.panels.forEach(p=>PANELMAP[p.id]={...p,areaId:a.id,areaLabel:a.label}));
-let currentPanel="panel-gameweek",expandedArea="gameweek";
+let currentPanel="panel-gameweek";
 
+// ── The players hub: two readings of the same squad ────────────────
+// Season risk is our model over the minutes-qualified baked set; All players
+// is the complete live FPL squad. Different columns and a different question,
+// but the same rows — which is what makes them views rather than pages.
+// Neither renderer changes; only which one owns the body.
+const DK_VIEWS=[
+  {id:"season",el:"dkSeason",label:"Season risk",
+   desc:"Every squad player ranked by season-long booking risk — yellows per 90 weighted double, plus fouls per 90."},
+  {id:"all",el:"dkAll",label:"All players",
+   desc:"The complete current squad list from the live FPL feed — games played and discipline for every registered player, with fouls where the ScoutingStats data has them."}
+];
+let DK_VIEW="season";
+function dkView(id){ return DK_VIEWS.find(v=>v.id===id)||DK_VIEWS[0]; }
+function dkSetView(id){ DK_VIEW=dkView(id).id; }
+function dkRender(){
+  const v=dkView(DK_VIEW);
+  DK_VIEWS.forEach(x=>{ const el=$(x.el); if(el) el.hidden=(x.id!==v.id); });
+  const note=$("dkNote"); if(note) note.textContent=v.desc;
+  document.querySelectorAll("#dkViews [data-dkview]").forEach(b=>{
+    const on=b.dataset.dkview===v.id;
+    b.classList.toggle("on",on);
+    b.setAttribute("aria-selected",on?"true":"false");
+  });
+  // The live squad list is fetched, so it only builds when it is on screen.
+  if(v.id==="all"&&typeof renderAllPlayers==="function") renderAllPlayers();
+}
+
+// A retired panel id names the VIEW it always showed, not just the panel it
+// folded into — landing on the season table is not the page an old #p=allplayers
+// link promised.
+const PANEL_ALIAS={"panel-allplayers":"panel-players"};
+const PANEL_VIEW={"panel-players":"season","panel-allplayers":"all"};
+function resolvePanel(id){ return PANEL_ALIAS[id]||id; }
+
+// The sidebar is a flat list of areas — five choices, not eight. It used to
+// expand Desk into a sub-list, which put every view in the app in front of you
+// just to move one step sideways. The lateral move lives on the page now
+// (renderAreaTabs), scoped to the thing you are actually reading, so the
+// sidebar only has to answer "which part of the desk am I in".
 function buildNav(){
   const nav=$("sbNav"); nav.innerHTML="";
   NAV.forEach(area=>{
     const wrap=document.createElement("div"); wrap.className="nav-area";
-    const single=area.panels.length===1;
     const btn=document.createElement("button");
     btn.className="nav-area-btn"; btn.dataset.area=area.id; btn.type="button";
-    if(!single) btn.setAttribute("aria-expanded","false");
+    // The panels stay in the accessible name even though only the area shows —
+    // panel names are how people look for things, and the tabs reveal them on
+    // arrival.
+    btn.setAttribute("aria-label",area.label+" — "+area.panels.map(p=>p.label).join(", "));
     btn.innerHTML='<span class="nav-area-ic">'+NICON[area.icon]+'</span>'
-      +'<span class="nav-area-label">'+area.label+'</span>'
-      +(single?'':'<span class="nav-chevron">'+NICON.chevron+'</span>');
-    btn.addEventListener("click",()=>{ if(single) openPanel(area.panels[0].id); else toggleArea(area.id); });
+      +'<span class="nav-area-label">'+area.label+'</span>';
+    btn.addEventListener("click",()=>openPanel(area.panels[0].id));
     wrap.appendChild(btn);
-    if(!single){
-      const sub=document.createElement("div"); sub.className="nav-sub"; sub.dataset.sub=area.id;
-      area.panels.forEach(p=>{
-        const sb2=document.createElement("button");
-        sb2.className="nav-sub-btn"; sb2.dataset.panel=p.id; sb2.type="button";
-        sb2.innerHTML="<span>"+p.label+"</span>";
-        sb2.addEventListener("click",()=>openPanel(p.id));
-        sub.appendChild(sb2);
-      });
-      wrap.appendChild(sub);
-    }
     nav.appendChild(wrap);
   });
+}
+
+// ── Area tabs: the lateral move, on the page rather than in the sidebar ──
+// One node, relocated into whichever page is active. A single-panel area gets
+// no strip at all — one tab is furniture.
+function renderAreaTabs(){
+  let tabs=$("areaTabs");
+  if(!tabs){
+    tabs=document.createElement("nav");
+    tabs.id="areaTabs"; tabs.className="area-tabs";
+    tabs.setAttribute("aria-label","Views in this area");
+    tabs.addEventListener("click",e=>{
+      const b=e.target.closest("[data-panel]"); if(b) openPanel(b.dataset.panel);
+    });
+  }
+  const area=NAV.find(a=>a.id===PANELMAP[currentPanel].areaId);
+  const head=document.querySelector("#"+currentPanel+" .page-head");
+  if(!area||!head||area.panels.length<2){ tabs.remove(); return; }
+  tabs.innerHTML=area.panels.map(p=>
+    '<button class="area-tab'+(p.id===currentPanel?" on":"")+'" type="button" data-panel="'+p.id+'"'+
+    (p.id===currentPanel?' aria-current="page"':'')+'>'+p.label+'</button>').join("");
+  head.insertAdjacentElement("afterend",tabs);
 }
 function buildBottomNav(){
   const bn=$("bottomNav"); bn.innerHTML="";
@@ -1567,30 +1635,34 @@ function buildBottomNav(){
     bn.appendChild(item);
   });
 }
-function toggleArea(areaId){ expandedArea=(expandedArea===areaId)?null:areaId; syncNav(); }
-function openPanel(panelId){
-  currentPanel=panelId; expandedArea=PANELMAP[panelId].areaId;
+function openPanel(panelId,opts){
+  // Read the view from the id AS TYPED, before the alias resolves — that is the
+  // whole point: #p=allplayers and #p=players land on the same panel and must
+  // still open on different views of it.
+  //
+  // keepView is for a caller that has ALREADY chosen a view — a ⌘K lens entry,
+  // a link that points at one. Without it the destination's own default wins
+  // and every such link silently lands on the season table, which is the exact
+  // bug this argument exists to prevent.
+  if(PANEL_VIEW[panelId]&&!(opts&&opts.keepView)) dkSetView(PANEL_VIEW[panelId]);
+  panelId=resolvePanel(panelId);
+  if(!PANELMAP[panelId]) panelId="panel-gameweek";
+  currentPanel=panelId;
   document.querySelectorAll(".page").forEach(s=>s.classList.toggle("active",s.id===panelId));
   $("tbArea").textContent=PANELMAP[panelId].areaLabel;
   $("tbTitle").textContent=PANELMAP[panelId].label;
   // Re-render the gameweek view on entry so the watchlist dashboard reflects
   // stars set on other tabs.
   if(panelId==="panel-gameweek"&&typeof renderGameweek==="function") renderGameweek();
-  if(panelId==="panel-allplayers"&&typeof renderAllPlayers==="function") renderAllPlayers();
+  if(panelId==="panel-players") dkRender();
+  renderAreaTabs();
   syncNav(); closeSidebar(); window.scrollTo({top:0});
   writeHash();
 }
 function syncNav(){
   const activeArea=PANELMAP[currentPanel].areaId;
   document.querySelectorAll(".nav-area-btn").forEach(btn=>{
-    const a=btn.dataset.area;
-    btn.classList.toggle("expanded",a===expandedArea);
-    btn.classList.toggle("active",a===activeArea);
-    if(btn.hasAttribute("aria-expanded")) btn.setAttribute("aria-expanded",a===expandedArea?"true":"false");
-  });
-  document.querySelectorAll(".nav-sub").forEach(sub=>sub.classList.toggle("open",sub.dataset.sub===expandedArea));
-  document.querySelectorAll(".nav-sub-btn").forEach(btn=>{
-    const on=btn.dataset.panel===currentPanel;
+    const on=btn.dataset.area===activeArea;
     btn.classList.toggle("active",on);
     if(on) btn.setAttribute("aria-current","page"); else btn.removeAttribute("aria-current");
   });
@@ -1609,7 +1681,11 @@ let HASH_READY=false, PENDING_GW=null;
 function writeHash(){
   if(!HASH_READY) return;
   const q=new URLSearchParams();
-  if(currentPanel!=="panel-gameweek") q.set("p",currentPanel.replace(/^panel-/,""));
+  // The hub records which view is showing, not just which panel — a shared
+  // link to the all-players list has to come back to the all-players list.
+  const pkey=(currentPanel==="panel-players"&&DK_VIEW==="all")?"allplayers"
+    :currentPanel.replace(/^panel-/,"");
+  if(currentPanel!=="panel-gameweek") q.set("p",pkey);
   const cf=$("clubFilter").value, pf=$("posFilter").value, s=$("search").value.trim();
   if(cf!=="all") q.set("club",cf);
   if(pf!=="all") q.set("pos",pf);
@@ -1631,7 +1707,7 @@ function applyHash(){
   if(q.get("watch")==="1") $("watchOnly").checked=true;
   PENDING_GW=q.get("gw"); // applied once the fixtures list has loaded
   const panel="panel-"+(q.get("p")||"gameweek");
-  if(PANELMAP[panel]) openPanel(panel);
+  if(PANELMAP[resolvePanel(panel)]) openPanel(panel);
 }
 // Following a link that only changes the hash doesn't reload the page, so
 // re-apply the state (writeHash uses replaceState and never re-triggers this).
@@ -1657,6 +1733,10 @@ function fillApClubFilter(){
 ["apSearch","apClub","apPos","apHide"].forEach(id=>{ const el=$(id); if(el) el.addEventListener("input",()=>{ apShown=AP_PAGE; renderAllPlayers(); }); });
 $("apCsvBtn").addEventListener("click",exportAllPlayersCSV);
 document.querySelectorAll("#apViewSeg [data-apview]").forEach(b=>b.addEventListener("click",()=>setApView(b.dataset.apview)));
+document.querySelectorAll("#dkViews [data-dkview]").forEach(b=>b.addEventListener("click",()=>{
+  if(b.dataset.dkview===DK_VIEW) return;
+  dkSetView(b.dataset.dkview); dkRender(); writeHash();
+}));
 $("apMoreBtn").addEventListener("click",()=>{ apShown+=AP_PAGE; renderAllPlayers(); });
 // A card opens the player's profile when he matched the baked risk set.
 $("apCards").addEventListener("click",e=>{ const c=e.target.closest(".ap-card[data-appk]"); if(c) openPlayerProfile(c.dataset.appk); });
@@ -2869,6 +2949,12 @@ function cmdkItems(q){
     out.push({label:p.label,sub:p.areaLabel,icon:"view",run:()=>openPanel(id),
       score:q?cmdkScore(p.label,q)*2+cmdkScore(p.areaLabel,q):1.4});
   });
+  DK_VIEWS.forEach(v=>{
+    if(v.id==="season") return;   // that IS the panel, already listed above
+    out.push({label:v.label,sub:"Desk · view",icon:"view",
+      run:()=>{ dkSetView(v.id); openPanel("panel-players",{keepView:true}); },
+      score:q?cmdkScore(v.label,q)*2:1.2});
+  });
   const verbs=[
     {label:"Toggle light / dark theme",sub:"action",icon:"action",run:cmdkToggleTheme},
     {label:"Export current view as CSV",sub:"action",icon:"action",run:()=>{ openPanel("panel-players"); exportCSV(); }},
@@ -2940,7 +3026,7 @@ function initKeys(){
     if(!kbd.hidden)return;
     if(_pendingG&&Date.now()-_pendingG<900){
       const id=G_CHORDS[e.key.toLowerCase()]; _pendingG=0;
-      if(id&&PANELMAP[id]){ e.preventDefault(); openPanel(id); }
+      if(id&&PANELMAP[resolvePanel(id)]){ e.preventDefault(); openPanel(id); }
       return;
     }
     if(e.key.toLowerCase()==="g"){ _pendingG=Date.now(); return; }
