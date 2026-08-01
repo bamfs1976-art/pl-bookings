@@ -14,13 +14,51 @@ vm.createContext(ctx);
 vm.runInContext(dataSrc + '\n;({CLUBS, PL_PLAYERS, REFS})', ctx);
 const { CLUBS, PL_PLAYERS, REFS } = vm.runInContext('({CLUBS, PL_PLAYERS, REFS})', ctx);
 
-assert.ok(Array.isArray(PL_PLAYERS) && PL_PLAYERS.length >= 400,
-  `expected >=400 players in data/pl_data.js, got ${PL_PLAYERS && PL_PLAYERS.length}`);
+// Tightened 2026-08-01. The old ">=400 players, >=1 EFL row" was loose enough
+// to hide a real hole. Note the "528 players / 72 EFL" figure in AUDIT.md was
+// never real: those 72 rows were 6 unique forwards repeated 12x each, and the
+// de-dup in 6ffde1e correctly collapsed them to 6. So the promoted clubs have
+// never had a defender or midfielder in this dataset — a count assert alone
+// can't see that, which is why the per-club and per-position floors below are
+// the load-bearing ones.
+assert.ok(Array.isArray(PL_PLAYERS) && PL_PLAYERS.length >= 450,
+  `expected >=450 players in data/pl_data.js, got ${PL_PLAYERS && PL_PLAYERS.length} — re-run the harvest (data/harvest.py + build_pl_data.py)`);
 assert.equal(CLUBS.length, 20, `expected 20 clubs, got ${CLUBS.length}`);
 assert.ok(Array.isArray(REFS) && REFS.length >= 10,
   `expected >=10 referees, got ${REFS && REFS.length}`);
 const efl = PL_PLAYERS.filter((p) => p.b === 'EFL').length;
-assert.ok(efl >= 1, `expected at least one promoted-club (EFL) row, got ${efl}`);
+assert.ok(efl >= 40,
+  `expected >=40 promoted-club (EFL) player rows, got ${efl} — the Championship harvest has not landed`);
+
+// The one that actually bites: a squad can only go missing club by club, and
+// a club with a handful of rows is worse than useless in a risk table — it
+// silently under-rates exactly the defenders and holding midfielders the
+// promoted sides are picked for.
+const squads = new Map();
+for (const p of PL_PLAYERS) squads.set(p.c, (squads.get(p.c) || 0) + 1);
+const thin = [...squads.entries()].filter(([, n]) => n < 15).sort((a, b) => a[1] - b[1]);
+assert.equal(thin.length, 0,
+  `clubs with under 15 players in data/pl_data.js: ${thin.map(([c, n]) => `${c} (${n})`).join(', ')} — ` +
+  `the harvest is incomplete; every club needs a full squad before this ships`);
+const missingClub = CLUBS.filter((c) => !squads.has(c.short)).map((c) => c.short);
+assert.equal(missingClub.length, 0,
+  `clubs with no players at all: ${missingClub.join(', ')}`);
+
+// A squad of only forwards is a harvest that half-failed. Bookings come from
+// defenders and holding midfielders, so a club with no DF/MF row is actively
+// misleading in a card-risk table, not merely incomplete.
+const shapeless = [];
+for (const c of CLUBS) {
+  const squad = PL_PLAYERS.filter((p) => p.c === c.short);
+  if (!squad.length) continue;
+  const positions = new Set(squad.map((p) => p.p));
+  if (!positions.has('DF') || !positions.has('MF')) {
+    shapeless.push(`${c.short} (${[...positions].join('/') || 'none'})`);
+  }
+}
+assert.equal(shapeless.length, 0,
+  `clubs with no defenders or midfielders: ${shapeless.join(', ')} — ` +
+  `a forwards-only squad under-rates exactly the players who collect cards`);
 
 // No duplicate (club, name) rows — a repeated player in a prediction product
 // reads as a data bug and erodes trust. The generator de-dupes; this guards
