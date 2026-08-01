@@ -121,10 +121,13 @@ Calibration check across all 272 possible pairings:
 
 | Metric | Model | Reality |
 |---|---|---|
-| Expected cards per match | **4.10** | ~4.0–4.3 |
+| Expected cards per match | **4.10**, 4.15 once venue lands | ~4.0–4.3 |
 | O4.5 on an average fixture | 42–47% | broadly market range |
 | Both teams carded | 74–82% | ~75–80% |
-| Away vs home expected | 2.59 vs 1.91 | away bias, correct direction |
+| Away vs home, league mean | 2.18 vs 1.97 | away bias, correct direction |
+
+(Figures are league means across all 272 pairings. An individual fixture
+spreads much wider — a derby prices near 4.5 with the away side at 2.6.)
 
 Independence is the honest limit — cards cluster, so the far tails run thin.
 Stated in the Guide rather than fudged. 14 new unit tests.
@@ -139,6 +142,42 @@ themes, lowest measured 4.95:1.
 A free-text note per player on the profile, stored beside the watchlist,
 debounced, capped at 500 characters, cleared when blank. A starred player
 without the reason you starred him is half a note.
+
+### Head-to-head card history — from `card-bookings-bot`
+
+Average yellows in past meetings between the two clubs, on the market strip
+beside the model's number. Built by `scripts/build-h2h.mjs` from the same
+public-domain football-data.co.uk records already used for referees and venue
+splits — 1,118 meetings across 151 club pairs over five seasons, no new source
+and no key.
+
+Counts **yellows only**, matching what the fixture model counts (players
+booked), so the two are directly comparable. Pairs with under three meetings
+show nothing.
+
+Two results worth keeping:
+
+- The history's league average is **4.0 yellows a meeting** against the
+  model's 4.10 expected cards. Two unrelated methods landing in the same
+  place is the strongest evidence yet that the minutes weighting is right.
+- They disagree by **0.61 cards on average and by a full card in 19%** of
+  fixtures. So the cell is neither noise nor a restatement — it earns its
+  space, and divergence of a card or more is highlighted.
+
+### Venue factor per player — from the forecast branch
+
+Away sides are carded more, in every season on record. Fixture heat already
+reflected it; the per-player number now does too, ×0.95 home and ×1.08 away.
+League expected cards moves 4.10 → 4.15, still inside the real band, and opens
+a 0.20-card gap between the sides, which is the size the record shows.
+
+Alongside it, `cardLambda` / `pCardFromLambda` / `chaseFactor` land as a
+tested foundation for the full hazard model, running beside the shipped
+logistic mapping rather than replacing it. Two bugs the tests caught and worth
+remembering: `Number(null)` is `0`, so a missing simulator input read as a
+certain loss and marked up every unwired fixture; and `1 - exp(-λ)` rounds to
+exactly `1` past λ≈37, which would have handed the value layer fair odds of
+1.00 and an infinite implied edge.
 
 ### Calendar export — from `sportsfinder-uk`
 
@@ -162,7 +201,8 @@ desk is downstream of this being right.
 
 ### 2. Port the rest of the forecast-branch model
 
-The minutes weighting landed. The rest has not:
+Minutes weighting, the venue factor and the hazard functions have landed. The
+rest has not:
 
 ```
 lambda  = yellows/90 (blended, shrunk) x expected minutes/90
@@ -170,22 +210,17 @@ lambda  = yellows/90 (blended, shrunk) x expected minutes/90
 P(card) = 1 - exp(-lambda)
 ```
 
-`main` maps a risk score through a logistic curve. The hazard form handles
-minutes explicitly and composes the match factors multiplicatively, which is
-the more defensible structure. Also on that branch and worth taking: blending
-current season with last season capped at 900 minutes of evidence, confirmed
-lineups near kick-off, and freezing forecasts before kick-off so they are
-scored honestly afterwards.
+`main` still maps a risk score through a logistic curve on every displayed
+row. The hazard form is now available beside it but does not drive the
+numbers, because swapping what every row shows should follow a backtest, not
+a refactor. `scripts/backtest.mjs` already exists to do that.
 
-### 3. Head-to-head card history — from `card-bookings-bot`
+Also on that branch and worth taking: blending current season with last season
+capped at 900 minutes of evidence, expected minutes from real appearance data,
+confirmed lineups near kick-off, and freezing forecasts before kick-off so
+they are scored honestly afterwards.
 
-Average cards in past meetings between the two clubs, plus an O/U 4.5 call
-from history to sit beside the model's number. Computable from the
-football-data.co.uk records **already downloaded** for the referee build
-(`data/build_refs.py`), so it needs no new source and no key. Cheapest real
-signal still on the table.
-
-### 4. Web push — from `gameweek-edge`
+### 3. Web push — from `gameweek-edge`
 
 Deferred in `IMPLEMENTATION_NOTES.md` as needing server infrastructure. It
 exists: `push-key`, `push-subscribe`, `push-unsubscribe`, `push-cron`, VAPID
@@ -195,7 +230,7 @@ published for a watchlisted player* and *one card from a ban*.
 
 Needs `VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`, `VAPID_SUBJECT`.
 
-### 5. Game-state and close-game factors — from `Plsimulator`
+### 4. Game-state and close-game factors — from `Plsimulator`
 
 The forecast branch defines the integration point and nothing feeds it. Export
 per-fixture win probabilities to `pipeline/sources/sim_predictions.json` and a
@@ -210,7 +245,7 @@ Also worth taking: its walk-forward backtest scores against **market closing
 odds** (RPS 0.2068 vs the market's 0.1994). The desk's calibration loop scores
 against a base rate, which is a much easier benchmark.
 
-### 6. Charts
+### 5. Charts
 
 There is one sparkline in the entire app and no other visualisation.
 `Gavin-Roche/premier_league_statistics_analyzer` is a small Plotly study of
@@ -218,13 +253,13 @@ exactly this data. Three that would earn their space: a club × referee card
 heatmap, the reliability curve the calibration loop already computes as a
 table, and per-player card form.
 
-### 7. Table virtualisation
+### 6. Table virtualisation
 
 All Players renders every registered player across 20 clubs from the live
 feed. No virtualisation, and the season table historically truncated at 400
 rows. It will get slow in season.
 
-### 8. Broadcaster line and onboarding
+### 7. Broadcaster line and onboarding
 
 Both from `sportsfinder-uk`. The broadcaster rights table is a maintained JSON
 map of fixture → channel, which is real ongoing work rather than a code
@@ -232,7 +267,7 @@ change, so it is listed rather than started. The three-step onboarding wizard
 (pick your clubs and players) would seed the watchlist — today a new user
 lands on an empty card.
 
-### 9. Platform patterns from `gameweek-edge`
+### 8. Platform patterns from `gameweek-edge`
 
 - The capability registry (`GAMES` / `NAV` with `needs:`) — panels that need
   live data would disappear pre-season instead of showing zeros.
