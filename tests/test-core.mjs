@@ -313,6 +313,62 @@ t('decay defaults to 0.97 and clamps degenerate inputs', () => {
   assert.equal(core.recencyWeight(-3, 0.9), 1);                 // future/neg clamps to 0 ago
 });
 
+/* ---- hazard model (forecast-branch structure) ---- */
+console.log('hazard model');
+t('venue factor prices away above home, neutral when unknown', () => {
+  assert.equal(core.venueFactor(true), core.HOME_FACTOR);
+  assert.equal(core.venueFactor(false), core.AWAY_FACTOR);
+  assert.equal(core.venueFactor(null), 1);
+  assert.ok(core.AWAY_FACTOR > core.HOME_FACTOR, 'away sides are carded more');
+});
+t('chase factor lifts underdogs, damps favourites, clamps hard', () => {
+  assert.equal(core.chaseFactor(0.5), 1);                    // even game, neutral
+  assert.ok(core.chaseFactor(0.1) > 1, 'a heavy underdog chases');
+  assert.ok(core.chaseFactor(0.9) < 1, 'a heavy favourite does not');
+  assert.ok(core.chaseFactor(0) <= 1.20 && core.chaseFactor(1) >= 0.85, 'clamped');
+  assert.equal(core.chaseFactor(1.5), 1);                    // nonsense input
+  // Number(null) and Number('') are both 0, which would read a missing
+  // simulator input as a certain loss and mark up every unwired fixture.
+  assert.equal(core.chaseFactor(null), 1);
+  assert.equal(core.chaseFactor(undefined), 1);
+  assert.equal(core.chaseFactor(''), 1);
+  assert.equal(core.chaseFactor(false), 1);
+});
+t('card lambda scales with rate, minutes and every factor', () => {
+  const base = core.cardLambda(0.3, 90);
+  assert.ok(Math.abs(base - 0.3) < 1e-12, `full 90 at 0.3/90 is 0.3, got ${base}`);
+  assert.ok(Math.abs(core.cardLambda(0.3, 45) - 0.15) < 1e-12, 'half the minutes, half the risk');
+  const withRef = core.cardLambda(0.3, 90, { ref: 1.2 });
+  assert.ok(Math.abs(withRef - 0.36) < 1e-12, `got ${withRef}`);
+  // factors compose multiplicatively
+  const all = core.cardLambda(0.3, 90, { ref: 1.2, venue: 1.08, derby: 1.15 });
+  assert.ok(Math.abs(all - 0.3 * 1.2 * 1.08 * 1.15) < 1e-12, `got ${all}`);
+  // missing/degenerate factors are ignored, not treated as zero
+  assert.equal(core.cardLambda(0.3, 90, { ref: null, venue: 0 }), 0.3);
+  assert.equal(core.cardLambda(-1, 90), null);
+  assert.equal(core.cardLambda(0.3, 0), null);
+});
+t('p(card) from lambda stays in [0,1) and is monotonic', () => {
+  assert.equal(core.pCardFromLambda(0), 0);
+  const a = core.pCardFromLambda(0.2), b = core.pCardFromLambda(0.5), c = core.pCardFromLambda(3);
+  assert.ok(a < b && b < c, 'monotonic in lambda');
+  assert.ok(c < 1, 'can never reach certainty');
+  // 1 - exp(-l) rounds to exactly 1 past l ~= 37, which would give the
+  // value layer fair odds of 1.00 and an infinite edge. Capped below that.
+  assert.ok(core.pCardFromLambda(50) < 1, 'never returns exact certainty');
+  assert.ok(core.fairOdds(core.pCardFromLambda(50)) > 1, 'fair odds stay above evens');
+  // a small lambda approximates itself, the sanity check of the form
+  assert.ok(Math.abs(core.pCardFromLambda(0.01) - 0.01) < 1e-4);
+  assert.equal(core.pCardFromLambda(-1), null);
+});
+t('venue reaches contextProb without disturbing the neutral case', () => {
+  const base = 0.2;
+  assert.equal(core.contextProb(base, 1, 1, 1), core.contextProb(base, 1, 1));
+  const home = core.contextProb(base, 1, 1, core.venueFactor(true));
+  const away = core.contextProb(base, 1, 1, core.venueFactor(false));
+  assert.ok(away > base && base > home, `expected ${home} < ${base} < ${away}`);
+});
+
 /* ---- team card markets (Poisson-binomial) ---- */
 console.log('teamCardMarkets');
 t('card count distribution is exact and sums to 1', () => {

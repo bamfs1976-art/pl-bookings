@@ -131,11 +131,72 @@
     const o = (p / (1 - p)) * f;
     return o / (1 + o);
   }
-  function contextProb(baseP, refFactor, derbyFactor) {
+  function contextProb(baseP, refFactor, derbyFactor, venueFactorV) {
     if (baseP == null) return null;
     let p = scaleOdds(baseP, refFactor == null ? 1 : refFactor);
     p = scaleOdds(p, derbyFactor == null ? 1 : derbyFactor);
+    p = scaleOdds(p, venueFactorV == null ? 1 : venueFactorV);
     return Math.min(0.95, Math.max(0.005, p));
+  }
+
+  /* ---- venue ----
+     Away sides collect more cards than home sides, consistently and across
+     every season in the record. The desk already applies this at fixture
+     level through the home/away cards-against split; these are the
+     per-player equivalents, taken from the forecast branch's model.py. */
+  const HOME_FACTOR = 0.95, AWAY_FACTOR = 1.08;
+  function venueFactor(isHome) {
+    if (isHome == null) return 1;
+    return isHome ? HOME_FACTOR : AWAY_FACTOR;
+  }
+
+  /* ---- game state (chase) ----
+     A side being outplayed chases the game and fouls tactically; a
+     comfortable favourite does not. Fed by a simulator's win probability
+     (Plsimulator exports these). Neutral at 1.0 when nothing is supplied,
+     so it is inert until wired. Clamped hard — this is a nudge, not a
+     re-rating. */
+  const CHASE_SLOPE = 0.30, CHASE_MIN = 0.85, CHASE_MAX = 1.20;
+  function chaseFactor(winProb) {
+    /* Guard the value before coercing: Number(null) and Number('') are both
+       0, which would read "no simulator input" as "certain to lose" and
+       quietly mark up every unwired fixture. */
+    if (winProb == null || winProb === '' || typeof winProb === 'boolean') return 1;
+    const w = Number(winProb);
+    if (!isFinite(w) || w < 0 || w > 1) return 1;
+    return Math.min(CHASE_MAX, Math.max(CHASE_MIN, 1 + (0.5 - w) * CHASE_SLOPE));
+  }
+
+  /* ---- hazard form of the card forecast ----
+     lambda = yellows/90 x (expected minutes / 90) x every match factor,
+     P(card) = 1 - exp(-lambda).
+
+     This is the forecast branch's structure and it is the more defensible
+     one: minutes enter explicitly rather than being buried in a season
+     average, the factors compose multiplicatively on the rate rather than
+     on an already-squashed probability, and the exponential cannot leave
+     [0,1) however large lambda gets.
+
+     It runs alongside the shipped logistic mapping rather than replacing
+     it — swapping the number every row displays is a decision for a
+     backtest, not a refactor. Surfaced as a cross-check today. */
+  function cardLambda(y90, expMin, factors) {
+    const y = Number(y90), m = Number(expMin);
+    if (!isFinite(y) || y < 0 || !isFinite(m) || m <= 0) return null;
+    const f = factors || {};
+    const mul = [f.ref, f.venue, f.derby, f.opponent, f.chase]
+      .reduce((acc, v) => acc * (isFinite(Number(v)) && Number(v) > 0 ? Number(v) : 1), 1);
+    return y * (m / 90) * mul;
+  }
+  function pCardFromLambda(lam) {
+    const l = Number(lam);
+    if (!isFinite(l) || l < 0) return null;
+    /* Capped just below certainty. Past lambda ~37 the exponential
+       underflows and 1 - exp(-l) rounds to exactly 1, which would hand the
+       value layer a fair price of 1.00 and an infinite implied edge. No
+       real player gets near it — lambda 7 is already 0.999 — so the cap
+       only ever catches a bad input. */
+    return Math.min(0.999, 1 - Math.exp(-l));
   }
 
   /* ---- Tier 1c: calibration metrics ----
@@ -357,6 +418,8 @@
     riskScore, normName, pickPL, summarisePicks, calibrate, impliedProb, fairOdds, edgePct, LOGISTIC_SLOPE,
     cardCountDist, probOverCards, expectedCards, probBothCarded, teamCardMarkets,
     minuteWeights, matchLambdas,
+    venueFactor, chaseFactor, cardLambda, pCardFromLambda,
+    HOME_FACTOR, AWAY_FACTOR,
     shrinkRate, logit, invLogit, scaleOdds, contextProb,
     brier, logLoss, reliability, glmProb,
     gammaln, expectedFouls, nbTailProb, cardProbFromFouls, recencyWeight, refCardFactor,
