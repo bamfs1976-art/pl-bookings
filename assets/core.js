@@ -248,8 +248,115 @@
     return Math.pow(d, g);
   }
 
+  /* ---- team card markets ----
+     The desk prices individual players, but the liquid card markets are
+     team-level: total cards over/under, and both teams to be carded. Both
+     fall straight out of the per-player probabilities we already compute.
+
+     Each player is one Bernoulli trial (booked or not) with his own p, so
+     the number of cards in a match is Poisson-binomial. That has an exact
+     distribution — no simulation needed — built by folding one player in at
+     a time: after each player the array holds P(exactly k cards so far).
+     n players cost O(n^2), which at ~30 rated players a side is nothing.
+
+     The independence assumption is the honest limit: cards cluster (a
+     flashpoint books two players at once), so the tails are slightly
+     thinner than reality. Stated in the Guide rather than fudged. */
+  /* Expected-minutes weights for a squad.
+     A player's implied P(card) is P(booked | he plays 90). Summing that over
+     a 25-man squad prices a match with 50 players on the pitch, which is how
+     you end up quoting 9 expected cards instead of 4. Only 11 a side start,
+     so each player's chance is weighted by the share of the team's minutes
+     he actually takes: w_i = min_i / Σmin × 11, capped at 1.
+
+     Normalising within the squad rather than dividing by a fixed season
+     length keeps it honest for the promoted clubs, whose minutes come from a
+     46-game Championship season, and for any partial harvest.
+
+     This is the minutes-aware correction the forecast branch applies as
+     `expected minutes / 90`, in the form the shipped data can support. */
+  function minuteWeights(mins, xi) {
+    const n = (xi == null) ? 11 : Number(xi);
+    const list = (Array.isArray(mins) ? mins : []).map((m) => {
+      const v = Number(m);
+      return isFinite(v) && v > 0 ? v : 0;
+    });
+    const total = list.reduce((s, v) => s + v, 0);
+    if (!(total > 0)) return list.map(() => 0);
+    return list.map((v) => Math.min(1, (v / total) * n));
+  }
+
+  /* Per-player card chances for a side, scaled to expected minutes. */
+  function matchLambdas(probs, mins, xi) {
+    const w = minuteWeights(mins, xi);
+    return (Array.isArray(probs) ? probs : []).map((p, i) => {
+      const v = Number(p);
+      return isFinite(v) && v > 0 ? Math.min(0.999, v) * (w[i] || 0) : 0;
+    });
+  }
+
+  function cardCountDist(ps) {
+    const list = (Array.isArray(ps) ? ps : [])
+      .map(Number)
+      .filter((p) => isFinite(p) && p > 0)
+      .map((p) => Math.min(0.999, p));
+    let dist = [1];
+    for (const p of list) {
+      const next = new Array(dist.length + 1).fill(0);
+      for (let k = 0; k < dist.length; k++) {
+        next[k] += dist[k] * (1 - p);
+        next[k + 1] += dist[k] * p;
+      }
+      dist = next;
+    }
+    return dist;
+  }
+
+  /* P(total cards > line). Lines are the market's .5 values, so "over 4.5"
+     means 5 or more; a whole number is treated as strictly greater. */
+  function probOverCards(ps, line) {
+    const dist = cardCountDist(ps);
+    const need = Math.floor(Number(line) || 0) + 1;
+    let acc = 0;
+    for (let k = need; k < dist.length; k++) acc += dist[k];
+    return Math.min(1, Math.max(0, acc));
+  }
+
+  function expectedCards(ps) {
+    return (Array.isArray(ps) ? ps : [])
+      .map(Number)
+      .filter((p) => isFinite(p) && p > 0)
+      .reduce((s, p) => s + Math.min(0.999, p), 0);
+  }
+
+  /* Both teams carded: neither side gets through clean. */
+  function probBothCarded(homePs, awayPs) {
+    const clean = (ps) => (Array.isArray(ps) ? ps : [])
+      .map(Number)
+      .filter((p) => isFinite(p) && p > 0)
+      .reduce((acc, p) => acc * (1 - Math.min(0.999, p)), 1);
+    return Math.min(1, Math.max(0, (1 - clean(homePs)) * (1 - clean(awayPs))));
+  }
+
+  /* One call for a fixture: the whole team-card board. */
+  function teamCardMarkets(homePs, awayPs, lines) {
+    const all = [].concat(homePs || [], awayPs || []);
+    const ls = (Array.isArray(lines) && lines.length) ? lines : [3.5, 4.5, 5.5];
+    const over = {};
+    for (const l of ls) over[l] = probOverCards(all, l);
+    return {
+      expected: Math.round(expectedCards(all) * 100) / 100,
+      expectedHome: Math.round(expectedCards(homePs) * 100) / 100,
+      expectedAway: Math.round(expectedCards(awayPs) * 100) / 100,
+      over,
+      bothCarded: probBothCarded(homePs, awayPs),
+    };
+  }
+
   const PLDCore = {
     riskScore, normName, pickPL, summarisePicks, calibrate, impliedProb, fairOdds, edgePct, LOGISTIC_SLOPE,
+    cardCountDist, probOverCards, expectedCards, probBothCarded, teamCardMarkets,
+    minuteWeights, matchLambdas,
     shrinkRate, logit, invLogit, scaleOdds, contextProb,
     brier, logLoss, reliability, glmProb,
     gammaln, expectedFouls, nbTailProb, cardProbFromFouls, recencyWeight, refCardFactor,

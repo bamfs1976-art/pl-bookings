@@ -313,4 +313,81 @@ t('decay defaults to 0.97 and clamps degenerate inputs', () => {
   assert.equal(core.recencyWeight(-3, 0.9), 1);                 // future/neg clamps to 0 ago
 });
 
+/* ---- team card markets (Poisson-binomial) ---- */
+console.log('teamCardMarkets');
+t('card count distribution is exact and sums to 1', () => {
+  const d = core.cardCountDist([0.5, 0.5]);
+  assert.equal(d.length, 3);
+  assert.ok(Math.abs(d[0] - 0.25) < 1e-12);   // neither booked
+  assert.ok(Math.abs(d[1] - 0.50) < 1e-12);   // exactly one
+  assert.ok(Math.abs(d[2] - 0.25) < 1e-12);   // both
+  const big = core.cardCountDist([0.1, 0.2, 0.3, 0.4, 0.5, 0.6]);
+  assert.ok(Math.abs(big.reduce((a, b) => a + b, 0) - 1) < 1e-12);
+});
+t('probOverCards matches a hand-computed case', () => {
+  // three players at 0.5: P(0)=1/8, P(1)=3/8, P(2)=3/8, P(3)=1/8
+  const ps = [0.5, 0.5, 0.5];
+  assert.ok(Math.abs(core.probOverCards(ps, 0.5) - 7 / 8) < 1e-12);  // 1 or more
+  assert.ok(Math.abs(core.probOverCards(ps, 1.5) - 4 / 8) < 1e-12);  // 2 or more
+  assert.ok(Math.abs(core.probOverCards(ps, 2.5) - 1 / 8) < 1e-12);  // 3 or more
+  assert.equal(core.probOverCards(ps, 3.5), 0);                      // impossible
+});
+t('over-line probability is monotonically decreasing in the line', () => {
+  const ps = [0.4, 0.3, 0.25, 0.2, 0.18, 0.15, 0.12, 0.1];
+  const a = core.probOverCards(ps, 1.5), b = core.probOverCards(ps, 2.5), c = core.probOverCards(ps, 3.5);
+  assert.ok(a > b && b > c, `expected decreasing, got ${a} ${b} ${c}`);
+});
+t('expected cards is the sum of probabilities', () => {
+  assert.ok(Math.abs(core.expectedCards([0.25, 0.25, 0.5]) - 1) < 1e-12);
+  assert.equal(core.expectedCards([]), 0);
+  assert.equal(core.expectedCards(null), 0);
+});
+t('both teams carded is the product of each side not staying clean', () => {
+  // one player each at 0.5 -> 0.5 * 0.5
+  assert.ok(Math.abs(core.probBothCarded([0.5], [0.5]) - 0.25) < 1e-12);
+  // an empty side can never be carded
+  assert.equal(core.probBothCarded([0.5], []), 0);
+  assert.ok(core.probBothCarded([0.3, 0.3], [0.3, 0.3]) > core.probBothCarded([0.3], [0.3]));
+});
+t('teamCardMarkets assembles the board consistently', () => {
+  const home = [0.3, 0.25, 0.2], away = [0.28, 0.2, 0.15];
+  const m = core.teamCardMarkets(home, away);
+  assert.ok(Math.abs(m.expected - (m.expectedHome + m.expectedAway)) < 1e-9);
+  assert.ok(m.over[3.5] < m.over[4.5] === false);           // 4.5 must be the harder line
+  assert.ok(m.over[4.5] < m.over[3.5]);
+  assert.ok(m.bothCarded > 0 && m.bothCarded < 1);
+});
+t('minute weights spread an XI across the squad', () => {
+  const w = core.minuteWeights([3000, 3000, 3000, 300], 11);
+  const sum = w.reduce((a, b) => a + b, 0);
+  assert.ok(sum <= 11 + 1e-9, `weights should not exceed the XI, got ${sum}`);
+  assert.ok(w[0] > w[3], 'a regular starter must outweigh a fringe player');
+  assert.ok(w.every((v) => v >= 0 && v <= 1), 'no weight may exceed one full match');
+  // an even squad of 11 gives everyone a full match
+  const even = core.minuteWeights(new Array(11).fill(2000), 11);
+  assert.ok(even.every((v) => Math.abs(v - 1) < 1e-9), 'an even XI should each weight 1');
+});
+t('minute weights survive missing or zero minutes', () => {
+  assert.deepEqual(core.minuteWeights([], 11), []);
+  assert.deepEqual(core.minuteWeights([0, 0], 11), [0, 0]);
+  assert.ok(core.minuteWeights([null, 100], 11)[0] === 0);
+});
+t('expected cards land in a realistic range once minutes are applied', () => {
+  // 25-man squads, season-average P(card|90) about 0.19 each
+  const probs = new Array(25).fill(0.19);
+  const mins = new Array(25).fill(0).map((_, i) => (i < 11 ? 3000 : 600));
+  const side = core.matchLambdas(probs, mins, 11);
+  const m = core.teamCardMarkets(side, side);
+  assert.ok(m.expected > 2.5 && m.expected < 6,
+    `a match should price near the ~4-card league average, got ${m.expected}`);
+  assert.ok(m.over[4.5] > 0.1 && m.over[4.5] < 0.75,
+    `O4.5 should be a real market price, got ${m.over[4.5]}`);
+});
+t('degenerate inputs cannot produce NaN', () => {
+  const m = core.teamCardMarkets([null, undefined, NaN, -1], []);
+  assert.equal(m.expected, 0);
+  assert.equal(m.bothCarded, 0);
+  assert.ok(isFinite(m.over[4.5]));
+});
+
 console.log(`\n${passed} tests passed`);

@@ -36,6 +36,10 @@
     --text:#0c1322; --text-2:#586275; --text-3:#8b94a5; --border:#e3e7ee; --border-2:#d7dce6;
     --accent:#3d195b; --accent-2:#e90052; --on-accent:#ffffff;
     --danger:#dc2626; --warn:#d97706; --good:#16a34a; --info:#4f46e5;
+    /* Darker variants for small text on a light surface: the fill colours
+       above are tuned for badges and only reach ~2.9:1 as body text, under
+       the 4.5:1 WCAG 2.2 AA needs at these sizes. */
+    --danger-ink:#b91c1c; --warn-ink:#a35709; --good-ink:#15803d;
     --target:#16a34a; --mid:#d97706; --fade:#64748b; --efl:#7c3aed;
     --shadow-sm:0 1px 2px rgba(13,19,34,.06); --shadow:0 4px 16px -4px rgba(13,19,34,.12),0 1px 3px rgba(13,19,34,.06);
     --ring:rgba(61,25,91,.45);
@@ -45,6 +49,8 @@
     --text:#eef1f7; --text-2:#9aa6bb; --text-3:#6b7790; --border:#283248; --border-2:#33405a;
     --accent:#a78bfa; --accent-2:#ff2d7e; --on-accent:#160a24;
     --danger:#f87171; --warn:#fbbf24; --good:#34d399; --info:#a5b4fc;
+    /* On dark surfaces the base tokens already clear AA, so ink == fill. */
+    --danger-ink:#f87171; --warn-ink:#fbbf24; --good-ink:#34d399;
     --target:#34d399; --mid:#fbbf24; --fade:#94a3b8; --efl:#c4b5fd;
     --shadow-sm:0 1px 2px rgba(0,0,0,.4); --shadow:0 10px 30px -8px rgba(0,0,0,.55),0 2px 6px rgba(0,0,0,.4);
     --ring:rgba(167,139,250,.5);
@@ -302,6 +308,13 @@
   .heat-badge{font-family:var(--mono);font-weight:700;font-size:.82rem;padding:.14rem .48rem;border-radius:7px;background:var(--surface-3);color:var(--text-2);display:inline-block}
   .heat-badge.hot{background:color-mix(in srgb,var(--warn) 22%,transparent);color:var(--warn)}
   .fx-refrow{display:flex;align-items:center;gap:.5rem;padding:.4rem .85rem;border-bottom:1px solid var(--border)}
+  /* Team-card market strip: total cards and both-teams-carded per fixture */
+  .mk-strip{display:flex;align-items:center;gap:1.15rem;flex-wrap:wrap;padding:.45rem .85rem;
+            border-bottom:1px solid var(--border);background:var(--surface-2)}
+  .mk-cell{display:flex;flex-direction:column;gap:.05rem;line-height:1.15}
+  .mk-lab{font-family:var(--mono);font-size:.64rem;letter-spacing:.08em;color:var(--text-2);font-weight:700}
+  .mk-val{font-family:var(--mono);font-size:.86rem;font-weight:800;font-variant-numeric:tabular-nums;color:var(--text)}
+  .mk-note{font-family:var(--mono);font-size:.56rem;color:var(--text-3);align-self:center}
   .cand2{display:flex;align-items:center;gap:.7rem;padding:.55rem .85rem;border-top:1px solid var(--border);width:100%;text-align:left;background:none;border-left:0;border-right:0;border-bottom:0;color:inherit;font:inherit;cursor:pointer}
   .cand2:hover{background:var(--surface-2)}
   .cbadge{width:44px;height:38px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-weight:700;font-size:.64rem;flex:none;background:var(--surface-2);border:1px solid var(--border-2);color:var(--text-2)}
@@ -769,6 +782,10 @@
       <p>A referee's <strong>×factor</strong> now blends two measures. <strong>Yellows per game</strong> is the obvious one, but it's contaminated: an official shows more cards partly because the fixtures he draws are more foul-heavy. <strong>Cards per foul</strong> divides that out — how readily he reaches for the card given the same provocation. Because the desk already models each club's foul and card propensity separately, leaning on yellows per game alone double-counts the teams. The two ratios (each against the league average) are combined as a weighted geometric mean, equal weight by default, and clamped to ×0.75–×1.30 so no single official can swamp the model. Both columns are on the <strong>Referees</strong> tab; cards per foul carries its % difference from the league average. Where an official has no fouls data yet, the factor stays on yellows per game exactly as before. Fouls come from the same public football-data.co.uk match records as the card counts, so this adds no new data source.</p>
       <h3>Live data</h3>
       <p>The desk pulls the official FPL feed through its own proxy: the 2026-27 schedule for the Fixtures tab, each player's live yellow and red card count, and availability flags (injured, suspended, doubtful). Once a player has 450 minutes of 2026-27 football, his yellow rate in the risk score switches from last season's form to this season's live rate — rows carry a green dot when live rates are in use. If the feed is unreachable the desk falls back to the baked 2025-26 form and says so in the top bar. Player photos are the official cutouts from the same FPL feed; a player without one (pre-season, or unmatched) simply shows his club crest.</p>
+      <h3>Team card markets — total cards and both teams carded</h3>
+      <p>Each fixture card carries a market strip: <strong>EXP CARDS</strong> (the expected total in the match), <strong>O3.5</strong> and <strong>O4.5</strong> (the chance of 4+ and 5+ cards) and <strong>BTC</strong> (both teams carded — each side picks up at least one). These are the liquid card markets, and they fall out of the per-player numbers the desk already computes: every rated available player is one coin-flip with his own probability, so the match total follows a <em>Poisson-binomial</em> distribution, which has an exact answer — no simulation involved.</p>
+      <p>One correction matters. A player's percentage is his chance of a card <em>if he plays the full 90</em>, so simply adding up a 25-man squad would price a match with 50 players on the pitch — it returns about 9 expected cards instead of 4. Each player is therefore weighted by the share of his side's minutes he actually takes, scaled to an eleven. Across all 272 possible pairings in the shipped data the model averages <strong>4.1 cards a match</strong>, against a real Premier League average of roughly 4.0–4.3, and it prices away sides above home sides, which is the right direction.</p>
+      <p>The honest limit: the maths assumes players are booked independently, and they are not — a flashpoint books two at once, and a referee losing control books five. That makes the extreme tails slightly thin, so treat O5.5 and above as a floor rather than a price. Fixtures with fewer than twelve rated players are marked <em>thin sample</em>.</p>
       <h3>Matchup context</h3>
       <p>Derby fixtures — the recognised rivalries among the 20 clubs, North London to Tyne–Wear, plus the promoted clubs' regional rivalries — get a booking-heat boost and a 🔥 derby chip on the Fixtures tab, since rivalry games run hotter with the referee. Once at least two finished gameweeks have been recorded, the players table adds a small ▲ card-form trend beside the yellow count: cards picked up over the recent recorded window (up to the last five gameweeks). Booking heat is also venue-aware: each club's cards-against is split into home and away rates (football-data.co.uk match data — away sides consistently pick up more cards), so the same two clubs read differently at each ground. Each player now carries both <strong>fouls committed</strong> and <strong>fouls won</strong> per 90 (shown on the player profile, in the share cards and the CSV) — committed feeds the risk score today; fouls won is a new data slot that populates on the next ScoutingStats refresh (it isn't in the live FPL feed), and will sharpen opponent-aggression matchup calls once it's in.</p>
       <h3>Suspension watch</h3>
@@ -2545,6 +2562,39 @@ function gwCandidates(h,a,ref,derby){
     .filter(c=>c.prob!=null)
     .sort((x,y)=>y.prob-x.prob);
 }
+/* Team-card markets for a fixture. The desk prices players; the liquid
+   markets are team-level (total cards over/under, both teams carded), so
+   fold the per-player chances into a Poisson-binomial — see PLDCore. Uses
+   every rated available player on each side, not just the shown top few. */
+function teamCardBoard(h,a,ref,derby){
+  const cands=gwCandidates(h,a,ref,derby);
+  if(!cands.length) return null;
+  /* Each candidate's probability assumes he plays 90, so scale it by the
+     share of his side's minutes he actually takes — otherwise a 25-man
+     squad prices a match with 50 players on the pitch. */
+  const side=c=>{
+    const s=cands.filter(x=>x.p.c===c);
+    return PLDCore.matchLambdas(s.map(x=>x.prob),s.map(x=>x.p.min));
+  };
+  const board=PLDCore.teamCardMarkets(side(h),side(a),[3.5,4.5,5.5]);
+  board.thin=cands.length<12;   // too few rated players to trust the tails
+  return board;
+}
+function marketStripHtml(board){
+  if(!board) return "";
+  const pc=v=>Math.round(v*100)+"%";
+  const col=v=>v>=0.6?"var(--danger-ink)":v>=0.45?"var(--warn-ink)":"var(--text-2)";
+  const cell=(label,val,title)=>
+    `<div class="mk-cell" title="${esc(title)}"><span class="mk-lab">${label}</span>`+
+    `<span class="mk-val" style="color:${col(val)}">${pc(val)}</span></div>`;
+  return `<div class="mk-strip"${board.thin?' data-thin="1"':''}>
+    <div class="mk-cell"><span class="mk-lab">EXP CARDS</span><span class="mk-val">${board.expected.toFixed(1)}</span></div>
+    ${cell("O3.5",board.over[3.5],"Chance of 4 or more cards in the match")}
+    ${cell("O4.5",board.over[4.5],"Chance of 5 or more cards in the match")}
+    ${cell("BTC",board.bothCarded,"Both teams carded: each side picks up at least one")}
+    ${board.thin?'<span class="mk-note">thin sample</span>':''}
+  </div>`;
+}
 // Severity band from the fixture-aware probability (prototype language).
 function severity(prob){
   if(prob>=0.45) return {label:"Critical",col:"var(--danger)"};
@@ -2636,6 +2686,7 @@ function fixtureCardHtml(f,opts){
       </div>
     </div>
     <div class="fx-refrow">${refSelect(f.id)}${refDelta}</div>
+    ${marketStripHtml(teamCardBoard(h,a,ref,derby))}
     ${body}
     <div class="fx-foot"><button class="fx-share" data-share-fid="${f.id}" type="button" title="Download a shareable card of this match">⬇ Share match</button></div>
   </div>`;
