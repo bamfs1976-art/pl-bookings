@@ -931,7 +931,7 @@ const CLUBMAP={}; CLUBS.forEach(c=>CLUBMAP[c.short]=c);
 
 // ---- state ----
 let state=loadState();
-function loadState(){ try{ const s=JSON.parse(localStorage.getItem(STORE_KEY))||{}; return {picks:s.picks||[],watch:s.watch||[]}; }catch(e){ return {picks:[],watch:[]}; } }
+function loadState(){ try{ const s=JSON.parse(localStorage.getItem(STORE_KEY))||{}; return {picks:s.picks||[],watch:s.watch||[],notes:s.notes||{}}; }catch(e){ return {picks:[],watch:[],notes:{}}; } }
 function saveState(){ try{ localStorage.setItem(STORE_KEY, JSON.stringify(state)); }catch(e){} }
 
 // ---- helpers ----
@@ -1834,17 +1834,81 @@ function openPlayerProfile(k){
         ${derby?'<span title="Derby">🔥</span>':""}${refChip(ref)||""}
       </div>
       <div class="faint" style="font-size:.74rem;margin-top:.2rem">${fx.kickoff_time?fmtKO(fx.kickoff_time):"Kick-off TBC"} · ${home?"home":"away"} v ${esc(clubName(opp))}</div>
+      ${fx.kickoff_time?`<button class="btn btn-ghost" type="button" data-ics="${esc(fx.id)}" data-ics-player="${esc(k)}" style="margin-top:.45rem;font-size:.74rem;padding:.28rem .6rem">📅 Add to calendar</button>`:""}
     </div>`;
   } else if(!LIVE){
     h+='<p class="faint" style="font-size:.76rem;margin:.2rem 0 .6rem">Next-fixture context needs the live FPL feed, which is unreachable right now.</p>';
   }
+  /* Your own note on a player — the wcstats desk has this and it is the
+     thing that makes a research tool stick: the reason you flagged him. */
+  h+=`<div style="margin-bottom:.8rem">
+    <label class="faint" for="ppNote" style="font-size:.68rem;text-transform:uppercase;letter-spacing:.04em;display:block;margin-bottom:.25rem">Your note</label>
+    <textarea id="ppNote" data-note-key="${esc(k)}" rows="2" placeholder="Why he's on your list — tactical fouler, on 4 yellows, hates this ref…"
+      style="width:100%;resize:vertical;font:inherit;font-size:.84rem;padding:.45rem .6rem;border-radius:8px;border:1px solid var(--border);background:var(--surface);color:var(--text)">${esc(noteFor(k))}</textarea>
+    <div class="faint" id="ppNoteState" aria-live="polite" style="font-size:.68rem;margin-top:.2rem;min-height:1em"></div>
+  </div>`;
   h+='<div style="display:flex;justify-content:flex-end"><button class="btn btn-ghost" data-pp-close>Close</button></div>';
   $("ppBody").innerHTML=h;
   $("playerModal").classList.add("show");
+  const ta=$("ppNote");
+  if(ta){
+    let t=null;
+    ta.addEventListener("input",()=>{
+      clearTimeout(t);
+      t=setTimeout(()=>{ setNote(ta.dataset.noteKey,ta.value); const s=$("ppNoteState"); if(s){ s.textContent="Saved"; setTimeout(()=>{ if(s) s.textContent=""; },1600); } },400);
+    });
+  }
+}
+/* ---- calendar export (RFC 5545) ----
+   Lifted from sportsfinder-uk: a fixture you care about belongs in your
+   calendar, not just in a tab. Built as a data: URL so it needs no server
+   and works offline. Times are emitted in UTC (the Z suffix), which is
+   what the FPL feed gives us, so the calendar app localises it. */
+function icsEscape(s){ return String(s||"").replace(/([\\;,])/g,"\\$1").replace(/\n/g,"\\n"); }
+function icsStamp(d){ return new Date(d).toISOString().replace(/[-:]/g,"").replace(/\.\d{3}/,""); }
+function fixtureICS(fx,player){
+  if(!fx||!fx.kickoff_time) return null;
+  const hS=LIVE.teamMap[fx.team_h], aS=LIVE.teamMap[fx.team_a];
+  const start=new Date(fx.kickoff_time), end=new Date(start.getTime()+115*60000); // 90 + stoppage + half time
+  const ref=refFor(fx.id);
+  const title=`${clubName(hS)} v ${clubName(aS)}`;
+  const bits=[`Booking heat ${(clubCAH(hS)+clubCAA(aS)).toFixed(1)}`];
+  if(ref) bits.push(`Referee ${ref.n}${ref.ypg!=null?` (${ref.ypg.toFixed(2)} cards/game)`:""}`);
+  if(player) bits.push(`Watching: ${player}`);
+  bits.push("Via Premier League Bookings Desk — 18+, research not betting advice.");
+  return ["BEGIN:VCALENDAR","VERSION:2.0","PRODID:-//PL Bookings Desk//EN","CALSCALE:GREGORIAN","BEGIN:VEVENT",
+    `UID:plb-${fx.id}-${player?"p":"m"}@bookings-desk`,
+    `DTSTAMP:${icsStamp(Date.now())}`,`DTSTART:${icsStamp(start)}`,`DTEND:${icsStamp(end)}`,
+    `SUMMARY:${icsEscape(title)}`,`DESCRIPTION:${icsEscape(bits.join(" · "))}`,
+    "BEGIN:VALARM","TRIGGER:-PT60M","ACTION:DISPLAY",`DESCRIPTION:${icsEscape(title)} kicks off in an hour`,"END:VALARM",
+    "END:VEVENT","END:VCALENDAR"].join("\r\n");
+}
+function downloadICS(fx,player,name){
+  const ics=fixtureICS(fx,player); if(!ics){ toast("No kick-off time yet"); return; }
+  const a=document.createElement("a");
+  a.href="data:text/calendar;charset=utf-8,"+encodeURIComponent(ics);
+  a.download=(name||"fixture").replace(/[^a-z0-9]+/gi,"-").toLowerCase()+".ics";
+  document.body.appendChild(a); a.click(); a.remove();
+  toast("Calendar file downloaded");
+}
+/* Notes live beside the watchlist in the same local store. */
+function noteFor(k){ return (state.notes&&state.notes[k])||""; }
+function setNote(k,v){
+  if(!state.notes) state.notes={};
+  const s=String(v||"").slice(0,500).trim();
+  if(s) state.notes[k]=s; else delete state.notes[k];
+  saveState();
 }
 function closePlayerProfile(){ $("playerModal").classList.remove("show"); }
 $("playerModal").addEventListener("click",e=>{
   if(e.target.id==="playerModal"||e.target.closest("[data-pp-close]")){ closePlayerProfile(); return; }
+  const ics=e.target.closest("[data-ics]");
+  if(ics){
+    const fx=(LIVE&&LIVE.fixtures)?LIVE.fixtures.find(f=>String(f.id)===ics.dataset.ics):null;
+    const pl=playerByKey(ics.dataset.icsPlayer);
+    if(fx) downloadICS(fx,pl?pl.n:"",`${LIVE.teamMap[fx.team_h]}-v-${LIVE.teamMap[fx.team_a]}`);
+    return;
+  }
   const b=e.target.closest(".watch-btn");
   if(b){ const k=b.dataset.w, i=state.watch.indexOf(k);
     if(i>=0) state.watch.splice(i,1); else state.watch.push(k);
