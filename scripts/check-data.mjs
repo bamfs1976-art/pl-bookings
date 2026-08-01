@@ -110,6 +110,28 @@ assert.ok(REF_HISTORY.seasons.every((s) => s.ypg > 0 && s.g > 0),
 assert.ok(REF_HISTORY.span.endsWith(histLabels[histLabels.length - 1]),
   `span "${REF_HISTORY.span}" does not match the last season ${histLabels[histLabels.length - 1]}`);
 
+// Head-to-head card history (scripts/build-h2h.mjs). Public-domain match
+// records, so the shape is guaranteed; assert it stays sane and that the
+// counting rule has not silently changed from yellows to all cards.
+const h2hCtx = {};
+vm.createContext(h2hCtx);
+vm.runInContext(readFileSync(join(root, 'data', 'h2h.js'), 'utf8'), h2hCtx);
+const H2H = vm.runInContext('H2H', h2hCtx);
+assert.ok(H2H && H2H.pairs && H2H.meta, 'data/h2h.js missing {meta, pairs}');
+assert.ok(H2H.meta.meetings >= 500,
+  `expected >=500 head-to-head meetings, got ${H2H.meta.meetings}`);
+assert.ok(H2H.meta.pairs >= 100,
+  `expected >=100 club pairs with history, got ${H2H.meta.pairs}`);
+// A yellows-only average lands near 4 a game. If this drifts past 6 the
+// build has started counting reds, or booking points, into the same field.
+assert.ok(H2H.meta.leagueAvgYellows > 2.5 && H2H.meta.leagueAvgYellows < 6,
+  `h2h league average ${H2H.meta.leagueAvgYellows} implausible for yellows-only counting`);
+for (const [k, p] of Object.entries(H2H.pairs)) {
+  assert.ok(p.n > 0 && p.avg >= 0 && p.o45 >= 0 && p.o45 <= 1, `h2h pair ${k} has impossible values`);
+  const [x, y] = k.split('|');
+  assert.ok(x < y, `h2h pair key ${k} is not in sorted order — lookups will miss`);
+}
+
 // Card/fouls model (scripts/build-model.mjs). Assert the shape the app depends on.
 const mctx = {};
 vm.createContext(mctx);
@@ -131,6 +153,8 @@ assert.ok(/<script\s+src="data\/pl_data\.js"><\/script>/.test(html),
   'index.html no longer loads data/pl_data.js');
 assert.ok(/<script\s+src="data\/ref_history\.js"><\/script>/.test(html),
   'index.html no longer loads data/ref_history.js');
+assert.ok(/<script\s+src="data\/h2h\.js"><\/script>/.test(html),
+  'index.html no longer loads data/h2h.js');
 assert.ok(/<script\s+src="data\/model\.js"><\/script>/.test(html),
   'index.html no longer loads data/model.js');
 

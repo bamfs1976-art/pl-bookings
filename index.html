@@ -786,6 +786,10 @@
       <p>Each fixture card carries a market strip: <strong>EXP CARDS</strong> (the expected total in the match), <strong>O3.5</strong> and <strong>O4.5</strong> (the chance of 4+ and 5+ cards) and <strong>BTC</strong> (both teams carded — each side picks up at least one). These are the liquid card markets, and they fall out of the per-player numbers the desk already computes: every rated available player is one coin-flip with his own probability, so the match total follows a <em>Poisson-binomial</em> distribution, which has an exact answer — no simulation involved.</p>
       <p>One correction matters. A player's percentage is his chance of a card <em>if he plays the full 90</em>, so simply adding up a 25-man squad would price a match with 50 players on the pitch — it returns about 9 expected cards instead of 4. Each player is therefore weighted by the share of his side's minutes he actually takes, scaled to an eleven. Across all 272 possible pairings in the shipped data the model averages <strong>4.1 cards a match</strong>, against a real Premier League average of roughly 4.0–4.3, and it prices away sides above home sides, which is the right direction.</p>
       <p>The honest limit: the maths assumes players are booked independently, and they are not — a flashpoint books two at once, and a referee losing control books five. That makes the extreme tails slightly thin, so treat O5.5 and above as a floor rather than a price. Fixtures with fewer than twelve rated players are marked <em>thin sample</em>.</p>
+      <h3>Head to head — what these two actually do to each other</h3>
+      <p>Where the two clubs have met at least three times in the last five seasons, the market strip carries an <strong>H2H</strong> cell: the average yellows across those meetings, with the number of games in the label and the recent run in the tooltip. It counts <strong>yellows only</strong>, exactly as the model's expected-cards figure does, so the two numbers are directly comparable. Reds are recorded separately rather than folded in.</p>
+      <p>It is deliberately kept <em>beside</em> the model rather than inside it. They are two independent reads of the same question — one from this season's player rates, one from what actually happened when these sides met — and the disagreement is the useful part. Across the 120 fixtures where both exist they differ by 0.61 cards on average, and by a full card or more in about one in five. Those are the fixtures worth a second look, so the H2H figure is highlighted when it diverges by a card or more.</p>
+      <p>Treat it as context, not proof. Squads turn over, managers change, and ten meetings is a small sample — a fixture with a violent history and none of the same players is a coincidence, not a signal. Pairs that have not met enough show nothing at all, which is most of the promoted clubs. Data is the public-domain football-data.co.uk match record (1,118 meetings across 151 club pairs), the same source behind the referee figures and the home/away splits, so it adds no new dependency.</p>
       <h3>Matchup context</h3>
       <p>Derby fixtures — the recognised rivalries among the 20 clubs, North London to Tyne–Wear, plus the promoted clubs' regional rivalries — get a booking-heat boost and a 🔥 derby chip on the Fixtures tab, since rivalry games run hotter with the referee. Once at least two finished gameweeks have been recorded, the players table adds a small ▲ card-form trend beside the yellow count: cards picked up over the recent recorded window (up to the last five gameweeks). Booking heat is also venue-aware: each club's cards-against is split into home and away rates (football-data.co.uk match data — away sides consistently pick up more cards), so the same two clubs read differently at each ground. Each player now carries both <strong>fouls committed</strong> and <strong>fouls won</strong> per 90 (shown on the player profile, in the share cards and the CSV) — committed feeds the risk score today; fouls won is a new data slot that populates on the next ScoutingStats refresh (it isn't in the live FPL feed), and will sharpen opponent-aggression matchup calls once it's in.</p>
       <h3>Suspension watch</h3>
@@ -914,6 +918,7 @@
 
 <script src="data/pl_data.js"></script>
 <script src="data/ref_history.js"></script>
+<script src="data/h2h.js"></script>
 <script src="data/model.js"></script>
 <script src="assets/core.js"></script>
 <script>
@@ -2644,18 +2649,38 @@ function teamCardBoard(h,a,ref,derby){
   board.thin=cands.length<12;   // too few rated players to trust the tails
   return board;
 }
-function marketStripHtml(board){
+/* Past meetings between these two clubs, from the public-domain
+   football-data.co.uk records (data/h2h.js). Null for pairs that have not
+   met in the covered seasons — the promoted clubs mostly. */
+function h2hFor(h,a){
+  if(typeof H2H==="undefined"||!H2H.pairs) return null;
+  const p=H2H.pairs[[h,a].sort().join("|")];
+  return (p&&p.n>=3)?p:null;   // under three meetings is anecdote, not history
+}
+function marketStripHtml(board,h2h){
   if(!board) return "";
   const pc=v=>Math.round(v*100)+"%";
   const col=v=>v>=0.6?"var(--danger-ink)":v>=0.45?"var(--warn-ink)":"var(--text-2)";
   const cell=(label,val,title)=>
     `<div class="mk-cell" title="${esc(title)}"><span class="mk-lab">${label}</span>`+
     `<span class="mk-val" style="color:${col(val)}">${pc(val)}</span></div>`;
+  /* The history sits beside the model, never inside it: two independent
+     reads of the same question, and the disagreement is the interesting
+     part. Highlighted only when they diverge by a full card. */
+  let h2hCell="";
+  if(h2h){
+    const gap=h2h.avg-board.expected;
+    const tone=Math.abs(gap)>=1?(gap>0?"var(--danger-ink)":"var(--text-2)"):"var(--text)";
+    h2hCell=`<div class="mk-cell mk-h2h" title="${esc(`Past meetings: ${h2h.avg} yellows on average across ${h2h.n} games (${h2h.last.join(", ")} most recent first). ${Math.round(h2h.o45*100)}% of them produced 5 or more.`)}">
+      <span class="mk-lab">H2H ${h2h.n}</span>
+      <span class="mk-val" style="color:${tone}">${h2h.avg.toFixed(1)}</span></div>`;
+  }
   return `<div class="mk-strip"${board.thin?' data-thin="1"':''}>
     <div class="mk-cell"><span class="mk-lab">EXP CARDS</span><span class="mk-val">${board.expected.toFixed(1)}</span></div>
     ${cell("O3.5",board.over[3.5],"Chance of 4 or more cards in the match")}
     ${cell("O4.5",board.over[4.5],"Chance of 5 or more cards in the match")}
     ${cell("BTC",board.bothCarded,"Both teams carded: each side picks up at least one")}
+    ${h2hCell}
     ${board.thin?'<span class="mk-note">thin sample</span>':''}
   </div>`;
 }
@@ -2750,7 +2775,7 @@ function fixtureCardHtml(f,opts){
       </div>
     </div>
     <div class="fx-refrow">${refSelect(f.id)}${refDelta}</div>
-    ${marketStripHtml(teamCardBoard(h,a,ref,derby))}
+    ${marketStripHtml(teamCardBoard(h,a,ref,derby),h2hFor(h,a))}
     ${body}
     <div class="fx-foot"><button class="fx-share" data-share-fid="${f.id}" type="button" title="Download a shareable card of this match">⬇ Share match</button></div>
   </div>`;
