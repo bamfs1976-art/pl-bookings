@@ -57,6 +57,14 @@
   .muted{color:var(--text-2)} .faint{color:var(--text-3)}
   a{color:var(--accent-2);text-decoration:none}
   a:focus-visible,button:focus-visible,select:focus-visible,textarea:focus-visible,input:focus-visible{outline:3px solid var(--ring); outline-offset:2px; border-radius:8px}
+  /* Responsible gambling notice — shown site-wide, required for a UK betting-research tool */
+  .rg{display:flex;flex-wrap:wrap;align-items:center;gap:.5rem .85rem;padding:.85rem 1rem;border:1px solid var(--border);
+      border-radius:12px;background:var(--surface-2);font-size:.76rem;line-height:1.5;color:var(--text-2)}
+  .rg-18{flex:none;display:inline-grid;place-items:center;width:26px;height:26px;border-radius:50%;
+         background:var(--danger);color:#fff;font-weight:800;font-size:.68rem;letter-spacing:-.02em}
+  .rg a{color:var(--text);text-decoration:underline;text-underline-offset:2px}
+  .rg a:hover{color:var(--accent-2)}
+  .rg-sep{color:var(--text-3)}
   .tier-target{background:color-mix(in srgb,var(--target) 14%,transparent); color:var(--target); border:1px solid color-mix(in srgb,var(--target) 35%,transparent)}
   .tier-mid{background:color-mix(in srgb,var(--mid) 14%,transparent); color:var(--mid); border:1px solid color-mix(in srgb,var(--mid) 35%,transparent)}
   .tier-fade{background:color-mix(in srgb,var(--fade) 12%,transparent); color:var(--text-2); border:1px solid color-mix(in srgb,var(--fade) 30%,transparent)}
@@ -440,7 +448,7 @@
         </button>
       </div>
       <a href="https://gameweekedge.netlify.app" rel="noopener" class="faint" style="font-size:.72rem;font-weight:600">Part of the Edge family · Gameweek Edge ↗</a>
-      <p class="sb-foot-legal">Player and club form via ScoutingStats, live data via the official FPL API, referee data from football-data.co.uk records. Research, not a betting guarantee. Stake responsibly.</p>
+      <p class="sb-foot-legal">18+ only. Research, not betting advice — no result is guaranteed. Help: <a href="https://www.begambleaware.org/" target="_blank" rel="noopener noreferrer">BeGambleAware</a>. Form via ScoutingStats, live data via the official FPL API, referee data from football-data.co.uk.</p>
     </div>
   </aside>
 
@@ -789,7 +797,20 @@
     </main>
 
     <footer class="muted" style="padding:0 26px 2rem;font-size:.78rem">
-      Premier League Bookings Desk. Player and club form via ScoutingStats, live data via the official FPL API, referee data from football-data.co.uk records. Research, not a betting guarantee. Stake responsibly.
+      <div class="rg" role="note" aria-label="Responsible gambling">
+        <span class="rg-18" aria-hidden="true">18+</span>
+        <span><strong>Over 18s only.</strong> This desk is statistical research, not betting advice, and no result is guaranteed. Never stake more than you can afford to lose.</span>
+        <span>
+          <a href="https://www.begambleaware.org/" target="_blank" rel="noopener noreferrer">BeGambleAware</a>
+          <span class="rg-sep" aria-hidden="true">·</span>
+          <a href="https://www.gamcare.org.uk/" target="_blank" rel="noopener noreferrer">GamCare</a>
+          <span class="rg-sep" aria-hidden="true">·</span>
+          <a href="https://www.gamstop.co.uk/" target="_blank" rel="noopener noreferrer">GAMSTOP</a>
+          <span class="rg-sep" aria-hidden="true">·</span>
+          National Gambling Helpline <a href="tel:08088020133">0808 8020 133</a> (free, 24/7)
+        </span>
+      </div>
+      <p style="margin:.9rem 0 0">Premier League Bookings Desk. Player and club form via ScoutingStats, live data via the official FPL API, referee data from football-data.co.uk records.</p>
     </footer>
 
   </div><!-- /.main -->
@@ -1394,7 +1415,7 @@ async function exportPNG(){
   });
   // footer
   x.fillStyle="#8b94a5"; x.font=`600 18px ${body}`;
-  x.fillText("Player form via ScoutingStats · 2026-27 squads · research, not a betting guarantee",P,H-50);
+  x.fillText("18+ · Player form via ScoutingStats · 2026-27 squads · research, not betting advice · begambleaware.org",P,H-50);
   x.fillStyle="#3d195b"; x.font=`800 20px ${disp}`; x.textAlign="right"; x.fillText("PL BOOKINGS DESK",W-P,H-50); x.textAlign="left";
   c.toBlob(blob=>{ const u=URL.createObjectURL(blob),a=document.createElement("a"); a.href=u; a.download=`pl-bookings-${cf==="all"?"top":cf.toLowerCase()}.png`; a.click(); setTimeout(()=>URL.revokeObjectURL(u),2000); },"image/png");
 }
@@ -1416,7 +1437,7 @@ function shareBrandBand(x,W,P,body,disp,title,subtitle){
   x.fillStyle="#586275"; x.font=`600 22px ${body}`; x.fillText(subtitle,P,210);
 }
 function shareFooter(x,W,P,H,body,disp,note){
-  x.fillStyle="#8b94a5"; x.font=`600 18px ${body}`; x.fillText(note,P,H-50);
+  x.fillStyle="#8b94a5"; x.font=`600 18px ${body}`; x.fillText("18+ · "+note+" · begambleaware.org",P,H-50);
   x.fillStyle="#3d195b"; x.font=`800 20px ${disp}`; x.textAlign="right"; x.fillText("PL BOOKINGS DESK",W-P,H-50); x.textAlign="left";
 }
 // One match: teams, referee, heat and the fixture-aware booking candidates.
@@ -1770,10 +1791,10 @@ $("playerRows").addEventListener("click",e=>{ const b=e.target.closest(".watch-b
 $("exportBtn").addEventListener("click",exportPNG);
 document.querySelectorAll("th [data-sort]").forEach(b=>b.addEventListener("click",()=>{ const k=b.dataset.sort; if(sortKey===k) sortDir*=-1; else { sortKey=k; sortDir=(k==="n"||k==="p")?1:-1; } renderPlayers(); }));
 $("pickForm").addEventListener("submit",e=>{ e.preventDefault();
-  const p={id:"p"+Date.now().toString(36)+Math.random().toString(36).slice(2,6),ts:Date.now(),fixture:$("pkFixture").value.trim(),selection:$("pkSelection").value.trim(),market:$("pkMarket").value.trim(),odds:$("pkOdds").value,stake:$("pkStake").value,status:"pending"};
+  const p={id:"p"+Date.now().toString(36)+Math.random().toString(36).slice(2,6),ts:Date.now(),uat:Date.now(),fixture:$("pkFixture").value.trim(),selection:$("pkSelection").value.trim(),market:$("pkMarket").value.trim(),odds:$("pkOdds").value,stake:$("pkStake").value,status:"pending"};
   if(!p.fixture||!p.selection) return; state.picks.push(p); saveState(); cloudPickUpsert(p); renderTracker(); e.target.reset(); $("pkFixture").focus();
 });
-$("pickRows").addEventListener("change",e=>{ const s=e.target.closest(".pk-status"); if(!s) return; const p=state.picks.find(x=>x.id===s.dataset.id); if(p){ p.status=s.value; saveState(); cloudPickUpsert(p); renderTracker(); } });
+$("pickRows").addEventListener("change",e=>{ const s=e.target.closest(".pk-status"); if(!s) return; const p=state.picks.find(x=>x.id===s.dataset.id); if(p){ p.status=s.value; touchPick(p); saveState(); cloudPickUpsert(p); renderTracker(); } });
 $("pickRows").addEventListener("click",e=>{ const b=e.target.closest(".pk-del"); if(!b) return; state.picks=state.picks.filter(x=>x.id!==b.dataset.id); saveState(); cloudPickDel(b.dataset.id); renderTracker(); });
 
 // ---- AI review of picks ----
@@ -2715,6 +2736,34 @@ $("fxShareBtn").addEventListener("click",()=>{ const gw=Number($("gwSelect").val
 // ═══════════════════════════════════════════════════════════
 const SUPA={url:"https://knodunjnsxelmpziupwk.supabase.co",key:"sb_publishable_xCECe0czArDwwIBtR8Mzxg_tuhyGYu-"};
 let sb=null,SESSION=null,SYNCED_UID=null;
+
+/* ── Stale-client guard ────────────────────────────────────────────────
+   A tab left open across a deploy still holds the old app and the old
+   picks. Without a guard it signs in, merges, and pushes that stale copy
+   over rows a newer client already fixed — the wipe that hit F1 Grid
+   Masters on 2026-07-16. Three defences:
+     1. every pick carries a real edit time (`uat`), so the merge can tell
+        which side is actually newer instead of trusting the last writer;
+     2. if the cloud carries a higher schema than this build understands,
+        the client goes READ-ONLY — it still shows the picks, it just
+        never writes;
+     3. the pre-merge local state is backed up before anything overwrites
+        it, so a bad merge is recoverable.
+   `schema_v` is only written once we've seen the column on a read, so
+   this works whether or not the migration in supabase/plb_picks.sql has
+   been run yet. */
+const SCHEMA_V=2, BACKUP_KEY="pl_desk_v1_backup";
+let CLOUD_RO=false, HAS_SCHEMA_COL=false;
+function backupState(reason){
+  try{ localStorage.setItem(BACKUP_KEY,JSON.stringify({at:new Date().toISOString(),reason:reason||"",state:state})); }catch(e){}
+}
+function setReadOnly(on,why){
+  CLOUD_RO=!!on;
+  const n=$("trackerSyncNote");
+  if(CLOUD_RO&&n) n.textContent="This tab is running an older version of the desk than your saved picks. It won't write to the cloud — reload the page to get back in sync.";
+  if(CLOUD_RO) toast("Older version open — sync paused, reload to fix");
+  if(CLOUD_RO&&why&&window.console) console.warn("[plb] cloud sync read-only:",why);
+}
 function uid(){ return SESSION&&SESSION.user?SESSION.user.id:null; }
 function initAuth(){
   if(!(window.supabase&&window.supabase.createClient)) return;
@@ -2734,13 +2783,21 @@ function updateAcctUI(){
     :"Picks save to this browser under pl_desk_v1 — sign in (top right) to sync them across devices.";
 }
 
+/* Stamp a real edit time. Called at every point a pick actually changes,
+   so the merge compares genuine edit times rather than push times. */
+function touchPick(p){ p.uat=Date.now(); return p; }
+
 function pickRow(p){
   const num=v=>{ const n=Number(v); return v===""||v==null||!isFinite(n)?null:n; };
-  return {user_id:uid(),id:p.id,fixture:p.fixture||"",selection:p.selection||"",market:p.market||"",odds:num(p.odds),stake:num(p.stake),status:p.status||"pending",updated_at:new Date().toISOString()};
+  const row={user_id:uid(),id:p.id,fixture:p.fixture||"",selection:p.selection||"",market:p.market||"",odds:num(p.odds),stake:num(p.stake),status:p.status||"pending",
+             updated_at:new Date(p.uat||p.ts||Date.now()).toISOString()};
+  if(HAS_SCHEMA_COL) row.schema_v=SCHEMA_V;
+  return row;
 }
-/* Cloud writers (fire-and-forget; local storage stays the working copy). */
-function cloudPickUpsert(p){ if(sb&&uid()) sb.from("plb_picks").upsert(pickRow(p)).then(()=>{},()=>{}); }
-function cloudPickDel(id){ if(sb&&uid()) sb.from("plb_picks").delete().eq("user_id",uid()).eq("id",id).then(()=>{},()=>{}); }
+/* Cloud writers (fire-and-forget; local storage stays the working copy).
+   Both no-op in read-only mode so a stale tab can never write. */
+function cloudPickUpsert(p){ if(sb&&uid()&&!CLOUD_RO) sb.from("plb_picks").upsert(pickRow(p)).then(()=>{},()=>{}); }
+function cloudPickDel(id){ if(sb&&uid()&&!CLOUD_RO) sb.from("plb_picks").delete().eq("user_id",uid()).eq("id",id).then(()=>{},()=>{}); }
 
 /* On first sign-in, merge local and cloud picks so nothing is lost, then
    push the merged set back to the cloud. A settled result beats pending. */
@@ -2749,20 +2806,52 @@ async function syncOnLogin(){
   try{
     const {data:rows,error}=await sb.from("plb_picks").select("*").eq("user_id",id);
     if(error) throw error;
+    const cloudRows=rows||[];
+
+    /* Does the table carry the guard column yet? Only write it if so, so
+       this works before and after the migration is run. */
+    HAS_SCHEMA_COL=cloudRows.length>0&&Object.prototype.hasOwnProperty.call(cloudRows[0],"schema_v");
+
+    /* Guard: cloud written by a newer build than this one. Show, never write. */
+    const maxCloudV=cloudRows.reduce((m,r)=>Math.max(m,Number(r.schema_v)||1),1);
+    if(maxCloudV>SCHEMA_V){
+      setReadOnly(true,"cloud schema v"+maxCloudV+" > client v"+SCHEMA_V);
+      state.picks=cloudRows.map(cloudToPick).sort((a,b)=>(a.ts||0)-(b.ts||0));
+      renderTracker(); return;                        // deliberately no saveState, no push
+    }
+
+    backupState("pre-merge sign-in");                 // recoverable if the merge goes wrong
+
     const local={}; state.picks.forEach(p=>local[p.id]=p);
-    let base=1; state.picks.forEach(p=>{ if(!p.ts) p.ts=base++; });
+    let base=1; state.picks.forEach(p=>{ if(!p.ts) p.ts=base++; if(!p.uat) p.uat=p.ts||base; });
     const cloudOnly=[];
-    (rows||[]).forEach(r=>{
-      const c={id:r.id,fixture:r.fixture||"",selection:r.selection||"",market:r.market||"",odds:r.odds==null?"":String(r.odds),stake:r.stake==null?"":String(r.stake),status:r.status||"pending",ts:r.created_at?Date.parse(r.created_at):0};
+    cloudRows.forEach(r=>{
+      const c=cloudToPick(r);
       const l=local[r.id];
-      if(!l) cloudOnly.push(c);
-      else if(l.status==="pending"&&c.status!=="pending") l.status=c.status;
+      if(!l){ cloudOnly.push(c); return; }
+      /* Newer edit wins, field by field. Where neither side carries a real
+         edit time (picks made before this version), fall back to the old
+         rule: a settled result beats pending. */
+      const lU=Number(l.uat)||0, cU=Number(c.uat)||0;
+      if(cU>lU){
+        l.fixture=c.fixture; l.selection=c.selection; l.market=c.market;
+        l.odds=c.odds; l.stake=c.stake; l.status=c.status; l.uat=cU;
+      }else if(!lU&&!cU&&l.status==="pending"&&c.status!=="pending"){
+        l.status=c.status;
+      }
     });
     state.picks=[...state.picks,...cloudOnly].sort((a,b)=>(a.ts||0)-(b.ts||0));
     saveState();
     if(state.picks.length) await sb.from("plb_picks").upsert(state.picks.map(pickRow));
     renderTracker(); toast("Signed in — picks synced");
   }catch(e){ toast("Signed in — cloud sync unavailable"); }
+}
+function cloudToPick(r){
+  return {id:r.id,fixture:r.fixture||"",selection:r.selection||"",market:r.market||"",
+          odds:r.odds==null?"":String(r.odds),stake:r.stake==null?"":String(r.stake),
+          status:r.status||"pending",
+          ts:r.created_at?Date.parse(r.created_at):0,
+          uat:r.updated_at?Date.parse(r.updated_at):0};
 }
 
 // ---- account modal ----
