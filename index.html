@@ -564,6 +564,7 @@
     <div class="seg lensbar" id="dkViews" role="tablist" aria-label="Choose a view of the player list">
       <button class="seg-btn on" type="button" data-dkview="season" role="tab" aria-selected="true">Season risk</button>
       <button class="seg-btn" type="button" data-dkview="all" role="tab" aria-selected="false">All players</button>
+      <button class="seg-btn" type="button" data-dkview="value" role="tab" aria-selected="false">Value</button>
     </div>
     <p class="faint" id="dkNote" style="font-size:.8rem;margin:0 0 .8rem"></p>
     <div id="dkSeason">
@@ -610,6 +611,7 @@
     </div>
     <p class="faint" style="font-size:.78rem;margin-top:.6rem">Risk = yellow rate per 90 weighted double plus fouls per 90, from 2025-26 form. P(card) is the model-implied chance of a booking in a match with its fair decimal odds — click it to compare a bookmaker price (an estimate, see the Guide). The EFL chip marks the three promoted clubs, whose form is from the Championship. Low sample is under 450 minutes.</p>
     </div>
+    <div id="dkValue" hidden></div>
     <div id="dkAll" hidden>
     <div style="display:flex;gap:.6rem;flex-wrap:wrap;align-items:center;margin-bottom:.8rem">
       <input id="apSearch" type="search" placeholder="Search player" aria-label="Search player" style="flex:1;min-width:160px">
@@ -788,6 +790,7 @@
       <h3>Implied probability and value</h3>
       <p>The desk turns form into a model-implied chance of the player being carded in a match. The league base booking rate is total yellows per player-match (about <span id="guideBaseRate">—</span>% here). The <strong>P(card)</strong> column shows the probability and its fair decimal odds (1 ÷ probability); click it to paste a bookmaker's price and see the edge, (odds × probability − 1). Positive edge means the price pays more than the model thinks the chance is worth.</p>
       <p>The model (v2) does three things a naive score doesn't: it <strong>shrinks</strong> each player's per-90 rates toward the position average by how many minutes they've actually played (so one card in a few appearances doesn't read as an elite booker); it runs the shrunk rates through a fitted <strong>logistic</strong> and, per fixture, shifts that on the <strong>log-odds scale</strong> for the referee and derby (multiplying the odds, not the probability, so a strict ref lifts a 72% pick to ~77% rather than an implausible 94%); and it forecasts <strong>fouls</strong> directly — expected fouls and over/under lines from a Negative-Binomial count model, with a mechanistic fouls→card cross-check on each player's profile. The <strong>Model track record</strong> card scores the model out of sample (Brier, log-loss) against a base-rate baseline. Full write-up: <code>docs/modelling-review.md</code>. Still an estimate for research, not a market price.</p>
+      <p>Every price you type into a P(card) cell is now <strong>kept</strong> — in this browser only, and discarded after a week — and plotted on the <strong>Value</strong> view of the Players panel: the chance the price implies across, our model up. On the diagonal the two agree. The shaded band beneath it is roughly the bookmaker's margin, and a point sitting in it beats his opinion but not his cut, so it does not pay. There is no odds feed here, so the chart only ever shows prices you entered yourself, and a single price cannot have its margin removed properly — that needs both sides of the market, which nobody publishes. The band is an assumption, not a measurement.</p>
       <p>Be honest with it: this is a season-average <em>estimate</em> from form data, not a market price. It knows nothing about a specific matchup beyond the risk score, referees and derbies adjust fixture heat but not this per-player number, and bookmaker odds carry margin. Use the edge as a screen for further research, never as a guarantee.</p>
       <h3>Club discipline</h3>
       <p>Clubs are tiered on cards received per game, target 2.0 and above, mid 1.5 to 1.9, fade below 1.5. The flame marks a combustible side, 2.0 plus cards and 12.0 plus fouls.</p>
@@ -1218,7 +1221,7 @@ function valueCell(p){
   const prob=pImp(p);
   if(prob==null) return `<td style="text-align:right;padding:.45rem .6rem"><span class="faint">—</span></td>`;
   const fair=PLDCore.fairOdds(prob);
-  return `<td style="text-align:right;padding:.45rem .6rem"><button class="val-btn" type="button" data-p="${prob}" title="Model estimate of a card this match — click to check a bookmaker price" style="background:none;border:0;cursor:pointer;font:inherit;color:var(--text);padding:0;text-align:right"><span class="num" style="font-weight:700">${(prob*100).toFixed(0)}%</span><div class="faint num" style="font-size:.72rem">fair ${fair.toFixed(2)}</div></button></td>`;
+  return `<td style="text-align:right;padding:.45rem .6rem"><button class="val-btn" type="button" data-p="${prob}" data-pid="${esc(pKey(p))}" title="Model estimate of a card this match — click to check a bookmaker price" style="background:none;border:0;cursor:pointer;font:inherit;color:var(--text);padding:0;text-align:right"><span class="num" style="font-weight:700">${(prob*100).toFixed(0)}%</span><div class="faint num" style="font-size:.72rem">fair ${fair.toFixed(2)}</div></button></td>`;
 }
 $("playerRows").addEventListener("click",e=>{
   const b=e.target.closest(".val-btn"); if(!b) return;
@@ -1231,7 +1234,7 @@ $("playerRows").addEventListener("click",e=>{
     <div style="display:flex;gap:.7rem;align-items:center;flex-wrap:wrap;font-size:.82rem">
       <strong style="font-family:'Bricolage Grotesque',sans-serif">Value check</strong>
       <span class="muted num">model ${(prob*100).toFixed(1)}% · fair ${fair.toFixed(2)}</span>
-      <label class="muted">Bookmaker odds <input class="val-odds" type="number" step="0.01" min="1.01" placeholder="2.50" data-p="${prob}" style="width:92px;padding:.25rem .4rem"></label>
+      <label class="muted">Bookmaker odds <input class="val-odds" type="number" step="0.01" min="1.01" placeholder="2.50" data-p="${prob}" data-pid="${b.dataset.pid||''}" style="width:92px;padding:.25rem .4rem"></label>
       <span class="val-out" aria-live="polite"></span>
     </div>
     <p class="faint" style="margin:.35rem 0 0;font-size:.72rem">Season-average model estimate, not a guarantee — use the edge as a screen, then do the matchup research.</p>
@@ -1244,11 +1247,129 @@ $("playerRows").addEventListener("input",e=>{
   const out=i.closest("td").querySelector(".val-out");
   const o=Number(i.value), prob=Number(i.dataset.p);
   if(!isFinite(o)||o<=1){ out.textContent=""; return; }
+  oddsRemember(i.dataset.pid, o, prob);
   const edge=PLDCore.edgePct(o,prob);
   const col=edge>=2?"var(--good)":edge<=-2?"var(--danger)":"var(--text-2)";
   const verdict=edge>=2?"value":edge<=-2?"no value":"marginal";
   out.innerHTML=`edge <strong class="num" style="color:${col}">${edge>=0?"+":""}${edge.toFixed(1)}%</strong> — ${verdict}`;
 });
+
+
+// ---- kept prices ----------------------------------------------------
+// A bookmaker price used to live for as long as the row was open and was then
+// thrown away, so every check started from nothing and no comparison across
+// players was possible. They are kept now, which is the only reason the value
+// chart can exist: there is no odds feed in this app and never has been.
+// Local to the browser, because a price you saw is not a fact about the world
+// — it is what one book was showing you at one moment.
+// Players carry no id in the baked data, and a bare surname collides across
+// clubs, so the club goes in the key.
+function pKey(p){ return (p&&p.c||"")+"|"+(p&&p.n||""); }
+const ODDS_KEY="pld_odds_v1";
+const ODDS_MAX_AGE=7*24*3600e3;   // a week-old card price is not a price
+function oddsLoad(){
+  try{
+    const raw=JSON.parse(localStorage.getItem(ODDS_KEY)||"{}");
+    const now=Date.now(), out={};
+    Object.keys(raw).forEach(k=>{
+      const v=raw[k];
+      if(v&&isFinite(v.o)&&v.o>1&&now-(v.t||0)<ODDS_MAX_AGE) out[k]=v;
+    });
+    return out;
+  }catch(_){ return {}; }
+}
+function oddsRemember(pid,o,prob){
+  if(!pid||!isFinite(o)||o<=1) return;
+  try{
+    const all=oddsLoad();
+    all[pid]={o:o,p:prob,t:Date.now()};
+    localStorage.setItem(ODDS_KEY,JSON.stringify(all));
+  }catch(_){ /* private mode — the check still works, it just is not kept */ }
+}
+function oddsForget(){
+  try{ localStorage.removeItem(ODDS_KEY); }catch(_){}
+  if(DK_VIEW==="value") renderValueChart();
+}
+
+// ---- the value chart -------------------------------------------------
+// Model probability against the price you were quoted. The diagonal is
+// agreement; the band under it is the bookmaker's margin, and a point in that
+// band is the mistake this chart exists to make visible — our number beats his
+// opinion but not his cut, so it does not pay.
+function renderValueChart(){
+  const host=$("dkValue"); if(!host) return;
+  const kept=oddsLoad();
+  const byId={};
+  PL_PLAYERS.forEach(p=>{ byId[pKey(p)]=p; });
+  const rows=[];
+  Object.keys(kept).forEach(k=>{
+    const rec=kept[k], pl=byId[k];
+    if(!pl) return;
+    const prob=pImp(pl);
+    const v=PLDCore.valuePoint(prob,rec.o);
+    if(v) rows.push({pl,rec,v});
+  });
+  if(!rows.length){
+    host.innerHTML='<p class="beginner-hint">No prices kept yet. Open <b>Season risk</b>, click a '+
+      '<b>P(card)</b> cell and type the bookmaker price you have been quoted — every price you '+
+      'check is kept here and plotted against our own number. There is no odds feed in this app, '+
+      'so this chart only ever shows prices you have entered yourself.</p>';
+    return;
+  }
+  rows.sort((a,b)=>b.v.edge-a.v.edge);
+  const W=340,H=250,pad=34,padB=30;
+  const sc=t=>({x:pad+(W-pad-10)*t, y:H-padB-(H-padB-12)*t});
+  const px=t=>pad+(W-pad-10)*Math.max(0,Math.min(1,t));
+  const py=t=>H-padB-(H-padB-12)*Math.max(0,Math.min(1,t));
+  const m=PLDCore.TYPICAL_CARD_MARGIN;
+  // agreement diagonal, and the margin band beneath it
+  const diag='<line x1="'+px(0)+'" y1="'+py(0)+'" x2="'+px(1)+'" y2="'+py(1)+
+    '" stroke="var(--text-2)" stroke-width="1.2" opacity=".7"/>';
+  const band='<polygon points="'+px(0)+','+py(0)+' '+px(1)+','+py(1)+' '+px(1)+','+py(1-m)+' '+px(0)+','+py(0)+
+    '" fill="var(--text-2)" opacity=".16"/>';
+  const dots=rows.map(r=>{
+    const col=r.v.beatsPrice?"var(--good)":r.v.insideMargin?"var(--warn,#b9741a)":"var(--danger)";
+    return '<circle cx="'+px(r.v.market).toFixed(1)+'" cy="'+py(r.v.model).toFixed(1)+'" r="4" fill="'+col+
+      '" fill-opacity=".85"><title>'+esc(r.pl.n)+' — price '+r.rec.o.toFixed(2)+
+      ', market '+(r.v.market*100).toFixed(0)+'%, model '+(r.v.model*100).toFixed(0)+
+      '%, edge '+(r.v.edge>=0?"+":"")+r.v.edge.toFixed(1)+'%</title></circle>';
+  }).join("");
+  const ticks=[0,.25,.5,.75,1].map(t=>
+    '<text x="'+px(t).toFixed(1)+'" y="'+(H-10)+'" text-anchor="middle" style="font-size:8px;fill:var(--text-2)">'+
+    (t*100).toFixed(0)+'%</text>'+
+    '<text x="'+(pad-5)+'" y="'+(py(t)+3).toFixed(1)+'" text-anchor="end" style="font-size:8px;fill:var(--text-2)">'+
+    (t*100).toFixed(0)+'%</text>').join("");
+  const list=rows.slice(0,8).map(r=>{
+    const col=r.v.beatsPrice?"var(--good)":r.v.insideMargin?"var(--warn,#b9741a)":"var(--danger)";
+    const tag=r.v.beatsPrice?"beats the price":r.v.insideMargin?"inside the margin":"no value";
+    return '<tr><td style="padding:.35rem .5rem">'+esc(r.pl.n)+'<div class="faint" style="font-size:.72rem">'+
+      esc(r.pl.c||"")+'</div></td>'+
+      '<td class="num" style="text-align:right;padding:.35rem .5rem">'+r.rec.o.toFixed(2)+'</td>'+
+      '<td class="num" style="text-align:right;padding:.35rem .5rem">'+(r.v.market*100).toFixed(0)+'%</td>'+
+      '<td class="num" style="text-align:right;padding:.35rem .5rem">'+(r.v.model*100).toFixed(0)+'%</td>'+
+      '<td class="num" style="text-align:right;padding:.35rem .5rem;color:'+col+'">'+
+      (r.v.edge>=0?"+":"")+r.v.edge.toFixed(1)+'%<div class="faint" style="font-size:.7rem">'+tag+'</div></td></tr>';
+  }).join("");
+  host.innerHTML=
+    '<svg viewBox="0 0 '+W+' '+H+'" style="width:100%;height:auto" role="img" aria-label="Model booking probability against bookmaker implied probability for '+rows.length+' prices">'+
+      band+diag+dots+ticks+'</svg>'+
+    '<p class="faint" style="font-size:.75rem;margin:.3rem 0 .6rem">Across: the chance the price implies. '+
+      'Up: our model. On the line the two agree; above it we rate the player likelier than the price does. '+
+      'The shaded band is roughly the bookmaker\'s margin ('+(m*100).toFixed(0)+'%) — a point in there beats '+
+      'his opinion but not his cut, so it does not pay.</p>'+
+    '<table style="width:100%;border-collapse:collapse;font-size:.82rem"><thead><tr>'+
+      '<th style="text-align:left;padding:.35rem .5rem">Player</th>'+
+      '<th style="text-align:right;padding:.35rem .5rem">Price</th>'+
+      '<th style="text-align:right;padding:.35rem .5rem">Implied</th>'+
+      '<th style="text-align:right;padding:.35rem .5rem">Model</th>'+
+      '<th style="text-align:right;padding:.35rem .5rem">Edge</th></tr></thead><tbody>'+list+'</tbody></table>'+
+    '<p class="faint" style="font-size:.72rem;margin:.6rem 0 0">'+rows.length+
+      ' price'+(rows.length===1?"":"s")+' kept, this browser only, discarded after a week. '+
+      'One price cannot have its margin removed properly — that needs both sides of the market — so the band '+
+      'is an assumption, not a measurement. '+
+      '<button type="button" class="linklike" onclick="oddsForget()" style="background:none;border:0;padding:0;'+
+      'color:var(--text-2);text-decoration:underline;cursor:pointer;font:inherit">Clear kept prices</button></p>';
+}
 
 // ---- clubs ----
 function topRiskFor(short){
@@ -1659,7 +1780,9 @@ const DK_VIEWS=[
   {id:"season",el:"dkSeason",label:"Season risk",
    desc:"Every squad player ranked by season-long booking risk — yellows per 90 weighted double, plus fouls per 90."},
   {id:"all",el:"dkAll",label:"All players",
-   desc:"The complete current squad list from the live FPL feed — games played and discipline for every registered player, with fouls where the ScoutingStats data has them."}
+   desc:"The complete current squad list from the live FPL feed — games played and discipline for every registered player, with fouls where the ScoutingStats data has them."},
+  {id:"value",el:"dkValue",label:"Value",
+   desc:"Our booking probability against the bookmaker prices you have checked. There is no odds feed here — the chart plots the prices you type into a P(card) cell, which are now kept instead of thrown away."}
 ];
 let DK_VIEW="season";
 function dkView(id){ return DK_VIEWS.find(v=>v.id===id)||DK_VIEWS[0]; }
@@ -1675,6 +1798,7 @@ function dkRender(){
   });
   // The live squad list is fetched, so it only builds when it is on screen.
   if(v.id==="all"&&typeof renderAllPlayers==="function") renderAllPlayers();
+  if(v.id==="value"&&typeof renderValueChart==="function") renderValueChart();
 }
 
 // A retired panel id names the VIEW it always showed, not just the panel it

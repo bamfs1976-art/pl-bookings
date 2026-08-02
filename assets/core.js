@@ -94,6 +94,68 @@
     return (o * prob - 1) * 100;
   }
 
+  /* ---- the market side of the value chart ----
+     A decimal price turned back into the probability it implies. This is the
+     RAW implied chance and it is deliberately not called "the market's view",
+     because it is not: it includes the bookmaker's margin, so it is biased
+     high. A 2.50 shot reads as 40% when the bookmaker's own opinion might be
+     37% with 3 points of margin on top.
+
+     THE MARGIN CANNOT BE REMOVED FROM ONE PRICE. De-vigging needs every
+     outcome in the market — for "player booked" that means the unbooked side
+     too, which no one publishes. Anything else is a guess with a formula
+     wrapped round it, so this returns the raw number and the caller is
+     expected to show the margin as a band rather than pretend it away. */
+  function marketProb(bookOdds) {
+    const o = Number(bookOdds);
+    if (!isFinite(o) || o <= 1) return null;
+    return 1 / o;
+  }
+
+  /* The same price with an ASSUMED margin stripped out, for drawing the
+     "this is still inside the bookmaker's cut" band. `margin` is the
+     overround as a fraction (0.06 = 6%). Explicitly an assumption: it is a
+     band on the chart, never a number quoted at a player. */
+  const TYPICAL_CARD_MARGIN = 0.06;
+  function marketProbDeVig(bookOdds, margin) {
+    const raw = marketProb(bookOdds);
+    if (raw == null) return null;
+    const m = margin == null ? TYPICAL_CARD_MARGIN : Number(margin);
+    if (!isFinite(m) || m < 0 || m >= 1) return raw;
+    return raw * (1 - m);
+  }
+
+  /* One row of the value chart, and the two thresholds are not the same
+     thing — which is the distinction the chart exists to draw.
+
+     To be +EV you must beat the RAW implied probability: stake × odds pays
+     only if prob × odds > 1, i.e. prob > 1/odds. The margin makes that bar
+     HARDER, not easier, because it inflates the implied number you have to
+     clear.
+
+     The de-vigged line sits BELOW the raw one and is the bookmaker's own
+     opinion. A model landing between the two disagrees with him — it thinks
+     the event likelier than he does — and still loses money, because the
+     disagreement is smaller than his cut. That band is where a naive "our
+     number is higher than his" read manufactures value out of the vig, and
+     it is drawn on the chart for exactly that reason. */
+  function valuePoint(prob, bookOdds, margin) {
+    const market = marketProb(bookOdds);
+    if (prob == null || market == null) return null;
+    const fair = marketProbDeVig(bookOdds, margin);
+    return {
+      model: prob,
+      market,
+      fair,
+      edge: edgePct(bookOdds, prob),
+      /* The only one of these worth acting on. */
+      beatsPrice: prob > market,
+      /* Beats the bookmaker's opinion but not his margin: a disagreement
+         that does not pay. */
+      insideMargin: prob > fair && prob <= market
+    };
+  }
+
   /* ══════════════════════════════════════════════════════════════════
      MODEL v2 — accuracy work (see docs/modelling-review.md).
      All pure, all unit-tested. Three families:
@@ -416,6 +478,7 @@
 
   const PLDCore = {
     riskScore, normName, pickPL, summarisePicks, calibrate, impliedProb, fairOdds, edgePct, LOGISTIC_SLOPE,
+    marketProb, marketProbDeVig, valuePoint, TYPICAL_CARD_MARGIN,
     cardCountDist, probOverCards, expectedCards, probBothCarded, teamCardMarkets,
     minuteWeights, matchLambdas,
     venueFactor, chaseFactor, cardLambda, pCardFromLambda,
