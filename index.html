@@ -36,6 +36,10 @@
     --text:#0c1322; --text-2:#586275; --text-3:#8b94a5; --border:#e3e7ee; --border-2:#d7dce6;
     --accent:#3d195b; --accent-2:#e90052; --on-accent:#ffffff;
     --danger:#dc2626; --warn:#d97706; --good:#16a34a; --info:#4f46e5;
+    /* Darker variants for small text on a light surface: the fill colours
+       above are tuned for badges and only reach ~2.9:1 as body text, under
+       the 4.5:1 WCAG 2.2 AA needs at these sizes. */
+    --danger-ink:#b91c1c; --warn-ink:#a35709; --good-ink:#15803d;
     --target:#16a34a; --mid:#d97706; --fade:#64748b; --efl:#7c3aed;
     --shadow-sm:0 1px 2px rgba(13,19,34,.06); --shadow:0 4px 16px -4px rgba(13,19,34,.12),0 1px 3px rgba(13,19,34,.06);
     --ring:rgba(61,25,91,.45);
@@ -45,6 +49,8 @@
     --text:#eef1f7; --text-2:#9aa6bb; --text-3:#6b7790; --border:#283248; --border-2:#33405a;
     --accent:#a78bfa; --accent-2:#ff2d7e; --on-accent:#160a24;
     --danger:#f87171; --warn:#fbbf24; --good:#34d399; --info:#a5b4fc;
+    /* On dark surfaces the base tokens already clear AA, so ink == fill. */
+    --danger-ink:#f87171; --warn-ink:#fbbf24; --good-ink:#34d399;
     --target:#34d399; --mid:#fbbf24; --fade:#94a3b8; --efl:#c4b5fd;
     --shadow-sm:0 1px 2px rgba(0,0,0,.4); --shadow:0 10px 30px -8px rgba(0,0,0,.55),0 2px 6px rgba(0,0,0,.4);
     --ring:rgba(167,139,250,.5);
@@ -57,6 +63,14 @@
   .muted{color:var(--text-2)} .faint{color:var(--text-3)}
   a{color:var(--accent-2);text-decoration:none}
   a:focus-visible,button:focus-visible,select:focus-visible,textarea:focus-visible,input:focus-visible{outline:3px solid var(--ring); outline-offset:2px; border-radius:8px}
+  /* Responsible gambling notice — shown site-wide, required for a UK betting-research tool */
+  .rg{display:flex;flex-wrap:wrap;align-items:center;gap:.5rem .85rem;padding:.85rem 1rem;border:1px solid var(--border);
+      border-radius:12px;background:var(--surface-2);font-size:.76rem;line-height:1.5;color:var(--text-2)}
+  .rg-18{flex:none;display:inline-grid;place-items:center;width:26px;height:26px;border-radius:50%;
+         background:var(--danger);color:#fff;font-weight:800;font-size:.68rem;letter-spacing:-.02em}
+  .rg a{color:var(--text);text-decoration:underline;text-underline-offset:2px}
+  .rg a:hover{color:var(--accent-2)}
+  .rg-sep{color:var(--text-3)}
   .tier-target{background:color-mix(in srgb,var(--target) 14%,transparent); color:var(--target); border:1px solid color-mix(in srgb,var(--target) 35%,transparent)}
   .tier-mid{background:color-mix(in srgb,var(--mid) 14%,transparent); color:var(--mid); border:1px solid color-mix(in srgb,var(--mid) 35%,transparent)}
   .tier-fade{background:color-mix(in srgb,var(--fade) 12%,transparent); color:var(--text-2); border:1px solid color-mix(in srgb,var(--fade) 30%,transparent)}
@@ -301,6 +315,13 @@
   .heat-badge{font-family:var(--mono);font-weight:700;font-size:.82rem;padding:.14rem .48rem;border-radius:7px;background:var(--surface-3);color:var(--text-2);display:inline-block}
   .heat-badge.hot{background:color-mix(in srgb,var(--warn) 22%,transparent);color:var(--warn)}
   .fx-refrow{display:flex;align-items:center;gap:.5rem;padding:.4rem .85rem;border-bottom:1px solid var(--border)}
+  /* Team-card market strip: total cards and both-teams-carded per fixture */
+  .mk-strip{display:flex;align-items:center;gap:1.15rem;flex-wrap:wrap;padding:.45rem .85rem;
+            border-bottom:1px solid var(--border);background:var(--surface-2)}
+  .mk-cell{display:flex;flex-direction:column;gap:.05rem;line-height:1.15}
+  .mk-lab{font-family:var(--mono);font-size:.64rem;letter-spacing:.08em;color:var(--text-2);font-weight:700}
+  .mk-val{font-family:var(--mono);font-size:.86rem;font-weight:800;font-variant-numeric:tabular-nums;color:var(--text)}
+  .mk-note{font-family:var(--mono);font-size:.56rem;color:var(--text-3);align-self:center}
   .cand2{display:flex;align-items:center;gap:.7rem;padding:.55rem .85rem;border-top:1px solid var(--border);width:100%;text-align:left;background:none;border-left:0;border-right:0;border-bottom:0;color:inherit;font:inherit;cursor:pointer}
   .cand2:hover{background:var(--surface-2)}
   .cbadge{width:44px;height:38px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-weight:700;font-size:.64rem;flex:none;background:var(--surface-2);border:1px solid var(--border-2);color:var(--text-2)}
@@ -447,7 +468,7 @@
         </button>
       </div>
       <a href="https://gameweekedge.netlify.app" rel="noopener" class="faint" style="font-size:.72rem;font-weight:600">Part of the Edge family · Gameweek Edge ↗</a>
-      <p class="sb-foot-legal">Player and club form via ScoutingStats, live data via the official FPL API, referee data from football-data.co.uk records. Research, not a betting guarantee. Stake responsibly.</p>
+      <p class="sb-foot-legal">18+ only. Research, not betting advice — no result is guaranteed. Help: <a href="https://www.begambleaware.org/" target="_blank" rel="noopener noreferrer">BeGambleAware</a>. Form via ScoutingStats, live data via the official FPL API, referee data from football-data.co.uk.</p>
     </div>
   </aside>
 
@@ -774,6 +795,16 @@
       <p>A referee's <strong>×factor</strong> now blends two measures. <strong>Yellows per game</strong> is the obvious one, but it's contaminated: an official shows more cards partly because the fixtures he draws are more foul-heavy. <strong>Cards per foul</strong> divides that out — how readily he reaches for the card given the same provocation. Because the desk already models each club's foul and card propensity separately, leaning on yellows per game alone double-counts the teams. The two ratios (each against the league average) are combined as a weighted geometric mean, equal weight by default, and clamped to ×0.75–×1.30 so no single official can swamp the model. Both columns are on the <strong>Referees</strong> tab; cards per foul carries its % difference from the league average. Where an official has no fouls data yet, the factor stays on yellows per game exactly as before. Fouls come from the same public football-data.co.uk match records as the card counts, so this adds no new data source.</p>
       <h3>Live data</h3>
       <p>The desk pulls the official FPL feed through its own proxy: the 2026-27 schedule for the Fixtures tab, each player's live yellow and red card count, and availability flags (injured, suspended, doubtful). Once a player has 450 minutes of 2026-27 football, his yellow rate in the risk score switches from last season's form to this season's live rate — rows carry a green dot when live rates are in use. If the feed is unreachable the desk falls back to the baked 2025-26 form and says so in the top bar. Player photos are the official cutouts from the same FPL feed; a player without one (pre-season, or unmatched) simply shows his club crest.</p>
+      <h3>Team card markets — total cards and both teams carded</h3>
+      <p>Each fixture card carries a market strip: <strong>EXP CARDS</strong> (the expected total in the match), <strong>O3.5</strong> and <strong>O4.5</strong> (the chance of 4+ and 5+ cards) and <strong>BTC</strong> (both teams carded — each side picks up at least one). These are the liquid card markets, and they fall out of the per-player numbers the desk already computes: every rated available player is one coin-flip with his own probability, so the match total follows a <em>Poisson-binomial</em> distribution, which has an exact answer — no simulation involved.</p>
+      <p>One correction matters. A player's percentage is his chance of a card <em>if he plays the full 90</em>, so simply adding up a 25-man squad would price a match with 50 players on the pitch — it returns about 9 expected cards instead of 4. Each player is therefore weighted by the share of his side's minutes he actually takes, scaled to an eleven. Across all 272 possible pairings in the shipped data the model averages <strong>4.1 cards a match</strong>, against a real Premier League average of roughly 4.0–4.3, and it prices away sides above home sides, which is the right direction.</p>
+      <p>The honest limit: the maths assumes players are booked independently, and they are not — a flashpoint books two at once, and a referee losing control books five. That makes the extreme tails slightly thin, so treat O5.5 and above as a floor rather than a price. Fixtures with fewer than twelve rated players are marked <em>thin sample</em>.</p>
+      <h3>Home and away</h3>
+      <p>Away sides collect more cards than home sides, in every season on record. Booking heat has reflected that for a while through each club's home/away cards-against split; now the <em>per-player</em> number does too — a player is priced at <span class="num">×0.95</span> at home and <span class="num">×1.08</span> away, the factors carried over from the forecast pipeline. Across the league that opens a gap of about 0.2 cards a match between the two sides, which is the size the match record shows.</p>
+      <h3>Head to head — what these two actually do to each other</h3>
+      <p>Where the two clubs have met at least three times in the last five seasons, the market strip carries an <strong>H2H</strong> cell: the average yellows across those meetings, with the number of games in the label and the recent run in the tooltip. It counts <strong>yellows only</strong>, exactly as the model's expected-cards figure does, so the two numbers are directly comparable. Reds are recorded separately rather than folded in.</p>
+      <p>It is deliberately kept <em>beside</em> the model rather than inside it. They are two independent reads of the same question — one from this season's player rates, one from what actually happened when these sides met — and the disagreement is the useful part. Across the 120 fixtures where both exist they differ by 0.61 cards on average, and by a full card or more in about one in five. Those are the fixtures worth a second look, so the H2H figure is highlighted when it diverges by a card or more.</p>
+      <p>Treat it as context, not proof. Squads turn over, managers change, and ten meetings is a small sample — a fixture with a violent history and none of the same players is a coincidence, not a signal. Pairs that have not met enough show nothing at all, which is most of the promoted clubs. Data is the public-domain football-data.co.uk match record (1,118 meetings across 151 club pairs), the same source behind the referee figures and the home/away splits, so it adds no new dependency.</p>
       <h3>Matchup context</h3>
       <p>Derby fixtures — the recognised rivalries among the 20 clubs, North London to Tyne–Wear, plus the promoted clubs' regional rivalries — get a booking-heat boost and a 🔥 derby chip on the Fixtures tab, since rivalry games run hotter with the referee. Once at least two finished gameweeks have been recorded, the players table adds a small ▲ card-form trend beside the yellow count: cards picked up over the recent recorded window (up to the last five gameweeks). Booking heat is also venue-aware: each club's cards-against is split into home and away rates (football-data.co.uk match data — away sides consistently pick up more cards), so the same two clubs read differently at each ground. Each player now carries both <strong>fouls committed</strong> and <strong>fouls won</strong> per 90 (shown on the player profile, in the share cards and the CSV) — committed feeds the risk score today; fouls won is a new data slot that populates on the next ScoutingStats refresh (it isn't in the live FPL feed), and will sharpen opponent-aggression matchup calls once it's in.</p>
       <h3>Suspension watch</h3>
@@ -802,7 +833,20 @@
     </main>
 
     <footer class="muted" style="padding:0 26px 2rem;font-size:.78rem">
-      Premier League Bookings Desk. Player and club form via ScoutingStats, live data via the official FPL API, referee data from football-data.co.uk records. Research, not a betting guarantee. Stake responsibly.
+      <div class="rg" role="note" aria-label="Responsible gambling">
+        <span class="rg-18" aria-hidden="true">18+</span>
+        <span><strong>Over 18s only.</strong> This desk is statistical research, not betting advice, and no result is guaranteed. Never stake more than you can afford to lose.</span>
+        <span>
+          <a href="https://www.begambleaware.org/" target="_blank" rel="noopener noreferrer">BeGambleAware</a>
+          <span class="rg-sep" aria-hidden="true">·</span>
+          <a href="https://www.gamcare.org.uk/" target="_blank" rel="noopener noreferrer">GamCare</a>
+          <span class="rg-sep" aria-hidden="true">·</span>
+          <a href="https://www.gamstop.co.uk/" target="_blank" rel="noopener noreferrer">GAMSTOP</a>
+          <span class="rg-sep" aria-hidden="true">·</span>
+          National Gambling Helpline <a href="tel:08088020133">0808 8020 133</a> (free, 24/7)
+        </span>
+      </div>
+      <p style="margin:.9rem 0 0">Premier League Bookings Desk. Player and club form via ScoutingStats, live data via the official FPL API, referee data from football-data.co.uk records.</p>
     </footer>
 
   </div><!-- /.main -->
@@ -889,6 +933,7 @@
 
 <script src="data/pl_data.js"></script>
 <script src="data/ref_history.js"></script>
+<script src="data/h2h.js"></script>
 <script src="data/model.js"></script>
 <script src="assets/core.js"></script>
 <script>
@@ -906,7 +951,7 @@ const CLUBMAP={}; CLUBS.forEach(c=>CLUBMAP[c.short]=c);
 
 // ---- state ----
 let state=loadState();
-function loadState(){ try{ const s=JSON.parse(localStorage.getItem(STORE_KEY))||{}; return {picks:s.picks||[],watch:s.watch||[]}; }catch(e){ return {picks:[],watch:[]}; } }
+function loadState(){ try{ const s=JSON.parse(localStorage.getItem(STORE_KEY))||{}; return {picks:s.picks||[],watch:s.watch||[],notes:s.notes||{}}; }catch(e){ return {picks:[],watch:[],notes:{}}; } }
 function saveState(){ try{ localStorage.setItem(STORE_KEY, JSON.stringify(state)); }catch(e){} }
 
 // ---- helpers ----
@@ -1407,7 +1452,7 @@ async function exportPNG(){
   });
   // footer
   x.fillStyle="#8b94a5"; x.font=`600 18px ${body}`;
-  x.fillText("Player form via ScoutingStats · 2026-27 squads · research, not a betting guarantee",P,H-50);
+  x.fillText("18+ · Player form via ScoutingStats · 2026-27 squads · research, not betting advice · begambleaware.org",P,H-50);
   x.fillStyle="#3d195b"; x.font=`800 20px ${disp}`; x.textAlign="right"; x.fillText("PL BOOKINGS DESK",W-P,H-50); x.textAlign="left";
   c.toBlob(blob=>{ const u=URL.createObjectURL(blob),a=document.createElement("a"); a.href=u; a.download=`pl-bookings-${cf==="all"?"top":cf.toLowerCase()}.png`; a.click(); setTimeout(()=>URL.revokeObjectURL(u),2000); },"image/png");
 }
@@ -1429,7 +1474,7 @@ function shareBrandBand(x,W,P,body,disp,title,subtitle){
   x.fillStyle="#586275"; x.font=`600 22px ${body}`; x.fillText(subtitle,P,210);
 }
 function shareFooter(x,W,P,H,body,disp,note){
-  x.fillStyle="#8b94a5"; x.font=`600 18px ${body}`; x.fillText(note,P,H-50);
+  x.fillStyle="#8b94a5"; x.font=`600 18px ${body}`; x.fillText("18+ · "+note+" · begambleaware.org",P,H-50);
   x.fillStyle="#3d195b"; x.font=`800 20px ${disp}`; x.textAlign="right"; x.fillText("PL BOOKINGS DESK",W-P,H-50); x.textAlign="left";
 }
 // One match: teams, referee, heat and the fixture-aware booking candidates.
@@ -1456,27 +1501,57 @@ async function exportFixturePNG(fid){
   x.fillStyle="#fff"; x.textAlign="center"; x.fillText(ht,W-P-hw/2,ry-1); x.textAlign="left";
   const top=322;
   x.fillStyle="#8b94a5"; x.font=`700 16px ${body}`;
-  x.fillText("BOOKING CANDIDATE",P,top-16);
+  x.fillText("MOST LIKELY BOOKED",P,top-16);
   x.textAlign="right"; x.fillText("P(CARD)",W-P,top-16); x.textAlign="left";
-  if(!cands.length){ x.fillStyle="#586275"; x.font=`600 24px ${body}`; x.fillText("No rated available players yet.",P,top+40); }
-  const rh=Math.min(118,(H-top-120)/Math.max(1,cands.length));
-  cands.forEach((cd,i)=>{
+  const listCands=cands.slice(0,5);
+  if(!listCands.length){ x.fillStyle="#586275"; x.font=`600 24px ${body}`; x.fillText("No rated available players yet.",P,top+40); }
+  const rh=Math.min(122,(958-top)/Math.max(1,listCands.length));
+  listCands.forEach((cd,i)=>{
     const p=cd.p, prob=cd.prob, y=top+i*rh, mid=y+rh/2;
     if(i%2===0){ x.fillStyle="#f4f6fa"; roundRect(x,P-16,y+6,W-2*(P-16),rh-10,14); x.fill(); }
-    const col=clubColour(p.c); x.fillStyle=col; roundRect(x,P,mid-20,52,40,9); x.fill();
-    x.fillStyle=textOn(col); x.font=`800 17px ${body}`; x.textAlign="center"; x.fillText(p.c,P+26,mid+6); x.textAlign="left";
+    x.fillStyle=i<3?"#3d195b":"#c2c8d4"; x.font=`800 26px ${disp}`; x.textAlign="center"; x.fillText(String(i+1),P+14,mid+8); x.textAlign="left";
+    const col=clubColour(p.c); x.fillStyle=col; roundRect(x,P+36,mid-20,52,40,9); x.fill();
+    x.fillStyle=textOn(col); x.font=`800 17px ${body}`; x.textAlign="center"; x.fillText(p.c,P+62,mid+6); x.textAlign="left";
     x.fillStyle="#0c1322"; x.font=`700 30px ${disp}`;
-    let nm=p.n; while(x.measureText(nm).width>W-P-430&&nm.length>3) nm=nm.slice(0,-1);
-    x.fillText(nm+(nm!==p.n?"…":""),P+72,mid-2);
+    let nm=p.n; while(x.measureText(nm).width>W-P-470&&nm.length>3) nm=nm.slice(0,-1);
+    x.fillText(nm+(nm!==p.n?"…":""),P+108,mid-2);
     x.fillStyle="#586275"; x.font=`600 18px ${body}`;
-    x.fillText(`${p.p||""} · base ${(pImp(p)*100).toFixed(0)}%${p.f!=null?" · "+p.f.toFixed(1)+" fls/90":""}${p.fw!=null?" · "+p.fw.toFixed(1)+" won":""}${ref&&Math.abs(rf-1)>=0.02?" · ×"+rf.toFixed(2)+" ref":""}`,P+72,mid+24);
+    x.fillText(`${p.p||""} · base ${(pImp(p)*100).toFixed(0)}%${p.f!=null?" · "+p.f.toFixed(1)+" fls/90":""}${p.fw!=null?" · "+p.fw.toFixed(1)+" won":""}${ref&&Math.abs(rf-1)>=0.02?" · ×"+rf.toFixed(2)+" ref":""}`,P+108,mid+24);
     const pc=probHex(prob);
     x.fillStyle=pc; x.font=`800 40px ${disp}`; x.textAlign="right"; x.fillText((prob*100).toFixed(0)+"%",W-P,mid-4); x.textAlign="left";
-    const bw=210,bx=W-P-bw,by=mid+12;
+    const bw=190,bx=W-P-bw,by=mid+12;
     x.fillStyle="#e3e7ee"; roundRect(x,bx,by,bw,8,4); x.fill();
     x.fillStyle=pc; roundRect(x,bx,by,bw*Math.min(1,prob),8,4); x.fill();
   });
-  shareFooter(x,W,P,H,body,disp,"Fixture-aware, referee-adjusted booking model · research, not a guarantee");
+  // ── ACCA BUILDER: best same-match double & treble from the top 3 ──
+  // Combined chance assumes independent bookings (a research estimate — real
+  // same-game legs are correlated); implied fair odds = 1 / combined chance.
+  const top3=cands.filter(c=>c.prob>0).slice(0,3);
+  const ay=1004;
+  x.fillStyle="#8b94a5"; x.font=`700 16px ${body}`;
+  x.fillText("ACCA BUILDER · SAME MATCH",P,ay-18);
+  x.textAlign="right"; x.fillText("ALL BOOKED",W-P,ay-18); x.textAlign="left";
+  const accaRows=[];
+  if(top3.length>=2) accaRows.push({tag:"DOUBLE",legs:top3.slice(0,2)});
+  if(top3.length>=3) accaRows.push({tag:"TREBLE",legs:top3.slice(0,3)});
+  if(!accaRows.length){ x.fillStyle="#586275"; x.font=`600 22px ${body}`; x.fillText("Not enough rated players for a combo.",P,ay+34); }
+  const arh=120;
+  accaRows.forEach((row,i)=>{
+    const y=ay+i*arh, mid=y+arh/2;
+    x.fillStyle="#faf5ff"; roundRect(x,P-16,y+4,W-2*(P-16),arh-12,14); x.fill();
+    x.fillStyle="#3d195b"; roundRect(x,P,mid-18,104,36,9); x.fill();
+    x.fillStyle="#ffffff"; x.font=`800 18px ${body}`; x.textAlign="center"; x.fillText(row.tag,P+52,mid+6); x.textAlign="left";
+    const names=row.legs.map(c=>c.p.n).join(" + ");
+    x.fillStyle="#0c1322"; x.font=`700 26px ${disp}`;
+    let nm=names; while(x.measureText(nm).width>W-P-430&&nm.length>3) nm=nm.slice(0,-1);
+    x.fillText(nm+(nm!==names?"…":""),P+124,mid-2);
+    x.fillStyle="#586275"; x.font=`600 18px ${body}`;
+    x.fillText(row.legs.map(c=>c.p.c).join(" · "),P+124,mid+24);
+    const cp=row.legs.reduce((s,c)=>s*c.prob,1);
+    x.fillStyle=probHex(cp); x.font=`800 38px ${disp}`; x.textAlign="right"; x.fillText((cp*100).toFixed(0)+"%",W-P,mid-4);
+    x.fillStyle="#586275"; x.font=`600 18px ${body}`; x.fillText("~"+(1/cp).toFixed(1)+" fair odds",W-P,mid+24); x.textAlign="left";
+  });
+  shareFooter(x,W,P,H,body,disp,"Same-match combos assume independent bookings · research, not a guarantee");
   c.toBlob(blob=>dlBlob(blob,`pl-bookings-${h.toLowerCase()}-${a.toLowerCase()}.png`),"image/png");
 }
 // Whole gameweek: every fixture by booking heat, hottest first, with its top risk.
@@ -1495,7 +1570,7 @@ async function exportGameweekPNG(gw){
   x.fillStyle="#8b94a5"; x.font=`700 16px ${body}`;
   x.fillText("FIXTURE",P+92,top-16); x.fillText("TOP RISK",P+430,top-16);
   x.textAlign="right"; x.fillText("HEAT",W-P,top-16); x.textAlign="left";
-  const rows=fx.slice(0,10), rh=Math.min(98,(H-top-110)/Math.max(1,rows.length));
+  const rows=fx.slice(0,8), rh=Math.min(92,(1000-top)/Math.max(1,rows.length));
   const badge=(x,cx,mid,short)=>{ const col=clubColour(short); x.fillStyle=col; roundRect(x,cx,mid-16,46,32,7); x.fill(); x.fillStyle=textOn(col); x.font=`800 14px ${body}`; x.textAlign="center"; x.fillText(short,cx+23,mid+5); x.textAlign="left"; };
   rows.forEach((f,i)=>{
     const M=fixtureMeta(f); if(!M) return;
@@ -1512,7 +1587,35 @@ async function exportGameweekPNG(gw){
     x.fillStyle=hc; x.font=`800 36px ${disp}`; x.textAlign="right"; x.fillText(heat.toFixed(1),W-P,mid-2);
     x.font=`700 15px ${body}`; x.fillText(lbl,W-P,mid+22); x.textAlign="left";
   });
-  shareFooter(x,W,P,H,body,disp,"Booking heat = venue card rates × referee × derby · research, not a guarantee");
+  // ── ACCA BUILDER: best cross-match double & treble, one leg per fixture ──
+  // Each leg is a different match's most likely booking, so the legs are
+  // uncorrelated; combined chance = product, fair odds = 1 / combined chance.
+  const legPool=fx.map(f=>{ const M=fixtureMeta(f); if(!M) return null; const t=gwCandidates(M.h,M.a,M.ref,M.derby)[0]; return (t&&t.prob>0)?{p:t.p,prob:t.prob}:null; }).filter(Boolean).sort((p,q)=>q.prob-p.prob);
+  const ay=1034;
+  x.fillStyle="#8b94a5"; x.font=`700 16px ${body}`;
+  x.fillText("ACCA BUILDER · CROSS-MATCH",P,ay-18);
+  x.textAlign="right"; x.fillText("ALL BOOKED",W-P,ay-18); x.textAlign="left";
+  const accaRows=[];
+  if(legPool.length>=2) accaRows.push({tag:"DOUBLE",legs:legPool.slice(0,2)});
+  if(legPool.length>=3) accaRows.push({tag:"TREBLE",legs:legPool.slice(0,3)});
+  if(!accaRows.length){ x.fillStyle="#586275"; x.font=`600 22px ${body}`; x.fillText("Not enough rated players for a combo.",P,ay+34); }
+  const arh=118;
+  accaRows.forEach((row,i)=>{
+    const y=ay+i*arh, mid=y+arh/2;
+    x.fillStyle="#faf5ff"; roundRect(x,P-16,y+4,W-2*(P-16),arh-12,14); x.fill();
+    x.fillStyle="#3d195b"; roundRect(x,P,mid-18,104,36,9); x.fill();
+    x.fillStyle="#ffffff"; x.font=`800 18px ${body}`; x.textAlign="center"; x.fillText(row.tag,P+52,mid+6); x.textAlign="left";
+    const names=row.legs.map(c=>c.p.n).join(" + ");
+    x.fillStyle="#0c1322"; x.font=`700 26px ${disp}`;
+    let nm=names; while(x.measureText(nm).width>W-P-430&&nm.length>3) nm=nm.slice(0,-1);
+    x.fillText(nm+(nm!==names?"…":""),P+124,mid-2);
+    x.fillStyle="#586275"; x.font=`600 18px ${body}`;
+    x.fillText(row.legs.map(c=>c.p.c).join(" · "),P+124,mid+24);
+    const cp=row.legs.reduce((s,c)=>s*c.prob,1);
+    x.fillStyle=probHex(cp); x.font=`800 38px ${disp}`; x.textAlign="right"; x.fillText((cp*100).toFixed(0)+"%",W-P,mid-4);
+    x.fillStyle="#586275"; x.font=`600 18px ${body}`; x.fillText("~"+(1/cp).toFixed(1)+" fair odds",W-P,mid+24); x.textAlign="left";
+  });
+  shareFooter(x,W,P,H,body,disp,"Cross-match combos assume independent bookings · research, not a guarantee");
   c.toBlob(blob=>dlBlob(blob,`pl-bookings-gw${gw}.png`),"image/png");
 }
 
@@ -1818,17 +1921,81 @@ function openPlayerProfile(k){
         ${derby?'<span title="Derby">🔥</span>':""}${refChip(ref)||""}
       </div>
       <div class="faint" style="font-size:.74rem;margin-top:.2rem">${fx.kickoff_time?fmtKO(fx.kickoff_time):"Kick-off TBC"} · ${home?"home":"away"} v ${esc(clubName(opp))}</div>
+      ${fx.kickoff_time?`<button class="btn btn-ghost" type="button" data-ics="${esc(fx.id)}" data-ics-player="${esc(k)}" style="margin-top:.45rem;font-size:.74rem;padding:.28rem .6rem">📅 Add to calendar</button>`:""}
     </div>`;
   } else if(!LIVE){
     h+='<p class="faint" style="font-size:.76rem;margin:.2rem 0 .6rem">Next-fixture context needs the live FPL feed, which is unreachable right now.</p>';
   }
+  /* Your own note on a player — the wcstats desk has this and it is the
+     thing that makes a research tool stick: the reason you flagged him. */
+  h+=`<div style="margin-bottom:.8rem">
+    <label class="faint" for="ppNote" style="font-size:.68rem;text-transform:uppercase;letter-spacing:.04em;display:block;margin-bottom:.25rem">Your note</label>
+    <textarea id="ppNote" data-note-key="${esc(k)}" rows="2" placeholder="Why he's on your list — tactical fouler, on 4 yellows, hates this ref…"
+      style="width:100%;resize:vertical;font:inherit;font-size:.84rem;padding:.45rem .6rem;border-radius:8px;border:1px solid var(--border);background:var(--surface);color:var(--text)">${esc(noteFor(k))}</textarea>
+    <div class="faint" id="ppNoteState" aria-live="polite" style="font-size:.68rem;margin-top:.2rem;min-height:1em"></div>
+  </div>`;
   h+='<div style="display:flex;justify-content:flex-end"><button class="btn btn-ghost" data-pp-close>Close</button></div>';
   $("ppBody").innerHTML=h;
   $("playerModal").classList.add("show");
+  const ta=$("ppNote");
+  if(ta){
+    let t=null;
+    ta.addEventListener("input",()=>{
+      clearTimeout(t);
+      t=setTimeout(()=>{ setNote(ta.dataset.noteKey,ta.value); const s=$("ppNoteState"); if(s){ s.textContent="Saved"; setTimeout(()=>{ if(s) s.textContent=""; },1600); } },400);
+    });
+  }
+}
+/* ---- calendar export (RFC 5545) ----
+   Lifted from sportsfinder-uk: a fixture you care about belongs in your
+   calendar, not just in a tab. Built as a data: URL so it needs no server
+   and works offline. Times are emitted in UTC (the Z suffix), which is
+   what the FPL feed gives us, so the calendar app localises it. */
+function icsEscape(s){ return String(s||"").replace(/([\\;,])/g,"\\$1").replace(/\n/g,"\\n"); }
+function icsStamp(d){ return new Date(d).toISOString().replace(/[-:]/g,"").replace(/\.\d{3}/,""); }
+function fixtureICS(fx,player){
+  if(!fx||!fx.kickoff_time) return null;
+  const hS=LIVE.teamMap[fx.team_h], aS=LIVE.teamMap[fx.team_a];
+  const start=new Date(fx.kickoff_time), end=new Date(start.getTime()+115*60000); // 90 + stoppage + half time
+  const ref=refFor(fx.id);
+  const title=`${clubName(hS)} v ${clubName(aS)}`;
+  const bits=[`Booking heat ${(clubCAH(hS)+clubCAA(aS)).toFixed(1)}`];
+  if(ref) bits.push(`Referee ${ref.n}${ref.ypg!=null?` (${ref.ypg.toFixed(2)} cards/game)`:""}`);
+  if(player) bits.push(`Watching: ${player}`);
+  bits.push("Via Premier League Bookings Desk — 18+, research not betting advice.");
+  return ["BEGIN:VCALENDAR","VERSION:2.0","PRODID:-//PL Bookings Desk//EN","CALSCALE:GREGORIAN","BEGIN:VEVENT",
+    `UID:plb-${fx.id}-${player?"p":"m"}@bookings-desk`,
+    `DTSTAMP:${icsStamp(Date.now())}`,`DTSTART:${icsStamp(start)}`,`DTEND:${icsStamp(end)}`,
+    `SUMMARY:${icsEscape(title)}`,`DESCRIPTION:${icsEscape(bits.join(" · "))}`,
+    "BEGIN:VALARM","TRIGGER:-PT60M","ACTION:DISPLAY",`DESCRIPTION:${icsEscape(title)} kicks off in an hour`,"END:VALARM",
+    "END:VEVENT","END:VCALENDAR"].join("\r\n");
+}
+function downloadICS(fx,player,name){
+  const ics=fixtureICS(fx,player); if(!ics){ toast("No kick-off time yet"); return; }
+  const a=document.createElement("a");
+  a.href="data:text/calendar;charset=utf-8,"+encodeURIComponent(ics);
+  a.download=(name||"fixture").replace(/[^a-z0-9]+/gi,"-").toLowerCase()+".ics";
+  document.body.appendChild(a); a.click(); a.remove();
+  toast("Calendar file downloaded");
+}
+/* Notes live beside the watchlist in the same local store. */
+function noteFor(k){ return (state.notes&&state.notes[k])||""; }
+function setNote(k,v){
+  if(!state.notes) state.notes={};
+  const s=String(v||"").slice(0,500).trim();
+  if(s) state.notes[k]=s; else delete state.notes[k];
+  saveState();
 }
 function closePlayerProfile(){ $("playerModal").classList.remove("show"); }
 $("playerModal").addEventListener("click",e=>{
   if(e.target.id==="playerModal"||e.target.closest("[data-pp-close]")){ closePlayerProfile(); return; }
+  const ics=e.target.closest("[data-ics]");
+  if(ics){
+    const fx=(LIVE&&LIVE.fixtures)?LIVE.fixtures.find(f=>String(f.id)===ics.dataset.ics):null;
+    const pl=playerByKey(ics.dataset.icsPlayer);
+    if(fx) downloadICS(fx,pl?pl.n:"",`${LIVE.teamMap[fx.team_h]}-v-${LIVE.teamMap[fx.team_a]}`);
+    return;
+  }
   const b=e.target.closest(".watch-btn");
   if(b){ const k=b.dataset.w, i=state.watch.indexOf(k);
     if(i>=0) state.watch.splice(i,1); else state.watch.push(k);
@@ -1850,10 +2017,10 @@ $("playerRows").addEventListener("click",e=>{ const b=e.target.closest(".watch-b
 $("exportBtn").addEventListener("click",exportPNG);
 document.querySelectorAll("th [data-sort]").forEach(b=>b.addEventListener("click",()=>{ const k=b.dataset.sort; if(sortKey===k) sortDir*=-1; else { sortKey=k; sortDir=(k==="n"||k==="p")?1:-1; } renderPlayers(); }));
 $("pickForm").addEventListener("submit",e=>{ e.preventDefault();
-  const p={id:"p"+Date.now().toString(36)+Math.random().toString(36).slice(2,6),ts:Date.now(),fixture:$("pkFixture").value.trim(),selection:$("pkSelection").value.trim(),market:$("pkMarket").value.trim(),odds:$("pkOdds").value,stake:$("pkStake").value,status:"pending"};
+  const p={id:"p"+Date.now().toString(36)+Math.random().toString(36).slice(2,6),ts:Date.now(),uat:Date.now(),fixture:$("pkFixture").value.trim(),selection:$("pkSelection").value.trim(),market:$("pkMarket").value.trim(),odds:$("pkOdds").value,stake:$("pkStake").value,status:"pending"};
   if(!p.fixture||!p.selection) return; state.picks.push(p); saveState(); cloudPickUpsert(p); renderTracker(); e.target.reset(); $("pkFixture").focus();
 });
-$("pickRows").addEventListener("change",e=>{ const s=e.target.closest(".pk-status"); if(!s) return; const p=state.picks.find(x=>x.id===s.dataset.id); if(p){ p.status=s.value; saveState(); cloudPickUpsert(p); renderTracker(); } });
+$("pickRows").addEventListener("change",e=>{ const s=e.target.closest(".pk-status"); if(!s) return; const p=state.picks.find(x=>x.id===s.dataset.id); if(p){ p.status=s.value; touchPick(p); saveState(); cloudPickUpsert(p); renderTracker(); } });
 $("pickRows").addEventListener("click",e=>{ const b=e.target.closest(".pk-del"); if(!b) return; state.picks=state.picks.filter(x=>x.id!==b.dataset.id); saveState(); cloudPickDel(b.dataset.id); renderTracker(); });
 
 // ---- AI review of picks ----
@@ -2525,11 +2692,16 @@ function confidence(p){
 // LOG-ODDS scale by the referee's card factor and a small derby bump (multiply
 // the odds, not the probability — so a 72% pick under a strict ref lands ~77%,
 // not the naive 94%). See docs/modelling-review.md.
-function fixtureProb(p,ref,derby){
+/* isHome: true if this player's club is the home side, false away, null
+   when the venue isn't known (the season table, where there is no fixture
+   in view). Away sides are carded more; the desk already reflects that in
+   fixture heat, and now in the per-player number too. */
+function fixtureProb(p,ref,derby,isHome){
   const base=pImp(p); if(base==null) return null;
   const rf=ref?refFactor(ref):1, df=derby?1.08:1;
-  if(MODEL_OK&&typeof PLDCore.contextProb==="function") return PLDCore.contextProb(base,rf,df);
-  return Math.min(0.95,Math.max(0.005,base*rf*df)); // legacy fallback if core.js is stale
+  const vf=(typeof PLDCore.venueFactor==="function")?PLDCore.venueFactor(isHome):1;
+  if(MODEL_OK&&typeof PLDCore.contextProb==="function") return PLDCore.contextProb(base,rf,df,vf);
+  return Math.min(0.95,Math.max(0.005,base*rf*df*vf)); // legacy fallback if core.js is stale
 }
 // One-booking-from-a-ban / banned flag, from the live feed.
 function suspFlagInline(p){
@@ -2542,9 +2714,62 @@ function suspFlagInline(p){
 function gwCandidates(h,a,ref,derby){
   return PL_PLAYERS
     .filter(p=>(p.c===h||p.c===a)&&rEff(p)!=null&&pImp(p)!=null&&!p.ls&&!(p.live&&"isu".includes(p.live.st)))
-    .map(p=>({p,prob:fixtureProb(p,ref,derby)}))
+    .map(p=>({p,prob:fixtureProb(p,ref,derby,p.c===h)}))
     .filter(c=>c.prob!=null)
     .sort((x,y)=>y.prob-x.prob);
+}
+/* Team-card markets for a fixture. The desk prices players; the liquid
+   markets are team-level (total cards over/under, both teams carded), so
+   fold the per-player chances into a Poisson-binomial — see PLDCore. Uses
+   every rated available player on each side, not just the shown top few. */
+function teamCardBoard(h,a,ref,derby){
+  const cands=gwCandidates(h,a,ref,derby);
+  if(!cands.length) return null;
+  /* Each candidate's probability assumes he plays 90, so scale it by the
+     share of his side's minutes he actually takes — otherwise a 25-man
+     squad prices a match with 50 players on the pitch. */
+  const side=c=>{
+    const s=cands.filter(x=>x.p.c===c);
+    return PLDCore.matchLambdas(s.map(x=>x.prob),s.map(x=>x.p.min));
+  };
+  const board=PLDCore.teamCardMarkets(side(h),side(a),[3.5,4.5,5.5]);
+  board.thin=cands.length<12;   // too few rated players to trust the tails
+  return board;
+}
+/* Past meetings between these two clubs, from the public-domain
+   football-data.co.uk records (data/h2h.js). Null for pairs that have not
+   met in the covered seasons — the promoted clubs mostly. */
+function h2hFor(h,a){
+  if(typeof H2H==="undefined"||!H2H.pairs) return null;
+  const p=H2H.pairs[[h,a].sort().join("|")];
+  return (p&&p.n>=3)?p:null;   // under three meetings is anecdote, not history
+}
+function marketStripHtml(board,h2h){
+  if(!board) return "";
+  const pc=v=>Math.round(v*100)+"%";
+  const col=v=>v>=0.6?"var(--danger-ink)":v>=0.45?"var(--warn-ink)":"var(--text-2)";
+  const cell=(label,val,title)=>
+    `<div class="mk-cell" title="${esc(title)}"><span class="mk-lab">${label}</span>`+
+    `<span class="mk-val" style="color:${col(val)}">${pc(val)}</span></div>`;
+  /* The history sits beside the model, never inside it: two independent
+     reads of the same question, and the disagreement is the interesting
+     part. Highlighted only when they diverge by a full card. */
+  let h2hCell="";
+  if(h2h){
+    const gap=h2h.avg-board.expected;
+    const tone=Math.abs(gap)>=1?(gap>0?"var(--danger-ink)":"var(--text-2)"):"var(--text)";
+    h2hCell=`<div class="mk-cell mk-h2h" title="${esc(`Past meetings: ${h2h.avg} yellows on average across ${h2h.n} games (${h2h.last.join(", ")} most recent first). ${Math.round(h2h.o45*100)}% of them produced 5 or more.`)}">
+      <span class="mk-lab">H2H ${h2h.n}</span>
+      <span class="mk-val" style="color:${tone}">${h2h.avg.toFixed(1)}</span></div>`;
+  }
+  return `<div class="mk-strip"${board.thin?' data-thin="1"':''}>
+    <div class="mk-cell"><span class="mk-lab">EXP CARDS</span><span class="mk-val">${board.expected.toFixed(1)}</span></div>
+    ${cell("O3.5",board.over[3.5],"Chance of 4 or more cards in the match")}
+    ${cell("O4.5",board.over[4.5],"Chance of 5 or more cards in the match")}
+    ${cell("BTC",board.bothCarded,"Both teams carded: each side picks up at least one")}
+    ${h2hCell}
+    ${board.thin?'<span class="mk-note">thin sample</span>':''}
+  </div>`;
 }
 // Severity band from the fixture-aware probability (prototype language).
 function severity(prob){
@@ -2637,6 +2862,7 @@ function fixtureCardHtml(f,opts){
       </div>
     </div>
     <div class="fx-refrow">${refSelect(f.id)}${refDelta}</div>
+    ${marketStripHtml(teamCardBoard(h,a,ref,derby),h2hFor(h,a))}
     ${body}
     <div class="fx-foot"><button class="fx-share" data-share-fid="${f.id}" type="button" title="Download a shareable card of this match">⬇ Share match</button></div>
   </div>`;
@@ -2691,7 +2917,7 @@ function renderWatchDash(){
     let opp="—", ha="", gw="", prob=pImp(p), ref=null;
     if(LIVE){
       const f=nextFixtureFor(p.c);
-      if(f){ const H=LIVE.teamMap[f.team_h], A=LIVE.teamMap[f.team_a]; const home=(H===p.c); ref=refFor(f.id); prob=fixtureProb(p,ref,isDerby(H,A)); opp=home?A:H; ha=home?"H":"A"; gw=f.event?("GW"+f.event):""; }
+      if(f){ const H=LIVE.teamMap[f.team_h], A=LIVE.teamMap[f.team_a]; const home=(H===p.c); ref=refFor(f.id); prob=fixtureProb(p,ref,isDerby(H,A),home); opp=home?A:H; ha=home?"H":"A"; gw=f.event?("GW"+f.event):""; }
     }
     return {p,opp,ha,gw,ref,prob:prob==null?-1:prob};
   }).sort((x,y)=>y.prob-x.prob);
@@ -2795,6 +3021,34 @@ $("fxShareBtn").addEventListener("click",()=>{ const gw=Number($("gwSelect").val
 // ═══════════════════════════════════════════════════════════
 const SUPA={url:"https://knodunjnsxelmpziupwk.supabase.co",key:"sb_publishable_xCECe0czArDwwIBtR8Mzxg_tuhyGYu-"};
 let sb=null,SESSION=null,SYNCED_UID=null;
+
+/* ── Stale-client guard ────────────────────────────────────────────────
+   A tab left open across a deploy still holds the old app and the old
+   picks. Without a guard it signs in, merges, and pushes that stale copy
+   over rows a newer client already fixed — the wipe that hit F1 Grid
+   Masters on 2026-07-16. Three defences:
+     1. every pick carries a real edit time (`uat`), so the merge can tell
+        which side is actually newer instead of trusting the last writer;
+     2. if the cloud carries a higher schema than this build understands,
+        the client goes READ-ONLY — it still shows the picks, it just
+        never writes;
+     3. the pre-merge local state is backed up before anything overwrites
+        it, so a bad merge is recoverable.
+   `schema_v` is only written once we've seen the column on a read, so
+   this works whether or not the migration in supabase/plb_picks.sql has
+   been run yet. */
+const SCHEMA_V=2, BACKUP_KEY="pl_desk_v1_backup";
+let CLOUD_RO=false, HAS_SCHEMA_COL=false;
+function backupState(reason){
+  try{ localStorage.setItem(BACKUP_KEY,JSON.stringify({at:new Date().toISOString(),reason:reason||"",state:state})); }catch(e){}
+}
+function setReadOnly(on,why){
+  CLOUD_RO=!!on;
+  const n=$("trackerSyncNote");
+  if(CLOUD_RO&&n) n.textContent="This tab is running an older version of the desk than your saved picks. It won't write to the cloud — reload the page to get back in sync.";
+  if(CLOUD_RO) toast("Older version open — sync paused, reload to fix");
+  if(CLOUD_RO&&why&&window.console) console.warn("[plb] cloud sync read-only:",why);
+}
 function uid(){ return SESSION&&SESSION.user?SESSION.user.id:null; }
 function initAuth(){
   if(!(window.supabase&&window.supabase.createClient)) return;
@@ -2814,13 +3068,21 @@ function updateAcctUI(){
     :"Picks save to this browser under pl_desk_v1 — sign in (top right) to sync them across devices.";
 }
 
+/* Stamp a real edit time. Called at every point a pick actually changes,
+   so the merge compares genuine edit times rather than push times. */
+function touchPick(p){ p.uat=Date.now(); return p; }
+
 function pickRow(p){
   const num=v=>{ const n=Number(v); return v===""||v==null||!isFinite(n)?null:n; };
-  return {user_id:uid(),id:p.id,fixture:p.fixture||"",selection:p.selection||"",market:p.market||"",odds:num(p.odds),stake:num(p.stake),status:p.status||"pending",updated_at:new Date().toISOString()};
+  const row={user_id:uid(),id:p.id,fixture:p.fixture||"",selection:p.selection||"",market:p.market||"",odds:num(p.odds),stake:num(p.stake),status:p.status||"pending",
+             updated_at:new Date(p.uat||p.ts||Date.now()).toISOString()};
+  if(HAS_SCHEMA_COL) row.schema_v=SCHEMA_V;
+  return row;
 }
-/* Cloud writers (fire-and-forget; local storage stays the working copy). */
-function cloudPickUpsert(p){ if(sb&&uid()) sb.from("plb_picks").upsert(pickRow(p)).then(()=>{},()=>{}); }
-function cloudPickDel(id){ if(sb&&uid()) sb.from("plb_picks").delete().eq("user_id",uid()).eq("id",id).then(()=>{},()=>{}); }
+/* Cloud writers (fire-and-forget; local storage stays the working copy).
+   Both no-op in read-only mode so a stale tab can never write. */
+function cloudPickUpsert(p){ if(sb&&uid()&&!CLOUD_RO) sb.from("plb_picks").upsert(pickRow(p)).then(()=>{},()=>{}); }
+function cloudPickDel(id){ if(sb&&uid()&&!CLOUD_RO) sb.from("plb_picks").delete().eq("user_id",uid()).eq("id",id).then(()=>{},()=>{}); }
 
 /* On first sign-in, merge local and cloud picks so nothing is lost, then
    push the merged set back to the cloud. A settled result beats pending. */
@@ -2829,20 +3091,52 @@ async function syncOnLogin(){
   try{
     const {data:rows,error}=await sb.from("plb_picks").select("*").eq("user_id",id);
     if(error) throw error;
+    const cloudRows=rows||[];
+
+    /* Does the table carry the guard column yet? Only write it if so, so
+       this works before and after the migration is run. */
+    HAS_SCHEMA_COL=cloudRows.length>0&&Object.prototype.hasOwnProperty.call(cloudRows[0],"schema_v");
+
+    /* Guard: cloud written by a newer build than this one. Show, never write. */
+    const maxCloudV=cloudRows.reduce((m,r)=>Math.max(m,Number(r.schema_v)||1),1);
+    if(maxCloudV>SCHEMA_V){
+      setReadOnly(true,"cloud schema v"+maxCloudV+" > client v"+SCHEMA_V);
+      state.picks=cloudRows.map(cloudToPick).sort((a,b)=>(a.ts||0)-(b.ts||0));
+      renderTracker(); return;                        // deliberately no saveState, no push
+    }
+
+    backupState("pre-merge sign-in");                 // recoverable if the merge goes wrong
+
     const local={}; state.picks.forEach(p=>local[p.id]=p);
-    let base=1; state.picks.forEach(p=>{ if(!p.ts) p.ts=base++; });
+    let base=1; state.picks.forEach(p=>{ if(!p.ts) p.ts=base++; if(!p.uat) p.uat=p.ts||base; });
     const cloudOnly=[];
-    (rows||[]).forEach(r=>{
-      const c={id:r.id,fixture:r.fixture||"",selection:r.selection||"",market:r.market||"",odds:r.odds==null?"":String(r.odds),stake:r.stake==null?"":String(r.stake),status:r.status||"pending",ts:r.created_at?Date.parse(r.created_at):0};
+    cloudRows.forEach(r=>{
+      const c=cloudToPick(r);
       const l=local[r.id];
-      if(!l) cloudOnly.push(c);
-      else if(l.status==="pending"&&c.status!=="pending") l.status=c.status;
+      if(!l){ cloudOnly.push(c); return; }
+      /* Newer edit wins, field by field. Where neither side carries a real
+         edit time (picks made before this version), fall back to the old
+         rule: a settled result beats pending. */
+      const lU=Number(l.uat)||0, cU=Number(c.uat)||0;
+      if(cU>lU){
+        l.fixture=c.fixture; l.selection=c.selection; l.market=c.market;
+        l.odds=c.odds; l.stake=c.stake; l.status=c.status; l.uat=cU;
+      }else if(!lU&&!cU&&l.status==="pending"&&c.status!=="pending"){
+        l.status=c.status;
+      }
     });
     state.picks=[...state.picks,...cloudOnly].sort((a,b)=>(a.ts||0)-(b.ts||0));
     saveState();
     if(state.picks.length) await sb.from("plb_picks").upsert(state.picks.map(pickRow));
     renderTracker(); toast("Signed in — picks synced");
   }catch(e){ toast("Signed in — cloud sync unavailable"); }
+}
+function cloudToPick(r){
+  return {id:r.id,fixture:r.fixture||"",selection:r.selection||"",market:r.market||"",
+          odds:r.odds==null?"":String(r.odds),stake:r.stake==null?"":String(r.stake),
+          status:r.status||"pending",
+          ts:r.created_at?Date.parse(r.created_at):0,
+          uat:r.updated_at?Date.parse(r.updated_at):0};
 }
 
 // ---- account modal ----

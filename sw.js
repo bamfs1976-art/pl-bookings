@@ -3,12 +3,13 @@
    cache-first. Live FPL data (/api/fpl/*) and Supabase calls are never
    touched here — the app's own data layer decides what is fresh vs cached. */
 
-const VERSION = 'plb-v8';
+const VERSION = 'plb-v9';
 const SHELL = [
   '/',
   '/index.html',
   '/data/pl_data.js',
   '/data/ref_history.js',
+  '/data/h2h.js',
   '/data/model.js',
   '/assets/core.js',
   '/assets/tw.css',

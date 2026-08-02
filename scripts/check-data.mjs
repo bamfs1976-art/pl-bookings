@@ -14,13 +14,51 @@ vm.createContext(ctx);
 vm.runInContext(dataSrc + '\n;({CLUBS, PL_PLAYERS, REFS})', ctx);
 const { CLUBS, PL_PLAYERS, REFS } = vm.runInContext('({CLUBS, PL_PLAYERS, REFS})', ctx);
 
-assert.ok(Array.isArray(PL_PLAYERS) && PL_PLAYERS.length >= 400,
-  `expected >=400 players in data/pl_data.js, got ${PL_PLAYERS && PL_PLAYERS.length}`);
+// Tightened 2026-08-01. The old ">=400 players, >=1 EFL row" was loose enough
+// to hide a real hole. Note the "528 players / 72 EFL" figure in AUDIT.md was
+// never real: those 72 rows were 6 unique forwards repeated 12x each, and the
+// de-dup in 6ffde1e correctly collapsed them to 6. So the promoted clubs have
+// never had a defender or midfielder in this dataset — a count assert alone
+// can't see that, which is why the per-club and per-position floors below are
+// the load-bearing ones.
+assert.ok(Array.isArray(PL_PLAYERS) && PL_PLAYERS.length >= 450,
+  `expected >=450 players in data/pl_data.js, got ${PL_PLAYERS && PL_PLAYERS.length} — re-run the harvest (data/harvest.py + build_pl_data.py)`);
 assert.equal(CLUBS.length, 20, `expected 20 clubs, got ${CLUBS.length}`);
 assert.ok(Array.isArray(REFS) && REFS.length >= 10,
   `expected >=10 referees, got ${REFS && REFS.length}`);
 const efl = PL_PLAYERS.filter((p) => p.b === 'EFL').length;
-assert.ok(efl >= 1, `expected at least one promoted-club (EFL) row, got ${efl}`);
+assert.ok(efl >= 40,
+  `expected >=40 promoted-club (EFL) player rows, got ${efl} — the Championship harvest has not landed`);
+
+// The one that actually bites: a squad can only go missing club by club, and
+// a club with a handful of rows is worse than useless in a risk table — it
+// silently under-rates exactly the defenders and holding midfielders the
+// promoted sides are picked for.
+const squads = new Map();
+for (const p of PL_PLAYERS) squads.set(p.c, (squads.get(p.c) || 0) + 1);
+const thin = [...squads.entries()].filter(([, n]) => n < 15).sort((a, b) => a[1] - b[1]);
+assert.equal(thin.length, 0,
+  `clubs with under 15 players in data/pl_data.js: ${thin.map(([c, n]) => `${c} (${n})`).join(', ')} — ` +
+  `the harvest is incomplete; every club needs a full squad before this ships`);
+const missingClub = CLUBS.filter((c) => !squads.has(c.short)).map((c) => c.short);
+assert.equal(missingClub.length, 0,
+  `clubs with no players at all: ${missingClub.join(', ')}`);
+
+// A squad of only forwards is a harvest that half-failed. Bookings come from
+// defenders and holding midfielders, so a club with no DF/MF row is actively
+// misleading in a card-risk table, not merely incomplete.
+const shapeless = [];
+for (const c of CLUBS) {
+  const squad = PL_PLAYERS.filter((p) => p.c === c.short);
+  if (!squad.length) continue;
+  const positions = new Set(squad.map((p) => p.p));
+  if (!positions.has('DF') || !positions.has('MF')) {
+    shapeless.push(`${c.short} (${[...positions].join('/') || 'none'})`);
+  }
+}
+assert.equal(shapeless.length, 0,
+  `clubs with no defenders or midfielders: ${shapeless.join(', ')} — ` +
+  `a forwards-only squad under-rates exactly the players who collect cards`);
 
 // No duplicate (club, name) rows — a repeated player in a prediction product
 // reads as a data bug and erodes trust. The generator de-dupes; this guards
@@ -72,6 +110,28 @@ assert.ok(REF_HISTORY.seasons.every((s) => s.ypg > 0 && s.g > 0),
 assert.ok(REF_HISTORY.span.endsWith(histLabels[histLabels.length - 1]),
   `span "${REF_HISTORY.span}" does not match the last season ${histLabels[histLabels.length - 1]}`);
 
+// Head-to-head card history (scripts/build-h2h.mjs). Public-domain match
+// records, so the shape is guaranteed; assert it stays sane and that the
+// counting rule has not silently changed from yellows to all cards.
+const h2hCtx = {};
+vm.createContext(h2hCtx);
+vm.runInContext(readFileSync(join(root, 'data', 'h2h.js'), 'utf8'), h2hCtx);
+const H2H = vm.runInContext('H2H', h2hCtx);
+assert.ok(H2H && H2H.pairs && H2H.meta, 'data/h2h.js missing {meta, pairs}');
+assert.ok(H2H.meta.meetings >= 500,
+  `expected >=500 head-to-head meetings, got ${H2H.meta.meetings}`);
+assert.ok(H2H.meta.pairs >= 100,
+  `expected >=100 club pairs with history, got ${H2H.meta.pairs}`);
+// A yellows-only average lands near 4 a game. If this drifts past 6 the
+// build has started counting reds, or booking points, into the same field.
+assert.ok(H2H.meta.leagueAvgYellows > 2.5 && H2H.meta.leagueAvgYellows < 6,
+  `h2h league average ${H2H.meta.leagueAvgYellows} implausible for yellows-only counting`);
+for (const [k, p] of Object.entries(H2H.pairs)) {
+  assert.ok(p.n > 0 && p.avg >= 0 && p.o45 >= 0 && p.o45 <= 1, `h2h pair ${k} has impossible values`);
+  const [x, y] = k.split('|');
+  assert.ok(x < y, `h2h pair key ${k} is not in sorted order — lookups will miss`);
+}
+
 // Card/fouls model (scripts/build-model.mjs). Assert the shape the app depends on.
 const mctx = {};
 vm.createContext(mctx);
@@ -93,6 +153,8 @@ assert.ok(/<script\s+src="data\/pl_data\.js"><\/script>/.test(html),
   'index.html no longer loads data/pl_data.js');
 assert.ok(/<script\s+src="data\/ref_history\.js"><\/script>/.test(html),
   'index.html no longer loads data/ref_history.js');
+assert.ok(/<script\s+src="data\/h2h\.js"><\/script>/.test(html),
+  'index.html no longer loads data/h2h.js');
 assert.ok(/<script\s+src="data\/model\.js"><\/script>/.test(html),
   'index.html no longer loads data/model.js');
 

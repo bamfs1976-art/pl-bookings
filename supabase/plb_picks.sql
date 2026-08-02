@@ -19,7 +19,21 @@ create table if not exists public.plb_picks (
   primary key (user_id, id)
 );
 
+-- Stale-client guard (added 2026-08-01). `schema_v` records the app version
+-- that last wrote each row. A client running an older schema than the data it
+-- reads goes read-only instead of pushing its stale copy over newer picks —
+-- the failure that cost F1 Grid Masters a state wipe on 2026-07-16.
+-- Safe to run on an existing table.
+alter table public.plb_picks
+  add column if not exists schema_v integer not null default 1;
+
 alter table public.plb_picks enable row level security;
+
+-- Policies are dropped first so the whole file stays re-runnable.
+drop policy if exists "plb_picks_select_own" on public.plb_picks;
+drop policy if exists "plb_picks_insert_own" on public.plb_picks;
+drop policy if exists "plb_picks_update_own" on public.plb_picks;
+drop policy if exists "plb_picks_delete_own" on public.plb_picks;
 
 create policy "plb_picks_select_own" on public.plb_picks
   for select using (auth.uid() = user_id);
