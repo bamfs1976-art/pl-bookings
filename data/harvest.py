@@ -30,6 +30,10 @@ import urllib.request
 from pathlib import Path
 
 DATA = Path(__file__).resolve().parent
+sys.path.insert(0, str(DATA))
+# The club map, squad floor and position list live in build_pl_data so the
+# harvest and the build cannot drift apart about what a covered squad is.
+import build_pl_data  # noqa: E402
 BASE = "https://scoutingstats.ai/api/league/{league}/player-stats"
 
 
@@ -61,6 +65,30 @@ def fetch(league, season, cookie):
 
 
 
+def promoted_shortfall(payload):
+    """Which promoted clubs this Championship payload fails to cover, reusing
+    the build's own club map, squad floor and position requirement so the two
+    stages cannot disagree about what "covered" means."""
+    players = payload["players"] if isinstance(payload, dict) and "players" in payload else payload
+    by_club = {}
+    for p in players or []:
+        short = build_pl_data.SHORT.get(p.get("team"))
+        if short in build_pl_data.PROMOTED:
+            by_club.setdefault(short, []).append(p)
+    out = []
+    for short in sorted(build_pl_data.PROMOTED):
+        squad = by_club.get(short, [])
+        if len(squad) < build_pl_data.MIN_SQUAD:
+            out.append(f"{short}: {build_pl_data._n_players(len(squad))}, need at least {build_pl_data.MIN_SQUAD}")
+            continue
+        have = {build_pl_data.POS.get(p.get("pos"), p.get("pos") or "") for p in squad}
+        missing = [q for q in build_pl_data.POS_ORDER
+                   if q in build_pl_data.REQUIRED_POS and q not in have]
+        if missing:
+            out.append(f"{short}: no {', '.join(missing)} in the squad")
+    return out
+
+
 def main():
     cookie = os.environ.get("SS_COOKIE", "").strip()
     if not cookie:
@@ -72,6 +100,21 @@ def main():
     print(f"pl_players.json written ({n_pl} players)")
 
     ch, n_ch = fetch(9, os.environ.get("SS_SEASON_CH"), cookie)
+    # The league-wide count is not the check that matters. league 9 has 24
+    # clubs, so a payload of 100+ players clears `fetch`'s floor comfortably
+    # while carrying only a handful for the three clubs we actually keep —
+    # which is exactly what shipped: six forwards, no defenders, for a year.
+    # Refuse to overwrite a good file with a thin one.
+    thin = promoted_shortfall(ch)
+    if thin:
+        sys.exit(
+            "ERROR: league 9 answered with "
+            f"{n_ch} players, but the promoted clubs are not covered:\n  - "
+            + "\n  - ".join(thin)
+            + "\n\nchamp_promoted.json was NOT overwritten. This endpoint appears to "
+              "return a slice of the league rather than full squads; try a "
+              "team-scoped or paginated request before trusting the result."
+        )
     (DATA / "champ_promoted.json").write_text(json.dumps(ch), encoding="utf-8")
     print(f"champ_promoted.json written ({n_ch} players)")
 

@@ -28,6 +28,12 @@ jobs:
       - name: Model builder is reproducible (season prior regenerates cleanly)
         run: node scripts/build-model.mjs
 
+      # The promoted clubs are the one feed with no Premier League fallback,
+      # so their coverage is checked at the point the data is built, not only
+      # on the shipped file. Pure Python, no network, no cookie.
+      - name: Promoted-club coverage guards (harvest + build)
+        run: python3 data/test_coverage.py
+
       - name: Data guard (pl_data.js counts, no inline dataset in index.html)
         run: node scripts/check-data.mjs
 

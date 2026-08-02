@@ -18,6 +18,7 @@ Booking risk = yc_p90*2 + fouls_p90, the same metric as the WC desk.
 """
 
 import json
+import sys
 from pathlib import Path
 
 DATA = Path(__file__).resolve().parent
@@ -25,6 +26,53 @@ OUT = DATA / "pl_data.js"
 LOW_MIN = 450
 
 DROP = {"Burnley", "West Ham United", "Wolverhampton Wanderers"}  # relegated
+
+# The promoted three. Their form comes from the Championship feed, which is the
+# only part of this pipeline with no Premier League fallback — so it is the
+# only part that can go missing without anything else looking wrong.
+PROMOTED = {"COV", "IPS", "HUL"}
+# A club needs a squad, not a handful of names. Fifteen is the floor the CI
+# guard already applies to the shipped file; applying it HERE means a bad
+# harvest never reaches the file in the first place.
+MIN_SQUAD = 15
+# And a squad is not a squad without defenders. This is the check that would
+# have caught the real hole: for a year the promoted clubs carried six
+# forwards and nothing else, which no row count can see. A booking model
+# without centre-backs and holding midfielders is missing exactly the players
+# it exists to rate.
+REQUIRED_POS = {"GK", "DF", "MF", "FW"}
+
+
+# Reported in football order rather than alphabetical: "no GK, DF, MF" is the
+# order a reader thinks in, and "no DF, GK, MF" reads like a sorting accident.
+POS_ORDER = ["GK", "DF", "MF", "FW"]
+
+
+def _n_players(n):
+    return f"{n} player" + ("" if n == 1 else "s")
+
+
+def coverage_problems(rows):
+    """Every reason the promoted clubs' data is not fit to ship, as plain
+    sentences. Empty list means it is. Pure — takes rows, touches nothing."""
+    problems = []
+    by_club = {}
+    for r in rows:
+        if not r:
+            continue
+        by_club.setdefault(r["c"], []).append(r)
+    for short in sorted(PROMOTED):
+        squad = by_club.get(short, [])
+        if not squad:
+            problems.append(f"{short}: no players at all")
+            continue
+        if len(squad) < MIN_SQUAD:
+            problems.append(f"{short}: {_n_players(len(squad))}, need at least {MIN_SQUAD}")
+        have = {r["p"] for r in squad}
+        missing = [q for q in POS_ORDER if q in REQUIRED_POS and q not in have]
+        if missing:
+            problems.append(f"{short}: no {', '.join(missing)} in the squad")
+    return problems
 POS = {"Goalkeeper": "GK", "Defender": "DF", "Midfielder": "MF", "Attacker": "FW"}
 
 SHORT = {
@@ -149,6 +197,18 @@ def jsval(x):
 
 def main():
     players = build_players()
+    problems = coverage_problems(players)
+    if problems:
+        sys.exit(
+            "ERROR: the promoted-club (Championship) data is incomplete, so "
+            "pl_data.js was NOT rewritten:\n  - "
+            + "\n  - ".join(problems)
+            + "\n\nThe league-9 harvest returns a slice of the Championship, not full "
+              "squads, and nothing downstream can reconstruct a missing centre-back. "
+              "Re-run data/harvest.py with a fresh SS_COOKIE and confirm "
+              "champ_promoted.json carries whole squads for these clubs before "
+              "rebuilding."
+        )
     clubs = build_clubs(players)
     refs = build_refs()
 

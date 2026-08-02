@@ -69,6 +69,25 @@ Two ways to fix the data:
 Option 2 is the better long-term answer and is the largest single item still
 open.
 
+**Update 2026-08-02 — guards moved upstream.** The hole was only ever caught by
+`scripts/check-data.mjs`, i.e. after a bad build had already written
+`pl_data.js`. Two checks now run earlier, share one definition of "covered"
+(`build_pl_data.PROMOTED`, `MIN_SQUAD`, `REQUIRED_POS`), and are unit-tested in
+`data/test_coverage.py` — pure Python, no network and no cookie, so CI runs
+them:
+
+- `harvest.py` refuses to overwrite `champ_promoted.json` when the league-9
+  payload does not cover the promoted clubs. The old floor was `>=100 players`
+  across all 24 Championship clubs, which a three-player slice clears easily —
+  and did.
+- `build_pl_data.py` refuses to write `pl_data.js` at all, naming each club and
+  the positions it is missing rather than leaving a downstream count to fail
+  vaguely later.
+
+This does not put the data in. It stops the gap being invisible, and makes the
+failure say which club to go and fetch. The two options above are still the
+fix, and option 2 is still the better one.
+
 ---
 
 ## Shipped in this branch
