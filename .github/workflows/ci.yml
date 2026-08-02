@@ -34,6 +34,9 @@ jobs:
       - name: Promoted-club coverage guards (harvest + build)
         run: python3 data/test_coverage.py
 
+      - name: API-Football harvest route (mapping and pagination)
+        run: python3 data/test_apifootball.py
+
       - name: Data guard (pl_data.js counts, no inline dataset in index.html)
         run: node scripts/check-data.mjs
 

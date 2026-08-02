@@ -88,6 +88,31 @@ This does not put the data in. It stops the gap being invisible, and makes the
 failure say which club to go and fetch. The two options above are still the
 fix, and option 2 is still the better one.
 
+**Update 2026-08-02 — option 2 is built.** `data/harvest_apifootball.py` fetches
+the promoted clubs' Championship form from API-Football and writes
+`champ_promoted.json` in the shape `build_pl_data.py` already consumes, so
+nothing downstream changes. It needs one free key in `API_FOOTBALL_KEY` rather
+than a browser cookie, which is why the refresh can finally run unattended: the
+workflow runs it whenever the secret is set, after the ScoutingStats step and
+overwriting it.
+
+`/players` is paginated twenty at a time, which is the same truncation risk in
+a new coat, so the walk reads every page, follows a page count revised upward
+mid-walk, and treats a 200 carrying an `errors` object (a bad key, an exhausted
+quota) as a failure rather than an empty squad. Coverage is judged by
+`build_pl_data.coverage_problems` — the one implementation, reached through an
+adapter, after an earlier pair of copies disagreed about whether a thin squad
+also reports its missing positions.
+
+**Not yet verified against the live API.** It is written from the documented v3
+contract and tested against recorded-shape fixtures in
+`data/test_apifootball.py`; api-football.com is unreachable from this
+environment and needs a key. The first real run is the proof, and the guards
+are deliberately loud so a moved field stops the harvest by name instead of
+writing a plausible file. What is still needed: a free key at
+<https://dashboard.api-football.com>, added as the `API_FOOTBALL_KEY`
+repository secret, then run the data refresh.
+
 ---
 
 ## Shipped in this branch
