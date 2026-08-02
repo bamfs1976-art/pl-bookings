@@ -157,8 +157,13 @@ def _harvest_catches_slice():
                raw("Ipswich Town", "Attacker", "Clarke")]
     payload += [raw("Sheffield Wednesday", "Defender", "x" + str(i)) for i in range(200)]
     short = H.promoted_shortfall(payload)
-    assert len(short) == 3, short
-    assert all("need at least" in s for s in short), short
+    # Two complaints per club — thin, and missing three positions — because
+    # the harvest guard delegates to the build's rule rather than carrying its
+    # own. That delegation is the point: an earlier pair of copies disagreed
+    # about whether a thin squad also reports its gaps.
+    assert len(short) == 6, short
+    assert sum("need at least" in s for s in short) == 3, short
+    assert sum("no GK, DF, MF" in s for s in short) == 3, short
 
 
 t("200 Championship players with 3 from the promoted clubs is a shortfall", _harvest_catches_slice)
@@ -169,7 +174,7 @@ def _harvest_unknown_club():
     answer — an unmapped name is not evidence of a squad."""
     payload = [raw("Coventry", "Defender", "x")] * 30   # note: not "Coventry City"
     short = H.promoted_shortfall(payload)
-    assert any(s.startswith("COV: 0 players") for s in short), short
+    assert any(s.startswith("COV: no players at all") for s in short), short
 
 
 t("an unmapped club name counts as no cover, not as cover", _harvest_unknown_club)
@@ -177,6 +182,12 @@ t("an unmapped club name counts as no cover, not as cover", _harvest_unknown_clu
 
 def _shared_vocabulary():
     """If these ever drift, the harvest and the build start disagreeing."""
+    # The strongest form of that: identical inputs, identical complaints, with
+    # no second copy of the rule to fall out of step.
+    rows = [row("HUL", "FW", "one")]
+    api = [raw("Hull City", "Attacker", "one")]
+    assert H.promoted_shortfall(api) == B.coverage_problems(rows), (
+        H.promoted_shortfall(api), B.coverage_problems(rows))
     assert B.PROMOTED == {"COV", "IPS", "HUL"}
     assert B.REQUIRED_POS == {"GK", "DF", "MF", "FW"}
     assert B.MIN_SQUAD >= 15

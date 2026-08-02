@@ -43,6 +43,7 @@ jobs:
     # cleanly when the cookie isn't set.
     env:
       SS_COOKIE: ${{ secrets.SS_COOKIE }}
+      API_FOOTBALL_KEY: ${{ secrets.API_FOOTBALL_KEY }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -66,8 +67,19 @@ jobs:
           SS_SEASON_CH: ${{ inputs.season_ch }}
         run: python3 data/harvest.py
 
+      # The Championship leg, from a key rather than a browser cookie. Runs
+      # after the ScoutingStats harvest so it OVERWRITES champ_promoted.json:
+      # the cookie route has never produced full promoted-club squads, and
+      # this one is the reason the refresh can be automated at all. Both are
+      # optional, and either can carry the job on its own.
+      - name: Harvest the promoted clubs from API-Football
+        if: ${{ env.API_FOOTBALL_KEY != '' }}
+        env:
+          API_FOOTBALL_SEASON: ${{ inputs.season_ch }}
+        run: python3 data/harvest_apifootball.py
+
       - name: Rebuild pl_data.js from the harvest
-        if: ${{ env.SS_COOKIE != '' }}
+        if: ${{ env.SS_COOKIE != '' || env.API_FOOTBALL_KEY != '' }}
         run: python3 data/build_pl_data.py
 
       # After build_pl_data regenerates CLUBS, re-add the home/away

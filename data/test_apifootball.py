@@ -1,0 +1,293 @@
+#!/usr/bin/env python3
+"""Tests for the API-Football harvest route.
+
+Run: python3 data/test_apifootball.py   (wired into CI)
+
+This route replaces a cookie with a key, which is the point — a key can be a
+repository secret, so the refresh can run unattended. But it also swaps one
+truncation risk for another: `/players` is paginated twenty at a time, and a
+squad's first page looks exactly like a squad. That is the same shape of
+failure that let six forwards ship as three squads, so most of what follows is
+about pages.
+
+Everything here runs against fixtures. The live API is not reachable from CI
+and needs a key, so these prove the MAPPING and the WALK, not the endpoint.
+"""
+import json
+import sys
+from pathlib import Path
+
+DATA = Path(__file__).resolve().parent
+sys.path.insert(0, str(DATA))
+import build_pl_data as B  # noqa: E402
+import harvest_apifootball as A  # noqa: E402
+
+passed = 0
+
+
+def t(name, fn):
+    global passed
+    fn()
+    passed += 1
+    print("  ok - " + name)
+
+
+def entry(name, club, pos, minutes, yellow=0, red=0, fouls_c=None, fouls_d=None, tid=1):
+    """One /players row, in the v3 shape."""
+    return {
+        "player": {"name": name, "photo": f"https://media.api-sports.io/{name}.png"},
+        "statistics": [{
+            "team": {"id": tid, "name": club},
+            "games": {"minutes": minutes, "position": pos, "appearences": 10},
+            "cards": {"yellow": yellow, "red": red},
+            "fouls": {"committed": fouls_c, "drawn": fouls_d},
+        }],
+    }
+
+
+def page(rows, current, total):
+    return {"errors": [], "paging": {"current": current, "total": total}, "response": rows}
+
+
+print("club names")
+
+
+def _aliases():
+    assert A.canonical_club("Coventry") == "Coventry City"
+    assert A.canonical_club("Ipswich") == "Ipswich Town"
+    assert A.canonical_club("Hull City") == "Hull City"
+    assert A.canonical_club("Sheffield Wednesday") is None
+    assert A.canonical_club(None) is None
+    assert A.canonical_club("  Coventry  ") == "Coventry City", "whitespace is trimmed"
+    # every canonical name must be one build_pl_data can key on, or the row is
+    # dropped later for a reason nobody will connect to this table
+    for full in set(A.CLUB_ALIASES.values()):
+        assert full in B.SHORT, full
+
+
+t("API-Football spellings map onto the build's club names", _aliases)
+
+
+def _resolve():
+    payload = {"response": [
+        {"team": {"id": 63, "name": "Coventry"}},
+        {"team": {"id": 64, "name": "Ipswich"}},
+        {"team": {"id": 65, "name": "Hull City"}},
+        {"team": {"id": 99, "name": "Sheffield Wednesday"}},
+    ]}
+    ids, missing = A.resolve_teams(payload)
+    assert missing == [], missing
+    assert ids == {"Coventry City": 63, "Ipswich Town": 64, "Hull City": 65}, ids
+
+
+t("the three promoted clubs resolve to ids, others are ignored", _resolve)
+
+
+def _resolve_missing():
+    """A renamed or absent club must be named, not skipped. Fetching two of
+    three squads and shipping is the whole class of bug being fixed."""
+    payload = {"response": [{"team": {"id": 63, "name": "Coventry"}}]}
+    ids, missing = A.resolve_teams(payload)
+    assert ids == {"Coventry City": 63}
+    assert missing == ["Hull City", "Ipswich Town"], missing
+
+
+t("clubs the API does not list are reported by name", _resolve_missing)
+
+
+print("per-90 conversion")
+
+
+def _per90():
+    assert A.per90(45, 900) == 4.5
+    assert A.per90(0, 900) == 0.0
+    # The one that matters: no minutes is unknown, not zero. A zero here reads
+    # as a player who never fouls and would rank him the calmest in the league.
+    assert A.per90(3, 0) is None
+    assert A.per90(3, None) is None
+    assert A.per90(None, 900) is None
+    assert A.per90("x", 900) is None
+
+
+t("a rate off zero minutes is unknown, not zero", _per90)
+
+
+print("player mapping")
+
+
+def _map():
+    row = A.map_player(entry("A Player", "Coventry", "Defender", 900,
+                             yellow=5, red=1, fouls_c=30, fouls_d=12, tid=63),
+                       "Coventry City")
+    assert row["team"] == "Coventry City"
+    assert row["n"] == "A Player"
+    assert row["pos"] == "Defender"
+    assert row["min"] == 900 and row["yc"] == 5 and row["rc"] == 1
+    assert row["fc90"] == 3.0 and row["fd90"] == 1.2
+    assert row["tid"] == 63
+    # The position vocabulary has to be one build_pl_data.POS knows, or every
+    # player lands with a blank position and the coverage guard fires forever.
+    assert row["pos"] in B.POS, row["pos"]
+    assert B.POS[row["pos"]] == "DF"
+
+
+t("a row maps into the shape build_pl_data consumes", _map)
+
+
+def _map_transfer():
+    """A January move gives a player two statistics legs. Keep the leg for the
+    club we asked about — the other one is another club's form."""
+    e = entry("Mover", "Coventry", "Midfielder", 400, yellow=2, fouls_c=10, tid=63)
+    e["statistics"].append({
+        "team": {"id": 77, "name": "Hull City"},
+        "games": {"minutes": 1200, "position": "Midfielder"},
+        "cards": {"yellow": 9, "red": 0},
+        "fouls": {"committed": 40, "drawn": 5},
+    })
+    row = A.map_player(e, "Coventry City")
+    assert row["min"] == 400 and row["yc"] == 2, row
+    other = A.map_player(e, "Hull City")
+    assert other["min"] == 1200 and other["yc"] == 9, other
+
+
+t("a mid-season transfer keeps the right club's leg", _map_transfer)
+
+
+def _map_junk():
+    assert A.map_player(None, "Coventry City") is None
+    assert A.map_player({}, "Coventry City") is None
+    assert A.map_player({"player": {"name": "X"}, "statistics": []}, "Coventry City") is None
+    # a row for a club we did not ask about is not ours
+    assert A.map_player(entry("X", "Hull City", "Defender", 90), "Coventry City") is None
+
+
+t("unusable rows are dropped rather than half-built", _map_junk)
+
+
+print("pagination — the failure this route invites")
+
+
+def _single_page():
+    rows = [entry(f"P{i}", "Coventry", "Defender", 900) for i in range(12)]
+    got = A.collect_players(lambda p: page(rows, 1, 1), 63, "Coventry City")
+    assert len(got) == 12, len(got)
+
+
+t("a one-page squad reads in full", _single_page)
+
+
+def _walks_every_page():
+    """The load-bearing test. Twenty-eight players across two pages: stopping
+    at page one yields twenty, which is a plausible-looking squad and wrong."""
+    all_rows = [entry(f"P{i}", "Coventry", "Defender", 900) for i in range(28)]
+    pages = {1: page(all_rows[:20], 1, 2), 2: page(all_rows[20:], 2, 2)}
+    calls = []
+
+    def fetch(p):
+        calls.append(p)
+        return pages[p]
+
+    got = A.collect_players(fetch, 63, "Coventry City")
+    assert calls == [1, 2], calls
+    assert len(got) == 28, f"read {len(got)}, a page-one-only read gives 20"
+
+
+t("both pages of a 28-player squad are read", _walks_every_page)
+
+
+def _total_can_grow_mid_walk():
+    """A feed that revises its page count upward must not truncate us. Page
+    one says two pages; page two says three. Stopping at two loses a third of
+    the squad, and the shape that comes back looks perfectly normal."""
+    rows = [[entry(f"P{i}", "Coventry", "Defender", 900)] for i in range(3)]
+    pages = {1: page(rows[0], 1, 2), 2: page(rows[1], 2, 3), 3: page(rows[2], 3, 3)}
+    calls = []
+
+    def fetch(p):
+        calls.append(p)
+        return pages[p]
+
+    got = A.collect_players(fetch, 63, "Coventry City")
+    assert calls == [1, 2, 3], calls
+    assert len(got) == 3, len(got)
+
+
+t("a page count revised upward mid-walk is followed", _total_can_grow_mid_walk)
+
+
+def _api_errors_are_errors():
+    """API-Football answers 200 with an errors object for a bad key or an
+    exhausted quota. Treating that as an empty squad would overwrite good data
+    with nothing."""
+    bad = {"errors": {"token": "invalid"}, "paging": {"current": 1, "total": 1}, "response": []}
+    try:
+        A.collect_players(lambda p: bad, 63, "Coventry City")
+    except RuntimeError as e:
+        assert "errors" in str(e), e
+        return
+    raise AssertionError("an errors payload should have raised")
+
+
+t("a 200 carrying an errors object is a failure, not an empty squad", _api_errors_are_errors)
+
+
+def _runaway_guard():
+    try:
+        A.collect_players(lambda p: page([], p, 9999), 63, "Coventry City")
+    except RuntimeError as e:
+        assert "50" in str(e), e
+        return
+    raise AssertionError("a runaway page count should have raised")
+
+
+t("a nonsense page count stops rather than looping", _runaway_guard)
+
+
+print("coverage, in the API's own shape")
+
+
+def _shortfall_shares_the_bar():
+    """This route must clear exactly the bar the other one does, or the two
+    harvests disagree about what a covered squad is."""
+    rows = []
+    for club in ("Coventry City", "Ipswich Town", "Hull City"):
+        for i, pos in enumerate(["Goalkeeper", "Defender", "Midfielder", "Attacker"]):
+            rows.append({"team": club, "pos": pos, "n": f"{club}{i}"})
+        while len([r for r in rows if r["team"] == club]) < B.MIN_SQUAD:
+            rows.append({"team": club, "pos": "Defender", "n": f"{club}x{len(rows)}"})
+    assert A._shortfall(rows) == [], A._shortfall(rows)
+
+    thin = [r for r in rows if r["team"] != "Hull City"]
+    thin.append({"team": "Hull City", "pos": "Attacker", "n": "lone"})
+    out = A._shortfall(thin)
+    assert out and all("HUL" in o for o in out), out
+    assert any("1 player" in o for o in out), out
+
+
+t("the API-Football rows are judged by the same coverage bar", _shortfall_shares_the_bar)
+
+
+def _end_to_end_shape():
+    """A full walk, mapped, then handed to the build's own guard — the seam
+    where a wrong field name would show up as an empty squad."""
+    rows = []
+    for club, api_name in (("Coventry City", "Coventry"), ("Ipswich Town", "Ipswich"),
+                           ("Hull City", "Hull City")):
+        squad = []
+        for i, pos in enumerate(["Goalkeeper", "Defender", "Midfielder", "Attacker"]):
+            squad.append(entry(f"{club}-{pos}", api_name, pos, 900, yellow=i, fouls_c=10))
+        while len(squad) < B.MIN_SQUAD:
+            squad.append(entry(f"{club}-x{len(squad)}", api_name, "Defender", 900, fouls_c=8))
+        rows += A.collect_players(lambda p, s=squad: page(s, 1, 1), 1, club)
+    assert A._shortfall(rows) == [], A._shortfall(rows)
+    built = [B.mk(r, "EFL") for r in rows]
+    assert all(b is not None for b in built), "every row survives build_pl_data.mk"
+    assert B.coverage_problems(built) == [], B.coverage_problems(built)
+    sample = built[0]
+    assert sample["b"] == "EFL" and sample["c"] in B.PROMOTED
+    assert sample["r"] is not None, "risk is computed, so the harvest feeds the model"
+
+
+t("a full harvest passes the build's guard and produces risk scores", _end_to_end_shape)
+
+print(f"\n{passed} tests passed")
