@@ -446,4 +446,79 @@ t('degenerate inputs cannot produce NaN', () => {
   assert.ok(isFinite(m.over[4.5]));
 });
 
+
+console.log('value chart — market side');
+/* ── the market side of the value chart ──────────────────────────────
+   The chart compares our probability with a bookmaker's price. Everything
+   here is about not manufacturing value out of the bookmaker's margin. */
+t('marketProb turns a decimal price into its raw implied chance', () => {
+  assert.ok(Math.abs(core.marketProb(2.0) - 0.5) < 1e-12);
+  assert.ok(Math.abs(core.marketProb(4.0) - 0.25) < 1e-12);
+  /* Prices that are not prices. An "evens or shorter than certain" input
+     would otherwise read as a probability above 1. */
+  assert.equal(core.marketProb(1), null);
+  assert.equal(core.marketProb(0.5), null);
+  assert.equal(core.marketProb(-2), null);
+  assert.equal(core.marketProb('abc'), null);
+  assert.equal(core.marketProb(null), null);
+});
+
+t('the de-vigged price is always below the raw one', () => {
+  const raw = core.marketProb(2.5);
+  const fair = core.marketProbDeVig(2.5);
+  assert.ok(fair < raw, 'removing margin lowers the implied chance');
+  assert.ok(Math.abs(fair - raw * (1 - core.TYPICAL_CARD_MARGIN)) < 1e-12);
+  /* A zero margin is a no-op, and a nonsense margin falls back to raw
+     rather than producing a negative probability. */
+  assert.ok(Math.abs(core.marketProbDeVig(2.5, 0) - raw) < 1e-12);
+  assert.ok(Math.abs(core.marketProbDeVig(2.5, 1.5) - raw) < 1e-12);
+  assert.ok(Math.abs(core.marketProbDeVig(2.5, -0.2) - raw) < 1e-12);
+});
+
+t('valuePoint separates beating the price from beating the bookmaker', () => {
+  /* 2.50 implies 40% raw, 37.6% after a 6% margin. The band between them is
+     where a model "beats the bookmaker" and still loses money — the exact
+     mistake this chart is built to make visible. */
+  const inBand = core.valuePoint(0.38, 2.5);
+  assert.ok(inBand.edge < 0, 'inside the band the bet is still -EV');
+  assert.equal(inBand.beatsPrice, false, '0.38 does not clear the 40% it must beat');
+  assert.equal(inBand.insideMargin, true, 'but it does beat the bookmaker’s own 37.6%');
+
+  const below = core.valuePoint(0.36, 2.5);
+  assert.equal(below.beatsPrice, false);
+  assert.equal(below.insideMargin, false, 'below the de-vigged line there is no disagreement at all');
+
+  const real = core.valuePoint(0.50, 2.5);
+  assert.equal(real.beatsPrice, true, 'clearing the raw price is the bar that pays');
+  assert.equal(real.insideMargin, false, 'and it is past the band, not in it');
+  assert.ok(real.edge > 20, 'a real disagreement shows a large edge');
+
+  /* The two flags are mutually exclusive by construction — a point cannot
+     both pay and sit inside the cut. */
+  for (const p of [0.30, 0.36, 0.376, 0.38, 0.40, 0.55]) {
+    const v = core.valuePoint(p, 2.5);
+    assert.ok(!(v.beatsPrice && v.insideMargin), 'flags never both set at p=' + p);
+  }
+  /* And the edge sign agrees with beatsPrice at every one of them, so the
+     chart's colouring and its numbers cannot tell different stories. */
+  for (const p of [0.30, 0.39, 0.41, 0.60]) {
+    const v = core.valuePoint(p, 2.5);
+    assert.equal(v.beatsPrice, v.edge > 0, 'edge sign matches beatsPrice at p=' + p);
+  }
+
+  assert.equal(core.valuePoint(null, 2.5), null);
+  assert.equal(core.valuePoint(0.4, null), null);
+  assert.equal(core.valuePoint(0.4, 1), null);
+});
+
+t('valuePoint carries both probabilities so the chart can plot them', () => {
+  const v = core.valuePoint(0.42, 2.0);
+  assert.ok(Math.abs(v.model - 0.42) < 1e-12);
+  assert.ok(Math.abs(v.market - 0.5) < 1e-12);
+  assert.ok(v.fair < v.market, 'the fair line sits below the raw market line');
+  /* The edge agrees with the existing single-price check, so the chart and
+     the row-level value check can never disagree. */
+  assert.ok(Math.abs(v.edge - core.edgePct(2.0, 0.42)) < 1e-12);
+});
+
 console.log(`\n${passed} tests passed`);
