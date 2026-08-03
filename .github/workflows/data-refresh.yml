@@ -72,20 +72,39 @@ jobs:
         run: python3 data/harvest.py
 
       # The Championship leg, from a key rather than a browser cookie. Runs
-      # after the ScoutingStats harvest so it OVERWRITES champ_promoted.json:
-      # the cookie route has never produced full promoted-club squads, and
-      # this one is the reason the refresh can be automated at all. Both are
-      # optional, and either can carry the job on its own.
-      - name: Harvest the promoted clubs from API-Football
+      # after the ScoutingStats harvest so it OVERWRITES champ_promoted.json.
+      #
+      # continue-on-error, because on a FREE API-Football plan this step
+      # cannot succeed: the free plan covers seasons 2022 to 2024, and the
+      # promoted clubs' Championship season is 2025-26, so /teams answers
+      # "Free plans do not have access to this season". It still runs, and
+      # still prints the API's own refusal, because a paid key makes it work
+      # immediately and real Championship rates beat none. What it must not do
+      # any more is take the whole refresh down with it — the FPL squads step
+      # below now covers the squads on its own.
+      - name: Harvest the promoted clubs from API-Football (optional, needs a paid plan)
         if: ${{ env.API_FOOTBALL_KEY != '' }}
+        continue-on-error: true
         env:
           # NOT season_ch: that is a ScoutingStats season id (five digits),
           # while API-Football names a season by its starting year.
           API_FOOTBALL_SEASON: ${{ inputs.season_af }}
         run: python3 data/harvest_apifootball.py
 
+      # The squads themselves, free and keyless. This is the leg that closes
+      # the year-old hole: the promoted clubs shipped as six forwards and no
+      # defender, because the Championship feed only ever returned players who
+      # cleared its minutes floor. These rows carry NO form (basis NEW, rates
+      # null) and are de-duplicated behind any real Championship rate, so they
+      # fill the squads out without inventing a number for anyone.
+      - name: Fill the promoted clubs' squads from the FPL feed (free, no key)
+        run: python3 data/harvest_fpl_squads.py
+
+      # Always runs now. Any source that did not harvest today falls back to
+      # what it produced last time, read back out of the shipped pl_data.js —
+      # so a missing cookie means "the Premier League rows are unchanged", not
+      # "the Premier League is empty". Every fallback is named in the log.
       - name: Rebuild pl_data.js from the harvest
-        if: ${{ env.SS_COOKIE != '' || env.API_FOOTBALL_KEY != '' }}
         run: python3 data/build_pl_data.py
 
       # After build_pl_data regenerates CLUBS, re-add the home/away

@@ -26,9 +26,42 @@ assert.ok(Array.isArray(PL_PLAYERS) && PL_PLAYERS.length >= 450,
 assert.equal(CLUBS.length, 20, `expected 20 clubs, got ${CLUBS.length}`);
 assert.ok(Array.isArray(REFS) && REFS.length >= 10,
   `expected >=10 referees, got ${REFS && REFS.length}`);
+// Promoted-club coverage is counted by CLUB, not by basis. The old assert here
+// wanted 40 EFL rows, which could only ever be met by a Championship harvest
+// that returns full squads — and it doesn't; it returns whoever cleared its
+// minutes floor, which was six forwards. The squads are now filled from the
+// free FPL feed with the rates left null (basis NEW), so what matters is that
+// the three clubs have real squads, whatever each row's form came from.
+const PROMOTED = ['COV', 'HUL', 'IPS'];
 const efl = PL_PLAYERS.filter((p) => p.b === 'EFL').length;
-assert.ok(efl >= 40,
-  `expected >=40 promoted-club (EFL) player rows, got ${efl} — the Championship harvest has not landed`);
+const promotedRows = PL_PLAYERS.filter((p) => PROMOTED.includes(p.c)).length;
+assert.ok(promotedRows >= 60,
+  `expected >=60 promoted-club player rows across ${PROMOTED.join('/')}, got ${promotedRows} — ` +
+  `run data/harvest_fpl_squads.py, then rebuild with data/build_pl_data.py`);
+
+// The basis vocabulary is closed. A fourth value would silently render as no
+// chip at all, which is how a player with no form comes to look like one with
+// average form.
+const BASES = new Set(['PL', 'EFL', 'NEW']);
+const oddBasis = [...new Set(PL_PLAYERS.map((p) => p.b))].filter((b) => !BASES.has(b));
+assert.equal(oddBasis.length, 0,
+  `unknown player basis values: ${oddBasis.join(', ')} — expected one of ${[...BASES].join(', ')}`);
+
+// The load-bearing one. NEW means "no card record yet", so its rates must be
+// null and never zero: a zero yellow rate would rank a player the calmest
+// defender in the division and put him top of every "safe" screen, which is a
+// worse error than leaving him out was.
+const fakedNew = PL_PLAYERS.filter((p) => p.b === 'NEW' &&
+  (p.y != null || p.f != null || p.r != null || p.yc != null));
+assert.equal(fakedNew.length, 0,
+  `${fakedNew.length} NEW rows carry a rate instead of null (e.g. ${fakedNew.slice(0, 3).map((p) => `${p.c} ${p.n}`).join(', ')}) — ` +
+  `a fabricated zero rates a player who has never played as the calmest in the league`);
+
+// And NEW only exists because the promoted clubs have no other source. A NEW
+// row at an established club means a harvest fell through to the wrong feed.
+const strayNew = PL_PLAYERS.filter((p) => p.b === 'NEW' && !PROMOTED.includes(p.c));
+assert.equal(strayNew.length, 0,
+  `NEW-basis rows outside the promoted clubs: ${[...new Set(strayNew.map((p) => p.c))].join(', ')}`);
 
 // The one that actually bites: a squad can only go missing club by club, and
 // a club with a handful of rows is worse than useless in a risk table — it
@@ -78,10 +111,15 @@ const missingFw = PL_PLAYERS.filter((p) => !('fw' in p)).length;
 assert.equal(missingFw, 0, `${missingFw} player rows missing the fw (fouls won) field`);
 
 // Each of the three promoted clubs must be flagged EFL (clearly separated
-// from the 17 Premier League clubs in the shipped data).
-for (const short of ['COV', 'HUL', 'IPS']) {
+// from the 17 Premier League clubs in the shipped data). At CLUB level EFL
+// means "not on Premier League data", which stays true once most of the squad
+// is NEW — the club aggregate is withheld either way, and the EFL/NEW
+// distinction lives on the player row where it changes what to believe.
+for (const short of PROMOTED) {
   const club = CLUBS.find((c) => c.short === short);
   assert.ok(club && club.basis === 'EFL', `promoted club ${short} must be flagged EFL`);
+  assert.equal(club.ca, null, `promoted club ${short} must not ship a team cards-against rate`);
+  assert.equal(club.fm, null, `promoted club ${short} must not ship a team fouls-per-match rate`);
 }
 
 const histSrc = readFileSync(join(root, 'data', 'ref_history.js'), 'utf8');
@@ -158,5 +196,6 @@ assert.ok(/<script\s+src="data\/h2h\.js"><\/script>/.test(html),
 assert.ok(/<script\s+src="data\/model\.js"><\/script>/.test(html),
   'index.html no longer loads data/model.js');
 
-console.log(`data guard OK: ${PL_PLAYERS.length} players (${efl} EFL), ${CLUBS.length} clubs, ${REFS.length} refs, ` +
+console.log(`data guard OK: ${PL_PLAYERS.length} players (${promotedRows} at promoted clubs, ${efl} of them on Championship form), ` +
+  `${CLUBS.length} clubs, ${REFS.length} refs, ` +
   `${REF_HISTORY.refs.length} historical refs over ${REF_HISTORY.seasons.length} seasons, no inline dataset`);
