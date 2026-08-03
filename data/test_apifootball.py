@@ -290,4 +290,37 @@ def _end_to_end_shape():
 
 t("a full harvest passes the build's guard and produces risk scores", _end_to_end_shape)
 
+print("env plumbing")
+
+
+def _env_or():
+    """A blank workflow input sets the variable to "", which os.environ.get's
+    default never sees — the request then goes out as `season=`. This is the
+    seam between the YAML and the script, and nothing else covers it."""
+    import os
+    os.environ["AF_TEST_EMPTY"] = ""
+    assert A.env_or("AF_TEST_EMPTY", "2025") == "2025", "set-but-empty falls back"
+    os.environ["AF_TEST_EMPTY"] = "  "
+    assert A.env_or("AF_TEST_EMPTY", "2025") == "2025", "whitespace-only falls back"
+    os.environ["AF_TEST_EMPTY"] = " 2024 "
+    assert A.env_or("AF_TEST_EMPTY", "2025") == "2024", "a real value is trimmed and used"
+    os.environ.pop("AF_TEST_EMPTY")
+    assert A.env_or("AF_TEST_EMPTY", "2025") == "2025", "absent falls back"
+
+
+t("a blank workflow input falls back to the default", _env_or)
+
+
+def _season_shape():
+    """The two APIs number seasons differently: ScoutingStats uses a five-digit
+    id (25583), API-Football a four-digit start year (2025). Feeding one to the
+    other asks for a season that does not exist, and the old workflow wired
+    exactly that."""
+    assert A.DEFAULT_SEASON.isdigit() and len(A.DEFAULT_SEASON) == 4
+    for bad in ("25583", "", "2025-26", "abc"):
+        assert not (bad.isdigit() and len(bad) == 4), bad
+
+
+t("a ScoutingStats season id is not a valid API-Football season", _season_shape)
+
 print(f"\n{passed} tests passed")

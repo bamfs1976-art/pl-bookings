@@ -52,6 +52,14 @@ sys.path.insert(0, str(DATA))
 import build_pl_data  # noqa: E402
 
 DEFAULT_HOST = "v3.football.api-sports.io"
+DEFAULT_SEASON = "2025"     # API-Football names a season by its starting year
+DEFAULT_LEAGUE = "40"       # England, Championship
+
+
+def env_or(name, default):
+    """An environment variable, treating set-but-empty as absent."""
+    return (os.environ.get(name) or "").strip() or default
+
 RAPIDAPI_HOST = "api-football-v1.p.rapidapi.com"
 PAGE_SIZE = 20          # API-Football's fixed page size for /players
 
@@ -212,9 +220,18 @@ def main():
     if not key:
         sys.exit("ERROR: set API_FOOTBALL_KEY to an API-Football key "
                  "(free tier is enough — see the docstring at the top).")
-    host = os.environ.get("API_FOOTBALL_HOST", DEFAULT_HOST).strip()
-    season = os.environ.get("API_FOOTBALL_SEASON", "2025").strip()
-    league = os.environ.get("API_FOOTBALL_LEAGUE", "40").strip()
+    # `os.environ.get(name, default)` returns "" for a var that is SET but
+    # empty, which is exactly what a blank workflow input produces — so the
+    # default never fires and the request goes out as `season=`. Fall back on
+    # emptiness, not on absence.
+    host = env_or("API_FOOTBALL_HOST", DEFAULT_HOST)
+    season = env_or("API_FOOTBALL_SEASON", DEFAULT_SEASON)
+    league = env_or("API_FOOTBALL_LEAGUE", DEFAULT_LEAGUE)
+    if not season.isdigit() or len(season) != 4:
+        sys.exit(f"ERROR: API_FOOTBALL_SEASON is {season!r}. API-Football names a "
+                 "season by its starting year, so 2025 means 2025-26. This is NOT "
+                 "the ScoutingStats season id (a five-digit number like 25583) — "
+                 "passing one of those here asks for a season that does not exist.")
 
     teams_payload = _get(host, key, "teams", {"league": league, "season": season})
     ids, missing = resolve_teams(teams_payload)

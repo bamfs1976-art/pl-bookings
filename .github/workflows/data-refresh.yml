@@ -25,6 +25,10 @@ on:
         description: "ScoutingStats season id for the Championship (blank = current)"
         required: false
         default: ""
+      season_af:
+        description: "API-Football season START YEAR for the Championship (2025 = 2025-26). NOT a ScoutingStats id."
+        required: false
+        default: "2025"
       fit_model:
         description: "Fit the card model on FPL per-match history (Tier 2). Keeps the season prior until enough matches exist."
         type: boolean
@@ -75,7 +79,9 @@ jobs:
       - name: Harvest the promoted clubs from API-Football
         if: ${{ env.API_FOOTBALL_KEY != '' }}
         env:
-          API_FOOTBALL_SEASON: ${{ inputs.season_ch }}
+          # NOT season_ch: that is a ScoutingStats season id (five digits),
+          # while API-Football names a season by its starting year.
+          API_FOOTBALL_SEASON: ${{ inputs.season_af }}
         run: python3 data/harvest_apifootball.py
 
       - name: Rebuild pl_data.js from the harvest
