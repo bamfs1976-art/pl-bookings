@@ -609,7 +609,7 @@
         <tbody id="playerRows"></tbody>
       </table>
     </div>
-    <p class="faint" style="font-size:.78rem;margin-top:.6rem">Risk = yellow rate per 90 weighted double plus fouls per 90, from 2025-26 form. P(card) is the model-implied chance of a booking in a match with its fair decimal odds — click it to compare a bookmaker price (an estimate, see the Guide). The EFL chip marks the three promoted clubs, whose form is from the Championship. Low sample is under 450 minutes.</p>
+    <p class="faint" style="font-size:.78rem;margin-top:.6rem">Risk = yellow rate per 90 weighted double plus fouls per 90, from 2025-26 form. P(card) is the model-implied chance of a booking in a match with its fair decimal odds — click it to compare a bookmaker price (an estimate, see the Guide). At the three promoted clubs, the EFL chip marks a player rated on Championship form and the <em>new</em> chip one with no card record yet — listed with dashes rather than invented numbers. Low sample is under 450 minutes.</p>
     </div>
     <div id="dkValue" hidden></div>
     <div id="dkAll" hidden>
@@ -681,7 +681,7 @@
         <tbody id="clubRows"></tbody>
       </table>
     </div>
-    <p class="faint" style="font-size:.78rem">Club rates are 2025-26 Premier League, cards received per game and fouls committed per game; the H · A line under each rate is the home/away split (football-data.co.uk match data), which the Fixtures tab's booking heat uses. Tier off cards against: target 2.0 and above, mid 1.5 to 1.9, fade below 1.5. Flame marks combustible, 2.0 plus cards and 12.0 plus fouls. The three promoted clubs played 2025-26 in the Championship, where the data mixes cup games, so their team rate is not comparable and is shown as EFL basis. Click a club to see its players.</p>
+    <p class="faint" style="font-size:.78rem">Club rates are 2025-26 Premier League, cards received per game and fouls committed per game; the H · A line under each rate is the home/away split (football-data.co.uk match data), which the Fixtures tab's booking heat uses. Tier off cards against: target 2.0 and above, mid 1.5 to 1.9, fade below 1.5. Flame marks combustible, 2.0 plus cards and 12.0 plus fouls. The three promoted clubs played 2025-26 in the Championship, where the data mixes cup games, so their team rate is not comparable and is shown as EFL basis — their squads are listed in full, but most players there carry no rate yet. Click a club to see its players.</p>
   </section>
 
   <!-- REFEREES -->
@@ -817,15 +817,15 @@
       <h3>AI review of your picks</h3>
       <p>Optional, in the Tracker tab. Once you have three or more settled picks, the review sends them to the desk's own server function and returns a short read on which markets are paying, whether your odds range shows a pattern, and what to change. The AI key lives on the server, never in your browser. You need to be signed in — the review is tied to your account and capped per day so the shared budget can't be drained. If the deploy hasn't enabled it, the desk simply says so — nothing else depends on it.</p>
       <h3>Where the numbers come from</h3>
-      <p>Player and club form is 2025-26 from ScoutingStats, refreshed in season with live card counts from the official FPL API. Seventeen clubs are on Premier League data. The three promoted clubs, Coventry, Ipswich and Hull, carry their 2025-26 Championship form, flagged EFL, since that is their only recent record. Referee figures are 2025-26 season averages from public data, with each official's long-run record (and the league's multi-decade card trend) from the MIT-licensed epldata package up to 2017/18 and the public-domain football-data.co.uk match records from 2018/19 onward — cautions only, so it contextualises rather than prices.</p>
+      <p>Player and club form is 2025-26 from ScoutingStats, refreshed in season with live card counts from the official FPL API. Seventeen clubs are on Premier League data. At the three promoted clubs, Coventry, Ipswich and Hull, the players the Championship feed covered carry their 2025-26 form there, flagged EFL, since that is their only recent record; the rest of each squad comes from the free FPL feed and is flagged <em>new</em>, with no rate at all until 2026-27 minutes accrue. Referee figures are 2025-26 season averages from public data, with each official's long-run record (and the league's multi-decade card trend) from the MIT-licensed epldata package up to 2017/18 and the public-domain football-data.co.uk match records from 2018/19 onward — cautions only, so it contextualises rather than prices.</p>
       <h3>Accounts and sync</h3>
       <p>Sign-in is optional. Signed out, picks save to this browser only. Sign in (top right) and your tracker picks sync to the cloud and follow you across devices — on first sign-in, local and cloud picks are merged so nothing is lost. The same account works on Gameweek Edge.</p>
       <h3>Known limits</h3>
       <ul>
         <li>Until the 2026-27 season starts, risk scores are last season's form as the pre-season basis. Live card rates take over per player at 450 minutes.</li>
         <li>Fouls are not in the FPL feed, so the fouls half of the risk score stays on 2025-26 form all season.</li>
-        <li>Promoted clubs (Coventry, Hull, Ipswich) are on Championship form, a different and rougher division, so treat their numbers as indicative. They're flagged EFL throughout and their team rate is not shown, because the Championship data mixes cup minutes.</li>
-        <li>The promoted clubs carry only a handful of players who cleared the minutes floor, so their squads look sparse here until 2026-27 Premier League form accrues. They're kept separate rather than padded.</li>
+        <li>Promoted clubs (Coventry, Hull, Ipswich) are flagged EFL throughout, and their team rate is not shown because the Championship data mixes cup minutes. Where a player does carry a Championship rate, treat it as indicative: it's a different and rougher division.</li>
+        <li>Only a handful of promoted-club players cleared the Championship feed's minutes floor. The rest of each squad is listed from the FPL feed with <em>no</em> card rate — flagged <em>new</em>, shown as dashes, ranked below anyone with evidence, and hidden by the low-sample tick box. That's deliberate: a squad with a missing centre-back is worse than one that admits it doesn't know yet, and a zero would rank him the calmest defender in the division.</li>
         <li>Referee appointments are not in the FPL feed. Assign the official on each fixture card once appointments are published (usually a few days out) — the assignment saves to this browser and folds the referee's card rate into that fixture's booking heat, and watchlisted players get a strict-ref flag above the players table.</li>
       </ul>
       <p class="faint" style="font-size:.8rem">Built for research, not a betting guarantee. Stake responsibly.</p>
@@ -962,6 +962,22 @@ function esc(s){ const d=document.createElement("div"); d.textContent=s==null?""
 function riskColour(r){ if(r==null) return "var(--text-3)"; if(r>=2.5) return "var(--danger)"; if(r>=1.8) return "var(--warn)"; if(r>=1.2) return "var(--good)"; return "var(--text-2)"; }
 function tierOf(ca){ if(ca==null) return "efl"; if(ca>=2.0) return "target"; if(ca>=1.5) return "mid"; return "fade"; }
 function tierLabel(t){ return {target:"Target",mid:"Mid",fade:"Fade",efl:"EFL basis"}[t]; }
+/* One place decides how a player's basis reads, because there are four of them
+   — table row, phone card, profile, share image — and a basis handled in only
+   three would look like a data bug rather than a missing chip.
+   NEW outranks the low-sample chip: "no form yet" and "not much form yet" are
+   different claims, and showing both says the weaker one twice. */
+function basisChip(p,size){
+  const s=size||".62rem";
+  if(p.b==="NEW") return `<span class="chip tier-efl" style="margin-left:.35rem;font-size:${s}" title="Promoted club, no card record yet — rates fill in as 2026-27 minutes accrue">new</span>`;
+  if(p.b==="EFL") return `<span class="chip tier-efl" style="margin-left:.35rem;font-size:${s}" title="2025-26 Championship form — a different, rougher division">EFL</span>`;
+  return "";
+}
+function basisNote(p){
+  if(p.b==="NEW") return " · no form yet";
+  if(p.b==="EFL") return " · Championship basis";
+  return "";
+}
 function combustible(c){ return c.ca!=null && c.fm!=null && c.ca>=2.0 && c.fm>=12.0; }
 /* Club crest. Prefers the OFFICIAL Premier League badge (from the live feed's
    team code, same CDN as the player cutouts and already allowed by the CSP),
@@ -1084,9 +1100,15 @@ function fillClubFilter(){
     const o=document.createElement("option"); o.value=c.short; o.textContent=c.name+(c.basis==="EFL"?" (promoted)":""); sel.appendChild(o);
   });
 }
-function currentPlayers(){
+/* opts.ignoreLow runs every other filter but keeps the low-sample rows, so the
+   caller can say how many the tick box is hiding. Counting matters most on the
+   promoted clubs, whose squads are almost entirely low sample until 2026-27
+   minutes accrue — a bare three-row table reads as a broken feed, where
+   "22 hidden" reads as what it is. */
+function currentPlayers(opts){
   const q=$("search").value.trim().toLowerCase();
-  const cf=$("clubFilter").value, pf=$("posFilter").value, hide=$("hideLow").checked, wo=$("watchOnly").checked;
+  const cf=$("clubFilter").value, pf=$("posFilter").value, wo=$("watchOnly").checked;
+  const hide=$("hideLow").checked && !(opts&&opts.ignoreLow);
   let rows=PL_PLAYERS.filter(p=>{
     if(q && !(p.n||"").toLowerCase().includes(q)) return false;
     if(cf!=="all" && p.c!==cf) return false;
@@ -1103,7 +1125,7 @@ function currentPlayers(){
   return rows;
 }
 // Active-filter chips: the current data slice, explicit and one-tap clearable.
-function renderFilterChips(){
+function renderFilterChips(hiddenLow){
   const el=$("filterChips"); if(!el) return;
   const chips=[];
   const cf=$("clubFilter").value; if(cf!=="all") chips.push(["club",clubName(cf)]);
@@ -1111,10 +1133,13 @@ function renderFilterChips(){
   const s=$("search").value.trim(); if(s) chips.push(["q","“"+s+"”"]);
   if($("watchOnly").checked) chips.push(["watch","★ Watchlist"]);
   if(!$("hideLow").checked) chips.push(["low","incl. low sample"]);
+  // Clearing this one shows the hidden players rather than removing a chip,
+  // which is why it says "show" instead of carrying the ✕ the others do.
+  else if(hiddenLow>0) chips.push(["showlow",hiddenLow+" hidden, low sample",true]);
   if(!chips.length){ el.hidden=true; el.innerHTML=""; return; }
   el.hidden=false;
   el.innerHTML='<span class="faint" style="font-size:.72rem">Showing:</span>'
-    +chips.map(([k,label])=>`<span class="chip surface-2" style="border:1px solid var(--border)">${esc(label)} <button class="chip-x" data-clear="${k}" aria-label="Clear this filter" title="Clear">✕</button></span>`).join("")
+    +chips.map(([k,label,show])=>`<span class="chip surface-2" style="border:1px solid var(--border)">${esc(label)} <button class="chip-x" data-clear="${k}" aria-label="${show?"Show the hidden low-sample players":"Clear this filter"}" title="${show?"Show them":"Clear"}">${show?"show":"✕"}</button></span>`).join("")
     +'<button id="chipsReset" class="btn btn-ghost" style="padding:.15rem .6rem;font-size:.72rem" type="button">Reset all</button>';
 }
 
@@ -1140,8 +1165,12 @@ function exportCSV(){
 
 const MOBILE_MQ=window.matchMedia("(max-width:700px)");
 function renderPlayers(){
-  renderFilterChips();
   const rows=currentPlayers();
+  // The watchlist deliberately ignores the low-sample filter, so there is
+  // nothing hidden to report while it is on.
+  const hiddenLow=($("hideLow").checked && !$("watchOnly").checked)
+    ? currentPlayers({ignoreLow:true}).length-rows.length : 0;
+  renderFilterChips(hiddenLow);
   renderPlayerCards(rows);
   const tb=$("playerRows"); tb.innerHTML="";
   if(!rows.length){ tb.innerHTML='<tr><td colspan="10" class="muted" style="padding:1rem;text-align:center">'+($("watchOnly").checked?"Your watchlist is empty — tap the ☆ star on any player to pin them here.":"No players match your filters. Clear the club, position or search filters — the chips above show what's active.")+'</td></tr>'; return; }
@@ -1150,8 +1179,8 @@ function renderPlayers(){
   rows.slice(0,400).forEach(p=>{
     const tr=document.createElement("tr");
     tr.dataset.pk=watchKey(p); tr.style.cursor="pointer"; tr.title="Open "+p.n+"'s profile";
-    const ls=p.ls?'<span class="chip tier-mid" style="margin-left:.35rem;font-size:.62rem">low</span>':'';
-    const efl=p.b==="EFL"?'<span class="chip tier-efl" style="margin-left:.35rem;font-size:.62rem">EFL</span>':'';
+    const ls=(p.ls&&p.b!=="NEW")?'<span class="chip tier-mid" style="margin-left:.35rem;font-size:.62rem">low</span>':'';
+    const efl=basisChip(p);
     const avail=availChip(p);
     if(p.live&&"isu".includes(p.live.st)) tr.style.opacity=".55";
     const yc=(LIVE&&LIVE.seasonStarted&&p.live)
@@ -1192,7 +1221,7 @@ function renderPlayerCards(rows){
       <button class="watch-btn" data-w="${esc(watchKey(p))}" aria-pressed="${w}" title="${w?'Remove from watchlist':'Add to watchlist'}">${w?'★':'☆'}</button>
       ${playerAvatar(p,"avatar-sm",null,{crest:true})}
       <div class="pcard-main">
-        <div class="pcard-name">${esc(p.n)}${p.ls?'<span class="chip tier-mid" style="font-size:.58rem">low</span>':''}${p.b==="EFL"?'<span class="chip tier-efl" style="font-size:.58rem">EFL</span>':''}${availChip(p)}</div>
+        <div class="pcard-name">${esc(p.n)}${(p.ls&&p.b!=="NEW")?'<span class="chip tier-mid" style="font-size:.58rem">low</span>':''}${basisChip(p,".58rem")}${availChip(p)}</div>
         <div class="pcard-sub num">${crest(p.c)} ${p.c} · ${esc(p.p||"")} · ${yEff(p)==null?"—":yEff(p).toFixed(2)} yc/90 · ${p.f==null?"—":p.f.toFixed(2)} f/90</div>
       </div>
       <div class="pcard-risk">
@@ -1945,7 +1974,10 @@ window.addEventListener("hashchange",()=>{ applyHash(); renderPlayers(); if(LIVE
 $("filterChips").addEventListener("click",e=>{
   const x=e.target.closest(".chip-x"), reset=e.target.closest("#chipsReset");
   if(!x&&!reset) return;
-  const clear=k=>{ if(k==="club")$("clubFilter").value="all"; if(k==="pos")$("posFilter").value="all"; if(k==="q")$("search").value=""; if(k==="watch")$("watchOnly").checked=false; if(k==="low")$("hideLow").checked=true; };
+  // "showlow" is the one chip whose button reveals rather than clears, so it is
+  // deliberately absent from the Reset all list below — a reset restores the
+  // default, which is to hide them.
+  const clear=k=>{ if(k==="club")$("clubFilter").value="all"; if(k==="pos")$("posFilter").value="all"; if(k==="q")$("search").value=""; if(k==="watch")$("watchOnly").checked=false; if(k==="low")$("hideLow").checked=true; if(k==="showlow")$("hideLow").checked=false; };
   if(reset) ["club","pos","q","watch","low"].forEach(clear); else clear(x.dataset.clear);
   renderPlayers(); writeHash();
 });
@@ -1990,7 +2022,7 @@ function openPlayerProfile(k){
   let h=`<div style="display:flex;align-items:center;gap:.6rem;margin-bottom:.7rem">
     ${playerAvatar(p,"avatar-lg",250)}
     <div style="min-width:0"><h2 id="ppTitle" style="margin:0;font-size:1.15rem;display:flex;align-items:center;gap:.35rem">${crest(p.c)}${esc(p.n)}</h2>
-    <p class="muted" style="margin:.1rem 0 0;font-size:.8rem">${esc(club?club.name:p.c)} · ${esc(p.p||"")}${p.b==="EFL"?' · Championship basis':''}${availChip(p)}</p></div>
+    <p class="muted" style="margin:.1rem 0 0;font-size:.8rem">${esc(club?club.name:p.c)} · ${esc(p.p||"")}${basisNote(p)}${availChip(p)}</p></div>
     <button class="watch-btn" style="margin-left:auto;font-size:1.4rem" data-w="${esc(k)}" aria-pressed="${w}" title="${w?'Remove from watchlist':'Add to watchlist'}">${w?'★':'☆'}</button>
   </div>
   <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:.5rem;margin-bottom:.7rem">
@@ -3479,7 +3511,8 @@ const GLOSS=[
   ["Derby boost","Recognised rivalry fixtures run hotter with the referee, so they get a booking-heat bump and a 🔥 chip."],
   ["Shrinkage","The model pulls each player's per-90 rates toward the position average by how few minutes they've played, so one card in a cameo doesn't read as elite-booker form."],
   ["Low sample","Under 450 minutes of football — too little to trust the rate fully. Flagged throughout; live rates take over per player at 450 minutes of 2026-27 football."],
-  ["EFL","The three promoted clubs (Coventry, Ipswich, Hull) carry 2025-26 Championship form — a rougher, different division — so their numbers are indicative and flagged EFL."]
+  ["EFL","A player at one of the three promoted clubs (Coventry, Ipswich, Hull) whose rate comes from 2025-26 Championship form — a rougher, different division — so the numbers are indicative rather than comparable."],
+  ["new","A promoted-club player with no card record at all: the Championship feed only covered the handful who cleared its minutes floor. He is listed so the squad is complete, with dashes instead of invented rates, and fills in as 2026-27 minutes accrue. He sorts below anyone with evidence and is hidden by the low-sample tick box until then."]
 ];
 function openGloss(){
   $("glossList").innerHTML=GLOSS.map(([t,d])=>'<li><div class="gloss-t">'+esc(t)+'</div><div class="gloss-d">'+esc(d)+'</div></li>').join("");

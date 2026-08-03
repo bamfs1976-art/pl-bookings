@@ -37,6 +37,12 @@ jobs:
       - name: API-Football harvest route (mapping and pagination)
         run: python3 data/test_apifootball.py
 
+      # The FPL-squads leg and the previous-build fallback. The first must
+      # never turn "no record" into a zero; the second must never turn "did
+      # not run" into "returned nothing".
+      - name: FPL squads harvest and the previous-build fallback
+        run: python3 data/test_fpl_squads.py
+
       - name: Data guard (pl_data.js counts, no inline dataset in index.html)
         run: node scripts/check-data.mjs
 

@@ -8,16 +8,35 @@ Inputs (harvested from ScoutingStats, logged in):
   pl_refs.json        PL referee card rates (build_refs.py, from the free
                       football-data.co.uk mirror at datasets/football-datasets)
 
+Optional input (free FPL feed, no cookie — data/harvest_fpl_squads.py):
+  promoted_squads.json  The promoted clubs' full 2026-27 squads with NO form.
+                        The Championship feed only ever returned the handful of
+                        players who cleared its minutes floor, which left three
+                        clubs as six forwards and no defenders. These rows fill
+                        the squad out and are flagged NEW, not EFL, because
+                        they carry no rate at all.
+
 Output: pl_data.js with PL_PLAYERS, CLUBS and REFS. index.html loads this file
 directly via <script src="data/pl_data.js"> — there is no hand-copy step, so
 regenerating this file is all a data refresh needs. Keep the const names stable.
 
+pl_data.js is ALSO the cache of the last good harvest. The raw JSONs above are
+gitignored (large, regenerable), so a refresh that cannot reach ScoutingStats
+has no Premier League rows at all — and a build that took that literally would
+rewrite the shipped file as an empty one and a bot would commit it. Instead any
+source that is missing today is read back out of the file it produced last
+time. That is what makes a partial refresh possible: the FPL squads leg below
+needs no cookie and no key, so it can land on its own without the rest of the
+pipeline being reachable.
+
 2026-27 lineup: 17 continuing PL clubs (drop Burnley, West Ham, Wolves) plus
-Coventry, Ipswich, Hull (promoted, 2025-26 Championship form, flagged EFL).
+Coventry, Ipswich, Hull (promoted, flagged EFL as clubs; their players are EFL
+where a Championship rate exists and NEW where none does).
 Booking risk = yc_p90*2 + fouls_p90, the same metric as the WC desk.
 """
 
 import json
+import re
 import sys
 from pathlib import Path
 
@@ -92,19 +111,134 @@ def num(v):
         return None
 
 
+def load_optional(name):
+    """A source that may not have been harvested yet. Missing is not an error;
+    a malformed file is."""
+    if not (DATA / name).exists():
+        return []
+    return load(name)
+
+
 def load(name):
     d = json.loads((DATA / name).read_text(encoding="utf-8"))
     return d["players"] if isinstance(d, dict) and "players" in d else d
 
 
+# --- reading the shipped file back in -------------------------------------
+NAME_BY_SHORT = {v: k for k, v in SHORT.items()}
+POS_NAME = {v: k for k, v in POS.items()}
+
+
+def quote_keys(js):
+    """Quote the unquoted object keys in a machine-written JS object literal.
+
+    Tracks string state so a player named "Smith, jr: II" is left alone, and
+    takes no allowlist of key names — build_club_splits.py patches caH/caA into
+    the same file afterwards, and a fixed list would have gone stale silently
+    the first time a field was added."""
+    out, i, n, in_str = [], 0, len(js), False
+    while i < n:
+        ch = js[i]
+        if in_str:
+            out.append(ch)
+            if ch == "\\" and i + 1 < n:
+                out.append(js[i + 1])
+                i += 2
+                continue
+            if ch == '"':
+                in_str = False
+            i += 1
+            continue
+        if ch == '"':
+            in_str = True
+            out.append(ch)
+            i += 1
+            continue
+        m = re.match(r"[A-Za-z_][A-Za-z_0-9]*(?=:)", js[i:])
+        if m and (not out or out[-1] in "{,"):
+            out.append('"' + m.group(0) + '"')
+            i += m.end()
+            continue
+        out.append(ch)
+        i += 1
+    return "".join(out)
+
+
+def js_array(src, name):
+    """Parse `const NAME = [...]` out of the generated file.
+
+    Safe here, and only here, because main() writes it: JSON scalars, one
+    object per line, trailing comma. This is not a JavaScript parser and must
+    not be pointed at a hand-written file."""
+    m = re.search(r"^const " + name + r" = \[$(.*?)^\];$", src, re.S | re.M)
+    if not m:
+        raise SystemExit(f"ERROR: {OUT.name} has no `const {name} = [` block, so "
+                         "it cannot serve as the previous harvest. It was not "
+                         "written by this script.")
+    body = quote_keys(m.group(1)).strip().rstrip(",")
+    return json.loads("[" + body + "]")
+
+
+def shipped_rows():
+    """The last good harvest, in the SOURCE shape mk() consumes, grouped by
+    basis. Round-trips exactly: mk() recomputes y and r from yc, min and f,
+    which are all carried on the shipped row."""
+    if not OUT.exists():
+        return {}
+    src = OUT.read_text(encoding="utf-8")
+    imgs = {c["short"]: c.get("img") for c in js_array(src, "CLUBS")}
+    out = {}
+    for p in js_array(src, "PL_PLAYERS"):
+        out.setdefault(p.get("b"), []).append({
+            "team": NAME_BY_SHORT.get(p["c"]), "n": p["n"],
+            "pos": POS_NAME.get(p.get("p"), p.get("p")),
+            "min": p.get("min"), "yc": p.get("yc"), "rc": p.get("rc"),
+            "fc90": p.get("f"), "fd90": p.get("fw"),
+            # tid is not emitted, and nothing downstream reads it — the club
+            # crest comes from img, which CLUBS does carry.
+            "tid": None, "img": imgs.get(p["c"]),
+        })
+    return out
+
+
+def source(name, basis, shipped, reused):
+    """This run's harvest for one source, or the last one if it didn't run.
+
+    Falling back is the difference between a partial refresh and a destroyed
+    dataset: without a cookie there is no pl_players.json, and taking that at
+    face value would ship an empty league. Every fallback is named on stdout so
+    a refresh never quietly re-commits stale data while looking like it worked.
+    """
+    fresh = load_optional(name)
+    if fresh:
+        return fresh
+    kept = shipped.get(basis, [])
+    if kept:
+        reused.append(f"{name} ({_n_players(len(kept))} kept from the previous build)")
+    return kept
+
+
 def build_players():
+    shipped = shipped_rows()
+    reused = []
     rows = []
-    for p in load("pl_players.json"):
+    for p in source("pl_players.json", "PL", shipped, reused):
         if p.get("team") in DROP:
             continue
         rows.append(mk(p, "PL"))
-    for p in load("champ_promoted.json"):
+    for p in source("champ_promoted.json", "EFL", shipped, reused):
         rows.append(mk(p, "EFL"))
+    # The promoted clubs' remaining squad, from the free FPL feed, with no form
+    # attached. Loaded AFTER champ_promoted so the de-duplication below keeps
+    # the Championship rate wherever one exists: a real number must never be
+    # overwritten by a blank one, and the order is the only thing enforcing
+    # that.
+    for p in source("promoted_squads.json", "NEW", shipped, reused):
+        rows.append(mk(p, "NEW"))
+    if reused:
+        print("Reusing the previous build for sources that did not harvest:")
+        for r in reused:
+            print("  - " + r)
     # De-duplicate on (club, name): a harvest that repeats a player (the
     # promoted-club feeds have done this) must never fan out into the shipped
     # data — duplicate rows in a prediction product erode trust instantly.
@@ -151,16 +285,35 @@ def mk(p, basis):
     }
 
 
+def club_basis(bases):
+    """A club's basis describes its TEAM aggregate, not its players.
+
+    A promoted club now carries two kinds of row: the few with real
+    Championship form (EFL) and the rest with none yet (NEW). Both produce the
+    same team aggregate — none — so the club label's job is only to say "not on
+    Premier League data", which EFL already means everywhere in the app. The
+    EFL/NEW distinction lives where it changes what a reader should believe:
+    on the player row.
+
+    Derived from the whole squad rather than read off whichever row happened to
+    load first, so the label cannot flip when a harvest changes order."""
+    bases = set(bases)
+    return "PL" if bases == {"PL"} else "EFL"
+
+
 def build_clubs(players):
     by = {}
     for p in players:
         c = p["c"]
         d = by.setdefault(c, {"short": c, "name": p["_club"], "tid": p["_tid"],
-                              "img": p["_img"], "basis": p["b"], "yc": 0, "fouls": 0.0,
+                              "img": p["_img"], "bases": [], "yc": 0, "fouls": 0.0,
                               "players": 0})
+        d["bases"].append(p["b"])
         d["yc"] += (p["yc"] or 0)
         d["fouls"] += p["_fouls"]
         d["players"] += 1
+    for d in by.values():
+        d["basis"] = club_basis(d["bases"])
     clubs = []
     for c, d in by.items():
         if d["basis"] == "PL":
@@ -169,7 +322,8 @@ def build_clubs(players):
             fm = round(d["fouls"] / 38, 1)
         else:
             # Championship minutes include cup games, so the team per-game
-            # aggregate is not comparable. Omit rather than ship a wrong number.
+            # aggregate is not comparable; a NEW club has no minutes at all.
+            # Omit rather than ship a wrong number.
             ca = None
             fm = None
         clubs.append({"short": c, "name": d["name"], "img": d["img"], "basis": d["basis"],
@@ -178,9 +332,33 @@ def build_clubs(players):
     return clubs
 
 
+# The reverse of the abbreviated names main() emits for REFS.
+REF_FIELD = {"n": "name", "region": "region", "matches": "matches", "ypg": "ypg",
+             "red": "red_pg", "pen": "pen_pg", "fpg": "fouls_pg", "cpf": "cards_per_foul"}
+
+
+def shipped_refs():
+    if not OUT.exists():
+        return []
+    return [{REF_FIELD[k]: v for k, v in r.items() if k in REF_FIELD}
+            for r in js_array(OUT.read_text(encoding="utf-8"), "REFS")]
+
+
 def build_refs():
-    d = json.loads((DATA / "pl_refs.json").read_text(encoding="utf-8"))
-    refs = list(d["refs"])
+    """Referees, with the same previous-build fallback as the players.
+
+    In the refresh workflow build_refs.py always runs first, so pl_refs.json is
+    always there — but it is gitignored like every other raw harvest, and a
+    build that crashed on its absence could not be run standalone at all. It
+    also means a rebuild triggered for the players' sake cannot destroy the
+    referee table as a side effect."""
+    path = DATA / "pl_refs.json"
+    if path.exists():
+        refs = list(json.loads(path.read_text(encoding="utf-8"))["refs"])
+    else:
+        refs = shipped_refs()
+        if refs:
+            print(f"Reusing the previous build for pl_refs.json ({len(refs)} referees kept).")
     refs.sort(key=lambda r: -(r.get("ypg") or 0))
     return refs
 
@@ -203,17 +381,20 @@ def main():
             "ERROR: the promoted-club (Championship) data is incomplete, so "
             "pl_data.js was NOT rewritten:\n  - "
             + "\n  - ".join(problems)
-            + "\n\nThe league-9 harvest returns a slice of the Championship, not full "
-              "squads, and nothing downstream can reconstruct a missing centre-back. "
-              "Re-run data/harvest.py with a fresh SS_COOKIE and confirm "
-              "champ_promoted.json carries whole squads for these clubs before "
-              "rebuilding."
+            + "\n\nThe Championship harvest only ever returns the players who cleared "
+              "its minutes floor, so it cannot fill a squad on its own and nothing "
+              "downstream can reconstruct a missing centre-back. Run\n"
+              "    python3 data/harvest_fpl_squads.py\n"
+              "which takes the squads from the free FPL feed with no cookie and no "
+              "key, and writes promoted_squads.json. Those rows carry no form by "
+              "design — they fill in as Premier League minutes accumulate."
         )
     clubs = build_clubs(players)
     refs = build_refs()
 
     lines = ["// Auto-generated by build_pl_data.py. ScoutingStats 2025-26 form.",
-             "// 2026-27 Premier League. Promoted clubs flagged EFL (Championship basis).",
+             "// 2026-27 Premier League. Promoted clubs flagged EFL (Championship basis);",
+             "// their players without a Championship rate are flagged NEW, rates null.",
              "const CLUBS = ["]
     for c in clubs:
         lines.append("  {" + ",".join([
