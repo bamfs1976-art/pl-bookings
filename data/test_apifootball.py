@@ -323,4 +323,43 @@ def _season_shape():
 
 t("a ScoutingStats season id is not a valid API-Football season", _season_shape)
 
+print("diagnosing a failure")
+
+
+def _api_errors():
+    """A 200 carrying an errors object is a refusal, and reading it as "no
+    results" is what sent two real runs chasing a spelling problem that did
+    not exist. Both shapes the API uses have to be recognised."""
+    assert A.api_errors({"errors": []}) is None, "empty list is fine"
+    assert A.api_errors({"errors": {}}) is None, "empty dict is fine"
+    assert A.api_errors({}) is None
+    assert A.api_errors(None) is None
+    # the dict form, which is what a plan restriction returns
+    msg = A.api_errors({"errors": {"plan": "Free plans do not have access to this season."}})
+    assert msg and "Free plans" in msg, msg
+    assert "plan:" in msg, msg
+    # the list form
+    assert A.api_errors({"errors": ["rate limit"]}) == "rate limit"
+    # a key error, which is the other thing that lands here
+    tok = A.api_errors({"errors": {"token": "invalid"}})
+    assert tok and "token" in tok, tok
+
+
+t("a 200 carrying an errors object is recognised in both shapes", _api_errors)
+
+
+def _errors_beat_emptiness():
+    """A refused request has an empty response AND an errors object. The
+    errors must win: 'no teams' and 'you may not read this season' lead to
+    completely different next steps."""
+    refused = {"errors": {"plan": "not allowed"}, "response": []}
+    assert A.api_errors(refused), "the refusal is visible"
+    ids, missing = A.resolve_teams(refused)
+    assert ids == {} and len(missing) == 3, (ids, missing)
+    # resolve_teams cannot tell them apart on its own — which is exactly why
+    # main() checks api_errors BEFORE it looks at what is missing.
+
+
+t("a refusal and an empty league look identical to resolve_teams", _errors_beat_emptiness)
+
 print(f"\n{passed} tests passed")

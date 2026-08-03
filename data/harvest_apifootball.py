@@ -144,6 +144,24 @@ def map_player(entry, club_name):
     }
 
 
+def api_errors(payload):
+    """API-Football answers 200 with an `errors` object for a rejected
+    request — a bad key, an exhausted quota, or a season the plan does not
+    cover. An empty list means fine; a dict or a non-empty list is a refusal
+    dressed as a success, and reading it as "no results" is how a plan limit
+    turns into "those clubs do not exist".
+
+    Returns a printable string, or None."""
+    errs = (payload or {}).get("errors")
+    if not errs:
+        return None
+    if isinstance(errs, dict):
+        return "; ".join(f"{k}: {v}" for k, v in errs.items() if v)
+    if isinstance(errs, list):
+        return "; ".join(str(e) for e in errs) or None
+    return str(errs)
+
+
 def pages_needed(payload):
     """How many pages the API says this query has. Trusted only as a
     cross-check on our own walk, never as the walk itself."""
@@ -163,12 +181,9 @@ def collect_players(fetch, team_id, club_name):
         payload = fetch(page)
         if payload is None:
             raise RuntimeError(f"{club_name}: page {page} returned nothing")
-        errors = payload.get("errors")
-        # API-Football answers 200 with an errors object for a bad key or an
-        # exhausted quota, so a non-empty errors field is a failure even
-        # though the HTTP status says otherwise.
-        if errors and not (isinstance(errors, list) and not errors):
-            raise RuntimeError(f"{club_name}: API returned errors: {errors}")
+        err = api_errors(payload)
+        if err:
+            raise RuntimeError(f"{club_name}: API returned errors: {err}")
         reported = pages_needed(payload)
         # Take the largest total any page has claimed. Trusting only page one
         # means a feed that revises its count upward mid-walk gets truncated —
@@ -234,14 +249,38 @@ def main():
                  "passing one of those here asks for a season that does not exist.")
 
     teams_payload = _get(host, key, "teams", {"league": league, "season": season})
+    # The refusal case first, and verbatim. A plan that does not cover this
+    # season answers 200 with an explanation, and treating that as "no clubs"
+    # sent two runs chasing a spelling problem that was never there.
+    err = api_errors(teams_payload)
+    if err:
+        sys.exit(f"ERROR: API-Football refused the /teams request: {err}\n"
+                 "That is the API's own message, not ours. A plan restriction, a bad "
+                 "key or an exhausted quota all land here.")
+
+    returned = [((row.get("team") or {}).get("name") or "?")
+                for row in (teams_payload or {}).get("response", []) or []]
     ids, missing = resolve_teams(teams_payload)
     if missing:
+        # Say WHICH of the three possibilities this is, rather than listing all
+        # three and leaving the reader to run it again to find out.
+        if not returned:
+            sys.exit(
+                f"ERROR: league {league} season {season} returned NO teams at all "
+                "(and no error message).\n"
+                "So this is not a spelling problem. Either the league id is wrong "
+                "(40 should be England's Championship) or the season is outside what "
+                "this key may read — free plans are commonly limited to a few "
+                "seasons. Check /leagues?id=" + league + " for the seasons your key "
+                "covers, then set season_af to one of them.")
         sys.exit(
-            "ERROR: league " + league + " season " + season + " does not contain: "
-            + ", ".join(missing)
-            + "\nEither the season is wrong, the clubs are not in this division, "
-              "or API-Football spells them differently — add the spelling to "
-              "CLUB_ALIASES rather than letting a club go missing.")
+            f"ERROR: league {league} season {season} has {len(returned)} teams, "
+            "but not: " + ", ".join(missing) + "\n"
+            "The API DID answer with a squad list, so this is a naming or a "
+            "division problem, not a plan one. What it actually returned:\n  "
+            + ", ".join(sorted(returned)[:30])
+            + "\nIf one of ours is in that list under another spelling, add it to "
+              "CLUB_ALIASES.")
 
     rows = []
     for club_name, team_id in sorted(ids.items()):
