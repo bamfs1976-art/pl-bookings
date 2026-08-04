@@ -193,11 +193,16 @@
     const o = (p / (1 - p)) * f;
     return o / (1 + o);
   }
-  function contextProb(baseP, refFactor, derbyFactor, venueFactorV) {
+  /* Chains the fixture's odds-factors and clamps. `chaseFactorV` is
+     optional and defaults to neutral, so a caller that predates the
+     simulator wiring — or a service worker serving a stale index.html —
+     gets exactly the old three-factor answer. */
+  function contextProb(baseP, refFactor, derbyFactor, venueFactorV, chaseFactorV) {
     if (baseP == null) return null;
     let p = scaleOdds(baseP, refFactor == null ? 1 : refFactor);
     p = scaleOdds(p, derbyFactor == null ? 1 : derbyFactor);
     p = scaleOdds(p, venueFactorV == null ? 1 : venueFactorV);
+    p = scaleOdds(p, chaseFactorV == null ? 1 : chaseFactorV);
     return Math.min(0.95, Math.max(0.005, p));
   }
 
@@ -214,10 +219,16 @@
 
   /* ---- game state (chase) ----
      A side being outplayed chases the game and fouls tactically; a
-     comfortable favourite does not. Fed by a simulator's win probability
-     (Plsimulator exports these). Neutral at 1.0 when nothing is supplied,
-     so it is inert until wired. Clamped hard — this is a nudge, not a
-     re-rating. */
+     comfortable favourite does not. Fed by the match model below, which
+     vendors Plsimulator's fitted ratings.
+
+     The argument is the player's OWN side's expected result share
+     (simResultShare: P(win) + P(draw)/2), not its raw win probability —
+     see the note there, it is the difference between redistributing risk
+     across a mismatch and inflating it league-wide. So an underdog prices
+     up and a heavy favourite prices down. Neutral at 1.0 when nothing is
+     supplied, so an unrated fixture behaves exactly as it did before the
+     wiring. Clamped hard — this is a nudge, not a re-rating. */
   const CHASE_SLOPE = 0.30, CHASE_MIN = 0.85, CHASE_MAX = 1.20;
   function chaseFactor(winProb) {
     /* Guard the value before coercing: Number(null) and Number('') are both
@@ -227,6 +238,170 @@
     const w = Number(winProb);
     if (!isFinite(w) || w < 0 || w > 1) return 1;
     return Math.min(CHASE_MAX, Math.max(CHASE_MIN, 1 + (0.5 - w) * CHASE_SLOPE));
+  }
+
+  /* ══════════════════════════════════════════════════════════════════
+     THE MATCH MODEL — Plsimulator's fitted ratings, reproduced exactly.
+
+     The desk models cards. It has never modelled the match those cards
+     are shown in, so `chaseFactor` above sat inert: nothing could tell it
+     who was likely to be chasing. Plsimulator fits that model weekly and
+     publishes it as a bundle (`model.json`), which `data/sim_model.js`
+     vendors in club-code form.
+
+     What follows is the bundle's own arithmetic, ported function for
+     function from `plsim/models.py` so the two products cannot drift:
+
+       lambda_home = BASE_H x attack(home) x defence(away) x homeAdv(home)
+       lambda_away = BASE_A x attack(away) x defence(home)
+
+     then a Poisson product over the scoreline grid with the Dixon-Coles
+     (1997) low-score correction, which lifts 0-0 and 1-1 and trims 1-0 and
+     0-1 — the four scorelines independent Poisson is known to get wrong.
+     Note the asymmetry is deliberate and matches the source: the home
+     side's own home-advantage rating multiplies its rate, the away side
+     has no equivalent term.
+
+     Two numbers come out that the desk wants:
+       - win probability per side, which is what `chaseFactor` consumes;
+       - P(margin <= 1), the fitted closeness of the fixture.
+     ══════════════════════════════════════════════════════════════════ */
+
+  /* Per-team goal cap for the grid, matching the source model's MAX_GOALS.
+     P(11+ goals for one side) is ~3e-4 at the highest rate the bundle
+     produces and the residual is normalised across the grid below, which
+     leaves the recovered mean a hair under the goal rate. Same cap, same
+     normalisation, same tiny bias as Plsimulator — deliberately, so the
+     two products agree to floating point. */
+  const SIM_MAX_GOALS = 10;
+
+  function simPositive(v) {
+    const n = Number(v);
+    return (isFinite(n) && n > 0) ? n : null;
+  }
+
+  /* Goal rates for one fixture. `home`/`away` are keys into model.teams —
+     club short codes in the vendored bundle. Null when either side is
+     unknown or its ratings are unusable, which is the honest answer: a
+     promoted club the simulator has not rated yet must not be silently
+     handed league-average strength. */
+  function simLambdas(home, away, model) {
+    if (!model || !model.teams) return null;
+    const th = model.teams[home], ta = model.teams[away];
+    if (!th || !ta) return null;
+    const c = model.constants || {};
+    const bh = simPositive(c.BASE_H), ba = simPositive(c.BASE_A);
+    if (bh == null || ba == null) return null;
+    const attH = simPositive(th.attack), defH = simPositive(th.defence);
+    const attA = simPositive(ta.attack), defA = simPositive(ta.defence);
+    if (attH == null || defH == null || attA == null || defA == null) return null;
+    /* Per-club home advantage defaults to neutral, exactly as the source
+       model does (`th.get("home", 1.0)`). */
+    const advH = simPositive(th.home) == null ? 1 : simPositive(th.home);
+    return { lh: bh * attH * defA * advH, la: ba * attA * defH };
+  }
+
+  /* Poisson pmf for 0..n, built by recurrence (p_k = p_{k-1} x lam / k) so
+     no factorial table is needed and nothing overflows. */
+  function simPoissonPmf(lam, n) {
+    const p = [Math.exp(-lam)];
+    for (let k = 1; k <= n; k++) p[k] = p[k - 1] * lam / k;
+    return p;
+  }
+
+  /* The Dixon-Coles correction, applied to the four low scorelines only.
+     Returned normalised, so the grid is a proper distribution whatever the
+     correction and the goal cap did to the total. */
+  function simScoreGrid(lh, la, rho, maxGoals) {
+    if (!(lh > 0) || !(la > 0)) return null;
+    const n = (maxGoals == null || !(maxGoals >= 1)) ? SIM_MAX_GOALS : Math.floor(maxGoals);
+    const G = n + 1;
+    const ph = simPoissonPmf(lh, n), pa = simPoissonPmf(la, n);
+    const grid = new Array(G * G);
+    for (let h = 0; h < G; h++) {
+      for (let a = 0; a < G; a++) grid[h * G + a] = ph[h] * pa[a];
+    }
+    const r = Number(rho);
+    if (isFinite(r) && r !== 0) {
+      /* Clamped at zero: at the fitted rho (~-0.09) no real goal rate can
+         drive a tau negative, but a corrupt bundle should degrade to a
+         zero cell rather than a negative probability. */
+      const tau = (i, t) => { grid[i] = Math.max(0, grid[i] * t); };
+      tau(0, 1 - lh * la * r);        // 0-0
+      tau(1, 1 + lh * r);             // 0-1
+      tau(G, 1 + la * r);             // 1-0
+      tau(G + 1, 1 - r);              // 1-1
+    }
+    let total = 0;
+    for (let i = 0; i < grid.length; i++) total += grid[i];
+    if (!(total > 0)) return null;
+    for (let i = 0; i < grid.length; i++) grid[i] /= total;
+    return grid;
+  }
+
+  /* Fold a grid into the numbers the desk uses. `close` is P(margin <= 1)
+     — a draw or a one-goal win either way. That is the fitted "tight
+     match" signal: cards follow games that stay live, which is not the
+     same set as the historic rivalries in the derby list. */
+  function simOutcomes(grid, maxGoals) {
+    if (!Array.isArray(grid) || !grid.length) return null;
+    const n = (maxGoals == null || !(maxGoals >= 1)) ? SIM_MAX_GOALS : Math.floor(maxGoals);
+    const G = n + 1;
+    if (grid.length !== G * G) return null;
+    let home = 0, draw = 0, away = 0, close = 0, expH = 0, expA = 0;
+    for (let h = 0; h < G; h++) {
+      for (let a = 0; a < G; a++) {
+        const p = grid[h * G + a];
+        if (h > a) home += p; else if (h === a) draw += p; else away += p;
+        if (Math.abs(h - a) <= 1) close += p;
+        expH += h * p; expA += a * p;
+      }
+    }
+    return { home, draw, away, close, expH, expA };
+  }
+
+  /* A side's expected RESULT SHARE: P(win) + P(draw)/2.
+
+     This, not the raw win probability, is what the game-state factor must
+     be fed, and the reason is calibration rather than taste. `chaseFactor`
+     is neutral at 0.5, but a win probability cannot average 0.5 across a
+     three-way market — the draw takes roughly a quarter of the mass, so
+     the average side's win probability is nearer 0.37. Feeding it raw
+     marks up BOTH sides of an even fixture (measured: x1.013 and x1.068 on
+     Arsenal-City), drifting every player's number upward by a few percent
+     league-wide on no evidence at all, and pulling the model off the base
+     rate the logistic is anchored to.
+
+     Result share is the standard two-way reduction of a three-way market —
+     the same W + D/2 that points-share and win-expectancy use. The two
+     sides' shares sum to exactly 1, so their chase factors are mirror
+     images about 1.0 and the league's expected card total is unchanged:
+     the factor redistributes risk between the sides of a mismatch instead
+     of inflating it everywhere. Null in, null out. */
+  function simResultShare(sim, isHome) {
+    if (!sim || isHome == null) return null;
+    const w = Number(isHome ? sim.home : sim.away), d = Number(sim.draw);
+    if (!isFinite(w) || !isFinite(d)) return null;
+    return Math.min(1, Math.max(0, w + d / 2));
+  }
+
+  /* One call per fixture: ratings in, everything the desk needs out.
+     Null when the fixture cannot be rated — callers treat that as "no
+     simulator input" and every factor downstream stays neutral. */
+  function simFixture(home, away, model, opts) {
+    const lam = simLambdas(home, away, model);
+    if (lam == null) return null;
+    const n = (opts && opts.maxGoals) || SIM_MAX_GOALS;
+    const rho = (model.constants || {}).DC_RHO;
+    const grid = simScoreGrid(lam.lh, lam.la, rho, n);
+    if (grid == null) return null;
+    const o = simOutcomes(grid, n);
+    if (o == null) return null;
+    return {
+      lh: lam.lh, la: lam.la,
+      home: o.home, draw: o.draw, away: o.away,
+      close: o.close, expH: o.expH, expA: o.expA,
+    };
   }
 
   /* ---- hazard form of the card forecast ----
@@ -483,6 +658,7 @@
     minuteWeights, matchLambdas,
     venueFactor, chaseFactor, cardLambda, pCardFromLambda,
     HOME_FACTOR, AWAY_FACTOR,
+    simLambdas, simPoissonPmf, simScoreGrid, simOutcomes, simFixture, simResultShare, SIM_MAX_GOALS,
     shrinkRate, logit, invLogit, scaleOdds, contextProb,
     brier, logLoss, reliability, glmProb,
     gammaln, expectedFouls, nbTailProb, cardProbFromFouls, recencyWeight, refCardFactor,

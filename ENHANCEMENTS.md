@@ -274,20 +274,40 @@ published for a watchlisted player* and *one card from a ban*.
 
 Needs `VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`, `VAPID_SUBJECT`.
 
-### 4. Game-state and close-game factors — from `Plsimulator`
+### 4. Game-state and close-game factors — from `Plsimulator` (mostly done)
 
-The forecast branch defines the integration point and nothing feeds it. Export
-per-fixture win probabilities to `pipeline/sources/sim_predictions.json` and a
-10% underdog prices up to ×1.20 on cards.
+**Landed 2026-08-04.** Not as a JSON export from the forecast branch: the
+simulator publishes its whole fitted model as a CORS-open bundle
+(`plsimulation.netlify.app/model.json`, refreshed weekly), so
+`scripts/build-sim-model.mjs` vendors the ratings into `data/sim_model.js` and
+`PLDCore.simFixture` reproduces the Dixon-Coles arithmetic in `core.js`. That
+is strictly better than importing precomputed win probabilities — the desk can
+price *any* pairing, not just the fixtures someone remembered to export, and a
+frozen golden-value test pins the port to `plsim/models.py`'s own output so the
+two products cannot drift.
 
-Better still, the simulator produces a full scoreline grid, so
-**P(one-goal game)** is available — a fitted closeness signal that should
-replace the hardcoded `DERBIES` list as the primary heat input. Cards follow
-tight matches, not just historic rivalries.
+The game-state factor now drives every fixture-aware booking probability. One
+correction to the plan above, found by measuring rather than reasoning: feeding
+`chaseFactor` the raw **win probability** marks up *both* sides of an even
+fixture, because a win probability averages ~0.37 across a three-way market and
+the factor is neutral at 0.5. That is a few percent of upward drift on every
+player in the league, on no evidence, and it pulls the model off the base rate
+the logistic is anchored to. It takes the side's **expected result share**
+(`P(win) + P(draw)/2`) instead — 0.5 on a level fixture, mirrored between the
+sides, mean exactly 1.0 across all 380 pairings. Range on the shipped ratings
+is ×0.887–×1.113, so the ×0.85–×1.20 clamp is a guard rather than a binding
+constraint.
 
-Also worth taking: its walk-forward backtest scores against **market closing
-odds** (RPS 0.2068 vs the market's 0.1994). The desk's calibration loop scores
-against a base rate, which is a much easier benchmark.
+**P(one-goal game)** is computed and shown on every fixture card as `tight`
+(defined as `P(margin <= 1)` — a draw or a one-goal win). It is deliberately
+*not* wired into booking heat yet: it is the right replacement for the
+hardcoded `DERBIES` list, but changing what orders the fixture list is a
+backtest decision, and `scripts/backtest.mjs` exists to make it. That is the
+remaining half of this item.
+
+Still open from this item: the walk-forward backtest scoring against **market
+closing odds** (RPS 0.2068 vs the market's 0.1994). The desk's calibration loop
+scores against a base rate, which is a much easier benchmark.
 
 ### 5. Charts
 

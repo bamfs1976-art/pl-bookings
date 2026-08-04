@@ -521,4 +521,237 @@ t('valuePoint carries both probabilities so the chart can plot them', () => {
   assert.ok(Math.abs(v.edge - core.edgePct(2.0, 0.42)) < 1e-12);
 });
 
+/* ---- the match model (Plsimulator's ratings, ported) ---- */
+console.log('match model');
+
+/* A deliberately lopsided toy model: HOME is much the better side, EVEN
+   pairs with itself for the symmetry checks. Ratings are the bundle's own
+   shape (attack/defence multipliers, per-club home advantage). */
+const TOY = {
+  constants: { BASE_H: 1.62, BASE_A: 1.32, DC_RHO: -0.0855 },
+  teams: {
+    HOME: { attack: 1.4, defence: 0.75, home: 1.05 },
+    AWAY: { attack: 0.8, defence: 1.25, home: 1.0 },
+    EVEN: { attack: 1.0, defence: 1.0, home: 1.0 },
+    NOHA: { attack: 1.0, defence: 1.0 },              // no home rating
+    BAD: { attack: 0, defence: 1.0 },                 // unusable
+  },
+};
+
+t('lambdas reproduce the bundle formula, including the one-sided home term', () => {
+  const l = core.simLambdas('HOME', 'AWAY', TOY);
+  assert.ok(Math.abs(l.lh - 1.62 * 1.4 * 1.25 * 1.05) < 1e-12, `got ${l.lh}`);
+  assert.ok(Math.abs(l.la - 1.32 * 0.8 * 0.75) < 1e-12, `got ${l.la}`);
+  // The home-advantage rating multiplies the HOME side's rate only — the
+  // away side has no equivalent term in the source model.
+  const rev = core.simLambdas('AWAY', 'HOME', TOY);
+  assert.ok(Math.abs(rev.la - 1.32 * 1.4 * 1.25) < 1e-12, 'away rate carries no home term');
+  // A missing home rating is neutral, not zero.
+  assert.ok(Math.abs(core.simLambdas('NOHA', 'EVEN', TOY).lh - 1.62) < 1e-12);
+});
+
+t('an unrated or unusable club yields null, never an average team', () => {
+  assert.equal(core.simLambdas('HOME', 'NOTACLUB', TOY), null);
+  assert.equal(core.simLambdas('NOTACLUB', 'HOME', TOY), null);
+  assert.equal(core.simLambdas('HOME', 'BAD', TOY), null);
+  assert.equal(core.simLambdas('HOME', 'AWAY', null), null);
+  assert.equal(core.simLambdas('HOME', 'AWAY', { teams: TOY.teams }), null, 'no constants');
+  assert.equal(core.simFixture('HOME', 'NOTACLUB', TOY), null);
+});
+
+t('the score grid is a proper distribution, Dixon-Coles or not', () => {
+  for (const rho of [0, -0.0855, -0.2]) {
+    const g = core.simScoreGrid(1.6, 1.3, rho);
+    const sum = g.reduce((s, p) => s + p, 0);
+    assert.ok(Math.abs(sum - 1) < 1e-12, `rho ${rho} sums to ${sum}`);
+    assert.ok(g.every((p) => p >= 0), `rho ${rho} produced a negative cell`);
+  }
+  assert.equal(core.simScoreGrid(0, 1.3, -0.0855), null);
+  assert.equal(core.simScoreGrid(1.6, -1, -0.0855), null);
+});
+
+t('Dixon-Coles lifts the drawn low scores and trims the 1-0s', () => {
+  const G = core.SIM_MAX_GOALS + 1;
+  const plain = core.simScoreGrid(1.6, 1.3, 0);
+  const dc = core.simScoreGrid(1.6, 1.3, -0.0855);
+  // Negative rho: 0-0 and 1-1 up, 1-0 and 0-1 down. This is the whole
+  // point of the correction and the direction is easy to flip by accident.
+  assert.ok(dc[0] > plain[0], '0-0 should rise');
+  assert.ok(dc[G + 1] > plain[G + 1], '1-1 should rise');
+  assert.ok(dc[G] < plain[G], '1-0 should fall');
+  assert.ok(dc[1] < plain[1], '0-1 should fall');
+  // ...and nothing outside the 2x2 corner is touched beyond renormalising.
+  const ratio = dc[3 * G + 2] / plain[3 * G + 2];
+  for (const [h, a] of [[2, 2], [3, 0], [0, 4], [5, 5]]) {
+    assert.ok(Math.abs(dc[h * G + a] / plain[h * G + a] - ratio) < 1e-12,
+      `${h}-${a} was adjusted, only the four low scores should be`);
+  }
+});
+
+t('outcome probabilities sum to one and rank the sides correctly', () => {
+  const r = core.simFixture('HOME', 'AWAY', TOY);
+  assert.ok(Math.abs(r.home + r.draw + r.away - 1) < 1e-12);
+  assert.ok(r.home > r.away, 'the stronger side at home should be favourite');
+  assert.ok(r.close > 0 && r.close < 1);
+  /* Expected goals come back out of the grid near the input rates but not
+     exactly on them. The gap is the 10-goal cap, which the source model
+     has too: the discarded tail is renormalised across the grid, so the
+     recovered mean sits a little under the rate. It is ~1e-7 at lambda 1,
+     ~2e-4 at 2.3 and ~2e-3 at 3 — the last being this toy's deliberately
+     extreme home rate, and still above anything the real bundle produces
+     (max ~2.99, P(11+ goals) ~3e-4). Asserted as a bound rather than an
+     equality so a genuine arithmetic slip still fails. */
+  assert.ok(Math.abs(r.expH - r.lh) < 0.005, `expH ${r.expH} vs lh ${r.lh}`);
+  assert.ok(Math.abs(r.expA - r.la) < 0.005, `expA ${r.expA} vs la ${r.la}`);
+  const tame = core.simScoreGrid(1.0, 1.0, 0);
+  const G0 = core.SIM_MAX_GOALS + 1;
+  let mean = 0;
+  for (let h = 0; h < G0; h++) for (let a = 0; a < G0; a++) mean += h * tame[h * G0 + a];
+  assert.ok(Math.abs(mean - 1) < 1e-6, `truncation should vanish at low rates, got ${mean}`);
+});
+
+t('an evenly matched pair is symmetric apart from home advantage', () => {
+  const r = core.simFixture('EVEN', 'EVEN', TOY);
+  // Same ratings both sides, but BASE_H > BASE_A, so home is still ahead.
+  assert.ok(r.home > r.away, 'home advantage survives equal ratings');
+  const flat = core.simFixture('EVEN', 'EVEN',
+    { constants: { BASE_H: 1.4, BASE_A: 1.4, DC_RHO: 0 }, teams: TOY.teams });
+  assert.ok(Math.abs(flat.home - flat.away) < 1e-12, 'no home edge -> perfectly symmetric');
+});
+
+t('closeness is P(margin <= 1), not P(draw)', () => {
+  const r = core.simFixture('EVEN', 'EVEN', TOY);
+  assert.ok(r.close > r.draw, 'a one-goal win is close too');
+  // A mismatch projects less tight than a level game.
+  const mismatch = core.simFixture('HOME', 'AWAY', TOY);
+  assert.ok(mismatch.close < r.close, 'a lopsided fixture is less likely to stay tight');
+});
+
+t('result share is win plus half the draw, and the two sides sum to one', () => {
+  const r = core.simFixture('HOME', 'AWAY', TOY);
+  const sh = core.simResultShare(r, true), sa = core.simResultShare(r, false);
+  assert.ok(Math.abs(sh - (r.home + r.draw / 2)) < 1e-12);
+  assert.ok(Math.abs(sh + sa - 1) < 1e-12, 'shares must sum to 1 or the factor drifts');
+  assert.equal(core.simResultShare(null, true), null);
+  assert.equal(core.simResultShare(r, null), null);
+});
+
+t('the chase factor reads the right side of the fixture', () => {
+  const r = core.simFixture('HOME', 'AWAY', TOY);
+  // The favourite's players are damped, the underdog's marked up. Getting
+  // these the wrong way round is the one bug that would look plausible.
+  assert.ok(core.chaseFactor(core.simResultShare(r, true)) < 1, 'favourite damped');
+  assert.ok(core.chaseFactor(core.simResultShare(r, false)) > 1, 'underdog marked up');
+});
+
+t('an even fixture is neutral and no fixture drifts the league total', () => {
+  /* The bug this exists to prevent: a raw win probability averages ~0.37
+     across a three-way market, so feeding it marks up BOTH sides of an
+     even game and lifts every player's number league-wide on no evidence.
+     Result share is 0.5 on a level fixture and mirrored on any other. */
+  const even = core.simFixture('EVEN', 'EVEN',
+    { constants: { BASE_H: 1.4, BASE_A: 1.4, DC_RHO: -0.0855 }, teams: TOY.teams });
+  assert.ok(Math.abs(core.simResultShare(even, true) - 0.5) < 1e-12, 'level game is 0.5');
+  assert.equal(core.chaseFactor(core.simResultShare(even, true)), 1);
+  assert.equal(core.chaseFactor(core.simResultShare(even, false)), 1);
+  // The raw win probability would NOT have been neutral here.
+  assert.ok(core.chaseFactor(even.home) > 1 && core.chaseFactor(even.away) > 1,
+    'sanity: raw win probabilities really do mark up both sides');
+  // Mirror images about 1.0 on a mismatch, so the sides trade risk rather
+  // than the fixture gaining any.
+  const r = core.simFixture('HOME', 'AWAY', TOY);
+  const ch = core.chaseFactor(core.simResultShare(r, true));
+  const ca = core.chaseFactor(core.simResultShare(r, false));
+  assert.ok(Math.abs((ch - 1) + (ca - 1)) < 1e-12, `${ch} and ${ca} are not mirrored`);
+});
+
+t('contextProb takes the chase factor and stays backward compatible', () => {
+  const base = 0.4;
+  // A caller that predates the wiring gets exactly the old answer.
+  assert.equal(core.contextProb(base, 1.1, 1, 1.08),
+    core.contextProb(base, 1.1, 1, 1.08, null));
+  assert.equal(core.contextProb(base, 1.1, 1, 1.08),
+    core.contextProb(base, 1.1, 1, 1.08, 1));
+  const up = core.contextProb(base, 1, 1, 1, 1.2);
+  const down = core.contextProb(base, 1, 1, 1, 0.85);
+  assert.ok(up > base && down < base);
+  // It multiplies the ODDS, so it cannot run away with the probability.
+  assert.ok(up < 0.5, `odds-scale, not probability-scale: got ${up}`);
+  assert.ok(Math.abs(up - core.scaleOdds(base, 1.2)) < 1e-12);
+});
+
+/* The port is only worth having if it agrees with the thing it ported.
+   These ratings and expectations are a FROZEN snapshot: the ratings are
+   Arsenal's and Manchester City's from bundle 2026-08-03, and the expected
+   numbers were produced by running Plsimulator's own plsim/models.py over
+   them (score_grid + outcome_probs, Dixon-Coles on). Frozen deliberately —
+   the shipped bundle is refitted weekly, so pinning against live ratings
+   would fail every refresh and prove nothing. If this test breaks, the
+   arithmetic diverged from the source model. */
+t('reproduces Plsimulator\'s own output to floating point', () => {
+  const FROZEN = {
+    constants: { BASE_H: 1.62, BASE_A: 1.32, DC_RHO: -0.0855 },
+    teams: {
+      ARS: { attack: 1.1776, defence: 0.7208, home: 0.9813 },
+      MCI: { attack: 1.2418, defence: 0.8448, home: 1.0333 },
+    },
+  };
+  const EXPECTED = {
+    lh: 1.5814975212748799,
+    la: 1.1815180608000002,
+    home: 0.45607721539757345,
+    draw: 0.26912931485177327,
+    away: 0.2747934697506538,
+    close: 0.6456233260289104,
+  };
+  const r = core.simFixture('ARS', 'MCI', FROZEN);
+  for (const [k, want] of Object.entries(EXPECTED)) {
+    assert.ok(Math.abs(r[k] - want) < 1e-12,
+      `${k}: got ${r[k]}, plsim/models.py gives ${want}`);
+  }
+});
+
+/* The shipped bundle, not a toy: catches a rekeyed or truncated data file
+   as well as arithmetic. */
+console.log('shipped sim model');
+const simSrc = readFileSync(join(root, 'data', 'sim_model.js'), 'utf8');
+const simCtx = {};
+vm.createContext(simCtx);
+vm.runInContext(simSrc, simCtx);
+const SIM_MODEL = vm.runInContext('SIM_MODEL', simCtx);
+
+t('data/sim_model.js rates every club with sane ratings', () => {
+  assert.ok(SIM_MODEL && SIM_MODEL.teams, 'no teams in the bundle');
+  const codes = Object.keys(SIM_MODEL.teams);
+  assert.equal(codes.length, 20, `expected 20 rated clubs, got ${codes.length}`);
+  for (const c of codes) {
+    const t2 = SIM_MODEL.teams[c];
+    assert.ok(t2.attack > 0.3 && t2.attack < 3, `${c} attack ${t2.attack} out of range`);
+    assert.ok(t2.defence > 0.3 && t2.defence < 3, `${c} defence ${t2.defence} out of range`);
+    assert.ok(t2.home > 0.5 && t2.home < 2, `${c} home ${t2.home} out of range`);
+  }
+  assert.ok(SIM_MODEL.constants.BASE_H > SIM_MODEL.constants.BASE_A,
+    'home scoring base should exceed away');
+  assert.ok(SIM_MODEL.constants.DC_RHO < 0, 'fitted Dixon-Coles rho is negative');
+});
+
+t('every club pair prices, and every fixture stays inside the clamps', () => {
+  const codes = Object.keys(SIM_MODEL.teams);
+  let n = 0;
+  for (const h of codes) {
+    for (const a of codes) {
+      if (h === a) continue;
+      const r = core.simFixture(h, a, SIM_MODEL);
+      assert.ok(r, `${h} v ${a} did not price`);
+      assert.ok(Math.abs(r.home + r.draw + r.away - 1) < 1e-9, `${h} v ${a} probabilities`);
+      const cf = core.chaseFactor(core.simResultShare(r, true));
+      assert.ok(cf >= 0.85 && cf <= 1.20, `${h} v ${a} chase factor ${cf} escaped the clamp`);
+      assert.ok(r.lh > 0.2 && r.lh < 5, `${h} v ${a} home rate ${r.lh} implausible`);
+      assert.ok(r.la > 0.2 && r.la < 5, `${h} v ${a} away rate ${r.la} implausible`);
+      n++;
+    }
+  }
+  assert.equal(n, 380, `expected 380 ordered pairs, priced ${n}`);
+});
+
 console.log(`\n${passed} tests passed`);

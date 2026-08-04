@@ -114,6 +114,54 @@ walk-forward score reflects the same weighting the live model uses. With no
 gameweek on a row the weight is uniform (a no-op), so the season-prior basis
 is unchanged.
 
+### Game state, from a vendored match model (2026-08-04)
+
+The desk has never had a view on the match its cards are shown in, so
+`PLDCore.chaseFactor` — written earlier with the right shape — sat inert with
+nothing to feed it. It is now fed by **Plsimulator's** fitted Dixon-Coles
+model, vendored weekly into `data/sim_model.js` by
+`scripts/build-sim-model.mjs` and evaluated by `PLDCore.simFixture`:
+
+    lambda_home = BASE_H x attack(home) x defence(away) x homeAdv(home)
+    lambda_away = BASE_A x attack(away) x defence(home)
+
+then a Poisson product over an 11x11 scoreline grid with the Dixon-Coles
+low-score correction on 0-0 / 0-1 / 1-0 / 1-1, normalised. This is a port, not
+a reimplementation: it is `plsim/models.py` function for function, including
+the one-sided home-advantage term and the 10-goal cap, and
+`tests/test-core.mjs` pins it to frozen output from the Python so drift fails
+CI rather than going unnoticed.
+
+**What it feeds, and the correction that mattered.** The factor takes the
+player's own side's *expected result share*, `P(win) + P(draw)/2`, not its win
+probability. The distinction is not cosmetic. `chaseFactor` is neutral at 0.5,
+but a win probability cannot average 0.5 in a three-way market — the draw takes
+about a quarter of the mass, so the mean is near 0.37. Fed raw, an evenly
+matched fixture returns ×1.013 and ×1.068 — *both sides marked up* — which
+adds a few percent to every player's number league-wide on no evidence and
+drags the model off the base rate the logistic is anchored to. Result share is
+0.5 on a level fixture and the two sides' factors are exact mirror images about
+1.0, so the mean factor across all 380 orderings is 1.000000: a mismatch
+**redistributes** card risk between the sides rather than manufacturing it.
+
+Applied on the log-odds scale via `contextProb` alongside the referee, derby
+and venue factors. Observed range on the shipped ratings is ×0.887–×1.113
+against a ×0.85–×1.20 clamp, so the clamp guards a bad input rather than
+shaping normal output.
+
+**Closeness, computed but not wired.** The same grid gives `P(margin <= 1)`,
+shown on each fixture card as `tight`. It is the better closeness signal and
+the natural replacement for the hardcoded `DERBIES` list — cards follow games
+that stay live, not historic rivalries — but booking heat still uses the derby
+list, because changing what orders the fixture list is a decision for
+`scripts/backtest.mjs`. Same discipline as the hazard model: available beside
+the shipped number until a backtest justifies the swap.
+
+**Failure modes are all neutral.** A fixture the simulator has not rated, a
+missing `data/sim_model.js`, or a service worker serving a stale `core.js` each
+leave every factor at 1.0 — the pre-wiring behaviour — rather than substituting
+an average match.
+
 ## The calibration loop (server-verified accuracy)
 
 The **Model Track Record** card self-scores in each visitor's browser. On top
@@ -160,3 +208,5 @@ machinery is implemented and unit-tested; running the harvest flips the model to
 | `scripts/build-model.mjs` | derive the prior / fit the GLM → `data/model.js` |
 | `data/harvest_history.py` | FPL `element-summary` → `data/match_history.json` |
 | `scripts/backtest.mjs` | walk-forward Brier/log-loss |
+| `data/sim_model.js` | Plsimulator's fitted match ratings, rekeyed to club codes (generated) |
+| `scripts/build-sim-model.mjs` | vendor the simulator bundle → `data/sim_model.js` |
