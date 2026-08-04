@@ -98,6 +98,25 @@ Two modelling best-practices ported from Gameweek Edge:
 9. **Docs.** README updated for the external data file, protected AI review,
    ref assignment, value layer, tests/CI; this file lists the deferrals.
 
+10. **The match model, wired (2026-08-04).** `PLDCore.chaseFactor` shipped
+    earlier with nothing to feed it. It now runs off Plsimulator's fitted
+    Dixon-Coles ratings, vendored into `data/sim_model.js` by
+    `scripts/build-sim-model.mjs` and evaluated by `PLDCore.simFixture` — a
+    function-for-function port of `plsim/models.py`, pinned to frozen output
+    from the Python so the two products cannot drift. Each fixture card shows
+    the win probabilities, the fitted `tight` number (`P(margin <= 1)`) and the
+    game-state multiplier each side's players carry.
+
+    Two things worth recording. The factor takes the side's **expected result
+    share** (`P(win) + P(draw)/2`), not its win probability: fed raw, an even
+    fixture marks up *both* sides (measured ×1.013 / ×1.068), because a win
+    probability averages ~0.37 in a three-way market while `chaseFactor` is
+    neutral at 0.5 — a league-wide upward drift on no evidence. And `tight` is
+    computed and displayed but **not** wired into booking heat; it is the right
+    replacement for the `DERBIES` list, and that swap belongs to
+    `scripts/backtest.mjs`. `sw.js` precaches the new data file (cache now
+    `plb-v10`).
+
 ## Deferred (and why)
 
 - **Automated ScoutingStats re-harvest** (audit rec 6). The harvest

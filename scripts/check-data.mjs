@@ -184,6 +184,46 @@ assert.ok(MODEL.twoStage && MODEL.twoStage.baseHazard > 0, 'data/model.js missin
 assert.ok(MODEL.nbFouls && MODEL.nbFouls.dispersion > 0, 'data/model.js missing nbFouls.dispersion');
 assert.ok(MODEL.baseRate > 0.05 && MODEL.baseRate < 0.4, `model baseRate ${MODEL.baseRate} implausible`);
 
+// The match model (scripts/build-sim-model.mjs), vendored from Plsimulator.
+// The desk degrades cleanly without it, so nothing here is fatal-by-absence —
+// but a file that IS present and wrong would quietly misprice the game-state
+// factor on every fixture, so what ships is checked hard.
+const sctx = {};
+vm.createContext(sctx);
+vm.runInContext(readFileSync(join(root, 'data', 'sim_model.js'), 'utf8'), sctx);
+const SIM_MODEL = vm.runInContext('SIM_MODEL', sctx);
+assert.ok(SIM_MODEL && SIM_MODEL.teams && SIM_MODEL.constants,
+  'data/sim_model.js missing teams/constants — re-run scripts/build-sim-model.mjs');
+for (const key of ['BASE_H', 'BASE_A', 'DC_RHO']) {
+  assert.ok(Number.isFinite(SIM_MODEL.constants[key]), `sim model constant ${key} not finite`);
+}
+assert.ok(SIM_MODEL.constants.DC_RHO < 0 && SIM_MODEL.constants.DC_RHO > -0.5,
+  `sim model DC_RHO ${SIM_MODEL.constants.DC_RHO} outside the plausible fitted range`);
+// Every club the desk lists must be rated, or that club's fixtures silently
+// lose the game-state factor. The usual cause is a rename on either side —
+// which is exactly the failure the short-code rekey exists to catch early.
+const simRated = new Set(Object.keys(SIM_MODEL.teams));
+const simMissing = CLUBS.filter((c) => !simRated.has(c.short)).map((c) => c.short);
+assert.equal(simMissing.length, 0,
+  `clubs unrated by the match model: ${simMissing.join(', ')} — re-run scripts/build-sim-model.mjs ` +
+  `(a club renamed on either side needs an entry in its NAME_ALIASES table)`);
+for (const [code, t] of Object.entries(SIM_MODEL.teams)) {
+  assert.ok(t.attack > 0.3 && t.attack < 3, `sim model ${code} attack ${t.attack} implausible`);
+  assert.ok(t.defence > 0.3 && t.defence < 3, `sim model ${code} defence ${t.defence} implausible`);
+  assert.ok(t.home > 0.5 && t.home < 2, `sim model ${code} home advantage ${t.home} implausible`);
+}
+// A bundle nobody has refreshed for a season is worse than none: the ratings
+// go stale silently while the factor keeps applying them with full confidence.
+// Warn rather than fail — a stale model is still better than no model, and CI
+// should not go red because a weekend passed.
+const simAge = Math.round((Date.now() - Date.parse(SIM_MODEL.vendored)) / 86400000);
+if (!Number.isFinite(simAge)) {
+  console.warn('  warning: data/sim_model.js has no readable "vendored" date');
+} else if (simAge > 45) {
+  console.warn(`  warning: data/sim_model.js was vendored ${simAge} days ago (bundle ${SIM_MODEL.version}) — ` +
+    `re-run scripts/build-sim-model.mjs to pick up Plsimulator's latest fit`);
+}
+
 const html = readFileSync(join(root, 'index.html'), 'utf8');
 assert.ok(!/const\s+PL_PLAYERS\s*=\s*\[/.test(html),
   'index.html contains an inline PL_PLAYERS literal — the dataset must ship only in data/pl_data.js');
@@ -195,7 +235,10 @@ assert.ok(/<script\s+src="data\/h2h\.js"><\/script>/.test(html),
   'index.html no longer loads data/h2h.js');
 assert.ok(/<script\s+src="data\/model\.js"><\/script>/.test(html),
   'index.html no longer loads data/model.js');
+assert.ok(/<script\s+src="data\/sim_model\.js"><\/script>/.test(html),
+  'index.html no longer loads data/sim_model.js');
 
 console.log(`data guard OK: ${PL_PLAYERS.length} players (${promotedRows} at promoted clubs, ${efl} of them on Championship form), ` +
   `${CLUBS.length} clubs, ${REFS.length} refs, ` +
-  `${REF_HISTORY.refs.length} historical refs over ${REF_HISTORY.seasons.length} seasons, no inline dataset`);
+  `${REF_HISTORY.refs.length} historical refs over ${REF_HISTORY.seasons.length} seasons, ` +
+  `match model ${SIM_MODEL.version} rating all ${simRated.size}, no inline dataset`);

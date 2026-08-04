@@ -547,7 +547,7 @@
       </div>
     </div>
     <div id="gwFixtures"></div>
-    <p class="faint" style="font-size:.78rem;margin-top:.8rem">Fixtures are ordered <strong>hottest to coolest</strong> by booking heat. Each fixture's booking candidates are its highest-risk available players, ranked by a <strong>fixture-aware booking probability</strong>: the season model chance scaled by the assigned referee's card rate (the ×factor) and a small derby bump. Bands: <span style="color:var(--danger);font-weight:700">High</span> 50%+, <span style="color:var(--warn);font-weight:700">Watch</span> 30–50%. The dot is sample confidence (minutes played). Assign referees on each card once appointments are published. An estimate for research, not a price — see the Guide.</p>
+    <p class="faint" style="font-size:.78rem;margin-top:.8rem">Fixtures are ordered <strong>hottest to coolest</strong> by booking heat. Each fixture's booking candidates are its highest-risk available players, ranked by a <strong>fixture-aware booking probability</strong>: the season model chance scaled by the assigned referee's card rate (the ×factor), a small derby bump and the game state — the side the match model expects to be chasing fouls more. Bands: <span style="color:var(--danger);font-weight:700">High</span> 50%+, <span style="color:var(--warn);font-weight:700">Watch</span> 30–50%. The dot is sample confidence (minutes played). Assign referees on each card once appointments are published. An estimate for research, not a price — see the Guide.</p>
   </section>
 
   <!-- PLAYERS — one panel, two lenses.
@@ -727,7 +727,7 @@
       <button class="btn btn-primary" id="fxShareBtn" style="padding:.4rem .8rem;font-size:.82rem;margin-left:auto" type="button" title="Download a shareable card of this gameweek's fixtures by booking heat">⬇ Share gameweek</button>
     </div>
     <div id="fixtureList"></div>
-    <p class="faint" style="font-size:.78rem;margin-top:.6rem">Booking heat is venue-aware: the home side's home card rate plus the away side's away card rate, from 2025-26 form (promoted clubs use the league median until they build Premier League data). Hot is 4.2 plus, warm 3.5 plus. The flame marks a combustible side; recognised derbies get a ×1.15 heat boost and a derby chip. Top risks are each fixture's highest-risk available players. Referee appointments are not published in the FPL feed — once the PGMOL announcement is out, assign the official with each fixture's Ref control (saved in this browser) and the booking heat scales to his card rate, clamped. Schedule via the official FPL API.</p>
+    <p class="faint" style="font-size:.78rem;margin-top:.6rem">Booking heat is venue-aware: the home side's home card rate plus the away side's away card rate, from 2025-26 form (promoted clubs use the league median until they build Premier League data). Hot is 4.2 plus, warm 3.5 plus. The flame marks a combustible side; recognised derbies get a ×1.15 heat boost and a derby chip. Each card also carries the match model's read: win probabilities, the fitted chance the game finishes within one goal (“tight”), and the game-state factor each side's players are scaled by. Top risks are each fixture's highest-risk available players. Referee appointments are not published in the FPL feed — once the PGMOL announcement is out, assign the official with each fixture's Ref control (saved in this browser) and the booking heat scales to his card rate, clamped. Schedule via the official FPL API.</p>
   </section>
 
   <!-- TRACKER -->
@@ -810,6 +810,10 @@
       <p>Treat it as context, not proof. Squads turn over, managers change, and ten meetings is a small sample — a fixture with a violent history and none of the same players is a coincidence, not a signal. Pairs that have not met enough show nothing at all, which is most of the promoted clubs. Data is the public-domain football-data.co.uk match record (1,118 meetings across 151 club pairs), the same source behind the referee figures and the home/away splits, so it adds no new dependency.</p>
       <h3>Matchup context</h3>
       <p>Derby fixtures — the recognised rivalries among the 20 clubs, North London to Tyne–Wear, plus the promoted clubs' regional rivalries — get a booking-heat boost and a 🔥 derby chip on the Fixtures tab, since rivalry games run hotter with the referee. Once at least two finished gameweeks have been recorded, the players table adds a small ▲ card-form trend beside the yellow count: cards picked up over the recent recorded window (up to the last five gameweeks). Booking heat is also venue-aware: each club's cards-against is split into home and away rates (football-data.co.uk match data — away sides consistently pick up more cards), so the same two clubs read differently at each ground. Each player now carries both <strong>fouls committed</strong> and <strong>fouls won</strong> per 90 (shown on the player profile, in the share cards and the CSV) — committed feeds the risk score today; fouls won is a new data slot that populates on the next ScoutingStats refresh (it isn't in the live FPL feed), and will sharpen opponent-aggression matchup calls once it's in.</p>
+      <h3>The match model (game state)</h3>
+      <p>The desk models cards. It does not model football matches — so it borrowed one. <a href="https://plsimulation.netlify.app" target="_blank" rel="noopener">Plsimulator</a> fits a Dixon–Coles attack/defence model to three seasons of results each week and publishes the ratings; the desk vendors them and reproduces its arithmetic exactly, so both products quote the same match.</p>
+      <p>It is used for one thing on your numbers: <strong>game state</strong>. A side being outplayed chases the game and fouls tactically; a comfortable favourite does not. Each fixture card shows the model's win probabilities, and every player's booking chance is scaled by <em>his own side's</em> expected result share — the underdog's players up, the favourite's down, on the log-odds scale like every other factor here. In practice it runs between about ×0.89 and ×1.11 and is clamped at ×0.85–×1.20; a level fixture is exactly neutral, and the two sides' factors are mirror images, so a mismatch <em>redistributes</em> risk between the sides rather than adding any to the league.</p>
+      <p>Each card also shows <strong>tight</strong>: the fitted chance the match finishes within one goal. Cards follow games that stay live, so this is a better closeness signal than a fixed list of rivalries — but it is shown and not yet used. Swapping what orders the fixture list is a decision for a backtest, so booking heat still uses the derby list. Fixtures the model has not rated get no game-state factor at all rather than an assumed average, and the desk works exactly as it did before if the model file is missing.</p>
       <h3>Suspension watch</h3>
       <p>Premier League bans trigger at 5 yellows (up to gameweek 19), 10 (up to gameweek 32) and 15 (all season). The strip above the players table flags anyone one booking from a ban — a player with a card to burn is a lean, one protecting a threshold often isn't — and lists players currently suspended or injured so you don't back an absentee.</p>
       <h3>Watchlist</h3>
@@ -938,6 +942,7 @@
 <script src="data/ref_history.js"></script>
 <script src="data/h2h.js"></script>
 <script src="data/model.js"></script>
+<script src="data/sim_model.js"></script>
 <script src="assets/core.js"></script>
 <script>
 const STORE_KEY="pl_desk_v1", THEME_KEY="pl_desk_theme";
@@ -2785,6 +2790,48 @@ const DERBY_SET=new Set(DERBIES.map(d=>[...d].sort().join("|")));
 function isDerby(h,a){ return DERBY_SET.has([h,a].sort().join("|")); }
 const DERBY_BOOST=1.15;
 
+// ---- the match model (data/sim_model.js) ----
+// Plsimulator's weekly fit, vendored and rekeyed to club short codes. It
+// answers one question the desk could never answer for itself: who is
+// likely to be chasing this game. That drives the game-state factor on
+// every player's booking chance (PLDCore.chaseFactor) and gives each
+// fixture a fitted closeness number.
+//
+// Guarded the same way the v2 card model is: BOTH the data and the pure
+// functions must be present, so a service worker serving a stale core.js
+// falls back to the pre-simulator behaviour instead of throwing. Every
+// downstream factor is neutral when SIM_OK is false or the fixture is
+// unrated, so nothing about the shipped numbers depends on this file
+// arriving.
+const SIM=(typeof window!=="undefined"&&window.SIM_MODEL)||null;
+const SIM_OK=!!(SIM&&SIM.teams&&PLDCore&&typeof PLDCore.simFixture==="function");
+if(SIM&&!SIM_OK) try{ console.warn("[Bookings Desk] match model present but core.js is stale — game-state factor off. Hard-refresh to update."); }catch(e){}
+// One grid per fixture per session: simFixture is ~120 multiplications and
+// the fixture list re-renders on every filter change.
+const SIM_CACHE=new Map();
+function simFor(h,a){
+  if(!SIM_OK||!h||!a) return null;
+  const k=h+"|"+a;
+  if(SIM_CACHE.has(k)) return SIM_CACHE.get(k);
+  let v=null;
+  try{ v=PLDCore.simFixture(h,a,SIM); }catch(e){ v=null; }
+  SIM_CACHE.set(k,v);
+  return v;
+}
+// The game-state factor for one side of a fixture. Fed the side's expected
+// result share (win + half the draw), NOT its raw win probability — see the
+// note on simResultShare in core.js: raw win probabilities average well
+// under 0.5 in a three-way market, so feeding them marks up both sides of
+// every even game and drifts the whole league off the base rate. Null when
+// the fixture is unrated or core.js is stale, which keeps the factor
+// neutral rather than guessing.
+function chaseFor(sim,isHome){
+  if(!sim||typeof PLDCore.chaseFactor!=="function"||typeof PLDCore.simResultShare!=="function") return null;
+  const share=PLDCore.simResultShare(sim,isHome);
+  if(share==null) return null;
+  return PLDCore.chaseFactor(share);
+}
+
 // ---- fixtures ----
 const CA_MEDIAN=1.87; // league median cards-against, stands in for promoted clubs
 let gwInit=false;
@@ -2845,19 +2892,25 @@ function confidence(p){
   return {col:"var(--text-3)",label:"Low sample — only "+m+" mins played"};
 }
 // Fixture-aware booking chance: the season model P(card) shifted on the
-// LOG-ODDS scale by the referee's card factor and a small derby bump (multiply
+// LOG-ODDS scale by the referee's card factor, a small derby bump and the
+// match model's game-state factor (multiply
 // the odds, not the probability — so a 72% pick under a strict ref lands ~77%,
 // not the naive 94%). See docs/modelling-review.md.
 /* isHome: true if this player's club is the home side, false away, null
    when the venue isn't known (the season table, where there is no fixture
    in view). Away sides are carded more; the desk already reflects that in
    fixture heat, and now in the per-player number too. */
-function fixtureProb(p,ref,derby,isHome){
+/* sim: the fixture's match-model outcome from simFor(), or null when the
+   fixture is unrated. A player on the side more likely to be chasing is
+   marked up, the comfortable favourite's side down — clamped to ±20%/-15%
+   inside chaseFactor, so it moves the number without re-rating anyone. */
+function fixtureProb(p,ref,derby,isHome,sim){
   const base=pImp(p); if(base==null) return null;
   const rf=ref?refFactor(ref):1, df=derby?1.08:1;
   const vf=(typeof PLDCore.venueFactor==="function")?PLDCore.venueFactor(isHome):1;
-  if(MODEL_OK&&typeof PLDCore.contextProb==="function") return PLDCore.contextProb(base,rf,df,vf);
-  return Math.min(0.95,Math.max(0.005,base*rf*df*vf)); // legacy fallback if core.js is stale
+  const cf=chaseFor(sim,isHome);
+  if(MODEL_OK&&typeof PLDCore.contextProb==="function") return PLDCore.contextProb(base,rf,df,vf,cf);
+  return Math.min(0.95,Math.max(0.005,base*rf*df*vf*(cf==null?1:cf))); // legacy fallback if core.js is stale
 }
 // One-booking-from-a-ban / banned flag, from the live feed.
 function suspFlagInline(p){
@@ -2867,10 +2920,11 @@ function suspFlagInline(p){
   if(t) return ` <span title="One booking from a ban (${p.live.yc}/${t.n} yellows this season)" style="color:var(--warn);font-weight:800;font-size:.66rem">⚠${p.live.yc}YC</span>`;
   return "";
 }
-function gwCandidates(h,a,ref,derby){
+function gwCandidates(h,a,ref,derby,sim){
+  const s=sim===undefined?simFor(h,a):sim;
   return PL_PLAYERS
     .filter(p=>(p.c===h||p.c===a)&&rEff(p)!=null&&pImp(p)!=null&&!p.ls&&!(p.live&&"isu".includes(p.live.st)))
-    .map(p=>({p,prob:fixtureProb(p,ref,derby,p.c===h)}))
+    .map(p=>({p,prob:fixtureProb(p,ref,derby,p.c===h,s)}))
     .filter(c=>c.prob!=null)
     .sort((x,y)=>y.prob-x.prob);
 }
@@ -2891,6 +2945,31 @@ function teamCardBoard(h,a,ref,derby){
   const board=PLDCore.teamCardMarkets(side(h),side(a),[3.5,4.5,5.5]);
   board.thin=cands.length<12;   // too few rated players to trust the tails
   return board;
+}
+/* The match model's line on a fixture: who is expected to win, how tight
+   the game projects, and what that did to every player's number.
+
+   The chase multipliers are shown rather than buried because they are the
+   one factor here with no card evidence behind it — it is a game-state
+   argument, and a reader who disagrees with it can see exactly how much it
+   moved and discount accordingly. Empty string when the fixture is
+   unrated, so the card keeps its shape. */
+function simStripHtml(M){
+  const {h,a,sim}=M;
+  if(!sim) return "";
+  const pct=v=>(v*100).toFixed(0)+"%";
+  const ch=chaseFor(sim,true), ca=chaseFor(sim,false);
+  const moved=(ch!=null&&ca!=null)&&(Math.abs(ch-1)>=0.01||Math.abs(ca-1)>=0.01);
+  const chaseBit=moved
+    ? `<span class="mono" style="font-size:.6rem;color:var(--text-3)" title="Game state: the side more likely to be chasing fouls more. Every player's booking chance is scaled by his own side's factor — ${esc(h)} ×${ch.toFixed(2)}, ${esc(a)} ×${ca.toFixed(2)} — on the log-odds scale.">game state ${esc(h)} ×${ch.toFixed(2)} · ${esc(a)} ×${ca.toFixed(2)}</span>`
+    : `<span class="mono" style="font-size:.6rem;color:var(--text-3)" title="Evenly matched — the game-state factor is neutral here.">game state neutral</span>`;
+  /* "Tight" is P(margin ≤ 1): a draw or a one-goal win either way. */
+  const tight=`<span class="mono" style="font-size:.6rem;color:${sim.close>=0.66?"var(--warn)":"var(--text-3)"}" title="Fitted closeness: the model's chance this finishes within one goal (a draw or a one-goal win). Cards follow games that stay live. Shown as a signal — it does not move the heat score, which still uses the recognised-derby list.">tight ${pct(sim.close)}</span>`;
+  return `<div class="fx-simrow" style="display:flex;flex-wrap:wrap;align-items:center;gap:.5rem;padding:.15rem 0 .35rem">
+    <span class="mono" style="font-size:.63rem;color:var(--text-2)" title="Plsimulator's fitted match model (bundle ${esc(SIM.version)}): expected goals ${sim.expH.toFixed(2)}–${sim.expA.toFixed(2)}.">${esc(h)} ${pct(sim.home)} · draw ${pct(sim.draw)} · ${esc(a)} ${pct(sim.away)}</span>
+    ${tight}
+    ${chaseBit}
+  </div>`;
 }
 /* Past meetings between these two clubs, from the public-domain
    football-data.co.uk records (data/h2h.js). Null for pairs that have not
@@ -2972,7 +3051,14 @@ function fixtureMeta(f){
   const heat=Number((base*rf*(derby?DERBY_BOOST:1)).toFixed(1));
   const cls=heat>=4.2?"tier-target":heat>=3.5?"tier-mid":"tier-fade";
   const lbl=heat>=4.2?"Hot":heat>=3.5?"Warm":"Cool";
-  return {f,h,a,ref,rf,derby,base,heat,cls,lbl};
+  /* The match model's read on this fixture. Deliberately NOT folded into
+     `heat`: the fitted closeness is the better closeness signal and should
+     eventually replace the hardcoded derby list, but swapping what orders
+     the fixture list is a decision for scripts/backtest.mjs, not a
+     refactor. It reaches the per-player numbers through the game-state
+     factor and is shown on the card; the sort is unchanged. */
+  const sim=simFor(h,a);
+  return {f,h,a,ref,rf,derby,base,heat,cls,lbl,sim};
 }
 // Fixtures ordered hottest → coolest, kickoff time breaking ties.
 function sortFixturesByHeat(fx){
@@ -2986,7 +3072,7 @@ function sortFixturesByHeat(fx){
 function fixtureCardHtml(f,opts){
   opts=opts||{};
   const M=fixtureMeta(f); if(!M) return "";
-  const {h,a,ref,rf,derby,base,heat}=M;
+  const {h,a,ref,rf,derby,base,heat,sim}=M;
   const s=refStrictness(ref);
   const derbyChip=derby?' <span class="mono" style="font-size:.6rem;color:var(--accent-2);font-weight:800;letter-spacing:.06em">DERBY</span>':'';
   const score=f.finished?` <span class="mono muted" style="font-weight:700;font-size:.72rem">FT ${f.hs==null?"":f.hs}–${f.as==null?"":f.as}</span>`:"";
@@ -3018,6 +3104,7 @@ function fixtureCardHtml(f,opts){
       </div>
     </div>
     <div class="fx-refrow">${refSelect(f.id)}${refDelta}</div>
+    ${simStripHtml(M)}
     ${marketStripHtml(teamCardBoard(h,a,ref,derby),h2hFor(h,a))}
     ${body}
     <div class="fx-foot"><button class="fx-share" data-share-fid="${f.id}" type="button" title="Download a shareable card of this match">⬇ Share match</button></div>
@@ -3073,7 +3160,7 @@ function renderWatchDash(){
     let opp="—", ha="", gw="", prob=pImp(p), ref=null;
     if(LIVE){
       const f=nextFixtureFor(p.c);
-      if(f){ const H=LIVE.teamMap[f.team_h], A=LIVE.teamMap[f.team_a]; const home=(H===p.c); ref=refFor(f.id); prob=fixtureProb(p,ref,isDerby(H,A),home); opp=home?A:H; ha=home?"H":"A"; gw=f.event?("GW"+f.event):""; }
+      if(f){ const H=LIVE.teamMap[f.team_h], A=LIVE.teamMap[f.team_a]; const home=(H===p.c); ref=refFor(f.id); prob=fixtureProb(p,ref,isDerby(H,A),home,simFor(H,A)); opp=home?A:H; ha=home?"H":"A"; gw=f.event?("GW"+f.event):""; }
     }
     return {p,opp,ha,gw,ref,prob:prob==null?-1:prob};
   }).sort((x,y)=>y.prob-x.prob);
@@ -3501,7 +3588,7 @@ if("serviceWorker" in navigator&&(location.protocol==="https:"||location.hostnam
 // ---- Glossary: plain-English definitions of the desk's terms ----
 const GLOSS=[
   ["Booking heat","A fixture's overall card temperature — the two sides' cards-against rates (home/away split), lifted for a strict referee and for recognised derbies. Fixtures sort hottest to coolest by it."],
-  ["Booking probability / P(card)","The model's chance that a player picks up a card in a given match. On This Gameweek it's fixture-aware (scaled by the referee and derby); the Season table shows the pre-fixture season chance."],
+  ["Booking probability / P(card)","The model's chance that a player picks up a card in a given match. On This Gameweek it's fixture-aware (scaled by the referee, the derby list, the venue and the game state); the Season table shows the pre-fixture season chance."],
   ["Fair odds","The price that exactly matches the model's probability — 1 ÷ P(card). A bookmaker paying more than this is, on the model's view, value."],
   ["Edge %","How much a bookmaker's price beats the model: (odds × probability − 1). Positive means the price pays more than the model thinks the chance is worth. A research screen, not a guarantee."],
   ["×factor","The referee multiplier on a fixture. A strict whistle lifts every candidate's booking chance; a lenient one lowers it. Shown on each fixture card once you assign the official."],
