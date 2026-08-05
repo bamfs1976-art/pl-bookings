@@ -1,88 +1,69 @@
 #!/usr/bin/env python3
 """
-Build the referee dataset from a free source: the football-data.co.uk
-Premier League match CSVs mirrored on GitHub by the Frictionless Data
-project (github.com/datasets/football-datasets, public domain data).
+Build a league's referee dataset from the free football-data.co.uk match
+records (public domain, no login, no key).
 
-Every match row carries the referee plus both teams' yellow (HY/AY) and
-red (HR/AR) card counts, so yellows-per-game and reds-per-game can be
-computed for EVERY official who took a Premier League match — no login,
-no API key.
+Every match row carries the referee plus both teams' yellow (HY/AY) and red
+(HR/AR) card counts and fouls (HF/AF), so yellows-per-game, fouls-per-game and
+cards-per-foul can be computed for every official who took a match.
 
-Penalties are not in this source, so pen-per-game (and the region label)
-are carried over from the previous dataset where the referee matches,
-and null for new officials.
+Penalties are not in this source, so pen-per-game (and the region label) are
+carried over from the previous dataset where the referee matches, and null for
+new officials.
 
 Usage:
-    python3 data/build_refs.py              # fetch season 2526 from GitHub
+    python3 data/build_refs.py                          # Premier League, 2526
     python3 data/build_refs.py --season 2627
-    python3 data/build_refs.py --csv path/to/season.csv   # offline
+    python3 data/build_refs.py --league EFLC            # EFL Championship
+    python3 data/build_refs.py --league EFLC --season 2526
+    python3 data/build_refs.py --csv path/to/season.csv  # offline
+    python3 data/build_refs.py --league EFLC --dry-run   # print, write nothing
 
-Writes data/pl_refs.json and patches the REFS block of data/pl_data.js
-in place (CLUBS and PL_PLAYERS are untouched).
+Writes data/<league>_refs.json and patches the REFS block of the league's
+data file in place (clubs and players are untouched). A league whose data file
+does not exist yet — the state a new competition starts in — gets the JSON and
+a note, not an error.
+
+WHICH LEAGUES THIS WORKS FOR. Only the ones whose match records actually name
+the official, which is English and Scottish football and effectively nowhere
+else; see data/leagues.py and docs/la-liga-feasibility.md. Pointing this script
+at a league without free referees is refused up front rather than producing an
+empty ranking.
 """
 
 import argparse
-import csv
-import io
 import json
 import re
 import sys
-import urllib.request
 from pathlib import Path
 
 DATA = Path(__file__).resolve().parent
-RAW = ("https://raw.githubusercontent.com/datasets/football-datasets/"
-       "main/datasets/premier-league/season-{season}.csv")
-MIN_MATCHES = 3  # below this, ypg is too noisy to rank
-
-# football-data.co.uk abbreviates names ("A Taylor"); display full names.
-FULL_NAMES = {
-    "A Taylor": "Anthony Taylor", "C Kavanagh": "Chris Kavanagh",
-    "M Oliver": "Michael Oliver", "S Attwell": "Stuart Attwell",
-    "S Barrott": "Samuel Barrott", "D England": "Darren England",
-    "T Bramall": "Thomas Bramall", "P Bankes": "Peter Bankes",
-    "J Gillett": "Jarred Gillett", "C Pawson": "Craig Pawson",
-    "A Madley": "Andy Madley", "R Jones": "Robert Jones",
-    "S Hooper": "Simon Hooper", "M Salisbury": "Michael Salisbury",
-    "P Tierney": "Paul Tierney", "J Brooks": "John Brooks",
-    "T Harrington": "Tony Harrington", "T Robinson": "Tim Robinson",
-    "T Kirk": "Thomas Kirk", "F Hallam": "Farai Hallam",
-    "A Kitchen": "Adam Kitchen", "M Donohue": "Matthew Donohue",
-    "L Smith": "Lewis Smith", "D Coote": "David Coote",
-    "G Scott": "Graham Scott", "D Bond": "Darren Bond",
-    "J Smith": "Josh Smith", "S Allison": "Sam Allison",
-}
+sys.path.insert(0, str(DATA))
+import leagues  # noqa: E402
 
 
-def full_name(abbrev):
-    return FULL_NAMES.get(abbrev, abbrev)
+def previous_details(league):
+    """pen/region from the league's current data file, keyed by initial+surname.
 
-
-def load_rows(args):
-    if args.csv:
-        text = Path(args.csv).read_text(encoding="utf-8-sig")
-    else:
-        url = RAW.format(season=args.season)
-        req = urllib.request.Request(url, headers={"User-Agent": "pl-bookings-refs"})
-        try:
-            with urllib.request.urlopen(req, timeout=60) as r:
-                text = r.read().decode("utf-8-sig")
-        except urllib.error.HTTPError as e:
-            sys.exit(f"ERROR: {url} answered {e.code} — check the season code "
-                     "(e.g. 2526) or pass a local file with --csv.")
-    return list(csv.DictReader(io.StringIO(text)))
-
-
-def previous_details():
-    """pen/region from the current pl_data.js, keyed by surname+initial."""
-    src = (DATA / "pl_data.js").read_text(encoding="utf-8")
+    Absent file or absent REFS block is not an error: a competition the desk
+    has not built yet has no previous detail to carry over, which is the
+    normal state on the first run for a new league.
+    """
+    path = league.path(league.data_file)
+    if not path.exists():
+        return {}
+    src = path.read_text(encoding="utf-8")
     block = re.search(r"const REFS = \[(.*?)\];", src, re.S)
     out = {}
     if not block:
         return out
+    # NOTE the row is matched up to `pen:` and no further. This pattern used to
+    # end with a closing brace, which silently stopped matching the day fpg and
+    # cpf were appended to the row format — 0 of 22 rows since, so pen and
+    # region were being dropped on every rebuild rather than carried over. The
+    # row format is allowed to grow; this pattern must not care that it did.
     for m in re.finditer(r"\{n:(\".*?\"),region:(\".*?\"),matches:(?:null|[\d.]+),"
-                         r"ypg:(?:null|[\d.]+),red:(?:null|[\d.]+),pen:(null|[\d.]+)\}",
+                         r"ypg:(?:null|[\d.]+),red:(?:null|[\d.]+),pen:(null|[\d.]+)",
                          block.group(1)):
         name = json.loads(m.group(1))
         key = (name.split()[0][0] + " " + name.split()[-1]).lower()
@@ -91,17 +72,9 @@ def previous_details():
     return out
 
 
-def main():
-    ap = argparse.ArgumentParser()
-    ap.add_argument("--season", default="2526", help="football-data season code (e.g. 2526)")
-    ap.add_argument("--csv", help="local season CSV instead of fetching")
-    args = ap.parse_args()
-
-    rows = load_rows(args)
-    if len(rows) < 50:
-        sys.exit(f"ERROR: only {len(rows)} match rows — season incomplete or wrong file; "
-                 "refusing to overwrite the referee data.")
-
+def tally_refs(rows):
+    """referee -> counts, plus the number of rows that carried no usable card
+    data. Pure: this is the whole computation, and it is what the tests call."""
     tally = {}
     skipped = 0
     for r in rows:
@@ -123,20 +96,24 @@ def main():
             fouls = int(r["HF"]) + int(r["AF"])
         except (KeyError, TypeError, ValueError):
             fouls = None
-        d = tally.setdefault(ref, {"matches": 0, "yellows": 0, "reds": 0, "fouls": 0, "foul_matches": 0})
+        d = tally.setdefault(ref, {"matches": 0, "yellows": 0, "reds": 0,
+                                   "fouls": 0, "foul_matches": 0})
         d["matches"] += 1
         d["yellows"] += hy + ay
         d["reds"] += hr + ar
         if fouls is not None:
             d["fouls"] += fouls
             d["foul_matches"] += 1
+    return tally, skipped
 
-    prev = previous_details()
+
+def build_refs(tally, prev, min_matches):
+    """The ranked referee rows. Pure, so the rates are unit-testable."""
     refs = []
     for abbrev, d in tally.items():
-        if d["matches"] < MIN_MATCHES:
+        if d["matches"] < min_matches:
             continue
-        name = full_name(abbrev)
+        name = leagues.full_name(abbrev)
         key = (name.split()[0][0] + " " + name.split()[-1]).lower()
         old = prev.get(key, {})
         # fouls/game and cards-per-foul, over the matches that carried fouls.
@@ -160,17 +137,18 @@ def main():
             "cards_per_foul": cpf,
         })
     refs.sort(key=lambda r: -r["ypg"])
+    return refs
 
-    (DATA / "pl_refs.json").write_text(json.dumps({"refs": refs}, indent=1), encoding="utf-8")
 
-    # Patch the REFS block of pl_data.js in place; players/clubs untouched.
-    def jsval(x):
-        if x is None:
-            return "null"
-        if isinstance(x, str):
-            return json.dumps(x, ensure_ascii=False)
-        return str(x)
+def jsval(x):
+    if x is None:
+        return "null"
+    if isinstance(x, str):
+        return json.dumps(x, ensure_ascii=False)
+    return str(x)
 
+
+def refs_block(refs):
     lines = ["const REFS = ["]
     for r in refs:
         lines.append("  {" + ",".join([
@@ -180,14 +158,59 @@ def main():
             f'fpg:{jsval(r["fouls_pg"])}', f'cpf:{jsval(r["cards_per_foul"])}',
         ]) + "},")
     lines.append("];")
-    src = (DATA / "pl_data.js").read_text(encoding="utf-8")
-    new_src, n = re.subn(r"const REFS = \[.*?\];", "\n".join(lines), src, count=1, flags=re.S)
+    return "\n".join(lines)
+
+
+def patch_data_file(league, refs):
+    """Replace the REFS block in the league's data file. Returns a status
+    string; a missing data file is reported, not fatal."""
+    path = league.path(league.data_file)
+    if not path.exists():
+        return (f"{league.data_file} does not exist yet — wrote "
+                f"{league.refs_file} only. Build the league's data file, then "
+                "re-run to patch its REFS block.")
+    src = path.read_text(encoding="utf-8")
+    new_src, n = re.subn(r"const REFS = \[.*?\];", refs_block(refs), src,
+                         count=1, flags=re.S)
     if n != 1:
-        sys.exit("ERROR: could not find the REFS block in pl_data.js.")
-    (DATA / "pl_data.js").write_text(new_src, encoding="utf-8")
+        sys.exit(f"ERROR: could not find the REFS block in {league.data_file}.")
+    path.write_text(new_src, encoding="utf-8")
+    return f"patched the REFS block of {league.data_file}"
+
+
+def main():
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--league", default="PL",
+                    help="league code (%s)" % ", ".join(sorted(leagues.LEAGUES)))
+    ap.add_argument("--season", default="2526", help="football-data season code (e.g. 2526)")
+    ap.add_argument("--csv", help="local season CSV instead of fetching")
+    ap.add_argument("--dry-run", action="store_true",
+                    help="print the ranking, write nothing")
+    args = ap.parse_args()
+
+    league = leagues.get(args.league)
+    if not league.has_free_referees:
+        sys.exit(f"ERROR: {league.name} match records do not name the official, "
+                 "so there is nothing for this script to compute. See "
+                 "docs/la-liga-feasibility.md for the referee-name join that "
+                 "such a league needs instead.")
+
+    rows, where = leagues.load_rows(league, season=args.season, csv_path=args.csv,
+                                    agent="pl-bookings-refs")
+    tally, skipped = tally_refs(rows)
+    if not tally:
+        sys.exit(f"ERROR: {where} carried {len(rows)} match rows but named no "
+                 "referee on any of them. This source does not publish "
+                 f"referees for {league.name}; refusing to write an empty set.")
+
+    refs = build_refs(tally, previous_details(league), league.min_ref_matches)
+    if not refs:
+        sys.exit(f"ERROR: no referee reached {league.min_ref_matches} matches "
+                 f"in {len(rows)} rows — partial season; refusing to write.")
 
     dropped = len(tally) - len(refs)
-    print(f"refs: {len(refs)} (dropped {dropped} under {MIN_MATCHES} matches, "
+    print(f"{league.name} refs: {len(refs)} from {len(rows)} matches via {where}")
+    print(f"  (dropped {dropped} under {league.min_ref_matches} matches, "
           f"skipped {skipped} rows without card data)")
     for r in refs:
         pen = "  - " if r["pen_pg"] is None else f"{r['pen_pg']:.2f}"
@@ -195,6 +218,14 @@ def main():
         cpf = "  -  " if r["cards_per_foul"] is None else f"{r['cards_per_foul']:.3f}"
         print(f"   {r['ypg']:>5}  {r['red_pg']:>4} red  {pen} pen  "
               f"{fpg} fouls  {cpf} c/f  {r['matches']:>2}m  {r['name']}")
+
+    if args.dry_run:
+        print("\ndry run — nothing written")
+        return
+
+    league.path(league.refs_file).write_text(
+        json.dumps({"refs": refs}, indent=1), encoding="utf-8")
+    print("\n" + patch_data_file(league, refs))
 
 
 if __name__ == "__main__":

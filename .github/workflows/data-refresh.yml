@@ -34,6 +34,11 @@ on:
         type: boolean
         required: false
         default: true
+      refresh_eflc:
+        description: "Also refresh EFL Championship referees (free source, no key). The first leg of the Championship desk."
+        type: boolean
+        required: false
+        default: true
 
 permissions:
   contents: write
@@ -63,6 +68,20 @@ jobs:
       # is always recomputed, so re-running cannot double-count.
       - name: Extend the referee history (free source, always runs)
         run: python3 data/extend_ref_history.py --to "${{ inputs.refs_season }}"
+
+      # The Championship's referee spine — the first leg of the second desk.
+      # Free and keyless for exactly the same reason the Premier League's is:
+      # football-data.co.uk names the official for English football. It reads
+      # the ORIGIN rather than the GitHub mirror, because the mirror carries
+      # only the top five European leagues (see data/leagues.py).
+      #
+      # continue-on-error: this is not what the live Premier League desk runs
+      # on. An origin outage must leave the shipped Championship seed in place,
+      # not take the Premier League refresh down with it.
+      - name: Refresh EFL Championship referees (free source, no key)
+        if: ${{ inputs.refresh_eflc }}
+        continue-on-error: true
+        run: python3 data/build_refs.py --league EFLC --season "${{ inputs.refs_season }}"
 
       - name: Harvest players from ScoutingStats
         if: ${{ env.SS_COOKIE != '' }}
@@ -153,6 +172,11 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add data/pl_data.js data/model.js data/sim_model.js data/ref_history.js
+          # The Championship has no data file to fold its referees into yet, so
+          # the JSON IS the artifact for now (gitignore carries an exception for
+          # it). It folds into eflc_data.js the way pl_refs.json folds into
+          # pl_data.js once that file exists.
+          git add data/eflc_refs.json 2>/dev/null || true
           if git diff --cached --quiet; then
             echo "No data or model changes."
           else

@@ -38,6 +38,13 @@ jobs:
       - name: API-Football harvest route (mapping and pagination)
         run: python3 data/test_apifootball.py
 
+      # The multi-league data layer. Holds the Premier League path byte-stable
+      # while a second competition moves in beside it, and holds the rule that
+      # a league whose records name no official is refused rather than shipped
+      # as an empty ranking.
+      - name: League registry and the league-aware referee build
+        run: python3 data/test_leagues.py
+
       # The FPL-squads leg and the previous-build fallback. The first must
       # never turn "no record" into a zero; the second must never turn "did
       # not run" into "returned nothing".

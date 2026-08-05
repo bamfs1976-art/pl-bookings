@@ -14,5 +14,10 @@ data/*.json
 # data/extend_ref_history.py needs at runtime (including in the refresh
 # Action), not a raw harvest. Must stay committed.
 !data/ref_history_base.json
+# ...and except the Championship referee set. pl_refs.json is an intermediate
+# because pl_data.js is the shipped artifact; the Championship has no data file
+# yet, so this JSON is the artifact. Reclassify it as an intermediate (drop
+# this line) once eflc_data.js exists and carries a REFS block.
+!data/eflc_refs.json
 data/epldata/
 __pycache__/

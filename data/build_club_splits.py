@@ -31,16 +31,14 @@ are untouched).
 """
 
 import argparse
-import csv
-import io
 import re
 import sys
-import urllib.request
 from pathlib import Path
 
 DATA = Path(__file__).resolve().parent
-RAW = ("https://raw.githubusercontent.com/datasets/football-datasets/"
-       "main/datasets/premier-league/season-{season}.csv")
+sys.path.insert(0, str(DATA))
+import leagues  # noqa: E402
+
 MIN_VENUE_MATCHES = 8  # below this the venue rate is too noisy to trust
 
 # football-data.co.uk team names -> pl_data.js short codes (2025-26 PL).
@@ -53,21 +51,6 @@ TEAM_SHORT = {
     "Man United": "MUN", "Newcastle": "NEW", "Nott'm Forest": "NFO",
     "Sunderland": "SUN", "Tottenham": "TOT",
 }
-
-
-def load_rows(args):
-    if args.csv:
-        text = Path(args.csv).read_text(encoding="utf-8-sig")
-    else:
-        url = RAW.format(season=args.season)
-        req = urllib.request.Request(url, headers={"User-Agent": "pl-bookings-splits"})
-        try:
-            with urllib.request.urlopen(req, timeout=60) as r:
-                text = r.read().decode("utf-8-sig")
-        except urllib.error.HTTPError as e:
-            sys.exit(f"ERROR: {url} answered {e.code} — check the season code "
-                     "(e.g. 2526) or pass a local file with --csv.")
-    return list(csv.DictReader(io.StringIO(text)))
 
 
 def venue_rates(rows):
@@ -141,10 +124,11 @@ def main():
     ap.add_argument("--csv", help="local season CSV instead of fetching")
     args = ap.parse_args()
 
-    rows = load_rows(args)
-    if len(rows) < 50:
-        sys.exit(f"ERROR: only {len(rows)} match rows — season incomplete or wrong "
-                 "file; refusing to patch the club splits.")
+    # Shared with build_refs.py via the league registry: same publisher, same
+    # season code, same blank-row and partial-season guards, one copy.
+    rows, where = leagues.load_rows(leagues.get("PL"), season=args.season,
+                                    csv_path=args.csv, agent="pl-bookings-splits")
+    print(f"read {len(rows)} match rows via {where}")
 
     rates = venue_rates(rows)
     print(f"venue rates for {len(rates)} clubs from {len(rows)} matches")
