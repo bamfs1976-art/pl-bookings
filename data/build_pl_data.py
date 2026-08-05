@@ -71,16 +71,21 @@ def _n_players(n):
     return f"{n} player" + ("" if n == 1 else "s")
 
 
-def coverage_problems(rows):
-    """Every reason the promoted clubs' data is not fit to ship, as plain
-    sentences. Empty list means it is. Pure — takes rows, touches nothing."""
+def coverage_problems(rows, clubs=None):
+    """Every reason a set of clubs' data is not fit to ship, as plain
+    sentences. Empty list means it is. Pure — takes rows, touches nothing.
+
+    `clubs` defaults to the promoted three, which is the only set with no
+    Premier League fallback and so the only one this file has to judge. The
+    Championship desk passes its whole 24, because there every club is in that
+    position: no higher-division feed sits behind any of them."""
     problems = []
     by_club = {}
     for r in rows:
         if not r:
             continue
         by_club.setdefault(r["c"], []).append(r)
-    for short in sorted(PROMOTED):
+    for short in sorted(PROMOTED if clubs is None else clubs):
         squad = by_club.get(short, [])
         if not squad:
             problems.append(f"{short}: no players at all")
@@ -254,9 +259,16 @@ def build_players():
     return deduped
 
 
-def mk(p, basis):
+def mk(p, basis, resolve=None):
+    """One source row into a shipped player row.
+
+    `resolve` maps a feed's club name to a short code; it defaults to this
+    league's SHORT map. The Championship builder passes its own, so the risk
+    formula, the per-90 conversions and the fouls-won key fallbacks are shared
+    rather than reimplemented — the arithmetic here is the product.
+    """
     club = p.get("team")
-    short = SHORT.get(club)
+    short = (resolve or SHORT.get)(club)
     if not short:
         return None
     mins = num(p.get("min")) or 0

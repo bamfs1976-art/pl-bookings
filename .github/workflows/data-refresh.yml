@@ -135,6 +135,20 @@ jobs:
       - name: Refresh the season-prior model
         run: node scripts/build-model.mjs
 
+      # The Championship dataset. Reuses the harvest the Premier League build
+      # already did: data/harvest.py fetches the WHOLE of ScoutingStats league 8
+      # and league 9, and the Premier League build keeps a slice of each — so 21
+      # of these 24 squads need no extra fetching, only 2025-26 season ids.
+      #
+      # continue-on-error, and it writes its own file: the live Premier League
+      # desk must not be able to fail because the second desk's squads are
+      # short. It refuses to write rather than shipping a partial league, so a
+      # failure here leaves the previous eflc_data.js exactly as it was.
+      - name: Build the Championship dataset
+        if: ${{ inputs.refresh_eflc && env.SS_COOKIE != '' }}
+        continue-on-error: true
+        run: python3 data/build_eflc_data.py --season "${{ inputs.refs_season }}"
+
       # Re-vendor Plsimulator's match model, which it refits weekly and
       # publishes CORS-open at plsimulation.netlify.app/model.json. Feeds the
       # game-state factor and the fitted closeness signal.
@@ -176,7 +190,7 @@ jobs:
           # the JSON IS the artifact for now (gitignore carries an exception for
           # it). It folds into eflc_data.js the way pl_refs.json folds into
           # pl_data.js once that file exists.
-          git add data/eflc_refs.json 2>/dev/null || true
+          git add data/eflc_refs.json data/eflc_data.js 2>/dev/null || true
           if git diff --cached --quiet; then
             echo "No data or model changes."
           else

@@ -99,7 +99,17 @@ The `data` folder holds the build script and the raw harvests (harvest JSON giti
 
 The desk is being generalised from one league to several, Championship first and La Liga after it. `docs/la-liga-feasibility.md` is the research behind that order; the short version is that every referee number here comes from a free source that publishes the official for English and Scottish football and effectively nowhere else — measured, 0 of 33 seasons for La Liga, all of them for England's five tiers. So the Championship reuses the referee spine with a changed division code, while La Liga has to buy the referee *name* from a keyed API and keep computing the *rates* from the same free file.
 
-What exists so far is the data layer, not a second site: the league registry (`data/leagues.py`), a league-aware `build_refs.py`, and a Championship referee step in the refresh Action that is free and needs no key. It writes `data/eflc_refs.json`, which is committed because the Championship has no data file to fold it into yet. The Premier League path is unchanged — byte-identical output, held there by `data/test_leagues.py`.
+What exists so far is the data layer, not a second site. The Premier League path is unchanged throughout — byte-identical output from both `build_refs.py` and `build_pl_data.py`, held there by `data/test_leagues.py`.
+
+- `data/leagues.py` — the league registry, including the 2026-27 Championship's 24 clubs, their feed-name aliases, and which of them arrived from which division.
+- `build_refs.py --league EFLC` — the referee spine, free and keyless, from the same public-domain records the Premier League uses. Writes `data/eflc_refs.json`.
+- `build_eflc_data.py` — the Championship dataset. It **reuses** the Premier League builder's arithmetic (`mk`, `coverage_problems`, `quote_keys`) rather than copying it, so the two desks cannot drift about what a booking risk is.
+
+The Championship is the mirror image of the Premier League desk: 18 clubs on 2025-26 Championship form, 3 on Premier League form (Burnley, West Ham, Wolves — relegated, so last season's record is from a higher division, and flagged as such), and 3 on League One form or none (Lincoln, Cardiff, Bolton — promoted).
+
+Two things fall out of that which are better here than in the Premier League desk. **21 of the 24 squads need no new harvesting**: `harvest.py` already fetches the whole of ScoutingStats league 8 and league 9, and the Premier League build keeps only a slice of each — the Championship desk wants the rest. And **club card rates are counted from the free match records rather than the player feed**, which the Premier League desk cannot do for its promoted clubs because Championship minutes in that feed include cup games. Counting E1 matches directly gives an exact league-only rate with the home/away split built in, instead of patched on afterwards by a second script.
+
+Still open: the League One league id (nothing harvests it yet, so Lincoln, Cardiff and Bolton have no form), and the Championship suspension thresholds, which are recorded in the registry as partially confirmed.
 
 ## Tests and CI
 

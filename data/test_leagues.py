@@ -236,6 +236,127 @@ def test_generated_block_is_valid_and_ordered():
     assert ypg == sorted(ypg, reverse=True), ypg
 
 
+# ── the Championship dataset ────────────────────────────────────────────────
+
+def test_the_24_are_24_and_distinct():
+    """The lineup was DERIVED from six separately-confirmed moves, not read off
+    one list. A duplicated short code would silently merge two squads."""
+    assert len(L.EFLC_CLUBS) == 24, len(L.EFLC_CLUBS)
+    assert len(set(L.EFLC_CLUBS.values())) == 24, "short codes collide"
+    assert all(len(s) == 3 and s.isupper() for s in L.EFLC_CLUBS.values())
+
+
+def test_every_alias_points_at_a_real_club():
+    codes = set(L.EFLC_CLUBS.values())
+    stray = {a: c for a, c in L.EFLC_ALIASES.items() if c not in codes}
+    assert not stray, stray
+    assert L.eflc_short("QPR") == "QPR"
+    assert L.eflc_short("West Brom") == L.eflc_short("West Bromwich Albion") == "WBA"
+    assert L.eflc_short("Leicester") is None, "relegated to League One, not in the 24"
+
+
+def test_the_two_minorities_are_in_the_24():
+    codes = set(L.EFLC_CLUBS.values())
+    assert L.EFLC_FROM_PL < codes and L.EFLC_FROM_L1 < codes
+    assert not (L.EFLC_FROM_PL & L.EFLC_FROM_L1), "a club cannot arrive from both"
+
+
+def test_unmapped_clubs_are_reported_not_dropped():
+    """The failure this build is most exposed to. An unrecognised club name
+    looks exactly like a club with no players, and 23 squads plus a silent gap
+    is the shape of the bug that already cost this repo a year."""
+    import build_eflc_data as E
+    unmapped = {}
+    got = E.rows_for(
+        [{"team": "Millwall", "n": "A", "pos": "Defender", "min": 900, "yc": 5, "fc90": 2.0},
+         {"team": "Luton", "n": "B", "pos": "Defender", "min": 900, "yc": 3, "fc90": 1.2}],
+        {"MIL"}, "EFLC", unmapped)
+    assert len(got) == 1 and got[0]["c"] == "MIL", got
+    assert unmapped == {"Luton": 1}, unmapped
+
+
+def test_keep_filter_excludes_other_divisions_clubs():
+    """pl_players.json is the WHOLE Premier League. Only the three relegated
+    clubs may come out of it, or the Championship desk grows a Liverpool."""
+    import build_eflc_data as E
+    unmapped = {}
+    got = E.rows_for(
+        [{"team": "Burnley", "n": "A", "pos": "Defender", "min": 900, "yc": 5, "fc90": 2.0},
+         {"team": "Southampton", "n": "B", "pos": "Defender", "min": 900, "yc": 4, "fc90": 1.5}],
+        L.EFLC_FROM_PL, "PL", unmapped)
+    assert [r["c"] for r in got] == ["BUR"], got
+    assert unmapped == {}, "Southampton IS in the 24 — recognised, just not from this feed"
+
+
+def test_club_rates_off_real_championship_matches():
+    import build_eflc_data as E
+    # Two Millwall matches: home 2Y+0R, away 1Y+1R.
+    two = rows("\n".join([
+        HEAD,
+        "E1,01/01/2020,Millwall,Derby,1,0,X,10,10,2,1,0,0",
+        "E1,08/01/2020,Derby,Millwall,0,0,X,10,10,1,1,0,1",
+    ]))
+    rates = E.club_card_rates(two)
+    assert rates == {}, "two matches is under the venue floor"
+
+    # 20 matches, 10 at each venue, so both clear the per-venue floor of 8.
+    r = E.club_card_rates(rows_n(20))["MIL"]
+    assert r[0] == 2.0, r      # 40 cards over 20 matches
+    assert r[1] == 3.0, r      # home: 3 a game
+    assert r[2] == 1.0, r      # away: 1 a game
+
+    # 12 matches is 6 a venue: the overall rate survives, the splits do not.
+    # A venue rate off six games is noise, and the app has a league-median
+    # fallback precisely so it does not have to be given one.
+    thin = E.club_card_rates(rows_n(12))["MIL"]
+    assert thin == (2.0, None, None), thin
+
+
+def rows_n(n):
+    """n Millwall matches, alternating venue: 3 cards at home, 1 away."""
+    lines = [HEAD]
+    for i in range(n // 2):
+        lines.append(f"E1,0{1+i%9}/01/2020,Millwall,Derby,1,0,X,10,10,3,0,0,0")
+        lines.append(f"E1,0{1+i%9}/02/2020,Derby,Millwall,0,0,X,10,10,0,1,0,0")
+    return rows("\n".join(lines))
+
+
+def test_a_club_with_no_match_record_gets_no_invented_rate():
+    """The six who were not in the division last season. Null, so the app's
+    league-median fallback takes over — not zero, which reads as spotless."""
+    import build_eflc_data as E
+    players = [{"c": "BUR", "b": "PL", "_img": None, "_fouls": 40.0},
+               {"c": "MIL", "b": "EFLC", "_img": None, "_fouls": 50.0}]
+    clubs = {c["short"]: c for c in E.build_clubs(players, {"MIL": (2.0, 3.0, 1.0)})}
+    assert clubs["BUR"]["ca"] is None and clubs["BUR"]["fm"] is None, clubs["BUR"]
+    assert clubs["BUR"]["basis"] == "PL", clubs["BUR"]
+    assert clubs["MIL"]["ca"] == 2.0 and clubs["MIL"]["basis"] == "EFLC", clubs["MIL"]
+
+
+def test_coverage_rule_is_shared_and_takes_a_club_set():
+    """The Premier League desk judges its promoted three. The Championship
+    judges all 24, because no higher-division feed sits behind any of them."""
+    import build_pl_data as P
+    squad = [{"c": "MIL", "p": p} for p in ["GK", "DF", "DF", "MF", "FW"] * 4]
+    problems = P.coverage_problems(squad, clubs={"MIL", "BUR"})
+    assert any("BUR" in p and "no players" in p for p in problems), problems
+    assert not any("MIL" in p for p in problems), problems
+    # default is still the promoted three — the Premier League path is untouched
+    assert P.coverage_problems([]) == P.coverage_problems([], clubs=P.PROMOTED)
+
+
+def test_risk_arithmetic_is_shared_with_the_premier_league_builder():
+    """Not reimplemented. Same mk(), same formula, different club map."""
+    import build_pl_data as P
+    row = P.mk({"team": "Millwall", "n": "A", "pos": "Defender", "min": 900,
+                "yc": 5, "rc": 0, "fc90": 2.0}, "EFLC", resolve=L.eflc_short)
+    assert row["c"] == "MIL" and row["p"] == "DF", row
+    assert row["y"] == 0.5, row                      # 5 yellows / 900 min * 90
+    assert row["r"] == round(0.5 * 2 + 2.0, 3), row  # yc90*2 + fouls90
+    assert P.mk({"team": "Millwall", "n": "A", "min": 900}, "PL") is None, \
+        "the Premier League map does not know Millwall — default unchanged"
+
+
 if __name__ == "__main__":
     print("league registry and referee build")
     for name, fn in sorted(globals().items()):

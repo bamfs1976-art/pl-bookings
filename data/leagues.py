@@ -121,6 +121,59 @@ LEAGUES = {
 }
 
 
+# ── the 2026-27 EFL Championship ────────────────────────────────────────────
+#
+# DERIVED, NOT READ OFF A CONFIRMED LIST. The EFL's own line-up pages could not
+# be fetched when this was written, so the 24 were derived from moves that were
+# each confirmed separately: Coventry, Ipswich and Hull up to the Premier
+# League; Sheffield Wednesday, Leicester and Oxford down to League One; Burnley,
+# West Ham and Wolves down from the Premier League; Lincoln, Cardiff and Bolton
+# up from League One. That is a chain of six facts, and a wrong link here does
+# not crash anything — an unmapped club name simply produces no players. So
+# build_eflc_data.py reports every unmapped club by name and refuses to write
+# when the count is short, rather than shipping 21 squads and a quiet gap.
+EFLC_CLUBS = {
+    "Birmingham City": "BIR", "Blackburn Rovers": "BLB",
+    "Bolton Wanderers": "BOL", "Bristol City": "BRC", "Burnley": "BUR",
+    "Cardiff City": "CAR", "Charlton Athletic": "CHA", "Derby County": "DER",
+    "Lincoln City": "LIN", "Middlesbrough": "MID", "Millwall": "MIL",
+    "Norwich City": "NOR", "Portsmouth": "POR", "Preston North End": "PRE",
+    "Queens Park Rangers": "QPR", "Sheffield United": "SHU",
+    "Southampton": "SOU", "Stoke City": "STK", "Swansea City": "SWA",
+    "Watford": "WAT", "West Bromwich Albion": "WBA",
+    "West Ham United": "WHU", "Wolverhampton Wanderers": "WOL",
+    "Wrexham": "WRE",
+}
+
+# Feeds name the same club differently — ScoutingStats, the FPL feed and
+# football-data.co.uk all disagree, and football-data in particular uses short
+# forms ("Sheffield United" is "Sheffield United" but "QPR" is "QPR"). Every
+# spelling that resolves to a club goes here. An alias that is NOT here is
+# reported, not guessed.
+EFLC_ALIASES = {
+    "Birmingham": "BIR", "Blackburn": "BLB", "Bolton": "BOL",
+    "Bristol City": "BRC", "Cardiff": "CAR", "Charlton": "CHA",
+    "Derby": "DER", "Lincoln": "LIN", "Middlesbrough": "MID",
+    "Norwich": "NOR", "Preston": "PRE", "QPR": "QPR",
+    "Queens Park Rangers": "QPR", "Sheffield Utd": "SHU",
+    "Sheff Utd": "SHU", "Stoke": "STK", "Swansea": "SWA",
+    "West Brom": "WBA", "West Bromwich": "WBA", "West Ham": "WHU",
+    "Wolves": "WOL", "Wolverhampton": "WOL",
+}
+
+# Where each club's 2025-26 form comes from. The Championship desk is the
+# mirror image of the Premier League one: most of its clubs played in the
+# division last season, and the interesting minority did not.
+EFLC_FROM_PL = {"BUR", "WHU", "WOL"}   # relegated — last season's form is PL
+EFLC_FROM_L1 = {"LIN", "CAR", "BOL"}   # promoted — last season's form is L1
+
+
+def eflc_short(name):
+    """A club name from any feed as its short code, or None if unrecognised."""
+    n = (name or "").strip()
+    return EFLC_CLUBS.get(n) or EFLC_ALIASES.get(n)
+
+
 def get(code):
     """A league by code, or a loud exit naming the ones that exist."""
     try:
