@@ -1281,22 +1281,6 @@
       + '">H2H ' + p.n + ' <b' + hot + '>' + p.avg.toFixed(1) + '</b></span>';
   }
 
-  function h2hCell(x) {
-    var p = h2hFor(x.fx.h, x.fx.a);
-    if (!p) return '';
-    /* Highlighted when it disagrees with the model by a card or more — those
-       are the fixtures worth a second look, which is the whole reason it sits
-       next to the number rather than inside it. */
-    var gap = Math.abs(p.avg - (x.m.expected || 0));
-    var tone = gap >= 1 ? 'var(--danger-ink)' : 'var(--text-2)';
-    return '<div class="mk-cell" title="' + esc('Past meetings: ' + p.avg
-        + ' yellows on average across ' + p.n + ' games (' + p.last.join(', ')
-        + ', most recent first). ' + Math.round(p.o45 * 100)
-        + '% produced 5 or more. Reds ' + p.red + ' a game.')
-      + '"><span class="mk-lab">H2H ' + p.n + '</span>'
-      + '<span class="mk-val" style="color:' + tone + '">' + p.avg.toFixed(1) + '</span></div>';
-  }
-
   /* ---- derbies -----------------------------------------------------------
    * A derby is carded more than the same two clubs would be otherwise, and the
    * Premier League desk has priced that for a while. The list is editorial —

@@ -192,6 +192,37 @@ divergence on the device most people use, and it is not in any row above
 because the audit compared features, not breakpoints. It should be settled one
 way for all three.
 
+**The Matchday list shipped completely unstyled on both newer desks.** Found
+from a phone screenshot, not from any guard. `renderMatchday()` was ported from
+`today.html` without the five rules that make it a layout — `.row`, `.teams`,
+`.top`, `.heat`, `.when` — which lived in that page's inline `<style>` and
+nowhere else. `.teams` and `.top` are spans, so with no flex container they
+flowed inline and ran together; the Championship fixture list read
+`Charlton Athletic v Derby CountyL. Travis 19% · M. Clarke 17%` as one wrapping
+paragraph, twelve fixtures deep. `.btn.primary` was missed in the same port, so
+"Share matchday" rendered as an ordinary outlined button.
+
+Two things made it survive. `.stat` *did* come across, so the stats strip above
+the list looked right and the breakage read as a formatting nit rather than a
+broken panel. And a missing CSS rule throws nothing, fails no selector and logs
+nothing — every guard in the suite passed, because they all check behaviour and
+content rather than appearance.
+
+Fixed in `assets/tw.css`, scoped to `#mdList`: `.row`, `.top` and `.heat` are
+generic enough that `index.html` styles its own `class="heat"` chip, so sharing
+them unscoped would have fixed two desks by restyling a third.
+`scripts/check-styles.mjs` now asserts every literal class the four pages emit
+has a rule in the CSS that page actually loads, and that the matchday rules
+stay scoped. Its first version was itself satisfiable by the wrong text —
+`includes('#mdList .row')` matched inside `#mdList .rowgroup`, and the sweep
+accepted `#mdList .row:last-child` as proof the `display:flex` rule existed, so
+a rename passed. It now requires a complete selector opening a rule.
+
+**Unverifiable from the sandbox:** club crests on the newer desks come from
+`media.api-sports.io` where the Premier League's come from
+`cdn.sportmonks.com`. Both hosts are blocked by the build proxy, so crests
+render broken locally on all three desks and neither can be checked here.
+
 ## Where this stands
 
 **Done and live: items 1–5 and 7.** The two newer desks now share the Premier

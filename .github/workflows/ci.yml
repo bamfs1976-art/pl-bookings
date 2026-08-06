@@ -105,5 +105,13 @@ jobs:
       - name: iPhone guards (share sheet, install, touch targets, offline shell)
         run: node scripts/check-mobile.mjs
 
+      # Does the markup have styling behind it? renderMatchday() was ported to
+      # two desks without the five rules that make it a layout, so the fixture
+      # list rendered as one unstyled paragraph — "Derby CountyL. Travis 19%"
+      # — on both. A missing CSS rule throws nothing and fails no selector, so
+      # every other guard here passed; it took a screenshot from a phone.
+      - name: Every emitted class has a rule behind it
+        run: node scripts/check-styles.mjs
+
       - name: Unit tests (PLDCore)
         run: node tests/test-core.mjs
