@@ -244,7 +244,13 @@ def _fake_api(total, cap=10, report_pages=True):
         q = dict(up.parse_qsl(up.urlparse(url).query))
         page = int(q["page"])
         start = (page - 1) * cap
-        rows = [{"n": f"p{i}"} for i in range(start, min(start + cap, total))]
+        # Feed-shaped rows: fetch_all normalises before returning, and a row
+        # without a club or minutes is refused there — correctly.
+        rows = [{"player_name": f"p{i}", "team_name": "Millwall",
+                 "position": "Defender", "minutes_played": 900,
+                 "yellow_cards": 3, "red_cards": 0,
+                 "fouls_committed_p90": 1.5, "fouls_drawn_p90": 0.9}
+                for i in range(start, min(start + cap, total))]
         out = {"players": rows, "page": page, "per_page": cap, "total_count": total}
         if report_pages:
             out["total_pages"] = (total + cap - 1) // cap
