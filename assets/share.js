@@ -60,6 +60,12 @@
   /* ---- primitives ------------------------------------------------------- */
 
   function roundRect(x, a, b, w, h, r) {
+    /* CLAMPED. arcTo does not bound its radius: hand it 999 for a pill and it
+       sweeps arcs far outside the rectangle, which paints a swirl across the
+       whole card rather than failing. Half the shorter side is the largest
+       radius a rectangle can actually have, so `999` now means "fully round"
+       exactly as a caller would expect. */
+    r = Math.max(0, Math.min(r, w / 2, h / 2));
     x.beginPath();
     x.moveTo(a + r, b);
     x.arcTo(a + w, b, a + w, b + h, r);
@@ -193,6 +199,26 @@
      says so. Cross-match legs are much closer to genuinely independent, which
      is why the combined and matchday cards can carry the same strip honestly. */
   function accaStrip(x, th, legs, y, heading, rightLabel) {
+    /* ONE LEG PER PLAYER. Multiplying a player's probability by his own is not
+       a combo, it is the same event counted twice, and it prices a treble at a
+       number no book would ever offer. It cannot arise on a single date — a
+       player appears once — but a card drawn across DATES picks the same name
+       off several of them, and the first calendar card built a treble reading
+       "Lundstram + Cuenca + Lundstram". Deduped here rather than in the
+       callers, because no caller ever wants the alternative.
+
+       Deduping BEFORE the cut to three, never after. Slicing first and
+       deduping the slice is what the calendar card did at first: its four
+       hottest legs were the same player four times, which deduped to one and
+       printed "Not enough rated players for a combo" on a card listing eight
+       rated fixtures. Callers therefore pass the whole list and the cut
+       happens here. */
+    var seen = {};
+    legs = (legs || []).filter(function (l) {
+      var id = (l && l.name) + '|' + (l && l.club);
+      if (!l || seen[id]) return false;
+      seen[id] = 1; return true;
+    }).slice(0, 3);
     x.fillStyle = '#8b94a5'; x.font = '700 16px ' + BODY;
     x.fillText(heading, P, y - 18);
     x.textAlign = 'right'; x.fillText(rightLabel, W - P, y - 18); x.textAlign = 'left';
@@ -384,10 +410,139 @@
         x.textAlign = 'left';
       });
 
-      accaStrip(x, th, (spec.legs || []).slice(0, 3), 1034,
+      accaStrip(x, th, (spec.legs || []), 1034,
                 spec.accaHeading || 'ACCA BUILDER · CROSS-MATCH', 'ALL BOOKED');
       footer(x, th, spec.note ||
         'Cross-match combos assume independent bookings · research, not a guarantee');
+      return toBlob(k.c);
+    });
+  }
+
+  /* ---- the calendar card ------------------------------------------------- */
+  /*
+   * The match card is about a fixture, the matchday card about a date. This one
+   * is about the whole CALENDAR, which will not fit on a card at any density:
+   * ~1,300 fixtures over ~128 dates against room for eight rows. So it does two
+   * things — states the calendar's shape in a stat band, then ranks the single
+   * hottest fixtures in it, each stamped with the date it falls on.
+   *
+   * IT DOES NOT RANK DATES, and that was the first attempt. Ranking a date by
+   * the cards expected across it sounds like "the biggest booking day" and is
+   * really "the day with the most matches scheduled": with per-match
+   * expectation nearly constant across a division, the eleven 22-match
+   * Saturdays came out at 77.1, 76.9, 76.9, 76.9, 76.8, 76.8 — a top six
+   * separated by less than half a card in seventy-seven, which is noise
+   * presented as a ranking. Fixture heat has real spread, so that is what gets
+   * ranked, and the date rides along as a column.
+   *
+   * spec = {
+   *   league, title, subtitle,
+   *   stats: [{ value, label }],
+   *   fixtures: [{ date, home, away, tag, heat, top:{name,prob} }],
+   *   legs, accaHeading, note, coverage: { dates, matches, shown, filter }
+   * }
+   */
+  var LEAGUE_TINT = {
+    PL: '#e90052', EFLC: '#7c3aed', LL: '#ea580c', ALL: '#0891b2'
+  };
+
+  function leagueChip(x, cx, mid, code, w) {
+    var col = LEAGUE_TINT[code] || '#64748b';
+    x.font = '800 15px ' + BODY;
+    w = w || x.measureText(code).width + 20;
+    x.globalAlpha = 0.14; x.fillStyle = col;
+    roundRect(x, cx, mid - 13, w, 26, 13); x.fill();
+    x.globalAlpha = 1; x.fillStyle = col;
+    x.textAlign = 'center'; x.fillText(code, cx + w / 2, mid + 6); x.textAlign = 'left';
+    return cx + w + 6;
+  }
+
+  /* The calendar's shape, which is the part a ranked list cannot carry: how
+     many dates there are, how many of them stack leagues, how big it all is. */
+  function statBand(x, th, stats, y) {
+    var n = stats.length; if (!n) return;
+    var gap = 12, w = (W - 2 * P - gap * (n - 1)) / n;
+    stats.forEach(function (s, i) {
+      var cx = P + i * (w + gap);
+      x.fillStyle = '#f4f6fa'; roundRect(x, cx, y, w, 76, 13); x.fill();
+      x.fillStyle = th.ink; x.font = '800 30px ' + DISP;
+      x.textAlign = 'center';
+      x.fillText(fit(x, String(s.value), w - 16), cx + w / 2, y + 38);
+      x.fillStyle = '#8b94a5'; x.font = '600 14px ' + BODY;
+      x.fillText(fit(x, s.label, w - 12), cx + w / 2, y + 60);
+      x.textAlign = 'left';
+    });
+  }
+
+  function calendarCard(spec) {
+    return ready().then(function () {
+      var th = theme(spec.league), k = canvas(), x = k.x;
+      brandBand(x, th, spec.title, spec.subtitle);
+      statBand(x, th, (spec.stats || []).slice(0, 4), 232);
+
+      var top = 366, rows = (spec.fixtures || []).slice(0, 8);
+      x.fillStyle = '#8b94a5'; x.font = '700 16px ' + BODY;
+      x.fillText('DATE', P + 34, top - 16);
+      x.fillText('FIXTURE', P + 210, top - 16);
+      x.fillText('TOP RISK', P + 560, top - 16);
+      x.textAlign = 'right'; x.fillText('HEAT', W - P, top - 16); x.textAlign = 'left';
+
+      if (!rows.length) {
+        x.fillStyle = '#586275'; x.font = '600 24px ' + BODY;
+        x.fillText('No fixtures to show.', P, top + 40);
+      }
+      var rh = Math.min(76, (944 - top) / Math.max(1, rows.length));
+      rows.forEach(function (f, i) {
+        var y = top + i * rh, mid = y + rh / 2;
+        if (i % 2 === 0) {
+          x.fillStyle = '#f4f6fa';
+          roundRect(x, P - 16, y + 4, W - 2 * (P - 16), rh - 8, 13); x.fill();
+        }
+        x.fillStyle = '#c2c8d4'; x.font = '800 22px ' + DISP;
+        x.textAlign = 'right'; x.fillText(String(i + 1), P + 8, mid + 7); x.textAlign = 'left';
+
+        x.fillStyle = '#586275'; x.font = '700 17px ' + BODY;
+        x.fillText(fit(x, f.date || '', 150), P + 34, mid + 6);
+
+        badge(x, P + 210, mid, f.home, spec.palette, th);
+        x.fillStyle = '#586275'; x.font = '600 16px ' + BODY;
+        x.fillText('v', P + 264, mid + 5);
+        badge(x, P + 282, mid, f.away, spec.palette, th);
+        if (f.tag) leagueChip(x, P + 342, mid, f.tag, 62);
+
+        if (f.top) {
+          x.fillStyle = '#0c1322'; x.font = '700 20px ' + DISP;
+          x.fillText(fit(x, f.top.name, 210), P + 560, mid - 1);
+          x.fillStyle = probHex(f.top.prob); x.font = '700 15px ' + BODY;
+          x.fillText((f.top.prob * 100).toFixed(0) + '% card', P + 560, mid + 20);
+        } else {
+          x.fillStyle = '#8b94a5'; x.font = '600 17px ' + BODY;
+          x.fillText('—', P + 560, mid + 6);
+        }
+
+        x.fillStyle = heatHex(f.heat, spec.heatMid, spec.heatHot);
+        x.font = '800 32px ' + DISP; x.textAlign = 'right';
+        x.fillText(f.heat.toFixed(1), W - P, mid + 1);
+        x.textAlign = 'left';
+      });
+
+      /* WHAT IS NOT ON THE CARD, on the card. Eight of 1,312 is a severe cut
+         and the reader cannot tell eight-of-eight from eight-of-1,312 by
+         looking, so the denominator is drawn rather than left to whoever
+         writes the caption. */
+      var cov = spec.coverage || {};
+      if (cov.matches) {
+        x.fillStyle = '#8b94a5'; x.font = '600 17px ' + BODY;
+        var line = 'Hottest ' + rows.length + ' of ' + cov.matches + ' match'
+          + (cov.matches === 1 ? '' : 'es') + ' across ' + cov.dates + ' date'
+          + (cov.dates === 1 ? '' : 's') + (cov.filter ? ' · ' + cov.filter : '');
+        x.fillText(fit(x, line, W - 2 * P), P, 966);
+      }
+
+      accaStrip(x, th, (spec.legs || []), 1046,
+                spec.accaHeading || 'ACCA BUILDER · ACROSS DATES', 'ALL BOOKED');
+      footer(x, th, spec.note ||
+        'Legs on different days · research, not a guarantee');
       return toBlob(k.c);
     });
   }
@@ -501,7 +656,7 @@
   root.PLDShare = {
     W: W, H: H, PAD: P,
     THEMES: THEMES, theme: theme,
-    matchCard: matchCard, roundCard: roundCard,
+    matchCard: matchCard, roundCard: roundCard, calendarCard: calendarCard,
     deskMatchSpec: deskMatchSpec, deskRoundSpec: deskRoundSpec,
     download: download, slug: slug,
     heatHex: heatHex, probHex: probHex, textOn: textOn,

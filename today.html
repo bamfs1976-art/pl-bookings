@@ -129,6 +129,7 @@
       </div>
       <select id="day" aria-label="Date"></select>
       <button class="btn primary" id="shareBtn" type="button">⬇ Share the day</button>
+      <button class="btn primary" id="calBtn" type="button" hidden>⬇ Share the calendar</button>
       <label id="multiOnly" hidden style="font-size:13px;display:inline-flex;align-items:center;gap:6px">
         <input type="checkbox" id="multiChk"> more than one league only
       </label>
@@ -572,6 +573,7 @@
        `= all` alone would UN-hide it in single-date mode on a browser with no
        canvas, where boot had deliberately hidden it. */
     $('#shareBtn').hidden = all || !S;
+    $('#calBtn').hidden = !all || !S || !S.calendarCard;
     $('#multiOnly').hidden = !all;
     if (!all) { $('#reveal').hidden = true; $('#reveal').innerHTML = ''; }
     try {
@@ -610,14 +612,110 @@
           + 'than a same-match combo · research, not a guarantee'
     };
     btn = btn || $('#shareBtn');
+    building(btn, S.roundCard(spec), 'bookings-desk-' + S.slug(key) + '.png');
+  }
+
+  /* Shared so the two cards cannot disagree about what a button does while it
+     is working, or forget to re-enable it when a render throws. */
+  function building(btn, promise, filename) {
     var label = btn.textContent;
     btn.disabled = true; btn.textContent = 'Building…';
-    S.roundCard(spec)
-      .then(function (b) {
-        S.download(b, 'bookings-desk-' + S.slug(key) + '.png');
-      })
+    promise
+      .then(function (b) { S.download(b, filename); })
       .catch(function (e) { console.error(e); })
       .then(function () { btn.disabled = false; btn.textContent = label; });
+  }
+
+  /* ---- the card for the whole calendar ---------------------------------- */
+  /*
+   * One card for the season rather than one per date. It cannot list the
+   * fixtures — there are ~1,300 of them — so it ranks the DATES by the total
+   * cards expected across everything played on them, and each row says how many
+   * matches its number is made of so the ranking reads as volume rather than
+   * intensity.
+   *
+   * It covers exactly what the calendar on screen covers. If you have filtered
+   * to multi-league dates, or folded away the ones already played, the card
+   * follows — a share button that quietly exported something other than what
+   * you were looking at would be worse than no button.
+   */
+  function shortDay(k) {
+    var d = new Date(k + 'T12:00:00Z');
+    return isNaN(d) ? k : d.toLocaleDateString(undefined,
+      { weekday: 'short', day: 'numeric', month: 'short' });
+  }
+
+  function shareCalendar() {
+    if (!S || !S.calendarCard) return;
+    var keys = calendarKeys();
+    if (!keys.length) return;
+
+    /* Every fixture in the calendar as it is currently filtered, hottest
+       first. Ranked as FIXTURES rather than as dates: a date's total is
+       dominated by how many matches happen to be scheduled on it, so ranking
+       dates sorts the fixture list rather than the football. */
+    var all = [];
+    keys.forEach(function (k) {
+      rowsFor(k).forEach(function (p) { all.push({ k: k, p: p }); });
+    });
+    all.sort(function (a, b) { return b.p.m.expected - a.p.m.expected; });
+
+    /* CAPPED AT THREE A LEAGUE AND ONE A CLUB. Taken straight, the top eight
+       were eight La Liga fixtures, six of them Sevilla's — which is not a
+       finding about the season, it is two facts restated: Spain cards more
+       than England (4.41 a game against 3.71), and a club with a high rate
+       plays 38 times. A cross-league card whose every row is one league tells
+       a reader nothing they could act on, so the ranking is diversified and
+       the card says on its face that it was. */
+    var perLeague = {}, usedClub = {}, top = [];
+    all.forEach(function (r) {
+      if (top.length >= 8) return;
+      var code = r.p.L.code;
+      if ((perLeague[code] || 0) >= 3) return;
+      if (usedClub[code + r.p.fx.h] || usedClub[code + r.p.fx.a]) return;
+      perLeague[code] = (perLeague[code] || 0) + 1;
+      usedClub[code + r.p.fx.h] = usedClub[code + r.p.fx.a] = 1;
+      top.push(r);
+    });
+
+    var multi = keys.filter(function (k) { return leaguesOn(k).length > 1; }).length;
+    var three = keys.filter(function (k) { return leaguesOn(k).length > 2; }).length;
+
+    var spec = {
+      league: 'ALL',
+      title: 'The season\'s hottest cards',
+      subtitle: shortDay(keys[0]) + ' – ' + fmtDay(keys[keys.length - 1]),
+      stats: [
+        { value: keys.length, label: 'match dates' },
+        { value: all.length, label: 'fixtures priced' },
+        { value: multi, label: '2+ leagues' },
+        { value: three, label: 'all three' }
+      ],
+      fixtures: top.map(function (r) {
+        var t = candidates(r.p)[0];
+        return {
+          date: shortDay(r.k), home: r.p.fx.h, away: r.p.fx.a, tag: r.p.L.code,
+          heat: r.p.m.expected,
+          top: t ? { name: t.name, prob: t.prob } : null
+        };
+      }),
+      /* Legs drawn from the hottest fixtures, which sit on different dates in
+         different competitions — the most nearly independent set this site can
+         put on a card. accaStrip drops a repeated player, which matters here
+         and nowhere else: across dates the same name tops more than one. */
+      legs: top.map(function (r) { return candidates(r.p)[0]; })
+        .filter(function (l) { return l && l.prob > 0; })
+        .sort(function (a, b) { return b.prob - a.prob; }),
+      accaHeading: 'ACCA BUILDER · ACROSS DATES',
+      coverage: {
+        dates: keys.length, matches: all.length, shown: top.length,
+        filter: 'max 3 a league, 1 a club · '
+              + ($('#multiChk').checked ? 'multi-league dates only'
+                : (showPast ? 'whole season' : 'from today'))
+      },
+      note: 'Legs on different days · research, not a guarantee'
+    };
+    building($('#calBtn'), S.calendarCard(spec), 'bookings-desk-calendar.png');
   }
 
   /* ---- boot ------------------------------------------------------------ */
@@ -651,6 +749,7 @@
     $('#day').value = defaultDay();
     $('#day').addEventListener('change', render);
     $('#shareBtn').addEventListener('click', function () { shareDay($('#day').value); });
+    $('#calBtn').addEventListener('click', shareCalendar);
     $('#multiChk').addEventListener('change', render);
     Array.prototype.forEach.call(document.querySelectorAll('input[name=mode]'),
       function (r) { r.addEventListener('change', render); });

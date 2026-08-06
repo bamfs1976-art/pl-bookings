@@ -170,6 +170,70 @@ assert.ok(text3.includes('EFLC') && text3.includes('LL'),
   'the combined card did not label which league each fixture is from');
 assert.ok(text3.includes('BOOKINGS DESK'), 'the combined card lost its wordmark');
 
+/* ---- the calendar card --------------------------------------------------- */
+/* This one summarises ~1,300 fixtures in eight rows, so the assertions are
+   mostly about what it must NOT be allowed to imply. */
+drawn.length = 0;
+const calBlob = await S.calendarCard({
+  league: 'ALL', title: 'The season\'s hottest cards', subtitle: 'Aug – May',
+  /* Deliberately NOT the same numbers as `coverage` below. With 128/1312 in
+     the stat band too, the denominator assertion passed with the coverage line
+     deleted — the band was satisfying it. Same trap as the league-tag test
+     above, and it caught nothing until the numbers were separated. */
+  stats: [{ value: 7, label: 'match dates' }, { value: 9, label: 'fixtures priced' }],
+  fixtures: [
+    { date: 'Sun, Nov 1', home: 'GET', away: 'SEV', tag: 'LL', heat: 4.8,
+      top: { name: 'Carmona', prob: 0.27 } },
+    { date: 'Sat, Oct 24', home: 'CHE', away: 'TOT', tag: 'PL', heat: 4.5,
+      top: { name: 'Romero', prob: 0.38 } }],
+  /* Carmona twice, as ranking across dates genuinely produces. */
+  legs: [{ name: 'Carmona', club: 'SEV', prob: 0.27 },
+         { name: 'Carmona', club: 'SEV', prob: 0.27 },
+         { name: 'Romero', club: 'TOT', prob: 0.38 },
+         { name: 'Veltman', club: 'BHA', prob: 0.33 }],
+  coverage: { dates: 128, matches: 1312, shown: 2, filter: 'from today' }
+});
+assert.ok(calBlob && calBlob.__blob, 'calendarCard did not produce a blob');
+const cal = drawn.join('\n');
+assert.ok(/18\+/.test(cal) && /begambleaware/.test(cal),
+  'the calendar card went out without the 18+ / BeGambleAware line');
+/* THE DENOMINATOR. Eight rows out of 1,312 matches is a severe cut, and a card
+   that shows the cut without the total reads as a complete picture of the
+   season. This line is the difference between a summary and an overclaim. */
+assert.ok(/of 1312 matches across 128 dates/.test(cal),
+  'the calendar card never drew how much of the calendar it left out');
+assert.ok(cal.includes('LL') && cal.includes('PL'),
+  'the calendar card did not label which league each fixture is from');
+assert.ok(cal.includes('Sun, Nov 1'),
+  'the calendar card lost the date column, which is what makes it a calendar');
+
+/* NO PLAYER TWICE IN A COMBO. Multiplying a player's probability by his own is
+   the same event counted twice. It cannot happen on a single date, so it is
+   only ever reachable from this card — and the dedupe must survive the cut to
+   three, not be applied to an already-cut list. */
+const combo = drawn.filter((t) => / \+ /.test(t));
+assert.ok(combo.length, 'the calendar card drew no acca rows at all');
+for (const line of combo) {
+  const names = line.split(' + ').map((s) => s.trim());
+  assert.equal(new Set(names).size, names.length,
+    `an acca repeats a player: ${JSON.stringify(line)}`);
+}
+assert.ok(combo.some((l) => l.split(' + ').length === 3),
+  'the acca never reached a treble — the dedupe is cutting before it selects, ' +
+  'which is what left a card of eight rated fixtures saying "not enough players"');
+
+/* roundRect must bound its own radius. arcTo does not: a pill drawn with
+   r=999 swept arcs across the entire card the first time this was tried, and
+   nothing threw. */
+{
+  const radii = [];
+  const rec = { beginPath() {}, moveTo() {}, closePath() {},
+                arcTo(_a, _b, _c, _d, r) { radii.push(r); } };
+  sb.globalThis.PLDShare.roundRect(rec, 0, 0, 200, 26, 999);
+  assert.ok(radii.length && Math.max(...radii) <= 13,
+    `roundRect passed a radius of ${Math.max(...radii)} for a 26px-tall box`);
+}
+
 /* ---- the pages are wired to it ------------------------------------------ */
 for (const [page, needs] of [
   ['eflc.html', ['assets/share.js', 'PLDShare', 'deskMatchSpec', 'fxShareBtn', 'data-share']],
@@ -336,6 +400,34 @@ assert.ok(!/#day/.test(share[2]),
    by delegation — per-node listeners would stack a fresh set per redraw. */
 assert.ok(/#list'\)\.addEventListener\(\s*'click'/.test(todayCode),
   'the calendar\'s per-date share buttons are not delegated off #list');
+
+/* ---- the calendar card is wired to the calendar it describes ------------- */
+assert.equal((todayCode.match(/S\.calendarCard\(/g) || []).length, 1,
+  'today.html must build the calendar card in exactly one place');
+const cardFn = body('shareCalendar');
+/* It must summarise WHAT IS ON SCREEN. Building it from DAYKEYS instead of
+   calendarKeys() would export the whole season while the reader is looking at
+   a filtered calendar — a card that quietly disagrees with the page that
+   produced it, which is the one thing a share card cannot do. */
+assert.ok(/calendarKeys\(\)/.test(cardFn),
+  'shareCalendar does not read the filtered calendar, so the card would ' +
+  'describe something other than what is on screen');
+assert.ok(!/\bDAYKEYS\b/.test(cardFn),
+  'shareCalendar reads DAYKEYS directly, ignoring the multi-league and ' +
+  'past-date filters the reader has applied');
+/* The diversity caps. Without them the top eight were eight La Liga fixtures,
+   six of them one club — a cross-league card showing one league. */
+/* The CAPS, not merely the variables. Asserting that `perLeague` appears
+   passed with the comparison deleted and only the counter left behind — the
+   bookkeeping survives, the limit does not, and every row is La Liga again. */
+assert.ok(/perLeague\[[^\]]+\][^;]*>=\s*3/.test(cardFn),
+  'shareCalendar counts per league but no longer caps at three, so the ' +
+  'highest-carding division will fill every row');
+assert.ok(/if\s*\(usedClub\[/.test(cardFn),
+  'shareCalendar tracks clubs but no longer skips a repeat, so one club can ' +
+  'take most of the card');
+assert.ok(/max 3 a league/.test(cardFn),
+  'the card does not disclose that its ranking was diversified');
 
 console.log(
   `check-share OK: ${['PL', 'EFLC', 'LL', 'ALL'].length} themes, match + round + ` +

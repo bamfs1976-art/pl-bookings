@@ -206,8 +206,35 @@ January clock the view opens on 48 dates with *Show 80 earlier dates* beside
 it. `#all` and `#d=YYYY-MM-DD` deep-link both views, and a date with no matches
 falls through to the default rather than rendering an empty page.
 
-The two views are two renderings of one set of priced rows, and `check-share`
-pins the seams where they could silently diverge — one `rowHTML`, one
+**The calendar has its own card too**, alongside the per-date ones. It cannot
+list the season — 1,312 fixtures against room for eight rows — so it states the
+calendar's shape in a stat band (dates, fixtures, how many carry two leagues,
+how many carry all three) and then ranks the hottest individual fixtures, each
+stamped with its date and league. It always describes **what is on screen**:
+filter to multi-league dates and the card follows, down to 52 dates and 797
+matches.
+
+Two things it deliberately does not do, both of them corrections to a first
+version that looked fine and said nothing:
+
+- **It does not rank dates.** "The biggest booking day" sounds like the natural
+  summary and is really "the day with the most matches scheduled" — per-match
+  expectation barely varies across a division, so the eleven 22-match Saturdays
+  came out at 77.1, 76.9, 76.9, 76.9, 76.8, 76.8. A top six separated by less
+  than half a card in seventy-seven is noise formatted as a ranking. Fixture
+  heat has real spread, so fixtures are what get ranked.
+- **It does not rank on heat alone.** Taken straight, the top eight were eight
+  La Liga fixtures, six of them Sevilla's — which restates two things already
+  known (Spain cards more than England, 4.41 a game against 3.71; a
+  high-carding club plays 38 times) and tells a reader nothing. The ranking is
+  capped at three a league and one a club, and the card says so on its face
+  rather than presenting a diversified list as a raw one.
+
+Both caps, and the coverage denominator that keeps eight-of-1,312 from reading
+as the whole season, are pinned by `check-share`.
+
+The two date views are two renderings of one set of priced rows, and
+`check-share` pins the seams where they could silently diverge — one `rowHTML`, one
 `rowsFor` ordering, one `S.roundCard` call site, and a `shareDay` that takes
 the date as an **argument**. That last one is the reason the guard exists: a
 `shareDay` reading the `#day` dropdown instead would leave all 128 calendar
