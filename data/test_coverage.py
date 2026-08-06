@@ -233,4 +233,62 @@ def _cookie_other_paste_mistakes():
 
 t("the other ways a pasted cookie arrives broken", _cookie_other_paste_mistakes)
 
+
+def _fake_api(total, cap=10, report_pages=True):
+    """A player-stats endpoint that CAPS per_page below what is asked for,
+    which is what the real one does: it answers per_page 10 to a request
+    for 20."""
+    import urllib.parse as up
+
+    def req(url, cookie):
+        q = dict(up.parse_qsl(up.urlparse(url).query))
+        page = int(q["page"])
+        start = (page - 1) * cap
+        rows = [{"n": f"p{i}"} for i in range(start, min(start + cap, total))]
+        out = {"players": rows, "page": page, "per_page": cap, "total_count": total}
+        if report_pages:
+            out["total_pages"] = (total + cap - 1) // cap
+        return out
+    return req
+
+
+def _pagination_walks_every_page():
+    """The bug that shipped six forwards as three squads, in its second form.
+
+    The walk asks for 100 a page. The API answers 10. "A page shorter than
+    asked for is the last page" is then true of EVERY page, so the walk stops
+    at the first one — a truncated squad that looks like a complete small
+    league. It has to judge against the size the API says it used."""
+    real = H.request_json
+    try:
+        for total, pages in ((47, True), (47, False), (10, True), (1, False)):
+            H.request_json = _fake_api(total, cap=10, report_pages=pages)
+            rows, _ = H.fetch_all(9, "x", "c", "test")
+            assert len(rows) == total, (total, pages, len(rows))
+    finally:
+        H.request_json = real
+
+
+t("pagination walks every page when the API caps per_page", _pagination_walks_every_page)
+
+
+def _empty_season_is_refused():
+    """A wrong season_id does not error — it returns a real, recent, empty
+    league. Written out, that is a dataset of nobody."""
+    real = H.request_json
+    try:
+        H.request_json = _fake_api(0, cap=10)
+        try:
+            H.fetch_all(9, "27903", "c", "Championship")
+        except SystemExit as e:
+            assert "no players on page 1" in str(e), str(e)
+            assert "season_id" in str(e), str(e)
+        else:
+            assert False, "an empty league should stop the harvest"
+    finally:
+        H.request_json = real
+
+
+t("an empty season stops the harvest instead of writing nobody", _empty_season_is_refused)
+
 print(f"\n{passed} tests passed")

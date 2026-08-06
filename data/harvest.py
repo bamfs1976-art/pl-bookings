@@ -207,12 +207,25 @@ def fetch_all(league, season_id, cookie, label, min_minutes=0):
     looked like a reasonable number of players.
     """
     rows, page, first_meta = [], 1, {}
+    # The API CAPS per_page below what is asked for — league 9 answers
+    # per_page 10 to a request for 20. So "a short page means the last page"
+    # is false against the requested size and has to be judged against the
+    # size the API says it used, with total_pages as the real terminator where
+    # the response reports one. Getting this wrong truncates at page one,
+    # which is the bug this rewrite exists to fix.
+    effective, total_pages = PAGE_SIZE, None
     while True:
         url = build_url(league, season_id, page, min_minutes=min_minutes)
         payload = request_json(url, cookie)
         got = players_of(payload)
         if page == 1:
             first_meta = meta_of(payload)
+            reported = first_meta.get("per_page")
+            if isinstance(reported, int) and reported > 0:
+                effective = reported
+            tp = first_meta.get("total_pages") or first_meta.get("pages")
+            if isinstance(tp, int) and tp > 0:
+                total_pages = tp
             if not got:
                 sys.exit(
                     f"ERROR: {label} (league {league}, season_id "
@@ -224,7 +237,11 @@ def fetch_all(league, season_id, cookie, label, min_minutes=0):
                     "season that has not kicked off yet has no players. Run "
                     "with --probe to see what a season_id actually contains.")
         rows.extend(got)
-        if len(got) < PAGE_SIZE:
+        if not got:
+            break
+        if total_pages is not None and page >= total_pages:
+            break
+        if total_pages is None and len(got) < effective:
             break
         page += 1
         if page > MAX_PAGES:
