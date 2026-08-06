@@ -18,7 +18,11 @@ Writes (both gitignored):
 If data/pl_refs.json is missing, build_refs.py is run to produce it from the
 free football-data.co.uk mirror (no login needed for referees).
 
-Optional env: SS_SEASON_PL / SS_SEASON_CH to pin a season id (e.g. 25583 was
+Optional env:
+  SS_USER_AGENT  the User-Agent to send. Cloudflare binds cf_clearance to the
+                 IP AND the User-Agent that solved its challenge, so this must
+                 match the browser the cookie came from or the edge answers 400.
+  SS_SEASON_PL / SS_SEASON_CH to pin a season id (e.g. 25583 was
 2025-26); unset, the API returns its current season.
 """
 
@@ -37,14 +41,38 @@ import build_pl_data  # noqa: E402
 BASE = "https://scoutingstats.ai/api/league/{league}/player-stats"
 
 
+# The cookie is only half of what the edge checks. Cloudflare binds
+# cf_clearance to the IP AND THE USER-AGENT that solved the challenge, so a
+# request carrying a browser's clearance token under a different User-Agent is
+# rejected — with a 400, which reads like a malformed cookie and is not.
+#
+# This value was hardcoded to a Linux string, which was invisible for as long
+# as the harvest only ever ran beside a Linux browser. Run it on Windows with a
+# cookie from Chrome and it cannot work, however correct the cookie is. So it
+# is settable, and the default is the common case for a desktop browser rather
+# than for the machine this repo happens to be developed on.
+DEFAULT_UA = ("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
+              "(KHTML, like Gecko) Chrome/151.0.0.0 Safari/537.36")
+
+
+def user_agent():
+    return (os.environ.get("SS_USER_AGENT") or "").strip() or DEFAULT_UA
+
+
 def fetch(league, season, cookie):
     url = BASE.format(league=league)
     if season:
         url += f"?season={season}"
     req = urllib.request.Request(url, headers={
         "Cookie": cookie,
-        "User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36",
+        "User-Agent": user_agent(),
         "Accept": "application/json",
+        # Cloudflare scores requests that look nothing like the browser the
+        # clearance was issued to. These cost nothing and remove a whole class
+        # of "why is this a 400" from the picture.
+        "Accept-Language": "en-GB,en;q=0.9",
+        "Referer": "https://scoutingstats.ai/",
+        "X-Requested-With": "XMLHttpRequest",
     })
     try:
         with urllib.request.urlopen(req, timeout=60) as r:
@@ -67,17 +95,22 @@ def fetch(league, season, cookie):
                 "That is the request being rejected as malformed, not the "
                 "session being judged — so it is the cookie VALUE or where "
                 "the request came FROM, not the account.\n\n"
-                + ("MOST LIKELY HERE: this cookie carries cf_clearance, which "
-                   "is Cloudflare's challenge-clearance token and is bound to "
-                   "the IP ADDRESS AND USER-AGENT that solved the challenge. "
-                   "Replayed from anywhere else — a CI runner, a container, a "
-                   "different network — the edge rejects it before "
-                   "scoutingstats.ai is reached, however cleanly the cookie "
-                   "was pasted.\n\n"
-                   "  -> Run this harvest on the SAME MACHINE AND NETWORK as "
-                   "the browser session it came from. That is why this route "
-                   "cannot run unattended, and why data/harvest_apifootball.py "
-                   "exists as the key-based alternative.\n\n"
+                + ("MOST LIKELY HERE: this cookie carries cf_clearance, "
+                   "Cloudflare's challenge-clearance token. It is bound to "
+                   "BOTH the IP address AND the User-Agent that solved the "
+                   "challenge, and BOTH have to match or the edge rejects the "
+                   "request before scoutingstats.ai is reached.\n\n"
+                   f"  This request sent:\n    {user_agent()}\n\n"
+                   "  If that is not the User-Agent of the browser you copied "
+                   "the cookie from, that alone is enough to cause this. Read "
+                   "the browser's own value from DevTools -> Network -> any "
+                   "request -> Request Headers -> user-agent, and set it:\n\n"
+                   "    $env:SS_USER_AGENT = '<the browser's user-agent>'\n\n"
+                   "  And run the harvest on the SAME MACHINE AND NETWORK as "
+                   "that browser session. Those two constraints together are "
+                   "why this route cannot run unattended, and why "
+                   "data/harvest_apifootball.py exists as the key-based "
+                   "alternative.\n\n"
                    if cf else "")
                 + "Otherwise check that SS_COOKIE:\n"
                   "  - is a single line with no breaks in it\n"
