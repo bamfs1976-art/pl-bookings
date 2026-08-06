@@ -72,6 +72,11 @@ jobs:
         with:
           node-version: 20
 
+      # One run's worth, not an ever-growing pile.
+      - name: Start this run's Spanish harvest log
+        run: |
+          echo "La Liga harvest — run ${{ github.run_number }}" > data/laliga_harvest.log
+
       - name: Refresh referees (free source, always runs)
         run: python3 data/build_refs.py --season "${{ inputs.refs_season }}"
 
@@ -181,14 +186,18 @@ jobs:
         continue-on-error: true
         env:
           API_FOOTBALL_SEASON: ${{ inputs.season_fixtures }}
-        run: python3 data/harvest_apifootball.py --league LL --clubs
+        run: |
+          echo "== discover ==" >> data/laliga_harvest.log
+          python3 data/harvest_apifootball.py --league LL --clubs 2>&1 | tee -a data/laliga_harvest.log
 
       - name: Harvest the La Liga squads from API-Football
         if: ${{ env.API_FOOTBALL_KEY != '' && inputs.refresh_laliga }}
         continue-on-error: true
         env:
           API_FOOTBALL_SEASON: ${{ inputs.season_af }}
-        run: python3 data/harvest_apifootball.py --league LL
+        run: |
+          echo "== squads ==" >> data/laliga_harvest.log
+          python3 data/harvest_apifootball.py --league LL 2>&1 | tee -a data/laliga_harvest.log
 
       # Segunda División, for the clubs promoted into La Liga — their 2025-26
       # form is a second-tier record and appears in no La Liga harvest. The
@@ -198,7 +207,9 @@ jobs:
         continue-on-error: true
         env:
           API_FOOTBALL_SEASON: ${{ inputs.season_af }}
-        run: python3 data/harvest_apifootball.py --league SEG
+        run: |
+          echo "== segunda ==" >> data/laliga_harvest.log
+          python3 data/harvest_apifootball.py --league SEG 2>&1 | tee -a data/laliga_harvest.log
 
       # THE ONE THING SPAIN BUYS. football-data.co.uk publishes every card and
       # every foul in La Liga and has never published an official — 0 of 33
@@ -214,14 +225,18 @@ jobs:
         continue-on-error: true
         env:
           API_FOOTBALL_SEASON: ${{ inputs.season_af }}
-        run: python3 data/harvest_apifootball.py --ref-fixtures --league LL
+        run: |
+          echo "== ref-fixtures ==" >> data/laliga_harvest.log
+          python3 data/harvest_apifootball.py --ref-fixtures --league LL 2>&1 | tee -a data/laliga_harvest.log
 
       - name: Harvest the La Liga fixtures from API-Football
         if: ${{ env.API_FOOTBALL_KEY != '' && inputs.refresh_laliga }}
         continue-on-error: true
         env:
           API_FOOTBALL_SEASON: ${{ inputs.season_fixtures }}
-        run: python3 data/harvest_apifootball.py --fixtures --league LL
+        run: |
+          echo "== fixtures ==" >> data/laliga_harvest.log
+          python3 data/harvest_apifootball.py --fixtures --league LL 2>&1 | tee -a data/laliga_harvest.log
 
       # The Premier League fixture list. Committed like the other two, which is
       # what lets /today price a PL fixture at all: the desk itself reads
@@ -290,12 +305,16 @@ jobs:
       - name: Build the La Liga dataset
         if: ${{ inputs.refresh_laliga }}
         continue-on-error: true
-        run: python3 data/build_laliga_data.py --season "${{ inputs.season_sp }}"
+        run: |
+          echo "== build ==" >> data/laliga_harvest.log
+          python3 data/build_laliga_data.py --season "${{ inputs.season_sp }}" 2>&1 | tee -a data/laliga_harvest.log
 
       - name: Join the Spanish referees onto the free match records
         if: ${{ inputs.refresh_laliga }}
         continue-on-error: true
-        run: python3 data/build_refs.py --league LL --season "${{ inputs.season_sp }}"
+        run: |
+          echo "== referee-join ==" >> data/laliga_harvest.log
+          python3 data/build_refs.py --league LL --season "${{ inputs.season_sp }}" 2>&1 | tee -a data/laliga_harvest.log
 
       # Re-vendor Plsimulator's match model, which it refits weekly and
       # publishes CORS-open at plsimulation.netlify.app/model.json. Feeds the
@@ -346,7 +365,7 @@ jobs:
           # command when either path matches nothing, so a run that produced
           # the referees but not the dataset staged NEITHER — which is exactly
           # what happened the first time this ran.
-          for f in data/pl_fixtures.js \
+          for f in data/pl_fixtures.js data/laliga_harvest.log \
                    data/eflc_refs.json data/eflc_data.js data/eflc_status.txt data/eflc_fixtures.js \
                    data/laliga_clubs.json data/laliga_refs.json data/laliga_data.js \
                    data/laliga_status.txt data/laliga_fixtures.js data/laliga_ref_fixtures.js; do

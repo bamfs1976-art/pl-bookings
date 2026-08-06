@@ -30,5 +30,11 @@ data/*.json
 # clubs the desk is about, and every later stage reads it. Losing it would not
 # degrade the build, it would stop it.
 !data/laliga_clubs.json
+# ...and the Spanish harvest log. `*.log` above is an editor/OS rule; this one
+# is a deliberate artifact. The La Liga harvest steps are continue-on-error so
+# a Spanish outage cannot take the Premier League refresh down, and twice a
+# step went green having done nothing — the only record being a log pane
+# somebody had to open. Committing it makes the failure readable from the repo.
+!data/laliga_harvest.log
 data/epldata/
 __pycache__/
