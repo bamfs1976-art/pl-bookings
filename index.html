@@ -296,7 +296,12 @@
   .cand-prob{text-align:right;flex:none;width:76px}
   .cand-prob-n{font-family:'Bricolage Grotesque',sans-serif;font-weight:800;font-size:1.18rem;font-variant-numeric:tabular-nums;line-height:1}
   .cand-barwrap{height:6px;border-radius:999px;background:var(--surface-3);overflow:hidden;margin-top:.28rem;width:70px;margin-left:auto}
-  .conf-dot{width:9px;height:9px;border-radius:50%;flex:none}
+  /* Sample confidence. The Guide has always described this dot — "green high,
+     amber medium, grey low" — and this class has always existed, but nothing
+     ever rendered one, so the Guide described a feature the page did not have.
+     A 0.50 built on 90 minutes and one built on 2,000 are not the same number. */
+  .conf-dot{width:9px;height:9px;border-radius:50%;flex:none;display:inline-block;margin-right:6px;vertical-align:middle}
+  .conf-hi{background:var(--good)} .conf-mid{background:var(--warn)} .conf-lo{background:var(--border-2)}
   .fx-more{width:100%;border:0;border-top:1px solid var(--border);background:none;color:var(--accent-2);font:inherit;font-weight:700;font-size:.78rem;padding:.5rem;cursor:pointer}
   .fx-more:hover{background:var(--surface-2)}
   .fx-foot{border-top:1px solid var(--border);padding:.45rem .6rem;display:flex;justify-content:flex-end;margin-top:auto}
@@ -1298,7 +1303,7 @@ function renderPlayers(){
       `<td style="padding:.45rem .7rem"><span class="name-cell">${playerAvatar(p,"avatar-xs")}<span><strong>${esc(p.n)}</strong>${ls}${efl}${avail}</span></span></td>`+
       `<td style="padding:.45rem .5rem" class="muted">${crest(p.c)} <span class="num" style="font-size:.85rem">${p.c}</span></td>`+
       `<td style="text-align:center" class="faint num">${esc(p.p||"")}</td>`+
-      `<td style="text-align:right" class="num muted">${p.min}</td>`+
+      `<td style="text-align:right" class="num muted">${confDot(p.min)}${p.min}</td>`+
       `<td style="text-align:right" class="num muted">${yc}${formBadge(p)}</td>`+
       `<td style="text-align:right" class="num">${y==null?'—':y.toFixed(2)+liveDot}</td>`+
       `<td style="text-align:right" class="num">${p.f==null?'—':p.f.toFixed(2)}</td>`+
@@ -2801,6 +2806,13 @@ function saveAcc(){ try{ localStorage.setItem(ACC_KEY,JSON.stringify(ACC)); }cat
 function liveYcByKey(){ const m={}; PL_PLAYERS.forEach(p=>{ if(p.live) m[watchKey(p)]=p.live.yc; }); return m; }
 // Card form over the recorded history window (up to the last 5 finished
 // gameweeks, once >=2 snapshots exist).
+function confDot(min){
+  const m=Number(min)||0;
+  const cls=m>=900?"conf-hi":m>=450?"conf-mid":"conf-lo";
+  const lab=m>=900?"high":m>=450?"medium":"low";
+  return `<span class="conf-dot ${cls}" title="Sample confidence: ${lab} (${m} minutes)" aria-label="sample confidence ${lab}"></span>`;
+}
+
 function cardForm(p){
   if(!ACC.hist||ACC.hist.length<2) return null;
   const k=watchKey(p), a=ACC.hist[0], b=ACC.hist[ACC.hist.length-1];

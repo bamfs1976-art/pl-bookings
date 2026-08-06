@@ -28,7 +28,7 @@ The genuine data gaps are four, and they are listed separately at the end.
 
 | View | PL | EFLC | LL |
 |---|---|---|---|
-| This Gameweek (fixture-first landing) | ✅ | ❌ | ❌ |
+| This Gameweek / This Matchday landing | ✅ | ✅ | ✅ |
 | Players | ✅ | ✅ | ✅ |
 | Fixtures | ✅ | ✅ | ✅ |
 | Clubs | ✅ | ✅ | ✅ |
@@ -57,11 +57,11 @@ Premier League data only.
 | Suspension watch strip | ✅ | ✅ | ✅ | — |
 | **Player photos** | ✅ | ❌ | ❌ | **data** |
 | **Availability flags** (injured / doubtful / suspended) | ✅ | ❌ | ❌ | **data** |
-| **Confidence / low-sample dot** | ✅ | ❌ | ❌ | interface |
-| **Recent card-form arrow** | ✅ | ❌ | ❌ | interface (`sc`/`sm` exist) |
+| Confidence / low-sample dot | ❌ *(dead CSS)* | ✅ | ✅ | *(audit error — now on all three)* |
+| Recent card-form arrow | ✅ | ✅ | ✅ | *(done — from `sc`/`sm`)* |
 | **"All players" second view** (Starts, RC, Won/90) | ✅ | ❌ | ❌ | mixed |
 | **Player notes** | ✅ | ❌ | ❌ | interface |
-| **CSV export** | ✅ | ❌ | ❌ | interface |
+| CSV export | ✅ | ✅ | ✅ | *(done)* |
 
 ## Per match
 
@@ -71,8 +71,8 @@ Premier League data only.
 | Referee picker, rescales every number | ✅ | ✅ | ✅ | — |
 | Team card markets (EXP / O3.5 / O4.5 / BTC) | ✅ | ✅ | ✅ | — |
 | Share match card + share matchday card | ✅ | ✅ | ✅ | — |
-| **Thin-sample warning** | ✅ | ❌ | ❌ | interface |
-| **"Hide low sample" filter** | ✅ | ❌ | ❌ | interface |
+| Thin-sample warning | ✅ | ✅ | ✅ | *(done)* |
+| "Hide low sample" filter | ✅ | ✅ | ✅ | *(audit error — `#fMin`, "450+ minutes")* |
 | High / Watch banding of players | ✅ | ✅ | ✅ | *(audit error — see note)* |
 | **Head-to-head strip** | ✅ | ❌ | ❌ | **data** (same source available) |
 | **Derby boost** | ✅ | ❌ | ❌ | **data** (editorial list) |
@@ -119,7 +119,7 @@ from the same fields, so neither is a subset of the other.
 | Dark mode | ✅ | ✅ | ✅ |
 | PWA install / offline shell | ✅ | ✅ | ✅ |
 | Share sheet on iOS | ✅ | ✅ | ✅ |
-| **Sidebar + mobile bottom tab bar** | ✅ | ❌ | ❌ |
+| Sidebar + mobile bottom tab bar | ✅ | ✅ | ✅ |
 | **Command palette (⌘K)** | ✅ | ❌ | ❌ |
 | **Guided tour** | ✅ | ❌ | ❌ |
 | **Glossary / help panel** | ✅ | ❌ | ❌ |
@@ -157,6 +157,16 @@ a harvest change first:
 Not obtainable: the **match model**. Plsimulator publishes Premier League ratings
 only. Until an equivalent exists for the Championship and La Liga, that term
 stays Premier-League-only, and the honest move is to say so on the page.
+
+## Audit errors found while implementing
+
+Four rows were wrong, all for the same reason — a grep matching the wrong thing.
+Recorded rather than quietly corrected, because the pattern is the lesson:
+
+1. **High/Watch banding** — present on both newer desks via `band()` returning `['hi','High']`; the grep looked for `>High<` and `"High"`.
+2. **"Hide low sample"** — present as `#fMin` ("450+ minutes"); the grep looked for `hideLow`/`lowSample`.
+3. **Recent form arrow** — the probe matched `▲`, which is the *sort direction* indicator.
+4. **Confidence dot** — the Premier League desk never rendered one. `.conf-dot` was dead CSS and its Guide described a feature the page did not have. The gap ran the *other* way.
 
 ## Recommended order
 

@@ -156,6 +156,15 @@
      the same model. */
   .band-hi{background:color-mix(in srgb,var(--danger) 18%,transparent);color:var(--danger-ink);font-weight:800}
   .band-mid{background:color-mix(in srgb,var(--warn) 22%,transparent);color:var(--warn-ink);font-weight:800}
+  /* Sample confidence, from minutes played. The Premier League Guide has always
+     described this dot — "green high, amber medium, grey low" — and the class
+     existed in its stylesheet, but nothing ever rendered one. A 0.50 built on
+     90 minutes and one built on 2,000 are not the same number, and the row
+     gave no way to tell them apart. */
+  .conf-dot{width:9px;height:9px;border-radius:50%;flex:none;display:inline-block;margin-right:6px;vertical-align:middle}
+  .conf-hi{background:var(--good)} .conf-mid{background:var(--warn)} .conf-lo{background:var(--border-2)}
+  .form-arr{font-size:11px;font-weight:800;margin-left:5px}
+  .form-up{color:var(--danger-ink)} .form-down{color:var(--good-ink)}
   .empty{padding:26px;text-align:center;color:var(--text-2)}
   .note{font-size:12.5px;color:var(--text-2);margin-top:10px;line-height:1.55}
   .guide{max-width:74ch;line-height:1.65;font-size:14.5px}
@@ -282,6 +291,8 @@
         <select id="fRef" aria-label="Referee for the fixture"></select>
         <input type="search" id="fSearch" placeholder="Search player…" aria-label="Search player">
         <label class="chk"><input type="checkbox" id="fMin" checked> 450+ minutes</label>
+        <button class="btn" id="csvBtn" type="button">&#8681; CSV</button>
+        <span class="faint" id="csvNote" style="font-size:12.5px"></span>
         <label class="chk"><input type="checkbox" id="fStar"> ★ only</label>
         <span class="spacer"></span>
         <span class="faint" id="count" style="font-size:12.5px"></span>
@@ -721,11 +732,11 @@
       return '<tr>'
         + '<td><button class="star" data-k="' + esc(k) + '" aria-pressed="' + (starred[k] ? 'true' : 'false')
         + '" aria-label="Watchlist ' + esc(p.n) + '">' + (starred[k] ? '★' : '☆') + '</button></td>'
-        + '<td>' + esc(p.n) + '</td>'
+        + '<td>' + esc(p.n) + formArrow(p) + '</td>'
         + '<td><span class="clubcell">' + (c.img ? '<img class="crest" src="' + esc(c.img) + '" alt="" loading="lazy">' : '')
         + esc(p.c) + '</span></td>'
         + '<td>' + esc(p.p) + '</td>'
-        + '<td class="num">' + (p.min || 0) + '</td>'
+        + '<td class="num">' + confDot(p.min) + (p.min || 0) + '</td>'
         + '<td class="num">' + (p.yc == null ? '—' : p.yc) + '</td>'
         + '<td class="num">' + n2(p.y) + '</td>'
         + '<td class="num">' + n2(p.f) + '</td>'
@@ -1154,6 +1165,70 @@
 
   /* ---- provenance ------------------------------------------------------- */
 
+  /* ---- sample confidence and card form ---------------------------------- */
+  /* A probability built on 90 minutes and one built on 2,000 are not the same
+     number. The dot says which you are looking at, on the same thresholds the
+     Premier League Guide has always described. */
+  function confDot(min) {
+    var m = Number(min) || 0;
+    var cls = m >= 900 ? 'conf-hi' : m >= 450 ? 'conf-mid' : 'conf-lo';
+    var lab = m >= 900 ? 'high' : m >= 450 ? 'medium' : 'low';
+    return '<span class="conf-dot ' + cls + '" title="Sample confidence: ' + lab
+      + ' (' + m + ' minutes)" aria-label="sample confidence ' + lab + '"></span>';
+  }
+
+  /* Is he carding faster this season than his baseline? The Premier League desk
+     answers this from gameweek snapshots it accumulates live; these two have no
+     such history, but they do carry sc/sm — this season's cautions and minutes
+     — so the same question is answered by comparing this season's rate with the
+     rate the row is priced on. Null until the season is harvested, and null
+     means "not counted", not "no change". */
+  function formArrow(p) {
+    if (p.sc == null || !p.sm || p.y == null) return '';
+    var now = p.sc / (p.sm / 90);
+    if (!isFinite(now)) return '';
+    var d = now - p.y;
+    if (Math.abs(d) < 0.08) return '';
+    return d > 0
+      ? '<span class="form-arr form-up" title="Carding faster than his baseline this season">▲</span>'
+      : '<span class="form-arr form-down" title="Carding slower than his baseline this season">▼</span>';
+  }
+
+  /* ---- CSV --------------------------------------------------------------- */
+  function exportCsv() {
+    var list = rows(), ref = currentRef();
+    var head = ['Player', 'Club', 'Pos', 'Minutes', 'YC', 'Y/90', 'Fouls/90', 'Risk',
+                'P(card)', 'Fair odds', 'Basis', 'Referee'];
+    var cell = function (v) {
+      var t = v == null ? '' : String(v);
+      return /[",\n]/.test(t) ? '"' + t.replace(/"/g, '""') + '"' : t;
+    };
+    var lines = [head.join(',')].concat(list.map(function (r) {
+      var p = r.p;
+      return [p.n, p.c, p.p, p.min, p.yc, p.y, p.f, p.r,
+              r.prob == null ? '' : r.prob.toFixed(4),
+              r.odds ? r.odds.toFixed(2) : '', p.b, ref ? ref.n : ''].map(cell).join(',');
+    }));
+    var name = (LEAGUE_SLUG || 'bookings') + '-players.csv';
+    saveFile(new Blob([lines.join('\n')], { type: 'text/csv' }), name, 'text/csv',
+      function (res) { if (res !== 'cancelled') toastLite(list.length + ' players exported'); });
+  }
+
+  /* PLDSave routes a phone to the share sheet; an <a download> is inert on iOS. */
+  function saveFile(blob, name, mime, done) {
+    if (!window.PLDSave) { console.warn('assets/save.js did not load'); return; }
+    window.PLDSave.file(blob, name, mime).then(function (r) { if (done) done(r); })
+      .catch(function (e) { console.warn(e); });
+  }
+  function toastLite(msg) {
+    var n = $('#csvNote'); if (!n) return;
+    n.textContent = msg;
+    clearTimeout(toastLite._t);
+    toastLite._t = setTimeout(function () { n.textContent = ''; }, 4000);
+  }
+
+  var LEAGUE_SLUG = 'eflc-bookings';
+
   /* ---- This Matchday ----------------------------------------------------
    * The landing view. The Premier League desk opens on its fixtures ranked by
    * booking heat; these two opened on a table of several hundred players,
@@ -1259,6 +1334,7 @@
     + ' clubs, ' + REFLIST.length + ' referees. Base rate ' + pct(CAL.baseRate)
     + ', average risk ' + n2(CAL.avgRisk) + '.';
 
+  $('#csvBtn').addEventListener('click', exportCsv);
   renderMatchday();
   renderSuspension();
   renderPlayers();
