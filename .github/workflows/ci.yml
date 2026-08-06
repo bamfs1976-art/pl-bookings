@@ -90,6 +90,13 @@ jobs:
       - name: Model convergence across the desks
         run: node scripts/check-models.mjs
 
+      # Can you actually get there? The Championship and La Liga desks were
+      # built, guarded, deployed and live while being unreachable from the home
+      # page — every page passed its own checks and no check asked whether
+      # anything linked to it.
+      - name: Every desk reachable from every desk
+        run: node scripts/check-nav.mjs
+
       # The phone. Every failure this guards against was SILENT on iOS and
       # invisible on a desktop: share buttons that do nothing because Safari
       # ignores `download` on a blob URL, a select wide enough to make Safari

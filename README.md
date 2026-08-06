@@ -76,6 +76,16 @@ Each fixture card also shows **tight** — the fitted `P(margin ≤ 1)`. Cards f
 
 Connect the `pl-bookings` repo (preferred — the `/api/fpl/*` proxy needs the Netlify Function, which a drag-and-drop deploy of the root also carries in `netlify/functions/`). Publish directory is the root, no build command. Only the raw harvest JSON in `data/` is gitignored — the generated `data/pl_data.js` is committed and deployed, and `index.html` loads it directly. No environment variables are required — optionally set `ANTHROPIC_API_KEY` to switch on the AI review of tracker picks (plus `SUPABASE_SERVICE_ROLE_KEY` for the daily cap, `AI_DAILY_CAP` to change it, and `SUPABASE_URL`/`SUPABASE_PUBLISHABLE_KEY` if not using the defaults). The same `SUPABASE_URL` + `SUPABASE_SERVICE_ROLE_KEY` also switch on the **Live prediction accuracy** calibration loop (run `supabase/plb_predictions.sql` once); the hourly logger and its schedule are declared in `netlify.toml`.
 
+## Getting between the desks
+
+There is a **league switcher** on every page — Premier League · Championship · La Liga · Today — sticky under the topbar, marking the desk you are on.
+
+It is worth recording why it had to be added, because nothing caught the problem. The Championship and La Liga desks were built, tested, guarded, deployed and live, and the home page's only link to another desk was the phrase "Today's Card" inside a paragraph of prose on the Guide tab. Two of the four desks were, in practice, undiscoverable: every page passed its own guards, every URL resolved, the deploy was green, and *nothing asked whether anything linked to them*. `scripts/check-nav.mjs` asks now — that each desk links to all four, marks exactly one as current and marks the right one, and that each pretty URL is routed **before** the catch-all in `_redirects` (a missing rule does not 404, it silently serves the Premier League page at the Championship's URL).
+
+Two details are load-bearing on a phone. The bar is **sticky**, because `index.html` restores its scroll position on load — it opens 131px down, so a bar in normal flow was already off-screen when the page appeared, on the one page that most needed it. And the labels **shorten below 560px**: at full length the row needs 625px and the widest iPhone is 430, so "La Liga" and "Today" sat off the right edge on every handset, behind a horizontal swipe nobody would think to try.
+
+Adding it also exposed that index's topbar does not fit a phone at all — the account button wrapped onto a second line and landed on top of the switcher, covering "Today". The controls a phone does not need are now dropped below 560px: the command palette is keyboard-only, the live-basis chip repeats the hero card immediately beneath it, and the density and account labels are carried by their icons.
+
 ## Install as an app
 
 The site is a PWA: on iPhone open it in Safari → Share → Add to Home Screen; Chrome on Android offers Install app. It launches full-screen with an offline app shell (live data still needs a connection).
