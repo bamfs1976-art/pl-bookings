@@ -54,6 +54,24 @@ def fetch(league, season, cookie):
             sys.exit(f"ERROR: {url} answered {e.code} — the SS_COOKIE is "
                      "missing, expired or not logged in. Copy a fresh cookie "
                      "header from a logged-in browser session and retry.")
+        if e.code == 400:
+            # Not an auth failure — a malformed REQUEST. The cookie is a header
+            # value, so anything the browser did not put there (a line break
+            # from a wrapped copy, a "Cookie:" prefix copied along with the
+            # value, smart quotes) makes the header invalid and the edge
+            # rejects it before the API is reached. That looked like a bare
+            # traceback until this existed.
+            sys.exit(f"ERROR: {url} answered 400 (bad request).\n\n"
+                     "That is the request being malformed, not the session "
+                     "being rejected — so it is almost always the cookie "
+                     "VALUE rather than the account. Check that SS_COOKIE:\n"
+                     "  - is a single line with no breaks in it\n"
+                     "  - has no leading 'cookie:' or 'Cookie:' prefix\n"
+                     "  - is the raw header value, not the name/value table\n"
+                     "    from the Application tab\n\n"
+                     "In a GitHub Actions log a multi-line secret shows as\n"
+                     "'SS_COOKIE:' with the value starting on the NEXT line — "
+                     "that is the tell.")
         raise
     data = json.loads(body)
     players = data["players"] if isinstance(data, dict) and "players" in data else data
@@ -83,11 +101,52 @@ def promoted_shortfall(payload):
     return build_pl_data.coverage_problems(rows)
 
 
+def clean_cookie(raw):
+    """(cookie, problem) for a raw SS_COOKIE value.
+
+    Pure, so the rules are testable without a network or a real session.
+
+    A cookie is an HTTP header value, and the ways it arrives broken are all
+    silent: a line break survives a copy from a wrapped DevTools pane, the
+    'cookie:' label gets selected with the value, or someone pastes the
+    Application tab's name/value table instead of the header. None of those
+    look wrong in a secrets box, and the API answers 400 to all of them —
+    which reads as a server problem rather than a paste problem. Name it here
+    instead, before a request is made.
+    """
+    raw = (raw or "").strip()
+    if not raw:
+        return None, ("SS_COOKIE is not set. Copy the `cookie` REQUEST header "
+                      "from a logged-in scoutingstats.ai session (see the "
+                      "docstring at the top of this file).")
+    if "\n" in raw or "\r" in raw:
+        n = len([ln for ln in raw.splitlines() if ln.strip()])
+        return None, (
+            f"SS_COOKIE contains a line break ({n} lines). A cookie header is "
+            "ONE line — a break makes the header invalid and the API answers "
+            "400.\n\nRe-copy it as a single line: DevTools -> Network -> tick "
+            "'Disable cache' -> reload -> click a request -> Request Headers "
+            "-> Raw, then copy the whole `cookie:` line's value.\n\nIn a "
+            "GitHub Actions log this shows as 'SS_COOKIE:' with the value "
+            "starting on the next line.")
+    low = raw.lower()
+    if low.startswith("cookie:"):
+        # Recoverable and unambiguous, unlike a line break: strip the label
+        # rather than making someone paste again for it.
+        raw = raw.split(":", 1)[1].strip()
+        print("note: stripped a leading 'cookie:' label from SS_COOKIE")
+    if "=" not in raw:
+        return None, ("SS_COOKIE has no `name=value` pair in it, so it is not "
+                      "a cookie header. Copy the value of the `cookie` request "
+                      "header, not the URL, the response, or a single cookie's "
+                      "name.")
+    return raw, None
+
+
 def main():
-    cookie = os.environ.get("SS_COOKIE", "").strip()
-    if not cookie:
-        sys.exit("ERROR: set SS_COOKIE to a logged-in scoutingstats.ai cookie "
-                 "header (see the docstring at the top of this file).")
+    cookie, problem = clean_cookie(os.environ.get("SS_COOKIE"))
+    if problem:
+        sys.exit("ERROR: " + problem)
 
     pl, n_pl = fetch(8, os.environ.get("SS_SEASON_PL"), cookie)
     (DATA / "pl_players.json").write_text(json.dumps(pl), encoding="utf-8")

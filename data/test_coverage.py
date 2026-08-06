@@ -197,4 +197,40 @@ def _shared_vocabulary():
 
 t("the club map, floor and positions are shared by both stages", _shared_vocabulary)
 
+
+def _cookie_line_break():
+    """The real failure: a cookie pasted with a line break in it.
+
+    A cookie is an HTTP header value, so a break makes the header invalid and
+    the edge answers 400 — which reads as a server fault, not a paste fault,
+    and arrived as a bare urllib traceback. The secrets box shows nothing
+    wrong either. So it is caught before a request is made."""
+    c, p = H.clean_cookie("sessionid=abc;\n_cfuvid=xyz")
+    assert c is None, c
+    assert "line break" in p and "ONE line" in p, p
+    # A break only at the ends is just paste whitespace — strip, don't refuse.
+    c, p = H.clean_cookie("\n  sessionid=abc; _cfuvid=xyz  \n")
+    assert p is None and c == "sessionid=abc; _cfuvid=xyz", (c, p)
+
+
+t("a cookie with a line break in it is refused before the request", _cookie_line_break)
+
+
+def _cookie_other_paste_mistakes():
+    for raw in (None, "", "   "):
+        c, p = H.clean_cookie(raw)
+        assert c is None and "not set" in p, (raw, p)
+    # The label copied along with the value: unambiguous, so fix it silently.
+    c, p = H.clean_cookie("Cookie: sessionid=abc; x=1")
+    assert p is None and c == "sessionid=abc; x=1", (c, p)
+    # Something that is not a cookie at all.
+    c, p = H.clean_cookie("https://scoutingstats.ai/dashboard")
+    assert c is None and "name=value" in p, p
+    # A real one survives untouched.
+    good = "sessionid=abc123; _cfuvid=xyz789; ph_session=1"
+    assert H.clean_cookie(good) == (good, None)
+
+
+t("the other ways a pasted cookie arrives broken", _cookie_other_paste_mistakes)
+
 print(f"\n{passed} tests passed")
