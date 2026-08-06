@@ -38,6 +38,7 @@ import json
 import os
 import subprocess
 import sys
+import time
 import urllib.parse
 import urllib.request
 from pathlib import Path
@@ -171,7 +172,19 @@ def meta_of(payload):
     return out
 
 
+# Politeness, and self-interest. The variant passes below can ask for hundreds
+# of pages, and an earlier run put over a thousand requests through this API in
+# a few minutes — after which League One answered with ten rows instead of 706.
+# A service degrading under that is behaving correctly; the client was not.
+REQUEST_DELAY = 0.4     # seconds between requests
+_last_request = [0.0]
+
+
 def request_json(url, cookie, allow_400=False):
+    wait = REQUEST_DELAY - (time.monotonic() - _last_request[0])
+    if wait > 0:
+        time.sleep(wait)
+    _last_request[0] = time.monotonic()
     req = urllib.request.Request(url, headers={
         "Cookie": cookie,
         "User-Agent": user_agent(),
@@ -187,6 +200,11 @@ def request_json(url, cookie, allow_400=False):
         with urllib.request.urlopen(req, timeout=60) as r:
             body = r.read().decode("utf-8")
     except urllib.error.HTTPError as e:
+        if e.code == 429:
+            sys.exit(f"ERROR: {url} answered 429 (too many requests).\n\n"
+                     "This harvest is rate limited. Wait, then retry — and if "
+                     "it recurs, raise REQUEST_DELAY rather than retrying "
+                     "harder.")
         if e.code in (401, 403):
             sys.exit(f"ERROR: {url} answered {e.code} — the SS_COOKIE is "
                      "missing, expired or not logged in. Copy a fresh cookie "
@@ -383,8 +401,8 @@ def fetch_all(league, season_id, cookie, label, min_minutes=0):
     three times and every version of it looked plausible.
     """
     into = {}
-    first_meta, _ = one_pass(league, season_id, cookie, min_minutes, into, label,
-                             PASS_VARIANTS[0])
+    first_meta, first_seen = one_pass(league, season_id, cookie, min_minutes,
+                                      into, label, PASS_VARIANTS[0])
     claimed = (first_meta.get("total") or first_meta.get("total_count")
                or first_meta.get("count"))
 
@@ -393,8 +411,20 @@ def fetch_all(league, season_id, cookie, label, min_minutes=0):
         if not isinstance(claimed, int) or len(into) >= claimed:
             break
         before = len(into)
-        one_pass(league, season_id, cookie, min_minutes, into, label, variant)
+        _, seen_now = one_pass(league, season_id, cookie, min_minutes, into,
+                               label, variant)
         used += 1
+        # A pass that returns a fraction of what the first one did is the
+        # service throttling us, not the league shrinking. Retrying harder is
+        # exactly the wrong response.
+        if seen_now < first_seen * 0.5:
+            sys.exit(
+                f"ERROR: {label}: pass {used} returned {seen_now} rows where "
+                f"the first returned {first_seen}.\n\n"
+                "  That is the API throttling this client, not the data "
+                "changing.\n  Stop, wait, and if you retry, do it with a "
+                "larger REQUEST_DELAY\n  and fewer variants — not with more "
+                "passes.")
         print(f"    +{len(into) - before:<4} {len(into)}/{claimed} distinct"
               f"  (per_page {variant['per_page']}, {variant['sort_by']} "
               f"{variant['sort_order']})")
