@@ -40,6 +40,7 @@ data/test_apifootball.py, not against the real API. The shape guards below are
 deliberately loud for that reason: on the first real run, a field that has
 moved will stop the harvest and name itself rather than write a plausible file.
 """
+import argparse
 import json
 import os
 import sys
@@ -50,6 +51,7 @@ from pathlib import Path
 DATA = Path(__file__).resolve().parent
 sys.path.insert(0, str(DATA))
 import build_pl_data  # noqa: E402
+import leagues  # noqa: E402
 
 DEFAULT_HOST = "v3.football.api-sports.io"
 DEFAULT_SEASON = "2025"     # API-Football names a season by its starting year
@@ -63,38 +65,36 @@ def env_or(name, default):
 RAPIDAPI_HOST = "api-football-v1.p.rapidapi.com"
 PAGE_SIZE = 20          # API-Football's fixed page size for /players
 
-# API-Football's club names are not the names build_pl_data keys on, and an
-# unmapped name is silently no club at all — the failure that must never be
-# quiet here. Mapped explicitly, and every one of the three is then asserted
-# present before a single player is fetched.
-CLUB_ALIASES = {
-    "Coventry": "Coventry City",
-    "Coventry City": "Coventry City",
-    "Ipswich": "Ipswich Town",
-    "Ipswich Town": "Ipswich Town",
-    "Hull City": "Hull City",
-    "Hull": "Hull City",
-}
+# Which club names each league's builder keys on. The spelling differences are
+# in leagues.AF_ALIASES; this only says whose vocabulary to check against.
+def known_names(code):
+    if code == "PL":
+        return set(build_pl_data.SHORT)
+    # The Championship desk's 24, plus the clubs the Premier League desk pulls
+    # out of a Championship season (its promoted three). One harvest of a
+    # division serves both desks, so it keeps every club either recognises.
+    return set(leagues.EFLC_CLUBS) | set(build_pl_data.SHORT)
 
 
-def canonical_club(api_name):
-    """The name build_pl_data.SHORT keys on, or None if we do not want it."""
-    return CLUB_ALIASES.get((api_name or "").strip())
+def resolve_teams(payload, code):
+    """{canonical club name: team id} for a /teams response, plus the names
+    nothing could be made of.
 
-
-def resolve_teams(payload):
-    """{full club name: team id} for the promoted clubs in a /teams response,
-    plus the ones missing. Missing is a hard error upstream: fetching two of
-    three squads and shipping is the whole class of bug being fixed."""
-    found = {}
+    Unmapped names are RETURNED, not skipped. A club whose squad silently does
+    not arrive is indistinguishable from a club with no players, and this repo
+    has already spent a year on that confusion.
+    """
+    known = known_names(code)
+    found, unmapped = {}, []
     for row in (payload or {}).get("response", []) or []:
         team = row.get("team") or {}
-        name = canonical_club(team.get("name"))
+        raw = (team.get("name") or "").strip()
+        name = leagues.canonical_club(raw, known)
         if name and team.get("id") is not None:
             found[name] = team["id"]
-    wanted = {build_pl_data.SHORT[n]: n for n in set(CLUB_ALIASES.values())}
-    missing = sorted(n for s, n in wanted.items() if n not in found)
-    return found, missing
+        elif raw:
+            unmapped.append(raw)
+    return found, sorted(unmapped)
 
 
 def per90(total, minutes):
@@ -109,7 +109,7 @@ def per90(total, minutes):
         return None
 
 
-def map_player(entry, club_name):
+def map_player(entry, club_name, team_id):
     """One /players row into the shape build_pl_data.mk() consumes. Returns
     None for a row with no usable identity rather than a half-built player."""
     player = (entry or {}).get("player") or {}
@@ -120,8 +120,8 @@ def map_player(entry, club_name):
     # Keep the leg played for the club we asked about, not the aggregate.
     leg = None
     for s in stats:
-        if ((s.get("team") or {}).get("name") or "").strip() and \
-                canonical_club((s.get("team") or {}).get("name")) == club_name:
+        tid = (s.get("team") or {}).get("id")
+        if tid is not None and tid == team_id:
             leg = s
             break
     if leg is None:
@@ -192,7 +192,7 @@ def collect_players(fetch, team_id, club_name):
         if total_pages is None or reported > total_pages:
             total_pages = reported
         for entry in payload.get("response") or []:
-            row = map_player(entry, club_name)
+            row = map_player(entry, club_name, team_id)
             if row:
                 rows.append(row)
         seen_pages += 1
@@ -230,89 +230,101 @@ def _get(host, key, path, params):
         raise
 
 
+# The clubs each harvest exists to guarantee. A division has more clubs than
+# any one desk needs, but these are the ones whose absence makes a desk wrong
+# rather than smaller — they have no higher-division feed behind them.
+MUST_COVER = {
+    "PL": set(),                       # build_pl_data guards its own 20
+    "EFLC": build_pl_data.PROMOTED,    # COV/IPS/HUL, for the Premier League desk
+    "L1": None,                        # set at runtime from the registry
+}
+
+
+def short_of(name):
+    """A canonical club name as whichever desk's short code knows it."""
+    return build_pl_data.SHORT.get(name) or leagues.EFLC_CLUBS.get(name)
+
+
+def shortfall(rows, wanted):
+    """Coverage judged by build_pl_data's own rule rather than a second copy."""
+    if not wanted:
+        return []
+    mapped = []
+    for r in rows:
+        code = short_of(r["team"])
+        if code in wanted:
+            mapped.append({"c": code,
+                           "p": build_pl_data.POS.get(r["pos"], r["pos"] or "")})
+    return build_pl_data.coverage_problems(mapped, clubs=wanted)
+
+
 def main():
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--league", default="EFLC", choices=sorted(leagues.LEAGUES),
+                    help="which division to harvest")
+    ap.add_argument("--season", help="season START year, e.g. 2025 for 2025-26")
+    args = ap.parse_args()
+
+    league = leagues.get(args.league)
+    MUST_COVER["L1"] = leagues.EFLC_FROM_L1
+    wanted = MUST_COVER.get(league.code) or set()
+
     key = os.environ.get("API_FOOTBALL_KEY", "").strip()
     if not key:
-        sys.exit("ERROR: set API_FOOTBALL_KEY to an API-Football key "
-                 "(free tier is enough — see the docstring at the top).")
-    # `os.environ.get(name, default)` returns "" for a var that is SET but
-    # empty, which is exactly what a blank workflow input produces — so the
-    # default never fires and the request goes out as `season=`. Fall back on
-    # emptiness, not on absence.
+        sys.exit("ERROR: set API_FOOTBALL_KEY to an API-Football key. The free "
+                 "tier covers seasons 2022-2024 only, so 2025-26 needs a paid "
+                 "plan — see the docstring at the top.")
     host = env_or("API_FOOTBALL_HOST", DEFAULT_HOST)
-    season = env_or("API_FOOTBALL_SEASON", DEFAULT_SEASON)
-    league = env_or("API_FOOTBALL_LEAGUE", DEFAULT_LEAGUE)
+    season = (args.season or env_or("API_FOOTBALL_SEASON", DEFAULT_SEASON)).strip()
     if not season.isdigit() or len(season) != 4:
-        sys.exit(f"ERROR: API_FOOTBALL_SEASON is {season!r}. API-Football names a "
-                 "season by its starting year, so 2025 means 2025-26. This is NOT "
-                 "the ScoutingStats season id (a five-digit number like 25583) — "
-                 "passing one of those here asks for a season that does not exist.")
+        sys.exit(f"ERROR: season is {season!r}. API-Football names a season by "
+                 "its starting year, so 2025 means 2025-26. This is NOT a "
+                 "ScoutingStats season id (a five-digit number like 25583).")
+    af = str(league.af_league)
 
-    teams_payload = _get(host, key, "teams", {"league": league, "season": season})
-    # The refusal case first, and verbatim. A plan that does not cover this
-    # season answers 200 with an explanation, and treating that as "no clubs"
-    # sent two runs chasing a spelling problem that was never there.
+    print(f"{league.name}: API-Football league {af}, season {season}")
+    teams_payload = _get(host, key, "teams", {"league": af, "season": season})
     err = api_errors(teams_payload)
     if err:
         sys.exit(f"ERROR: API-Football refused the /teams request: {err}\n"
-                 "That is the API's own message, not ours. A plan restriction, a bad "
-                 "key or an exhausted quota all land here.")
+                 "That is the API's own message. A plan restriction, a bad key "
+                 "or an exhausted quota all land here — and the free plan does "
+                 "not cover 2025-26.")
 
-    returned = [((row.get("team") or {}).get("name") or "?")
-                for row in (teams_payload or {}).get("response", []) or []]
-    ids, missing = resolve_teams(teams_payload)
-    if missing:
-        # Say WHICH of the three possibilities this is, rather than listing all
-        # three and leaving the reader to run it again to find out.
-        if not returned:
-            sys.exit(
-                f"ERROR: league {league} season {season} returned NO teams at all "
-                "(and no error message).\n"
-                "So this is not a spelling problem. Either the league id is wrong "
-                "(40 should be England's Championship) or the season is outside what "
-                "this key may read — free plans are commonly limited to a few "
-                "seasons. Check /leagues?id=" + league + " for the seasons your key "
-                "covers, then set season_af to one of them.")
-        sys.exit(
-            f"ERROR: league {league} season {season} has {len(returned)} teams, "
-            "but not: " + ", ".join(missing) + "\n"
-            "The API DID answer with a squad list, so this is a naming or a "
-            "division problem, not a plan one. What it actually returned:\n  "
-            + ", ".join(sorted(returned)[:30])
-            + "\nIf one of ours is in that list under another spelling, add it to "
-              "CLUB_ALIASES.")
+    ids, unmapped = resolve_teams(teams_payload, league.code)
+    if not ids:
+        sys.exit(f"ERROR: league {af} season {season} returned no clubs this "
+                 "desk recognises.\n  API returned: "
+                 + ", ".join(unmapped[:30])
+                 + "\n\nEither the league id is wrong or every name needs an "
+                   "entry in leagues.AF_ALIASES.")
+    if unmapped:
+        # Reported, never silent. For the Championship these will legitimately
+        # be the clubs that went down — but a MISSPELLED club looks identical,
+        # so it gets read rather than assumed.
+        print(f"  not in this desk's club list ({len(unmapped)}): "
+              + ", ".join(unmapped))
+    print(f"  fetching {len(ids)} squads")
 
     rows = []
     for club_name, team_id in sorted(ids.items()):
+        before = len(rows)
         rows += collect_players(
             lambda page, t=team_id: _get(host, key, "players", {
-                "league": league, "season": season, "team": t, "page": page}),
+                "league": af, "season": season, "team": t, "page": page}),
             team_id, club_name)
-        print(f"{club_name}: {len([r for r in rows if r['team'] == club_name])} players")
+        print(f"    {club_name:26} {len(rows) - before:>3} players")
 
-    # The same coverage bar the other route now has to clear. A harvest that
-    # cannot fill three squads must not overwrite one that did.
-    shortfall = _shortfall(rows)
-    if shortfall:
-        sys.exit("ERROR: the harvest does not cover the promoted clubs, so "
-                 "champ_promoted.json was NOT overwritten:\n  - "
-                 + "\n  - ".join(shortfall))
+    problems = shortfall(rows, wanted)
+    if problems:
+        sys.exit(f"ERROR: the clubs this harvest exists to cover are not "
+                 f"covered, so {league.players_file} was NOT overwritten:\n  - "
+                 + "\n  - ".join(problems))
 
-    out = DATA / "champ_promoted.json"
+    out = DATA / league.players_file
     out.write_text(json.dumps(rows), encoding="utf-8")
-    print(f"champ_promoted.json written ({len(rows)} players from API-Football)")
-
-
-def _shortfall(rows):
-    """Coverage, judged by build_pl_data's own rule rather than a second copy
-    of it — see the note on harvest.promoted_shortfall."""
-    mapped = []
-    for r in rows:
-        short = build_pl_data.SHORT.get(r["team"])
-        if short in build_pl_data.PROMOTED:
-            mapped.append({"c": short,
-                           "p": build_pl_data.POS.get(r["pos"], r["pos"] or "")})
-    return build_pl_data.coverage_problems(mapped)
+    print(f"\n{league.players_file} written ({len(rows)} players from "
+          f"{len(ids)} clubs, API-Football)")
 
 
 if __name__ == "__main__":

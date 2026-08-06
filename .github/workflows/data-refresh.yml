@@ -101,14 +101,33 @@ jobs:
       # immediately and real Championship rates beat none. What it must not do
       # any more is take the whole refresh down with it — the FPL squads step
       # below now covers the squads on its own.
-      - name: Harvest the promoted clubs from API-Football (optional, needs a paid plan)
+      # THE squad route now, not a fallback. The ScoutingStats endpoint was
+      # retired from this pipeline after producing six distinct ways of
+      # returning a partial league that looked complete — page-one-as-league,
+      # a per_page cap, unstable ties, a silently ignored sort field,
+      # deterministic page-seam loss, and throttling. None of them errored.
+      #
+      # API-Football fetches per CLUB, so a walk is one squad rather than a
+      # slice of a league, and its paging.total is a cross-check the walk is
+      # held to. It needs a key rather than a browser cookie, so unlike the
+      # cookie route it can run here at all.
+      - name: Harvest the Championship from API-Football
         if: ${{ env.API_FOOTBALL_KEY != '' }}
         continue-on-error: true
         env:
           # NOT season_ch: that is a ScoutingStats season id (five digits),
           # while API-Football names a season by its starting year.
           API_FOOTBALL_SEASON: ${{ inputs.season_af }}
-        run: python3 data/harvest_apifootball.py
+        run: python3 data/harvest_apifootball.py --league EFLC
+
+      # League One, for the three clubs promoted into the Championship. Only
+      # the Championship desk needs it, so it never blocks the Premier League.
+      - name: Harvest League One from API-Football (the promoted three)
+        if: ${{ env.API_FOOTBALL_KEY != '' && inputs.refresh_eflc }}
+        continue-on-error: true
+        env:
+          API_FOOTBALL_SEASON: ${{ inputs.season_af }}
+        run: python3 data/harvest_apifootball.py --league L1
 
       # The squads themselves, free and keyless. This is the leg that closes
       # the year-old hole: the promoted clubs shipped as six forwards and no

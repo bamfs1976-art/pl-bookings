@@ -109,7 +109,9 @@ The Championship is the mirror image of the Premier League desk: 18 clubs on 202
 
 Two things fall out of that which are better here than in the Premier League desk. **21 of the 24 squads need no new harvesting**: `harvest.py` already fetches the whole of ScoutingStats league 8 and league 9, and the Premier League build keeps only a slice of each — the Championship desk wants the rest. And **club card rates are counted from the free match records rather than the player feed**, which the Premier League desk cannot do for its promoted clubs because Championship minutes in that feed include cup games. Counting E1 matches directly gives an exact league-only rate with the home/away split built in, instead of patched on afterwards by a second script.
 
-Still open: the League One league id (nothing harvests it yet, so Lincoln, Cardiff and Bolton have no form), and the Championship suspension thresholds, which are recorded in the registry as partially confirmed.
+**Squads come from API-Football, not ScoutingStats.** The cookie route was retired from this pipeline after producing six distinct ways of returning a partial league that looked complete: page one read as a whole league, a `per_page` cap below what was requested, tied rows drifting under an unstable sort, a sort field silently ignored rather than rejected, deterministic loss at page seams, and finally throttling. Not one of them errored, and every one produced a plausible dataset. `harvest_apifootball.py --league EFLC|L1|PL` fetches per **club**, so a walk is a squad rather than a slice of a league, and it is checked against the API's own `paging.total`. It needs a paid key: the free tier covers seasons 2022-2024 and the desk is built on 2025-26.
+
+Still open: the Championship suspension thresholds, recorded in the registry as partially confirmed.
 
 ## Tests and CI
 

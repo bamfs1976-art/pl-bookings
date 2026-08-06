@@ -20,6 +20,7 @@ from pathlib import Path
 DATA = Path(__file__).resolve().parent
 sys.path.insert(0, str(DATA))
 import build_pl_data as B  # noqa: E402
+import leagues as L  # noqa: E402
 import harvest_apifootball as A  # noqa: E402
 
 passed = 0
@@ -32,8 +33,12 @@ def t(name, fn):
     print("  ok - " + name)
 
 
-def entry(name, club, pos, minutes, yellow=0, red=0, fouls_c=None, fouls_d=None, tid=1):
-    """One /players row, in the v3 shape."""
+def entry(name, club, pos, minutes, yellow=0, red=0, fouls_c=None, fouls_d=None, tid=63):
+    """One /players row, in the v3 shape.
+
+    tid defaults to 63, the id the club-scoped tests fetch: map_player picks a
+    player's leg by TEAM ID rather than by name now, because a name can be
+    spelled two ways and an id cannot."""
     return {
         "player": {"name": name, "photo": f"https://media.api-sports.io/{name}.png"},
         "statistics": [{
@@ -53,16 +58,19 @@ print("club names")
 
 
 def _aliases():
-    assert A.canonical_club("Coventry") == "Coventry City"
-    assert A.canonical_club("Ipswich") == "Ipswich Town"
-    assert A.canonical_club("Hull City") == "Hull City"
-    assert A.canonical_club("Sheffield Wednesday") is None
-    assert A.canonical_club(None) is None
-    assert A.canonical_club("  Coventry  ") == "Coventry City", "whitespace is trimmed"
-    # every canonical name must be one build_pl_data can key on, or the row is
-    # dropped later for a reason nobody will connect to this table
-    for full in set(A.CLUB_ALIASES.values()):
-        assert full in B.SHORT, full
+    known = A.known_names("EFLC")
+    assert L.canonical_club("Coventry", known) == "Coventry City"
+    assert L.canonical_club("Ipswich", known) == "Ipswich Town"
+    assert L.canonical_club("Hull City", known) == "Hull City"
+    assert L.canonical_club("QPR", known) == "Queens Park Rangers"
+    assert L.canonical_club("Sheffield Wednesday", known) is None, "relegated, not ours"
+    assert L.canonical_club(None, known) is None
+    assert L.canonical_club("  Coventry  ", known) == "Coventry City", "trimmed"
+    # Every alias must land on a name SOME desk keys on, or the row is dropped
+    # later for a reason nobody will connect back to this table.
+    everything = set(B.SHORT) | set(L.EFLC_CLUBS)
+    for full in set(L.AF_ALIASES.values()):
+        assert full in everything, full
 
 
 t("API-Football spellings map onto the build's club names", _aliases)
@@ -75,24 +83,26 @@ def _resolve():
         {"team": {"id": 65, "name": "Hull City"}},
         {"team": {"id": 99, "name": "Sheffield Wednesday"}},
     ]}
-    ids, missing = A.resolve_teams(payload)
-    assert missing == [], missing
-    assert ids == {"Coventry City": 63, "Ipswich Town": 64, "Hull City": 65}, ids
+    ids, unmapped = A.resolve_teams(payload, "EFLC")
+    assert ids["Coventry City"] == 63 and ids["Hull City"] == 65, ids
+    assert unmapped == ["Sheffield Wednesday"], unmapped
 
 
-t("the three promoted clubs resolve to ids, others are ignored", _resolve)
+t("API spellings resolve to ids, the rest are reported", _resolve)
 
 
-def _resolve_missing():
-    """A renamed or absent club must be named, not skipped. Fetching two of
-    three squads and shipping is the whole class of bug being fixed."""
-    payload = {"response": [{"team": {"id": 63, "name": "Coventry"}}]}
-    ids, missing = A.resolve_teams(payload)
-    assert ids == {"Coventry City": 63}
-    assert missing == ["Hull City", "Ipswich Town"], missing
+def _resolve_reports_unknown_names():
+    """An unmapped name is RETURNED, never skipped. A squad that quietly does
+    not arrive is indistinguishable from a club with no players, and a
+    misspelling and a relegated club look identical from here."""
+    payload = {"response": [{"team": {"id": 63, "name": "Coventry"}},
+                            {"team": {"id": 71, "name": "Kidderminster"}}]}
+    ids, unmapped = A.resolve_teams(payload, "EFLC")
+    assert ids == {"Coventry City": 63}, ids
+    assert unmapped == ["Kidderminster"], unmapped
 
 
-t("clubs the API does not list are reported by name", _resolve_missing)
+t("club names nothing maps are reported by name", _resolve_reports_unknown_names)
 
 
 print("per-90 conversion")
@@ -118,7 +128,7 @@ print("player mapping")
 def _map():
     row = A.map_player(entry("A Player", "Coventry", "Defender", 900,
                              yellow=5, red=1, fouls_c=30, fouls_d=12, tid=63),
-                       "Coventry City")
+                       "Coventry City", 63)
     assert row["team"] == "Coventry City"
     assert row["n"] == "A Player"
     assert row["pos"] == "Defender"
@@ -144,9 +154,9 @@ def _map_transfer():
         "cards": {"yellow": 9, "red": 0},
         "fouls": {"committed": 40, "drawn": 5},
     })
-    row = A.map_player(e, "Coventry City")
+    row = A.map_player(e, "Coventry City", 63)
     assert row["min"] == 400 and row["yc"] == 2, row
-    other = A.map_player(e, "Hull City")
+    other = A.map_player(e, "Hull City", 77)
     assert other["min"] == 1200 and other["yc"] == 9, other
 
 
@@ -154,11 +164,13 @@ t("a mid-season transfer keeps the right club's leg", _map_transfer)
 
 
 def _map_junk():
-    assert A.map_player(None, "Coventry City") is None
-    assert A.map_player({}, "Coventry City") is None
-    assert A.map_player({"player": {"name": "X"}, "statistics": []}, "Coventry City") is None
-    # a row for a club we did not ask about is not ours
-    assert A.map_player(entry("X", "Hull City", "Defender", 90), "Coventry City") is None
+    assert A.map_player(None, "Coventry City", 63) is None
+    assert A.map_player({}, "Coventry City", 63) is None
+    assert A.map_player({"player": {"name": "X"}, "statistics": []},
+                        "Coventry City", 63) is None
+    # a row whose only leg belongs to another club is not ours
+    assert A.map_player(entry("X", "Hull City", "Defender", 90, tid=77),
+                        "Coventry City", 63) is None
 
 
 t("unusable rows are dropped rather than half-built", _map_junk)
@@ -255,11 +267,11 @@ def _shortfall_shares_the_bar():
             rows.append({"team": club, "pos": pos, "n": f"{club}{i}"})
         while len([r for r in rows if r["team"] == club]) < B.MIN_SQUAD:
             rows.append({"team": club, "pos": "Defender", "n": f"{club}x{len(rows)}"})
-    assert A._shortfall(rows) == [], A._shortfall(rows)
+    assert A.shortfall(rows, B.PROMOTED) == [], A.shortfall(rows, B.PROMOTED)
 
     thin = [r for r in rows if r["team"] != "Hull City"]
     thin.append({"team": "Hull City", "pos": "Attacker", "n": "lone"})
-    out = A._shortfall(thin)
+    out = A.shortfall(thin, B.PROMOTED)
     assert out and all("HUL" in o for o in out), out
     assert any("1 player" in o for o in out), out
 
@@ -271,15 +283,21 @@ def _end_to_end_shape():
     """A full walk, mapped, then handed to the build's own guard — the seam
     where a wrong field name would show up as an empty squad."""
     rows = []
-    for club, api_name in (("Coventry City", "Coventry"), ("Ipswich Town", "Ipswich"),
-                           ("Hull City", "Hull City")):
+    # A distinct id per club, because the leg-picking is by id now: a shared id
+    # would let one club's rows answer for another's and the test would pass
+    # for the wrong reason.
+    for tid, (club, api_name) in enumerate(
+            (("Coventry City", "Coventry"), ("Ipswich Town", "Ipswich"),
+             ("Hull City", "Hull City")), start=63):
         squad = []
         for i, pos in enumerate(["Goalkeeper", "Defender", "Midfielder", "Attacker"]):
-            squad.append(entry(f"{club}-{pos}", api_name, pos, 900, yellow=i, fouls_c=10))
+            squad.append(entry(f"{club}-{pos}", api_name, pos, 900, yellow=i,
+                               fouls_c=10, tid=tid))
         while len(squad) < B.MIN_SQUAD:
-            squad.append(entry(f"{club}-x{len(squad)}", api_name, "Defender", 900, fouls_c=8))
-        rows += A.collect_players(lambda p, s=squad: page(s, 1, 1), 1, club)
-    assert A._shortfall(rows) == [], A._shortfall(rows)
+            squad.append(entry(f"{club}-x{len(squad)}", api_name, "Defender", 900,
+                               fouls_c=8, tid=tid))
+        rows += A.collect_players(lambda p, s=squad: page(s, 1, 1), tid, club)
+    assert A.shortfall(rows, B.PROMOTED) == [], A.shortfall(rows, B.PROMOTED)
     built = [B.mk(r, "EFL") for r in rows]
     assert all(b is not None for b in built), "every row survives build_pl_data.mk"
     assert B.coverage_problems(built) == [], B.coverage_problems(built)
@@ -354,10 +372,14 @@ def _errors_beat_emptiness():
     completely different next steps."""
     refused = {"errors": {"plan": "not allowed"}, "response": []}
     assert A.api_errors(refused), "the refusal is visible"
-    ids, missing = A.resolve_teams(refused)
-    assert ids == {} and len(missing) == 3, (ids, missing)
-    # resolve_teams cannot tell them apart on its own — which is exactly why
-    # main() checks api_errors BEFORE it looks at what is missing.
+    ids, unmapped = A.resolve_teams(refused, "EFLC")
+    # Indistinguishable from a league that simply has no clubs: no ids, and
+    # nothing unmapped either, because there were no names to fail on. Which
+    # is exactly why main() checks api_errors BEFORE it interprets emptiness —
+    # "no teams" and "your plan may not read this season" lead to completely
+    # different next steps, and the free plan not covering 2025-26 is the most
+    # likely refusal this project will meet.
+    assert ids == {} and unmapped == [], (ids, unmapped)
 
 
 t("a refusal and an empty league look identical to resolve_teams", _errors_beat_emptiness)

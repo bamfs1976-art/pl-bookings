@@ -52,7 +52,8 @@ class League:
 
     def __init__(self, code, name, fd_div, clubs, matches, data_file,
                  refs_file, mirror_slug=None, referee_source="football-data",
-                 min_ref_matches=3, suspension=None):
+                 min_ref_matches=3, suspension=None, af_league=None,
+                 players_file=None):
         self.code = code                    # the desk's own id, e.g. "EFLC"
         self.name = name                    # display name
         self.fd_div = fd_div                # football-data.co.uk division code
@@ -64,6 +65,12 @@ class League:
         self.referee_source = referee_source
         self.min_ref_matches = min_ref_matches
         self.suspension = suspension or ""
+        # API-Football's own league id. The squad feed: it is fetched per CLUB
+        # rather than per league page, so a walk is a squad and cannot come
+        # back as a slice of one — which is the entire failure mode the
+        # ScoutingStats route produced six different ways.
+        self.af_league = af_league
+        self.players_file = players_file
 
     @property
     def has_free_referees(self):
@@ -95,7 +102,8 @@ LEAGUES = {
     "PL": League(
         code="PL", name="Premier League", fd_div="E0", clubs=20, matches=380,
         data_file="pl_data.js", refs_file="pl_refs.json",
-        mirror_slug="premier-league",
+        mirror_slug="premier-league", af_league=39,
+        players_file="pl_players.json",
         suspension="5 yellows to GW19, 10 to GW32, 15 all season",
     ),
     "EFLC": League(
@@ -104,7 +112,10 @@ LEAGUES = {
         # The GitHub mirror carries only the top five European leagues, so the
         # Championship reads football-data.co.uk directly. Same publisher, same
         # columns, same licence — the mirror is a convenience, not the source.
-        mirror_slug=None,
+        mirror_slug=None, af_league=40,
+        # champ_promoted.json is the historical name and stays: both builders
+        # already read it, and the file has always held the whole league.
+        players_file="champ_promoted.json",
         # 552 matches over ~35 officials, against the Premier League's 380 over
         # ~20. Individual workloads are thinner and more of the list is made of
         # one-off appointments, so the floor is higher before a rate is ranked.
@@ -117,6 +128,16 @@ LEAGUES = {
         # so they need checking against the EFL regulations before the strip
         # is switched on for this league.
         suspension="10 yellows before match 37 = 2 matches (5 and 15 rungs TO CONFIRM)",
+    ),
+    "L1": League(
+        code="L1", name="EFL League One", fd_div="E2", clubs=24, matches=552,
+        # No desk of its own. It is in the registry for the three clubs
+        # promoted into the Championship, whose 2025-26 form is a League One
+        # record — and, being English, it has free referees too if it ever
+        # wants one.
+        data_file="l1_data.js", refs_file="l1_refs.json",
+        players_file="l1_players.json",
+        mirror_slug=None, af_league=41, min_ref_matches=5,
     ),
 }
 
@@ -172,6 +193,41 @@ def eflc_short(name):
     """A club name from any feed as its short code, or None if unrecognised."""
     n = (name or "").strip()
     return EFLC_CLUBS.get(n) or EFLC_ALIASES.get(n)
+
+
+# API-Football spells clubs its own way, and an unmapped name is silently no
+# club at all. Every difference is written down here, and anything left over is
+# reported by name rather than dropped — a squad that quietly does not arrive
+# looks exactly like a club that has no players, which is the confusion this
+# repo has already paid for once.
+AF_ALIASES = {
+    "Newcastle": "Newcastle United", "Tottenham": "Tottenham Hotspur",
+    "West Ham": "West Ham United", "Wolves": "Wolverhampton Wanderers",
+    "Brighton": "Brighton & Hove Albion", "Bournemouth": "AFC Bournemouth",
+    "Leeds": "Leeds United", "Coventry": "Coventry City",
+    "Ipswich": "Ipswich Town", "Sheffield Utd": "Sheffield United",
+    "West Brom": "West Bromwich Albion", "QPR": "Queens Park Rangers",
+    "Preston": "Preston North End", "Blackburn": "Blackburn Rovers",
+    "Swansea": "Swansea City", "Cardiff": "Cardiff City",
+    "Norwich": "Norwich City", "Stoke": "Stoke City", "Derby": "Derby County",
+    "Charlton": "Charlton Athletic", "Birmingham": "Birmingham City",
+    "Bolton": "Bolton Wanderers", "Lincoln": "Lincoln City",
+}
+
+
+def canonical_club(api_name, known):
+    """An API-Football club name as the name a builder keys on, or None.
+
+    `known` is the set of names that builder recognises, passed in rather than
+    imported, so this module does not have to know which desk is asking.
+    """
+    name = (api_name or "").strip()
+    if not name:
+        return None
+    if name in known:
+        return name
+    mapped = AF_ALIASES.get(name)
+    return mapped if mapped in known else None
 
 
 def get(code):
