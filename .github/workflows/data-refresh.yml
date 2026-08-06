@@ -406,7 +406,16 @@ jobs:
           # command when either path matches nothing, so a run that produced
           # the referees but not the dataset staged NEITHER — which is exactly
           # what happened the first time this ran.
+          # The head-to-head files MUST be in this list. The Championship one is
+          # the whole reason its build step exists here: the mirror does not
+          # carry that division, the origin is unreachable from a development
+          # machine, and so this workflow is the only place it can be built. A
+          # build step whose output is never staged produces the file, prints a
+          # cheerful summary, and discards it when the runner is torn down —
+          # which is what happened until this line was added, and it is invisible
+          # because the step itself passes.
           for f in data/pl_fixtures.js data/laliga_harvest.log \
+                   data/h2h.js data/eflc_h2h.js data/laliga_h2h.js \
                    data/eflc_refs.json data/eflc_data.js data/eflc_status.txt data/eflc_fixtures.js \
                    data/laliga_clubs.json data/laliga_refs.json data/laliga_data.js \
                    data/laliga_status.txt data/laliga_fixtures.js data/laliga_ref_fixtures.js; do

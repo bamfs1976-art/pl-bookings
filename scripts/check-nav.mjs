@@ -316,6 +316,27 @@ assert.ok(!existsSync(join(root, 'scripts', 'build-h2h.mjs')),
   'scripts/build-h2h.mjs is back — data/build_h2h.py replaced it and ' +
   'reproduces its output exactly; two builders for one file is how they drift');
 
+/* A build step whose output is never staged is a no-op that LOOKS like a
+   success: the file is written, the step passes, the summary is cheerful, and
+   the runner is torn down with the work inside it. That is not hypothetical —
+   the head-to-head step shipped in exactly that state, and the only reason it
+   was caught is that someone read the commit step afterwards. So: every data
+   file the refresh workflow builds must also appear in the block that stages
+   it. Checked by name rather than by eye, because the two are ~290 lines apart.
+   Note the workflow is the ONLY place the Championship file can be built — the
+   mirror does not carry that division and the origin is unreachable from a
+   development machine — so losing its output loses it entirely. */
+const wf = read('.github/workflows/data-refresh.yml');
+const staged = wf.slice(wf.indexOf('Commit and push if changed'));
+for (const f of ['data/h2h.js', 'data/eflc_h2h.js', 'data/laliga_h2h.js']) {
+  assert.ok(staged.includes(f),
+    `data-refresh.yml builds ${f} but never stages it for commit — the run ` +
+    'would rebuild it and throw it away');
+}
+assert.ok(/python3 data\/build_h2h\.py --league EFLC/.test(wf),
+  'data-refresh.yml no longer builds the Championship head-to-head, which is ' +
+  'the one division that can only be built there');
+
 
 console.log(
   `check-nav OK: ${DESKS.length} desks, each linking to all ${DESKS.length} and ` +
