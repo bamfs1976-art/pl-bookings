@@ -1,9 +1,23 @@
+# SAMEORIGIN, not DENY. DENY refuses ALL framing including our own, and
+# /today is built out of three same-origin iframes — each desk's dataset
+# declares `const CLUBS`, so loading three into one document is a
+# redeclaration error and a frame is the separate global scope that avoids it.
+# With DENY the browser refused those frames, they became opaque origins, and
+# reading contentWindow.__data threw "Blocked a frame ... from accessing a
+# cross-origin frame", which emptied the whole combined view.
+#
+# This was invisible in every local test and every guard: `python -m
+# http.server` does not send this file, so /today was healthy on localhost and
+# broken on the only machine that matters. SAMEORIGIN keeps the clickjacking
+# protection that mattered — no other site can frame us — and allows the one
+# case the page is built on. frame-ancestors 'self' says the same thing to
+# browsers that prefer CSP, and wins where both are understood.
 /*
-  X-Frame-Options: DENY
+  X-Frame-Options: SAMEORIGIN
   X-Content-Type-Options: nosniff
   Referrer-Policy: strict-origin-when-cross-origin
   Permissions-Policy: geolocation=(), microphone=(), camera=()
-  Content-Security-Policy: default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data: https://cdn.sportmonks.com https://resources.premierleague.com; connect-src 'self' https://knodunjnsxelmpziupwk.supabase.co
+  Content-Security-Policy: default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data: https://cdn.sportmonks.com https://resources.premierleague.com https://media.api-sports.io; connect-src 'self' https://knodunjnsxelmpziupwk.supabase.co; frame-ancestors 'self'
 
 /data/pl_data.js
   Cache-Control: public, max-age=300, must-revalidate

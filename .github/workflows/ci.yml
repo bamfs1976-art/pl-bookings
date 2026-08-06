@@ -113,5 +113,14 @@ jobs:
       - name: Every emitted class has a rule behind it
         run: node scripts/check-styles.mjs
 
+      # The security headers must not break the site they protect. Both bugs
+      # here were invisible locally because `python -m http.server` does not
+      # send _headers: img-src refused all 47 Championship and La Liga crests,
+      # and X-Frame-Options: DENY blocked /today's own same-origin data frames
+      # on WebKit — empty combined view on every iPhone and iPad, nothing wrong
+      # in Chromium.
+      - name: Security headers do not break the site
+        run: node scripts/check-headers.mjs
+
       - name: Unit tests (PLDCore)
         run: node tests/test-core.mjs

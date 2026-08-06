@@ -266,13 +266,23 @@
 
   function readFrames() {
     return SOURCES.map(function (s) {
-      var w;
-      try { w = document.getElementById(s.frame).contentWindow; } catch (e) { return null; }
-      if (!w) return null;
+      /* The __data READ must be inside the try, not just the contentWindow
+         lookup. Getting contentWindow on a blocked frame succeeds; touching a
+         property on it is what throws SecurityError. That one line outside the
+         guard turned a header misconfiguration into a blank page: with
+         X-Frame-Options DENY the browser refused these same-origin frames,
+         they became opaque origins, and the throw escaped readFrames and took
+         the entire boot with it. The header is fixed; this makes the page
+         survive it happening again, by losing a league rather than the lot. */
+      var w, d;
+      try {
+        w = document.getElementById(s.frame).contentWindow;
+        if (!w) return null;
+        d = w.__data || {};
+      } catch (e) { return null; }
       /* Read from the frame's published __data, NOT from its globals: the
          data files use `const`, which is lexical and never becomes a window
          property, so contentWindow.CLUBS is always undefined. */
-      var d = w.__data || {};
       var L = {
         code: s.code, name: s.name, href: s.href,
         clubs: d.CLUBS, refs: d.REFS, players: d.players, fixtures: d.fixtures,

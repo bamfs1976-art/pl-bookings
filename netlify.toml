@@ -23,7 +23,11 @@
 [[headers]]
   for = "/*"
   [headers.values]
-    X-Frame-Options = "DENY"
+    # Must match _headers. Both files are applied, so leaving DENY here would
+    # have kept /today broken however carefully _headers was fixed — and the
+    # two disagreeing on one header is worse than either value alone. See the
+    # comment in _headers for why this is SAMEORIGIN rather than DENY.
+    X-Frame-Options = "SAMEORIGIN"
     X-Content-Type-Options = "nosniff"
     Referrer-Policy = "strict-origin-when-cross-origin"
     Permissions-Policy = "geolocation=(), microphone=(), camera=()"
