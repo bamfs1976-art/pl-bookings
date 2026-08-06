@@ -641,7 +641,14 @@
   }
 
   /* ---- download --------------------------------------------------------- */
+  /* Delegates to assets/save.js, which routes a phone to the native share
+     sheet — iOS Safari ignores `download` on a blob: URL, so the anchor below
+     is a dead button on an iPhone and every card on every desk went out
+     through it. The inline anchor is KEPT as a fallback rather than made a
+     hard dependency: share.js is loaded on its own inside the guard's VM,
+     where no DOM module exists. */
   function download(blob, name) {
+    if (root.PLDSave) return root.PLDSave.file(blob, name, 'image/png');
     var u = URL.createObjectURL(blob), a = document.createElement('a');
     a.href = u; a.download = name; a.click();
     setTimeout(function () { URL.revokeObjectURL(u); }, 2000);

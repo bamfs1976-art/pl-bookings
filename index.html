@@ -2,7 +2,14 @@
 <html lang="en-GB" data-theme="light">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<!-- viewport-fit=cover to match the other desks: the page already pads the
+     bottom nav out of the home indicator with env(safe-area-inset-bottom),
+     but those insets are always 0 until the page opts into the full screen,
+     so that padding was doing nothing and the app was letterboxed instead. -->
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Bookings Desk">
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data: https://cdn.sportmonks.com https://resources.premierleague.com https://media.api-sports.io; connect-src 'self' https://knodunjnsxelmpziupwk.supabase.co">
 <title>Bookings Desk · Premier League</title>
 <meta name="description" content="Premier League 2026-27 player-bookings analysis. Player card risk, club discipline, referees, fixtures and a suspension watch, on live FPL data.">
@@ -180,7 +187,7 @@
   .sb-foot-v{font-size:.66rem;color:var(--text-3)}
   .sb-foot-legal{font-size:.62rem;line-height:1.45;color:var(--text-3);margin:0}
   .main{margin-left:var(--sidebar-w);flex:1;display:flex;flex-direction:column;min-height:100vh;min-width:0}
-  .topbar{position:sticky;top:0;z-index:100;height:var(--topbar-h);padding:0 26px;background:color-mix(in srgb,var(--bg) 88%,transparent);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;gap:.6rem}
+  .topbar{position:sticky;top:0;z-index:100;height:var(--topbar-h);padding:0 26px;background:color-mix(in srgb,var(--bg) 88%,transparent);-webkit-backdrop-filter:blur(16px);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;gap:.6rem}
   .tb-left{display:flex;align-items:center;gap:13px;min-width:0}
   .hamburger{display:none;width:38px;height:38px;align-items:center;justify-content:center;border-radius:8px;background:var(--surface-2);border:1px solid var(--border);cursor:pointer;color:var(--text);flex:none}
   .hamburger svg{width:18px;height:18px}
@@ -201,7 +208,7 @@
   .page-head{margin-bottom:18px}
   .page-head h2{font-family:'Bricolage Grotesque',sans-serif;font-size:1.5rem;font-weight:800;letter-spacing:-.03em;margin:0}
   .page-head p{font-size:.85rem;color:var(--text-3);margin:.25rem 0 0}
-  .overlay{display:none;position:fixed;inset:0;z-index:190;background:rgba(8,10,20,.5);backdrop-filter:blur(2px);border:0;padding:0}
+  .overlay{display:none;position:fixed;inset:0;z-index:190;background:rgba(8,10,20,.5);-webkit-backdrop-filter:blur(2px);backdrop-filter:blur(2px);border:0;padding:0}
   .overlay.show{display:block}
   .bottom-nav{display:none}
   @media(max-width:900px){
@@ -434,6 +441,35 @@
   .kbd-grid kbd{justify-self:start}
   .row-sel{outline:2px solid var(--accent);outline-offset:-2px}
   @media(prefers-reduced-motion:reduce){.cmdk-row{transition:none}}
+
+  /* ---- iPhone ---------------------------------------------------------- */
+  /* viewport-fit=cover extends the page under the notch and home indicator,
+     so the fixed chrome has to be padded back out of them. The bottom nav
+     already handled its own inset; the topbar and the sides did not. */
+  .topbar{padding-top:env(safe-area-inset-top)}
+  body{padding-left:env(safe-area-inset-left);padding-right:env(safe-area-inset-right)}
+  html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
+  button,select,label,input{touch-action:manipulation}
+
+  /* TOUCH TARGETS. Apple's minimum is 44px. The watchlist star is ~17px and
+     there is one on every row, so on a thumb it is a coin toss between
+     starring a player and starring his neighbour. Scoped to coarse pointers,
+     leaving the desktop table at its current density. 16px on form controls
+     is what stops iOS zooming the page when one takes focus. */
+  @media (pointer: coarse){
+    /* A select sizes itself to its LONGEST OPTION, and 16px — which is what
+       stops iOS zooming the page when the control takes focus — pushed
+       /today's date picker to 428px and La Liga's referee filter to 384px.
+       Neither overflowed visibly: Safari widens the layout viewport to fit
+       instead, silently shrinking the whole page. Capped rather than
+       shrinking the font back, because the zoom-on-focus is the worse bug. */
+    select{max-width:100%}
+    .watch-btn{font-size:20px;padding:10px 8px;min-height:44px;min-width:40px;
+      display:inline-flex;align-items:center;justify-content:center}
+    .btn,select,input[type=text],input[type=search]{min-height:44px;font-size:16px}
+    .nav-area-btn,.tab,.pill{min-height:44px}
+    .hamburger,.tb-icon{min-height:44px;min-width:44px}
+  }
 </style>
 </head>
 <body>
@@ -963,6 +999,7 @@
 <script src="data/model.js"></script>
 <script src="data/sim_model.js"></script>
 <script src="assets/core.js"></script>
+<script src="assets/save.js"></script>
 <script src="assets/plmodel.js"></script>
 <script src="assets/suspension.js"></script>
 <script>
@@ -1192,10 +1229,8 @@ function exportCSV(){
       p.b||"",p.ls?1:0].map(cell).join(",");
   }));
   const blob=new Blob([lines.join("\n")],{type:"text/csv"});
-  const u=URL.createObjectURL(blob), a=document.createElement("a");
-  a.href=u; a.download="pl-bookings-players.csv"; a.click();
-  setTimeout(()=>URL.revokeObjectURL(u),2000);
-  toast("CSV downloaded — "+rows.length+" players");
+  saveFile(blob,"pl-bookings-players.csv","text/csv",
+    r=>toast(r==="cancelled"?"Export cancelled":"CSV ready — "+rows.length+" players"));
 }
 
 const MOBILE_MQ=window.matchMedia("(max-width:700px)");
@@ -1639,7 +1674,7 @@ async function exportPNG(){
   x.fillStyle="#8b94a5"; x.font=`600 18px ${body}`;
   x.fillText("18+ · Player form via ScoutingStats · 2026-27 squads · research, not betting advice · begambleaware.org",P,H-50);
   x.fillStyle="#3d195b"; x.font=`800 20px ${disp}`; x.textAlign="right"; x.fillText("PL BOOKINGS DESK",W-P,H-50); x.textAlign="left";
-  c.toBlob(blob=>{ const u=URL.createObjectURL(blob),a=document.createElement("a"); a.href=u; a.download=`pl-bookings-${cf==="all"?"top":cf.toLowerCase()}.png`; a.click(); setTimeout(()=>URL.revokeObjectURL(u),2000); },"image/png");
+  c.toBlob(blob=>dlBlob(blob,`pl-bookings-${cf==="all"?"top":cf.toLowerCase()}.png`),"image/png");
 }
 
 // ---- suspension watch ----
@@ -1700,9 +1735,31 @@ function renderSuspension(){
 // ---- fixture & gameweek share cards ----
 // Same brand-band canvas as the players export. Heat colours match the
 // on-screen chips (green = hot/target, amber = warm, grey = cool).
+/* Every file this page hands the user — cards, CSVs, the calendar invite —
+   goes out through here. On an iPhone the desktop idiom (an <a download> on a
+   blob: or data: URL) is silently inert: Safari ignores the attribute, so the
+   button appears to work and nothing is ever saved. assets/save.js routes a
+   phone to the native share sheet instead, which is also the better home for a
+   card meant to be posted. The `then` reports 'share' | 'download' |
+   'cancelled' so the toast can tell the truth about what happened. */
+function saveFile(blob,name,mime,done){
+  /* No inline anchor fallback here on purpose. assets/save.js already owns
+     both routes — share sheet and anchor — and a second copy of the anchor in
+     this file is exactly how the iOS bug survived: the broken idiom spread
+     across five call sites, so fixing one fixed nothing. scripts/check-mobile
+     fails the build if any page grows one back. */
+  if(!window.PLDSave){ console.warn("[Bookings Desk] assets/save.js did not load"); return; }
+  window.PLDSave.file(blob,name,mime)
+    .then(r=>{ if(done) done(r); })
+    .catch(e=>{ console.warn("[Bookings Desk] save:",e); if(done) done("download"); });
+}
+
 function heatHex(heat){ return heat>=4.2?"#16a34a":heat>=3.5?"#d97706":"#64748b"; }
 function probHex(p){ return p>=0.50?"#dc2626":p>=0.30?"#d97706":"#64748b"; }
-function dlBlob(blob,name){ const u=URL.createObjectURL(blob),a=document.createElement("a"); a.href=u; a.download=name; a.click(); setTimeout(()=>URL.revokeObjectURL(u),2000); toast("Card downloaded — "+name); }
+function dlBlob(blob,name){
+  saveFile(blob,name,"image/png",
+    r=>toast(r==="cancelled"?"Card not saved":r==="share"?"Card ready to share":"Card downloaded — "+name));
+}
 function shareBrandBand(x,W,P,body,disp,title,subtitle){
   const g=x.createLinearGradient(0,0,W,0); g.addColorStop(0,"#3d195b"); g.addColorStop(1,"#e90052");
   x.fillStyle=g; x.fillRect(0,0,W,168);
@@ -2218,11 +2275,9 @@ function fixtureICS(fx,player){
 }
 function downloadICS(fx,player,name){
   const ics=fixtureICS(fx,player); if(!ics){ toast("No kick-off time yet"); return; }
-  const a=document.createElement("a");
-  a.href="data:text/calendar;charset=utf-8,"+encodeURIComponent(ics);
-  a.download=(name||"fixture").replace(/[^a-z0-9]+/gi,"-").toLowerCase()+".ics";
-  document.body.appendChild(a); a.click(); a.remove();
-  toast("Calendar file downloaded");
+  saveFile(new Blob([ics],{type:"text/calendar"}),
+    (name||"fixture").replace(/[^a-z0-9]+/gi,"-").toLowerCase()+".ics","text/calendar",
+    r=>toast(r==="cancelled"?"Not saved":"Calendar file ready"));
 }
 /* Notes live beside the watchlist in the same local store. */
 function noteFor(k){ return (state.notes&&state.notes[k])||""; }
@@ -2591,9 +2646,8 @@ function exportAllPlayersCSV(){
     p.y90==null?"":p.y90.toFixed(3),p.r90==null?"":p.r90.toFixed(3),
     p.f==null?"":p.f.toFixed(2),p.fw==null?"":p.fw.toFixed(2),p.st].map(cell).join(",")));
   const blob=new Blob([lines.join("\n")],{type:"text/csv"});
-  const u=URL.createObjectURL(blob), a=document.createElement("a");
-  a.href=u; a.download="pl-all-players.csv"; a.click(); setTimeout(()=>URL.revokeObjectURL(u),2000);
-  toast("CSV downloaded — "+rows.length+" players");
+  saveFile(blob,"pl-all-players.csv","text/csv",
+    r=>toast(r==="cancelled"?"Export cancelled":"CSV ready — "+rows.length+" players"));
 }
 
 async function loadLive(){

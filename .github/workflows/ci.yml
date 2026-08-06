@@ -90,5 +90,13 @@ jobs:
       - name: Model convergence across the desks
         run: node scripts/check-models.mjs
 
+      # The phone. Every failure this guards against was SILENT on iOS and
+      # invisible on a desktop: share buttons that do nothing because Safari
+      # ignores `download` on a blob URL, a select wide enough to make Safari
+      # shrink the whole page rather than overflow, an atomic precache that
+      # takes the PWA offline over one renamed file.
+      - name: iPhone guards (share sheet, install, touch targets, offline shell)
+        run: node scripts/check-mobile.mjs
+
       - name: Unit tests (PLDCore)
         run: node tests/test-core.mjs

@@ -3,16 +3,34 @@
    cache-first. Live FPL data (/api/fpl/*) and Supabase calls are never
    touched here — the app's own data layer decides what is fresh vs cached. */
 
-const VERSION = 'plb-v10';
+const VERSION = 'plb-v11';
+/* Every desk, not just the Premier League one. The shell decides what opens
+   with no connection: installed on a phone, a page missing from here is a
+   blank screen on the Underground even though it works perfectly on wifi.
+   The three newer desks and the shared modules were never added when they
+   were built, so the app was installable but only one quarter offline. */
 const SHELL = [
   '/',
   '/index.html',
+  '/today.html',
+  '/eflc.html',
+  '/laliga.html',
+  '/data-frame.html',
   '/data/pl_data.js',
   '/data/ref_history.js',
   '/data/h2h.js',
   '/data/model.js',
   '/data/sim_model.js',
+  '/data/eflc_data.js',
+  '/data/eflc_fixtures.js',
+  '/data/laliga_data.js',
+  '/data/laliga_fixtures.js',
+  '/data/pl_fixtures.js',
   '/assets/core.js',
+  '/assets/save.js',
+  '/assets/share.js',
+  '/assets/plmodel.js',
+  '/assets/suspension.js',
   '/assets/tw.css',
   '/manifest.webmanifest',
   '/favicon.svg',
@@ -23,7 +41,16 @@ const SHELL = [
 ];
 
 self.addEventListener('install', (e) => {
-  e.waitUntil(caches.open(VERSION).then((c) => c.addAll(SHELL)).then(() => self.skipWaiting()));
+  /* Cached one at a time, NOT with addAll. addAll is atomic: a single 404
+     rejects the whole promise, the install fails, and the app has no offline
+     shell at all — so a renamed data file would take the entire PWA down
+     rather than costing it one page. With 28 entries across four desks that
+     stopped being an acceptable trade. Each miss is skipped; the rest install. */
+  e.waitUntil(
+    caches.open(VERSION)
+      .then((c) => Promise.all(SHELL.map((u) => c.add(u).catch(() => {}))))
+      .then(() => self.skipWaiting())
+  );
 });
 
 self.addEventListener('activate', (e) => {
