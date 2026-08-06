@@ -872,4 +872,98 @@ t('unknown counts and missing schemes yield null, never a default', () => {
   assert.equal(core.nextSuspension(-1, 10, LADDER), null);
 });
 
+/* ---- booking points ----------------------------------------------------
+ * The market bookmakers actually price for cards: 10 a yellow, 25 a red.
+ * These check the ARITHMETIC and the SHAPE, not just that a number comes
+ * back — a points market that is merely "10 times the cards" would pass a
+ * smoke test and be wrong the moment a red is possible. */
+
+t('points are 10 a yellow and 25 a red, and reds are priced from the referee', () => {
+  const ps = [0.5, 0.5, 0.5, 0.5];           // exactly 2 expected yellows
+  assert.equal(core.expectedPoints(ps, 0), 20, 'no reds: 2 yellows is 20 points');
+  /* A red rate of 0.4 adds 25 x 0.4 = 10. If this returns 20 the referee's
+     red rate is being ignored, which is the whole point of the market. */
+  assert.equal(core.expectedPoints(ps, 0.4), 30);
+  assert.equal(core.expectedPoints(ps, null), 20, 'no rate is no reds, not NaN');
+});
+
+t('the points distribution is a real distribution and lands only on 10s and 25s', () => {
+  const d = core.bookingPointsDist([0.5, 0.5], 0.3);
+  const total = d.reduce((s, v) => s + v, 0);
+  assert.ok(Math.abs(total - 1) < 1e-9, `points distribution sums to ${total}, not 1`);
+  /* Every reachable total is 10y + 25r, so nothing may land on a value that
+     cannot be made from yellows and reds — 5 and 15 are impossible. */
+  for (let k = 0; k < d.length; k++) {
+    if (d[k] <= 1e-12) continue;
+    let ok = false;
+    for (let y = 0; y <= 2 && !ok; y++) {
+      for (let r = 0; r <= 6 && !ok; r++) if (10 * y + 25 * r === k) ok = true;
+    }
+    assert.ok(ok, `points distribution puts mass on ${k}, which no yellow/red combination makes`);
+  }
+});
+
+t('the mean of the distribution equals the closed-form expectation', () => {
+  /* Independent check: if the convolution is wrong, these disagree. */
+  const ps = [0.6, 0.4, 0.35, 0.2, 0.15], lam = 0.25;
+  const d = core.bookingPointsDist(ps, lam);
+  const mean = d.reduce((s, v, k) => s + v * k, 0);
+  /* Tolerance 1e-4, not 1e-9. The closed form uses the exact rate; the
+     distribution uses the Poisson truncated at six reds and normalised, so
+     the two differ by the mass past that point — 1.6e-6 at this rate, which
+     is the truncation working, not a defect. Kept tight enough to matter: a
+     genuinely wrong convolution is out by whole points, not millionths. */
+  assert.ok(Math.abs(mean - core.expectedPoints(ps, lam)) < 1e-4,
+    `distribution mean ${mean} vs closed form ${core.expectedPoints(ps, lam)}`);
+});
+
+t('over lines fall as the line rises, and a red rate can only push them up', () => {
+  const ps = [0.5, 0.45, 0.4, 0.35, 0.3, 0.25];
+  const a = core.probOverPoints(ps, 0.2, 35.5);
+  const b = core.probOverPoints(ps, 0.2, 45.5);
+  const c = core.probOverPoints(ps, 0.2, 55.5);
+  assert.ok(a > b && b > c, `over lines not monotonic: ${a}, ${b}, ${c}`);
+  assert.ok(core.probOverPoints(ps, 0.6, 45.5) > core.probOverPoints(ps, 0, 45.5),
+    'a higher red rate must raise the chance of clearing a points line');
+});
+
+t('a .5 line reads against the real granularity, not as a smooth quantity', () => {
+  /* Two certain yellows and no reds is exactly 20 points. Over 15.5 must be
+     certain and over 20.5 impossible — a naive continuous treatment would
+     put mass either side of 20. */
+  const certain = [0.999, 0.999];
+  assert.ok(core.probOverPoints(certain, 0, 15.5) > 0.99);
+  assert.ok(core.probOverPoints(certain, 0, 20.5) < 0.01);
+});
+
+t('a whole-number line is strictly greater, so an exact hit is not a win', () => {
+  /* Same convention as probOverCards. It matters here more than there,
+     because points land on multiples of 5 and hitting a line EXACTLY is
+     common — two yellows is exactly 20. "Over 20" must not pay on 20.
+     Rounding the line instead of flooring-and-adding-one gets .5 lines
+     right and every whole line wrong, which no .5-only test would catch. */
+  const certain = [0.999, 0.999];                       // exactly 20 points
+  assert.ok(core.probOverPoints(certain, 0, 20) < 0.01,
+    'over 20 paid out on exactly 20 points');
+  assert.ok(core.probOverPoints(certain, 0, 19) > 0.99,
+    'over 19 must be won by 20 points');
+});
+
+t('the league red rate is weighted by matches, so a 3-game referee cannot swing it', () => {
+  const refs = [{ matches: 30, red: 0.1 }, { matches: 3, red: 2.0 }];
+  const w = core.leagueRedRate(refs);
+  const unweighted = (0.1 + 2.0) / 2;
+  assert.ok(w < 0.35, `weighted rate ${w} looks unweighted`);
+  assert.ok(Math.abs(w - unweighted) > 0.5, 'weighting made no difference');
+  assert.equal(core.leagueRedRate([]), 0);
+  assert.equal(core.leagueRedRate(null), 0);
+});
+
+t('the board reports the rate it priced with, so the number can be checked', () => {
+  const m = core.bookingPointsMarkets([0.5, 0.5], [0.5, 0.5], 0.24, [35.5]);
+  assert.equal(m.lambdaRed, 0.24);
+  assert.equal(m.expected, 26);                 // 4 x 0.5 = 2 yellows = 20, + 25 x 0.24 = 6
+  assert.ok(m.over[35.5] > 0 && m.over[35.5] < 1);
+});
+
 console.log(`\n${passed} tests passed`);

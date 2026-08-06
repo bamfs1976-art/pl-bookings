@@ -92,6 +92,32 @@
     return dlg;
   }
 
+  /* The player's face, on exactly the crest's fallback machinery — same
+     wrapper, same class, same capture listener, same data-mono ::after. A
+     photograph fails the same way a badge does (host down, CSP, 404), and a
+     second mechanism for the same failure is a second thing to get wrong.
+     Initials rather than a club short here: it is a person, not a club. */
+  function initials(name) {
+    var parts = String(name || '').trim().split(/\s+/).filter(Boolean);
+    if (!parts.length) return '?';
+    if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
+    return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+  }
+
+  function avatar(rec) {
+    var mono = initials(rec.name);
+    var style = 'background:hsl(' + clubHue((rec.club && rec.club.short) || rec.name) + ' 45% 38%)';
+    if (!rec.photo) {
+      return '<span class="crest crest-chip pp-avatar" style="' + style
+        + '" aria-hidden="true">' + esc(mono) + '</span>';
+    }
+    return '<span class="crest crest-wrap pp-avatar" style="' + style
+      + '" data-mono="' + esc(mono) + '">'
+      + '<img class="crest-img" src="' + esc(rec.photo) + '" alt="" '
+      + 'loading="lazy" decoding="async">'
+      + '</span>';
+  }
+
   function cell(label, value, note, colour) {
     return '<div class="pp-cell">'
       + '<div class="pp-lab">' + esc(label) + '</div>'
@@ -112,12 +138,20 @@
     var club = rec.club || {};
     var b = rec.band || {};
 
+    /* Availability is shown ONLY when the feed said something. An absent flag
+       is "not known", and rendering that as "fit" would be inventing news
+       about a player's body from a missing field. */
+    var avail = rec.injured === true
+      ? ' · <span class="pp-out">doubt</span>'
+      : '';
+
     var head = '<div class="pp-head">'
-      + crest(club, 'pp-crest')
+      + avatar(rec)
       + '<div class="pp-id">'
       + '<h2 id="pp-title">' + esc(rec.name) + '</h2>'
-      + '<p>' + esc(club.name || club.short || '') + (rec.pos ? ' · ' + esc(rec.pos) : '')
-      + (rec.lowSample ? ' · <span class="pp-warn">low sample</span>' : '') + '</p>'
+      + '<p>' + crest(club, 'pp-crest-sm') + ' '
+      + esc(club.name || club.short || '') + (rec.pos ? ' · ' + esc(rec.pos) : '')
+      + (rec.lowSample ? ' · <span class="pp-warn">low sample</span>' : '') + avail + '</p>'
       + '</div>'
       + '<button class="pp-star" type="button" data-pp-watch aria-pressed="'
       + (rec.watched ? 'true' : 'false') + '" title="'

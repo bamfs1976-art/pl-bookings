@@ -159,5 +159,40 @@ assert.ok(/crest-failed/.test(prof) && /crest-failed::after/.test(shared),
   'the crest fallback chip is not wired: profile.js must add .crest-failed ' +
   'and tw.css must render its data-mono through ::after');
 
+/* ---- booking points, and the player's face ----------------------------- */
+for (const page of ['eflc.html', 'laliga.html']) {
+  const src = read(page);
+  /* Booking points is the market a bookmaker actually posts for cards. The
+     red half must come from the APPOINTED referee where there is one — a
+     points market priced off a flat league red rate is not wrong so much as
+     pointless, since it would move for no fixture. */
+  assert.ok(/C\.bookingPointsMarkets\(/.test(src),
+    `${page} does not price booking points`);
+  assert.ok(/r\.ref && r\.ref\.red != null/.test(src),
+    `${page} prices booking points without using the appointed referee's own ` +
+    'red rate, so the market would be identical for every fixture');
+  assert.ok(/C\.leagueRedRate\(REFLIST\)/.test(src),
+    `${page} has no league red-rate fallback for unappointed fixtures`);
+  assert.ok(/function bookingPointsChips/.test(src),
+    `${page} computes booking points but never shows them`);
+  /* The player's face and availability. Both ride on p.ph / p.inj, which stay
+     absent until a refresh — the guard is that the desk READS them, not that
+     the shipped data has them yet. */
+  assert.ok(/photo: p\.ph \|\| null/.test(src),
+    `${page} player record drops the photo the harvest now carries`);
+  assert.ok(/injured: p\.inj === true/.test(src),
+    `${page} must treat availability as strictly true, so an absent flag ` +
+    'reads as "not known" rather than "fit"');
+}
+
+/* The face uses the crest's fallback, not a second mechanism. */
+assert.ok(/function avatar\(/.test(prof) && /crest-img/.test(prof),
+  'assets/profile.js must render the player photo through the same ' +
+  'crest-img/crest-failed path as the badge, or a dead photo host produces ' +
+  'a broken-image glyph that nothing handles');
+assert.ok(/rec\.injured === true/.test(prof),
+  'profile.js must show availability only on an explicit true — an absent ' +
+  'flag is "not known", and rendering it as fit invents news about a player');
+
 console.log(`check-styles OK: ${PAGES.length} pages, ${checked} class references, ` +
   'every one backed by a rule; matchday scoped; crests degrade; records open');

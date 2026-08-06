@@ -33,7 +33,7 @@ def t(name, fn):
     print("  ok - " + name)
 
 
-def entry(name, club, pos, minutes, yellow=0, red=0, fouls_c=None, fouls_d=None, tid=63):
+def entry(name, club, pos, minutes, yellow=0, red=0, fouls_c=None, fouls_d=None, tid=63, injured=None):
     """One /players row, in the v3 shape.
 
     tid defaults to 63, the id the club-scoped tests fetch: map_player picks a
@@ -41,7 +41,8 @@ def entry(name, club, pos, minutes, yellow=0, red=0, fouls_c=None, fouls_d=None,
     spelled two ways and an id cannot."""
     return {
         "player": {"name": name,
-                   "photo": f"https://media.api-sports.io/football/players/{tid}.png"},
+                   "photo": f"https://media.api-sports.io/football/players/{tid}.png",
+                   "injured": injured},
         "statistics": [{
             "team": {"id": tid, "name": club,
                      "logo": f"https://media.api-sports.io/football/teams/{tid}.png"},
@@ -173,6 +174,29 @@ def _map_junk():
     # a row whose only leg belongs to another club is not ours
     assert A.map_player(entry("X", "Hull City", "Defender", 90, tid=77),
                         "Coventry City", 63) is None
+
+
+def _map_photo():
+    """The player's FACE and availability, which the response has always
+    carried and the harvester used to throw away. Both were dropped alongside
+    the crest bug below and never restored, which is why the desks were said
+    to have "no photo source" when the source was the call already being made.
+
+    Asserted TOGETHER with the crest, in one test, on purpose: the failure
+    being guarded against is the two being confused, and checking either alone
+    is what let a squad member's headshot ship as a club badge."""
+    e = entry("Ellis Simms", "Coventry City", "Attacker", 900, tid=63, injured=True)
+    row = A.map_player(e, "Coventry City", 63)
+    assert row["photo"] == "https://media.api-sports.io/football/players/63.png", row["photo"]
+    assert row["img"] == "https://media.api-sports.io/football/teams/63.png", row["img"]
+    assert row["photo"] != row["img"], "the face and the badge must never be the same field"
+    assert row["inj"] is True, row["inj"]
+    # A fit player is not injured, and a feed that says nothing is not "fit".
+    fit = A.map_player(entry("X", "Coventry City", "Defender", 90, tid=63), "Coventry City", 63)
+    assert fit["inj"] in (False, None), fit["inj"]
+
+
+t("the player's photo and availability survive the mapping", _map_photo)
 
 
 t("unusable rows are dropped rather than half-built", _map_junk)

@@ -292,6 +292,11 @@ def mk(p, basis, resolve=None):
         "y": yc90, "f": fc90, "fw": (round(fw90, 3) if fw90 is not None else None),
         "r": risk,
         "ls": (mins < LOW_MIN), "b": basis,
+        # ph: the player's photograph. inj: injured/unavailable per the feed.
+        # Both stay None when the source did not supply them, so a desk shows
+        # a monogram and no flag rather than a broken image and a false "fit".
+        "ph": p.get("photo") or None,
+        "inj": (True if p.get("inj") is True else None),
         "_club": club, "_tid": p.get("tid"), "_img": p.get("img"),
         "_fouls": (fc90 * mins / 90) if (fc90 is not None) else 0,
     }

@@ -777,6 +777,88 @@
     return Math.min(1, Math.max(0, (1 - clean(homePs)) * (1 - clean(awayPs))));
   }
 
+  /* ---- booking points ---------------------------------------------------
+   * The market bookmakers actually price for cards is BOOKING POINTS, not a
+   * card count: 10 a yellow, 25 a red. The desks priced only the count, so
+   * the one line a punter is most likely to be shown was the one number the
+   * app could not give.
+   *
+   * It needs no new data. The yellow side is the exact Poisson-binomial the
+   * over/under lines already use. The red side is the referee's OWN red rate
+   * — REFS carry `red`, reds per game, measured the same way as `ypg` — so a
+   * fixture with an official appointed is priced by him, and one without by
+   * the league average. That is the same rule the yellow side already
+   * follows, rather than a second convention invented for reds.
+   *
+   * Reds are modelled as Poisson and truncated: at a realistic rate (0.0-0.8
+   * a game) the tail past six is ~1e-8, but a bad feed could hand this a
+   * nonsense rate, so the truncated mass is normalised back rather than
+   * silently dropped. Without that, a corrupt λ would quietly return
+   * probabilities that do not sum to one. */
+  const YELLOW_POINTS = 10;
+  const RED_POINTS = 25;
+  const MAX_REDS = 6;
+
+  function bookingPointsDist(ps, lambdaRed) {
+    const yd = cardCountDist(ps);
+    const lam = Math.max(0, Number(lambdaRed) || 0);
+    const rd = [];
+    let p = Math.exp(-lam);
+    for (let r = 0; r <= MAX_REDS; r++) { rd.push(p); p = (p * lam) / (r + 1); }
+    const mass = rd.reduce((s, v) => s + v, 0) || 1;
+    for (let r = 0; r < rd.length; r++) rd[r] /= mass;
+
+    const out = new Array(YELLOW_POINTS * (yd.length - 1) + RED_POINTS * MAX_REDS + 1).fill(0);
+    for (let y = 0; y < yd.length; y++) {
+      if (!yd[y]) continue;
+      for (let r = 0; r <= MAX_REDS; r++) {
+        out[YELLOW_POINTS * y + RED_POINTS * r] += yd[y] * rd[r];
+      }
+    }
+    return out;
+  }
+
+  function expectedPoints(ps, lambdaRed) {
+    return YELLOW_POINTS * expectedCards(ps) + RED_POINTS * Math.max(0, Number(lambdaRed) || 0);
+  }
+
+  /* P(points > line). Same convention as probOverCards: a .5 line means the
+     next whole number up. Points come in steps of 5, so "over 35.5" is 40 or
+     more from yellows alone, or 35 with a red — the granularity is real and
+     the line should be read against it rather than as a smooth quantity. */
+  function probOverPoints(ps, lambdaRed, line) {
+    const d = bookingPointsDist(ps, lambdaRed);
+    const need = Math.floor(Number(line) || 0) + 1;
+    let acc = 0;
+    for (let k = need; k < d.length; k++) acc += d[k];
+    return Math.min(1, Math.max(0, acc));
+  }
+
+  /* The league's red rate, weighted by matches refereed. Used when no
+     official is appointed. Weighted, because an unweighted mean lets a
+     referee with three games swing the league rate as hard as one with
+     thirty — which is the same reason ypg is shrunk elsewhere. */
+  function leagueRedRate(refs) {
+    let n = 0, m = 0;
+    for (const r of (Array.isArray(refs) ? refs : [])) {
+      const g = Number(r && r.matches), v = Number(r && r.red);
+      if (isFinite(g) && g > 0 && isFinite(v) && v >= 0) { n += v * g; m += g; }
+    }
+    return m > 0 ? n / m : 0;
+  }
+
+  function bookingPointsMarkets(homePs, awayPs, lambdaRed, lines) {
+    const all = [].concat(homePs || [], awayPs || []);
+    const ls = (Array.isArray(lines) && lines.length) ? lines : [35.5, 45.5, 55.5];
+    const over = {};
+    for (const l of ls) over[l] = probOverPoints(all, lambdaRed, l);
+    return {
+      expected: Math.round(expectedPoints(all, lambdaRed) * 10) / 10,
+      lambdaRed: Math.round(Math.max(0, Number(lambdaRed) || 0) * 100) / 100,
+      over,
+    };
+  }
+
   /* One call for a fixture: the whole team-card board. */
   function teamCardMarkets(homePs, awayPs, lines) {
     const all = [].concat(homePs || [], awayPs || []);
@@ -796,6 +878,8 @@
     riskScore, normName, pickPL, summarisePicks, calibrate, impliedProb, fairOdds, edgePct, LOGISTIC_SLOPE,
     marketProb, marketProbDeVig, valuePoint, TYPICAL_CARD_MARGIN,
     cardCountDist, probOverCards, expectedCards, probBothCarded, teamCardMarkets,
+    bookingPointsDist, expectedPoints, probOverPoints, leagueRedRate,
+    bookingPointsMarkets, YELLOW_POINTS, RED_POINTS,
     minuteWeights, matchLambdas,
     venueFactor, chaseFactor, cardLambda, pCardFromLambda, pCardSeason,
     HOME_FACTOR, AWAY_FACTOR,

@@ -203,6 +203,14 @@ def map_player(entry, club_name, team_id):
         # what Coventry, Hull and Ipswich shipped on the live desk, and what
         # all 24 Championship clubs shipped on the new one.
         "img": (leg.get("team") or {}).get("logo"),
+        # The player's face and availability, which this response has always
+        # carried and this harvester has always discarded. They were dropped
+        # together with the crest bug above and never put back, so the desks
+        # went without photographs on the grounds that "there is no source" —
+        # when the source was the call already being made. Kept under distinct
+        # keys so neither can ever be mistaken for the badge again.
+        "photo": player.get("photo"),
+        "inj": player.get("injured"),
     }
 
 

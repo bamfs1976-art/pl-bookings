@@ -293,3 +293,8 @@ html[data-density="expert"] .combined-note{display:none}
 /* A row you can open needs to look like one. */
 .rowlink{cursor:pointer}
 .rowlink:hover{background:var(--surface-2)}
+
+/* The player's face, on the crest's fallback machinery — see profile.js. */
+.pp-avatar{width:46px;height:46px;border-radius:11px;font-size:15px}
+.pp-crest-sm{width:14px;height:14px;font-size:7px;border-radius:4px}
+.pp-out{color:var(--warn-ink);font-weight:700}

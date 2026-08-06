@@ -774,6 +774,10 @@
     }
     var rec = {
       name: p.n, pos: p.p, club: clubBy[p.c] || { short: p.c },
+      /* Both stay undefined until a refresh populates them; the card shows a
+         monogram and no availability line rather than a broken image and a
+         claim about a player's fitness that nothing supports. */
+      photo: p.ph || null, injured: p.inj === true,
       minutes: p.min, yellows: p.yc, reds: p.rc,
       yc90: p.y, fouls90: p.f, foulsForm: p.fw, risk: p.r,
       prob: prob, odds: prob ? C.fairOdds(prob) : null,
@@ -1040,6 +1044,11 @@
      which is displayed as the referee's ×figure: folding it in there would
      report an official as stricter than he is because of who is playing. */
   var DERBY_BOOST = 1.08;
+  /* Reds a game across the division, weighted by matches refereed. Computed
+     once: it is the fallback for every fixture with no official appointed. */
+  var LEAGUE_RED = C.leagueRedRate(REFLIST);
+  var BP_LINES = [35.5, 45.5, 55.5];
+
   function priceFixture(fx) {
     var r = refFor(fx);
     var factor = r.ref ? refFactor(r.ref) : 1;
@@ -1047,7 +1056,15 @@
     var priced = factor * (derby ? DERBY_BOOST : 1);
     var home = sideProbs(fx.h, priced), away = sideProbs(fx.a, priced);
     var m = C.teamCardMarkets(home.ps, away.ps, [3.5, 4.5, 5.5]);
-    return { fx: fx, ref: r, factor: factor, derby: derby, home: home, away: away, m: m };
+    /* Booking points: the market a bookmaker actually posts for cards, 10 a
+       yellow and 25 a red. Reds come from the APPOINTED referee's own rate
+       where there is one, and the match-weighted league rate where there is
+       not — the same rule the yellow side follows, so the two halves of the
+       number are not built on different conventions. */
+    var lamRed = (r.ref && r.ref.red != null) ? Number(r.ref.red) : LEAGUE_RED;
+    var bp = C.bookingPointsMarkets(home.ps, away.ps, lamRed, BP_LINES);
+    return { fx: fx, ref: r, factor: factor, derby: derby, home: home, away: away,
+             m: m, bp: bp };
   }
 
   function whenText(iso) {
@@ -1157,6 +1174,7 @@
           }).join('')
         + h2hChip(x)
         + '<span class="mkt">Both teams carded <b>' + pct(x.m.bothCarded) + '</b></span>'
+        + bookingPointsChips(x)
         + '</div>'
         + '</div>';
     }).join('');
@@ -1403,6 +1421,22 @@
   }
   /* Rendered as a market chip so it sits in the same row as the numbers it is
      meant to be compared against. */
+  /* The booking-points strip. Titled with the rate it was priced at, because
+     the red half of the number is the part a reader cannot check by counting
+     the yellows on the card above it. */
+  function bookingPointsChips(x) {
+    if (!x.bp) return '';
+    var src = (x.ref && x.ref.ref) ? x.ref.ref.n + "'s" : 'the league';
+    var t = esc('Booking points: 10 a yellow, 25 a red. Reds priced at '
+      + n2(x.bp.lambdaRed) + ' a game, ' + src + ' rate. Points land in steps '
+      + 'of 5, so a line is cleared or it is not — over 35.5 means 40.');
+    return '<span class="mkt" title="' + t + '">Points <b>' + n1(x.bp.expected) + '</b></span>'
+      + BP_LINES.map(function (l) {
+          return '<span class="mkt" title="' + t + '">Over ' + l + ' <b>'
+            + pct(x.bp.over[l]) + '</b></span>';
+        }).join('');
+  }
+
   function h2hChip(x) {
     var p = h2hFor(x.fx.h, x.fx.a);
     if (!p) return '';
