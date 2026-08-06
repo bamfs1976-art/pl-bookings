@@ -338,6 +338,24 @@ assert.ok(/python3 data\/build_h2h\.py --league EFLC/.test(wf),
   'the one division that can only be built there');
 
 
+/* The combined view's boot must announce its own failure. Reported from an
+   iPad: heading and controls rendered, the date picker offered "No Options",
+   and there were no fixtures, no stats and no empty-state message — a state
+   only reachable if the boot threw partway, since both of its branches write
+   something visible. It could not be reproduced in Chromium and there is no
+   WebKit in this sandbox, so the fix is not a guess at the cause: it is that
+   the page can never again fail silently. Reuses `today`, read further up. */
+assert.ok(/function bootFailed/.test(today),
+  'today.html lost bootFailed() — a throw in its boot renders a page that ' +
+  'looks deliberate and is simply empty, with nothing to diagnose from');
+assert.ok(/catch \(err\) \{\s*\n\s*bootFailed\(err\);/.test(today),
+  'today.html catches its boot error without calling bootFailed(), so the ' +
+  'failure is swallowed and the page still goes blank');
+assert.ok(/desks are unaffected/.test(today),
+  'the boot failure message must point at the individual desks, which keep ' +
+  'working when only the combined view breaks');
+
+
 console.log(
   `check-nav OK: ${DESKS.length} desks, each linking to all ${DESKS.length} and ` +
   'marking itself current, all routed before the catch-all; combined views ' +

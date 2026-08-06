@@ -507,6 +507,7 @@
 <script src="assets/save.js"></script>
 <script src="assets/share.js"></script>
 <script src="assets/suspension.js"></script>
+<script src="assets/profile.js"></script>
 <script>
 (function () {
   'use strict';
@@ -729,17 +730,79 @@
     });
   }
 
+  /* ---- the player record ------------------------------------------------
+   * Tap any player row and get the number explained: what it is, what it is
+   * made of, and what fixture it is against. The Premier League desk has had
+   * this since it was written; these two showed a percentage in a table cell
+   * and no way to ask why. Rendering lives in assets/profile.js, shared with
+   * the other desk — the record below is the only league-specific part. */
+  function playerRecord(p) {
+    var ref = currentRef();
+    var prob = probFor(p, ref), b = band(prob);
+    var fx = null, i;
+    for (i = 0; i < FIXTURES.length; i++) {
+      if (FIXTURES[i].h === p.c || FIXTURES[i].a === p.c) { fx = FIXTURES[i]; break; }
+    }
+    var rec = {
+      name: p.n, pos: p.p, club: clubBy[p.c] || { short: p.c },
+      minutes: p.min, yellows: p.yc, reds: p.rc,
+      yc90: p.y, fouls90: p.f, foulsForm: p.fw, risk: p.r,
+      prob: prob, odds: prob ? C.fairOdds(prob) : null,
+      band: { label: b[1] || 'Low', colour: b[0] === 'hi' ? 'var(--danger-ink)'
+              : b[0] === 'mid' ? 'var(--warn-ink)' : '' },
+      lowSample: (Number(p.min) || 0) < 450,
+      ref: ref ? ref.n : null,
+      watched: !!starred[keyOf(p)],
+      onWatch: function () { toggleStar(keyOf(p)); return !!starred[keyOf(p)]; },
+      note: 'Season-long rate, scaled by the referee when one is picked. '
+        + 'Research, not betting advice.'
+    };
+    if (fx) {
+      var x = priceFixture(fx);
+      rec.fixture = {
+        home: clubBy[fx.h] || { short: fx.h }, away: clubBy[fx.a] || { short: fx.a },
+        when: whenText(fx.d), heat: x.m.expected, derby: x.derby,
+        ref: x.ref && x.ref.ref ? x.ref.ref.n : null
+      };
+    }
+    /* Only when the dataset actually carries a season card count. sc is null
+       across the board until the refresh populates it, and a suspension line
+       computed from nothing would read as "0 cards, safe" rather than
+       "not known yet". */
+    if (p.sc != null && SUSP && SUSP.rungs) {
+      for (i = 0; i < SUSP.rungs.length; i++) {
+        if (p.sc < SUSP.rungs[i].at) {
+          var left = SUSP.rungs[i].at - p.sc;
+          rec.susp = {
+            text: left + ' booking' + (left === 1 ? '' : 's') + ' from a '
+              + SUSP.rungs[i].ban + '-match ban (' + SUSP.rungs[i].at + ' yellows).',
+            urgent: left === 1
+          };
+          break;
+        }
+      }
+    }
+    return rec;
+  }
+
+  function openPlayer(k) {
+    for (var i = 0; i < PLAYERS.length; i++) {
+      if (keyOf(PLAYERS[i]) === k) { PLDProfile.open(playerRecord(PLAYERS[i])); return; }
+    }
+  }
+
   function renderPlayers() {
     var list = rows(), ref = currentRef();
     var tb = $('#tblPlayers tbody');
     $('#emptyPlayers').hidden = list.length > 0;
     tb.innerHTML = list.slice(0, 400).map(function (row) {
       var p = row.p, k = keyOf(p), b = band(row.prob), c = clubBy[p.c] || {};
-      return '<tr>'
+      return '<tr class="rowlink" data-pk="' + esc(k) + '" tabindex="0" role="button"'
+        + ' aria-label="Open ' + esc(p.n) + '\u2019s record">'
         + '<td><button class="star" data-k="' + esc(k) + '" aria-pressed="' + (starred[k] ? 'true' : 'false')
         + '" aria-label="Watchlist ' + esc(p.n) + '">' + (starred[k] ? '★' : '☆') + '</button></td>'
         + '<td>' + esc(p.n) + formArrow(p) + '</td>'
-        + '<td><span class="clubcell">' + (c.img ? '<img class="crest" src="' + esc(c.img) + '" alt="" loading="lazy">' : '')
+        + '<td><span class="clubcell">' + PLDProfile.crest(c)
         + esc(p.c) + '</span></td>'
         + '<td>' + esc(p.p) + '</td>'
         + '<td class="num">' + confDot(p.min) + (p.min || 0) + '</td>'
@@ -760,12 +823,27 @@
       : 'No referee assigned, so these are season-long probabilities. Pick an official above and '
         + 'every row rescales to his card rate.';
     $$('.star', tb).forEach(function (btn) {
-      btn.addEventListener('click', function () {
+      btn.addEventListener('click', function (e) {
+        /* The star lives INSIDE a row that opens the record. Without this the
+           same tap would toggle the watchlist and then open the profile. */
+        e.stopPropagation();
         toggleStar(btn.getAttribute('data-k'));
         renderPlayers();
       });
     });
   }
+
+  /* Delegated, so it survives every re-render of the table body. */
+  $('#tblPlayers').addEventListener('click', function (e) {
+    var tr = e.target.closest ? e.target.closest('tr[data-pk]') : null;
+    if (tr) openPlayer(tr.getAttribute('data-pk'));
+  });
+  $('#tblPlayers').addEventListener('keydown', function (e) {
+    if (e.key !== 'Enter' && e.key !== ' ') return;
+    var tr = e.target.closest ? e.target.closest('tr[data-pk]') : null;
+    if (tr && e.target === tr) { e.preventDefault(); openPlayer(tr.getAttribute('data-pk')); }
+  });
+  PLDProfile.wire();
 
   ['#fClub', '#fPos', '#fRef', '#fMin', '#fStar'].forEach(function (s) {
     $(s).addEventListener('change', renderPlayers);
@@ -817,7 +895,7 @@
       var tierTxt = r.tier === 1 ? 'Card-heavy' : r.tier === 3 ? 'Disciplined' : r.tier === 2 ? 'Middling' : '—';
       var w = c.ca == null ? 0 : Math.round((c.ca / max) * 100);
       return '<tr>'
-        + '<td><span class="clubcell">' + (c.img ? '<img class="crest" src="' + esc(c.img) + '" alt="" loading="lazy">' : '')
+        + '<td><span class="clubcell">' + PLDProfile.crest(c)
         + esc(c.name)
         + ((c.ca != null && c.ca >= 2.0 && c.fm != null && c.fm >= 12.0)
             ? ' <span title="Combustible — 2.0+ cards and 12.0+ fouls a game" aria-label="Combustible">\uD83D\uDD25</span>' : '')
@@ -1029,9 +1107,9 @@
       return '<div class="fx">'
         + '<div class="fx-top">'
         + '<div class="fx-teams">'
-        + (ch.img ? '<img class="crest" src="' + esc(ch.img) + '" alt="">' : '') + esc(ch.name || f.h)
+        + PLDProfile.crest(ch) + esc(ch.name || f.h)
         + '<span class="faint">v</span>'
-        + (ca.img ? '<img class="crest" src="' + esc(ca.img) + '" alt="">' : '') + esc(ca.name || f.a)
+        + PLDProfile.crest(ca) + esc(ca.name || f.a)
         + '</div>'
         + '<div class="fx-when">' + esc(whenText(f.d)) + derbyTag(x) + thinTag(x) + '</div>'
         + '<div class="fx-heat"><b>' + n1(x.m.expected) + '</b><span>expected cards</span></div>'

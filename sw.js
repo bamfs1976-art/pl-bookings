@@ -30,6 +30,7 @@ const SHELL = [
   '/data/pl_fixtures.js',
   '/assets/core.js',
   '/assets/save.js',
+  '/assets/profile.js',
   '/assets/share.js',
   '/assets/plmodel.js',
   '/assets/suspension.js',

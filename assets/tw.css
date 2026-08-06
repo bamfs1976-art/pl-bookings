@@ -245,3 +245,51 @@ html[data-density="expert"] .combined-note{display:none}
    today.html carries an identical rule of its own. */
 .btn.primary{background:var(--accent);color:var(--on-accent);
   border-color:transparent;font-weight:700}
+
+/* ---- Crests that degrade, and the player record ------------------------ */
+/* The crest chip IS the fallback: the wrapper carries the club colour and its
+   monogram, and the <img> sits on top. When the image loads you see the badge;
+   when the host does not answer, profile.js removes the <img> and the chip
+   underneath is what shows. A broken-image glyph next to every club — which is
+   what shipped — is the one outcome this makes impossible. */
+.crest{width:18px;height:18px;flex:none;object-fit:contain}
+.crest-chip,.crest-wrap{display:inline-flex;align-items:center;justify-content:center;
+  border-radius:5px;overflow:hidden;color:#fff;font-size:8.5px;font-weight:800;
+  letter-spacing:.02em;font-family:var(--mono);vertical-align:-3px}
+.crest-wrap .crest-img{width:100%;height:100%;object-fit:contain;display:block}
+/* Only once the <img> is gone. Until then the badge covers the monogram, and
+   showing both would flash the letters behind a transparent PNG. */
+.crest-failed::after{content:attr(data-mono)}
+
+.pp-dlg{border:0;padding:0;background:transparent;max-width:min(560px,94vw);width:100%}
+.pp-dlg::backdrop{background:rgba(8,10,20,.55);-webkit-backdrop-filter:blur(3px);backdrop-filter:blur(3px)}
+.pp-panel{background:var(--surface);color:var(--text);border:1px solid var(--border);
+  border-radius:16px;box-shadow:0 18px 50px rgba(0,0,0,.3);padding:16px;
+  max-height:86vh;overflow-y:auto;-webkit-overflow-scrolling:touch}
+.pp-head{display:flex;align-items:center;gap:9px;margin-bottom:13px}
+.pp-head .crest{width:34px;height:34px;font-size:12px;border-radius:8px}
+.pp-id{min-width:0;flex:1}
+.pp-id h2{margin:0;font-size:17px;line-height:1.2}
+.pp-id p{margin:2px 0 0;font-size:12.5px;color:var(--text-2)}
+.pp-warn{color:var(--warn-ink);font-weight:700}
+.pp-star,.pp-close{background:none;border:0;cursor:pointer;color:var(--text-2);flex:none;
+  font:inherit;line-height:1;padding:6px;border-radius:8px}
+.pp-star{font-size:21px}
+.pp-close{font-size:24px}
+.pp-star:focus-visible,.pp-close:focus-visible{outline:2px solid var(--ring);outline-offset:2px}
+.pp-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(118px,1fr));gap:7px}
+.pp-cell{background:var(--surface-2);border-radius:10px;padding:8px 10px;min-width:0}
+.pp-lab{font-size:10.5px;text-transform:uppercase;letter-spacing:.05em;color:var(--text-2);font-weight:700}
+.pp-val{font-family:var(--mono);font-size:18px;font-weight:800;line-height:1.2;margin-top:2px}
+.pp-note{font-size:11px;color:var(--text-3);margin-top:1px}
+.pp-line{font-size:12.5px;color:var(--text-2);margin:11px 0 0;line-height:1.5}
+.pp-urgent{color:var(--danger-ink);font-weight:600}
+.pp-fx{background:var(--surface-2);border-radius:10px;padding:9px 11px;margin-top:11px}
+.pp-fxline{display:flex;align-items:center;gap:5px;flex-wrap:wrap;
+  font-weight:700;font-size:14px;margin-top:3px}
+.pp-heat{font-family:var(--mono);font-weight:800}
+.pp-derby{font-size:9.5px;font-weight:800;letter-spacing:.06em;color:var(--accent-2)}
+.pp-foot{font-size:11.5px;color:var(--text-3);margin:11px 0 0;line-height:1.5}
+/* A row you can open needs to look like one. */
+.rowlink{cursor:pointer}
+.rowlink:hover{background:var(--surface-2)}

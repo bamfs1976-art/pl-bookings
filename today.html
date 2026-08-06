@@ -778,7 +778,34 @@
   }
 
   /* ---- boot ------------------------------------------------------------ */
+  /* WHY THIS IS WRAPPED. Reported from an iPad: the page rendered its heading
+     and controls, the date picker offered "No Options", and there were no
+     fixtures, no stats and no empty-state message — the last of which is the
+     tell. Both branches below write something visible, so reaching NEITHER
+     means this function threw partway. An exception here leaves exactly that
+     page: a shell that looks deliberate and is simply empty.
+     It could not be reproduced in Chromium or from this sandbox, and there is
+     no WebKit here to try it in, so rather than guess at the cause the failure
+     is made to announce itself. A blank page tells nobody anything; a blank
+     page that names the error can be read out over a phone. */
+  function bootFailed(err) {
+    try {
+      $('#stats').innerHTML = '';
+      $('#list').innerHTML = '';
+      $('#empty').hidden = false;
+      $('#empty').innerHTML = 'Something went wrong assembling the combined view, so '
+        + 'this page is empty rather than wrong. The individual '
+        + '<a href="/">Premier League</a>, <a href="/eflc">Championship</a> and '
+        + '<a href="/laliga">La Liga</a> desks are unaffected.<br>'
+        + '<span style="font-family:var(--mono);font-size:11.5px;color:var(--text-3)">'
+        + String((err && (err.message || err)) || 'unknown error') + '</span>';
+      $('#shareBtn').disabled = true;
+      $('#day').disabled = true;
+    } catch (e) { /* the DOM itself is gone; nothing useful left to do */ }
+  }
+
   whenReady(function () {
+  try {
   LEAGUES = readFrames();
   LEAGUES.forEach(prepare);
   index();
@@ -842,6 +869,10 @@
       document.head.appendChild(st);
     }
     render();
+  }
+  } catch (err) {
+    bootFailed(err);
+    if (window.console && console.error) console.error('today boot failed', err);
   }
   });
 })();

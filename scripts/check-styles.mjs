@@ -109,5 +109,55 @@ for (const sel of ['.row', '.teams', '.top', '.heat']) {
     'index.html uses class="heat" for a fixtures chip and would be restyled.');
 }
 
+/* ---- crests must degrade, and players must be openable ------------------
+ * Reported from an iPad: every club showed the browser's broken-image glyph.
+ * The desks emitted a bare <img> with no error handling, so a crest host that
+ * does not answer left 400 broken icons in the players table. The fallback is
+ * invisible when the host IS answering, which is exactly why it needs a guard
+ * — nobody will notice it rotting until the next outage. */
+for (const page of ['eflc.html', 'laliga.html']) {
+  const src = read(page);
+  assert.ok(!/<img class="crest"/.test(src),
+    `${page} still emits a bare <img class="crest">. Route it through ` +
+    'PLDProfile.crest(club) so a dead image host degrades to a monogram chip ' +
+    'instead of the browser broken-image glyph.');
+  /* Counted, not merely present. There are four crest sites per desk — two
+     club-table cells and both sides of the fixture card — and reverting any
+     ONE of them puts broken images back on that view while the other three
+     keep the bare-<img> check quiet. A substring test passes a 3-of-4 revert. */
+  const calls = (src.match(/PLDProfile\.crest\(/g) || []).length;
+  assert.ok(calls >= 4,
+    `${page} calls PLDProfile.crest ${calls} time(s); all 4 crest sites must ` +
+    'use it (2 club-table cells, 2 fixture-card sides)');
+  assert.ok(/PLDProfile\.wire\(\)/.test(src),
+    `${page} never calls PLDProfile.wire() — the crest fallback listens for ` +
+    'the image error event, so without it the chips never appear');
+  assert.ok(/assets\/profile\.js/.test(src), `${page} does not load assets/profile.js`);
+  /* The record itself. tr[data-pk] is what the delegated handler looks for. */
+  assert.ok(/tr class="rowlink" data-pk=/.test(src),
+    `${page} player rows are not openable — no tr.rowlink[data-pk]`);
+  assert.ok(/function playerRecord/.test(src) && /function openPlayer/.test(src),
+    `${page} is missing the player record builder`);
+  /* The star sits inside the row. Without stopPropagation one tap toggles the
+     watchlist AND opens the profile, which is how it behaved first time. */
+  assert.ok(/e\.stopPropagation\(\)/.test(src),
+    `${page} watchlist star does not stop propagation, so tapping it also ` +
+    'opens the player record');
+}
+
+/* error does not bubble — a delegated listener MUST use capture, or the
+   fallback silently never fires and every crest stays broken. */
+const prof = read('assets/profile.js');
+/* 1200, not 400: the listener body plus its comment is 517 characters, and the
+   first bound silently failed the assertion rather than the code. Still bounded
+   — an unbounded [\s\S]* would match a `}, true)` anywhere later in the file
+   and pass whatever the listener actually does. */
+assert.ok(/addEventListener\('error',[\s\S]{0,1200}?\},\s*true\)/.test(prof),
+  'assets/profile.js registers the crest error listener without capture. ' +
+  'The error event does not bubble; without `true` the handler never runs.');
+assert.ok(/crest-failed/.test(prof) && /crest-failed::after/.test(shared),
+  'the crest fallback chip is not wired: profile.js must add .crest-failed ' +
+  'and tw.css must render its data-mono through ::after');
+
 console.log(`check-styles OK: ${PAGES.length} pages, ${checked} class references, ` +
-  'every one backed by a rule; matchday rules present and scoped');
+  'every one backed by a rule; matchday scoped; crests degrade; records open');
