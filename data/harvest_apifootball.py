@@ -258,23 +258,70 @@ def shortfall(rows, wanted):
     return build_pl_data.coverage_problems(mapped, clubs=wanted)
 
 
+def check_key(host, key):
+    """Ask the API who this key is. /status is the one endpoint that answers
+    that directly, and it costs nothing against the quota.
+
+    Worth its own mode because "Missing application key" and "your plan does
+    not cover this season" are completely different problems that both arrive
+    as a refused /teams request, and telling them apart by re-reading the
+    harvest's output is guesswork."""
+    print(f"host: {host}")
+    print(f"key : {len(key)} chars, starts {key[:4]!r}, ends {key[-4:]!r}")
+    payload = _get(host, key, "status", {})
+    err = api_errors(payload)
+    if err:
+        sys.exit(
+            f"ERROR: /status refused this key: {err}\n\n"
+            + ("'Missing application key' means the API does not recognise "
+               "the key AT ALL — it is not a plan or a season problem.\n"
+               "  - If you subscribed on RAPIDAPI, the key only works against "
+               "their host. Set:\n"
+               "      API_FOOTBALL_HOST=api-football-v1.p.rapidapi.com\n"
+               "  - If you subscribed on dashboard.api-football.com, copy the "
+               "key from\n    that dashboard again — the secret may still "
+               "hold an older or partial value.\n"
+               "  - Check for stray quotes or spaces: a secret pasted as "
+               "\"abc\" sends the quotes.\n"
+               if "application key" in err.lower() else ""))
+    resp = (payload or {}).get("response") or {}
+    acct = resp.get("account") or {}
+    sub = resp.get("subscription") or {}
+    req = resp.get("requests") or {}
+    print("\nthe key works. API-Football says:")
+    print(f"  account      : {acct.get('firstname','?')} {acct.get('lastname','')} "
+          f"<{acct.get('email','?')}>")
+    print(f"  plan         : {sub.get('plan','?')}  active={sub.get('active','?')}  "
+          f"ends {sub.get('end','?')}")
+    print(f"  requests     : {req.get('current','?')} of {req.get('limit_day','?')} today")
+    if str(sub.get("plan", "")).lower() == "free":
+        print("\n  NOTE: still on the Free plan, which covers seasons "
+              "2022-2024 only.\n  2025-26 will be refused until this reads "
+              "something else.")
+
+
 def main():
     ap = argparse.ArgumentParser()
+    ap.add_argument("--check", action="store_true",
+                    help="ask /status what this key is and stop")
     ap.add_argument("--league", default="EFLC", choices=sorted(leagues.LEAGUES),
                     help="which division to harvest")
     ap.add_argument("--season", help="season START year, e.g. 2025 for 2025-26")
     args = ap.parse_args()
 
-    league = leagues.get(args.league)
-    MUST_COVER["L1"] = leagues.EFLC_FROM_L1
-    wanted = MUST_COVER.get(league.code) or set()
-
-    key = os.environ.get("API_FOOTBALL_KEY", "").strip()
+    key = os.environ.get("API_FOOTBALL_KEY", "").strip().strip('"').strip("'")
     if not key:
         sys.exit("ERROR: set API_FOOTBALL_KEY to an API-Football key. The free "
                  "tier covers seasons 2022-2024 only, so 2025-26 needs a paid "
                  "plan — see the docstring at the top.")
     host = env_or("API_FOOTBALL_HOST", DEFAULT_HOST)
+    if args.check:
+        check_key(host, key)
+        return
+
+    league = leagues.get(args.league)
+    MUST_COVER["L1"] = leagues.EFLC_FROM_L1
+    wanted = MUST_COVER.get(league.code) or set()
     season = (args.season or env_or("API_FOOTBALL_SEASON", DEFAULT_SEASON)).strip()
     if not season.isdigit() or len(season) != 4:
         sys.exit(f"ERROR: season is {season!r}. API-Football names a season by "
@@ -286,10 +333,16 @@ def main():
     teams_payload = _get(host, key, "teams", {"league": af, "season": season})
     err = api_errors(teams_payload)
     if err:
+        hint = ("\n\n'Missing application key' means the key is not "
+                "recognised AT ALL — not a plan or season problem.\n"
+                "Run this to see what the API thinks the key is:\n"
+                "    python3 data/harvest_apifootball.py --check"
+                if "application key" in err.lower() else
+                "\n\nA plan restriction or an exhausted quota both land here. "
+                "The free plan covers\nseasons 2022-2024 only. "
+                "`--check` prints the plan the API sees.")
         sys.exit(f"ERROR: API-Football refused the /teams request: {err}\n"
-                 "That is the API's own message. A plan restriction, a bad key "
-                 "or an exhausted quota all land here — and the free plan does "
-                 "not cover 2025-26.")
+                 "That is the API's own message, not ours." + hint)
 
     ids, unmapped = resolve_teams(teams_payload, league.code)
     if not ids:

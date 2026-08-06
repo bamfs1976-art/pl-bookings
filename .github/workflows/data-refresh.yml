@@ -112,6 +112,14 @@ jobs:
       # slice of a league, and its paging.total is a cross-check the walk is
       # held to. It needs a key rather than a browser cookie, so unlike the
       # cookie route it can run here at all.
+      # Says what the key IS before anything tries to use it. "Missing
+      # application key" and "your plan does not cover this season" both arrive
+      # as a refused request, and they need opposite fixes.
+      - name: Check the API-Football key
+        if: ${{ env.API_FOOTBALL_KEY != '' }}
+        continue-on-error: true
+        run: python3 data/harvest_apifootball.py --check
+
       - name: Harvest the Championship from API-Football
         if: ${{ env.API_FOOTBALL_KEY != '' }}
         continue-on-error: true
