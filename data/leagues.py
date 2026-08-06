@@ -171,12 +171,27 @@ LEAGUES = {
         # 380 matches over ~20 officials, the same ratio as the Premier League,
         # so the same floor.
         min_ref_matches=3,
-        # UNCONFIRMED — not shipped as user-facing copy. The five-yellow ban is
-        # well established in Spain and the cycle repeats rather than being
-        # gated by matchday the way England's is, which is what would make a
-        # suspension strip worth having here. The rungs above five need
-        # checking against current RFEF competition rules first.
-        suspension="5 yellows = 1 match, then the count recycles (rungs above 5 TO CONFIRM)",
+        # CHECKED against the RFEF Código Disciplinario, art. 112. See
+        # docs/spain-suspensions.md for the evidence and its limits.
+        #
+        # THE ANSWER IS THAT THERE ARE NO HIGHER RUNGS. England gates its
+        # ladder by matchday (5 by GW19, 10 by GW32, 15 all season, with the
+        # 10-rung a TWO-match ban); Spain does not have a ladder at all. Art.
+        # 112 sets one threshold — five cautions in the same season AND
+        # competition, one match — and then: "Cumplida la sanción, se iniciará
+        # un nuevo ciclo de la misma clase y con idénticos efectos." Identical
+        # effects. So the tenth card costs one match, the fifteenth costs one
+        # match, and so on; there is no escalation to price.
+        #
+        # Consequences for anything built on this:
+        #   - the count is PER COMPETITION ("misma temporada y competición"),
+        #     so league and Copa cards never pool;
+        #   - the Copa threshold is three, not five;
+        #   - accumulation sanctions do not carry into the following season;
+        #   - a fifth caution shown WITHIN a match can draw an extra match and
+        #     a fine, which is a referee's decision and not predictable here.
+        suspension="every 5 yellows = 1 match; the cycle repeats with identical "
+                   "effect (RFEF art. 112) — no escalation at 10 or 15",
     ),
 }
 

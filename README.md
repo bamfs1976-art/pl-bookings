@@ -144,7 +144,9 @@ Two fixture lists exist for this league and they are different seasons: `laliga_
 
 `scripts/check-laliga.mjs` guards two things the English guards cannot: that the discovered registry and the dataset describe the same division, and that the referee join covered a whole season rather than the fraction that happened to line up — a half-landed join yields a table that looks complete and is built on 60% of the evidence.
 
-Still open: the Championship suspension thresholds and the Spanish rungs above five yellows, both recorded in the registry as unconfirmed and neither shipped as user-facing copy.
+**Spain's suspension rungs are settled**: there are none above five. RFEF art. 112 sets a single threshold — five cautions in the same season *and competition*, one match — and then *"cumplida la sanción, se iniciará un nuevo ciclo de la misma clase y con idénticos efectos"*. England's ladder escalates and is gated by matchday; Spain's cycle just repeats, so there is nothing to price at ten or fifteen. Also: the count is per competition, the Copa threshold is three, and nothing carries into the next season. The evidence and — importantly — its limits are in `docs/spain-suspensions.md`: every primary document 403'd from this environment (a control fetch of Wikipedia failed too), so this rests on quotations of art. 112 rather than on the article itself, and one secondary source disagreed. That is why no strip ships on it yet.
+
+Still open: the Championship rungs, recorded in the registry as partially confirmed.
 
 ### Share cards, and the combined view
 
