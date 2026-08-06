@@ -24,7 +24,7 @@ suspension strips read from a harvested season file rather than a live feed.
 
 The genuine data gaps are four, and they are listed separately at the end.
 
-## Views: two whole sections are missing
+## Views
 
 | View | PL | EFLC | LL |
 |---|---|---|---|
@@ -36,11 +36,13 @@ The genuine data gaps are four, and they are listed separately at the end.
 | Guide | ✅ | ✅ | ✅ |
 | Tracker (logged predictions, P/L, ROI) | ✅ | ❌ | ❌ |
 
-**This Gameweek is the biggest single divergence.** The Premier League desk opens
-on a fixture-first landing view — matches ranked hottest to coolest, a hero
-carrying the gameweek number, a deadline countdown and the model's live track
-record, plus a watchlist card. The other two desks open on a table of 974 / 783
-players. That is a different product on first impression, not a different skin.
+**Settled.** All three now open on a fixture-first landing view — the next
+round ranked hottest to coolest, with matches, expected cards, cards a match and
+referees-appointed across the top. Before this the newer desks opened on a table
+of 974 / 783 players, which was a different product on first impression rather
+than a different skin.
+
+**Tracker is the one view still missing** from the other two.
 
 **Tracker** logs each gameweek's predictions and scores them. It is backed by
 Supabase and an hourly Netlify function (`log-predictions`) that is wired to the
@@ -102,11 +104,11 @@ rather than leaving implicit.
 | Cards against per game | ✅ | ✅ | ✅ |
 | Fouls per game | ✅ | ✅ | ✅ |
 | Crest | ✅ | ✅ | ✅ |
-| Tier (target / mid / fade) | ✅ | ✅ | ✅ |
-| Flame marker on combustible sides | ✅ | ❌ | ❌ |
+| Tier (Card-heavy / Middling / Disciplined) | ✅ | ✅ | ✅ |
+| Flame marker on combustible sides | ✅ | ✅ | ✅ |
 | Top booking risk per club | ✅ | ✅ | ✅ |
-| Home / away split columns | ❌ | ✅ | ✅ |
-| Form basis, squad size, discipline | ❌ | ✅ | ✅ |
+| Home / away split columns | ✅ | ✅ | ✅ |
+| Form basis, squad size, tier | ✅ | ✅ | ✅ |
 
 **Settled.** Both tables now show one agreed set on all three desks, from the
 identical fields every dataset already carried:
@@ -131,19 +133,27 @@ identical fields every dataset already carried:
 | **Account + watchlist sync** | ✅ | ❌ | ❌ |
 | **Skip link / landmarks** | ✅ | ❌ | ❌ |
 
-The two newer desks use a plain topbar and an underlined tab strip. The Premier
-League desk uses the full app shell. **This is what makes them feel like
-different products more than any individual feature does** — the navigation
-model differs before you read a single number.
+**Settled.** All three now use the same shell: sidebar of areas, breadcrumb, and
+a fixed bottom tab bar on a phone. This was the largest single cause of the
+three feeling like different products — the navigation model differed before you
+read a number — and it is shared code (`assets/shell.js`) rather than three
+copies, so it cannot drift again.
 
-## Reverse gaps: things to fold back into the Premier League desk
+Still outstanding on the newer desks: **account + watchlist sync** (part of item
+9) and **skip links / landmarks**.
 
-Making the three identical is not purely a matter of copying *from* the Premier
-League. These exist only on the newer desks, or are better there:
+## Reverse gaps — all but one closed
 
-1. **Referee ×factor and Strictness as table columns** — both desks show them as sortable columns. The PL referee table shows Reds/game, Pens/game and Career instead; it does carry the ×factor, but inline rather than as a column you can rank on.
-2. **Club home/away split columns** — the PL dataset carries `caH`/`caA` and never displays them.
-3. **Fair odds and Basis as player-table columns** — on the PL desk fair odds are behind a click on P(card).
+Making the three identical was never one-directional. These existed only on the
+newer desks and have been folded back into the Premier League:
+
+1. ~~**Referee ×factor and Strictness as columns**~~ — done. The multiplier the model actually applies was the one number its referee table never showed.
+2. ~~**Club home/away split columns**~~ — done. `caH`/`caA` were in the dataset and rendered only as an unsortable sub-line.
+3. ~~**Squad size and form basis columns**~~ — done.
+4. ~~**Confidence dot**~~ — done, and it ran furthest the other way: `.conf-dot` was dead CSS on the Premier League desk while its Guide described the feature to readers.
+
+**Still open:** *fair odds as a player-table column.* The newer desks show it;
+the Premier League desk keeps it behind a click on P(card).
 4. **A tighter, more scannable club table** — form basis, squad size and the home/away split in one view.
 
 ## The four genuine data gaps
@@ -181,6 +191,26 @@ La Liga desks show the scrollable table. This is a real look-and-feel
 divergence on the device most people use, and it is not in any row above
 because the audit compared features, not breakpoints. It should be settled one
 way for all three.
+
+## Where this stands
+
+**Done and live: items 1–5 and 7.** The two newer desks now share the Premier
+League's shell, open on a fixture-first landing, and carry the same fixture
+cards, player table, club and referee tables, tour, glossary, command palette
+and density switch. Several gaps ran the other way and were folded back into the
+Premier League desk.
+
+**Remaining: 6, 8 and 9**, and they are the three that need something this
+repository does not already have.
+
+| Item | What it needs | Blocker |
+|---|---|---|
+| 6 — H2H and derby lists | H2H built from football-data.co.uk (the *same* public-domain records already used for referees and home/away splits, covering both divisions); derby lists hand-written as the Premier League's is | The builder can be written, but the fetch is blocked from the build sandbox, so it must be written unrun and proved by a CI run |
+| 8 — Player photos, availability flags | Photos are one extra field through the API-Football call already made; availability needs the `/injuries` endpoint | An API-Football key and quota |
+| 9 — Account sync, Tracker | Per-league Supabase tables and a `log-predictions` equivalent per division | Largest of the three; a project rather than a change |
+
+Nothing in 6, 8 or 9 is blocked on a *decision* — only on credentials, network
+or scope.
 
 ## Recommended order
 
