@@ -379,19 +379,45 @@ def _unstable_api(total, cap=10, reject_player_id=False):
     return req
 
 
-def _a_total_order_collects_everyone():
-    """Sorting by player_id makes the pages disjoint, so the walk is complete."""
+def _reshuffling_api(total, cap=10, seed=1):
+    """What this endpoint actually does: re-sorts on every request, so each
+    page is a sample and each pass is a sample of the league."""
+    import random
+    import urllib.parse as up
+    rnd = random.Random(seed)
+
+    def req(url, cookie, allow_400=False):
+        page = int(up.parse_qs(up.urlparse(url).query)["page"][0])
+        ids = list(range(total))
+        rnd.shuffle(ids)
+        chunk = ids[(page - 1) * cap:(page - 1) * cap + cap]
+        rows = [{"player_id": i, "player_name": f"p{i}", "team_name": "Millwall",
+                 "position": "Defender", "minutes_played": 900,
+                 "yellow_cards": 1, "red_cards": 0,
+                 "fouls_committed_p90": 1.0, "fouls_drawn_p90": 0.5}
+                for i in chunk]
+        return {"players": rows, "page": page, "per_page": cap,
+                "total_count": total, "total_pages": (total + cap - 1) // cap}
+    return req
+
+
+def _repeated_passes_converge_on_the_whole_league():
+    """No sort key makes this endpoint's pages disjoint — an unknown sort
+    field is ignored rather than rejected, so there is nothing to detect.
+    Completeness comes from collecting until the distinct count matches the
+    total the API reports, over as many passes as that takes."""
     real = H.request_json
     try:
-        H.request_json = _unstable_api(47)
-        rows, _ = H.fetch_all(9, "x", "c", "test")
-        assert len(rows) == 47, len(rows)
-        assert len({r["pid"] for r in rows}) == 47, "and every one distinct"
+        for seed in (1, 2, 3):
+            H.request_json = _reshuffling_api(120, seed=seed)
+            rows, _ = H.fetch_all(9, "x", "c", f"seed {seed}")
+            assert len(rows) == 120, (seed, len(rows))
+            assert len({r["pid"] for r in rows}) == 120, seed
     finally:
         H.request_json = real
 
 
-t("a unique sort key makes the pages disjoint", _a_total_order_collects_everyone)
+t("repeated passes converge on the whole league", _repeated_passes_converge_on_the_whole_league)
 
 
 def _a_short_walk_is_refused():
@@ -405,7 +431,7 @@ def _a_short_walk_is_refused():
         try:
             H.fetch_all(9, "x", "c", "test")
         except SystemExit as e:
-            assert "are \nmissing" in str(e) or "missing" in str(e), str(e)
+            assert "missing" in str(e), str(e)
             assert "Refusing to write a partial league" in str(e), str(e)
         else:
             assert False, "a short walk should refuse to write"

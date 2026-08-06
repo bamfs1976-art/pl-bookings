@@ -72,18 +72,25 @@ PAGE_SIZE = 100      # asked for; the API may cap it, which the walk handles
 MAX_PAGES = 300      # runaway guard, far above any real squad list
 
 
-# Pagination needs a TOTAL order. Sorting by a rate does not give one: every
-# player with no goals ties on goals_p90, the server re-sorts per request, and
-# tied rows drift across page boundaries — so some arrive twice and others
-# never arrive at all. Observed exactly that: 710 rows walked against a
-# reported total of 706, with the promoted clubs missing every goalkeeper,
-# defender and midfielder. Forwards have a non-zero rate and hold their place;
-# everyone else was tied at zero and got shuffled.
+# Pagination over this endpoint is NOT stable, and no sort key fixes it.
 #
-# player_id is unique, so ordering by it is total and every page is disjoint.
-SORT_FIELD = "player_id"
-SORT_ORDER = "asc"
-FALLBACK_SORT = "goals_p90"     # only if the API rejects sorting by player_id
+# sort_by=goals_p90 ties every player without a goal, and the server re-sorts
+# per request, so tied rows drift across page boundaries: some come back twice
+# and an equal number never come back. Asking to sort by player_id — unique,
+# so a total order — is worse, because the API does not reject an unknown sort
+# field, it IGNORES it and falls back to no order at all. 549 rows collapsed to
+# 400 distinct players that way. There is nothing to detect: a rejected sort
+# and an honoured one both answer 200.
+#
+# So completeness cannot come from the ordering. It comes from collecting until
+# the set of distinct players matches the total the API itself reports, over
+# repeated passes if a pass is lossy. goals_p90 stays because it is a field the
+# app's own pages use, so it is certainly valid, and it is empirically the
+# least lossy of the ones tried.
+SORT_FIELD = "goals_p90"
+SORT_ORDER = "desc"
+MAX_PASSES = 15         # a lossy pass repeats; this bounds how many times
+DRY_PASSES = 3          # consecutive passes adding nobody before giving up
 
 
 def build_url(league, season_id, page, per_page=PAGE_SIZE, min_minutes=0,
@@ -281,37 +288,17 @@ def normalise_all(rows, label):
     return out
 
 
-def fetch_all(league, season_id, cookie, label, min_minutes=0):
-    """Every page for one league-season. Returns (rows, meta from page one).
+def one_pass(league, season_id, cookie, min_minutes, into, label):
+    """One walk of every page, adding distinct players to `into`.
 
-    A short read is a truncation, and a truncated squad list is the exact
-    failure this whole route has already shipped once. So the walk continues
-    until a page comes back short, and what it collected is reported against
-    whatever total the API claims — never stopping at page one because page one
-    looked like a reasonable number of players.
+    Returns (meta from page one, rows seen this pass). `into` is keyed by
+    player id, so a repeat within or across passes is simply an assignment
+    that changes nothing.
     """
-    # Establish the sort before walking. player_id gives a total order; if the
-    # API will not sort by it we fall back, but loudly, because the fallback is
-    # the ordering that loses players.
-    sort = SORT_FIELD
-    probe_url = build_url(league, season_id, 1, min_minutes=min_minutes)
-    if request_json(probe_url, cookie, allow_400=True) is None:
-        sort = FALLBACK_SORT
-        print(f"    WARNING: the API will not sort by {SORT_FIELD}; falling "
-              f"back to {FALLBACK_SORT}. Ties in that field shuffle between "
-              "requests, so the totals below are the check that matters.")
-
-    rows, page, first_meta = [], 1, {}
-    # The API CAPS per_page below what is asked for — league 9 answers
-    # per_page 10 to a request for 20. So "a short page means the last page"
-    # is false against the requested size and has to be judged against the
-    # size the API says it used, with total_pages as the real terminator where
-    # the response reports one. Getting this wrong truncates at page one,
-    # which is the bug this rewrite exists to fix.
+    page, seen, first_meta = 1, 0, {}
     effective, total_pages = PAGE_SIZE, None
     while True:
-        url = build_url(league, season_id, page, min_minutes=min_minutes,
-                        sort_by=sort)
+        url = build_url(league, season_id, page, min_minutes=min_minutes)
         payload = request_json(url, cookie)
         got = players_of(payload)
         if page == 1:
@@ -332,7 +319,10 @@ def fetch_all(league, season_id, cookie, label, min_minutes=0):
                     "An empty league is almost always the wrong season_id — a "
                     "season that has not kicked off yet has no players. Run "
                     "with --probe to see what a season_id actually contains.")
-        rows.extend(got)
+        seen += len(got)
+        for r in normalise_all(got, label):
+            key = r.get("pid") or (r.get("team"), r.get("n"))
+            into.setdefault(key, r)
         if not got:
             break
         if total_pages is not None and page >= total_pages:
@@ -343,40 +333,54 @@ def fetch_all(league, season_id, cookie, label, min_minutes=0):
         if page > MAX_PAGES:
             sys.exit(f"ERROR: {label} still returning full pages after "
                      f"{MAX_PAGES} — refusing to loop further.")
+    return first_meta, seen
 
-    rows = normalise_all(rows, label)
 
-    # De-duplicate on identity. Under an unstable sort the same player comes
-    # back on two pages, which is why a walk could report MORE rows than the
-    # league has — and every duplicate is a different player missed.
-    seen, unique = set(), []
-    for r in rows:
-        key = r.get("pid") or (r.get("team"), r.get("n"))
-        if key in seen:
-            continue
-        seen.add(key)
-        unique.append(r)
-    dupes = len(rows) - len(unique)
+def fetch_all(league, season_id, cookie, label, min_minutes=0):
+    """Every player in one league-season, collected until provably complete.
 
-    claimed = first_meta.get("total") or first_meta.get("total_count") or first_meta.get("count")
-    print(f"  {label}: {len(unique)} players over {page} page(s)"
-          + (f", {dupes} duplicate row(s) dropped" if dupes else ""))
+    The endpoint's paging is lossy (see SORT_FIELD above), so one walk is not
+    a league — it is a sample of one. This repeats the walk, accumulating
+    distinct players, until the count matches the total the API reports or a
+    pass adds nobody new. Anything short of the reported total refuses to
+    write, because a partial league is the failure this route has now shipped
+    three times and every version of it looked plausible.
+    """
+    into = {}
+    first_meta, _ = one_pass(league, season_id, cookie, min_minutes, into, label)
+    claimed = (first_meta.get("total") or first_meta.get("total_count")
+               or first_meta.get("count"))
 
-    # A short walk is players missing, and missing players are the whole bug
-    # this route has shipped twice. It is not a note.
-    if isinstance(claimed, int) and len(unique) < claimed:
+    passes, dry = 1, 0
+    while isinstance(claimed, int) and len(into) < claimed and passes < MAX_PASSES:
+        before = len(into)
+        one_pass(league, season_id, cookie, min_minutes, into, label)
+        passes += 1
+        gained = len(into) - before
+        print(f"    pass {passes}: {len(into)}/{claimed} distinct (+{gained})")
+        # One pass adding nobody is luck, not a wall — the last few players are
+        # the coupon-collector tail and a random sample often misses them
+        # twice. Give up only when several passes running find nothing new.
+        dry = dry + 1 if gained == 0 else 0
+        if dry >= DRY_PASSES:
+            break
+
+    rows = list(into.values())
+    print(f"  {label}: {len(rows)} players"
+          + (f" over {passes} passes" if passes > 1 else ""))
+
+    if isinstance(claimed, int) and len(rows) < claimed:
         sys.exit(
-            f"ERROR: {label}: the API reports {claimed} players and the walk "
-            f"ended with {len(unique)}, so {claimed - len(unique)} are "
-            f"missing.\n\n"
-            f"  sorted by: {sort}\n"
-            + ("  That is the unstable-sort fallback: rows tied on the sort "
-               "field move between requests, so a page boundary both repeats "
-               "and skips.\n" if sort == FALLBACK_SORT else
-               "  Under a unique sort key this should not happen — the feed "
-               "may have changed underneath the walk.\n")
-            + "\nRefusing to write a partial league.")
-    return unique, first_meta
+            f"ERROR: {label}: the API reports {claimed} players and "
+            f"{passes} pass(es) collected {len(rows)}, so "
+            f"{claimed - len(rows)} are still missing.\n\n"
+            "  This endpoint pages without a stable order, so a pass is a\n"
+            "  sample rather than a list. Repeating converges, but it has\n"
+            "  stopped converging here — either a pass is now returning the\n"
+            "  same subset every time, or the total is not reachable through\n"
+            "  this filter.\n\n"
+            "Refusing to write a partial league.")
+    return rows, first_meta
 
 
 
