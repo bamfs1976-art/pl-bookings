@@ -146,6 +146,10 @@ Two fixture lists exist for this league and they are different seasons: `laliga_
 
 **Spain's suspension rungs are settled**: there are none above five. RFEF art. 112 sets a single threshold — five cautions in the same season *and competition*, one match — and then *"cumplida la sanción, se iniciará un nuevo ciclo de la misma clase y con idénticos efectos"*. England's ladder escalates and is gated by matchday; Spain's cycle just repeats, so there is nothing to price at ten or fifteen. Also: the count is per competition, the Copa threshold is three, and nothing carries into the next season. The evidence and — importantly — its limits are in `docs/spain-suspensions.md`: every primary document 403'd from this environment (a control fetch of Wikipedia failed too), so this rests on quotations of art. 112 rather than on the article itself, and one secondary source disagreed. That is why no strip ships on it yet.
 
+**The La Liga suspension strip is built** (Players tab). It reads a separate `sc` field — THIS season's cautions, harvested from the season being played — never `yc`, which is last season's total: accumulation does not carry between seasons, so using `yc` would tell a reader a player is one booking from a ban when the rules have him on zero. Before the season starts every `sc` is null, and the strip says so and forecasts who reaches five first rather than pretending to a live count. `PLDCore.suspensionCycle` takes the total *modulo* five, so a player on ten has served two bans and is back on zero — not eight tenths of the way to a third. `check-laliga.mjs` asserts the strip reads `sc` and not `yc`, and that it bans at five and not at an English 10 or 15; both were confirmed to fire.
+
+It ships with the caveat attached, on the page: the five-caution rule is corroborated across several quotations of art. 112 but was not verified from the source document, which is unreachable from here.
+
 Still open: the Championship rungs, recorded in the registry as partially confirmed.
 
 ### Share cards, and the combined view

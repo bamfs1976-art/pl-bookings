@@ -303,6 +303,62 @@
 
   /* Poisson pmf for 0..n, built by recurrence (p_k = p_{k-1} x lam / k) so
      no factorial table is needed and nothing overflows. */
+  /* ---- suspension watch ------------------------------------------------
+   *
+   * P(a player collects at least `need` more cautions over `matches`), from a
+   * per-90 yellow rate and the share of a match he is expected to play.
+   * Cautions in a season behave close enough to Poisson for this: they are
+   * rare, roughly independent between matches, and the alternative — a
+   * binomial on P(carded) — throws away the fact that a player can be booked
+   * only once per match anyway, which is the same thing to two decimals at
+   * these rates.
+   *
+   * This exists because a suspension strip has to answer "how likely is a ban
+   * in the next three matches", not "what is his card rate". The second is
+   * not a substitute for the first: a defender on four cautions and a modest
+   * rate is in far more danger than a wild midfielder on none.
+   */
+  function pCardsAtLeast(y90, expMin, matches, need) {
+    /* Same rule as suspensionCycle: a null rate is unknown, not zero. Without
+       this, a player with no card rate reads as "0% chance of a ban" — the
+       most reassuring possible answer about someone nobody has measured. */
+    if (y90 == null || expMin == null || matches == null || need == null) return null;
+    const y = Number(y90), m = Number(expMin), k = Number(matches), n = Number(need);
+    if (!isFinite(y) || y < 0 || !isFinite(m) || m <= 0) return null;
+    if (!isFinite(k) || k <= 0 || !isFinite(n)) return null;
+    if (n <= 0) return 1;                       // already there
+    const lam = y * (m / 90) * k;
+    if (!(lam > 0)) return 0;
+    /* 1 - P(fewer than `need`), summed on the low side where the terms are
+       largest, so the subtraction never loses the answer to rounding. */
+    let term = Math.exp(-lam), below = term;
+    for (let i = 1; i < n; i++) {
+      term *= lam / i;
+      below += term;
+    }
+    return Math.min(1, Math.max(0, 1 - below));
+  }
+
+  /* Where a player sits in his current cycle, and what he needs for a ban.
+   * Spain: every five cautions is one match, the counter restarts, and the
+   * next five carry the same penalty (RFEF art. 112 — see
+   * docs/spain-suspensions.md). So the position in the cycle is the season
+   * total modulo the threshold, NOT the total itself: a player on ten has
+   * served two bans and is on zero again, not eight-tenths of the way to a
+   * third. */
+  function suspensionCycle(seasonCards, threshold) {
+    /* null and undefined are REJECTED, not coerced. Number(null) is 0, so
+       without this an unknown card count becomes "on zero, needs five" —
+       which is a confident claim about a player nobody has counted. The whole
+       strip rests on "no data" and "no cards" being different answers, and
+       this is where that distinction is either kept or quietly lost. */
+    if (seasonCards == null || threshold == null) return null;
+    const c = Number(seasonCards), t = Number(threshold);
+    if (!isFinite(c) || c < 0 || !isFinite(t) || t <= 0) return null;
+    const inCycle = Math.floor(c) % t;
+    return { inCycle, need: t - inCycle, served: Math.floor(Math.floor(c) / t) };
+  }
+
   function simPoissonPmf(lam, n) {
     const p = [Math.exp(-lam)];
     for (let k = 1; k <= n; k++) p[k] = p[k - 1] * lam / k;
@@ -693,6 +749,7 @@
     HOME_FACTOR, AWAY_FACTOR,
     simLambdas, simPoissonPmf, simScoreGrid, simOutcomes, simFixture, simResultShare, SIM_MAX_GOALS,
     shrinkRate, logit, invLogit, scaleOdds, contextProb,
+    pCardsAtLeast, suspensionCycle,
     brier, logLoss, reliability, glmProb,
     gammaln, expectedFouls, nbTailProb, cardProbFromFouls, recencyWeight, refCardFactor,
   };

@@ -203,6 +203,50 @@ for (const k of keys) {
     'across players who are different people with the same names');
 }
 
+/* ---- the suspension strip ---------------------------------------------- */
+/* RFEF art. 112 accumulation does not carry between seasons, so the strip has
+   to read THIS season's count. The dataset carries it as `sc`, separate from
+   `yc`, which is last season's total. Confusing the two would tell a reader a
+   player is one booking from a ban when the rules have him on zero — a
+   confident, specific and completely wrong claim, and the kind that gets
+   acted on. */
+const codeOnlyPage = page
+  .replace(/<!--[\s\S]*?-->/g, '')
+  .replace(/\/\*[\s\S]*?\*\//g, '')
+  .replace(/(^|[^:])\/\/.*$/gm, '$1');
+const strip = /function suspRows\(\)([\s\S]*?)\n  \}/.exec(codeOnlyPage);
+assert.ok(strip, 'laliga.html has no suspRows() — the suspension strip is gone');
+assert.ok(/\bp\.sc\b/.test(strip[1]),
+  'the suspension strip does not read `sc` (this season\'s cautions)');
+assert.ok(!/\bp\.yc\b/.test(strip[1]),
+  'the suspension strip reads `yc` — that is LAST season\'s total, and RFEF ' +
+  'art. 112 accumulation does not carry between seasons');
+assert.ok(/suspensionCycle/.test(codeOnlyPage) && /pCardsAtLeast/.test(codeOnlyPage),
+  'the strip no longer uses the shared suspension maths in core.js');
+/* Five, and only five. Spain has no ladder; a 10 or 15 here would be the
+   English thresholds imported to the wrong country. */
+const banAt = /BAN_AT\s*=\s*(\d+)/.exec(codeOnlyPage);
+assert.ok(banAt && banAt[1] === '5',
+  `the strip bans at ${banAt && banAt[1]} cautions — RFEF art. 112 says five`);
+
+/* Every `sc` is either unknown or a plausible in-season count. A value equal
+   to the player's whole previous season would mean the two fields have been
+   crossed somewhere upstream. */
+const withSc = LALIGA_PLAYERS.filter((p) => p.sc != null);
+for (const p of withSc) {
+  assert.ok(Number.isFinite(p.sc) && p.sc >= 0 && p.sc <= 30,
+    `${p.n}: implausible season caution count ${p.sc}`);
+}
+if (withSc.length) {
+  const identical = withSc.filter((p) => p.yc != null && p.sc === p.yc && p.yc > 3).length;
+  assert.ok(identical < withSc.length * 0.5,
+    `${identical} of ${withSc.length} players have this season's cautions exactly ` +
+    "equal to last season's — the two fields look crossed");
+}
+const scNote = withSc.length
+  ? `${withSc.length} players with this season's cautions`
+  : 'season cautions not harvested yet (pre-season)';
+
 /* ---- fixtures, when they have been harvested --------------------------- */
 let fxNote = 'no fixture list yet';
 const fxPath = join(root, 'data', 'laliga_fixtures.js');
@@ -255,5 +299,6 @@ console.log(
   `check-laliga OK: ${CLUBS.length} clubs, ${LALIGA_PLAYERS.length} players, ` +
   `${rated} clubs with a measured card rate; ` +
   `P(card) max ${(max * 100).toFixed(1)}%, median ${(median * 100).toFixed(1)}%; ` +
+  `${scNote}; ` +
   `${refNote}; ${fxNote}`
 );

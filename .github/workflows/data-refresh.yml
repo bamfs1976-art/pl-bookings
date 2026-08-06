@@ -199,6 +199,23 @@ jobs:
           echo "== squads ==" >> data/laliga_harvest.log
           python3 data/harvest_apifootball.py --league LL 2>&1 | tee -a data/laliga_harvest.log
 
+      # THIS season's cautions, for the suspension strip. A different harvest
+      # from the squads above and it has to be: those are 2025-26 FORM, while a
+      # suspension cycle is 2026-27 STATE, and RFEF art. 112 accumulation does
+      # not carry between seasons. Reusing last season's card counts would tell
+      # a reader a player is one booking from a ban when the rules have him on
+      # zero. Empty until the season starts, which is why the strip is built to
+      # say so rather than to show nothing.
+      - name: Harvest this season's Spanish cautions (for the suspension strip)
+        if: ${{ env.API_FOOTBALL_KEY != '' && inputs.refresh_laliga }}
+        continue-on-error: true
+        env:
+          API_FOOTBALL_SEASON: ${{ inputs.season_fixtures }}
+        run: |
+          echo "== season-cards ==" >> data/laliga_harvest.log
+          python3 data/harvest_apifootball.py --league LL --out laliga_season_cards.json 2>&1 \
+            | tee -a data/laliga_harvest.log
+
       # Segunda División, for the clubs promoted into La Liga — their 2025-26
       # form is a second-tier record and appears in no La Liga harvest. The
       # Spanish counterpart of the League One step below.

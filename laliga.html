@@ -112,6 +112,17 @@
   .bar{height:6px;border-radius:99px;background:var(--surface-3);overflow:hidden;min-width:56px}
   .bar i{display:block;height:100%;background:var(--accent)}
   .no-share .fx-share{display:none}
+  .susp{margin-bottom:12px}
+  .susp-head{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;margin-bottom:10px}
+  .susp-row{display:flex;align-items:center;gap:10px;padding:8px 4px;border-bottom:1px solid var(--border);flex-wrap:wrap}
+  .susp-row:last-child{border-bottom:0}
+  .susp-nm{font-weight:700;font-size:13.5px;flex:1 1 190px;min-width:0}
+  .pips{display:inline-flex;gap:3px;flex:none}
+  .pip{width:11px;height:14px;border-radius:2px;background:var(--surface-3);border:1px solid var(--border-2)}
+  .pip.on{background:#f7c600;border-color:#d4a900}
+  .susp-need{font-size:12.5px;color:var(--text-2);flex:none;min-width:120px}
+  .susp-need b{color:var(--danger-ink)}
+  .susp-p{font-family:var(--mono);font-weight:700;font-size:13.5px;flex:none;min-width:56px;text-align:right}
   .fx{border:1px solid var(--border);border-radius:13px;padding:12px 13px;margin-bottom:11px;background:var(--surface)}
   .fx-top{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
   .fx-teams{font-weight:700;font-size:15px;display:flex;align-items:center;gap:7px}
@@ -170,6 +181,14 @@
 
   <!-- ── Players ────────────────────────────────────────────────────────── -->
   <section class="panel" id="panel-players" role="tabpanel" aria-labelledby="tab-players">
+    <div class="card susp" id="suspCard" hidden>
+      <div class="susp-head">
+        <h2 style="font-size:15px">Suspension watch</h2>
+        <span class="faint" id="suspSub" style="font-size:12.5px"></span>
+      </div>
+      <div id="suspList"></div>
+      <p class="note" id="suspNote"></p>
+    </div>
     <div class="card">
       <div class="controls">
         <select id="fClub" aria-label="Filter by club"></select>
@@ -313,6 +332,15 @@
       purer measure of a strict whistle. It is applied on the odds scale and clamped to ×0.75–×1.30,
       so a strict referee cannot push an already-likely booking to a silly number.</p>
 
+      <h3>Suspension watch</h3>
+      <p>Spain bans a player for one match at every fifth caution, and then the count restarts with
+      the same penalty — there is no escalating ladder as in England, and no matchday gate, which
+      makes this the busiest of the three desks for a suspension watch: on a full season's form a
+      regular starter is near-certain to be banned at least once. The strip shows how far into his
+      current cycle each player is and the chance he completes it within the next one, three or
+      five matches, from his shrunk yellow rate and the share of a match he tends to play. Before
+      the season starts it shows instead the matchday his fifth caution is projected to land on.</p>
+
       <h3>Fixtures, heat and the card markets</h3>
       <p><b>Booking heat</b> is the expected number of cards in the match. Every squad player's
       chance of being carded is weighted by how likely he is to be on the pitch — last season's
@@ -351,14 +379,20 @@
         the club in the summer can still appear on one.
       </div>
       <ul>
-        <li><b>Suspension thresholds are checked but not yet shown.</b> RFEF art. 112 sets one
-        threshold — five cautions in a season <em>and competition</em>, one match — and then
-        “<span class="mono" style="font-size:12px">cumplida la sanción, se iniciará un nuevo ciclo
-        de la misma clase y con idénticos efectos</span>”. So unlike England there is no ladder:
-        the tenth card costs one match and so does the fifteenth. League and Copa cards never pool,
-        and nothing carries into the next season. No strip claims any of it yet because the primary
-        document could not be opened to verify it first-hand — see
-        <code>docs/spain-suspensions.md</code>.</li>
+        <li><b>The suspension strip rests on a rule I could not read first-hand.</b> RFEF art.
+        112 sets one threshold — five cautions in a season <em>and competition</em>, one match —
+        and then “<span class="mono" style="font-size:12px">cumplida la sanción, se iniciará un
+        nuevo ciclo de la misma clase y con idénticos efectos</span>”. So unlike England there is
+        no ladder: the tenth card costs one match and so does the fifteenth. That is corroborated
+        across several independent quotations of the article, but every attempt to open the
+        Código Disciplinario itself was blocked, so it is not verified from the source document —
+        <code>docs/spain-suspensions.md</code> sets out exactly what was and was not checked, and
+        names the one page to open to close the gap. One secondary source disagreed and is
+        recorded there too.</li>
+        <li><b>The strip counts this season only.</b> Accumulation does not carry between seasons
+        and each competition counts separately, so Copa cautions never pool with league ones. Until
+        the season has been harvested every player is on zero and the strip says so, forecasting
+        who reaches five first rather than pretending to a live count.</li>
         <li><b>No referee career history.</b> The English desks carry 26 seasons of it from a public
         dataset. There is no Spanish equivalent, so a referee here is described by last season only.</li>
         <li><b>The promoted clubs have no club card rate.</b> They were in Segunda last season.</li>
@@ -944,6 +978,125 @@
   $('#fxOrder').addEventListener('change', renderFixtures);
 
 
+  /* ---- suspension watch -------------------------------------------------
+   *
+   * RFEF art. 112: five cautions in the same season AND competition is one
+   * match, then the counter restarts and the next five carry the same
+   * penalty. There is no ladder — the tenth card costs one match and so does
+   * the fifteenth — so unlike England there is nothing to escalate. The rule
+   * and the limits of how it was verified are in docs/spain-suspensions.md.
+   *
+   * THE FIELD THIS READS IS `sc`, NOT `yc`. `yc` is last season's total, and
+   * accumulation does not carry between seasons: showing it here would tell a
+   * reader a player is one booking from a ban when the rules have him on
+   * zero. `sc` is null until the season has been harvested, and null is
+   * displayed as "not started" rather than as zero — "no data" and "no cards"
+   * are different claims and only one of them is safe to act on.
+   */
+  var BAN_AT = 5;            // cautions per cycle (RFEF art. 112)
+  /* The horizon has to suit the state. In season, with players on three and
+     four cautions, the useful question is "a ban in the next match or three".
+     Before a ball is kicked everyone needs all five, and over three matches
+     that is a fraction of a percent for every player alive — a column of
+     0.2%s ranked in an order nobody can act on. So pre-season the strip
+     prices a quarter, half and whole season instead, and leads with the
+     matchday a fifth caution is expected to land on. */
+  var HORIZ_LIVE = [1, 3, 5];
+  var HORIZ_PRE = [10, 19, 38];
+
+  function seasonKnown() {
+    return PLAYERS.some(function (p) { return p.sc != null; });
+  }
+
+  /* Expected share of a match a player takes, from his minutes. Used for the
+     forecast: a squad player who plays half of each match accumulates
+     cautions at half the rate of an ever-present, and pricing him as a
+     starter would put him on a watchlist he does not belong on. */
+  function playShare(p) {
+    var mins = seasonKnown() ? p.sm : p.min;
+    var matches = seasonKnown() ? Math.max(1, (p.sm || 0) / 90 + 2) : 38;
+    if (!mins || mins <= 0) return 0;
+    return Math.min(1, (mins / 90) / matches);
+  }
+
+  function suspRows() {
+    var known = seasonKnown();
+    var rows = [];
+    PLAYERS.forEach(function (p) {
+      if (p._y90 == null) return;
+      var share = playShare(p);
+      if (!(share > 0.15)) return;          // fringe players are noise here
+      var cyc = C.suspensionCycle(known ? (p.sc || 0) : 0, BAN_AT);
+      if (!cyc) return;
+      var hz = known ? HORIZ_LIVE : HORIZ_PRE;
+      var ps = hz.map(function (k) {
+        return C.pCardsAtLeast(p._y90, share * 90, k, cyc.need);
+      });
+      /* Matches until the cycle's last caution, at his own rate. Infinite for
+         a player who never gets booked, which is the honest answer and is
+         rendered as a dash rather than a number. */
+      var per = p._y90 * share;
+      var eta = per > 0 ? cyc.need / per : null;
+      rows.push({ p: p, cyc: cyc, ps: ps, share: share, eta: eta });
+    });
+    /* Rank by the chance of a ban inside the next three matches, which is the
+       question the strip exists to answer. Ranking by cards-so-far would put
+       a player on four who never plays above one on three who starts every
+       week, and ranking by card RATE ignores the count entirely. */
+    rows.sort(function (a, b) { return (b.ps[1] || 0) - (a.ps[1] || 0); });
+    return rows;
+  }
+
+  function renderSuspension() {
+    var known = seasonKnown(), rows = suspRows();
+    var host = $('#suspList'), card = $('#suspCard');
+    if (!rows.length) { card.hidden = true; return; }
+    card.hidden = false;
+    var top = rows.slice(0, 8);
+
+    $('#suspSub').textContent = known
+      ? 'Closest to a one-match ban — five cautions, then the cycle repeats'
+      : 'The 2026-27 season has not started, so every player is on zero. '
+        + 'These are the likeliest to reach five first, and roughly when.';
+
+    host.innerHTML = top.map(function (r) {
+      var pips = '';
+      for (var i = 0; i < BAN_AT; i++) {
+        pips += '<span class="pip' + (i < r.cyc.inCycle ? ' on' : '') + '"></span>';
+      }
+      var need = known
+        ? (r.cyc.need === 1
+            ? '<b>one booking from a ban</b>'
+            : r.cyc.need + ' more for a ban')
+        : (r.eta == null ? '—'
+            : 'fifth ≈ match ' + Math.round(r.eta));
+      return '<div class="susp-row">'
+        + '<span class="susp-nm">' + esc(r.p.n)
+        + ' <span class="faint">' + esc(r.p.p) + ' · ' + esc(r.p.c) + '</span></span>'
+        + '<span class="pips" role="img" aria-label="' + r.cyc.inCycle + ' of '
+        + BAN_AT + ' cautions">' + pips + '</span>'
+        + '<span class="susp-need">' + need + '</span>'
+        + (known ? HORIZ_LIVE : HORIZ_PRE).map(function (k, i) {
+            return '<span class="susp-p" title="chance of a ban within '
+              + k + ' match' + (k === 1 ? '' : 'es') + '">' + pct(r.ps[i]) + '</span>';
+          }).join('')
+        + '</div>';
+    }).join('');
+
+    $('#suspNote').innerHTML =
+      'Columns are the chance of reaching five cautions within the next '
+      + (known ? HORIZ_LIVE : HORIZ_PRE).join(', ') + ' matches, from each '
+      + 'player\'s shrunk yellow rate and the share of a match he tends to play. '
+      + (known
+          ? 'Counts are this season\'s, in La Liga only — RFEF art. 112 counts '
+            + 'each competition separately, so Copa cautions never pool with these.'
+          : '<b>No cautions have been played yet</b>, so these are forecasts from '
+            + '2025-26 form, not a live count. Once the season is harvested this '
+            + 'strip shows real state.')
+      + ' The five-caution rule is confirmed; how far that confirmation goes is '
+      + 'set out in <code>docs/spain-suspensions.md</code>.';
+  }
+
   /* ---- share cards ------------------------------------------------------ */
   /* The drawing lives in assets/share.js, shared with the other two desks, so
      three cards cannot drift apart the first time a colour changes. This end
@@ -1042,6 +1195,7 @@
     + ' clubs, ' + REFLIST.length + ' referees. Base rate ' + pct(CAL.baseRate)
     + ', average risk ' + n2(CAL.avgRisk) + '.' + calibrationNote();
 
+  renderSuspension();
   renderPlayers();
   renderFixtures();
   renderClubs();

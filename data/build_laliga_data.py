@@ -241,6 +241,32 @@ def club_card_rates(rows, resolve):
     return out
 
 
+def season_cards(resolve):
+    """{(short, name): (cautions, minutes)} for the season BEING PLAYED.
+
+    A separate harvest from the form, and it has to be. Everything else on
+    this desk is 2025-26 evidence; a suspension cycle is 2026-27 STATE, and
+    RFEF art. 112 accumulation does not carry between seasons — so reusing
+    last season's `yc` would tell a reader a player is one caution from a ban
+    when the rules have him on zero. That is not a rounding error, it is a
+    different fact.
+
+    Absent before the season starts, which is the normal state in August and
+    the reason every field this feeds is allowed to be null.
+    """
+    rows = P.load_optional("laliga_season_cards.json")
+    if not rows:
+        return {}
+    out = {}
+    for r in rows or []:
+        short = resolve((r.get("team") or "").strip())
+        name = (r.get("n") or "").strip()
+        if not short or not name:
+            continue
+        out[(short, name)] = (r.get("yc"), r.get("min"))
+    return out
+
+
 def build_players(clubs, continuing, promoted, resolve):
     """Every La Liga player, one row each, best-evidenced basis first."""
     unmapped, reused = {}, []
@@ -271,6 +297,14 @@ def build_players(clubs, continuing, promoted, resolve):
             continue
         seen.add(key)
         deduped.append(r)
+
+    # This season's cautions, stamped on where they are known. NOT defaulted
+    # to zero: "no data" and "no cards yet" look identical on a strip that
+    # tells someone a ban is one booking away, and only one is safe to act on.
+    live = season_cards(resolve)
+    for r in deduped:
+        got = live.get((r["c"], r["n"]))
+        r["_sc"], r["_sm"] = (got if got else (None, None))
     return deduped, unmapped
 
 
@@ -333,6 +367,9 @@ def emit(clubs, players, refs):
             f'c:{j(p["c"])}', f'n:{j(p["n"])}', f'p:{j(p["p"])}', f'min:{p["min"]}',
             f'yc:{j(p["yc"])}', f'rc:{j(p["rc"])}', f'y:{j(p["y"])}', f'f:{j(p["f"])}',
             f'fw:{j(p["fw"])}', f'r:{j(p["r"])}', f'ls:{j(p["ls"])}', f'b:{j(p["b"])}',
+            # THIS season: cautions and minutes so far. Null until the season
+            # has been harvested — see season_cards().
+            f'sc:{j(p.get("_sc"))}', f'sm:{j(p.get("_sm"))}',
         ]) + "},")
     lines.append("];")
     lines.append(refs)
@@ -415,6 +452,10 @@ def main():
                     for b in sorted({p["b"] for p in players})),
         f"clubs with players: {len({p['c'] for p in players})} of {len(shorts)}",
         f"club rates from match records: {len(rates)} of {len(shorts)}",
+        "season cautions (2026-27): "
+        + (f"{sum(1 for p in players if p.get('_sc') is not None)} players"
+           if any(p.get("_sc") is not None for p in players)
+           else "none yet — the season has not been harvested"),
     ]
     if problems:
         fail("squad coverage is short, so the desk would ship clubs with no "

@@ -754,4 +754,63 @@ t('every club pair prices, and every fixture stays inside the clamps', () => {
   assert.equal(n, 380, `expected 380 ordered pairs, priced ${n}`);
 });
 
+
+/* ---- suspension watch ---------------------------------------------------- */
+console.log('suspension watch');
+
+t('a cycle position is the total MODULO the threshold, not the total', () => {
+  /* The load-bearing one. A player on ten cautions has served two bans and is
+     on zero again — not eight tenths of the way to a third. Reading the raw
+     total would put him at the top of a watchlist he is not on. */
+  assert.deepEqual(core.suspensionCycle(0, 5), { inCycle: 0, need: 5, served: 0 });
+  assert.deepEqual(core.suspensionCycle(4, 5), { inCycle: 4, need: 1, served: 0 });
+  assert.deepEqual(core.suspensionCycle(5, 5), { inCycle: 0, need: 5, served: 1 });
+  assert.deepEqual(core.suspensionCycle(9, 5), { inCycle: 4, need: 1, served: 1 });
+  assert.deepEqual(core.suspensionCycle(12, 5), { inCycle: 2, need: 3, served: 2 });
+  /* Spain has no ladder: every cycle needs the same five and costs the same
+     one match, so `need` never depends on how many have been served. */
+  for (const total of [0, 5, 10, 15, 20]) {
+    assert.equal(core.suspensionCycle(total, 5).need, 5);
+  }
+});
+
+t('cycle rejects junk rather than inventing a position', () => {
+  for (const bad of [[null, 5], [-1, 5], [3, 0], [3, null], ['x', 5]]) {
+    assert.equal(core.suspensionCycle(bad[0], bad[1]), null, JSON.stringify(bad));
+  }
+});
+
+t('P(reaching the next ban) rises with rate, minutes and horizon', () => {
+  const base = core.pCardsAtLeast(0.30, 90, 3, 1);
+  assert.ok(base > 0 && base < 1, base);
+  assert.ok(core.pCardsAtLeast(0.60, 90, 3, 1) > base, 'a higher rate must be likelier');
+  assert.ok(core.pCardsAtLeast(0.30, 90, 6, 1) > base, 'a longer horizon must be likelier');
+  assert.ok(core.pCardsAtLeast(0.30, 45, 3, 1) < base, 'half a match must be less likely');
+  assert.ok(core.pCardsAtLeast(0.30, 90, 3, 3) < base, 'needing three must be less likely than one');
+});
+
+t('needing none is certain, and a rateless player is never at risk', () => {
+  assert.equal(core.pCardsAtLeast(0.3, 90, 3, 0), 1);
+  assert.equal(core.pCardsAtLeast(0, 90, 38, 1), 0);
+  for (const bad of [[null, 90, 3, 1], [0.3, 0, 3, 1], [0.3, 90, 0, 1], [-1, 90, 3, 1]]) {
+    assert.equal(core.pCardsAtLeast(...bad), null, JSON.stringify(bad));
+  }
+});
+
+t('P matches the Poisson tail by hand', () => {
+  /* lambda = 0.5 x 1 match. P(at least one) = 1 - e^-0.5 = 0.393469... */
+  assert.ok(Math.abs(core.pCardsAtLeast(0.5, 90, 1, 1) - (1 - Math.exp(-0.5))) < 1e-12);
+  /* Needing two at lambda 2: 1 - e^-2(1 + 2) = 0.593994... */
+  const want = 1 - Math.exp(-2) * (1 + 2);
+  assert.ok(Math.abs(core.pCardsAtLeast(2, 90, 1, 2) - want) < 1e-12);
+});
+
+t('a full season makes a ban near-certain for a regular starter', () => {
+  /* Spain bans at every fifth caution with no matchday gate, so a regular on
+     a typical defender's rate should be odds-on across a season. If this ever
+     reads low the strip is not worth showing. */
+  const p = core.pCardsAtLeast(0.30, 90, 38, 5);
+  assert.ok(p > 0.9, `a season-long ban chance of ${p} is implausibly low`);
+});
+
 console.log(`\n${passed} tests passed`);
