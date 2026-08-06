@@ -111,6 +111,7 @@
   .tier.t3{background:color-mix(in srgb,var(--good) 15%,transparent);color:var(--good-ink)}
   .bar{height:6px;border-radius:99px;background:var(--surface-3);overflow:hidden;min-width:56px}
   .bar i{display:block;height:100%;background:var(--accent)}
+  .no-share .fx-share{display:none}
   .fx{border:1px solid var(--border);border-radius:13px;padding:12px 13px;margin-bottom:11px;background:var(--surface)}
   .fx-top{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
   .fx-teams{font-weight:700;font-size:15px;display:flex;align-items:center;gap:7px}
@@ -215,6 +216,7 @@
           <option value="heat">Hottest first</option>
           <option value="time">By kick-off</option>
         </select>
+        <button class="btn" id="fxShareBtn" type="button" title="Download a shareable card of this matchday ranked by booking heat">⬇ Share matchday</button>
         <span class="spacer"></span>
         <span class="faint" id="fxCount" style="font-size:12.5px"></span>
       </div>
@@ -383,7 +385,7 @@
 
   <footer class="wrap" style="padding-left:0;padding-right:0">
     A sibling of the <a href="/">Premier League Bookings Desk</a> and the
-    <a href="/eflc">Championship desk</a>. Same risk formula, same tested
+    <a href="/eflc">Championship desk</a>. See every league on one day at <a href="/today">Today's Card</a>. Same risk formula, same tested
     core, different competition. Not betting advice.
   </footer>
 </main>
@@ -393,6 +395,7 @@
      tag is harmless — the Fixtures tab says so rather than breaking. -->
 <script src="data/laliga_fixtures.js"></script>
 <script src="assets/core.js"></script>
+<script src="assets/share.js"></script>
 <script>
 (function () {
   'use strict';
@@ -766,6 +769,7 @@
 
   /* ---- fixtures --------------------------------------------------------- */
   var FIXTURES = (typeof LALIGA_FIXTURES !== 'undefined' && LALIGA_FIXTURES) || [];
+  var S = (typeof PLDShare !== 'undefined' && PLDShare) || null;
   var REF_KEY = 'laliga_desk_refs_v1';
   var myRefs = {};
   try { myRefs = JSON.parse(localStorage.getItem(REF_KEY) || '{}') || {}; } catch (e) { myRefs = {}; }
@@ -910,6 +914,7 @@
         + side(ca.name || f.a, ca, x.away)
         + '</div>'
         + '<div class="mkts">'
+        + '<button class="mkt fx-share" type="button" data-share="' + f.id + '">\u2b07 Share match</button>'
         + '<span class="mkt">Home <b>' + n1(x.m.expectedHome) + '</b></span>'
         + '<span class="mkt">Away <b>' + n1(x.m.expectedAway) + '</b></span>'
         + [3.5, 4.5, 5.5].map(function (l) {
@@ -931,6 +936,67 @@
   }
   $('#fxRound').addEventListener('change', renderFixtures);
   $('#fxOrder').addEventListener('change', renderFixtures);
+
+
+  /* ---- share cards ------------------------------------------------------ */
+  /* The drawing lives in assets/share.js, shared with the other two desks, so
+     three cards cannot drift apart the first time a colour changes. This end
+     only says which league is asking and hands over fixtures already priced by
+     priceFixture() — the same objects the cards on screen are built from, so
+     a share card can never disagree with the page that produced it. */
+  var SHARE_CTX = {
+    league: 'LL',
+    seasonLabel: 'La Liga 2026-27',
+    roundWord: 'Matchday',
+    clubBy: clubBy,
+    whenText: whenText
+  };
+
+  function shareBusy(btn, on) {
+    if (!btn) return;
+    btn.disabled = on;
+    btn.textContent = on ? 'Building…' : btn.dataset.label;
+  }
+
+  function shareMatch(id, btn) {
+    var fx = FIXTURES.filter(function (f) { return String(f.id) === String(id); })[0];
+    if (!fx) return;
+    var spec = S.deskMatchSpec(priceFixture(fx), SHARE_CTX);
+    shareBusy(btn, true);
+    S.matchCard(spec)
+      .then(function (b) { S.download(b, spec.filename); })
+      .catch(function (e) { console.error(e); })
+      .then(function () { shareBusy(btn, false); });
+  }
+
+  function shareRound(btn) {
+    var round = Number($('#fxRound').value);
+    var list = FIXTURES.filter(function (f) { return f.r === round; }).map(priceFixture);
+    list.sort(function (a, b) { return b.m.expected - a.m.expected; });
+    if (!list.length) return;
+    var ctx = Object.assign({}, SHARE_CTX, { round: round });
+    var spec = S.deskRoundSpec(list, ctx);
+    shareBusy(btn, true);
+    S.roundCard(spec)
+      .then(function (b) { S.download(b, spec.filename); })
+      .catch(function (e) { console.error(e); })
+      .then(function () { shareBusy(btn, false); });
+  }
+
+  /* No module, no buttons. A share control that throws on click is worse
+     than one that was never drawn — the page still works without cards. */
+  if (!S) {
+    $('#fxShareBtn').hidden = true;
+    document.documentElement.classList.add('no-share');
+  } else {
+    $('#fxList').addEventListener('click', function (e) {
+      var b = e.target.closest('[data-share]');
+      if (b) { b.dataset.label = b.dataset.label || b.textContent; shareMatch(b.dataset.share, b); }
+    });
+    var rb = $('#fxShareBtn');
+    rb.dataset.label = rb.textContent;
+    rb.addEventListener('click', function () { shareRound(rb); });
+  }
 
   /* ---- provenance ------------------------------------------------------- */
   /* Says what the model prices against what the division actually produced.

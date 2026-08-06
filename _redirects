@@ -8,5 +8,7 @@
 # The La Liga desk. Same rule — before the catch-all.
 /laliga       /laliga.html  200
 /la-liga      /laliga.html  200
+# The combined same-day view across every desk.
+/today        /today.html   200
 
 /*    /index.html   200

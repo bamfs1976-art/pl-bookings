@@ -75,5 +75,13 @@ jobs:
       - name: La Liga dataset and desk guard
         run: node scripts/check-laliga.mjs
 
+      # The share cards. They are the one artefact that LEAVES the site, so
+      # nobody who sees one can check it against the page it came from. Runs
+      # the renderer against a recording stub and asserts the text drawn —
+      # pixel-diffing would fail on a font substitution and pass on a wrong
+      # number, which is exactly backwards.
+      - name: Share cards
+        run: node scripts/check-share.mjs
+
       - name: Unit tests (PLDCore)
         run: node tests/test-core.mjs

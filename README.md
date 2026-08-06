@@ -146,6 +146,56 @@ Two fixture lists exist for this league and they are different seasons: `laliga_
 
 Still open: the Championship suspension thresholds and the Spanish rungs above five yellows, both recorded in the registry as unconfirmed and neither shipped as user-facing copy.
 
+### Share cards, and the combined view
+
+All three desks now export the same two cards, from one implementation in
+`assets/share.js`: **⬇ Share match** on every fixture and **⬇ Share matchday**
+for the whole round, ranked by booking heat, each with an acca strip showing the
+best double and treble and their fair odds. The desks differ only by a *theme*
+(two gradient stops, a strap, a wordmark) and an *adapter* that turns whatever
+the desk already priced into what a card draws — so nothing in the renderer
+knows how a probability was arrived at, and three cards cannot drift apart the
+first time a colour changes.
+
+The Championship and La Liga cards additionally carry the **team card markets**
+strip (home/away expected, over 3.5/4.5/5.5, both teams carded) that those desks
+show on screen and the Premier League one does not.
+
+**`/today` combines them.** One date, every league that plays on it, ranked by
+heat, with a single share card across the lot — and because each leg is a
+different match in a different competition, the acca legs there are far closer
+to genuinely independent than a same-match combo. The heat numbers are computed
+by the same `PLDCore` calls each desk makes, and are verified equal to the
+desks' own: a fixture must never carry two prices.
+
+Two implementation notes worth keeping:
+
+- Every dataset declares `const CLUBS` and `const REFS` — right in a file read
+  by one desk, fatal in a page that wants two, since a redeclaration is a
+  `SyntaxError` and the second file never loads. `/today` loads each league in
+  a hidden same-origin iframe (`data-frame.html`), which is a separate global
+  scope, so no data file or desk had to change.
+- A top-level `const` is a **lexical** binding and never becomes a property of
+  the global object, so `frame.contentWindow.CLUBS` is permanently `undefined`.
+  The frame publishes an explicit `window.__data` instead. The first attempt
+  reported every frame ready and every dataset empty.
+
+`scripts/check-share.mjs` runs the renderer against a stub canvas that records
+every draw call and asserts the *text*: that both sides' candidates appear and
+are sorted, that the markets match the desk's, that each league keeps a distinct
+wordmark and filename slug, that the combined card labels each row's league, and
+that **every card carries the 18+ / BeGambleAware line** — which the first
+version silently truncated off the end of any card with a long note. Pixel
+diffing would have failed on a font substitution and passed on a wrong number.
+
+The Premier League is not yet on `/today`. Its fixtures come from the live FPL
+feed at runtime rather than a committed file, and its desk prices them with
+factors this page does not have (availability, derbies, the match model's
+game-state term) — so including it from a partial model would print a different
+number for the same match than the Premier League desk itself shows. One price
+per fixture matters more than one more league, and it drops in unchanged the
+moment a committed PL fixture list exists.
+
 ## Tests and CI
 
 `node tests/test-core.mjs` unit-tests the pure logic in `assets/core.js` (risk formula, name normalisation, pick P/L + ROI, implied-probability mapping). `python3 data/test_leagues.py` covers the league registry and the league-aware referee build — that the Premier League still reads the mirror first, that the origin's blank rows and latin-1 names are handled, that a per-league match floor applies, and that a league whose records carry no referee is refused rather than shipped as an empty ranking. GitHub Actions (`.github/workflows/ci.yml`) runs the tests, `node --check` over the Netlify functions / service worker / inline scripts, and the data guard on every push.

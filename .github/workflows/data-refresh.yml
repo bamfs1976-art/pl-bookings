@@ -318,6 +318,7 @@ jobs:
           node scripts/check-data.mjs
           node scripts/check-eflc.mjs
           node scripts/check-laliga.mjs
+          node scripts/check-share.mjs
           node tests/test-core.mjs
 
       - name: Commit and push if changed

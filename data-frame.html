@@ -1,0 +1,56 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>dataset frame</title>
+<!--
+  A scope, not a page.
+
+  Every desk's dataset declares `const CLUBS` and `const REFS` — the same two
+  names, because each file is read by exactly one desk and those are the right
+  names there. Loading two of them into one document is a redeclaration error,
+  so the combined view on /today would get the first league and a dead script
+  tag for the second.
+
+  Rewriting the data files to league-scoped globals would touch three desks,
+  build_refs.py's REFS patcher and two guards, all to work around a scoping
+  problem. A same-origin iframe already IS a separate global scope, so this
+  loads one league's data and /today reads it off contentWindow.
+
+  The league is passed in the hash (#eflc, #laliga). document.write of a
+  script SRC is fine under `script-src 'self' 'unsafe-inline'` — it is a
+  fetched file, not eval'd text.
+-->
+<script>
+(function () {
+  var ALLOWED = {
+    eflc: ['data/eflc_data.js', 'data/eflc_fixtures.js'],
+    laliga: ['data/laliga_data.js', 'data/laliga_fixtures.js']
+  };
+  // An allow-list, not string interpolation. The hash is attacker-controllable
+  // via a crafted link, and this writes a script tag out of it.
+  var files = ALLOWED[(location.hash || '').replace('#', '').toLowerCase()];
+  if (!files) return;
+  files.forEach(function (f) {
+    document.write('<script src="' + f + '" onerror="window.__missing=1"><\/script>');
+  });
+})();
+</script>
+<script>
+  // PUBLISHES the datasets onto `window`, which is not the formality it looks.
+  // The data files declare `const CLUBS = [...]`, and a top-level const is a
+  // LEXICAL binding — it is visible to this script, which shares its scope,
+  // but it is NOT a property of the global object, so the parent reading
+  // frame.contentWindow.CLUBS gets undefined however long it waits. That is
+  // exactly what happened on the first attempt: the frames reported ready and
+  // every dataset came back empty.
+  window.__data = {
+    CLUBS:   typeof CLUBS !== 'undefined' ? CLUBS : null,
+    REFS:    typeof REFS !== 'undefined' ? REFS : null,
+    players: typeof EFLC_PLAYERS !== 'undefined' ? EFLC_PLAYERS
+           : typeof LALIGA_PLAYERS !== 'undefined' ? LALIGA_PLAYERS : null,
+    fixtures: typeof EFLC_FIXTURES !== 'undefined' ? EFLC_FIXTURES
+            : typeof LALIGA_FIXTURES !== 'undefined' ? LALIGA_FIXTURES : null
+  };
+  // Tells the parent it is safe to read, whether or not the files existed:
+  // a league that has not been built yet is a normal state, not an error.
+  window.__ready = true;
+</script>

@@ -1,0 +1,453 @@
+<!doctype html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data: https://cdn.sportmonks.com https://media.api-sports.io; connect-src 'self'">
+<title>Today's Card — Bookings Desk</title>
+<meta name="description" content="Every match across the Championship and La Liga on one day, ranked by booking heat, with a combined share card.">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="assets/tw.css">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400..800&family=Hanken+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#eef1f6; --surface:#ffffff; --surface-2:#f4f6fa; --surface-3:#eaedf3;
+    --text:#0c1322; --text-2:#586275; --text-3:#8b94a5; --border:#e3e7ee; --border-2:#d7dce6;
+    --accent:#0e7490; --on-accent:#ffffff;
+    --danger:#dc2626; --warn:#d97706; --good:#16a34a;
+    --danger-ink:#b91c1c; --warn-ink:#a35709; --good-ink:#15803d;
+    --shadow-sm:0 1px 2px rgba(13,19,34,.06);
+    --ring:rgba(14,116,144,.45);
+    --mono:ui-monospace,"SF Mono",SFMono-Regular,Menlo,Consolas,monospace;
+  }
+  html[data-theme="dark"]{
+    --bg:#0b0f1a; --surface:#141b2c; --surface-2:#1b2336; --surface-3:#232c42;
+    --text:#eef1f7; --text-2:#9aa6bb; --text-3:#6b7790; --border:#283248; --border-2:#33405a;
+    --accent:#22d3ee; --on-accent:#062028;
+    --danger:#f87171; --warn:#fbbf24; --good:#34d399;
+    --danger-ink:#f87171; --warn-ink:#fbbf24; --good-ink:#34d399;
+    --ring:rgba(34,211,238,.5);
+  }
+  *{box-sizing:border-box}
+  body{background:var(--bg);color:var(--text);font-family:'Hanken Grotesk',system-ui,sans-serif;margin:0;-webkit-font-smoothing:antialiased}
+  h1,h2,h3{font-family:'Bricolage Grotesque',system-ui,sans-serif;letter-spacing:-.02em;margin:0}
+  .muted{color:var(--text-2)} .faint{color:var(--text-3)}
+  a{color:var(--accent)}
+  .wrap{max-width:1180px;margin:0 auto;padding:0 16px}
+  .topbar{position:sticky;top:0;z-index:30;height:60px;display:flex;align-items:center;
+    background:color-mix(in srgb,var(--surface) 88%,transparent);backdrop-filter:blur(10px);
+    border-bottom:1px solid var(--border)}
+  .brand{display:flex;align-items:center;gap:10px;font-weight:700;letter-spacing:-.02em}
+  .brand .dot{width:26px;height:26px;border-radius:8px;background:var(--accent);color:var(--on-accent);
+    display:grid;place-items:center;font-size:11px;font-weight:800}
+  .spacer{flex:1}
+  .btn{font:inherit;font-size:13px;padding:7px 12px;border-radius:9px;border:1px solid var(--border-2);
+    background:var(--surface);color:var(--text);cursor:pointer}
+  .btn:hover{border-color:var(--accent)}
+  .btn[disabled]{opacity:.55;cursor:progress}
+  .btn.primary{background:var(--accent);color:var(--on-accent);border-color:transparent;font-weight:700}
+  .btn:focus-visible,select:focus-visible{outline:2px solid var(--ring);outline-offset:2px}
+  select{font:inherit;font-size:13px;padding:7px 10px;border-radius:9px;
+    border:1px solid var(--border-2);background:var(--surface);color:var(--text)}
+  .hero{padding:22px 0 6px}
+  .hero h1{font-size:clamp(23px,3.4vw,34px)}
+  .card{background:var(--surface);border:1px solid var(--border);border-radius:14px;box-shadow:var(--shadow-sm);padding:14px}
+  .controls{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:12px}
+  .stats{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+  .stat{background:var(--surface);border:1px solid var(--border);border-radius:11px;padding:8px 13px}
+  .stat b{display:block;font-size:19px;line-height:1.15}
+  .stat span{font-size:11.5px;color:var(--text-2)}
+  .row{display:flex;align-items:center;gap:10px;padding:11px 4px;border-bottom:1px solid var(--border);flex-wrap:wrap}
+  .row:last-child{border-bottom:0}
+  .lg{font-size:10.5px;font-weight:800;padding:3px 8px;border-radius:999px;letter-spacing:.03em;flex:none}
+  .lg.EFLC{background:color-mix(in srgb,#7c3aed 16%,transparent);color:#6d28d9}
+  .lg.LL{background:color-mix(in srgb,#ea580c 18%,transparent);color:#c2410c}
+  .lg.PL{background:color-mix(in srgb,#e90052 15%,transparent);color:#be123c}
+  .teams{font-weight:700;font-size:14.5px;min-width:0;flex:1 1 260px}
+  .when{font-size:12.5px;color:var(--text-2);flex:none;font-family:var(--mono)}
+  .top{font-size:12.5px;color:var(--text-2);flex:1 1 200px;min-width:0}
+  .heat{font-family:var(--mono);font-weight:800;font-size:17px;flex:none;min-width:52px;text-align:right}
+  .heat.hot{color:var(--good-ink)} .heat.warm{color:var(--warn-ink)} .heat.cool{color:var(--text-2)}
+  .empty{padding:22px 6px;color:var(--text-2);text-align:center}
+  .note{font-size:12.5px;color:var(--text-2);margin:12px 0 0;line-height:1.5}
+  footer{padding:26px 0 40px;font-size:12.5px;color:var(--text-3)}
+</style>
+</head>
+<body>
+<header class="topbar">
+  <div class="wrap" style="display:flex;align-items:center;width:100%">
+    <div class="brand"><span class="dot">ALL</span> Today's Card</div>
+    <span class="spacer"></span>
+    <button class="btn" id="themeBtn" type="button" aria-label="Toggle dark mode">Dark</button>
+  </div>
+</header>
+
+<main class="wrap">
+  <section class="hero">
+    <h1>Every league, one day</h1>
+    <p class="muted" style="margin:8px 0 0;max-width:70ch">
+      Matches from every desk that plays on the same date, ranked by booking heat, with one
+      combined share card across the lot. The acca legs are one per match, so unlike a same-match
+      combo they are close to genuinely independent.
+    </p>
+    <div class="stats" id="stats"></div>
+  </section>
+
+  <div class="card">
+    <div class="controls">
+      <select id="day" aria-label="Date"></select>
+      <button class="btn primary" id="shareBtn" type="button">⬇ Share the day</button>
+      <span class="spacer"></span>
+      <span class="faint" id="count" style="font-size:12.5px"></span>
+    </div>
+    <div id="list"></div>
+    <div class="empty" id="empty" hidden></div>
+    <p class="note" id="cover"></p>
+  </div>
+
+  <footer class="wrap" style="padding-left:0;padding-right:0">
+    The <a href="/">Premier League</a>, <a href="/eflc">Championship</a> and
+    <a href="/laliga">La Liga</a> desks. Same risk formula, same tested core.
+    Not betting advice.
+  </footer>
+</main>
+
+<script src="assets/core.js"></script>
+<script src="assets/share.js"></script>
+<!-- Every desk's committed dataset, each in its OWN GLOBAL SCOPE.
+
+     They all declare `const CLUBS` and `const REFS` — correct in a file read
+     by one desk, fatal in a page that wants two. A same-origin iframe is a
+     separate scope, so each league loads into one and this page reads it off
+     contentWindow. No data file and no desk had to change for it. -->
+<iframe id="f-eflc"   src="data-frame.html#eflc"   hidden title="EFL Championship dataset"></iframe>
+<iframe id="f-laliga" src="data-frame.html#laliga" hidden title="La Liga dataset"></iframe>
+<script>
+(function () {
+  'use strict';
+  var $ = function (s) { return document.querySelector(s); };
+  var C = window.PLDCore, S = window.PLDShare;
+
+  /* ---- theme ----------------------------------------------------------- */
+  var THEME_KEY = 'today_desk_theme';
+  try {
+    var t = localStorage.getItem(THEME_KEY);
+    if (t) document.documentElement.dataset.theme = t;
+  } catch (e) { /* private mode */ }
+  $('#themeBtn').addEventListener('click', function () {
+    var d = document.documentElement.dataset.theme === 'dark';
+    document.documentElement.dataset.theme = d ? 'light' : 'dark';
+    $('#themeBtn').textContent = d ? 'Dark' : 'Light';
+    try { localStorage.setItem(THEME_KEY, d ? 'light' : 'dark'); } catch (e) {}
+  });
+  $('#themeBtn').textContent =
+    document.documentElement.dataset.theme === 'dark' ? 'Light' : 'Dark';
+
+  /* ---- the leagues on this page ---------------------------------------- */
+  /*
+   * Data-driven on purpose. Adding a competition to this page is an entry in
+   * this array, not another branch through the rendering — which is the same
+   * reason data/leagues.py exists on the Python side.
+   *
+   * The Premier League is NOT here, and the reason is worth stating: its
+   * fixtures come from the live FPL feed at runtime rather than a committed
+   * file, and its desk prices them with extra factors this page does not have
+   * (availability, derbies, the match model's game-state term). Including it
+   * from a partial model would print a DIFFERENT number for the same match
+   * than the Premier League desk itself shows, and two prices for one fixture
+   * is worse than one league missing. It drops in here unchanged the moment a
+   * committed PL fixture list exists.
+   */
+  var SOURCES = [
+    { code: 'EFLC', name: 'EFL Championship', href: '/eflc', frame: 'f-eflc' },
+    { code: 'LL', name: 'La Liga', href: '/laliga', frame: 'f-laliga' }
+  ];
+
+  function readFrames() {
+    return SOURCES.map(function (s) {
+      var w;
+      try { w = document.getElementById(s.frame).contentWindow; } catch (e) { return null; }
+      if (!w) return null;
+      /* Read from the frame's published __data, NOT from its globals: the
+         data files use `const`, which is lexical and never becomes a window
+         property, so contentWindow.CLUBS is always undefined. */
+      var d = w.__data || {};
+      var L = {
+        code: s.code, name: s.name, href: s.href,
+        clubs: d.CLUBS, refs: d.REFS, players: d.players, fixtures: d.fixtures
+      };
+      return (L.clubs && L.clubs.length && L.players && L.players.length
+              && L.fixtures && L.fixtures.length) ? L : null;
+    }).filter(Boolean);
+  }
+  var LEAGUES = [];
+
+  function framesReady() {
+    return SOURCES.every(function (s) {
+      var f = document.getElementById(s.frame);
+      try { return !!(f && f.contentWindow && f.contentWindow.__ready); }
+      catch (e) { return true; }   // cannot see it: stop waiting rather than hang
+    });
+  }
+
+  /* Waits for the frames, but never forever. A dataset that fails to load is
+     a league missing from the page, which is a normal state here — hanging on
+     a spinner because one file 404'd is not. */
+  function whenReady(fn) {
+    var tries = 0;
+    (function poll() {
+      if (framesReady() || ++tries > 60) { fn(); return; }
+      setTimeout(poll, 50);
+    })();
+  }
+
+  /* ---- pricing, identical to each desk's own ---------------------------- */
+  /* The same shrink-then-hazard path both desks use, from the same tested
+     core, so a fixture on this page reads exactly as it does on its own desk.
+     Duplicating the CALL is fine; duplicating the MODEL would not be, which is
+     why every step below is a PLDCore function. */
+  var SHRINK_MATCHES = 6;
+
+  function prepare(L) {
+    var acc = {};
+    L.players.forEach(function (p) {
+      var m = Number(p.min) || 0;
+      if (!(m > 0) || p.y == null) return;
+      var a = acc[p.p] || (acc[p.p] = { w: 0, m: 0 });
+      a.w += p.y * m; a.m += m;
+    });
+    L.prior = function (pos) {
+      return acc[pos] && acc[pos].m ? acc[pos].w / acc[pos].m : 0.15;
+    };
+    L.players.forEach(function (p) {
+      var m = Number(p.min) || 0;
+      p._y90 = (m > 0 && p.yc != null)
+        ? C.shrinkRate(p.yc, m, L.prior(p.p), SHRINK_MATCHES) : null;
+    });
+    L.clubBy = {};
+    L.clubs.forEach(function (c) { L.clubBy[c.short] = c; });
+    L.refBy = {};
+    (L.refs || []).forEach(function (r) { L.refBy[r.n] = r; });
+    /* The league's own average card rate, which the referee factor is
+       relative to. Match-weighted, because REFS carries a rate and a count. */
+    var mm = 0, tot = 0;
+    (L.refs || []).forEach(function (r) {
+      var k = Number(r.matches) || 0; mm += k; tot += (Number(r.ypg) || 0) * k;
+    });
+    L.leagueYpg = mm ? tot / mm : null;
+  }
+
+  function refFactor(L, ref) {
+    if (!ref || !L.leagueYpg || ref.ypg == null) return 1;
+    return Math.max(0.75, Math.min(1.30, ref.ypg / L.leagueYpg));
+  }
+
+  function sideProbs(L, short, factor) {
+    var squad = L.players.filter(function (p) {
+      return p.c === short && p._y90 != null;
+    });
+    if (!squad.length) return null;
+    var w = C.minuteWeights(squad.map(function (p) { return p.min; }), 11);
+    var rows = squad.map(function (p, i) {
+      var lam = C.cardLambda(p._y90, Math.max(0, w[i]) * 90, { ref: factor });
+      return { p: p, prob: C.pCardFromLambda(lam) || 0 };
+    });
+    return {
+      ps: rows.map(function (r) { return r.prob; }),
+      top: rows.slice().sort(function (a, b) { return b.prob - a.prob; }).slice(0, 4)
+    };
+  }
+
+  function price(L, fx) {
+    var ref = fx.ref ? L.refBy[fx.ref] : null;
+    var factor = refFactor(L, ref);
+    var home = sideProbs(L, fx.h, factor), away = sideProbs(L, fx.a, factor);
+    if (!home || !away) return null;
+    return {
+      L: L, fx: fx, ref: { ref: ref, name: fx.ref || null, appointed: !!fx.ref },
+      factor: factor, home: home, away: away,
+      m: C.teamCardMarkets(home.ps, away.ps, [3.5, 4.5, 5.5])
+    };
+  }
+
+  /* ---- the day --------------------------------------------------------- */
+  function dayKey(iso) { return String(iso || '').slice(0, 10); }
+
+  var ALL = [], DAYS = {}, DAYKEYS = [];
+
+  function index() {
+    LEAGUES.forEach(function (L) {
+      L.fixtures.forEach(function (fx) {
+        if (!fx.d) return;
+        var p = price(L, fx);
+        if (p) ALL.push(p);
+      });
+    });
+    ALL.forEach(function (p) {
+      (DAYS[dayKey(p.fx.d)] = DAYS[dayKey(p.fx.d)] || []).push(p);
+    });
+    DAYKEYS = Object.keys(DAYS).sort();
+  }
+
+  /* Days with more than one league on them are the point of this page, so
+     they are what it opens on — the next such date, or the next date at all
+     if no two leagues ever coincide. */
+  function leaguesOn(k) {
+    var s = {};
+    DAYS[k].forEach(function (p) { s[p.L.code] = 1; });
+    return Object.keys(s);
+  }
+  function defaultDay() {
+    var today = new Date().toISOString().slice(0, 10);
+    var future = DAYKEYS.filter(function (k) { return k >= today; });
+    var multi = future.filter(function (k) { return leaguesOn(k).length > 1; });
+    return multi[0] || future[0] || DAYKEYS[DAYKEYS.length - 1];
+  }
+
+  function fmtDay(k) {
+    var d = new Date(k + 'T12:00:00Z');
+    return isNaN(d) ? k : d.toLocaleDateString(undefined,
+      { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' });
+  }
+  function fmtTime(iso) {
+    var d = new Date(iso);
+    return isNaN(d) ? '' : d.toLocaleTimeString(undefined,
+      { hour: '2-digit', minute: '2-digit' });
+  }
+  function n1(v) { return v == null ? '—' : Number(v).toFixed(1); }
+  function esc(s) {
+    return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+    });
+  }
+  function heatClass(h) { return h >= 4.2 ? 'hot' : h >= 3.5 ? 'warm' : 'cool'; }
+
+  function candidates(p) {
+    var out = [];
+    ['home', 'away'].forEach(function (k) {
+      var short = p.fx[k === 'home' ? 'h' : 'a'];
+      (p[k].top || []).forEach(function (t) {
+        out.push({ name: t.p.n, club: short, prob: t.prob,
+                   sub: (t.p.p || '') + ' · ' + p.L.code });
+      });
+    });
+    return out.sort(function (a, b) { return b.prob - a.prob; });
+  }
+
+  function selected() {
+    var k = $('#day').value;
+    return (DAYS[k] || []).slice().sort(function (a, b) {
+      return b.m.expected - a.m.expected;
+    });
+  }
+
+  function render() {
+    var rows = selected(), host = $('#list'), empty = $('#empty');
+    $('#count').textContent = rows.length + ' match' + (rows.length === 1 ? '' : 'es');
+    if (!rows.length) {
+      host.innerHTML = ''; empty.hidden = false;
+      empty.textContent = 'No matches on that date.';
+      $('#cover').textContent = '';
+      $('#shareBtn').disabled = true;
+      return;
+    }
+    empty.hidden = true;
+    $('#shareBtn').disabled = false;
+    host.innerHTML = rows.map(function (p) {
+      var ch = p.L.clubBy[p.fx.h] || {}, ca = p.L.clubBy[p.fx.a] || {};
+      var top = candidates(p)[0];
+      return '<div class="row">'
+        + '<span class="lg ' + p.L.code + '">' + esc(p.L.code) + '</span>'
+        + '<span class="when">' + esc(fmtTime(p.fx.d)) + '</span>'
+        + '<span class="teams">' + esc(ch.name || p.fx.h) + ' <span class="faint">v</span> '
+        + esc(ca.name || p.fx.a) + '</span>'
+        + '<span class="top">' + (top
+            ? esc(top.name) + ' <b>' + (top.prob * 100).toFixed(0) + '%</b>'
+            : '<span class="faint">no rated players</span>') + '</span>'
+        + '<span class="heat ' + heatClass(p.m.expected) + '">' + n1(p.m.expected) + '</span>'
+        + '</div>';
+    }).join('');
+
+    var codes = leaguesOn($('#day').value);
+    $('#cover').textContent = 'Covering ' + codes.map(function (c) {
+      return (LEAGUES.filter(function (L) { return L.code === c; })[0] || {}).name || c;
+    }).join(' and ') + '. Heat is the expected number of cards in the match, both sides '
+      + 'added together, with the referee applied where one has been appointed.';
+  }
+
+  /* ---- the combined card ------------------------------------------------ */
+  function shareDay() {
+    var rows = selected();
+    if (!rows.length || !S) return;
+    var legs = rows.map(function (p) { return candidates(p)[0]; })
+      .filter(function (l) { return l && l.prob > 0; })
+      .sort(function (a, b) { return b.prob - a.prob; });
+    var codes = leaguesOn($('#day').value);
+    var spec = {
+      league: 'ALL',
+      title: fmtDay($('#day').value),
+      subtitle: codes.join(' · ') + ' · hottest fixtures first',
+      fixtures: rows.map(function (p) {
+        var top = candidates(p)[0];
+        return {
+          home: p.fx.h, away: p.fx.a, tag: p.L.code,
+          heat: p.m.expected, heatLabel: 'cards',
+          top: top ? { name: top.name, prob: top.prob } : null
+        };
+      }),
+      legs: legs,
+      accaHeading: 'ACCA BUILDER · ACROSS LEAGUES',
+      note: 'One leg a match across different leagues — closer to independent '
+          + 'than a same-match combo · research, not a guarantee'
+    };
+    var btn = $('#shareBtn'), label = btn.textContent;
+    btn.disabled = true; btn.textContent = 'Building…';
+    S.roundCard(spec)
+      .then(function (b) {
+        S.download(b, 'bookings-desk-' + S.slug($('#day').value) + '.png');
+      })
+      .catch(function (e) { console.error(e); })
+      .then(function () { btn.disabled = false; btn.textContent = label; });
+  }
+
+  /* ---- boot ------------------------------------------------------------ */
+  whenReady(function () {
+  LEAGUES = readFrames();
+  LEAGUES.forEach(prepare);
+  index();
+  if (!LEAGUES.length) {
+    $('#stats').innerHTML = '';
+    $('#list').innerHTML = '';
+    $('#empty').hidden = false;
+    $('#empty').innerHTML = 'No league datasets are built yet. They are produced by the '
+      + 'data-refresh workflow; this page combines whatever it finds.';
+    $('#shareBtn').disabled = true;
+    $('#day').disabled = true;
+  } else {
+    var multi = DAYKEYS.filter(function (k) { return leaguesOn(k).length > 1; }).length;
+    $('#stats').innerHTML = [
+      ['<b>' + LEAGUES.length + '</b><span>leagues</span>'],
+      ['<b>' + ALL.length + '</b><span>fixtures priced</span>'],
+      ['<b>' + DAYKEYS.length + '</b><span>match dates</span>'],
+      ['<b>' + multi + '</b><span>dates with more than one league</span>']
+    ].map(function (h) { return '<div class="stat">' + h + '</div>'; }).join('');
+
+    $('#day').innerHTML = DAYKEYS.map(function (k) {
+      var codes = leaguesOn(k);
+      return '<option value="' + k + '">' + esc(fmtDay(k)) + ' — '
+        + DAYS[k].length + ' match' + (DAYS[k].length === 1 ? '' : 'es')
+        + ' · ' + codes.join('+') + '</option>';
+    }).join('');
+    $('#day').value = defaultDay();
+    $('#day').addEventListener('change', render);
+    $('#shareBtn').addEventListener('click', shareDay);
+    if (!S) $('#shareBtn').hidden = true;
+    render();
+  }
+  });
+})();
+</script>
+</body>
+</html>
