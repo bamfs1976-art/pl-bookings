@@ -351,12 +351,21 @@ def probe(cookie, only=None):
         print(f"  reported      : {meta_of(payload) or 'nothing'}")
         print(f"  players page 1: {len(rows)}")
         if rows:
-            teams = sorted({(r.get('team') or '?') for r in rows})
-            print(f"  fields        : {sorted(rows[0])[:14]}")
-            print(f"  clubs on p1   : {len(teams)} -> {', '.join(teams[:6])}")
-            for r in rows[:3]:
-                print(f"    {r.get('team','?'):24} {r.get('n') or r.get('name','?')}"
-                      f"  min={r.get('min') or r.get('minutes')}")
+            keys = sorted(rows[0])
+            print(f"  fields ({len(keys)}):")
+            for i in range(0, len(keys), 6):
+                print("    " + ", ".join(keys[i:i + 6]))
+            # The build wants club, name, position, minutes, cards and fouls.
+            # It is the FEED that decides what those are called, and a mapping
+            # written from a guess is how a rate silently becomes null. So the
+            # fields that could plausibly carry them are printed with their
+            # values, from a real row, and the mapping is written from that.
+            want = ("team", "club", "name", "player", "pos", "min", "appear",
+                    "yellow", "red", "card", "foul")
+            hit = [k for k in keys if any(w in k.lower() for w in want)]
+            print("  the fields the build needs, on a real row:")
+            for k in hit:
+                print(f"    {k:34} = {rows[0].get(k)!r}")
 
 
 def main():
