@@ -159,7 +159,7 @@ assert.ok(REF_HISTORY.seasons.every((s) => s.ypg > 0 && s.g > 0),
 assert.ok(REF_HISTORY.span.endsWith(histLabels[histLabels.length - 1]),
   `span "${REF_HISTORY.span}" does not match the last season ${histLabels[histLabels.length - 1]}`);
 
-// Head-to-head card history (scripts/build-h2h.mjs). Public-domain match
+// Head-to-head card history (data/build_h2h.py). Public-domain match
 // records, so the shape is guaranteed; assert it stays sane and that the
 // counting rule has not silently changed from yellows to all cards.
 const h2hCtx = {};

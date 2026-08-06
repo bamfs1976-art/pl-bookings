@@ -190,7 +190,7 @@ without the reason you starred him is half a note.
 ### Head-to-head card history — from `card-bookings-bot`
 
 Average yellows in past meetings between the two clubs, on the market strip
-beside the model's number. Built by `scripts/build-h2h.mjs` from the same
+beside the model's number. Built by `data/build_h2h.py` from the same
 public-domain football-data.co.uk records already used for referees and venue
 splits — 1,118 meetings across 151 club pairs over five seasons, no new source
 and no key.

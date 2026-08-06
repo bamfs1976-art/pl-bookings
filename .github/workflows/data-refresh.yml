@@ -101,6 +101,20 @@ jobs:
         continue-on-error: true
         run: python3 data/build_refs.py --league EFLC --season "${{ inputs.refs_season }}"
 
+      # Head-to-head card history, from the same public-domain match records the
+      # referee and venue-split builds already read. No key, no new source.
+      #
+      # The Championship is the one that MUST run here. The GitHub mirror does
+      # not carry it, so it reads football-data.co.uk directly, which the build
+      # sandbox cannot reach — this workflow is the only place it can be built.
+      # continue-on-error for the same reason as the step above: an origin
+      # outage must leave the shipped file in place rather than empty it.
+      - name: Head-to-head history (Championship, La Liga)
+        continue-on-error: true
+        run: |
+          python3 data/build_h2h.py --league EFLC || echo "EFLC h2h unavailable this run"
+          python3 data/build_h2h.py --league LL   || echo "LL h2h unavailable this run"
+
       # LEGACY, and Premier League only. Kept because pl_data.js is still built
       # on a ScoutingStats basis and switching that changes every published
       # number, which is a decision of its own rather than a side effect of

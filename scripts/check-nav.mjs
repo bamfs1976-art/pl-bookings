@@ -267,6 +267,56 @@ assert.ok(/\.as-help\{display:none\}/.test(css) && /\.as-den-lab\{display:none\}
   'wider than the phone and renders zoomed out');
 
 
+/* ---- 9. head-to-head and derbies on the newer desks ---------------------- */
+/* Both were Premier-League-only. H2H comes from the same public-domain match
+   records already behind the referee figures and the venue splits, so this
+   added a signal without adding a source, a login or a key. */
+for (const [f, dataFile, varName] of [
+  ['eflc.html', 'data/eflc_h2h.js', 'EFLC_H2H'],
+  ['laliga.html', 'data/laliga_h2h.js', 'LALIGA_H2H']]) {
+  const src = read(f);
+  assert.ok(existsSync(join(root, dataFile)), `${dataFile} is missing`);
+  assert.ok(src.includes(dataFile), `${f} does not load its head-to-head history`);
+  assert.ok(/function h2hFor/.test(src), `${f} has no head-to-head lookup`);
+  /* Under three meetings is anecdote, not history. */
+  assert.ok(/p\.n >= 3/.test(src),
+    `${f} shows a head-to-head built on fewer than three meetings`);
+
+  /* Every derby code must be a club that is IN the division. A guessed short
+     code produces a derby that does not exist — the first list flagged
+     Bristol City v Millwall, which is not one. */
+  const derbies = /var DERBIES = \[([\s\S]*?)\n  \];/.exec(src);
+  assert.ok(derbies, `${f} has no derby list`);
+  const pairs = [...derbies[1].matchAll(/\['([A-Z]{2,4})','([A-Z]{2,4})'\]/g)]
+    .map((m) => [m[1], m[2]]);
+  assert.ok(pairs.length >= 8, `${f} lists only ${pairs.length} derbies`);
+  const clubsSrc = readFileSync(join(root, 'data',
+    f === 'eflc.html' ? 'eflc_data.js' : 'laliga_data.js'), 'utf8');
+  const block = /const CLUBS = \[([\s\S]*?)\n\];/.exec(clubsSrc);
+  const valid = new Set([...block[1].matchAll(/short:"([^"]+)"/g)].map((m) => m[1]));
+  for (const [a, b] of pairs) {
+    assert.ok(valid.has(a) && valid.has(b),
+      `${f} lists a derby between ${a} and ${b}, and ` +
+      `${valid.has(a) ? b : a} is not a club in this division`);
+    assert.notEqual(a, b, `${f} lists a club as its own derby`);
+  }
+
+  /* The derby must PRICE, not merely label. The Premier League desk applies
+     1.08 per player; a tag with no effect on the number is decoration. */
+  assert.ok(/DERBY_BOOST = 1\.08/.test(src),
+    `${f} does not apply the derby boost to its pricing`);
+  assert.ok(/factor \* \(derby \? DERBY_BOOST : 1\)/.test(codeOnly(src)),
+    `${f} computes a derby flag but never multiplies it into the price`);
+  /* …and it must stay out of the displayed referee factor, or an official
+     reads as stricter than he is because of who is playing. */
+  assert.ok(/factor: factor,/.test(src),
+    `${f} reports the derby-boosted factor as the referee's ×figure`);
+}
+assert.ok(!existsSync(join(root, 'scripts', 'build-h2h.mjs')),
+  'scripts/build-h2h.mjs is back — data/build_h2h.py replaced it and ' +
+  'reproduces its output exactly; two builders for one file is how they drift');
+
+
 console.log(
   `check-nav OK: ${DESKS.length} desks, each linking to all ${DESKS.length} and ` +
   'marking itself current, all routed before the catch-all; combined views ' +

@@ -19,6 +19,8 @@ const SHELL = [
   '/data/pl_data.js',
   '/data/ref_history.js',
   '/data/h2h.js',
+  '/data/eflc_h2h.js',
+  '/data/laliga_h2h.js',
   '/data/model.js',
   '/data/sim_model.js',
   '/data/eflc_data.js',

@@ -76,8 +76,8 @@ Premier League data only.
 | Thin-sample warning | ✅ | ✅ | ✅ | *(done)* |
 | "Hide low sample" filter | ✅ | ✅ | ✅ | *(audit error — `#fMin`, "450+ minutes")* |
 | High / Watch banding of players | ✅ | ✅ | ✅ | *(audit error — see note)* |
-| **Head-to-head strip** | ✅ | ❌ | ❌ | **data** (same source available) |
-| **Derby boost** | ✅ | ❌ | ❌ | **data** (editorial list) |
+| Head-to-head strip | ✅ | ⏳ *(workflow)* | ✅ | *(done — see note)* |
+| Derby boost | ✅ | ✅ | ✅ | *(done — 14 pairs each, priced at ×1.08)* |
 | **Match model / game-state term** | ✅ | ❌ | ❌ | **data** (no source) |
 | **ICS calendar export** | ✅ | ❌ | ❌ | interface |
 
@@ -161,12 +161,12 @@ the Premier League desk keeps it behind a click on P(card).
 Everything else above is interface work on data already shipped. These four need
 a harvest change first:
 
-| Gap | Source | Cost |
+| Gap | Source | Status |
 |---|---|---|
-| Player photos | API-Football `/players` carries a photo URL; already called | low — one field through the existing harvester |
-| Availability flags | API-Football `/injuries`; a new endpoint and quota | medium |
-| Head-to-head | football-data.co.uk — the *same* public-domain records already used for referees and home/away, and they cover both divisions | low |
-| Derby lists | Editorial, hand-written, as the PL list is | low |
+| Player photos | API-Football `/players` carries a photo URL; already called | open — needs a key |
+| Availability flags | API-Football `/injuries`; a new endpoint and quota | open — needs a key |
+| ~~Head-to-head~~ | football-data.co.uk, the *same* public-domain records already behind the referee figures and venue splits | **done** for La Liga; the Championship builds in the workflow |
+| ~~Derby lists~~ | Editorial, hand-written | **done** — 14 pairs each, priced at ×1.08 per player, every short code checked against the shipped club list |
 
 Not obtainable: the **match model**. Plsimulator publishes Premier League ratings
 only. Until an equivalent exists for the Championship and La Liga, that term
@@ -219,7 +219,7 @@ or scope.
 3. ~~**Fixture card parity**~~ — done: thin-sample warning added; banding already existed (audit error).
 4. ~~**Player table parity**~~ — done: confidence dot (all three), card-form arrow, CSV export. **Player notes still outstanding.**
 5. ~~**Club and referee table parity**~~ — done. One agreed set per table, applied in both directions.
-6. **H2H and derby lists** for both newer divisions (low-cost data work).
+6. ~~**H2H and derby lists**~~ — done. La Liga built (136 pairs, 1,146 meetings); the Championship builds in the data-refresh workflow, because the GitHub mirror does not carry it and the origin is unreachable from the build sandbox.
 7. ~~**Tour, glossary, density toggle, command palette**~~ — done on the two newer desks, as shared modules (`assets/tour.js`, `assets/palette.js`, glossary + density in `assets/shell.js`).
 8. **Photos and availability flags** (harvest work).
 9. **Account sync and Tracker** — largest, needs per-league pipelines.

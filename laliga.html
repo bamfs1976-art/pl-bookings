@@ -529,6 +529,7 @@
      tag is harmless — the Fixtures tab says so rather than breaking. -->
 <script src="data/laliga_fixtures.js"></script>
 <script src="assets/core.js"></script>
+<script src="data/laliga_h2h.js" onerror="void 0"></script>
 <script src="assets/shell.js"></script>
 <script src="assets/tour.js"></script>
 <script src="assets/palette.js"></script>
@@ -955,12 +956,20 @@
     };
   }
 
+  /* DERBY_BOOST is 1.08 per player, the same figure the Premier League desk
+     applies — a derby is carded more than the same two clubs otherwise would
+     be. It multiplies into the pricing factor but is kept OUT of `factor`,
+     which is displayed as the referee's ×figure: folding it in there would
+     report an official as stricter than he is because of who is playing. */
+  var DERBY_BOOST = 1.08;
   function priceFixture(fx) {
     var r = refFor(fx);
     var factor = r.ref ? refFactor(r.ref) : 1;
-    var home = sideProbs(fx.h, factor), away = sideProbs(fx.a, factor);
+    var derby = isDerby(fx.h, fx.a);
+    var priced = factor * (derby ? DERBY_BOOST : 1);
+    var home = sideProbs(fx.h, priced), away = sideProbs(fx.a, priced);
     var m = C.teamCardMarkets(home.ps, away.ps, [3.5, 4.5, 5.5]);
-    return { fx: fx, ref: r, factor: factor, home: home, away: away, m: m };
+    return { fx: fx, ref: r, factor: factor, derby: derby, home: home, away: away, m: m };
   }
 
   function whenText(iso) {
@@ -1053,7 +1062,7 @@
         + '<span class="faint">v</span>'
         + (ca.img ? '<img class="crest" src="' + esc(ca.img) + '" alt="">' : '') + esc(ca.name || f.a)
         + '</div>'
-        + '<div class="fx-when">' + esc(whenText(f.d)) + thinTag(x) + '</div>'
+        + '<div class="fx-when">' + esc(whenText(f.d)) + derbyTag(x) + thinTag(x) + '</div>'
         + '<div class="fx-heat"><b>' + n1(x.m.expected) + '</b><span>expected cards</span></div>'
         + '</div>'
         + '<div class="fx-ref">' + refCell + '</div>'
@@ -1068,6 +1077,7 @@
         + [3.5, 4.5, 5.5].map(function (l) {
             return '<span class="mkt">Over ' + l + ' <b>' + pct(x.m.over[l]) + '</b></span>';
           }).join('')
+        + h2hChip(x)
         + '<span class="mkt">Both teams carded <b>' + pct(x.m.bothCarded) + '</b></span>'
         + '</div>'
         + '</div>';
@@ -1297,6 +1307,87 @@
 
   var LEAGUE_SLUG = 'laliga-bookings';
 
+  /* ---- head to head ------------------------------------------------------
+   * What these two clubs actually do to each other, beside what the model
+   * expects. Deliberately BESIDE the model, not inside it: they are two
+   * independent reads of one question — this season's player rates, and what
+   * happened when these sides last met — and the disagreement is the useful
+   * part. Yellows only, matching the model, which counts players booked.
+   *
+   * Under three meetings is anecdote, not history, and is not shown. Promoted
+   * clubs have no top-flight meetings at all and correctly show nothing.
+   */
+  var H2H_DATA = (typeof LALIGA_H2H !== 'undefined') ? LALIGA_H2H : null;
+  function h2hFor(h, a) {
+    if (!H2H_DATA || !H2H_DATA.pairs) return null;
+    var p = H2H_DATA.pairs[[h, a].sort().join('|')];
+    return (p && p.n >= 3) ? p : null;
+  }
+  /* Rendered as a market chip so it sits in the same row as the numbers it is
+     meant to be compared against. */
+  function h2hChip(x) {
+    var p = h2hFor(x.fx.h, x.fx.a);
+    if (!p) return '';
+    var gap = Math.abs(p.avg - (x.m.expected || 0));
+    var hot = gap >= 1 ? ' style="color:var(--danger-ink)"' : '';
+    return '<span class="mkt" title="' + esc('Past meetings: ' + p.avg
+        + ' yellows on average across ' + p.n + ' games (' + p.last.join(', ')
+        + ', most recent first). ' + Math.round(p.o45 * 100)
+        + '% produced 5 or more. Reds ' + p.red + ' a game.'
+        + (gap >= 1 ? ' Highlighted: it disagrees with the model by a card or more.' : ''))
+      + '">H2H ' + p.n + ' <b' + hot + '>' + p.avg.toFixed(1) + '</b></span>';
+  }
+
+  function h2hCell(x) {
+    var p = h2hFor(x.fx.h, x.fx.a);
+    if (!p) return '';
+    /* Highlighted when it disagrees with the model by a card or more — those
+       are the fixtures worth a second look, which is the whole reason it sits
+       next to the number rather than inside it. */
+    var gap = Math.abs(p.avg - (x.m.expected || 0));
+    var tone = gap >= 1 ? 'var(--danger-ink)' : 'var(--text-2)';
+    return '<div class="mk-cell" title="' + esc('Past meetings: ' + p.avg
+        + ' yellows on average across ' + p.n + ' games (' + p.last.join(', ')
+        + ', most recent first). ' + Math.round(p.o45 * 100)
+        + '% produced 5 or more. Reds ' + p.red + ' a game.')
+      + '"><span class="mk-lab">H2H ' + p.n + '</span>'
+      + '<span class="mk-val" style="color:' + tone + '">' + p.avg.toFixed(1) + '</span></div>';
+  }
+
+  /* ---- derbies -----------------------------------------------------------
+   * A derby is carded more than the same two clubs would be otherwise, and the
+   * Premier League desk has priced that for a while. The list is editorial —
+   * there is no feed for "these two dislike each other" — and it is written
+   * down here rather than inferred from distance, because Sevilla v Betis and
+   * two clubs that merely share a city are not the same thing.
+   */
+  var DERBIES = [
+    /* As above: recognised rivalries between two clubs both in the division,
+       every code checked against the shipped club list. */
+    ['RMA','BAR'],   /* El Clásico */
+    ['RMA','ATM'],   /* El Derbi madrileño */
+    ['ATM','BAR'],
+    ['SEV','BET'],   /* El Gran Derbi */
+    ['ATH','RSO'],   /* Basque derby */
+    ['ATH','ALA'],   /* Basque */
+    ['RSO','ALA'],   /* Basque */
+    ['BAR','ESP'],   /* Barcelona derby */
+    ['VAL','LEV'],   /* Valencia derby */
+    ['VAL','VIL'],   /* Valencian community */
+    ['LEV','VIL'],   /* Valencian community */
+    ['CEL','DEP'],   /* O Noso Derbi — Galician */
+    ['SEV','MAL'],   /* Andalusian */
+    ['BET','MAL']    /* Andalusian */
+  ];
+  function isDerby(h, a) {
+    var k = [h, a].sort().join('|');
+    return DERBIES.some(function (d) { return d.slice().sort().join('|') === k; });
+  }
+  function derbyTag(x) {
+    return (x.derby != null ? x.derby : isDerby(x.fx.h, x.fx.a))
+      ? ' <span class="pill band-hi" title="Derby — these fixtures carry more cards than the same two clubs otherwise would">derby</span>' : '';
+  }
+
   /* ---- This Matchday ----------------------------------------------------
    * The landing view. The Premier League desk opens on its fixtures ranked by
    * booking heat; these two opened on a table of several hundred players,
@@ -1378,7 +1469,7 @@
       var cands = mdCandidates(x).slice(0, 4);
       return '<div class="row">'
         + '<span class="teams">' + esc(ch.name || f.h) + ' <span class="faint">v</span> '
-        + esc(ca.name || f.a) + thinTag(x) + '</span>'
+        + esc(ca.name || f.a) + derbyTag(x) + thinTag(x) + '</span>'
         + '<span class="top">' + (cands.length
             ? cands.map(function (c) {
                 return esc(c.name) + ' <b>' + (c.prob * 100).toFixed(0) + '%</b> ' + bandPill(c.prob);
