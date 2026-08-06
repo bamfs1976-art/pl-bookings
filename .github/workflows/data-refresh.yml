@@ -238,7 +238,7 @@ jobs:
           # command when either path matches nothing, so a run that produced
           # the referees but not the dataset staged NEITHER — which is exactly
           # what happened the first time this ran.
-          for f in data/eflc_refs.json data/eflc_data.js; do
+          for f in data/eflc_refs.json data/eflc_data.js data/eflc_status.txt; do
             [ -f "$f" ] && git add "$f"
           done
           if git diff --cached --quiet; then

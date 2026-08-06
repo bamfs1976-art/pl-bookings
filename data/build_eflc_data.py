@@ -61,6 +61,17 @@ sys.path.insert(0, str(DATA))
 import leagues  # noqa: E402
 import build_pl_data as P  # noqa: E402
 
+# Written on EVERY run, success or failure, and committed. A build that fails
+# inside a continue-on-error workflow step leaves no trace in the repository:
+# the run goes green, nothing is committed, and the only record is a log pane
+# somebody has to open and read back. That is a poor way to run a pipeline and
+# a worse way to ask someone else to.
+STATUS = DATA / "eflc_status.txt"
+
+
+def write_status(lines):
+    STATUS.write_text("\n".join(str(x) for x in lines) + "\n", encoding="utf-8")
+
 LEAGUE = leagues.get("EFLC")
 OUT = DATA / LEAGUE.data_file
 MATCHES = 46          # a Championship season, for the per-game team rates
@@ -307,7 +318,16 @@ def main():
     args = ap.parse_args()
 
     print("EFL Championship 2026-27")
+    status = ["EFL Championship 2026-27 — build_eflc_data.py"]
     players, unmapped = build_players()
+
+    by_basis = {}
+    for p in players:
+        by_basis[p["b"]] = by_basis.get(p["b"], 0) + 1
+    status.append(f"players: {len(players)}  by basis: "
+                  + ", ".join(f"{k}={v}" for k, v in sorted(by_basis.items())))
+    have_now = sorted({p["c"] for p in players})
+    status.append(f"clubs with players: {len(have_now)} of 24")
 
     # Everything wrong is reported together. On a first run against a fresh
     # harvest the diagnosis IS the output — which club names a feed uses is
@@ -321,6 +341,9 @@ def main():
             print(f"  {n:5} rows  {name!r}")
         print("  -> add each to leagues.EFLC_ALIASES (or fix EFLC_CLUBS if the "
               "lineup itself is wrong). These rows are NOT in the build.")
+        status.append("unresolved club names: "
+                      + ", ".join(f"{n} ({c} rows)" for n, c in
+                                  sorted(unmapped.items(), key=lambda kv: -kv[1])))
 
     have = {p["c"] for p in players}
     missing = sorted(set(leagues.EFLC_CLUBS.values()) - have)
@@ -336,6 +359,8 @@ def main():
         print(f"\n{len(faults)} problem(s):")
         for f in faults:
             print("  - " + f)
+        write_status(status + ["RESULT: NOT WRITTEN"]
+                     + [f"problem: {f}" for f in faults])
         sys.exit(
             f"\n{OUT.name} was NOT written.\n\n"
             "Every club here is in the position the Premier League desk's\n"
@@ -371,6 +396,8 @@ def main():
         print(f"\ndry run — would write {OUT.name}: {summary}")
         return
     emit(clubs, players, refs)
+    write_status(status + [f"club rates from match records: {rated} of {len(clubs)}",
+                           f"referees: {len(refs)}", "RESULT: WRITTEN " + OUT.name])
     print(f"\nwrote {OUT.name}: {summary}")
 
 
