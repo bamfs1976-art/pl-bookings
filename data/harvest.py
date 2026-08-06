@@ -72,7 +72,22 @@ PAGE_SIZE = 100      # asked for; the API may cap it, which the walk handles
 MAX_PAGES = 300      # runaway guard, far above any real squad list
 
 
-def build_url(league, season_id, page, per_page=PAGE_SIZE, min_minutes=0):
+# Pagination needs a TOTAL order. Sorting by a rate does not give one: every
+# player with no goals ties on goals_p90, the server re-sorts per request, and
+# tied rows drift across page boundaries — so some arrive twice and others
+# never arrive at all. Observed exactly that: 710 rows walked against a
+# reported total of 706, with the promoted clubs missing every goalkeeper,
+# defender and midfielder. Forwards have a non-zero rate and hold their place;
+# everyone else was tied at zero and got shuffled.
+#
+# player_id is unique, so ordering by it is total and every page is disjoint.
+SORT_FIELD = "player_id"
+SORT_ORDER = "asc"
+FALLBACK_SORT = "goals_p90"     # only if the API rejects sorting by player_id
+
+
+def build_url(league, season_id, page, per_page=PAGE_SIZE, min_minutes=0,
+              sort_by=None, sort_order=None):
     """The request the BROWSER makes, which is not the one this script used to.
 
     Three things were wrong and only the first announced itself:
@@ -92,11 +107,8 @@ def build_url(league, season_id, page, per_page=PAGE_SIZE, min_minutes=0):
     params = {
         "page": page,
         "per_page": per_page,
-        # Sorting by a rate would put every page boundary where players tie.
-        # The walk takes every page either way, and the build de-duplicates on
-        # (club, name), so this only has to be a field the API accepts.
-        "sort_by": "goals_p90",
-        "sort_order": "desc",
+        "sort_by": sort_by or SORT_FIELD,
+        "sort_order": sort_order or SORT_ORDER,
         "min_minutes": min_minutes,
     }
     if season_id:
@@ -131,7 +143,7 @@ def meta_of(payload):
     return out
 
 
-def request_json(url, cookie):
+def request_json(url, cookie, allow_400=False):
     req = urllib.request.Request(url, headers={
         "Cookie": cookie,
         "User-Agent": user_agent(),
@@ -151,6 +163,8 @@ def request_json(url, cookie):
             sys.exit(f"ERROR: {url} answered {e.code} — the SS_COOKIE is "
                      "missing, expired or not logged in. Copy a fresh cookie "
                      "header from a logged-in browser session and retry.")
+        if e.code == 400 and allow_400:
+            return None
         if e.code == 400:
             # Not an auth failure — a malformed REQUEST. The cookie is a header
             # value, so anything the browser did not put there (a line break
@@ -213,6 +227,7 @@ FIELD_MAP = {
     "rc": "red_cards",
     "fc90": "fouls_committed_p90",
     "fd90": "fouls_drawn_p90",
+    "pid": "player_id",       # unique; what the walk de-duplicates on
     "tid": "team_id",
     "img": "team_image",        # the CLUB crest, which is what CLUBS carries
 }
@@ -275,6 +290,17 @@ def fetch_all(league, season_id, cookie, label, min_minutes=0):
     whatever total the API claims — never stopping at page one because page one
     looked like a reasonable number of players.
     """
+    # Establish the sort before walking. player_id gives a total order; if the
+    # API will not sort by it we fall back, but loudly, because the fallback is
+    # the ordering that loses players.
+    sort = SORT_FIELD
+    probe_url = build_url(league, season_id, 1, min_minutes=min_minutes)
+    if request_json(probe_url, cookie, allow_400=True) is None:
+        sort = FALLBACK_SORT
+        print(f"    WARNING: the API will not sort by {SORT_FIELD}; falling "
+              f"back to {FALLBACK_SORT}. Ties in that field shuffle between "
+              "requests, so the totals below are the check that matters.")
+
     rows, page, first_meta = [], 1, {}
     # The API CAPS per_page below what is asked for — league 9 answers
     # per_page 10 to a request for 20. So "a short page means the last page"
@@ -284,7 +310,8 @@ def fetch_all(league, season_id, cookie, label, min_minutes=0):
     # which is the bug this rewrite exists to fix.
     effective, total_pages = PAGE_SIZE, None
     while True:
-        url = build_url(league, season_id, page, min_minutes=min_minutes)
+        url = build_url(league, season_id, page, min_minutes=min_minutes,
+                        sort_by=sort)
         payload = request_json(url, cookie)
         got = players_of(payload)
         if page == 1:
@@ -318,12 +345,38 @@ def fetch_all(league, season_id, cookie, label, min_minutes=0):
                      f"{MAX_PAGES} — refusing to loop further.")
 
     rows = normalise_all(rows, label)
+
+    # De-duplicate on identity. Under an unstable sort the same player comes
+    # back on two pages, which is why a walk could report MORE rows than the
+    # league has — and every duplicate is a different player missed.
+    seen, unique = set(), []
+    for r in rows:
+        key = r.get("pid") or (r.get("team"), r.get("n"))
+        if key in seen:
+            continue
+        seen.add(key)
+        unique.append(r)
+    dupes = len(rows) - len(unique)
+
     claimed = first_meta.get("total") or first_meta.get("total_count") or first_meta.get("count")
-    note = ""
-    if isinstance(claimed, int) and claimed != len(rows):
-        note = f"  (the API reports {claimed}; walked {len(rows)})"
-    print(f"  {label}: {len(rows)} players over {page} page(s){note}")
-    return rows, first_meta
+    print(f"  {label}: {len(unique)} players over {page} page(s)"
+          + (f", {dupes} duplicate row(s) dropped" if dupes else ""))
+
+    # A short walk is players missing, and missing players are the whole bug
+    # this route has shipped twice. It is not a note.
+    if isinstance(claimed, int) and len(unique) < claimed:
+        sys.exit(
+            f"ERROR: {label}: the API reports {claimed} players and the walk "
+            f"ended with {len(unique)}, so {claimed - len(unique)} are "
+            f"missing.\n\n"
+            f"  sorted by: {sort}\n"
+            + ("  That is the unstable-sort fallback: rows tied on the sort "
+               "field move between requests, so a page boundary both repeats "
+               "and skips.\n" if sort == FALLBACK_SORT else
+               "  Under a unique sort key this should not happen — the feed "
+               "may have changed underneath the walk.\n")
+            + "\nRefusing to write a partial league.")
+    return unique, first_meta
 
 
 

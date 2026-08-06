@@ -354,4 +354,65 @@ def _renamed_feed_stops_the_harvest():
 
 t("a renamed feed stops the harvest rather than nulling it", _renamed_feed_stops_the_harvest)
 
+
+def _unstable_api(total, cap=10, reject_player_id=False):
+    """An endpoint that re-sorts tied rows between requests, which is what the
+    real one does when asked to sort by a rate."""
+    import urllib.parse as up
+
+    def req(url, cookie, allow_400=False):
+        q = dict(up.parse_qsl(up.urlparse(url).query))
+        if q.get("sort_by") == "player_id" and reject_player_id:
+            return None
+        page = int(q["page"])
+        ids = list(range(total))
+        if reject_player_id and page > 1:      # the ties drift
+            ids = ids[1:] + ids[:1]
+        chunk = ids[(page - 1) * cap:(page - 1) * cap + cap]
+        rows = [{"player_id": i, "player_name": f"p{i}", "team_name": "Millwall",
+                 "position": "Defender", "minutes_played": 900,
+                 "yellow_cards": 1, "red_cards": 0,
+                 "fouls_committed_p90": 1.0, "fouls_drawn_p90": 0.5}
+                for i in chunk]
+        return {"players": rows, "page": page, "per_page": cap,
+                "total_count": total, "total_pages": (total + cap - 1) // cap}
+    return req
+
+
+def _a_total_order_collects_everyone():
+    """Sorting by player_id makes the pages disjoint, so the walk is complete."""
+    real = H.request_json
+    try:
+        H.request_json = _unstable_api(47)
+        rows, _ = H.fetch_all(9, "x", "c", "test")
+        assert len(rows) == 47, len(rows)
+        assert len({r["pid"] for r in rows}) == 47, "and every one distinct"
+    finally:
+        H.request_json = real
+
+
+t("a unique sort key makes the pages disjoint", _a_total_order_collects_everyone)
+
+
+def _a_short_walk_is_refused():
+    """The bug as it actually arrived: 710 rows walked against 706 reported,
+    the duplicates hiding an equal number of players who never came back. Every
+    one of those was a defender or a keeper, because forwards hold their place
+    in a goals-sorted list and everyone else was tied at zero."""
+    real = H.request_json
+    try:
+        H.request_json = _unstable_api(47, reject_player_id=True)
+        try:
+            H.fetch_all(9, "x", "c", "test")
+        except SystemExit as e:
+            assert "are \nmissing" in str(e) or "missing" in str(e), str(e)
+            assert "Refusing to write a partial league" in str(e), str(e)
+        else:
+            assert False, "a short walk should refuse to write"
+    finally:
+        H.request_json = real
+
+
+t("a short walk refuses rather than shipping a partial league", _a_short_walk_is_refused)
+
 print(f"\n{passed} tests passed")
