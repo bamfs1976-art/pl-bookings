@@ -83,21 +83,42 @@ def known_names(code):
     who only the Premier League map knows. Neither list is complete alone; the
     union is what a division contains.
     """
-    if code.upper() == "LL":
+    if code.upper() in SPANISH:
         # Spain's division is DISCOVERED, not declared — see leagues.py. Before
         # --clubs has ever run there is no vocabulary to check against, and
         # that is the normal first state rather than an error.
+        #
+        # SEGUNDA RESOLVES AGAINST LA LIGA'S REGISTRY, deliberately. That
+        # harvest exists for the clubs PROMOTED into La Liga, so the twenty
+        # names worth recognising in a second-tier response are La Liga's, and
+        # the other twenty are meant to be skipped. Falling through to the
+        # English maps below — which is what this did — checks Spanish clubs
+        # against Championship and Premier League names, matches nothing, and
+        # exits with "no clubs this desk recognises". Inside a
+        # continue-on-error step that is a green tick and three missing squads.
         return set(leagues.load_clubs("LL"))
     return set(leagues.EFLC_CLUBS) | set(build_pl_data.SHORT)
 
 
+# The Spanish family. Both resolve against La Liga's registry: Segunda is
+# harvested only for the clubs that have just come up into it.
+SPANISH = {"LL", "SEG"}
+
+
 def canonical_for(code, raw):
     """A feed's club name as the name that league's builder keys on."""
-    if code.upper() == "LL":
+    if code.upper() in SPANISH:
         n = (raw or "").strip()
         if not n:
             return None
-        canon = leagues.LALIGA_AF_ALIASES.get(n, n)
+        # leagues.canon_name, NOT a local alias lookup. It consults BOTH
+        # spelling tables; this consulted only the API-Football one, so a feed
+        # name that happens to match a football-data spelling went unmapped.
+        # That is how Alaves was lost: the 2025-26 response canonicalised to
+        # "Deportivo Alaves" (via the football-data table, which the referee
+        # join uses) while the 2026-27 registry stored the raw "Alaves" — two
+        # canonicalisers, two answers, one club with no squad and no error.
+        canon = leagues.canon_name("LL", n)
         reg = leagues.load_clubs("LL")
         if not reg:
             return canon          # discovery pass: every club is new
@@ -622,7 +643,8 @@ def discover_clubs(payload, league, season):
             if raw:
                 unmapped.append(raw)
             continue
-        canon = leagues.LALIGA_AF_ALIASES.get(raw, raw)
+        # Same canonicaliser the squad harvest and the referee join use.
+        canon = leagues.canon_name(league.code, raw)
         names.append(canon)
         ids[canon] = team["id"]
     shorts = leagues.assign_shorts(names)

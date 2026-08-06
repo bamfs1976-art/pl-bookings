@@ -199,6 +199,49 @@ t("discovery refuses a division of the wrong size",
   _discovery_refuses_a_short_division)
 
 
+def _one_canonicaliser_everywhere():
+    """THE BUG THE FIRST REAL RUN FOUND, and it cost a whole club.
+
+    Discovery and the squad harvest used a local alias lookup over the
+    API-Football table; the referee join used leagues.canon_name, which
+    consults BOTH tables. So the 2025-26 response canonicalised Alaves to
+    "Deportivo Alaves" while the 2026-27 registry stored the raw "Alaves",
+    the squad harvest could not bridge them, and the desk came out with 19
+    squads and no error anywhere. Every spelling must reach one name."""
+    for spelling in ("Alaves", "Alav\u00e9s", "Deportivo Alaves", "Deportivo Alav\u00e9s"):
+        assert L.canon_name("LL", spelling) == "Deportivo Alaves", spelling
+        assert A.canonical_for("LL", spelling) == L.canon_name("LL", spelling) \
+            or A.canonical_for("LL", spelling) is None, spelling
+    # And the other prefix-dropping pairs Spanish feeds alternate between.
+    for short, full in (("Oviedo", "Real Oviedo"), ("Valladolid", "Real Valladolid"),
+                        ("Racing", "Racing Santander"), ("Betis", "Real Betis"),
+                        ("Sociedad", "Real Sociedad")):
+        assert L.canon_name("LL", short) == full, (short, L.canon_name("LL", short))
+        assert L.canon_name("LL", full) == full, full
+
+
+t("every spelling of a club reaches one canonical name",
+  _one_canonicaliser_everywhere)
+
+
+def _segunda_resolves_against_la_liga():
+    """The Segunda harvest exists for the clubs PROMOTED into La Liga, so the
+    names worth recognising are La Liga's. It used to fall through to the
+    ENGLISH club maps, match nothing, and exit with 'no clubs this desk
+    recognises' — which inside a continue-on-error step is a green tick and
+    three missing squads, exactly what the first real run produced."""
+    known = A.known_names("SEG")
+    assert "Arsenal" not in known, \
+        "a Segunda harvest is checking Spanish clubs against English names"
+    assert known == A.known_names("LL"), \
+        "Segunda must resolve against La Liga's registry — it is harvested " \
+        "only for the clubs that have just come up into it"
+
+
+t("a Segunda harvest resolves against La Liga's clubs, not England's",
+  _segunda_resolves_against_la_liga)
+
+
 print("the referee join")
 
 
