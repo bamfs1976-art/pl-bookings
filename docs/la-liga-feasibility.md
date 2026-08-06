@@ -13,6 +13,34 @@ Every number below was measured, not assumed. Sources and method are at the end.
 
 ---
 
+> ## Update: this has been built
+>
+> The desk is live at `/laliga`. The plan below was followed, and the referee
+> join it proposed in §3 works: **380 of 380 matches** of the 2025-26 season
+> joined on the first run, across the football-data ↔ API-Football spelling gap.
+>
+> Three things turned out differently from the note:
+>
+> 1. **The club list could not be confirmed for 2026-27**, so it is not
+>    declared at all. `harvest_apifootball.py --league LL --clubs` reads the
+>    twenty off the feed that then supplies the squads, and the build refuses a
+>    division that is not twenty. Which clubs are promoted is derived from
+>    last season's match records rather than listed.
+> 2. **The join must key on canonical club NAMES, not short codes.** It runs
+>    over a completed season, three of whose clubs have since been relegated
+>    and so have no code in the current division — keying on codes drops their
+>    matches and rates every official on four fifths of his season, silently.
+> 3. **Two fixture lists are needed, not one.** The season being played (the
+>    Fixtures tab) and the season just completed (the referee join) are
+>    different seasons; conflating them gives a desk with no referee data.
+>
+> §4's live-feed wall stands unchanged: there is still no free Spanish
+> equivalent of the FPL API, so the desk is a static book between refreshes.
+> Leg 4, the 26-season referee career history, is gone as predicted and the
+> card is out of the Guide.
+
+---
+
 ## 1. Why La Liga is the right target
 
 La Liga is the most card-heavy league in the top five, and it is not close.

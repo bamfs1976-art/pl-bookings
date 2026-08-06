@@ -27,6 +27,7 @@ separately. A league can have match records and still have no referees.
 
 import csv
 import io
+import json
 import sys
 import urllib.error
 import urllib.request
@@ -53,7 +54,7 @@ class League:
     def __init__(self, code, name, fd_div, clubs, matches, data_file,
                  refs_file, mirror_slug=None, referee_source="football-data",
                  min_ref_matches=3, suspension=None, af_league=None,
-                 players_file=None):
+                 players_file=None, clubs_file=None):
         self.code = code                    # the desk's own id, e.g. "EFLC"
         self.name = name                    # display name
         self.fd_div = fd_div                # football-data.co.uk division code
@@ -71,6 +72,10 @@ class League:
         # ScoutingStats route produced six different ways.
         self.af_league = af_league
         self.players_file = players_file
+        # Only leagues that DISCOVER their division carry one (see LL). A
+        # league whose clubs are declared in this module has none, and
+        # load_clubs returning {} for it is the correct answer, not a gap.
+        self.clubs_file = clubs_file
 
     @property
     def has_free_referees(self):
@@ -138,6 +143,40 @@ LEAGUES = {
         data_file="l1_data.js", refs_file="l1_refs.json",
         players_file="l1_players.json",
         mirror_slug=None, af_league=41, min_ref_matches=5,
+    ),
+    "SEG": League(
+        code="SEG", name="Segunda División", fd_div="SP2", clubs=22, matches=462,
+        # No desk of its own, and no referees — it is here for the clubs
+        # PROMOTED into La Liga, whose 2025-26 form is a Segunda record and
+        # appears in no La Liga harvest. The Spanish counterpart of L1.
+        data_file="segunda_data.js", refs_file="segunda_refs.json",
+        players_file="segunda_players.json",
+        mirror_slug=None, af_league=141, referee_source="none",
+    ),
+    "LL": League(
+        code="LL", name="La Liga", fd_div="SP1", clubs=20, matches=380,
+        data_file="laliga_data.js", refs_file="laliga_refs.json",
+        # The mirror DOES carry Spain — it is one of the top five. What it does
+        # not carry, in any of 33 seasons, is a referee: the Referee column is
+        # present and always empty. Hence referee_source below.
+        mirror_slug="la-liga", af_league=140,
+        players_file="laliga_players.json", clubs_file="laliga_clubs.json",
+        # THE ONE LEAGUE HERE THAT PAYS FOR ITS REFEREES. Every card and every
+        # foul is in the free SP1 file at full coverage; only the official's
+        # NAME is missing. So the name is bought from API-Football's /fixtures
+        # — one call a season — and joined onto the free rows by date and the
+        # two clubs, after which build_refs.py computes every rate off data
+        # that stayed free. See build_refs.attach_referees.
+        referee_source="api-football",
+        # 380 matches over ~20 officials, the same ratio as the Premier League,
+        # so the same floor.
+        min_ref_matches=3,
+        # UNCONFIRMED — not shipped as user-facing copy. The five-yellow ban is
+        # well established in Spain and the cycle repeats rather than being
+        # gated by matchday the way England's is, which is what would make a
+        # suspension strip worth having here. The rungs above five need
+        # checking against current RFEF competition rules first.
+        suspension="5 yellows = 1 match, then the count recycles (rungs above 5 TO CONFIRM)",
     ),
 }
 
@@ -217,6 +256,261 @@ AF_ALIASES = {
     "Forest": "Nottingham Forest",
     "Wolverhampton": "Wolverhampton Wanderers",
 }
+
+
+# ── La Liga ─────────────────────────────────────────────────────────────────
+#
+# NOT A ROSTER. Unlike EFLC_CLUBS above, this is deliberately NOT a list of who
+# is in the division — it is a spelling table that covers more clubs than any
+# one season contains, and the actual twenty are DISCOVERED from API-Football
+# (harvest_apifootball.py --clubs) and written to laliga_clubs.json.
+#
+# The Championship's 24 were derived from a chain of six separately-confirmed
+# promotions and relegations, and that was already the weakest link in this
+# repo — a wrong link produces no error, just a club with no players. Spain's
+# 2026-27 line-up could not be confirmed from a primary source when this was
+# written, so rather than guess it and inherit that failure mode, the division
+# names itself and the build refuses to write if it comes back with anything
+# other than the twenty the registry expects.
+#
+# Codes for clubs beyond this table are generated (see auto_short); the table
+# exists for the ones where three letters off the front would be wrong or
+# would collide — Real Madrid / Real Sociedad / Real Betis being the obvious
+# case, since all three start "Rea".
+LALIGA_SHORT = {
+    "Real Madrid": "RMA", "Barcelona": "BAR", "Atletico Madrid": "ATM",
+    "Athletic Club": "ATH", "Real Sociedad": "RSO", "Real Betis": "BET",
+    "Sevilla": "SEV", "Valencia": "VAL", "Villarreal": "VIL",
+    "Celta Vigo": "CEL", "Espanyol": "ESP", "Getafe": "GET",
+    "Girona": "GIR", "Osasuna": "OSA", "Rayo Vallecano": "RAY",
+    "Mallorca": "MLL", "Deportivo Alaves": "ALA", "Elche": "ELC",
+    "Levante": "LEV", "Real Oviedo": "OVI", "Las Palmas": "LPA",
+    "Real Valladolid": "VLL", "Leganes": "LEG", "Cadiz": "CAD",
+    "Almeria": "ALM", "Granada": "GRA", "Sporting Gijon": "SPG",
+    "Eibar": "EIB", "Huesca": "HUE", "Real Zaragoza": "ZAR",
+    "Racing Santander": "RAC", "Deportivo La Coruna": "DEP",
+    "Malaga": "MAL", "Tenerife": "TEN", "Cartagena": "CTG",
+    "Albacete": "ALB", "Mirandes": "MIR", "Castellon": "CST",
+    "Burgos": "BUG", "Andorra": "AND", "Ceuta": "CEU", "Eldense": "ELD",
+}
+
+# football-data.co.uk writes Spanish clubs its own way, and has done for
+# twenty years — "Ath Madrid", "Espanol" (one n), "Sociedad", "Vallecano".
+# These are the spellings the FREE match records use, and every one of them
+# has to reach the same club as the API-Football spelling or the referee join
+# and the club card rates both silently address nobody.
+LALIGA_FD_ALIASES = {
+    "Ath Madrid": "Atletico Madrid", "Ath Bilbao": "Athletic Club",
+    "Espanol": "Espanyol", "Betis": "Real Betis", "Sociedad": "Real Sociedad",
+    "Vallecano": "Rayo Vallecano", "Celta": "Celta Vigo",
+    "Alaves": "Deportivo Alaves", "La Coruna": "Deportivo La Coruna",
+    "Sp Gijon": "Sporting Gijon", "Vallodolid": "Real Valladolid",
+    "Valladolid": "Real Valladolid", "Oviedo": "Real Oviedo",
+    "Zaragoza": "Real Zaragoza", "Santander": "Racing Santander",
+    "Racing": "Racing Santander", "Gimnastic": "Gimnastic Tarragona",
+    "Almeria": "Almeria", "Cadiz": "Cadiz", "Leganes": "Leganes",
+}
+
+# API-Football's own spellings that differ from the canonical name above.
+LALIGA_AF_ALIASES = {
+    "Atlético Madrid": "Atletico Madrid", "Athletic Bilbao": "Athletic Club",
+    "Alavés": "Deportivo Alaves", "Deportivo Alavés": "Deportivo Alaves",
+    "Cádiz": "Cadiz", "Almería": "Almeria", "Leganés": "Leganes",
+    "Celta de Vigo": "Celta Vigo", "RC Celta": "Celta Vigo",
+    "Rayo": "Rayo Vallecano", "Betis": "Real Betis",
+    "Sociedad": "Real Sociedad", "Oviedo": "Real Oviedo",
+    "Valladolid": "Real Valladolid", "Espanyol de Barcelona": "Espanyol",
+    "RCD Espanyol": "Espanyol", "FC Barcelona": "Barcelona",
+    "Málaga": "Malaga", "Castellón": "Castellon", "Mirandés": "Mirandes",
+    "Gijón": "Sporting Gijon", "Sporting Gijón": "Sporting Gijon",
+}
+
+
+def strip_accents(text):
+    """Accent-insensitive form. Feeds disagree about diacritics on the same
+    club — "Alavés" and "Alaves" are one team — and a name that differs only
+    by an accent must not become a second club with half a squad."""
+    import unicodedata
+    return "".join(c for c in unicodedata.normalize("NFKD", str(text or ""))
+                   if not unicodedata.combining(c))
+
+
+def auto_short(name, taken):
+    """A three-letter code for a club the override table does not cover.
+
+    Deterministic and collision-aware: the same league produces the same codes
+    every run, which matters because the code is what the shipped data file and
+    every stored watchlist key on. A generated code is a fallback, not a
+    preference — anything that appears regularly belongs in LALIGA_SHORT.
+    """
+    words = [w for w in strip_accents(name).upper().replace("-", " ").split()
+             if w.isalnum()]
+    if not words:
+        return None
+    candidates = []
+    if len(words) >= 3:
+        candidates.append("".join(w[0] for w in words[:3]))
+    if len(words) >= 2:
+        candidates.append(words[0][:2] + words[1][0])
+        candidates.append(words[1][:3])
+    candidates.append(words[0][:3])
+    # Then widen: first word plus a walking letter of the second, then digits,
+    # so a collision always terminates rather than looping.
+    base = words[0][:2] if len(words[0]) >= 2 else words[0]
+    for w in words[1:]:
+        candidates.extend(base + c for c in w)
+    candidates.extend(words[0][:2] + str(i) for i in range(1, 10))
+    for c in candidates:
+        c = c.upper()
+        if len(c) == 3 and c not in taken:
+            return c
+    return None
+
+
+def assign_shorts(names):
+    """{club name: short code} for a discovered division.
+
+    Overrides first, in a fixed order, so a generated code can never take a
+    letter combination an override needs. Sorted throughout: the mapping must
+    not depend on the order the API happened to answer in, or a re-harvest
+    would silently rename clubs and orphan every stored pick.
+    """
+    names = sorted({(n or "").strip() for n in names if (n or "").strip()})
+    out, taken = {}, set()
+    for n in names:
+        code = LALIGA_SHORT.get(n)
+        if code and code not in taken:
+            out[n] = code
+            taken.add(code)
+    for n in names:
+        if n in out:
+            continue
+        code = auto_short(n, taken)
+        if code:
+            out[n] = code
+            taken.add(code)
+    return out
+
+
+def clubs_path(code):
+    """Where a league's discovered club registry lives, or None if that league
+    declares its clubs in this module instead."""
+    league = LEAGUES.get(code.upper())
+    name = getattr(league, "clubs_file", None) if league else None
+    return DATA / name if name else None
+
+
+def load_clubs(code):
+    """The discovered club registry for a league, or {} before it exists.
+
+    {canonical name: {"short": "RMA", "id": 541}}. Written by
+    harvest_apifootball.py --clubs, committed, and read by every later stage —
+    so the division is established once, by the feed, rather than asserted by
+    hand in four places.
+    """
+    path = clubs_path(code)
+    if path is None or not path.exists():
+        return {}
+    try:
+        raw = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return {}
+    clubs = raw.get("clubs") if isinstance(raw, dict) else raw
+    return clubs if isinstance(clubs, dict) else {}
+
+
+def save_clubs(code, clubs, season=None):
+    path = clubs_path(code)
+    if path is None:
+        sys.exit(f"ERROR: {code} declares its clubs in leagues.py, so it has "
+                 "no discovered registry to write. Give it a clubs_file if it "
+                 "should name its own division.")
+    payload = {"league": code, "season": season, "clubs": clubs}
+    path.write_text(json.dumps(payload, indent=1, ensure_ascii=False,
+                               sort_keys=True) + "\n", encoding="utf-8")
+    return path
+
+
+def _accent_index(mapping):
+    return {strip_accents(k).lower(): v for k, v in mapping.items()}
+
+
+def laliga_short(name, clubs=None):
+    """A La Liga club name from ANY feed as its short code, or None.
+
+    Tries, in order: the discovered registry, the football-data spelling table,
+    the API-Football spelling table, then an accent-insensitive pass over all
+    three. Returns None rather than guessing — an unmapped name is reported by
+    every caller, because a club that quietly resolves to nothing is
+    indistinguishable from a club with no players.
+    """
+    n = (name or "").strip()
+    if not n:
+        return None
+    reg = load_clubs("LL") if clubs is None else clubs
+    entry = reg.get(n)
+    if entry:
+        return entry.get("short") if isinstance(entry, dict) else entry
+    for table in (LALIGA_FD_ALIASES, LALIGA_AF_ALIASES):
+        canon = table.get(n)
+        if canon:
+            hit = reg.get(canon)
+            if hit:
+                return hit.get("short") if isinstance(hit, dict) else hit
+            if canon in LALIGA_SHORT and not reg:
+                return LALIGA_SHORT[canon]
+    flat = strip_accents(n).lower()
+    for table in (_accent_index(reg), _accent_index(LALIGA_FD_ALIASES),
+                  _accent_index(LALIGA_AF_ALIASES)):
+        hit = table.get(flat)
+        if hit is None:
+            continue
+        if isinstance(hit, dict):
+            return hit.get("short")
+        canon = reg.get(hit)
+        if canon:
+            return canon.get("short") if isinstance(canon, dict) else canon
+        if not reg and hit in LALIGA_SHORT:
+            return LALIGA_SHORT[hit]
+    return None
+
+
+def canon_name(code, name):
+    """A club name from any feed as its CANONICAL name, whether or not that
+    club is in the division now.
+
+    Deliberately independent of the club registry. The referee join runs over
+    a COMPLETED season, and three of that season's clubs have since been
+    relegated out of the registry — keying the join on short codes dropped
+    their matches, which is a fifth of the league quietly missing from every
+    referee's record. A club's name does not depend on which division it is
+    in; its short code does.
+    """
+    n = (name or "").strip()
+    if not n:
+        return None
+    if code.upper() != "LL":
+        canon = EFLC_CLUBS.get(n) or EFLC_ALIASES.get(n) or AF_ALIASES.get(n)
+        return canon or n
+    for table in (LALIGA_FD_ALIASES, LALIGA_AF_ALIASES):
+        if n in table:
+            return table[n]
+    flat = strip_accents(n).lower()
+    for table in (LALIGA_FD_ALIASES, LALIGA_AF_ALIASES):
+        for k, v in table.items():
+            if strip_accents(k).lower() == flat:
+                return v
+    for known in LALIGA_SHORT:
+        if strip_accents(known).lower() == flat:
+            return known
+    return n
+
+
+def short_for(code, name, clubs=None):
+    """A club name as its short code, for whichever league is asking."""
+    if code.upper() == "LL":
+        return laliga_short(name, clubs=clubs)
+    return eflc_short(name)
 
 
 def canonical_club(api_name, known):

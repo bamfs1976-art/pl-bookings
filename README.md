@@ -95,9 +95,9 @@ The `data` folder holds the build script and the raw harvests (harvest JSON giti
 - `harvest.py` automates the harvest. ScoutingStats needs a logged-in session, so it authenticates with a browser cookie: log in at scoutingstats.ai, copy the `cookie` request header from DevTools, then `SS_COOKIE='…' python3 data/harvest.py && python3 data/build_pl_data.py`. If `pl_refs.json` is absent it is reconstructed from the shipped `pl_data.js` (referee figures only change when refreshed by hand).
 - The **Data refresh** GitHub Action (`.github/workflows/data-refresh.yml`) runs the whole pipeline in one click from the Actions tab — harvest → rebuild → regenerate the model → re-vendor the match model → guards → commit. The match-model step is `continue-on-error`: the desk works without it, so an unreachable simulator leaves the previous bundle in place instead of failing the refresh. It needs one repository secret, `SS_COOKIE`, holding that same cookie value; re-set it whenever the session expires. It also **fits the card model (Tier 2)**: the Action harvests per-match booking history from the public FPL `element-summary` endpoint (reachable from GitHub's runners) and refits the GLM by IRLS. The fitter keeps the season prior automatically until ≥200 real match rows exist, so it's a no-op early in the season and flips `data/model.js` to `basis:"match-fit"` once enough gameweeks have been played — no manual step needed. Uncheck the **fit_model** input to skip it.
 
-## A second competition
+## More than one competition
 
-The desk is being generalised from one league to several, Championship first and La Liga after it. `docs/la-liga-feasibility.md` is the research behind that order; the short version is that every referee number here comes from a free source that publishes the official for English and Scottish football and effectively nowhere else — measured, 0 of 33 seasons for La Liga, all of them for England's five tiers. So the Championship reuses the referee spine with a changed division code, while La Liga has to buy the referee *name* from a keyed API and keep computing the *rates* from the same free file.
+The desk has been generalised from one league to three: the Premier League, the EFL Championship and La Liga. `docs/la-liga-feasibility.md` is the research behind that order; the short version is that every referee number here comes from a free source that publishes the official for English and Scottish football and effectively nowhere else — measured, 0 of 33 seasons for La Liga, all of them for England's five tiers. So the Championship reuses the referee spine with a changed division code, while La Liga has to buy the referee *name* from a keyed API and keep computing the *rates* from the same free file.
 
 **The Championship dataset is built**: 24 clubs, 974 players (753 on Championship form, 111 on Premier League form, 110 on League One form), 30 referees, and exact card rates with home/away splits for the 18 clubs that were in the division last season. `data/eflc_status.txt` records the outcome of every build, committed, so a failure inside a `continue-on-error` step leaves a trace in the repository rather than only in a log pane.
 
@@ -113,7 +113,7 @@ The desk is being generalised from one league to several, Championship first and
 
 What exists so far is the data layer, not a second site. The Premier League path is unchanged throughout — byte-identical output from both `build_refs.py` and `build_pl_data.py`, held there by `data/test_leagues.py`.
 
-- `data/leagues.py` — the league registry, including the 2026-27 Championship's 24 clubs, their feed-name aliases, and which of them arrived from which division.
+- `data/leagues.py` — the league registry: the 2026-27 Championship's 24 declared clubs and their feed-name aliases, La Liga's spelling tables and short-code overrides, and the discovered-registry machinery Spain uses instead of a declared roster.
 - `build_refs.py --league EFLC` — the referee spine, free and keyless, from the same public-domain records the Premier League uses. Writes `data/eflc_refs.json`.
 - `build_eflc_data.py` — the Championship dataset. It **reuses** the Premier League builder's arithmetic (`mk`, `coverage_problems`, `quote_keys`) rather than copying it, so the two desks cannot drift about what a booking risk is.
 
@@ -123,7 +123,28 @@ Two things fall out of that which are better here than in the Premier League des
 
 **Squads come from API-Football, not ScoutingStats.** The cookie route was retired from this pipeline after producing six distinct ways of returning a partial league that looked complete: page one read as a whole league, a `per_page` cap below what was requested, tied rows drifting under an unstable sort, a sort field silently ignored rather than rejected, deterministic loss at page seams, and finally throttling. Not one of them errored, and every one produced a plausible dataset. `harvest_apifootball.py --league EFLC|L1|PL` fetches per **club**, so a walk is a squad rather than a slice of a league, and it is checked against the API's own `paging.total`. It needs a paid key: the free tier covers seasons 2022-2024 and the desk is built on 2025-26.
 
-Still open: the Championship suspension thresholds, recorded in the registry as partially confirmed.
+### La Liga
+
+**The La Liga desk is at `/laliga`** (`laliga.html`), built the same way as the Championship's and reading `data/laliga_data.js`. It is the first desk outside British football, and it is the one that costs something — but far less than the feasibility note feared.
+
+**The referee wall, and how it comes down.** `docs/la-liga-feasibility.md` measured that football-data.co.uk has never published a Spanish official: 0 of 33 seasons, against 100% for England's five tiers and Scotland's four. That is a quirk of the source covering British football, not a fact about Spain. What it *does* publish for Spain, at full coverage, is every card and every foul in every match. So the only thing missing is a name, and the only thing bought is a name:
+
+    harvest_apifootball.py --ref-fixtures --league LL   # the COMPLETED season's officials
+    build_refs.py --league LL                           # joins them onto the free rows
+
+`build_refs.attach_referees` joins on **date plus both clubs by canonical name** — not kick-off time, which the two sources disagree about by hours, and not short code, which would drop every match played by a club that has since been relegated and rate each official on four fifths of his season. After the join, `tally_refs` and `build_refs` run unchanged: **every published rate is computed from the free public-domain file**, exactly as for the English desks. The paid dependency is one column, not the foundation.
+
+Two fixture lists exist for this league and they are different seasons: `laliga_fixtures.js` is the season being *played* (the Fixtures tab), `laliga_ref_fixtures.js` is the season just *completed* (the referee join). Conflating them yields a desk with no referee data at all.
+
+**The division names itself.** The Championship's 24 clubs are declared in `leagues.py`, derived from a chain of six separately-confirmed promotions and relegations — which works, but a wrong link produces a club with no players and no error anywhere. Spain's 2026-27 line-up could not be confirmed from a primary source, so rather than guess it, `harvest_apifootball.py --league LL --clubs` reads the twenty off `/teams` and writes `data/laliga_clubs.json`, which is committed and which every later stage resolves club names through. It refuses to write a division that is not twenty clubs. **Which clubs are promoted is derived too**, from two files the build already reads: a club in the registry with no match in last season's records came up. There is no third list to keep in step with reality.
+
+**Three feeds, three spellings.** football-data.co.uk writes `Ath Madrid`, `Espanol`, `Sociedad`, `Vallecano`; API-Football writes `Atlético Madrid`, `Espanyol`, `Real Sociedad`, `Rayo Vallecano`. Every one must reach the same club or the referee join and the club card rates silently address nobody. `data/test_laliga.py` pins all twenty of 2025-26 in both spellings against each other, plus accent folding for names in no table at all.
+
+**It is the best league of the three to point this product at.** Over the six seasons to 2025-26 Spain produced 4.71 yellows a game against the Premier League's 3.64 — 29% more — with double the reds and the highest yellows-per-foul of the big five. The desk's base rate rises from 17.0% on the Championship to about 20% here.
+
+`scripts/check-laliga.mjs` guards two things the English guards cannot: that the discovered registry and the dataset describe the same division, and that the referee join covered a whole season rather than the fraction that happened to line up — a half-landed join yields a table that looks complete and is built on 60% of the evidence.
+
+Still open: the Championship suspension thresholds and the Spanish rungs above five yellows, both recorded in the registry as unconfirmed and neither shipped as user-facing copy.
 
 ## Tests and CI
 

@@ -22,5 +22,13 @@ data/*.json
 # ...and the fixture list, which the Championship page loads with a script
 # tag. Generated, but shipped — not a raw harvest.
 !data/eflc_fixtures.js
+# ...and La Liga's referee set, for the same reason as the Championship's.
+!data/laliga_refs.json
+# ...and La Liga's CLUB REGISTRY, which is not an intermediate at all: it is
+# how that division is defined. Spain's twenty are discovered from the feed
+# rather than declared in leagues.py, so this file is the only record of which
+# clubs the desk is about, and every later stage reads it. Losing it would not
+# degrade the build, it would stop it.
+!data/laliga_clubs.json
 data/epldata/
 __pycache__/

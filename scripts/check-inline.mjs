@@ -9,7 +9,7 @@ import { tmpdir } from 'node:os';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const dir = mkdtempSync(join(tmpdir(), 'plb-inline-'));
-const PAGES = ['index.html', 'eflc.html'];
+const PAGES = ['index.html', 'eflc.html', 'laliga.html'];
 let total = 0;
 for (const page of PAGES) {
   const html = readFileSync(join(root, page), 'utf8');

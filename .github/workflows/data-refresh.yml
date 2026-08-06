@@ -43,6 +43,15 @@ on:
         type: boolean
         required: false
         default: true
+      refresh_laliga:
+        description: "Also refresh the La Liga desk. Needs the API key: Spain's free match records carry every card but never the official."
+        type: boolean
+        required: false
+        default: true
+      season_sp:
+        description: "football-data season code for SPAIN's club rates and referee join (e.g. 2526 = the season just played)."
+        required: false
+        default: "2526"
 
 permissions:
   contents: write
@@ -160,6 +169,60 @@ jobs:
           API_FOOTBALL_SEASON: ${{ inputs.season_fixtures }}
         run: python3 data/harvest_apifootball.py --fixtures --league EFLC
 
+      # ── La Liga ─────────────────────────────────────────────────────────
+      #
+      # ORDER MATTERS HERE and nowhere else in this file. Spain's division is
+      # DISCOVERED rather than declared: --clubs reads the twenty off /teams
+      # and writes laliga_clubs.json, and every step after it resolves club
+      # names through that registry. Run the squads first and they resolve
+      # against an empty vocabulary, which is a harvest of nothing.
+      - name: Discover the La Liga division (writes the club registry)
+        if: ${{ env.API_FOOTBALL_KEY != '' && inputs.refresh_laliga }}
+        continue-on-error: true
+        env:
+          API_FOOTBALL_SEASON: ${{ inputs.season_fixtures }}
+        run: python3 data/harvest_apifootball.py --league LL --clubs
+
+      - name: Harvest the La Liga squads from API-Football
+        if: ${{ env.API_FOOTBALL_KEY != '' && inputs.refresh_laliga }}
+        continue-on-error: true
+        env:
+          API_FOOTBALL_SEASON: ${{ inputs.season_af }}
+        run: python3 data/harvest_apifootball.py --league LL
+
+      # Segunda División, for the clubs promoted into La Liga — their 2025-26
+      # form is a second-tier record and appears in no La Liga harvest. The
+      # Spanish counterpart of the League One step below.
+      - name: Harvest Segunda from API-Football (the promoted clubs)
+        if: ${{ env.API_FOOTBALL_KEY != '' && inputs.refresh_laliga }}
+        continue-on-error: true
+        env:
+          API_FOOTBALL_SEASON: ${{ inputs.season_af }}
+        run: python3 data/harvest_apifootball.py --league SEG
+
+      # THE ONE THING SPAIN BUYS. football-data.co.uk publishes every card and
+      # every foul in La Liga and has never published an official — 0 of 33
+      # seasons, a quirk of that source covering British football rather than
+      # a fact about Spain. So the NAME is taken from the COMPLETED season's
+      # fixtures and joined onto the free rows by date and both clubs.
+      #
+      # season_af, NOT season_fixtures: a referee's card rate comes from the
+      # season just played, while the fixture list below is the season about to
+      # be. Conflating the two gives a desk with no referee data at all.
+      - name: Harvest last season's Spanish officials (for the referee join)
+        if: ${{ env.API_FOOTBALL_KEY != '' && inputs.refresh_laliga }}
+        continue-on-error: true
+        env:
+          API_FOOTBALL_SEASON: ${{ inputs.season_af }}
+        run: python3 data/harvest_apifootball.py --ref-fixtures --league LL
+
+      - name: Harvest the La Liga fixtures from API-Football
+        if: ${{ env.API_FOOTBALL_KEY != '' && inputs.refresh_laliga }}
+        continue-on-error: true
+        env:
+          API_FOOTBALL_SEASON: ${{ inputs.season_fixtures }}
+        run: python3 data/harvest_apifootball.py --fixtures --league LL
+
       # League One, for the three clubs promoted into the Championship. Only
       # the Championship desk needs it, so it never blocks the Premier League.
       - name: Harvest League One from API-Football (the promoted three)
@@ -208,6 +271,21 @@ jobs:
         continue-on-error: true
         run: python3 data/build_eflc_data.py --season "${{ inputs.refs_season }}"
 
+      # The La Liga dataset, then its referees — in that order, because
+      # build_refs.py --league LL patches the REFS block of a file the build
+      # has to have written first. Both write their own status file, so a
+      # failure inside continue-on-error still leaves a record in the repo
+      # rather than only in a log pane somebody has to open.
+      - name: Build the La Liga dataset
+        if: ${{ inputs.refresh_laliga }}
+        continue-on-error: true
+        run: python3 data/build_laliga_data.py --season "${{ inputs.season_sp }}"
+
+      - name: Join the Spanish referees onto the free match records
+        if: ${{ inputs.refresh_laliga }}
+        continue-on-error: true
+        run: python3 data/build_refs.py --league LL --season "${{ inputs.season_sp }}"
+
       # Re-vendor Plsimulator's match model, which it refits weekly and
       # publishes CORS-open at plsimulation.netlify.app/model.json. Feeds the
       # game-state factor and the fitted closeness signal.
@@ -239,6 +317,7 @@ jobs:
         run: |
           node scripts/check-data.mjs
           node scripts/check-eflc.mjs
+          node scripts/check-laliga.mjs
           node tests/test-core.mjs
 
       - name: Commit and push if changed
@@ -254,7 +333,9 @@ jobs:
           # command when either path matches nothing, so a run that produced
           # the referees but not the dataset staged NEITHER — which is exactly
           # what happened the first time this ran.
-          for f in data/eflc_refs.json data/eflc_data.js data/eflc_status.txt data/eflc_fixtures.js; do
+          for f in data/eflc_refs.json data/eflc_data.js data/eflc_status.txt data/eflc_fixtures.js \
+                   data/laliga_clubs.json data/laliga_refs.json data/laliga_data.js \
+                   data/laliga_status.txt data/laliga_fixtures.js data/laliga_ref_fixtures.js; do
             [ -f "$f" ] && git add "$f"
           done
           if git diff --cached --quiet; then

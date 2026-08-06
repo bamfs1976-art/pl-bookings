@@ -83,7 +83,33 @@ def known_names(code):
     who only the Premier League map knows. Neither list is complete alone; the
     union is what a division contains.
     """
+    if code.upper() == "LL":
+        # Spain's division is DISCOVERED, not declared — see leagues.py. Before
+        # --clubs has ever run there is no vocabulary to check against, and
+        # that is the normal first state rather than an error.
+        return set(leagues.load_clubs("LL"))
     return set(leagues.EFLC_CLUBS) | set(build_pl_data.SHORT)
+
+
+def canonical_for(code, raw):
+    """A feed's club name as the name that league's builder keys on."""
+    if code.upper() == "LL":
+        n = (raw or "").strip()
+        if not n:
+            return None
+        canon = leagues.LALIGA_AF_ALIASES.get(n, n)
+        reg = leagues.load_clubs("LL")
+        if not reg:
+            return canon          # discovery pass: every club is new
+        if canon in reg:
+            return canon
+        # Accent-only differences are the same club, not a new one.
+        flat = leagues.strip_accents(canon).lower()
+        for name in reg:
+            if leagues.strip_accents(name).lower() == flat:
+                return name
+        return None
+    return leagues.canonical_club(raw, known_names(code))
 
 
 def resolve_teams(payload, code):
@@ -94,12 +120,11 @@ def resolve_teams(payload, code):
     not arrive is indistinguishable from a club with no players, and this repo
     has already spent a year on that confusion.
     """
-    known = known_names(code)
     found, unmapped = {}, []
     for row in (payload or {}).get("response", []) or []:
         team = row.get("team") or {}
         raw = (team.get("name") or "").strip()
-        name = leagues.canonical_club(raw, known)
+        name = canonical_for(code, raw)
         if name and team.get("id") is not None:
             found[name] = team["id"]
         elif raw:
@@ -364,7 +389,7 @@ def round_no(label):
     return int(m.group(1)) if m else None
 
 
-def map_fixture(entry, known):
+def map_fixture(entry, known, code="EFLC"):
     """One /fixtures row into the shape the desk reads, or None.
 
     A fixture whose clubs this desk does not know is dropped rather than
@@ -373,11 +398,11 @@ def map_fixture(entry, known):
     fx = (entry or {}).get("fixture") or {}
     tm = (entry or {}).get("teams") or {}
     lg = (entry or {}).get("league") or {}
-    home = leagues.canonical_club((tm.get("home") or {}).get("name"), known)
-    away = leagues.canonical_club((tm.get("away") or {}).get("name"), known)
+    home = canonical_for(code, (tm.get("home") or {}).get("name"))
+    away = canonical_for(code, (tm.get("away") or {}).get("name"))
     if not home or not away:
         return None
-    h, a = leagues.eflc_short(home), leagues.eflc_short(away)
+    h, a = leagues.short_for(code, home), leagues.short_for(code, away)
     if not h or not a:
         return None
     # The referee is the reason this endpoint is worth calling. It is null
@@ -410,14 +435,14 @@ def harvest_fixtures(host, key, league, season):
     unmapped = {}
     while True:
         for entry in (payload.get("response") or []):
-            got = map_fixture(entry, known)
+            got = map_fixture(entry, known, league.code)
             if got:
                 rows.append(got)
             else:
                 tm = (entry or {}).get("teams") or {}
                 for side in ("home", "away"):
                     nm = ((tm.get(side) or {}).get("name") or "").strip()
-                    if nm and not leagues.canonical_club(nm, known):
+                    if nm and not canonical_for(league.code, nm):
                         unmapped[nm] = unmapped.get(nm, 0) + 1
         if page >= pages:
             break
@@ -432,17 +457,120 @@ def harvest_fixtures(host, key, league, season):
     return rows
 
 
+# Each desk's fixture list: the global its page reads, and the file it lives
+# in. Keyed by league so a second desk cannot quietly overwrite the first's.
+FIXTURE_FILES = {
+    "EFLC": ("EFLC_FIXTURES", "eflc_fixtures.js"),
+    "LL": ("LALIGA_FIXTURES", "laliga_fixtures.js"),
+}
+
+# A SECOND, different fixture list, for leagues whose referees have to be
+# joined on (see build_refs.attach_referees). Two lists because they are two
+# seasons: the one above is the season being PLAYED, which is what the Fixtures
+# tab shows and which has barely any referees appointed yet; this one is the
+# season just COMPLETED, which is where a referee's card rate comes from.
+# Conflating them gives a desk that prices every fixture off no referee data.
+REF_FIXTURE_FILES = {
+    "LL": ("LALIGA_REF_FIXTURES", "laliga_ref_fixtures.js"),
+}
+
+
+def map_ref_fixture(entry, code):
+    """One /fixtures row for the REFEREE JOIN: date, both clubs by canonical
+    name, and the official.
+
+    Deliberately not map_fixture. That one resolves clubs to the short codes
+    of the CURRENT division and drops anything outside it — correct for a
+    fixture card, ruinous here, because this list covers a season three of
+    whose clubs have since been relegated. Dropping them would remove a fifth
+    of every referee's matches while looking like a complete table.
+    """
+    fx = (entry or {}).get("fixture") or {}
+    tm = (entry or {}).get("teams") or {}
+    home = leagues.canon_name(code, (tm.get("home") or {}).get("name"))
+    away = leagues.canon_name(code, (tm.get("away") or {}).get("name"))
+    date = fx.get("date")
+    if not home or not away or not date:
+        return None
+    ref = (fx.get("referee") or "").strip() or None
+    if ref:
+        ref = ref.split(",")[0].strip() or None
+    return {"d": str(date)[:10], "hn": home, "an": away, "ref": ref}
+
+
+def harvest_ref_fixtures(host, key, league, season):
+    """Every completed fixture and its official, for one league-season."""
+    af = str(league.af_league)
+    payload = _get(host, key, "fixtures", {"league": af, "season": season})
+    err = api_errors(payload)
+    if err:
+        sys.exit(f"ERROR: API-Football refused the /fixtures request: {err}")
+    rows, page, pages = [], 1, pages_needed(payload)
+    while True:
+        for entry in (payload.get("response") or []):
+            got = map_ref_fixture(entry, league.code)
+            if got:
+                rows.append(got)
+        if page >= pages:
+            break
+        page += 1
+        payload = _get(host, key, "fixtures",
+                       {"league": af, "season": season, "page": page})
+        pages = max(pages, pages_needed(payload))
+    rows.sort(key=lambda x: (x["d"], x["hn"]))
+    return rows
+
+
+def emit_ref_fixtures(rows, league, season):
+    try:
+        const, filename = REF_FIXTURE_FILES[league.code]
+    except KeyError:
+        sys.exit(f"ERROR: {league.name} does not need a referee-join fixture "
+                 "list — its free match records already name the official.")
+    withref = sum(1 for r in rows if r["ref"])
+    names = sorted({r["hn"] for r in rows} | {r["an"] for r in rows})
+    lines = [
+        "// Auto-generated by harvest_apifootball.py --ref-fixtures.",
+        f"// {league.name} {season}-{int(season) % 100 + 1}: {len(rows)} matches, "
+        f"{withref} with an official named.",
+        "// NOT the fixture list the page shows — this is the COMPLETED season,",
+        "// and it exists so build_refs.py can join a referee NAME onto the free",
+        "// match records, which for this league carry every card but no official.",
+        f"const {const} = [",
+    ]
+    for r in rows:
+        lines.append("  {" + ",".join([
+            f'd:{json.dumps(r["d"])}', f'hn:{json.dumps(r["hn"], ensure_ascii=False)}',
+            f'an:{json.dumps(r["an"], ensure_ascii=False)}',
+            f'ref:{json.dumps(r["ref"], ensure_ascii=False)}',
+        ]) + "},")
+    lines.append("];")
+    (DATA / filename).write_text("\n".join(lines) + "\n", encoding="utf-8")
+    print(f"\n{filename} written ({len(rows)} matches over {len(names)} clubs, "
+          f"{withref} with an official named)")
+    if withref < len(rows) // 2:
+        print("  WARNING: fewer than half these matches name an official. The "
+              "referee table\n  built from this will be thin — check the season "
+              "is one the plan covers.")
+
+
 def emit_fixtures(rows, league, season):
     """A committed .js file, same as the datasets: the page loads it with a
     script tag and no fetch, so it works offline and needs no key in the
     client."""
+    try:
+        const, filename = FIXTURE_FILES[league.code]
+    except KeyError:
+        sys.exit(f"ERROR: {league.name} has no fixture file configured. Add it "
+                 "to FIXTURE_FILES, or its fixtures would overwrite another "
+                 "desk's list.")
     withref = sum(1 for r in rows if r["ref"])
     rounds = sorted({r["r"] for r in rows if r["r"]})
     lines = [
         "// Auto-generated by harvest_apifootball.py --fixtures.",
         f"// {league.name} {season}-{int(season) % 100 + 1}: {len(rows)} fixtures, "
         f"{withref} with a referee appointed.",
-        "const EFLC_FIXTURES = [",
+        f"const {const} = [",
     ]
     for r in rows:
         lines.append("  {" + ",".join([
@@ -452,15 +580,79 @@ def emit_fixtures(rows, league, season):
             f'st:{json.dumps(r["st"])}',
         ]) + "},")
     lines.append("];")
-    (DATA / "eflc_fixtures.js").write_text("\n".join(lines) + "\n", encoding="utf-8")
-    print(f"\neflc_fixtures.js written ({len(rows)} fixtures over "
+    (DATA / filename).write_text("\n".join(lines) + "\n", encoding="utf-8")
+    print(f"\n{filename} written ({len(rows)} fixtures over "
           f"{len(rounds)} matchdays, {withref} with a referee appointed)")
+
+
+def discover_clubs(payload, league, season):
+    """Write the league's club registry from a /teams response.
+
+    THE FIRST STEP FOR A LEAGUE THAT NAMES ITS OWN DIVISION. The Championship
+    declares its 24 in leagues.py, derived from a chain of six confirmed
+    transfers between divisions — which works, but a wrong link in that chain
+    produces a club with no players and no error. Spain's 2026-27 line-up could
+    not be confirmed from a primary source, so instead of guessing it the
+    division is read from the feed that is about to supply the squads. The two
+    can then never disagree.
+
+    Refuses to write a division of the wrong size. Twenty clubs is what La Liga
+    is; nineteen means a name arrived in a spelling nothing maps, and shipping
+    it would look exactly like a club that has no players.
+    """
+    names, unmapped = [], []
+    ids = {}
+    for row in (payload or {}).get("response", []) or []:
+        team = row.get("team") or {}
+        raw = (team.get("name") or "").strip()
+        if not raw or team.get("id") is None:
+            if raw:
+                unmapped.append(raw)
+            continue
+        canon = leagues.LALIGA_AF_ALIASES.get(raw, raw)
+        names.append(canon)
+        ids[canon] = team["id"]
+    shorts = leagues.assign_shorts(names)
+    clubs = {n: {"short": shorts[n], "id": ids[n]} for n in sorted(shorts)}
+
+    if len(clubs) != league.clubs:
+        sys.exit(f"ERROR: /teams for {league.name} season {season} produced "
+                 f"{len(clubs)} clubs, not the {league.clubs} a season has.\n"
+                 "  got: " + ", ".join(sorted(clubs))
+                 + ("\n  unusable rows: " + ", ".join(unmapped) if unmapped else "")
+                 + f"\n\nRefusing to write {leagues.clubs_path(league.code).name}: "
+                   "a short division here becomes a desk with missing clubs "
+                   "and no error anywhere downstream.")
+    if len(set(s["short"] for s in clubs.values())) != len(clubs):
+        sys.exit("ERROR: two clubs were assigned the same short code. Add an "
+                 "override to leagues.LALIGA_SHORT.")
+
+    generated = [n for n in clubs if n not in leagues.LALIGA_SHORT]
+    path = leagues.save_clubs(league.code, clubs, season=season)
+    print(f"\n{path.name} written ({len(clubs)} clubs)")
+    for n, d in sorted(clubs.items(), key=lambda kv: kv[1]["short"]):
+        mark = "  (generated code)" if n in generated else ""
+        print(f"    {d['short']}  {n}{mark}")
+    if generated:
+        print("\n  Codes above marked generated came from auto_short, not the "
+              "override table.\n  They are stable, but a club that stays in "
+              "the division belongs in\n  leagues.LALIGA_SHORT so its code is "
+              "chosen rather than derived.")
+    return clubs
 
 
 def main():
     ap = argparse.ArgumentParser()
+    ap.add_argument("--clubs", action="store_true",
+                    help="discover the division's clubs and write the league's "
+                         "club registry, then stop (run this FIRST for a "
+                         "league that names its own division)")
     ap.add_argument("--fixtures", action="store_true",
                     help="harvest the fixture list instead of squads")
+    ap.add_argument("--ref-fixtures", action="store_true",
+                    help="harvest the COMPLETED season's officials, for the "
+                         "referee join (leagues whose free records name no "
+                         "official). A different season from --fixtures.")
     ap.add_argument("--check", action="store_true",
                     help="ask /status what this key is and stop")
     ap.add_argument("--league", default="EFLC", choices=sorted(leagues.LEAGUES),
@@ -495,6 +687,10 @@ def main():
     if args.fixtures:
         emit_fixtures(harvest_fixtures(host, key, league, season), league, season)
         return
+    if args.ref_fixtures:
+        emit_ref_fixtures(harvest_ref_fixtures(host, key, league, season),
+                          league, season)
+        return
     teams_payload = _get(host, key, "teams", {"league": af, "season": season})
     err = api_errors(teams_payload)
     if err:
@@ -509,7 +705,16 @@ def main():
         sys.exit(f"ERROR: API-Football refused the /teams request: {err}\n"
                  "That is the API's own message, not ours." + hint)
 
+    if args.clubs:
+        discover_clubs(teams_payload, league, season)
+        return
+
     ids, unmapped = resolve_teams(teams_payload, league.code)
+    if not ids and league.code == "LL":
+        sys.exit(f"ERROR: no {league.name} club registry yet, so there is no "
+                 "vocabulary to match the feed against.\n\nRun the discovery "
+                 "pass first — it reads the division off the same endpoint:\n"
+                 "    python3 data/harvest_apifootball.py --league LL --clubs")
     if not ids:
         sys.exit(f"ERROR: league {af} season {season} returned no clubs this "
                  "desk recognises.\n  API returned: "

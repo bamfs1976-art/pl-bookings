@@ -40,6 +40,7 @@ from pathlib import Path
 DATA = Path(__file__).resolve().parent
 sys.path.insert(0, str(DATA))
 import leagues  # noqa: E402
+import build_pl_data  # noqa: E402
 
 
 def previous_details(league):
@@ -70,6 +71,126 @@ def previous_details(league):
         pen = None if m.group(3) == "null" else float(m.group(3))
         out[key] = {"region": json.loads(m.group(2)), "pen_pg": pen}
     return out
+
+
+def match_key(date, home, away):
+    """The join key: one calendar date and the two clubs by CANONICAL NAME.
+
+    Deliberately NOT the kick-off time. The free records carry a date and the
+    API carries a timestamp with an offset, and the two disagree by hours for
+    an evening kick-off — joining on anything finer would match nothing while
+    looking like a data problem rather than a units problem.
+
+    And deliberately not the short code. This join runs over a COMPLETED
+    season whose relegated clubs are no longer in the division, so they have
+    no short code — keying on one dropped their matches and rated every
+    referee on four fifths of his season.
+    """
+    if not date or not home or not away:
+        return None
+    return (str(date)[:10], home, away)
+
+
+def fd_date(raw):
+    """football-data.co.uk's date as ISO. The archive uses BOTH `dd/mm/yy` and
+    `dd/mm/yyyy` across seasons, and the GitHub mirror re-writes them as
+    `yyyy-mm-dd`, so all three have to land on the same string or the join
+    silently produces nothing."""
+    s = (raw or "").strip()
+    if not s:
+        return None
+    if len(s) >= 10 and s[4] == "-" and s[7] == "-":
+        return s[:10]
+    parts = s.split("/")
+    if len(parts) != 3:
+        return None
+    d, m, y = (p.strip() for p in parts)
+    if len(y) == 2:
+        # football-data has no pre-2000 rows in any file this reads.
+        y = "20" + y
+    if not (d.isdigit() and m.isdigit() and y.isdigit()):
+        return None
+    return f"{int(y):04d}-{int(m):02d}-{int(d):02d}"
+
+
+def attach_referees(rows, fixtures, code):
+    """Stamp `Referee` onto free match records from a keyed fixture list.
+
+    THE ONE THING SPAIN PAYS FOR. Every card and every foul in La Liga is in
+    the free public-domain file already; the single column that is missing,
+    and has been for all 33 seasons of the archive, is who refereed the match.
+    So the NAME is bought — one /fixtures call a season — and joined on here,
+    after which tally_refs and build_refs below compute every published rate
+    off data that stayed free.
+
+    Returns (rows, stats). Rows are copies: the free records are an input and
+    must not be mutated in place, or a second pass over them would see a
+    referee that came from somewhere else.
+    """
+    index, played = {}, set()
+    for fx in fixtures or []:
+        key = match_key(fx.get("d"), leagues.canon_name(code, fx.get("hn") or fx.get("h")),
+                        leagues.canon_name(code, fx.get("an") or fx.get("a")))
+        if not key:
+            continue
+        played.add(key)
+        ref = (fx.get("ref") or "").strip()
+        if ref:
+            index[key] = ref
+
+    out = []
+    stats = {"matched": 0, "unmatched": 0, "no_referee_in_feed": 0, "misses": []}
+    for r in rows:
+        row = dict(r)
+        key = match_key(fd_date(r.get("Date")),
+                        leagues.canon_name(code, r.get("HomeTeam")),
+                        leagues.canon_name(code, r.get("AwayTeam")))
+        ref = index.get(key) if key else None
+        if ref:
+            row["Referee"] = ref
+            stats["matched"] += 1
+        elif key and key in played:
+            # The fixture is there; the API just carries no official for it.
+            # A different failure from "these two lists do not line up", and
+            # worth telling apart — one is a gap, the other is a bug.
+            stats["no_referee_in_feed"] += 1
+        else:
+            stats["unmatched"] += 1
+            if len(stats["misses"]) < 8:
+                stats["misses"].append(
+                    f"{r.get('Date')} {r.get('HomeTeam')} v {r.get('AwayTeam')}")
+        out.append(row)
+    return out, stats
+
+
+def load_fixture_list(league):
+    """The committed fixture list for a league, parsed back out of its .js.
+
+    Read from the SHIPPED file rather than re-fetched: the fixtures harvest is
+    its own workflow step with its own key and its own failure mode, and a
+    referee refresh should use whatever that step last produced rather than
+    spending a second call and being able to fail differently.
+    """
+    import harvest_apifootball as A
+    entry = A.REF_FIXTURE_FILES.get(league.code)
+    if not entry:
+        return None, f"{league.name} has no referee-join fixture file configured"
+    const, filename = entry
+    path = league.path(filename)
+    if not path.exists():
+        return None, (f"{filename} does not exist yet — harvest the completed "
+                      f"season's officials first:\n    python3 "
+                      f"data/harvest_apifootball.py --ref-fixtures --league "
+                      f"{league.code} --season <the season just played>")
+    src = path.read_text(encoding="utf-8")
+    m = re.search(r"const " + const + r" = \[(.*?)\];", src, re.S)
+    if not m:
+        return None, f"{filename} has no `const {const} = [` block"
+    body = build_pl_data.quote_keys(m.group(1)).strip().rstrip(",")
+    try:
+        return json.loads("[" + body + "]"), None
+    except ValueError as e:
+        return None, f"{filename} did not parse: {e}"
 
 
 def tally_refs(rows):
@@ -189,14 +310,43 @@ def main():
     args = ap.parse_args()
 
     league = leagues.get(args.league)
-    if not league.has_free_referees:
-        sys.exit(f"ERROR: {league.name} match records do not name the official, "
-                 "so there is nothing for this script to compute. See "
-                 "docs/la-liga-feasibility.md for the referee-name join that "
-                 "such a league needs instead.")
+    if league.referee_source not in ("football-data", "api-football"):
+        sys.exit(f"ERROR: {league.name} has referee_source "
+                 f"{league.referee_source!r}, which this script cannot build "
+                 "from. See docs/la-liga-feasibility.md.")
 
     rows, where = leagues.load_rows(league, season=args.season, csv_path=args.csv,
                                     agent="pl-bookings-refs")
+
+    # A league whose free records carry no official gets the NAME joined on
+    # from the keyed fixture list. Everything after this line is identical for
+    # both kinds of league, which is the entire point of doing it here: the
+    # rates are computed once, from the free cards and fouls, however the name
+    # arrived.
+    if not league.has_free_referees:
+        fixtures, why = load_fixture_list(league)
+        if fixtures is None:
+            sys.exit(f"ERROR: {league.name} needs the referee NAME joined on "
+                     f"from the fixture list, and {why}.")
+        rows, jstats = attach_referees(rows, fixtures, league.code)
+        print(f"Referee join: {jstats['matched']} of {len(rows)} matches got an "
+              f"official from {len(fixtures)} fixtures")
+        if jstats["unmatched"]:
+            print(f"  {jstats['unmatched']} match rows found no fixture:")
+            for miss in jstats["misses"]:
+                print("    " + miss)
+        if not jstats["matched"]:
+            sys.exit("ERROR: the join matched NOTHING. Every match row failed "
+                     "to find a fixture, which is a key problem (club spelling "
+                     "or date format), not an empty season. Refusing to write.")
+        # Below about half, something systematic is wrong — a renamed club, a
+        # season offset — and a referee table built on the half that happened
+        # to line up is worse than none, because it looks complete.
+        if jstats["matched"] < len(rows) // 2:
+            sys.exit(f"ERROR: only {jstats['matched']} of {len(rows)} matches "
+                     "joined. That is a systematic mismatch, not a gap. "
+                     "Refusing to write a half-league referee table.")
+
     tally, skipped = tally_refs(rows)
     if not tally:
         sys.exit(f"ERROR: {where} carried {len(rows)} match rows but named no "

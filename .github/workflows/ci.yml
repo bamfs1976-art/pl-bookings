@@ -51,6 +51,13 @@ jobs:
       - name: FPL squads harvest and the previous-build fallback
         run: python3 data/test_fpl_squads.py
 
+      # The La Liga leg. Two failure modes neither English desk has: three
+      # feeds spelling the same club three ways (two of them with accents),
+      # and a referee join that can half-work and produce a table that looks
+      # complete. Both are silent, so both are pinned here.
+      - name: La Liga club names and the referee join
+        run: python3 data/test_laliga.py
+
       - name: Data guard (pl_data.js counts, no inline dataset in index.html)
         run: node scripts/check-data.mjs
 
@@ -60,6 +67,13 @@ jobs:
       # and nothing else would catch it.
       - name: Championship dataset and desk guard
         run: node scripts/check-eflc.mjs
+
+      # The La Liga desk. Checks two things the English guards cannot: that the
+      # DISCOVERED club registry and the dataset describe the same division,
+      # and that the bought referee join covered a whole season rather than the
+      # fraction of it that happened to line up.
+      - name: La Liga dataset and desk guard
+        run: node scripts/check-laliga.mjs
 
       - name: Unit tests (PLDCore)
         run: node tests/test-core.mjs
