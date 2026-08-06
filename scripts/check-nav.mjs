@@ -17,6 +17,13 @@ import assert from 'node:assert';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const read = (f) => readFileSync(join(root, f), 'utf8');
+/* Comments stripped before scanning for code patterns. Four assertions in this
+   repo have now been satisfied by prose describing the thing they were meant
+   to check, so scanning raw source is treated as a defect. */
+const codeOnly = (src) => src
+  .replace(/<!--[\s\S]*?-->/g, '')
+  .replace(/\/\*[\s\S]*?\*\//g, '')
+  .replace(/(^|[^:])\/\/.*$/gm, '$1');
 
 /* file -> the public URL it is served at, and the label that must be current
    on it. The redirects are what make the pretty URLs work, so they are checked
@@ -141,6 +148,42 @@ assert.ok(/leaguebar/.test(tour[1]),
 for (const word of ['Championship', 'La Liga']) {
   assert.ok(tour[1].includes(word), `the tour never mentions ${word}`);
 }
+
+/* ---- 6. the app shell is on the desks that need it ----------------------- */
+/* The two newer desks navigated with a single tab strip while the Premier
+   League desk had a sidebar, a breadcrumb and a mobile bottom bar. That is
+   felt before a number is read. */
+for (const f of ['eflc.html', 'laliga.html']) {
+  const src = read(f);
+  assert.ok(/assets\/shell\.js/.test(src), `${f} does not load the app shell`);
+  assert.ok(/PLDShell\.build\(/.test(src), `${f} never builds the app shell`);
+  for (const area of ['matchday', 'desk', 'fixtures', 'guide']) {
+    assert.ok(new RegExp(`id: '${area}'`).test(src), `${f}'s shell has no ${area} area`);
+  }
+  /* The landing view. Opening on a table of several hundred players is a
+     different product from opening on the fixtures, not a different skin. */
+  assert.ok(/id="panel-matchday"/.test(src), `${f} has no This Matchday landing`);
+  assert.ok(/function renderMatchday/.test(src), `${f} never renders the matchday view`);
+  /* ONE band(). A second declaration in the same scope hoists over the first
+     and silently replaced the fixture cards' High/Watch pills with a class
+     called "<" — the cards kept rendering and nothing threw. */
+  const decls = (codeOnly(src).match(/function band\(/g) || []).length;
+  assert.equal(decls, 1, `${f} declares band() ${decls} times — a duplicate hoists ` +
+    'over the fixture cards\' banding and replaces it with garbage that still renders');
+  /* shareRound must take the round: This Matchday shares a round that is not
+     the one selected on the Fixtures tab. */
+  assert.ok(/function shareRound\(round, btn\)/.test(src),
+    `${f}'s shareRound reads a control instead of taking the round, so This ` +
+    'Matchday would export whatever the Fixtures tab has selected');
+}
+assert.ok(/\.as-main\{[^}]*min-width:0/.test(css),
+  '.as-main can no longer shrink — the players table then forces the page ' +
+  'wider than the phone and the browser zooms the whole app out');
+assert.ok(!/\.as-main\{[^}]*display:flex/.test(css),
+  '.as-main is a flex container again: main.wrap has margin:0 auto, and auto ' +
+  'cross-axis margins disable stretch, so it sizes to its content and the ' +
+  'page grows to ~912px on a 390px screen');
+
 
 console.log(
   `check-nav OK: ${DESKS.length} desks, each linking to all ${DESKS.length} and ` +

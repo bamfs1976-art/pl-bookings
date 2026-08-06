@@ -70,3 +70,71 @@
   border-bottom:1.5px solid currentColor;padding-bottom:1px}
 .combined-note a:hover{opacity:.8}
 @media (pointer: coarse){ .combined-note a{display:inline-block;min-height:32px;line-height:30px} }
+
+/* ─── App shell (Championship / La Liga) ────────────────────────────────────
+   The Premier League desk has a sidebar, a breadcrumb topbar and a mobile
+   bottom tab bar; the other two had a plain header and an underlined tab
+   strip. That difference is felt before a single number is read — it is what
+   made them look like three products rather than one.
+
+   Prefixed `as-` rather than reusing index.html's class names. Identical
+   appearance, separate implementation: index.html's shell CSS is entangled
+   with 3,900 lines of page-specific rules, and redefining .sidebar in a
+   stylesheet that page also loads is a collision waiting to happen. The
+   values below are lifted from it so the two render the same. */
+:root{--as-sidebar-w:248px; --as-topbar-h:60px; --as-bottom-h:66px}
+.as-shell{display:flex;min-height:100vh}
+.as-sidebar{width:var(--as-sidebar-w);background:var(--surface);border-right:1px solid var(--border);
+  display:flex;flex-direction:column;position:fixed;left:0;top:0;bottom:0;z-index:200;
+  padding-top:env(safe-area-inset-top);transition:transform .22s ease}
+.as-brand{display:flex;align-items:center;gap:11px;padding:18px 18px 16px;border-bottom:1px solid var(--border)}
+.as-brand-dot{width:38px;height:38px;border-radius:11px;flex:none;display:grid;place-items:center;
+  font-weight:800;font-size:13px;color:#fff}
+.as-brand-name{font-family:'Bricolage Grotesque',sans-serif;font-size:1.04rem;letter-spacing:-.02em;font-weight:800;margin:0}
+.as-brand-tag{font-size:.62rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--accent);margin-top:3px}
+.as-nav{flex:1;overflow-y:auto;padding:8px 10px 16px}
+.as-area{margin-bottom:2px}
+.as-area-btn{display:flex;align-items:center;gap:11px;width:100%;padding:10px 12px;border-radius:8px;
+  border:0;background:none;cursor:pointer;color:var(--text-2);font:inherit;font-size:.86rem;font-weight:600}
+.as-area-btn:hover{background:var(--surface-2);color:var(--text)}
+.as-area-btn.active{background:color-mix(in srgb,var(--accent) 12%,transparent);color:var(--accent);font-weight:700}
+.as-area-btn:focus-visible{outline:2px solid var(--ring);outline-offset:-2px}
+.as-area-ic{width:20px;height:20px;flex:none;display:flex;align-items:center;justify-content:center}
+.as-foot{padding:12px 18px;border-top:1px solid var(--border);font-size:.72rem;color:var(--text-3)}
+/* display:BLOCK, not flex. As a flex column it broke the page it wraps:
+   `main.wrap` carries `margin:0 auto`, and auto margins on a flex item's
+   cross axis switch off `stretch`, so the element sized itself to its CONTENT
+   instead of its container. The players table is ~880px wide inside its own
+   horizontal scroller, so the page grew to 912px on a 390px phone and the
+   browser zoomed the whole thing out to fit. The table looked fine;
+   everything around it was silently shrunk.
+
+   A block wrapper gives `main.wrap` exactly the containing block it had
+   before the shell existed, and keeps its own max-width centring intact. */
+.as-main{margin-left:var(--as-sidebar-w);flex:1;min-width:0;min-height:100vh}
+.as-overlay{display:none;position:fixed;inset:0;z-index:190;background:rgba(8,10,20,.5);
+  -webkit-backdrop-filter:blur(2px);backdrop-filter:blur(2px);border:0;padding:0}
+.as-overlay.show{display:block}
+.as-burger{display:none;width:44px;height:44px;border-radius:9px;border:1px solid var(--border-2);
+  background:var(--surface);color:var(--text);cursor:pointer;align-items:center;justify-content:center;flex:none}
+.as-bottom{display:none}
+@media (max-width:900px){
+  .as-sidebar{transform:translateX(-100%)}
+  .as-sidebar.open{transform:translateX(0)}
+  .as-main{margin-left:0}
+  .as-burger{display:inline-flex}
+  .as-bottom{display:flex;position:fixed;bottom:0;left:0;right:0;z-index:150;height:var(--as-bottom-h);
+    background:var(--surface);border-top:1px solid var(--border);align-items:center;
+    justify-content:space-around;padding:0 4px env(safe-area-inset-bottom);
+    box-shadow:0 -2px 16px rgba(0,0,0,.18)}
+  .as-bn{display:flex;flex-direction:column;align-items:center;gap:3px;flex:1;max-width:84px;
+    padding:7px 4px;border-radius:8px;border:0;background:none;cursor:pointer;color:var(--text-3);
+    font:inherit;font-size:.62rem;font-weight:700;min-height:48px}
+  .as-bn.active{color:var(--accent)}
+  body{padding-bottom:calc(var(--as-bottom-h) + env(safe-area-inset-bottom))}
+}
+@supports(padding:max(0px)){@media (max-width:900px){.as-bottom{padding-bottom:max(4px,env(safe-area-inset-bottom))}}}
+/* The breadcrumb the PL topbar carries: area, then panel. */
+.as-crumb{display:flex;align-items:center;gap:7px;font-size:12.5px;color:var(--text-3);min-width:0}
+.as-crumb b{color:var(--text);font-weight:700}
+@media (max-width:560px){.as-crumb{display:none}}

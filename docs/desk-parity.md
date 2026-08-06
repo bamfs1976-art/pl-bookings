@@ -73,11 +73,20 @@ Premier League data only.
 | Share match card + share matchday card | ✅ | ✅ | ✅ | — |
 | **Thin-sample warning** | ✅ | ❌ | ❌ | interface |
 | **"Hide low sample" filter** | ✅ | ❌ | ❌ | interface |
-| **High / Watch banding of players** | ✅ | ❌ | ❌ | interface |
+| High / Watch banding of players | ✅ | ✅ | ✅ | *(audit error — see note)* |
 | **Head-to-head strip** | ✅ | ❌ | ❌ | **data** (same source available) |
 | **Derby boost** | ✅ | ❌ | ❌ | **data** (editorial list) |
 | **Match model / game-state term** | ✅ | ❌ | ❌ | **data** (no source) |
 | **ICS calendar export** | ✅ | ❌ | ❌ | interface |
+
+**Correction.** The banding row above originally read ❌ for both newer desks. It was
+wrong: they band at the same 50% / 30% thresholds via a `band()` returning
+`['hi','High']`, and the audit's grep looked for `>High<` and `"High"` so it
+matched neither. Acting on the error made it worse — a second `band()` was
+declared in the same scope, function declarations hoist and the last one wins,
+so the fixture cards' banding was silently replaced by an HTML string whose
+`[0]` is `"<"`. The cards kept rendering with a CSS class called `<`. Fixed by
+deleting the duplicate and rendering the existing one as a pill.
 
 **One of these is not cosmetic.** The Premier League desk folds in a vendored
 Dixon–Coles match model (`data/sim_model.js`, from Plsimulator) that the other two

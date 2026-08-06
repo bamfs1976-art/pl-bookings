@@ -149,6 +149,12 @@
   .mkts{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px;padding-top:9px;border-top:1px dashed var(--border)}
   .mkt{font-size:11.5px;background:var(--surface-2);border-radius:8px;padding:4px 9px}
   .mkt b{font-family:var(--mono)}
+  /* High / Watch banding, at the same thresholds the Premier League desk uses.
+     A list of bare percentages makes the reader do the thresholding, and two
+     desks thresholding differently is how "the same model" stops looking like
+     the same model. */
+  .band-hi{background:color-mix(in srgb,var(--danger) 18%,transparent);color:var(--danger-ink);font-weight:800}
+  .band-mid{background:color-mix(in srgb,var(--warn) 22%,transparent);color:var(--warn-ink);font-weight:800}
   .empty{padding:26px;text-align:center;color:var(--text-2)}
   .note{font-size:12.5px;color:var(--text-2);margin-top:10px;line-height:1.55}
   .guide{max-width:74ch;line-height:1.65;font-size:14.5px}
@@ -233,7 +239,8 @@
   </section>
 
   <nav class="tabs" role="tablist" aria-label="Sections">
-    <button class="tab" role="tab" id="tab-players"  aria-controls="panel-players"  aria-selected="true">Players</button>
+    <button class="tab" role="tab" id="tab-matchday" aria-controls="panel-matchday" aria-selected="false">This Matchday</button>
+    <button class="tab" role="tab" id="tab-players"  aria-controls="panel-players"  aria-selected="false">Players</button>
     <button class="tab" role="tab" id="tab-fixtures" aria-controls="panel-fixtures" aria-selected="false">Fixtures</button>
     <button class="tab" role="tab" id="tab-clubs"    aria-controls="panel-clubs"    aria-selected="false">Clubs</button>
     <button class="tab" role="tab" id="tab-referees" aria-controls="panel-referees" aria-selected="false">Referees</button>
@@ -241,7 +248,22 @@
   </nav>
 
   <!-- ── Players ────────────────────────────────────────────────────────── -->
-  <section class="panel" id="panel-players" role="tabpanel" aria-labelledby="tab-players">
+
+  <section class="panel" id="panel-matchday" role="tabpanel" aria-labelledby="tab-matchday" hidden>
+    <div class="stats" id="mdStats"></div>
+    <div class="card" style="margin-top:12px">
+      <div class="controls">
+        <b id="mdTitle">This Matchday</b>
+        <span class="faint" id="mdWhen" style="font-size:12.5px"></span>
+        <span class="spacer"></span>
+        <button class="btn primary" id="mdShareBtn" type="button">&#8681; Share matchday</button>
+      </div>
+      <div id="mdList"></div>
+      <p class="note" id="mdNote"></p>
+    </div>
+  </section>
+
+  <section class="panel" id="panel-players" role="tabpanel" aria-labelledby="tab-players" hidden>
     <div class="card susp" id="suspCard" hidden>
       <div class="susp-head">
         <h2 style="font-size:15px">Suspension watch</h2>
@@ -493,6 +515,7 @@
      tag is harmless — the Fixtures tab says so rather than breaking. -->
 <script src="data/laliga_fixtures.js"></script>
 <script src="assets/core.js"></script>
+<script src="assets/shell.js"></script>
 <script src="assets/save.js"></script>
 <script src="assets/share.js"></script>
 <script src="assets/suspension.js"></script>
@@ -1008,7 +1031,7 @@
         + '<span class="faint">v</span>'
         + (ca.img ? '<img class="crest" src="' + esc(ca.img) + '" alt="">' : '') + esc(ca.name || f.a)
         + '</div>'
-        + '<div class="fx-when">' + esc(whenText(f.d)) + '</div>'
+        + '<div class="fx-when">' + esc(whenText(f.d)) + thinTag(x) + '</div>'
         + '<div class="fx-heat"><b>' + n1(x.m.expected) + '</b><span>expected cards</span></div>'
         + '</div>'
         + '<div class="fx-ref">' + refCell + '</div>'
@@ -1121,8 +1144,11 @@
       .then(function () { shareBusy(btn, false); });
   }
 
-  function shareRound(btn) {
-    var round = Number($('#fxRound').value);
+  /* Takes the round rather than reading #fxRound: This Matchday shares a
+     round that is not the one selected on the Fixtures tab, and a function
+     that read the dropdown would export the wrong matchday from there
+     while succeeding. */
+  function shareRound(round, btn) {
     var list = FIXTURES.filter(function (f) { return f.r === round; }).map(priceFixture);
     list.sort(function (a, b) { return b.m.expected - a.m.expected; });
     if (!list.length) return;
@@ -1184,15 +1210,140 @@
     return ' Prices ' + n2(sum / n) + ' cards a match against the '
       + n2(m / mm) + ' the division produced last season.';
   }
+
+  /* ---- This Matchday ----------------------------------------------------
+   * The landing view. The Premier League desk opens on its fixtures ranked by
+   * booking heat; these two opened on a table of several hundred players,
+   * which is a different product on first impression rather than a different
+   * skin. Same pricing path as the Fixtures tab (priceFixture), so a match
+   * cannot read differently depending on which view you arrived through.
+   */
+  function nextRound() {
+    if (!FIXTURES.length) return null;
+    var today = new Date().toISOString().slice(0, 10);
+    var future = FIXTURES.filter(function (f) { return f.d && f.d.slice(0, 10) >= today; });
+    var pool = future.length ? future : FIXTURES;
+    return pool.reduce(function (m, f) { return m == null ? f.r : Math.min(m, f.r); }, null);
+  }
+
+  /* Renders the EXISTING band() — which already returns [class, label] and is
+     what the fixture cards use — as a pill. Declaring a second function band()
+     here is what the first version did, and because function declarations
+     hoist and the last wins, it silently replaced the fixture cards' banding
+     with an HTML string whose [0] is "<". The cards kept rendering; their
+     High/Watch pills turned into a class called "<". */
+  function bandPill(p) {
+    var b = band(p);
+    return b[1] ? '<span class="pill band-' + b[0] + '">' + b[1] + '</span>' : '';
+  }
+
+  function mdCandidates(x) {
+    var out = [];
+    ['home', 'away'].forEach(function (k) {
+      var short = x.fx[k === 'home' ? 'h' : 'a'];
+      (x[k].top || []).forEach(function (t) {
+        out.push({ name: t.p.n, club: short, prob: t.prob });
+      });
+    });
+    return out.sort(function (a, b) { return b.prob - a.prob; });
+  }
+
+  /* Fewer than twelve rated players between two squads is not a confident
+     price and must not look like one. */
+  function thinTag(x) {
+    var rated = ((x.home && x.home.ps) || []).length + ((x.away && x.away.ps) || []).length;
+    return rated < 12
+      ? ' <span class="pill" title="Fewer than 12 rated players between the two squads">thin sample</span>' : '';
+  }
+
+  function renderMatchday() {
+    var host = $('#mdList');
+    if (!host) return;
+    var r = nextRound();
+    if (r == null) {
+      host.innerHTML = '<div class="empty">No fixture list yet.</div>';
+      $('#mdStats').innerHTML = ''; $('#mdNote').textContent = '';
+      return;
+    }
+    var list = FIXTURES.filter(function (f) { return f.r === r; }).map(priceFixture)
+      .sort(function (a, b) { return b.m.expected - a.m.expected; });
+    var cards = list.reduce(function (a, x) { return a + (x.m.expected || 0); }, 0);
+    var withRef = list.filter(function (x) { return x.ref.appointed; }).length;
+    var dates = list.map(function (x) { return x.fx.d; }).filter(Boolean).sort();
+    var dfmt = function (d) {
+      var t = new Date(d);
+      return isNaN(t) ? '' : t.toLocaleDateString(undefined, { weekday: 'short', day: 'numeric', month: 'short' });
+    };
+
+    $('#mdTitle').textContent = 'Matchday ' + r;
+    $('#mdWhen').textContent = dates.length
+      ? dfmt(dates[0]) + (dates[dates.length - 1].slice(0, 10) !== dates[0].slice(0, 10)
+          ? ' – ' + dfmt(dates[dates.length - 1]) : '')
+      : '';
+    $('#mdStats').innerHTML = [
+      ['<b>' + list.length + '</b><span>matches</span>'],
+      ['<b>' + cards.toFixed(1) + '</b><span>cards expected</span>'],
+      ['<b>' + (list.length ? (cards / list.length).toFixed(2) : '—') + '</b><span>a match</span>'],
+      ['<b>' + withRef + ' of ' + list.length + '</b><span>referees appointed</span>']
+    ].map(function (h) { return '<div class="stat">' + h + '</div>'; }).join('');
+
+    host.innerHTML = list.map(function (x) {
+      var f = x.fx, ch = clubBy[f.h] || {}, ca = clubBy[f.a] || {};
+      var cands = mdCandidates(x).slice(0, 4);
+      return '<div class="row">'
+        + '<span class="teams">' + esc(ch.name || f.h) + ' <span class="faint">v</span> '
+        + esc(ca.name || f.a) + thinTag(x) + '</span>'
+        + '<span class="top">' + (cands.length
+            ? cands.map(function (c) {
+                return esc(c.name) + ' <b>' + (c.prob * 100).toFixed(0) + '%</b> ' + bandPill(c.prob);
+              }).join(' &middot; ')
+            : '<span class="faint">no rated players</span>') + '</span>'
+        + '<span class="heat ' + (x.m.expected >= 4.2 ? 'hot' : x.m.expected >= 3.5 ? 'warm' : 'cool') + '">'
+        + x.m.expected.toFixed(1) + '</span>'
+        + '</div>';
+    }).join('');
+
+    $('#mdNote').textContent = 'Ranked hottest to coolest by booking heat — the expected number of '
+      + 'cards in the match, both sides added together, with the referee applied where one has been '
+      + 'appointed. A player’s percentage is his chance of a card in that match: High is 50%+, '
+      + 'Watch 30–50%.';
+
+    var b = $('#mdShareBtn');
+    if (b && !b._wired) { b._wired = true; b.addEventListener('click', function () { shareRound(r, b); }); }
+  }
+
   $('#prov').textContent = 'Dataset: ' + PLAYERS.length + ' players across ' + CLUBLIST.length
     + ' clubs, ' + REFLIST.length + ' referees. Base rate ' + pct(CAL.baseRate)
     + ', average risk ' + n2(CAL.avgRisk) + '.' + calibrationNote();
 
+  renderMatchday();
   renderSuspension();
   renderPlayers();
   renderFixtures();
   renderClubs();
   renderRefs();
+
+  /* ---- app shell -------------------------------------------------------- */
+  /* Sidebar, breadcrumb and mobile bottom bar, matching the Premier League
+     desk. Areas hold panels; Desk holds the three tables, so those stay on the
+     existing strip and every other area hides it. */
+  if (window.PLDShell) {
+    window.PLDShell.build({
+      code: 'LL', name: 'La Liga', accent: '#ea580c', tag: 'La Liga Bookings Desk',
+      areas: [
+        { id: 'matchday', label: 'Matchday', icon: 'matchday',
+          panels: [{ id: 'panel-matchday', label: 'This Matchday' }] },
+        { id: 'desk', label: 'Desk', icon: 'desk', panels: [
+          { id: 'panel-players', label: 'Players' },
+          { id: 'panel-clubs', label: 'Clubs' },
+          { id: 'panel-referees', label: 'Referees' }] },
+        { id: 'fixtures', label: 'Fixtures', icon: 'fixtures',
+          panels: [{ id: 'panel-fixtures', label: 'All fixtures' }] },
+        { id: 'guide', label: 'Guide', icon: 'guide',
+          panels: [{ id: 'panel-guide', label: 'How to use' }] }
+      ]
+    });
+  }
 })();
 </script>
 <script>
