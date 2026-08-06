@@ -212,6 +212,10 @@ AF_ALIASES = {
     "Norwich": "Norwich City", "Stoke": "Stoke City", "Derby": "Derby County",
     "Charlton": "Charlton Athletic", "Birmingham": "Birmingham City",
     "Bolton": "Bolton Wanderers", "Lincoln": "Lincoln City",
+    "Man City": "Manchester City", "Man United": "Manchester United",
+    "Manchester Utd": "Manchester United", "Nott'm Forest": "Nottingham Forest",
+    "Forest": "Nottingham Forest",
+    "Wolverhampton": "Wolverhampton Wanderers",
 }
 
 

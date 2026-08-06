@@ -424,4 +424,30 @@ def _rate_limit_recognised_in_both_shapes():
 
 t("a rate limit is told apart from a bad key", _rate_limit_recognised_in_both_shapes)
 
+def _a_division_harvest_knows_clubs_that_changed_division():
+    """The bug this cost a run: build_pl_data.SHORT is the 2026-27 PREMIER
+    LEAGUE, so it excludes Burnley, West Ham and Wolves — who went down.
+    Scoping a Premier League harvest to that map dropped exactly the three
+    clubs the harvest existed to fetch, and reported nothing, because a club
+    that resolves to nothing is skipped.
+
+    Neither desk's list is complete on its own. A division contains the union."""
+    import leagues as L
+    known = A.known_names("PL")
+    for api_name, canonical in (("Burnley", "Burnley"),
+                                ("West Ham", "West Ham United"),
+                                ("Wolves", "Wolverhampton Wanderers")):
+        assert L.canonical_club(api_name, known) == canonical, api_name
+        assert L.eflc_short(canonical), f"{canonical} must reach a short code"
+    # and the other direction: a Championship harvest carries the three who
+    # went UP, whom only the Premier League map knows.
+    ch = A.known_names("EFLC")
+    for api_name in ("Coventry", "Ipswich", "Hull City"):
+        assert L.canonical_club(api_name, ch) in B.SHORT, api_name
+    assert A.known_names("PL") == A.known_names("EFLC"), \
+        "the vocabulary is the union, not the asking league's slice"
+
+
+t("a division harvest knows the clubs that changed division", _a_division_harvest_knows_clubs_that_changed_division)
+
 print(f"\n{passed} tests passed")

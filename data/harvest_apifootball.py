@@ -69,11 +69,19 @@ PAGE_SIZE = 20          # API-Football's fixed page size for /players
 # Which club names each league's builder keys on. The spelling differences are
 # in leagues.AF_ALIASES; this only says whose vocabulary to check against.
 def known_names(code):
-    if code == "PL":
-        return set(build_pl_data.SHORT)
-    # The Championship desk's 24, plus the clubs the Premier League desk pulls
-    # out of a Championship season (its promoted three). One harvest of a
-    # division serves both desks, so it keeps every club either recognises.
+    """Every club name ANY desk keys on — never just the asking league's.
+
+    A division harvest serves whichever desk wants it, and the two desks' club
+    lists deliberately disagree. build_pl_data.SHORT is the 2026-27 PREMIER
+    LEAGUE, so it excludes Burnley, West Ham and Wolves, who went down — and
+    scoping a Premier League harvest to that map dropped exactly the three
+    clubs the harvest was added to fetch. They were relegated INTO the
+    Championship, so it is the Championship's map that knows them.
+
+    Symmetrically, a Championship harvest carries Coventry, Ipswich and Hull,
+    who only the Premier League map knows. Neither list is complete alone; the
+    union is what a division contains.
+    """
     return set(leagues.EFLC_CLUBS) | set(build_pl_data.SHORT)
 
 
