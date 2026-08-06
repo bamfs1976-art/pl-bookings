@@ -1,9 +1,5 @@
 {
  "clubs": {
-  "Alaves": {
-   "id": 542,
-   "short": "ALA"
-  },
   "Athletic Club": {
    "id": 531,
    "short": "ATH"
@@ -19,6 +15,10 @@
   "Celta Vigo": {
    "id": 538,
    "short": "CEL"
+  },
+  "Deportivo Alaves": {
+   "id": 542,
+   "short": "ALA"
   },
   "Deportivo La Coruna": {
    "id": 544,
