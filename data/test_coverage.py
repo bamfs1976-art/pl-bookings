@@ -240,7 +240,7 @@ def _fake_api(total, cap=10, report_pages=True):
     for 20."""
     import urllib.parse as up
 
-    def req(url, cookie):
+    def req(url, cookie, allow_400=False):
         q = dict(up.parse_qsl(up.urlparse(url).query))
         page = int(q["page"])
         start = (page - 1) * cap
