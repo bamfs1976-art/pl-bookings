@@ -188,13 +188,30 @@ that **every card carries the 18+ / BeGambleAware line** — which the first
 version silently truncated off the end of any card with a long note. Pixel
 diffing would have failed on a font substitution and passed on a wrong number.
 
-The Premier League is not yet on `/today`. Its fixtures come from the live FPL
-feed at runtime rather than a committed file, and its desk prices them with
-factors this page does not have (availability, derbies, the match model's
-game-state term) — so including it from a partial model would print a different
-number for the same match than the Premier League desk itself shows. One price
-per fixture matters more than one more league, and it drops in unchanged the
-moment a committed PL fixture list exists.
+**All three leagues are on `/today`.** The Premier League needed two things
+the others did not. Its fixtures now come from a committed `data/pl_fixtures.js`
+(the same API-Football harvest the other two use) rather than only from the live
+FPL feed, so a static page can read them. And its pricing — a fitted GLM plus
+referee, derby, venue and game-state terms — moved into `assets/plmodel.js`,
+which **both the desk and `/today` call**. Verified bit-identical across 40 club
+pairings on expected cards, both-teams-carded and over 3.5. The derby list moved
+with it: `index.html` now reads `PLModel.DERBIES` instead of keeping its own
+copy, because two pages disagreeing about which fixtures are derbies would move
+every player's number on those fixtures, on one page only.
+
+What `/today` still cannot know for the Premier League is availability — who is
+injured or suspended — which lives in the live feed. Before the season starts
+that filter excludes nobody, which is the desk's own state too.
+
+**One caveat the combined view states in the open.** Heat *is* comparable across
+leagues: it is expected cards, and each desk is calibrated against the card rate
+its own division produced. The top-risk *percentage* is not. The Premier League
+prices a player through a fitted GLM; the other two through a hazard over a
+shrunk yellow rate. The two leagues' base rates are within half a point of each
+other (17.4% and 17.0%), so a Premier League name reading three times a
+Championship one is mostly the model, not the player. Converging the two is a
+modelling decision rather than a display one, so the page says so instead of
+quietly implying a comparison it cannot support.
 
 ## Tests and CI
 

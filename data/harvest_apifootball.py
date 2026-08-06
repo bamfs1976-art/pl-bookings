@@ -389,6 +389,18 @@ def round_no(label):
     return int(m.group(1)) if m else None
 
 
+def short_in(code, name):
+    """A club name as its short code, for whichever league is asking.
+
+    The Premier League's map lives in build_pl_data rather than leagues.py, so
+    the dispatch is here — leagues.short_for would send a PL club to the
+    Championship's map and answer None for all twenty of them.
+    """
+    if code.upper() == "PL":
+        return build_pl_data.SHORT.get((name or "").strip())
+    return leagues.short_for(code, name)
+
+
 def map_fixture(entry, known, code="EFLC"):
     """One /fixtures row into the shape the desk reads, or None.
 
@@ -402,7 +414,7 @@ def map_fixture(entry, known, code="EFLC"):
     away = canonical_for(code, (tm.get("away") or {}).get("name"))
     if not home or not away:
         return None
-    h, a = leagues.short_for(code, home), leagues.short_for(code, away)
+    h, a = short_in(code, home), short_in(code, away)
     if not h or not a:
         return None
     # The referee is the reason this endpoint is worth calling. It is null
@@ -460,6 +472,7 @@ def harvest_fixtures(host, key, league, season):
 # Each desk's fixture list: the global its page reads, and the file it lives
 # in. Keyed by league so a second desk cannot quietly overwrite the first's.
 FIXTURE_FILES = {
+    "PL": ("PL_FIXTURES", "pl_fixtures.js"),
     "EFLC": ("EFLC_FIXTURES", "eflc_fixtures.js"),
     "LL": ("LALIGA_FIXTURES", "laliga_fixtures.js"),
 }

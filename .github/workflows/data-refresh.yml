@@ -223,6 +223,17 @@ jobs:
           API_FOOTBALL_SEASON: ${{ inputs.season_fixtures }}
         run: python3 data/harvest_apifootball.py --fixtures --league LL
 
+      # The Premier League fixture list. Committed like the other two, which is
+      # what lets /today price a PL fixture at all: the desk itself reads
+      # fixtures from the live FPL feed at runtime, and a static page cannot.
+      # season_fixtures, not season_af — this is the season being played.
+      - name: Harvest the Premier League fixtures from API-Football
+        if: ${{ env.API_FOOTBALL_KEY != '' }}
+        continue-on-error: true
+        env:
+          API_FOOTBALL_SEASON: ${{ inputs.season_fixtures }}
+        run: python3 data/harvest_apifootball.py --fixtures --league PL
+
       # League One, for the three clubs promoted into the Championship. Only
       # the Championship desk needs it, so it never blocks the Premier League.
       - name: Harvest League One from API-Football (the promoted three)
@@ -334,7 +345,8 @@ jobs:
           # command when either path matches nothing, so a run that produced
           # the referees but not the dataset staged NEITHER — which is exactly
           # what happened the first time this ran.
-          for f in data/eflc_refs.json data/eflc_data.js data/eflc_status.txt data/eflc_fixtures.js \
+          for f in data/pl_fixtures.js \
+                   data/eflc_refs.json data/eflc_data.js data/eflc_status.txt data/eflc_fixtures.js \
                    data/laliga_clubs.json data/laliga_refs.json data/laliga_data.js \
                    data/laliga_status.txt data/laliga_fixtures.js data/laliga_ref_fixtures.js; do
             [ -f "$f" ] && git add "$f"

@@ -944,6 +944,7 @@
 <script src="data/model.js"></script>
 <script src="data/sim_model.js"></script>
 <script src="assets/core.js"></script>
+<script src="assets/plmodel.js"></script>
 <script>
 const STORE_KEY="pl_desk_v1", THEME_KEY="pl_desk_theme";
 const $=(id)=>document.getElementById(id);
@@ -2772,20 +2773,11 @@ function nextFixtureFor(short){
 // so a derby fixture gets a heat boost and a chip. Includes the promoted
 // clubs' regional rivalries where the other side is in the league
 // (Coventry-Villa in the West Midlands, Hull-Leeds across Yorkshire).
-const DERBIES=[
-  ["ARS","TOT"], // North London
-  ["LIV","EVE"], // Merseyside
-  ["LIV","MUN"], // North-West
-  ["MUN","MCI"], // Manchester
-  ["MUN","LEE"], // Roses
-  ["CHE","TOT"],
-  ["CHE","ARS"],
-  ["CHE","FUL"], // West London
-  ["CRY","BHA"], // M23
-  ["NEW","SUN"], // Tyne-Wear
-  ["AVL","COV"], // West Midlands
-  ["LEE","HUL"], // Yorkshire
-];
+// The list itself lives in assets/plmodel.js, which /today also reads. It was
+// duplicated for exactly one commit and that was enough to notice: two pages
+// disagreeing about which fixtures are derbies would move every player's
+// number on those fixtures, on one page only, with nothing to catch it.
+const DERBIES=(typeof PLModel!=="undefined"&&PLModel.DERBIES)||[];
 const DERBY_SET=new Set(DERBIES.map(d=>[...d].sort().join("|")));
 function isDerby(h,a){ return DERBY_SET.has([h,a].sort().join("|")); }
 const DERBY_BOOST=1.15;

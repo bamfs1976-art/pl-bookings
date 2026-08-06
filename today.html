@@ -116,12 +116,14 @@
 
 <script src="assets/core.js"></script>
 <script src="assets/share.js"></script>
+<script src="assets/plmodel.js"></script>
 <!-- Every desk's committed dataset, each in its OWN GLOBAL SCOPE.
 
      They all declare `const CLUBS` and `const REFS` — correct in a file read
      by one desk, fatal in a page that wants two. A same-origin iframe is a
      separate scope, so each league loads into one and this page reads it off
      contentWindow. No data file and no desk had to change for it. -->
+<iframe id="f-pl"     src="data-frame.html#pl"     hidden title="Premier League dataset"></iframe>
 <iframe id="f-eflc"   src="data-frame.html#eflc"   hidden title="EFL Championship dataset"></iframe>
 <iframe id="f-laliga" src="data-frame.html#laliga" hidden title="La Liga dataset"></iframe>
 <script>
@@ -161,6 +163,7 @@
    * committed PL fixture list exists.
    */
   var SOURCES = [
+    { code: 'PL', name: 'Premier League', href: '/', frame: 'f-pl' },
     { code: 'EFLC', name: 'EFL Championship', href: '/eflc', frame: 'f-eflc' },
     { code: 'LL', name: 'La Liga', href: '/laliga', frame: 'f-laliga' }
   ];
@@ -176,7 +179,8 @@
       var d = w.__data || {};
       var L = {
         code: s.code, name: s.name, href: s.href,
-        clubs: d.CLUBS, refs: d.REFS, players: d.players, fixtures: d.fixtures
+        clubs: d.CLUBS, refs: d.REFS, players: d.players, fixtures: d.fixtures,
+        model: d.model, sim: d.sim
       };
       return (L.clubs && L.clubs.length && L.players && L.players.length
               && L.fixtures && L.fixtures.length) ? L : null;
@@ -211,6 +215,23 @@
   var SHRINK_MATCHES = 6;
 
   function prepare(L) {
+    L.clubBy = {};
+    L.clubs.forEach(function (c) { L.clubBy[c.short] = c; });
+    L.refBy = {};
+    (L.refs || []).forEach(function (r) { L.refBy[r.n] = r; });
+
+    /* The Premier League desk prices a fixture through a fitted GLM, a
+       referee factor, a derby boost, a venue term and the match model's
+       game-state term. assets/plmodel.js is that wiring, shared with the desk
+       itself, so this page cannot print a different number for the same
+       match. The other two desks have no such model and use the shrink-then-
+       hazard path below, which is what THEY show. */
+    if (L.code === 'PL' && window.PLModel) {
+      L.pl = window.PLModel.create({
+        model: L.model, sim: L.sim, refs: L.refs, players: L.players
+      });
+      return;
+    }
     var acc = {};
     L.players.forEach(function (p) {
       var m = Number(p.min) || 0;
@@ -226,10 +247,6 @@
       p._y90 = (m > 0 && p.yc != null)
         ? C.shrinkRate(p.yc, m, L.prior(p.p), SHRINK_MATCHES) : null;
     });
-    L.clubBy = {};
-    L.clubs.forEach(function (c) { L.clubBy[c.short] = c; });
-    L.refBy = {};
-    (L.refs || []).forEach(function (r) { L.refBy[r.n] = r; });
     /* The league's own average card rate, which the referee factor is
        relative to. Match-weighted, because REFS carries a rate and a count. */
     var mm = 0, tot = 0;
@@ -261,6 +278,20 @@
   }
 
   function price(L, fx) {
+    if (L.pl) {
+      var pref = fx.ref ? L.refBy[fx.ref] : null;
+      var derby = L.pl.isDerby(fx.h, fx.a);
+      var b = L.pl.board(fx.h, fx.a, pref, derby);
+      if (!b) return null;
+      var cands = L.pl.candidates(fx.h, fx.a, pref, derby);
+      return {
+        L: L, fx: fx, ref: { ref: pref, name: fx.ref || null, appointed: !!fx.ref },
+        factor: L.pl.refFactor(pref), derby: derby,
+        home: { ps: [], top: cands.filter(function (c) { return c.p.c === fx.h; }).slice(0, 4) },
+        away: { ps: [], top: cands.filter(function (c) { return c.p.c === fx.a; }).slice(0, 4) },
+        m: b
+      };
+    }
     var ref = fx.ref ? L.refBy[fx.ref] : null;
     var factor = refFactor(L, ref);
     var home = sideProbs(L, fx.h, factor), away = sideProbs(L, fx.a, factor);
@@ -358,7 +389,8 @@
     host.innerHTML = rows.map(function (p) {
       var ch = p.L.clubBy[p.fx.h] || {}, ca = p.L.clubBy[p.fx.a] || {};
       var top = candidates(p)[0];
-      return '<div class="row">'
+      return '<div class="row" data-lg="' + p.L.code + '" data-h="' + p.fx.h
+        + '" data-a="' + p.fx.a + '">'
         + '<span class="lg ' + p.L.code + '">' + esc(p.L.code) + '</span>'
         + '<span class="when">' + esc(fmtTime(p.fx.d)) + '</span>'
         + '<span class="teams">' + esc(ch.name || p.fx.h) + ' <span class="faint">v</span> '
@@ -371,10 +403,28 @@
     }).join('');
 
     var codes = leaguesOn($('#day').value);
-    $('#cover').textContent = 'Covering ' + codes.map(function (c) {
+    var names = codes.map(function (c) {
       return (LEAGUES.filter(function (L) { return L.code === c; })[0] || {}).name || c;
-    }).join(' and ') + '. Heat is the expected number of cards in the match, both sides '
-      + 'added together, with the referee applied where one has been appointed.';
+    });
+    var note = 'Covering ' + names.join(' and ')
+      + '. Heat is the expected number of cards in the match, both sides added '
+      + 'together, with the referee applied where one has been appointed.';
+    /* A caveat that has to be stated, because the card invites the comparison
+       it does not support. HEAT is comparable across leagues: it is expected
+       cards, and each desk is calibrated against the card rate its own
+       division actually produced. The TOP RISK percentage is not. The Premier
+       League desk prices a player through a fitted GLM with venue, derby and
+       game-state terms; the other two use a hazard over a shrunk yellow rate.
+       The two leagues' base rates are within half a point of each other
+       (17.4% and 17.0%), so a Premier League name reading three times a
+       Championship one is mostly the model, not the player. */
+    if (codes.length > 1 && codes.indexOf('PL') >= 0) {
+      note += ' Heat is comparable across leagues; the top-risk percentage is '
+        + 'not — the Premier League desk prices players through a fitted model '
+        + 'and the others through a hazard rate, so its percentages run higher '
+        + 'for the same underlying risk.';
+    }
+    $('#cover').textContent = note;
   }
 
   /* ---- the combined card ------------------------------------------------ */

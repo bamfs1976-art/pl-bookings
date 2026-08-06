@@ -186,6 +186,17 @@ for (const [page, needs] of [
 /* today.html reads the frames' published __data, never their globals. The
    datasets use `const`, which never becomes a window property, so reading
    contentWindow.CLUBS silently yields nothing at all. */
+/* Source assertions must look at CODE, not prose. Three checks in this file
+   have already been fooled by a comment containing the exact string they were
+   searching for — including the one immediately below, which passed while the
+   PL frame had stopped loading the card model. */
+function codeOnly(src) {
+  return src
+    .replace(/<!--[\s\S]*?-->/g, '')
+    .replace(/\/\*[\s\S]*?\*\//g, '')
+    .replace(/(^|[^:])\/\/.*$/gm, '$1');
+}
+
 const todaySrc = readFileSync(join(root, 'today.html'), 'utf8');
 assert.ok(todaySrc.includes('__data'),
   'today.html must read the frame\'s published __data — contentWindow.CLUBS is ' +
@@ -194,20 +205,83 @@ assert.ok(todaySrc.includes('__data'),
    COMMENT that explains the bug — the same way an earlier guard in
    check-eflc.mjs failed on a comment rather than on code. A check that cannot
    tell prose from code will eventually be deleted by whoever it annoys. */
-const todayCode = todaySrc
-  .replace(/<!--[\s\S]*?-->/g, '')
-  .replace(/\/\*[\s\S]*?\*\//g, '')
-  .replace(/(^|[^:])\/\/.*$/gm, '$1');
+const todayCode = codeOnly(todaySrc);
 assert.ok(!/contentWindow\.(CLUBS|REFS)\b/.test(todayCode),
   'today.html reads a const off contentWindow, which is always undefined');
 
 /* The frame only loads files from its allow-list: it writes a script tag out
    of the URL hash, which anyone can put in a link. */
-const frameSrc = readFileSync(join(root, 'data-frame.html'), 'utf8');
+const frameSrc = codeOnly(readFileSync(join(root, 'data-frame.html'), 'utf8'));
 assert.ok(/ALLOWED\s*=/.test(frameSrc) && frameSrc.includes('location.hash'),
   'data-frame.html must keep its allow-list');
 assert.ok(!/document\.write\([^)]*location\.hash/.test(frameSrc),
   'data-frame.html interpolates the hash straight into a script tag');
+
+/* ---- the Premier League model is shared, not copied ---------------------- */
+/* /today prices a PL fixture through assets/plmodel.js, and so does the desk.
+   Two implementations of that wiring would print different numbers for the
+   same match on two pages of the same site, which is the one thing a combined
+   view must not do. These checks are cheap; the failure is not. */
+const plCtx = { PLDCore: JSON.parse('{}'), console };
+plCtx.globalThis = plCtx;
+vm.createContext(plCtx);
+vm.runInContext(readFileSync(join(root, 'assets', 'core.js'), 'utf8'), plCtx);
+vm.runInContext(readFileSync(join(root, 'assets', 'plmodel.js'), 'utf8'), plCtx);
+const PLModel = plCtx.PLModel;
+assert.ok(PLModel && typeof PLModel.create === 'function',
+  'assets/plmodel.js did not export PLModel');
+assert.ok(Array.isArray(PLModel.DERBIES) && PLModel.DERBIES.length >= 8,
+  `the derby list looks wrong: ${PLModel.DERBIES && PLModel.DERBIES.length} entries`);
+for (const d of PLModel.DERBIES) {
+  assert.ok(Array.isArray(d) && d.length === 2 && d.every((x) => /^[A-Z]{3}$/.test(x)),
+    `malformed derby entry ${JSON.stringify(d)}`);
+}
+
+/* index.html must READ that list rather than keep its own. A second copy is
+   not a syntax error and not visible on either page — it just quietly moves
+   every player's number on a derby, on one page only. */
+const deskSrc = readFileSync(join(root, 'index.html'), 'utf8');
+assert.ok(deskSrc.includes('assets/plmodel.js'),
+  'index.html no longer loads assets/plmodel.js');
+assert.ok(/const DERBIES\s*=\s*\(typeof PLModel/.test(deskSrc),
+  'index.html has its own derby list again — it must read PLModel.DERBIES, or ' +
+  'the desk and /today will disagree about which fixtures are derbies');
+
+/* The model reproduces the desk's calls over the shipped data. */
+const plDataCtx = {};
+vm.createContext(plDataCtx);
+vm.runInContext(readFileSync(join(root, 'assets', 'core.js'), 'utf8'), plDataCtx);
+vm.runInContext(readFileSync(join(root, 'data', 'pl_data.js'), 'utf8'), plDataCtx);
+const { PL_PLAYERS, REFS: PLREFS, CLUBS: PLCLUBS } =
+  vm.runInContext('({PL_PLAYERS, REFS, CLUBS})', plDataCtx);
+const model = existsSync(join(root, 'data', 'model.js'))
+  ? JSON.parse(JSON.stringify((await import(
+      'file://' + join(root, 'data', 'model.js'))).default)) : null;
+const M = PLModel.create({ model, sim: null, refs: PLREFS, players: PL_PLAYERS });
+const someBoard = M.board(PLCLUBS[0].short, PLCLUBS[1].short, null, false);
+assert.ok(someBoard && someBoard.expected > 1 && someBoard.expected < 9,
+  `the PL model priced a fixture at ${someBoard && someBoard.expected} expected cards`);
+assert.ok(M.isDerby('ARS', 'TOT') && !M.isDerby('ARS', 'BOU'),
+  'the derby lookup is not working');
+/* Order must not matter: a derby is a derby whichever club is at home. */
+assert.equal(M.isDerby('TOT', 'ARS'), M.isDerby('ARS', 'TOT'));
+
+/* ---- /today carries every league it can ---------------------------------- */
+const frameSrc2 = codeOnly(readFileSync(join(root, 'data-frame.html'), 'utf8'));
+for (const code of ['pl', 'eflc', 'laliga']) {
+  assert.ok(new RegExp(`\\b${code}:\\s*\\[`).test(frameSrc2),
+    `data-frame.html cannot load the ${code} dataset`);
+}
+assert.ok(/data\/model\.js/.test(frameSrc2) && /data\/sim_model\.js/.test(frameSrc2),
+  'the PL frame must load the card model and the match model, or /today would ' +
+  'price the Premier League with a reduced model and print a different number ' +
+  'for the same match than the desk does');
+assert.ok(todaySrc.includes('PLModel'),
+  'today.html must price the Premier League through the shared model');
+for (const code of ['PL', 'EFLC', 'LL']) {
+  assert.ok(new RegExp(`code:\\s*'${code}'`).test(todaySrc),
+    `today.html no longer lists ${code} as a source`);
+}
 
 console.log(
   `check-share OK: ${['PL', 'EFLC', 'LL', 'ALL'].length} themes, match + round + ` +
