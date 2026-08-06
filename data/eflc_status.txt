@@ -1,5 +1,6 @@
 EFL Championship 2026-27 — build_eflc_data.py
-players: 863  by basis: EFLC=753, L1=110
-clubs with players: 21 of 24
-RESULT: NOT WRITTEN
-problem: 3 of 24 clubs have no players at all: BUR, WHU, WOL
+players: 974  by basis: EFLC=753, L1=110, PL=111
+clubs with players: 24 of 24
+club rates from match records: 18 of 24
+referees: 30
+RESULT: WRITTEN eflc_data.js
