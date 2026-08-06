@@ -110,6 +110,27 @@ def rows_for(payload, keep, basis, unmapped):
     return out
 
 
+def season_cards():
+    """{(short, name): (cautions, minutes)} for the season BEING PLAYED.
+
+    Separate from the form, and it has to be: everything else here is 2025-26
+    evidence, while a suspension ladder is 2026-27 state. Using last season's
+    `yc` would tell a reader a player is one booking from a ban on the
+    strength of cards that no longer count. Absent before the season starts,
+    which is why every field it feeds is allowed to be null.
+    """
+    rows = P.load_optional("eflc_season_cards.json")
+    if not rows:
+        return {}
+    out = {}
+    for r in rows or []:
+        short = resolve((r.get("team") or "").strip())
+        name = (r.get("n") or "").strip()
+        if short and name:
+            out[(short, name)] = (r.get("yc"), r.get("min"))
+    return out
+
+
 def build_players():
     """Every Championship player, one row each, best basis wins."""
     unmapped, reused = {}, []
@@ -152,6 +173,14 @@ def build_players():
             continue
         seen.add(key)
         deduped.append(r)
+
+    # This season's cautions where known. NOT defaulted to zero: "no data" and
+    # "no cards yet" look identical on a strip that says a ban is one booking
+    # away, and only one of them is safe to act on.
+    live = season_cards()
+    for r in deduped:
+        got = live.get((r["c"], r["n"]))
+        r["_sc"], r["_sm"] = (got if got else (None, None))
     return deduped, unmapped
 
 
@@ -282,6 +311,10 @@ def emit(clubs, players, refs):
         "// 2026-27 EFL Championship. Clubs relegated from the Premier League carry",
         "// PL-basis player form, clubs promoted from League One carry L1 or none (NEW).",
         "// Club card rates are counted from the free football-data.co.uk E1 records.",
+        "// The league's suspension rule, from data/leagues.py — shipped so the",
+        "// page computes with it instead of hardcoding thresholds that could",
+        "// drift from the registry.",
+        "const SUSPENSION = " + json.dumps(LEAGUE.suspension_scheme) + ";",
         "const CLUBS = [",
     ]
     for c in clubs:
@@ -297,6 +330,8 @@ def emit(clubs, players, refs):
             f'c:{j(p["c"])}', f'n:{j(p["n"])}', f'p:{j(p["p"])}', f'min:{p["min"]}',
             f'yc:{j(p["yc"])}', f'rc:{j(p["rc"])}', f'y:{j(p["y"])}', f'f:{j(p["f"])}',
             f'fw:{j(p["fw"])}', f'r:{j(p["r"])}', f'ls:{j(p["ls"])}', f'b:{j(p["b"])}',
+            # THIS season: cautions and minutes so far, null until harvested.
+            f'sc:{j(p.get("_sc"))}', f'sm:{j(p.get("_sm"))}',
         ]) + "},")
     lines.append("];")
     lines.append("const REFS = [")

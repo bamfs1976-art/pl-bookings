@@ -214,20 +214,36 @@ const codeOnlyPage = page
   .replace(/<!--[\s\S]*?-->/g, '')
   .replace(/\/\*[\s\S]*?\*\//g, '')
   .replace(/(^|[^:])\/\/.*$/gm, '$1');
-const strip = /function suspRows\(\)([\s\S]*?)\n  \}/.exec(codeOnlyPage);
-assert.ok(strip, 'laliga.html has no suspRows() — the suspension strip is gone');
-assert.ok(/\bp\.sc\b/.test(strip[1]),
-  'the suspension strip does not read `sc` (this season\'s cautions)');
+const strip = /function renderSuspension\(\)([\s\S]*?)\n  \}/.exec(codeOnlyPage);
+assert.ok(strip, 'laliga.html has no renderSuspension() — the strip is gone');
 assert.ok(!/\bp\.yc\b/.test(strip[1]),
   'the suspension strip reads `yc` — that is LAST season\'s total, and RFEF ' +
   'art. 112 accumulation does not carry between seasons');
-assert.ok(/suspensionCycle/.test(codeOnlyPage) && /pCardsAtLeast/.test(codeOnlyPage),
-  'the strip no longer uses the shared suspension maths in core.js');
-/* Five, and only five. Spain has no ladder; a 10 or 15 here would be the
-   English thresholds imported to the wrong country. */
-const banAt = /BAN_AT\s*=\s*(\d+)/.exec(codeOnlyPage);
-assert.ok(banAt && banAt[1] === '5',
-  `the strip bans at ${banAt && banAt[1]} cautions — RFEF art. 112 says five`);
+assert.ok(/PLDSuspension/.test(codeOnlyPage),
+  'laliga.html does not use the shared suspension module — the two desks need ' +
+  'genuinely different schemes, which is exactly why neither implements one');
+assert.ok(/\bSUSPENSION\b/.test(codeOnlyPage),
+  'laliga.html does not read the shipped scheme');
+assert.ok(!/rungs\s*:/.test(codeOnlyPage),
+  'laliga.html defines its own rungs — Spain has none, and hardcoding any ' +
+  'here would be the English ladder in the wrong country');
+
+/* The shipped scheme must be Spain's, not England's. */
+const SUSP = vm.runInContext("typeof SUSPENSION !== 'undefined' ? SUSPENSION : null", ctx);
+if (SUSP) {
+  assert.equal(SUSP.kind, 'cycle',
+    `the La Liga scheme is "${SUSP.kind}" — RFEF art. 112 is a repeating cycle, ` +
+    'not an escalating ladder');
+  assert.equal(SUSP.at, 5, `the cycle is ${SUSP.at} cautions, expected 5`);
+  assert.equal(SUSP.ban, 1,
+    `the ban is ${SUSP.ban} matches — every Spanish cycle costs exactly one`);
+  assert.ok(!SUSP.rungs, 'Spain has no rungs; that is England');
+  assert.notEqual(SUSP.cumulative, true,
+    'the Spanish count resets after a ban — it is not cumulative like England');
+}
+/* The threshold used to be a BAN_AT constant in this page. It is now read
+   from the shipped scheme instead, and asserted above — a page-local constant
+   was one more place for the rule to drift from the registry. */
 
 /* Every `sc` is either unknown or a plausible in-season count. A value equal
    to the player's whole previous season would mean the two fields have been

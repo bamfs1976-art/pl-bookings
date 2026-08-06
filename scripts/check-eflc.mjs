@@ -121,6 +121,53 @@ for (const k of keys) {
     'across players who are different people with the same names');
 }
 
+/* ---- the suspension ladder ---------------------------------------------- */
+/* England's rungs are CUMULATIVE, ESCALATING and GATED by the club's match
+   number, and Spain's are a repeating ungated cycle. Both desks read their
+   rule from the dataset rather than hardcoding one, because getting the two
+   the wrong way round is silent: Spain's cycle applied here would forgive a
+   player who has spent his 5- and 10-rungs, and this ladder applied to Spain
+   would invent bans nobody serves. */
+const SUSP = vm.runInContext("typeof SUSPENSION !== 'undefined' ? SUSPENSION : null", ctx);
+let suspNote = 'no suspension scheme in the dataset yet';
+if (SUSP) {
+  assert.equal(SUSP.kind, 'ladder',
+    `the Championship scheme is "${SUSP.kind}" — England uses a ladder, not a cycle`);
+  assert.equal(SUSP.cumulative, true,
+    'the English ladder does not reset when a ban is served');
+  const at = SUSP.rungs.map((r) => r.at);
+  assert.deepEqual(at, [5, 10, 15], `rungs are ${at.join('/')}, expected 5/10/15`);
+  assert.deepEqual(SUSP.rungs.map((r) => r.ban), [1, 2, 3],
+    'the bans are 1, 2 and 3 matches — the ten-rung is TWO, not one');
+  /* 46-game season: the gates are the 19th and 37th match. The Premier
+     League's are 19 and 32, and using those here would price a cut-off five
+     matches early for every player in the division. */
+  assert.deepEqual(SUSP.rungs.map((r) => r.by), [19, 37, null],
+    `gates are ${SUSP.rungs.map((r) => r.by).join('/')} — a 46-game season ` +
+    'cuts off at 19 and 37, not the Premier League 19 and 32');
+  suspNote = `ladder ${at.join('/')} banning ${SUSP.rungs.map((r) => r.ban).join('/')}`;
+}
+
+const pageCode = page
+  .replace(/<!--[\s\S]*?-->/g, '')
+  .replace(/\/\*[\s\S]*?\*\//g, '')
+  .replace(/(^|[^:])\/\/.*$/gm, '$1');
+if (SUSP) {
+  assert.ok(/PLDSuspension/.test(pageCode),
+    'eflc.html does not use the shared suspension module');
+  assert.ok(/\bSUSPENSION\b/.test(pageCode),
+    'eflc.html does not read the shipped scheme — it must not hardcode rungs');
+  /* Thresholds must come from the data. A literal 5/10/15 in the page is the
+     drift this whole arrangement exists to prevent. */
+  assert.ok(!/rungs\s*:/.test(pageCode),
+    'eflc.html defines its own rungs instead of reading SUSPENSION');
+  /* And the strip counts THIS season. */
+  const strip = /function renderSuspension\(\)([\s\S]*?)\n  \}/.exec(pageCode);
+  assert.ok(strip, 'eflc.html has no renderSuspension()');
+  assert.ok(!/\bp\.yc\b/.test(strip[1]),
+    'the strip reads `yc` — that is last season, and the ladder counts only this one');
+}
+
 /* ---- fixtures, when they have been harvested --------------------------- */
 let fxNote = 'no fixture list yet';
 const fxPath = join(root, 'data', 'eflc_fixtures.js');
@@ -176,7 +223,7 @@ if (existsSync(fxPath)) {
 const rated = CLUBS.filter((c) => c.ca != null).length;
 console.log(
   `check-eflc OK: ${CLUBS.length} clubs, ${EFLC_PLAYERS.length} players, ` +
-  `${REFS.length} refs, ${rated} clubs with a measured card rate; ` +
+  `${REFS.length} refs, ${rated} clubs with a measured card rate; ${suspNote}; ` +
   `P(card) max ${(max * 100).toFixed(1)}%, median ${(median * 100).toFixed(1)}%; ` +
   fxNote
 );

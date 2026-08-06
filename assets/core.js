@@ -346,6 +346,58 @@
    * total modulo the threshold, NOT the total itself: a player on ten has
    * served two bans and is on zero again, not eight-tenths of the way to a
    * third. */
+  /* The next ban a player is heading for, under whichever scheme his league
+   * actually uses. ONE function, because the two schemes are easy to mix up
+   * and the failure is silent both ways round: England's ladder applied to
+   * Spain invents bans nobody serves, and Spain's cycle applied to England
+   * forgives a player who has already used up his 5- and 10-rungs.
+   *
+   * scheme, from data/leagues.py and shipped in each dataset:
+   *   {kind:'cycle',  at, ban}                    Spain — repeats, no gate
+   *   {kind:'ladder', rungs:[{at,ban,by}], review} England — cumulative,
+   *                                                escalating, gated by the
+   *                                                club's match number
+   *
+   * `played` is how many league matches the player's CLUB has played, which
+   * is what the English gates are measured in. It is ignored by a cycle.
+   *
+   * Returns {need, ban, at, by, dead} or null:
+   *   need  cautions still required for the next ban
+   *   ban   matches that ban costs
+   *   at    the threshold it is counted to
+   *   by    the club match it must be reached by, null if ungated
+   *   dead  true when every rung is out of reach — the player cannot be
+   *         suspended by accumulation again this season, which is a real
+   *         state a watchlist must not hide by showing the last rung anyway
+   */
+  function nextSuspension(seasonCards, played, scheme) {
+    if (seasonCards == null || !scheme) return null;
+    const c = Number(seasonCards);
+    if (!isFinite(c) || c < 0) return null;
+
+    if (scheme.kind === 'cycle') {
+      const cyc = suspensionCycle(c, scheme.at);
+      if (!cyc) return null;
+      return { need: cyc.need, ban: scheme.ban || 1, at: scheme.at,
+               by: null, dead: false, inCycle: cyc.inCycle, served: cyc.served };
+    }
+
+    const rungs = (scheme.rungs || []).slice().sort((a, b) => a.at - b.at);
+    const p = Number(played);
+    for (const r of rungs) {
+      if (c >= r.at) continue;                     // already passed this rung
+      /* A gate is a DEADLINE on the club's match number. Once it is behind
+         you the rung can no longer be reached however many cautions follow,
+         so the watch has to move on to the next one rather than keep
+         counting toward a ban that cannot happen. */
+      if (r.by != null && isFinite(p) && p >= r.by) continue;
+      return { need: r.at - c, ban: r.ban, at: r.at, by: r.by, dead: false,
+               inCycle: c, served: rungs.filter((x) => c >= x.at).length };
+    }
+    return { need: null, ban: null, at: null, by: null, dead: true,
+             inCycle: c, served: rungs.filter((x) => c >= x.at).length };
+  }
+
   function suspensionCycle(seasonCards, threshold) {
     /* null and undefined are REJECTED, not coerced. Number(null) is 0, so
        without this an unknown card count becomes "on zero, needs five" —
@@ -749,7 +801,7 @@
     HOME_FACTOR, AWAY_FACTOR,
     simLambdas, simPoissonPmf, simScoreGrid, simOutcomes, simFixture, simResultShare, SIM_MAX_GOALS,
     shrinkRate, logit, invLogit, scaleOdds, contextProb,
-    pCardsAtLeast, suspensionCycle,
+    pCardsAtLeast, suspensionCycle, nextSuspension,
     brier, logLoss, reliability, glmProb,
     gammaln, expectedFouls, nbTailProb, cardProbFromFouls, recencyWeight, refCardFactor,
   };

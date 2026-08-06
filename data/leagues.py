@@ -54,7 +54,7 @@ class League:
     def __init__(self, code, name, fd_div, clubs, matches, data_file,
                  refs_file, mirror_slug=None, referee_source="football-data",
                  min_ref_matches=3, suspension=None, af_league=None,
-                 players_file=None, clubs_file=None):
+                 players_file=None, clubs_file=None, suspension_scheme=None):
         self.code = code                    # the desk's own id, e.g. "EFLC"
         self.name = name                    # display name
         self.fd_div = fd_div                # football-data.co.uk division code
@@ -66,6 +66,26 @@ class League:
         self.referee_source = referee_source
         self.min_ref_matches = min_ref_matches
         self.suspension = suspension or ""
+        # The same rule, structured, so a desk can compute with it instead of
+        # each page hardcoding thresholds. Two shapes, because two countries
+        # do genuinely different things:
+        #
+        #   ladder  England. CUMULATIVE season totals, escalating bans, each
+        #           rung gated by a match number. Reaching 5 by your club's
+        #           19th league game is one match; 10 by the 37th is two; 15
+        #           at any point is three. The count does NOT reset when a ban
+        #           is served — a player on twelve has served two bans and is
+        #           still climbing toward the third rung.
+        #
+        #   cycle   Spain. A REPEATING cycle of five with no gate and no
+        #           escalation; the counter restarts each time and the next
+        #           five cost the same single match (RFEF art. 112).
+        #
+        # Getting these two the same way round matters: applying England's
+        # ladder to Spain would invent bans nobody serves, and applying
+        # Spain's cycle to England would forgive a player who has already
+        # used up his 5- and 10-rungs.
+        self.suspension_scheme = suspension_scheme
         # API-Football's own league id. The squad feed: it is fetched per CLUB
         # rather than per league page, so a walk is a squad and cannot come
         # back as a slice of one — which is the entire failure mode the
@@ -110,6 +130,12 @@ LEAGUES = {
         mirror_slug="premier-league", af_league=39,
         players_file="pl_players.json",
         suspension="5 yellows to GW19, 10 to GW32, 15 all season",
+        suspension_scheme={
+            "kind": "ladder", "cumulative": True, "review": 20,
+            "rungs": [{"at": 5, "ban": 1, "by": 19},
+                      {"at": 10, "ban": 2, "by": 32},
+                      {"at": 15, "ban": 3, "by": None}],
+        },
     ),
     "EFLC": League(
         code="EFLC", name="EFL Championship", fd_div="E1", clubs=24, matches=552,
@@ -125,14 +151,23 @@ LEAGUES = {
         # ~20. Individual workloads are thinner and more of the list is made of
         # one-off appointments, so the floor is higher before a rate is ranked.
         min_ref_matches=5,
-        # PARTIALLY CONFIRMED — do not ship as user-facing copy yet. The EFL
-        # uses the same 5/10/15 ladder as the Premier League with the cutoffs
-        # moved for a 46-game season, and the 10-before-match-37 rung (a TWO
-        # match ban, not one) is confirmed. The 5 and 15 cutoffs are not, and
-        # the desk's suspension-watch strip is only as good as these numbers,
-        # so they need checking against the EFL regulations before the strip
-        # is switched on for this league.
-        suspension="10 yellows before match 37 = 2 matches (5 and 15 rungs TO CONFIRM)",
+        # CHECKED. The EFL runs the same 5/10/15 ladder as the Premier League
+        # with the cutoffs moved for a 46-game season: five by the club's 19th
+        # league match is one game, ten by the 37th is TWO, fifteen at any
+        # point in the season is three. Twenty or more does not add a fourth
+        # automatic rung — it refers the player to a Regulatory Commission,
+        # whose sanction is discretionary and therefore not predictable here.
+        # The count is cumulative and does NOT reset when a ban is served.
+        # Accumulation suspensions do not carry into the play-offs.
+        # See docs/suspension-rules.md for the evidence and its limits.
+        suspension="5 yellows to match 19, 10 to match 37 (2 games), "
+                   "15 all season (3 games); cumulative, no reset",
+        suspension_scheme={
+            "kind": "ladder", "cumulative": True, "review": 20,
+            "rungs": [{"at": 5, "ban": 1, "by": 19},
+                      {"at": 10, "ban": 2, "by": 37},
+                      {"at": 15, "ban": 3, "by": None}],
+        },
     ),
     "L1": League(
         code="L1", name="EFL League One", fd_div="E2", clubs=24, matches=552,
@@ -192,6 +227,7 @@ LEAGUES = {
         #     a fine, which is a referee's decision and not predictable here.
         suspension="every 5 yellows = 1 match; the cycle repeats with identical "
                    "effect (RFEF art. 112) — no escalation at 10 or 15",
+        suspension_scheme={"kind": "cycle", "at": 5, "ban": 1, "cumulative": False},
     ),
 }
 

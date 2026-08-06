@@ -351,6 +351,10 @@ def emit(clubs, players, refs):
         "// Club card rates are counted from the free football-data.co.uk SP1",
         "// records; the referee NAMES are joined on from API-Football, because",
         "// that free source has never published an official for Spain.",
+        "// The league's suspension rule, from data/leagues.py — shipped so the",
+        "// page computes with it instead of hardcoding thresholds that could",
+        "// drift from the registry.",
+        "const SUSPENSION = " + json.dumps(LEAGUE.suspension_scheme) + ";",
         "const CLUBS = [",
     ]
     for c in clubs:

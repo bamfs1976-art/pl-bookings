@@ -813,4 +813,63 @@ t('a full season makes a ban near-certain for a regular starter', () => {
   assert.ok(p > 0.9, `a season-long ban chance of ${p} is implausibly low`);
 });
 
+
+console.log('suspension schemes');
+
+const LADDER = { kind: 'ladder', cumulative: true, review: 20,
+  rungs: [{ at: 5, ban: 1, by: 19 }, { at: 10, ban: 2, by: 37 },
+          { at: 15, ban: 3, by: null }] };
+const CYCLE = { kind: 'cycle', at: 5, ban: 1 };
+
+t('a ladder escalates and a cycle does not', () => {
+  assert.equal(core.nextSuspension(4, 10, LADDER).ban, 1);
+  assert.equal(core.nextSuspension(9, 30, LADDER).ban, 2, 'the ten-rung is TWO matches');
+  assert.equal(core.nextSuspension(14, 40, LADDER).ban, 3);
+  /* Spain never escalates, whatever the total. */
+  for (const total of [4, 9, 14, 19]) {
+    assert.equal(core.nextSuspension(total, 40, CYCLE).ban, 1);
+    assert.equal(core.nextSuspension(total, 40, CYCLE).need, 1);
+  }
+});
+
+t('a passed gate kills its rung and the watch moves on', () => {
+  /* Four cautions before the club's 19th match is one booking from a ban. */
+  const early = core.nextSuspension(4, 10, LADDER);
+  assert.equal(early.at, 5);
+  assert.equal(early.need, 1);
+  /* The same four cautions AFTER the 19th cannot reach that rung at all, so
+     the target becomes ten — six away, for two matches. Counting him toward
+     five would be a ban that cannot happen. */
+  const late = core.nextSuspension(4, 22, LADDER);
+  assert.equal(late.at, 10);
+  assert.equal(late.need, 6);
+  assert.equal(late.ban, 2);
+});
+
+t('the ladder is cumulative — a served ban does not reset it', () => {
+  /* Spain resets: ten cautions means two bans served and five to go again. */
+  assert.equal(core.nextSuspension(10, 30, CYCLE).need, 5);
+  assert.equal(core.nextSuspension(10, 30, CYCLE).served, 2);
+  /* England does not: ten means the 5- and 10-rungs are spent and fifteen is
+     next, five away. Resetting here would forgive a player mid-ladder. */
+  const eng = core.nextSuspension(10, 30, LADDER);
+  assert.equal(eng.at, 15);
+  assert.equal(eng.need, 5);
+  assert.equal(eng.served, 2);
+});
+
+t('past every rung, a player is dead to accumulation rather than mispriced', () => {
+  const done = core.nextSuspension(16, 44, LADDER);
+  assert.equal(done.dead, true);
+  assert.equal(done.need, null, 'a dead player must not carry a threshold');
+  /* And a cycle is never dead — there is always another five. */
+  assert.equal(core.nextSuspension(40, 44, CYCLE).dead, false);
+});
+
+t('unknown counts and missing schemes yield null, never a default', () => {
+  assert.equal(core.nextSuspension(null, 10, LADDER), null);
+  assert.equal(core.nextSuspension(4, 10, null), null);
+  assert.equal(core.nextSuspension(-1, 10, LADDER), null);
+});
+
 console.log(`\n${passed} tests passed`);

@@ -150,7 +150,18 @@ Two fixture lists exist for this league and they are different seasons: `laliga_
 
 It ships with the caveat attached, on the page: the five-caution rule is corroborated across several quotations of art. 112 but was not verified from the source document, which is unreachable from here.
 
-Still open: the Championship rungs, recorded in the registry as partially confirmed.
+**All three suspension schemes are now settled and shipped**, and England and Spain are structurally different rather than variants of one rule:
+
+| | PL | Championship | La Liga |
+|---|---|---|---|
+| Shape | ladder | ladder | cycle |
+| Ban | 1 / **2** / 3 | 1 / **2** / 3 | 1, always |
+| Gate | match 19 / 32 | match **19 / 37** | none |
+| After a ban | keeps running | keeps running | resets |
+
+Getting those the wrong way round is silent both ways, so no page implements a threshold: the rules live in `data/leagues.py`, ship with each dataset as `const SUSPENSION`, and are computed by one shared module (`assets/suspension.js` over `PLDCore.nextSuspension`). `check-eflc` and `check-laliga` each reject the *other* league's scheme, and both the Premier League's match-32 gate and a one-match ten-rung were confirmed to fail the Championship guard.
+
+The gating is load-bearing and was wrong at first: a Championship player on four cautions after his club's 19th match can no longer reach that rung, so pricing his ban over a 23-match horizon showed **99%** for something already impossible. The horizon is capped at the gate. `docs/suspension-rules.md` covers all three schemes and — as with Spain — exactly how far each was verified, which is not all the way: the regulations themselves are unreachable from this environment.
 
 ### Share cards, and the combined view
 

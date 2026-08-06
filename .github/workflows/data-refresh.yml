@@ -147,6 +147,16 @@ jobs:
           API_FOOTBALL_SEASON: ${{ inputs.season_af }}
         run: python3 data/harvest_apifootball.py --league EFLC
 
+      # THIS season's Championship cautions, for the suspension ladder. A
+      # different harvest from the squads: those are 2025-26 FORM, this is
+      # 2026-27 STATE, and the English ladder counts only the current season.
+      - name: Harvest this season's Championship cautions (suspension ladder)
+        if: ${{ env.API_FOOTBALL_KEY != '' && inputs.refresh_eflc }}
+        continue-on-error: true
+        env:
+          API_FOOTBALL_SEASON: ${{ inputs.season_fixtures }}
+        run: python3 data/harvest_apifootball.py --league EFLC --out eflc_season_cards.json
+
       # The Premier League division, for the three clubs RELEGATED into the
       # Championship — Burnley, West Ham and Wolves played there last season,
       # so their form is a PL record and no Championship harvest contains it.

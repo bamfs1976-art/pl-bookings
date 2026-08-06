@@ -3,6 +3,10 @@
 // Club card rates are counted from the free football-data.co.uk SP1
 // records; the referee NAMES are joined on from API-Football, because
 // that free source has never published an official for Spain.
+// The league's suspension rule, from data/leagues.py — shipped so the
+// page computes with it instead of hardcoding thresholds that could
+// drift from the registry.
+const SUSPENSION = {"kind": "cycle", "at": 5, "ban": 1, "cumulative": false};
 const CLUBS = [
   {short:"GET",name:"Getafe",img:"https://media.api-sports.io/football/teams/546.png",basis:"LL",ca:3.13,caH:2.53,caA:3.74,fm:15.2,squad:46},
   {short:"SEV",name:"Sevilla",img:"https://media.api-sports.io/football/teams/536.png",basis:"LL",ca:3.0,caH:3.32,caA:2.68,fm:15.0,squad:44},
