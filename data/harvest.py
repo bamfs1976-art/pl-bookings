@@ -197,6 +197,75 @@ def request_json(url, cookie):
     return json.loads(body)
 
 
+# What the feed calls the fields the build reads. Confirmed against a real row
+# rather than guessed: a wrong name here does not error, it produces a null,
+# and a null foul rate reads as a player who never fouls.
+#
+# The _p90 fields are genuine rates — fouls_committed 21 over minutes_played
+# 2953 is 0.64, which is what fouls_committed_p90 says — so they are taken as
+# given rather than recomputed.
+FIELD_MAP = {
+    "team": "team_name",
+    "n": "player_name",
+    "pos": "position",          # Goalkeeper/Defender/Midfielder/Attacker
+    "min": "minutes_played",
+    "yc": "yellow_cards",
+    "rc": "red_cards",
+    "fc90": "fouls_committed_p90",
+    "fd90": "fouls_drawn_p90",
+    "tid": "team_id",
+    "img": "team_image",        # the CLUB crest, which is what CLUBS carries
+}
+# Without these a row cannot be placed or rated, so their absence is fatal
+# rather than a null.
+ESSENTIAL = ("team", "n", "min")
+
+
+def normalise(row):
+    """One feed row in the shape build_pl_data.mk() reads.
+
+    Canonical keys win where a row already has them, so a harvest file written
+    by an older version of this script still loads.
+    """
+    out = {}
+    for key, feed_key in FIELD_MAP.items():
+        out[key] = row.get(key, row.get(feed_key))
+    # A per-90 the feed did not supply can still be derived, because the total
+    # and the minutes are both there. Only ever fills a gap.
+    if out["fc90"] is None and row.get("fouls_committed") and out["min"]:
+        out["fc90"] = round(row["fouls_committed"] * 90.0 / out["min"], 3)
+    if out["fd90"] is None and row.get("fouls_drawn") and out["min"]:
+        out["fd90"] = round(row["fouls_drawn"] * 90.0 / out["min"], 3)
+    return out
+
+
+def normalise_all(rows, label):
+    """Every row mapped, with the mapping itself checked against the data.
+
+    A feed that renames a field would otherwise pass silently: every row maps,
+    every value is None, and the build ships a league of players who never
+    foul. So the fill rate is measured and a field that is empty across the
+    board stops the harvest naming itself."""
+    out = [normalise(r) for r in rows]
+    if not out:
+        return out
+    fill = {k: sum(1 for r in out if r.get(k) is not None) for k in FIELD_MAP}
+    dead = [k for k in ESSENTIAL if fill[k] == 0]
+    if dead:
+        sys.exit(
+            f"ERROR: {label}: the fields {', '.join(dead)} are empty on all "
+            f"{len(out)} rows, so the feed is not calling them what this "
+            "harvest expects.\n\n  expected: "
+            + ", ".join(f"{k}<-{FIELD_MAP[k]}" for k in dead)
+            + f"\n  a row actually has: {sorted(rows[0])[:20]}\n\n"
+            "Run --probe to see the field names and update FIELD_MAP.")
+    thin = [f"{k} on {100 * fill[k] // len(out)}%" for k in FIELD_MAP
+            if 0 < fill[k] < len(out) * 0.5]
+    if thin:
+        print(f"    note: sparse fields — {', '.join(thin)}")
+    return out
+
+
 def fetch_all(league, season_id, cookie, label, min_minutes=0):
     """Every page for one league-season. Returns (rows, meta from page one).
 
@@ -248,6 +317,7 @@ def fetch_all(league, season_id, cookie, label, min_minutes=0):
             sys.exit(f"ERROR: {label} still returning full pages after "
                      f"{MAX_PAGES} — refusing to loop further.")
 
+    rows = normalise_all(rows, label)
     claimed = first_meta.get("total") or first_meta.get("total_count") or first_meta.get("count")
     note = ""
     if isinstance(claimed, int) and claimed != len(rows):

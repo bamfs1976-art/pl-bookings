@@ -291,4 +291,61 @@ def _empty_season_is_refused():
 
 t("an empty season stops the harvest instead of writing nobody", _empty_season_is_refused)
 
+
+# A real row, captured from league 9 season 25648. Kept verbatim so the field
+# mapping is pinned to what the feed actually sends rather than to a guess.
+REAL_ROW = {
+    "team_name": "Swansea City", "team_short": "SWA", "team_id": 30,
+    "team_image": "https://cdn.sportmonks.com/images/soccer/teams/30/30.png",
+    "player_name": "Zan Vipotnik", "position": "Attacker",
+    "detailed_position": "Centre Forward", "minutes_played": 2953,
+    "appearances": 44, "yellow_cards": 2, "red_cards": 0,
+    "fouls_committed": 21, "fouls_committed_p90": 0.64,
+    "fouls_drawn": 25, "fouls_drawn_p90": 0.76,
+}
+
+
+def _field_mapping_end_to_end():
+    """The feed calls nothing what the build reads. A wrong name here does not
+    error — it yields a null, and a null foul rate is a player who never
+    fouls. So the mapping is checked all the way through to the risk score."""
+    import leagues as L
+    row = B.mk(H.normalise(REAL_ROW), "EFLC", resolve=L.eflc_short)
+    assert row["c"] == "SWA" and row["n"] == "Zan Vipotnik", row
+    assert row["p"] == "FW", row                      # position -> POS
+    assert row["min"] == 2953 and row["yc"] == 2, row
+    assert row["f"] == 0.64 and row["fw"] == 0.76, row
+    assert row["y"] == round(2 / 2953 * 90, 3), row
+    assert row["r"] == round(row["y"] * 2 + 0.64, 3), row
+    assert row["_tid"] == 30 and row["_img"].endswith("30.png"), row
+
+
+t("the feed's field names map through to a risk score", _field_mapping_end_to_end)
+
+
+def _p90_derived_only_to_fill_a_gap():
+    """The feed's own per-90 wins. Derived from the total and the minutes only
+    when it is absent — and the two agree on the real row, which is the check
+    that the totals are totals and the rates are rates."""
+    assert H.normalise(REAL_ROW)["fc90"] == 0.64
+    without = {k: v for k, v in REAL_ROW.items() if k != "fouls_committed_p90"}
+    assert H.normalise(without)["fc90"] == 0.64, "21 * 90 / 2953"
+
+
+t("a per-90 is derived only when the feed omits it", _p90_derived_only_to_fill_a_gap)
+
+
+def _renamed_feed_stops_the_harvest():
+    """The silent failure this guards: every row maps, every value is None,
+    and a whole league ships as players who never foul."""
+    try:
+        H.normalise_all([{"teamName": "X", "playerName": "Y"}], "test")
+    except SystemExit as e:
+        assert "empty on all" in str(e) and "FIELD_MAP" in str(e), str(e)
+    else:
+        assert False, "a renamed feed should stop the harvest"
+
+
+t("a renamed feed stops the harvest rather than nulling it", _renamed_feed_stops_the_harvest)
+
 print(f"\n{passed} tests passed")
