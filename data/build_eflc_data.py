@@ -234,8 +234,12 @@ def club_card_rates(rows):
 def build_clubs(players, rates):
     by = {}
     for p in players:
-        d = by.setdefault(p["c"], {"short": p["c"], "img": p["_img"],
+        d = by.setdefault(p["c"], {"short": p["c"], "img": None,
                                    "bases": [], "fouls": 0.0, "players": 0})
+        # First NON-NULL crest — see build_pl_data.build_clubs. The FPL
+        # fill-in rows carry no badge, and they sort first for some clubs.
+        if d["img"] is None and p["_img"]:
+            d["img"] = p["_img"]
         d["bases"].append(p["b"])
         d["fouls"] += p["_fouls"]
         d["players"] += 1

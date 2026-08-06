@@ -40,9 +40,11 @@ def entry(name, club, pos, minutes, yellow=0, red=0, fouls_c=None, fouls_d=None,
     player's leg by TEAM ID rather than by name now, because a name can be
     spelled two ways and an id cannot."""
     return {
-        "player": {"name": name, "photo": f"https://media.api-sports.io/{name}.png"},
+        "player": {"name": name,
+                   "photo": f"https://media.api-sports.io/football/players/{tid}.png"},
         "statistics": [{
-            "team": {"id": tid, "name": club},
+            "team": {"id": tid, "name": club,
+                     "logo": f"https://media.api-sports.io/football/teams/{tid}.png"},
             "games": {"minutes": minutes, "position": pos, "appearences": 10},
             "cards": {"yellow": yellow, "red": red},
             "fouls": {"committed": fouls_c, "drawn": fouls_d},
@@ -174,6 +176,38 @@ def _map_junk():
 
 
 t("unusable rows are dropped rather than half-built", _map_junk)
+
+
+def _map_crest():
+    """`img` is the CLUB BADGE, which is what build_pl_data carries up into
+    CLUBS. Filling it with player.photo shipped a squad member's headshot as
+    the crest of every Championship club and of Coventry, Hull and Ipswich on
+    the live Premier League desk."""
+    e = entry("A Player", "Coventry", "Defender", 900, tid=63)
+    row = A.map_player(e, "Coventry City", 63)
+    assert row["img"] == "https://media.api-sports.io/football/teams/63.png", row["img"]
+    assert "/players/" not in row["img"], "the crest is a player photo again"
+    assert row["img"] != e["player"]["photo"]
+
+    # And it must follow the leg, not the first team in the list: a January
+    # mover carries the badge of the club he is being counted for.
+    e["statistics"].append({
+        "team": {"id": 77, "name": "Hull City",
+                 "logo": "https://media.api-sports.io/football/teams/77.png"},
+        "games": {"minutes": 1200, "position": "Midfielder"},
+        "cards": {"yellow": 9, "red": 0},
+        "fouls": {"committed": 40, "drawn": 5},
+    })
+    assert A.map_player(e, "Hull City", 77)["img"].endswith("/teams/77.png")
+
+    # A feed that omits the logo yields no crest — never a fallback to the
+    # face, which is the bug wearing a different hat.
+    e2 = entry("No Badge", "Coventry", "Defender", 900, tid=63)
+    del e2["statistics"][0]["team"]["logo"]
+    assert A.map_player(e2, "Coventry City", 63)["img"] is None
+
+
+t("a club's crest is the team badge, never the player's face", _map_crest)
 
 
 print("pagination — the failure this route invites")

@@ -75,7 +75,10 @@ def get(path):
 
 
 def photo_url(code):
-    """FPL's player cutout, the same pattern index.html builds."""
+    """FPL's player cutout. NOT the `img` field — see squads_from_bootstrap.
+
+    Kept because it is the pattern index.html builds for a player's face; it
+    just has no business being a club's badge."""
     return (f"https://resources.premierleague.com/premierleague/photos/players/"
             f"110x140/p{code}.png") if code else None
 
@@ -107,7 +110,14 @@ def squads_from_bootstrap(boot):
             "fc90": None,
             "fd90": None,
             "tid": el.get("team"),
-            "img": photo_url(el.get("code")),
+            # `img` is the CLUB crest in this row shape, not the player's
+            # face — build_pl_data carries it up into CLUBS as the badge.
+            # These rows are squad fill-ins for clubs that also have real
+            # rows from a source that DOES supply a crest, and build_clubs
+            # takes the first non-null, so leaving it null costs nothing.
+            # Guessing a badge URL would risk shipping a 404 on every club;
+            # a wrong badge is worse than no badge.
+            "img": None,
         })
     return rows
 

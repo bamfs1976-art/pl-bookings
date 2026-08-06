@@ -150,7 +150,13 @@ def map_player(entry, club_name, team_id):
         "fc90": per90(fouls.get("committed"), minutes),
         "fd90": per90(fouls.get("drawn"), minutes),
         "tid": (leg.get("team") or {}).get("id"),
-        "img": player.get("photo"),
+        # The CLUB crest, not the player's face. `img` is what build_pl_data
+        # carries up into CLUBS as the badge (harvest.py maps ScoutingStats's
+        # `team_image` here for the same reason), so filling it with
+        # player.photo put a squad member's headshot on the club — which is
+        # what Coventry, Hull and Ipswich shipped on the live desk, and what
+        # all 24 Championship clubs shipped on the new one.
+        "img": (leg.get("team") or {}).get("logo"),
     }
 
 

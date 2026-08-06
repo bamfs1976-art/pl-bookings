@@ -340,6 +340,21 @@ def test_a_club_with_no_match_record_gets_no_invented_rate():
     assert clubs["MIL"]["ca"] == 2.0 and clubs["MIL"]["basis"] == "EFLC", clubs["MIL"]
 
 
+def test_a_clubs_crest_survives_a_squad_that_starts_with_fill_in_rows():
+    """The badge comes from the first row that HAS one, not the first row.
+    Squads are a mix of sources and the FPL fill-ins carry no crest, so
+    keying off whichever row sorted first blanked clubs at random."""
+    import build_eflc_data as E
+    badge = "https://media.api-sports.io/football/teams/746.png"
+    players = [{"c": "MIL", "b": "NEW", "_img": None, "_fouls": 0.0},
+               {"c": "MIL", "b": "EFLC", "_img": badge, "_fouls": 50.0}]
+    clubs = {c["short"]: c for c in E.build_clubs(players, {})}
+    assert clubs["MIL"]["img"] == badge, clubs["MIL"]
+    # A club with nothing but fill-ins ships no badge — never a stand-in.
+    only_new = [{"c": "BUR", "b": "NEW", "_img": None, "_fouls": 0.0}]
+    assert E.build_clubs(only_new, {})[0]["img"] is None
+
+
 def test_coverage_rule_is_shared_and_takes_a_club_set():
     """The Premier League desk judges its promoted three. The Championship
     judges all 24, because no higher-division feed sits behind any of them."""

@@ -73,6 +73,23 @@ def _shape():
 t("only the promoted clubs are taken, in the build's position vocabulary", _shape)
 
 
+def _no_face_as_crest():
+    """`img` is the CLUB BADGE in this row shape — build_pl_data carries it
+    into CLUBS. These rows once put the FPL player cutout there, which is how
+    a club came to wear a squad member's face. No badge is fine: these are
+    fill-in rows for clubs that also have real rows from a source that does
+    supply one, and build_clubs takes the first non-null."""
+    rows = F.squads_from_bootstrap(boot(("Coventry", full())))
+    for r in rows:
+        assert r["img"] is None, r
+    # The build must not resurrect it downstream either.
+    for b in (B.mk(r, "NEW") for r in rows):
+        assert b["_img"] is None, b
+
+
+t("fill-in rows carry no crest rather than the player's face", _no_face_as_crest)
+
+
 def _rates_are_null_not_zero():
     """The load-bearing one. A zero here is worse than the missing squad it
     replaces: it is a confident claim that a player who has never played is

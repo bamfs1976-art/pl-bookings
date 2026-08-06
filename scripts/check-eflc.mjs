@@ -40,6 +40,15 @@ const shorts = new Set(CLUBS.map((c) => c.short));
 const orphan = [...new Set(EFLC_PLAYERS.map((p) => p.c))].filter((c) => !shorts.has(c));
 assert.equal(orphan.length, 0, `players at clubs not in CLUBS: ${orphan.join(', ')}`);
 
+/* A club's `img` is its BADGE. The API-Football harvest once mapped the
+   player's photo into it, so every club on this desk carried a squad member's
+   face where its crest belongs — wrong on screen, and nothing else here would
+   have noticed, because a photo URL is a perfectly well-formed string. */
+const faces = CLUBS.filter((c) => c.img && /\/(players|photos)\//.test(c.img))
+  .map((c) => `${c.short} -> ${c.img}`);
+assert.equal(faces.length, 0,
+  `clubs whose crest is a player photo, not a badge:\n  ${faces.join('\n  ')}`);
+
 /* Every club a real squad. This is the failure this repo has already shipped
    once, in the Premier League desk, as six forwards and no defenders. */
 for (const c of CLUBS) {

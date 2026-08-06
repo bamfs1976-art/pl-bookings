@@ -318,8 +318,14 @@ def build_clubs(players):
     for p in players:
         c = p["c"]
         d = by.setdefault(c, {"short": c, "name": p["_club"], "tid": p["_tid"],
-                              "img": p["_img"], "bases": [], "yc": 0, "fouls": 0.0,
+                              "img": None, "bases": [], "yc": 0, "fouls": 0.0,
                               "players": 0})
+        # First NON-NULL crest, not the first player's. Squads are a mix of
+        # sources and only some carry a badge — the FPL fill-in rows carry
+        # none — so keying off whichever row sorted first would blank a club
+        # whose first row happened to be a fill-in.
+        if d["img"] is None and p["_img"]:
+            d["img"] = p["_img"]
         d["bases"].append(p["b"])
         d["yc"] += (p["yc"] or 0)
         d["fouls"] += p["_fouls"]

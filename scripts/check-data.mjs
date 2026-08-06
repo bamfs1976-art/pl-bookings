@@ -77,6 +77,17 @@ const missingClub = CLUBS.filter((c) => !squads.has(c.short)).map((c) => c.short
 assert.equal(missingClub.length, 0,
   `clubs with no players at all: ${missingClub.join(', ')}`);
 
+// A club's `img` is its BADGE. Three harvesters feed this one field and two
+// of them once filled it with the player's face, so Coventry, Hull and Ipswich
+// shipped a squad member's headshot as the club crest — visible on the live
+// page, invisible to every other check here. Nothing about a photo URL is
+// malformed; it is just the wrong picture, which is why it needs saying out
+// loud rather than being caught by a shape assertion.
+const faces = CLUBS.filter((c) => c.img && /\/(players|photos)\//.test(c.img))
+  .map((c) => `${c.short} -> ${c.img}`);
+assert.equal(faces.length, 0,
+  `clubs whose crest is a player photo, not a badge:\n  ${faces.join('\n  ')}`);
+
 // A squad of only forwards is a harvest that half-failed. Bookings come from
 // defenders and holding midfielders, so a club with no DF/MF row is actively
 // misleading in a card-risk table, not merely incomplete.

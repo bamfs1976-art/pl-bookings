@@ -19,9 +19,9 @@ const CLUBS = [
   {short:"AVL",name:"Aston Villa",img:"https://cdn.sportmonks.com/images/soccer/teams/15/15.png",basis:"PL",ca:1.55,caH:1.37,caA:1.73,fm:10.0,squad:30},
   {short:"LIV",name:"Liverpool",img:"https://cdn.sportmonks.com/images/soccer/teams/8/8.png",basis:"PL",ca:1.5,caH:1.19,caA:1.81,fm:10.2,squad:24},
   {short:"ARS",name:"Arsenal",img:"https://cdn.sportmonks.com/images/soccer/teams/19/19.png",basis:"PL",ca:1.32,caH:0.88,caA:1.76,fm:10.3,squad:25},
-  {short:"COV",name:"Coventry City",img:"https://media.api-sports.io/football/players/47899.png",basis:"EFL",ca:null,caH:null,caA:null,fm:null,squad:62},
-  {short:"HUL",name:"Hull City",img:"https://media.api-sports.io/football/players/366630.png",basis:"EFL",ca:null,caH:null,caA:null,fm:null,squad:73},
-  {short:"IPS",name:"Ipswich Town",img:"https://media.api-sports.io/football/players/616.png",basis:"EFL",ca:null,caH:null,caA:null,fm:null,squad:67},
+  {short:"COV",name:"Coventry City",img:null,basis:"EFL",ca:null,caH:null,caA:null,fm:null,squad:62},
+  {short:"HUL",name:"Hull City",img:null,basis:"EFL",ca:null,caH:null,caA:null,fm:null,squad:73},
+  {short:"IPS",name:"Ipswich Town",img:null,basis:"EFL",ca:null,caH:null,caA:null,fm:null,squad:67},
 ];
 const PL_PLAYERS = [
   {c:"ARS",n:"Gabriel Jesus",p:"FW",min:421,yc:2,rc:0,y:0.428,f:1.92,fw:null,r:2.776,ls:true,b:"PL"},
