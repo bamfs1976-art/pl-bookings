@@ -10,10 +10,17 @@ authenticates with a session cookie you copy from your browser:
      and copy the full value of the `cookie` request header.
   3. Run:  SS_COOKIE='<pasted cookie>' python3 data/harvest.py
 
+The endpoint is PAGINATED and takes season_id (not season). Both are
+handled here; `--probe` reports what a season_id actually contains
+without writing anything, which is the fastest way to find the right one.
+
 Writes (both gitignored):
   data/pl_players.json       league 8 (Premier League) player stats
   data/champ_promoted.json   league 9 (Championship) player stats
-                             (build_pl_data.py keeps only the promoted clubs)
+                             (build_pl_data.py keeps only the promoted clubs;
+                              build_eflc_data.py keeps the other 18)
+  data/l1_players.json       league 12 (League One), only when SS_SEASON_L1
+                             is set — the Championship desk's promoted three
 
 If data/pl_refs.json is missing, build_refs.py is run to produce it from the
 free football-data.co.uk mirror (no login needed for referees).
@@ -22,14 +29,16 @@ Optional env:
   SS_USER_AGENT  the User-Agent to send. Cloudflare binds cf_clearance to the
                  IP AND the User-Agent that solved its challenge, so this must
                  match the browser the cookie came from or the edge answers 400.
-  SS_SEASON_PL / SS_SEASON_CH to pin a season id (e.g. 25583 was
-2025-26); unset, the API returns its current season.
+  SS_SEASON_PL / SS_SEASON_CH / SS_SEASON_L1  the season_id per league.
+                 REQUIRED: the endpoint answers 400 without one.
 """
 
+import argparse
 import json
 import os
 import subprocess
 import sys
+import urllib.parse
 import urllib.request
 from pathlib import Path
 
@@ -59,10 +68,70 @@ def user_agent():
     return (os.environ.get("SS_USER_AGENT") or "").strip() or DEFAULT_UA
 
 
-def fetch(league, season, cookie):
-    url = BASE.format(league=league)
-    if season:
-        url += f"?season={season}"
+PAGE_SIZE = 100      # asked for; the API may cap it, which the walk handles
+MAX_PAGES = 300      # runaway guard, far above any real squad list
+
+
+def build_url(league, season_id, page, per_page=PAGE_SIZE, min_minutes=0):
+    """The request the BROWSER makes, which is not the one this script used to.
+
+    Three things were wrong and only the first announced itself:
+
+      season_id   the parameter is season_id, not season. A required parameter
+                  under the wrong name is absent, and an absent required
+                  parameter is a 400 — which reads as a broken cookie.
+      page        the endpoint is PAGINATED. One request is one page.
+      min_minutes it filters by minutes, defaulting to a floor that hides
+                  fringe players entirely.
+
+    Together those explain the promoted clubs shipping as six forwards and no
+    defenders for a year: the app's own call sorts by goals per 90 and takes
+    twenty rows, and the top twenty of a goals-sorted list ARE forwards. It was
+    never a thin feed, it was page one.
+    """
+    params = {
+        "page": page,
+        "per_page": per_page,
+        # Sorting by a rate would put every page boundary where players tie.
+        # The walk takes every page either way, and the build de-duplicates on
+        # (club, name), so this only has to be a field the API accepts.
+        "sort_by": "goals_p90",
+        "sort_order": "desc",
+        "min_minutes": min_minutes,
+    }
+    if season_id:
+        params["season_id"] = season_id
+    return BASE.format(league=league) + "?" + urllib.parse.urlencode(params)
+
+
+def players_of(payload):
+    """The player rows out of a response, whatever it wraps them in."""
+    if isinstance(payload, dict):
+        for key in ("players", "data", "results", "items", "rows"):
+            if isinstance(payload.get(key), list):
+                return payload[key]
+        return []
+    return payload if isinstance(payload, list) else []
+
+
+def meta_of(payload):
+    """Anything pagination-shaped the response carries, for the log and the
+    cross-check. Trusted to report, never as the walk itself."""
+    if not isinstance(payload, dict):
+        return {}
+    out = {}
+    for key in ("total", "total_pages", "page", "per_page", "count",
+                "total_count", "pages", "season", "season_id", "season_name"):
+        if key in payload and not isinstance(payload[key], (list, dict)):
+            out[key] = payload[key]
+    for key in ("meta", "pagination", "paging"):
+        if isinstance(payload.get(key), dict):
+            out.update({k: v for k, v in payload[key].items()
+                        if not isinstance(v, (list, dict))})
+    return out
+
+
+def request_json(url, cookie):
     req = urllib.request.Request(url, headers={
         "Cookie": cookie,
         "User-Agent": user_agent(),
@@ -90,11 +159,16 @@ def fetch(league, season, cookie):
             # rejects it before the API is reached. That looked like a bare
             # traceback until this existed.
             cf = "cf_clearance=" in (cookie or "")
+            no_season = "season_id=" not in url
             sys.exit(
                 f"ERROR: {url} answered 400 (bad request).\n\n"
                 "That is the request being rejected as malformed, not the "
-                "session being judged — so it is the cookie VALUE or where "
-                "the request came FROM, not the account.\n\n"
+                "session being judged — the account is fine.\n\n"
+                + ("MOST LIKELY HERE: there is no season_id on that URL, and "
+                   "the endpoint requires one. Set the season id for this "
+                   "league (SS_SEASON_PL / SS_SEASON_CH / SS_SEASON_L1) and "
+                   "retry; --probe reports what an id contains.\n\n"
+                   if no_season else "")
                 + ("MOST LIKELY HERE: this cookie carries cf_clearance, "
                    "Cloudflare's challenge-clearance token. It is bound to "
                    "BOTH the IP address AND the User-Agent that solved the "
@@ -120,12 +194,49 @@ def fetch(league, season, cookie):
                   "In a GitHub Actions log a multi-line secret shows as\n"
                   "'SS_COOKIE:' with the value starting on the NEXT line.")
         raise
-    data = json.loads(body)
-    players = data["players"] if isinstance(data, dict) and "players" in data else data
-    if not isinstance(players, list) or len(players) < 100:
-        sys.exit(f"ERROR: {url} returned {len(players) if isinstance(players, list) else 'non-list'} "
-                 "players — unexpected shape, refusing to overwrite the harvest.")
-    return data, len(players)
+    return json.loads(body)
+
+
+def fetch_all(league, season_id, cookie, label, min_minutes=0):
+    """Every page for one league-season. Returns (rows, meta from page one).
+
+    A short read is a truncation, and a truncated squad list is the exact
+    failure this whole route has already shipped once. So the walk continues
+    until a page comes back short, and what it collected is reported against
+    whatever total the API claims — never stopping at page one because page one
+    looked like a reasonable number of players.
+    """
+    rows, page, first_meta = [], 1, {}
+    while True:
+        url = build_url(league, season_id, page, min_minutes=min_minutes)
+        payload = request_json(url, cookie)
+        got = players_of(payload)
+        if page == 1:
+            first_meta = meta_of(payload)
+            if not got:
+                sys.exit(
+                    f"ERROR: {label} (league {league}, season_id "
+                    f"{season_id or 'unset'}) returned no players on page 1.\n"
+                    f"  {url}\n"
+                    f"  response keys: {sorted(payload) if isinstance(payload, dict) else type(payload).__name__}\n"
+                    f"  reported: {first_meta or 'nothing'}\n\n"
+                    "An empty league is almost always the wrong season_id — a "
+                    "season that has not kicked off yet has no players. Run "
+                    "with --probe to see what a season_id actually contains.")
+        rows.extend(got)
+        if len(got) < PAGE_SIZE:
+            break
+        page += 1
+        if page > MAX_PAGES:
+            sys.exit(f"ERROR: {label} still returning full pages after "
+                     f"{MAX_PAGES} — refusing to loop further.")
+
+    claimed = first_meta.get("total") or first_meta.get("total_count") or first_meta.get("count")
+    note = ""
+    if isinstance(claimed, int) and claimed != len(rows):
+        note = f"  (the API reports {claimed}; walked {len(rows)})"
+    print(f"  {label}: {len(rows)} players over {page} page(s){note}")
+    return rows, first_meta
 
 
 
@@ -190,30 +301,102 @@ def clean_cookie(raw):
     return raw, None
 
 
+# league id -> (env var for its season_id, output file, display name).
+# 8, 9 and 12 are the app's own ids, read off the requests its pages make.
+SOURCES = {
+    "PL": (8, "SS_SEASON_PL", "pl_players.json", "Premier League"),
+    "CH": (9, "SS_SEASON_CH", "champ_promoted.json", "Championship"),
+    "L1": (12, "SS_SEASON_L1", "l1_players.json", "League One"),
+}
+
+
+def probe(cookie, only=None):
+    """Report what a season_id actually contains, without writing anything.
+
+    A season id is an opaque number, and the wrong one does not error — it
+    returns a real, recent, nearly empty league, which is the most expensive
+    kind of wrong. This names what is behind each id before anything is built
+    on it."""
+    for code, (league, env, _file, name) in SOURCES.items():
+        if only and code != only:
+            continue
+        season = (os.environ.get(env) or "").strip()
+        print(f"\n{name}  (league {league}, {env}={season or 'UNSET'})")
+        if not season:
+            print(f"  skipped — set {env} to a season_id to probe it")
+            continue
+        url = build_url(league, season, page=1, per_page=20, min_minutes=0)
+        print(f"  {url}")
+        payload = request_json(url, cookie)
+        rows = players_of(payload)
+        keys = sorted(payload) if isinstance(payload, dict) else type(payload).__name__
+        print(f"  response keys : {keys}")
+        print(f"  reported      : {meta_of(payload) or 'nothing'}")
+        print(f"  players page 1: {len(rows)}")
+        if rows:
+            teams = sorted({(r.get('team') or '?') for r in rows})
+            print(f"  fields        : {sorted(rows[0])[:14]}")
+            print(f"  clubs on p1   : {len(teams)} -> {', '.join(teams[:6])}")
+            for r in rows[:3]:
+                print(f"    {r.get('team','?'):24} {r.get('n') or r.get('name','?')}"
+                      f"  min={r.get('min') or r.get('minutes')}")
+
+
 def main():
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--probe", action="store_true",
+                    help="report what each season_id contains; write nothing")
+    ap.add_argument("--league", choices=sorted(SOURCES),
+                    help="probe only this one")
+    args = ap.parse_args()
+
     cookie, problem = clean_cookie(os.environ.get("SS_COOKIE"))
     if problem:
         sys.exit("ERROR: " + problem)
 
-    pl, n_pl = fetch(8, os.environ.get("SS_SEASON_PL"), cookie)
-    (DATA / "pl_players.json").write_text(json.dumps(pl), encoding="utf-8")
-    print(f"pl_players.json written ({n_pl} players)")
+    if args.probe:
+        probe(cookie, args.league)
+        print("\nprobe only — nothing written")
+        return
 
-    ch, n_ch = fetch(9, os.environ.get("SS_SEASON_CH"), cookie)
+    pl, _ = fetch_all(8, os.environ.get("SS_SEASON_PL"), cookie, "Premier League")
+    (DATA / "pl_players.json").write_text(json.dumps(pl), encoding="utf-8")
+    print(f"pl_players.json written ({len(pl)} players)")
+
+    # League One, for the Championship desk's three promoted clubs. Optional:
+    # the Premier League desk has never needed it, so an unset season id is a
+    # skip rather than a failure.
+    if (os.environ.get("SS_SEASON_L1") or "").strip():
+        l1, _ = fetch_all(12, os.environ.get("SS_SEASON_L1"), cookie, "League One")
+        (DATA / "l1_players.json").write_text(json.dumps(l1), encoding="utf-8")
+        print(f"l1_players.json written ({len(l1)} players)")
+
+    ch, _ = fetch_all(9, os.environ.get("SS_SEASON_CH"), cookie, "Championship")
+    n_ch = len(ch)
     # The league-wide count is not the check that matters. league 9 has 24
-    # clubs, so a payload of 100+ players clears `fetch`'s floor comfortably
-    # while carrying only a handful for the three clubs we actually keep —
-    # which is exactly what shipped: six forwards, no defenders, for a year.
-    # Refuse to overwrite a good file with a thin one.
+    # clubs, so a payload of 100+ players clears any league-wide floor
+    # comfortably while carrying only a handful for the three clubs we
+    # actually keep — which is exactly what shipped: six forwards, no
+    # defenders, for a year. Refuse to overwrite a good file with a thin one.
+    #
+    # The cause of that is no longer a mystery and is fixed above: the endpoint
+    # is paginated, and the app's own call takes twenty rows sorted by goals
+    # per 90. Page one of a goals-sorted list is forwards. The guard stays
+    # because it is cheap and it is the last thing standing between a bad
+    # harvest and the shipped file.
     thin = promoted_shortfall(ch)
     if thin:
         sys.exit(
             "ERROR: league 9 answered with "
             f"{n_ch} players, but the promoted clubs are not covered:\n  - "
             + "\n  - ".join(thin)
-            + "\n\nchamp_promoted.json was NOT overwritten. This endpoint appears to "
-              "return a slice of the league rather than full squads; try a "
-              "team-scoped or paginated request before trusting the result."
+            + "\n\nchamp_promoted.json was NOT overwritten.\n\n"
+              "FIRST THING TO CHECK IS THE SEASON. Coventry, Ipswich and Hull "
+              "are in the Premier League from 2026-27, so a CURRENT-season "
+              "Championship payload correctly does not contain them and this "
+              "guard correctly refuses it. The desk is built on 2025-26 form, "
+              "so SS_SEASON_CH wants the 2025-26 season_id.\n\n"
+              "  python3 data/harvest.py --probe   names what a season_id holds"
         )
     (DATA / "champ_promoted.json").write_text(json.dumps(ch), encoding="utf-8")
     print(f"champ_promoted.json written ({n_ch} players)")
