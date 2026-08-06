@@ -61,17 +61,31 @@ def fetch(league, season, cookie):
             # value, smart quotes) makes the header invalid and the edge
             # rejects it before the API is reached. That looked like a bare
             # traceback until this existed.
-            sys.exit(f"ERROR: {url} answered 400 (bad request).\n\n"
-                     "That is the request being malformed, not the session "
-                     "being rejected — so it is almost always the cookie "
-                     "VALUE rather than the account. Check that SS_COOKIE:\n"
-                     "  - is a single line with no breaks in it\n"
-                     "  - has no leading 'cookie:' or 'Cookie:' prefix\n"
-                     "  - is the raw header value, not the name/value table\n"
-                     "    from the Application tab\n\n"
-                     "In a GitHub Actions log a multi-line secret shows as\n"
-                     "'SS_COOKIE:' with the value starting on the NEXT line — "
-                     "that is the tell.")
+            cf = "cf_clearance=" in (cookie or "")
+            sys.exit(
+                f"ERROR: {url} answered 400 (bad request).\n\n"
+                "That is the request being rejected as malformed, not the "
+                "session being judged — so it is the cookie VALUE or where "
+                "the request came FROM, not the account.\n\n"
+                + ("MOST LIKELY HERE: this cookie carries cf_clearance, which "
+                   "is Cloudflare's challenge-clearance token and is bound to "
+                   "the IP ADDRESS AND USER-AGENT that solved the challenge. "
+                   "Replayed from anywhere else — a CI runner, a container, a "
+                   "different network — the edge rejects it before "
+                   "scoutingstats.ai is reached, however cleanly the cookie "
+                   "was pasted.\n\n"
+                   "  -> Run this harvest on the SAME MACHINE AND NETWORK as "
+                   "the browser session it came from. That is why this route "
+                   "cannot run unattended, and why data/harvest_apifootball.py "
+                   "exists as the key-based alternative.\n\n"
+                   if cf else "")
+                + "Otherwise check that SS_COOKIE:\n"
+                  "  - is a single line with no breaks in it\n"
+                  "  - has no leading 'cookie:' or 'Cookie:' prefix\n"
+                  "  - is the raw header value, not the name/value table from\n"
+                  "    the Application tab\n\n"
+                  "In a GitHub Actions log a multi-line secret shows as\n"
+                  "'SS_COOKIE:' with the value starting on the NEXT line.")
         raise
     data = json.loads(body)
     players = data["players"] if isinstance(data, dict) and "players" in data else data
