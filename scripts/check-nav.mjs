@@ -185,6 +185,50 @@ assert.ok(!/\.as-main\{[^}]*display:flex/.test(css),
   'page grows to ~912px on a 390px screen');
 
 
+/* ---- 7. the tables show the same columns on every desk ------------------- */
+/* The club and referee tables had diverged in BOTH directions from identical
+   data — each desk showing a subset the other did not. One agreed set now, so
+   a reader moving between divisions is not re-learning the table. */
+const CLUB_COLS = ['Club', 'Form basis', 'Cards/game', 'Home', 'Away',
+                   'Fouls/game', 'Tier', 'Squad', 'Top booking risk'];
+const REF_COLS = ['Referee', 'Matches', 'Yellows', 'Fouls', 'Cards/foul',
+                  'Reds', 'Pens', '×factor', 'Strictness'];
+for (const [f, clubId, refId] of [
+  ['index.html', 'panel-clubs', 'panel-refs'],
+  ['eflc.html', 'panel-clubs', 'panel-referees'],
+  ['laliga.html', 'panel-clubs', 'panel-referees']]) {
+  const src = read(f);
+  const seg = (id) => {
+    const i = src.indexOf(`id="${id}"`);
+    return i < 0 ? '' : src.slice(i, i + 4000);
+  };
+  /* The LABELS, not the raw HTML. Searching the markup matched
+     id="clubSquadTh" for the column called "Squad", so renaming the header to
+     "Sq" still passed — the assertion was reading an attribute name. */
+  const labels = (head) => [...head.matchAll(/<th[^>]*>([\s\S]*?)<\/th>/g)]
+    .map((m) => m[1].replace(/<[^>]+>/g, '').trim());
+  const clubHead = /<thead>[\s\S]*?<\/thead>/.exec(seg(clubId));
+  assert.ok(clubHead, `${f} has no club table head`);
+  const clubLabels = labels(clubHead[0]);
+  for (const c of CLUB_COLS) {
+    assert.ok(clubLabels.some((l) => l.includes(c)),
+      `${f}'s club table has no "${c}" column — it shows [${clubLabels.join(', ')}]`);
+  }
+  const refHead = /<thead>[\s\S]*?<\/thead>/.exec(seg(refId));
+  assert.ok(refHead, `${f} has no referee table head`);
+  const refLabels = labels(refHead[0]);
+  for (const c of REF_COLS) {
+    assert.ok(refLabels.some((l) => l.includes(c)),
+      `${f}'s referee table has no "${c}" column — it shows [${refLabels.join(', ')}]`);
+  }
+}
+/* One tier vocabulary. "Target" and "Fade" are instructions; the desk says
+   research, not a tip, on every other line. */
+for (const f of ['index.html', 'eflc.html', 'laliga.html']) {
+  assert.ok(/Card-heavy/.test(read(f)), `${f} uses a different tier vocabulary`);
+}
+
+
 console.log(
   `check-nav OK: ${DESKS.length} desks, each linking to all ${DESKS.length} and ` +
   'marking itself current, all routed before the catch-all; combined views ' +

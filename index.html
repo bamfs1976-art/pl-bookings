@@ -300,6 +300,10 @@
      amber medium, grey low" — and this class has always existed, but nothing
      ever rendered one, so the Guide described a feature the page did not have.
      A 0.50 built on 90 minutes and one built on 2,000 are not the same number. */
+  /* Strictness as a bar, matching the other two desks: a column of numbers is
+     compared pairwise, a column of bars is read down. */
+  .ref-bar{display:inline-block;width:110px;height:7px;border-radius:999px;background:var(--surface-3);overflow:hidden;vertical-align:middle}
+  .ref-bar i{display:block;height:100%;background:var(--accent-2,var(--accent));border-radius:999px}
   .conf-dot{width:9px;height:9px;border-radius:50%;flex:none;display:inline-block;margin-right:6px;vertical-align:middle}
   .conf-hi{background:var(--good)} .conf-mid{background:var(--warn)} .conf-lo{background:var(--border-2)}
   .fx-more{width:100%;border:0;border-top:1px solid var(--border);background:none;color:var(--accent-2);font:inherit;font-weight:700;font-size:.78rem;padding:.5rem;cursor:pointer}
@@ -767,9 +771,13 @@
         <caption class="visually-hidden">Premier League club discipline</caption>
         <thead><tr>
           <th scope="col" style="text-align:left;padding:.6rem .7rem">Club</th>
-          <th scope="col" style="text-align:right;padding:.6rem .5rem">Cards against /game</th>
-          <th scope="col" style="text-align:right;padding:.6rem .5rem">Fouls /game</th>
+          <th scope="col" style="text-align:left;padding:.6rem .5rem" title="Which division's form the club's rate is measured on">Form basis</th>
+          <th scope="col" style="text-align:right;padding:.6rem .5rem">Cards/game</th>
+          <th scope="col" style="text-align:right;padding:.6rem .5rem" title="Cards against per home game (football-data.co.uk)">Home</th>
+          <th scope="col" style="text-align:right;padding:.6rem .5rem" title="Cards against per away game (football-data.co.uk)">Away</th>
+          <th scope="col" style="text-align:right;padding:.6rem .5rem">Fouls/game</th>
           <th scope="col" style="text-align:left;padding:.6rem .5rem">Tier</th>
+          <th scope="col" style="text-align:right;padding:.6rem .5rem" id="clubSquadTh" title="Players in the squad with a rated card record">Squad</th>
           <th scope="col" style="text-align:left;padding:.6rem .7rem">Top booking risk</th>
         </tr></thead>
         <tbody id="clubRows"></tbody>
@@ -795,11 +803,13 @@
         <thead><tr>
           <th scope="col" style="text-align:left;padding:.6rem .7rem">Referee</th>
           <th scope="col" style="text-align:right;padding:.6rem .5rem">Matches</th>
-          <th scope="col" style="text-align:right;padding:.6rem .5rem">Yellows /game</th>
-          <th scope="col" style="text-align:right;padding:.6rem .5rem" title="Fouls (both sides) per game in his matches — how foul-heavy the games he takes are">Fouls /game</th>
-          <th scope="col" style="text-align:right;padding:.6rem .5rem" title="Yellows per foul — how readily he cards a foul, with the fixtures' foul volume divided out. The purer strictness signal.">Cards /foul</th>
-          <th scope="col" style="text-align:right;padding:.6rem .5rem">Reds /game</th>
-          <th scope="col" style="text-align:right;padding:.6rem .5rem">Pens /game</th>
+          <th scope="col" style="text-align:right;padding:.6rem .5rem">Yellows/game</th>
+          <th scope="col" style="text-align:right;padding:.6rem .5rem" title="Fouls (both sides) per game in his matches — how foul-heavy the games he takes are">Fouls/game</th>
+          <th scope="col" style="text-align:right;padding:.6rem .5rem" title="Yellows per foul — how readily he cards a foul, with the fixtures' foul volume divided out. The purer strictness signal.">Cards/foul</th>
+          <th scope="col" style="text-align:right;padding:.6rem .5rem">Reds/game</th>
+          <th scope="col" style="text-align:right;padding:.6rem .5rem">Pens/game</th>
+          <th scope="col" style="text-align:right;padding:.6rem .5rem" id="refFactorTh" title="The multiplier every player's card chance is scaled by when this official is appointed. Blends yellows per game and cards per foul equally, clamped to ×0.75–×1.30.">×factor</th>
+          <th scope="col" style="text-align:left;padding:.6rem .5rem" title="The same factor as a bar, so the table can be read down rather than compared number by number">Strictness</th>
           <th scope="col" style="text-align:right;padding:.6rem .7rem" id="refCareerTh" title="Career yellows per game in the historical record">Career</th>
         </tr></thead>
         <tbody id="refRows"></tbody>
@@ -887,7 +897,7 @@
       <p>Every price you type into a P(card) cell is now <strong>kept</strong> — in this browser only, and discarded after a week — and plotted on the <strong>Value</strong> view of the Players panel: the chance the price implies across, our model up. On the diagonal the two agree. The shaded band beneath it is roughly the bookmaker's margin, and a point sitting in it beats his opinion but not his cut, so it does not pay. There is no odds feed here, so the chart only ever shows prices you entered yourself, and a single price cannot have its margin removed properly — that needs both sides of the market, which nobody publishes. The band is an assumption, not a measurement.</p>
       <p>Be honest with it: this is a season-average <em>estimate</em> from form data, not a market price. It knows nothing about a specific matchup beyond the risk score, referees and derbies adjust fixture heat but not this per-player number, and bookmaker odds carry margin. Use the edge as a screen for further research, never as a guarantee.</p>
       <h3>Club discipline</h3>
-      <p>Clubs are tiered on cards received per game, target 2.0 and above, mid 1.5 to 1.9, fade below 1.5. The flame marks a combustible side, 2.0 plus cards and 12.0 plus fouls.</p>
+      <p>Clubs are tiered on cards received per game: card-heavy at 2.0 and above, middling 1.5 to 1.9, disciplined below 1.5. The flame marks a combustible side, 2.0 plus cards and 12.0 plus fouls.</p>
       <h3>Referee strictness — two signals, not one</h3>
       <p>A referee's <strong>×factor</strong> now blends two measures. <strong>Yellows per game</strong> is the obvious one, but it's contaminated: an official shows more cards partly because the fixtures he draws are more foul-heavy. <strong>Cards per foul</strong> divides that out — how readily he reaches for the card given the same provocation. Because the desk already models each club's foul and card propensity separately, leaning on yellows per game alone double-counts the teams. The two ratios (each against the league average) are combined as a weighted geometric mean, equal weight by default, and clamped to ×0.75–×1.30 so no single official can swamp the model. Both columns are on the <strong>Referees</strong> tab; cards per foul carries its % difference from the league average. Where an official has no fouls data yet, the factor stays on yellows per game exactly as before. Fouls come from the same public football-data.co.uk match records as the card counts, so this adds no new data source.</p>
       <h3>Live data</h3>
@@ -1063,7 +1073,12 @@ function saveState(){ try{ localStorage.setItem(STORE_KEY, JSON.stringify(state)
 function esc(s){ const d=document.createElement("div"); d.textContent=s==null?"":s; return d.innerHTML; }
 function riskColour(r){ if(r==null) return "var(--text-3)"; if(r>=2.5) return "var(--danger)"; if(r>=1.8) return "var(--warn)"; if(r>=1.2) return "var(--good)"; return "var(--text-2)"; }
 function tierOf(ca){ if(ca==null) return "efl"; if(ca>=2.0) return "target"; if(ca>=1.5) return "mid"; return "fade"; }
-function tierLabel(t){ return {target:"Target",mid:"Mid",fade:"Fade",efl:"EFL basis"}[t]; }
+/* DESCRIPTIVE, not advisory. These read "Target" and "Fade" — back it and lay
+   it — on a desk whose every other line says research, not a tip. The
+   Championship and La Liga tables have always described the club instead,
+   and describing the club is both more accurate and the same words on all
+   three. The CSS classes keep their old names; only the labels change. */
+function tierLabel(t){ return {target:"Card-heavy",mid:"Middling",fade:"Disciplined",efl:"EFL basis"}[t]; }
 /* One place decides how a player's basis reads, because there are four of them
    — table row, phone card, profile, share image — and a basis handled in only
    three would look like a data bug rather than a missing chip.
@@ -1527,9 +1542,21 @@ function renderClubs(){
     const split=(c.caH!=null&&c.caA!=null)?`<div class="faint num" style="font-size:.68rem" title="Home / away split (football-data.co.uk)">H ${c.caH.toFixed(2)} · A ${c.caA.toFixed(2)}</div>`:"";
     tr.innerHTML=
       `<td style="padding:.5rem .7rem">${crest(c.short)} ${esc(c.name)} ${comb?'<span title="Combustible" aria-label="Combustible">🔥</span>':''}</td>`+
-      `<td style="text-align:right" class="num"><strong>${c.ca==null?'—':c.ca.toFixed(2)}</strong>${split}</td>`+
+      /* Home and away are COLUMNS now, not a sub-line under the total. They
+         were already in this dataset (caH/caA) and already columns on the
+         other two desks; squeezed under the total they could not be sorted or
+         compared down the table. */
+      `<td><span class="chip ${c.basis==='PL'?'tier-mid':'tier-target'}" title="${c.basis==='PL'?'Measured on Premier League form':'Measured on '+esc(String(c.basis))+' form'}">${esc(String(c.basis||'—'))}</span></td>`+
+      `<td style="text-align:right" class="num"><strong>${c.ca==null?'—':c.ca.toFixed(2)}</strong></td>`+
+      `<td style="text-align:right" class="num muted">${c.caH==null?'—':c.caH.toFixed(2)}</td>`+
+      `<td style="text-align:right" class="num muted">${c.caA==null?'—':c.caA.toFixed(2)}</td>`+
       `<td style="text-align:right" class="num muted">${c.fm==null?'—':c.fm.toFixed(1)}</td>`+
+      /* Squad size and form basis, which the Championship and La Liga club
+         tables have always shown from the same fields this dataset carries.
+         A 2.4 measured on a promoted club's Championship form is not the same
+         claim as one measured on this division, and the row never said which. */
       `<td><span class="chip tier-${tier}">${tierLabel(tier)}</span></td>`+
+      `<td style="text-align:right" class="num muted">${c.squad==null?'—':c.squad}</td>`+
       `<td style="padding:.45rem .7rem">${tp?`${esc(tp.n)} <span class="num" style="color:${riskColour(rEff(tp))}">${rEff(tp).toFixed(2)}</span>`:'—'} <span class="faint" aria-hidden="true">›</span></td>`;
     tb.appendChild(tr);
   });
@@ -1587,6 +1614,12 @@ function renderRefs(){
       `<td style="text-align:right" class="num">${cpfCell(r)}</td>`+
       `<td style="text-align:right" class="num muted">${r.red==null?'—':r.red.toFixed(2)}</td>`+
       `<td style="text-align:right" class="num muted">${r.pen==null?'—':r.pen.toFixed(2)}</td>`+
+      /* The ×factor is what the model actually multiplies by, and it was the one
+         number this table did not show — it appeared inline on fixture cards
+         only. The Championship and La Liga desks have always had it as a
+         sortable column; this is that column, coming back the other way. */
+      `<td style="text-align:right" class="num"><span class="chip ${refFactor(r)>=1.08?'tier-target':refFactor(r)<=0.94?'tier-fade':'tier-mid'}">×${refFactor(r).toFixed(2)}</span></td>`+
+      `<td style="padding:.55rem .5rem"><span class="ref-bar" title="×${refFactor(r).toFixed(2)}"><i style="width:${Math.round((refFactor(r)/1.30)*100)}%"></i></span></td>`+
       `<td style="text-align:right;padding:.55rem .7rem">${hist}</td>`;
     tb.appendChild(tr);
   });

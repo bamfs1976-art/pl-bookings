@@ -108,8 +108,12 @@ rather than leaving implicit.
 | Home / away split columns | ❌ | ✅ | ✅ |
 | Form basis, squad size, discipline | ❌ | ✅ | ✅ |
 
-The club tables have **diverged in both directions**. They show different columns
-from the same fields, so neither is a subset of the other.
+**Settled.** Both tables now show one agreed set on all three desks, from the
+identical fields every dataset already carried:
+
+- **Clubs** — Club · Form basis · Cards/game · Home · Away · Fouls/game · Tier · Squad · Top booking risk. The Premier League gained Form basis, Home, Away and Squad as real sortable columns (home/away were a sub-line under the total, which cannot be sorted or read down); the newer desks gained Fouls/game and the combustible flame.
+- **Referees** — Referee · Matches · Yellows/game · Fouls/game · Cards/foul · Reds/game · Pens/game · ×factor · Strictness, plus Career on the Premier League only, which comes from a 34-season history file the other divisions have no equivalent for. The Premier League gained the ×factor and the strictness bar: the multiplier the model actually applies was the one number its referee table never showed.
+- **Tier vocabulary** — all three now read Card-heavy / Middling / Disciplined. The Premier League said Target / Mid / Fade, which are instructions to back or lay on a desk that says *research, not a tip* on every other line. Describing the club is both more accurate and the same words everywhere.
 
 ## App shell and UX
 
@@ -184,7 +188,7 @@ way for all three.
 2. ~~**A "This Matchday" landing**~~ — done on both, priced through the same `priceFixture` as the Fixtures tab.
 3. ~~**Fixture card parity**~~ — done: thin-sample warning added; banding already existed (audit error).
 4. ~~**Player table parity**~~ — done: confidence dot (all three), card-form arrow, CSV export. **Player notes still outstanding.**
-5. **Club and referee table parity** — pick one column set per table, in both directions.
+5. ~~**Club and referee table parity**~~ — done. One agreed set per table, applied in both directions.
 6. **H2H and derby lists** for both newer divisions (low-cost data work).
 7. **Tour, glossary, density toggle, command palette** on all three.
 8. **Photos and availability flags** (harvest work).

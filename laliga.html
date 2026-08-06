@@ -356,9 +356,10 @@
             <th class="num" data-sort="ca">Cards/game</th>
             <th class="num" data-sort="caH">Home</th>
             <th class="num" data-sort="caA">Away</th>
-            <th data-sort="tier">Discipline</th>
+            <th class="num" data-sort="fm">Fouls/game</th>
+            <th data-sort="tier">Tier</th>
             <th class="num" data-sort="squad">Squad</th>
-            <th data-sort="top">Highest risk</th>
+            <th data-sort="top">Top booking risk</th>
           </tr></thead>
           <tbody></tbody>
         </table>
@@ -384,6 +385,8 @@
             <th class="num" data-sort="ypg">Yellows/game</th>
             <th class="num" data-sort="fpg">Fouls/game</th>
             <th class="num" data-sort="cpf">Cards/foul</th>
+            <th class="num" data-sort="red">Reds/game</th>
+            <th class="num" data-sort="pen">Pens/game</th>
             <th class="num" data-sort="factor">×factor</th>
             <th data-sort="factor">Strictness</th>
           </tr></thead>
@@ -841,11 +844,15 @@
       var w = c.ca == null ? 0 : Math.round((c.ca / max) * 100);
       return '<tr>'
         + '<td><span class="clubcell">' + (c.img ? '<img class="crest" src="' + esc(c.img) + '" alt="" loading="lazy">' : '')
-        + esc(c.name) + '</span></td>'
+        + esc(c.name)
+        + ((c.ca != null && c.ca >= 2.0 && c.fm != null && c.fm >= 12.0)
+            ? ' <span title="Combustible — 2.0+ cards and 12.0+ fouls a game" aria-label="Combustible">\uD83D\uDD25</span>' : '')
+        + '</span></td>'
         + '<td><span class="pill ' + esc(String(c.basis || '').toLowerCase()) + '">' + esc(c.basis) + '</span></td>'
         + '<td class="num">' + n2(c.ca) + (c.ca == null ? '' : ' <span class="bar" style="display:inline-block;width:52px;vertical-align:middle"><i style="width:' + w + '%"></i></span>') + '</td>'
         + '<td class="num">' + n2(c.caH) + '</td>'
         + '<td class="num">' + n2(c.caA) + '</td>'
+        + '<td class="num">' + (c.fm == null ? '—' : c.fm.toFixed(1)) + '</td>'
         + '<td>' + (r.tier ? '<span class="tier t' + r.tier + '">' + tierTxt + '</span>' : '<span class="faint">—</span>') + '</td>'
         + '<td class="num">' + (c.squad || 0) + '</td>'
         + '<td>' + (r.top ? esc(r.top.n) + ' <span class="faint mono">' + n2(r.top.r) + '</span>' : '<span class="faint">—</span>') + '</td>'
@@ -885,6 +892,8 @@
         + '<td class="num">' + n2(r.ypg) + '</td>'
         + '<td class="num">' + n1(r.fpg) + '</td>'
         + '<td class="num">' + (r.cpf == null ? '—' : r.cpf.toFixed(3)) + '</td>'
+        + '<td class="num">' + (r.red == null ? '—' : r.red.toFixed(2)) + '</td>'
+        + '<td class="num">' + (r.pen == null ? '—' : r.pen.toFixed(2)) + '</td>'
         + '<td class="num"><span class="tier ' + cls + '">×' + n2(x.factor) + '</span></td>'
         + '<td><span class="bar" style="width:110px;display:inline-block"><i style="width:' + w + '%"></i></span></td>'
         + '</tr>';
