@@ -112,9 +112,62 @@ for (const k of keys) {
     'across players who are different people with the same names');
 }
 
+/* ---- fixtures, when they have been harvested --------------------------- */
+let fxNote = 'no fixture list yet';
+const fxPath = join(root, 'data', 'eflc_fixtures.js');
+if (existsSync(fxPath)) {
+  vm.runInContext(readFileSync(fxPath, 'utf8'), ctx);
+  const FX = vm.runInContext('EFLC_FIXTURES', ctx);
+  assert.ok(Array.isArray(FX) && FX.length > 0, 'eflc_fixtures.js has no fixtures');
+
+  for (const f of FX) {
+    assert.ok(shorts.has(f.h) && shorts.has(f.a),
+      `fixture ${f.id}: ${f.h} v ${f.a} — a club not in CLUBS`);
+    assert.notEqual(f.h, f.a, `fixture ${f.id} has a club playing itself`);
+    if (f.d) assert.ok(!isNaN(new Date(f.d)), `fixture ${f.id}: unparseable date ${f.d}`);
+  }
+
+  /* Calibration. Re-prices every fixture with NO referee — the neutral case —
+     the same way the page does, and checks the average lands near the card
+     rate the league actually produced. A model that drifts here shows nothing
+     on screen: the cards still render, the numbers are just wrong. */
+  const byClub = {};
+  for (const p of EFLC_PLAYERS) (byClub[p.c] ||= []).push(p);
+  const sideExpected = (short) => {
+    const squad = (byClub[short] || []).filter((p) => (Number(p.min) || 0) > 0 && p.yc != null);
+    if (!squad.length) return null;
+    const w = C.minuteWeights(squad.map((p) => p.min), 11);
+    return squad.reduce((sum, p, i) => {
+      const y = C.shrinkRate(p.yc, p.min, prior(p.p), SHRINK_MATCHES);
+      return sum + (C.pCardFromLambda(C.cardLambda(y, Math.max(0, w[i]) * 90, {})) || 0);
+    }, 0);
+  };
+  const cache = {};
+  const exp = FX.map((f) => (cache[f.h] ??= sideExpected(f.h)) + (cache[f.a] ??= sideExpected(f.a)))
+    .filter((x) => isFinite(x));
+  const meanExp = exp.reduce((s, v) => s + v, 0) / exp.length;
+
+  /* What the division actually produced. The shipped REFS carry a rate and a
+     match count, not raw totals, so it is the match-weighted mean of ypg —
+     reading a `yellows` field that the emit does not write gave a league
+     average of zero and an infinite ratio. */
+  const refMatches = REFS.reduce((s, r) => s + (Number(r.matches) || 0), 0);
+  const leagueYpg = REFS.reduce(
+    (s, r) => s + (Number(r.ypg) || 0) * (Number(r.matches) || 0), 0) / refMatches;
+  assert.ok(leagueYpg > 1 && leagueYpg < 8,
+    `league card rate came out at ${leagueYpg.toFixed(2)} — REFS shape has changed`);
+  const ratio = meanExp / leagueYpg;
+  assert.ok(ratio > 0.7 && ratio < 1.3,
+    `fixtures price ${meanExp.toFixed(2)} cards a match against a league that ` +
+    `produced ${leagueYpg.toFixed(2)} (ratio ${ratio.toFixed(2)}) — the model has drifted`);
+  fxNote = `${FX.length} fixtures, ${FX.filter((f) => f.ref).length} with a referee, ` +
+    `pricing ${meanExp.toFixed(2)} a match against the league's ${leagueYpg.toFixed(2)}`;
+}
+
 const rated = CLUBS.filter((c) => c.ca != null).length;
 console.log(
   `check-eflc OK: ${CLUBS.length} clubs, ${EFLC_PLAYERS.length} players, ` +
   `${REFS.length} refs, ${rated} clubs with a measured card rate; ` +
-  `P(card) max ${(max * 100).toFixed(1)}%, median ${(median * 100).toFixed(1)}%`
+  `P(card) max ${(max * 100).toFixed(1)}%, median ${(median * 100).toFixed(1)}%; ` +
+  fxNote
 );

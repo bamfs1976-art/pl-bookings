@@ -26,9 +26,13 @@ on:
         required: false
         default: ""
       season_af:
-        description: "API-Football season START YEAR for the Championship (2025 = 2025-26). NOT a ScoutingStats id."
+        description: "API-Football season START YEAR for last season's FORM (2025 = 2025-26). NOT a ScoutingStats id."
         required: false
         default: "2025"
+      season_fixtures:
+        description: "API-Football season START YEAR for the FIXTURE LIST — the season being played (2026 = 2026-27)."
+        required: false
+        default: "2026"
       fit_model:
         description: "Fit the card model on FPL per-match history (Tier 2). Keeps the season prior until enough matches exist."
         type: boolean
@@ -145,6 +149,17 @@ jobs:
           API_FOOTBALL_SEASON: ${{ inputs.season_af }}
         run: python3 data/harvest_apifootball.py --league PL --out pl_af_players.json
 
+      # The Championship fixture list. Separate from the squads because it
+      # moves on a different clock: squads are last season's form and change
+      # once, fixtures gain a referee as each appointment is published, so
+      # this is the step worth re-running weekly in season.
+      - name: Harvest the Championship fixtures from API-Football
+        if: ${{ env.API_FOOTBALL_KEY != '' && inputs.refresh_eflc }}
+        continue-on-error: true
+        env:
+          API_FOOTBALL_SEASON: ${{ inputs.season_fixtures }}
+        run: python3 data/harvest_apifootball.py --fixtures --league EFLC
+
       # League One, for the three clubs promoted into the Championship. Only
       # the Championship desk needs it, so it never blocks the Premier League.
       - name: Harvest League One from API-Football (the promoted three)
@@ -239,7 +254,7 @@ jobs:
           # command when either path matches nothing, so a run that produced
           # the referees but not the dataset staged NEITHER — which is exactly
           # what happened the first time this ran.
-          for f in data/eflc_refs.json data/eflc_data.js data/eflc_status.txt; do
+          for f in data/eflc_refs.json data/eflc_data.js data/eflc_status.txt data/eflc_fixtures.js; do
             [ -f "$f" ] && git add "$f"
           done
           if git diff --cached --quiet; then

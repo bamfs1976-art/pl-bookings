@@ -112,6 +112,23 @@
   .tier.t3{background:color-mix(in srgb,var(--good) 15%,transparent);color:var(--good-ink)}
   .bar{height:6px;border-radius:99px;background:var(--surface-3);overflow:hidden;min-width:56px}
   .bar i{display:block;height:100%;background:var(--accent)}
+  .fx{border:1px solid var(--border);border-radius:13px;padding:12px 13px;margin-bottom:11px;background:var(--surface)}
+  .fx-top{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+  .fx-teams{font-weight:700;font-size:15px;display:flex;align-items:center;gap:7px}
+  .fx-when{font-size:12px;color:var(--text-2)}
+  .fx-heat{margin-left:auto;text-align:right}
+  .fx-heat b{font-size:19px;line-height:1}
+  .fx-heat span{display:block;font-size:10.5px;color:var(--text-2)}
+  .fx-ref{display:flex;align-items:center;gap:8px;margin:10px 0 4px;flex-wrap:wrap;font-size:12.5px}
+  .fx-sides{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:8px}
+  @media (max-width:640px){ .fx-sides{grid-template-columns:1fr} }
+  .fx-side h4{margin:0 0 5px;font-size:11.5px;text-transform:uppercase;letter-spacing:.04em;color:var(--text-2);font-weight:700}
+  .cand{display:flex;align-items:center;gap:8px;font-size:13px;padding:3px 0}
+  .cand .nm{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .cand .pc{font-family:var(--mono);font-weight:700}
+  .mkts{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px;padding-top:9px;border-top:1px dashed var(--border)}
+  .mkt{font-size:11.5px;background:var(--surface-2);border-radius:8px;padding:4px 9px}
+  .mkt b{font-family:var(--mono)}
   .empty{padding:26px;text-align:center;color:var(--text-2)}
   .note{font-size:12.5px;color:var(--text-2);margin-top:10px;line-height:1.55}
   .guide{max-width:74ch;line-height:1.65;font-size:14.5px}
@@ -145,6 +162,7 @@
 
   <nav class="tabs" role="tablist" aria-label="Sections">
     <button class="tab" role="tab" id="tab-players"  aria-controls="panel-players"  aria-selected="true">Players</button>
+    <button class="tab" role="tab" id="tab-fixtures" aria-controls="panel-fixtures" aria-selected="false">Fixtures</button>
     <button class="tab" role="tab" id="tab-clubs"    aria-controls="panel-clubs"    aria-selected="false">Clubs</button>
     <button class="tab" role="tab" id="tab-referees" aria-controls="panel-referees" aria-selected="false">Referees</button>
     <button class="tab" role="tab" id="tab-guide"    aria-controls="panel-guide"    aria-selected="false">Guide</button>
@@ -186,6 +204,30 @@
       </div>
       <div class="empty" id="emptyPlayers" hidden>Nothing matches those filters.</div>
       <p class="note" id="refNote"></p>
+    </div>
+  </section>
+
+  <!-- ── Fixtures ───────────────────────────────────────────────────────── -->
+  <section class="panel" id="panel-fixtures" role="tabpanel" aria-labelledby="tab-fixtures" hidden>
+    <div class="card">
+      <div class="controls">
+        <select id="fxRound" aria-label="Matchday"></select>
+        <select id="fxOrder" aria-label="Order">
+          <option value="heat">Hottest first</option>
+          <option value="time">By kick-off</option>
+        </select>
+        <span class="spacer"></span>
+        <span class="faint" id="fxCount" style="font-size:12.5px"></span>
+      </div>
+      <div id="fxList"></div>
+      <div class="empty" id="fxEmpty" hidden></div>
+      <p class="note">
+        Booking heat is the expected number of cards in the match: every squad player’s chance of
+        being carded, weighted by how likely he is to be on the pitch, added up across both sides.
+        Where the referee has been appointed the feed supplies him and the card is marked
+        <span class="pill">appointed</span>; where he has not, choose one and the whole card
+        re-prices. Your choice is remembered in this browser.
+      </p>
     </div>
   </section>
 
@@ -265,6 +307,22 @@
       purer measure of a strict whistle. It is applied on the odds scale and clamped to ×0.75–×1.30,
       so a strict referee cannot push an already-likely booking to a silly number.</p>
 
+      <h3>Fixtures, heat and the card markets</h3>
+      <p><b>Booking heat</b> is the expected number of cards in the match. Every squad player's
+      chance of being carded is weighted by how likely he is to be on the pitch — last season's
+      minutes spread eleven starters across the squad — and the two sides are added together. On the
+      2025-26 squads it prices an average Championship match at about 3.5 cards against the 3.7 the
+      division actually produced, so it runs slightly conservative.</p>
+      <p>The over lines and <b>both teams carded</b> come from the same per-player probabilities,
+      combined exactly rather than simulated. They assume the cards are independent given the
+      referee, which is the usual simplification and is not quite true: a flashpoint produces two at
+      once. Read the over lines as a fair baseline, not a forecast.</p>
+      <p><b>Referees come from the feed where the appointment is published</b> — those cards are
+      marked <span class="pill">appointed</span> and cannot be overridden here. Where one is not yet
+      named, choose an official and the whole card re-prices; that choice is remembered in this
+      browser only. An appointed referee this desk has no card record for is priced at ×1.00 and
+      says so, rather than quietly guessing.</p>
+
       <h3>What “basis” means</h3>
       <ul>
         <li><span class="pill eflc">EFLC</span> 2025-26 Championship form. Same division, directly comparable.</li>
@@ -281,7 +339,9 @@
       <div class="warnbox">
         <b>No live data.</b> The Premier League desk refreshes in-season from the official FPL API.
         The Championship has no such free feed, so this desk is a static book until it is refreshed.
-        Nothing here knows about injuries, suspensions or today's team news.
+        <b>Nothing here knows who is injured, suspended, rested or dropped.</b> The fixture cards
+        name likely candidates from last season's minutes, not from a team sheet — a player who left
+        the club in the summer can still appear on one.
       </div>
       <ul>
         <li><b>Suspension thresholds are not shown</b> because they are not confirmed. The EFL uses the
@@ -313,6 +373,9 @@
 </main>
 
 <script src="data/eflc_data.js"></script>
+<!-- Optional. Absent until the fixture harvest has run, and a 404 on a script
+     tag is harmless — the Fixtures tab says so rather than breaking. -->
+<script src="data/eflc_fixtures.js"></script>
 <script src="assets/core.js"></script>
 <script>
 (function () {
@@ -685,12 +748,181 @@
     });
   });
 
+  /* ---- fixtures --------------------------------------------------------- */
+  var FIXTURES = (typeof EFLC_FIXTURES !== 'undefined' && EFLC_FIXTURES) || [];
+  var REF_KEY = 'eflc_desk_refs_v1';
+  var myRefs = {};
+  try { myRefs = JSON.parse(localStorage.getItem(REF_KEY) || '{}') || {}; } catch (e) { myRefs = {}; }
+
+  var refByName = {};
+  REFLIST.forEach(function (r) { refByName[r.n] = r; });
+
+  /* A fixture's official: the appointment from the feed if there is one, else
+     whatever has been chosen here. The feed wins — a published appointment is
+     not something to override by accident. */
+  function refFor(fx) {
+    if (fx.ref && refByName[fx.ref]) return { ref: refByName[fx.ref], appointed: true };
+    if (fx.ref) return { ref: null, appointed: true, name: fx.ref };  /* named, but no card record */
+    var chosen = myRefs[fx.id];
+    return { ref: chosen ? refByName[chosen] : null, appointed: false };
+  }
+
+  /* Squad probabilities for one club, weighted by the chance of playing.
+     A fringe player is not a starter, and counting his full-match card
+     chance would inflate every total. minuteWeights spreads an XI across
+     the squad by last season's minutes; the weight becomes expected minutes,
+     which is what the hazard model takes. */
+  function sideProbs(short, factor) {
+    var squad = PLAYERS.filter(function (p) { return p.c === short && p._y90 != null; });
+    if (!squad.length) return { ps: [], top: [] };
+    var w = C.minuteWeights(squad.map(function (p) { return p.min; }), 11);
+    var rows = squad.map(function (p, i) {
+      var expMin = Math.max(0, w[i]) * 90;
+      var lam = C.cardLambda(p._y90, expMin, { ref: factor });
+      return { p: p, prob: C.pCardFromLambda(lam) || 0 };
+    });
+    return {
+      ps: rows.map(function (r) { return r.prob; }),
+      top: rows.slice().sort(function (a, b) { return b.prob - a.prob; }).slice(0, 4)
+    };
+  }
+
+  function priceFixture(fx) {
+    var r = refFor(fx);
+    var factor = r.ref ? refFactor(r.ref) : 1;
+    var home = sideProbs(fx.h, factor), away = sideProbs(fx.a, factor);
+    var m = C.teamCardMarkets(home.ps, away.ps, [3.5, 4.5, 5.5]);
+    return { fx: fx, ref: r, factor: factor, home: home, away: away, m: m };
+  }
+
+  function whenText(iso) {
+    if (!iso) return '';
+    var d = new Date(iso);
+    if (isNaN(d)) return '';
+    return d.toLocaleString(undefined, {
+      weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit'
+    });
+  }
+
+  (function initRounds() {
+    if (!FIXTURES.length) return;
+    var rs = [];
+    FIXTURES.forEach(function (f) { if (f.r && rs.indexOf(f.r) < 0) rs.push(f.r); });
+    rs.sort(function (a, b) { return a - b; });
+    /* Land on the next matchday that has not been played, which is the one
+       anyone opening this page wants. */
+    var now = Date.now(), next = rs[0];
+    for (var i = 0; i < rs.length; i++) {
+      var any = FIXTURES.some(function (f) {
+        return f.r === rs[i] && f.d && new Date(f.d).getTime() > now;
+      });
+      if (any) { next = rs[i]; break; }
+    }
+    $('#fxRound').innerHTML = rs.map(function (r) {
+      return '<option value="' + r + '"' + (r === next ? ' selected' : '') + '>Matchday ' + r + '</option>';
+    }).join('');
+  })();
+
+  function renderFixtures() {
+    var host = $('#fxList'), empty = $('#fxEmpty');
+    if (!FIXTURES.length) {
+      host.innerHTML = '';
+      empty.hidden = false;
+      empty.innerHTML = 'No fixture list yet. It is built by '
+        + '<code>harvest_apifootball.py --fixtures --league EFLC</code>, which runs in the '
+        + 'data-refresh workflow once the 2026-27 schedule is published.';
+      $('#fxCount').textContent = '';
+      return;
+    }
+    empty.hidden = true;
+    var round = Number($('#fxRound').value);
+    var list = FIXTURES.filter(function (f) { return f.r === round; }).map(priceFixture);
+    if ($('#fxOrder').value === 'heat') {
+      list.sort(function (a, b) { return b.m.expected - a.m.expected; });
+    } else {
+      list.sort(function (a, b) { return String(a.fx.d).localeCompare(String(b.fx.d)); });
+    }
+    $('#fxCount').textContent = list.length + ' fixtures';
+
+    var refOpts = REFLIST.slice().sort(function (a, b) { return (b.ypg || 0) - (a.ypg || 0); });
+
+    host.innerHTML = list.map(function (x) {
+      var f = x.fx, ch = clubBy[f.h] || {}, ca = clubBy[f.a] || {};
+      var refCell;
+      if (x.ref.appointed && x.ref.ref) {
+        refCell = '<b>' + esc(x.ref.ref.n) + '</b> <span class="pill">appointed</span> '
+          + '<span class="faint">' + n2(x.ref.ref.ypg) + ' y/g · ×' + n2(x.factor) + '</span>';
+      } else if (x.ref.appointed) {
+        refCell = '<b>' + esc(x.ref.name) + '</b> <span class="pill">appointed</span> '
+          + '<span class="faint">no card record for him yet — priced at ×1.00</span>';
+      } else {
+        refCell = '<label class="faint" for="ref' + f.id + '">Referee</label>'
+          + '<select id="ref' + f.id + '" data-fx="' + f.id + '" class="fxref">'
+          + '<option value="">Not appointed</option>'
+          + refOpts.map(function (r) {
+              return '<option value="' + esc(r.n) + '"' + (myRefs[f.id] === r.n ? ' selected' : '')
+                + '>' + esc(r.n) + ' — ' + n2(r.ypg) + ' y/g</option>';
+            }).join('')
+          + '</select>'
+          + (x.ref.ref ? '<span class="faint">×' + n2(x.factor) + '</span>' : '');
+      }
+
+      function side(label, club, s) {
+        return '<div class="fx-side"><h4>' + esc(label) + '</h4>'
+          + (s.top.length ? s.top.map(function (t) {
+              var b = band(t.prob);
+              return '<div class="cand"><span class="nm">' + esc(t.p.n)
+                + ' <span class="faint">' + esc(t.p.p) + '</span></span>'
+                + '<span class="pc band ' + b[0] + '">' + pct(t.prob) + '</span></div>';
+            }).join('') : '<div class="faint" style="font-size:12.5px">No rated players.</div>')
+          + '</div>';
+      }
+
+      return '<div class="fx">'
+        + '<div class="fx-top">'
+        + '<div class="fx-teams">'
+        + (ch.img ? '<img class="crest" src="' + esc(ch.img) + '" alt="">' : '') + esc(ch.name || f.h)
+        + '<span class="faint">v</span>'
+        + (ca.img ? '<img class="crest" src="' + esc(ca.img) + '" alt="">' : '') + esc(ca.name || f.a)
+        + '</div>'
+        + '<div class="fx-when">' + esc(whenText(f.d)) + '</div>'
+        + '<div class="fx-heat"><b>' + n1(x.m.expected) + '</b><span>expected cards</span></div>'
+        + '</div>'
+        + '<div class="fx-ref">' + refCell + '</div>'
+        + '<div class="fx-sides">'
+        + side(ch.name || f.h, ch, x.home)
+        + side(ca.name || f.a, ca, x.away)
+        + '</div>'
+        + '<div class="mkts">'
+        + '<span class="mkt">Home <b>' + n1(x.m.expectedHome) + '</b></span>'
+        + '<span class="mkt">Away <b>' + n1(x.m.expectedAway) + '</b></span>'
+        + [3.5, 4.5, 5.5].map(function (l) {
+            return '<span class="mkt">Over ' + l + ' <b>' + pct(x.m.over[l]) + '</b></span>';
+          }).join('')
+        + '<span class="mkt">Both teams carded <b>' + pct(x.m.bothCarded) + '</b></span>'
+        + '</div>'
+        + '</div>';
+    }).join('');
+
+    $$('.fxref', host).forEach(function (sel) {
+      sel.addEventListener('change', function () {
+        var id = sel.getAttribute('data-fx');
+        if (sel.value) myRefs[id] = sel.value; else delete myRefs[id];
+        try { localStorage.setItem(REF_KEY, JSON.stringify(myRefs)); } catch (e) {}
+        renderFixtures();
+      });
+    });
+  }
+  $('#fxRound').addEventListener('change', renderFixtures);
+  $('#fxOrder').addEventListener('change', renderFixtures);
+
   /* ---- provenance ------------------------------------------------------- */
   $('#prov').textContent = 'Dataset: ' + PLAYERS.length + ' players across ' + CLUBLIST.length
     + ' clubs, ' + REFLIST.length + ' referees. Base rate ' + pct(CAL.baseRate)
     + ', average risk ' + n2(CAL.avgRisk) + '.';
 
   renderPlayers();
+  renderFixtures();
   renderClubs();
   renderRefs();
 })();

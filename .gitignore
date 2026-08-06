@@ -19,5 +19,8 @@ data/*.json
 # yet, so this JSON is the artifact. Reclassify it as an intermediate (drop
 # this line) once eflc_data.js exists and carries a REFS block.
 !data/eflc_refs.json
+# ...and the fixture list, which the Championship page loads with a script
+# tag. Generated, but shipped — not a raw harvest.
+!data/eflc_fixtures.js
 data/epldata/
 __pycache__/
