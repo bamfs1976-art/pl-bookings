@@ -512,8 +512,11 @@
 
   function probFor(p, ref) {
     if (p._y90 == null) return null;
-    var lam = C.cardLambda(p._y90, FULL_MATCH, { ref: ref ? refFactor(ref) : 1 });
-    return C.pCardFromLambda(lam);
+    /* PLDCore.pCardSeason is the one definition of a full-match booking
+       probability, shared with the Premier League desk since the models were
+       converged. Composing cardLambda + pCardFromLambda here by hand gave the
+       same answer, but it was a second place for that answer to change. */
+    return C.pCardSeason(p._y90, { ref: ref ? refFactor(ref) : 1 });
   }
 
   function band(prob) {

@@ -90,14 +90,25 @@
       return C.shrinkRate(p.f * ((p.min || 0) / 90), (p.min || 0),
                           mpick(S.foulMean, p.p, S.foulLeague), S.strengthMatches);
     }
+    /* The season base probability — now the SAME function all three desks
+       use (PLDCore.pCardSeason), where this used to be the logistic over
+       yellows, fouls and position.
+     *
+     * The change was measured, not assumed. Over the shipped squads the GLM
+     * averaged 20.2% against an observed 17.4% cards per 90 and topped out at
+     * 62%; the hazard averages 16.0%, which is exactly 1 - exp(-0.174), and
+     * tops out at 40%. Running the GLM over CHAMPIONSHIP data produced the
+     * same 70% top end, which is what proved the gap between the desks was
+     * the model rather than the league.
+     *
+     * The fouls signal is not lost — it still drives the risk score, which is
+     * what the desk ranks by. It is no longer allowed to set the price, for
+     * the same reason it was taken off the Championship's a year ago: a
+     * foul-heavy player and a booked player are different things. */
     function pModelBase(p) {
-      if (!MODEL_OK) return C.impliedProb(rEff(p), CALIB);
-      var sf = shrunkF90(p);
-      if (sf == null) return C.impliedProb(rEff(p), CALIB);
-      return C.glmProb({
-        yc90: shrunkY90(p), foul90: sf,
-        DF: p.p === 'DF' ? 1 : 0, MF: p.p === 'MF' ? 1 : 0, FW: p.p === 'FW' ? 1 : 0
-      }, MODEL.glm);
+      var y = shrunkY90(p);
+      if (y == null || !isFinite(y)) return C.impliedProb(rEff(p), CALIB);
+      return C.pCardSeason(y);
     }
 
     function refFactor(ref) {

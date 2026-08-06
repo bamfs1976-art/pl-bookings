@@ -83,5 +83,12 @@ jobs:
       - name: Share cards
         run: node scripts/check-share.mjs
 
+      # Are the three desks pricing the same thing? A calibration check, not a
+      # same-numbers check: each must land within a tenth of the card rate its
+      # own division produced. They answered different questions for a year,
+      # and it only became visible when they appeared on one page together.
+      - name: Model convergence across the desks
+        run: node scripts/check-models.mjs
+
       - name: Unit tests (PLDCore)
         run: node tests/test-core.mjs

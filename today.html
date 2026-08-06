@@ -409,21 +409,18 @@
     var note = 'Covering ' + names.join(' and ')
       + '. Heat is the expected number of cards in the match, both sides added '
       + 'together, with the referee applied where one has been appointed.';
-    /* A caveat that has to be stated, because the card invites the comparison
-       it does not support. HEAT is comparable across leagues: it is expected
-       cards, and each desk is calibrated against the card rate its own
-       division actually produced. The TOP RISK percentage is not. The Premier
-       League desk prices a player through a fitted GLM with venue, derby and
-       game-state terms; the other two use a hazard over a shrunk yellow rate.
-       The two leagues' base rates are within half a point of each other
-       (17.4% and 17.0%), so a Premier League name reading three times a
-       Championship one is mostly the model, not the player. */
-    if (codes.length > 1 && codes.indexOf('PL') >= 0) {
-      note += ' Heat is comparable across leagues; the top-risk percentage is '
-        + 'not — the Premier League desk prices players through a fitted model '
-        + 'and the others through a hazard rate, so its percentages run higher '
-        + 'for the same underlying risk.';
-    }
+    /* This used to carry a caveat saying the top-risk percentages were NOT
+       comparable, because the Premier League desk priced through a logistic
+       over yellows, fouls and position while the other two used a Poisson
+       hazard over the shrunk yellow rate. They are comparable now: every desk
+       prices through PLDCore.pCardSeason, and scripts/check-models.mjs holds
+       each of them to within a tenth of the card rate its own division
+       actually produced. The leagues still differ — Spain cards more than
+       England — and that difference is the thing the numbers are supposed to
+       show. */
+    note += ' Every desk prices a booking the same way, calibrated to the card '
+      + 'rate its own division produced, so the percentages compare directly '
+      + 'across leagues.';
     $('#cover').textContent = note;
   }
 

@@ -425,6 +425,39 @@
       .reduce((acc, v) => acc * (isFinite(Number(v)) && Number(v) > 0 ? Number(v) : 1), 1);
     return y * (m / 90) * mul;
   }
+  /* THE season base probability, for every desk.
+   *
+   * P(booked at least once in a full match) from a per-90 yellow rate, via
+   * the Poisson hazard: 1 - exp(-y90). One definition, because until this
+   * existed the three desks had two, and the difference was visible the
+   * moment they appeared on one page together.
+   *
+   * WHY NOT THE GLM. data/model.js also carries a logistic over (yellow rate,
+   * foul rate, position), and the Premier League desk priced through it. Run
+   * over the shipped squads it comes out at a mean of 20.2% against an
+   * observed 17.4% cards per 90, with a top end of 62%; the hazard gives
+   * 16.0% and 40%. Those are not close calls:
+   *
+   *   - 1 - exp(-0.174) IS 16.0%. The hazard reproduces the league's own
+   *     rate by construction; the GLM is four points over.
+   *   - The most-carded player in a division picks up about twelve yellows
+   *     in thirty-eight matches. That is ~32%, not 62%.
+   *   - The GLM's foul term (weight 1.1 per foul/90) dominates its top end,
+   *     and a foul-heavy player is not the same as a booked player. That is
+   *     the same finding that took the Championship desk off the foul-heavy
+   *     risk score as a PRICE a year ago — it stayed a good RANKING, which
+   *     is what the risk column still is.
+   *
+   * The GLM is not deleted: `basis` in data/model.js is still "season-prior",
+   * meaning those coefficients were set rather than fitted. If the Tier 2
+   * fitter ever accumulates enough real match rows to flip it to "match-fit",
+   * a fitted logistic may well beat this — but it would have to be shown to
+   * be calibrated first, which is what scripts/check-models.mjs now measures.
+   */
+  function pCardSeason(y90, factors) {
+    return pCardFromLambda(cardLambda(y90, 90, factors));
+  }
+
   function pCardFromLambda(lam) {
     const l = Number(lam);
     if (!isFinite(l) || l < 0) return null;
@@ -656,7 +689,7 @@
     marketProb, marketProbDeVig, valuePoint, TYPICAL_CARD_MARGIN,
     cardCountDist, probOverCards, expectedCards, probBothCarded, teamCardMarkets,
     minuteWeights, matchLambdas,
-    venueFactor, chaseFactor, cardLambda, pCardFromLambda,
+    venueFactor, chaseFactor, cardLambda, pCardFromLambda, pCardSeason,
     HOME_FACTOR, AWAY_FACTOR,
     simLambdas, simPoissonPmf, simScoreGrid, simOutcomes, simFixture, simResultShare, SIM_MAX_GOALS,
     shrinkRate, logit, invLogit, scaleOdds, contextProb,

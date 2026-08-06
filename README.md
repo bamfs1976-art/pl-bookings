@@ -203,15 +203,43 @@ What `/today` still cannot know for the Premier League is availability — who i
 injured or suspended — which lives in the live feed. Before the season starts
 that filter excludes nobody, which is the desk's own state too.
 
-**One caveat the combined view states in the open.** Heat *is* comparable across
-leagues: it is expected cards, and each desk is calibrated against the card rate
-its own division produced. The top-risk *percentage* is not. The Premier League
-prices a player through a fitted GLM; the other two through a hazard over a
-shrunk yellow rate. The two leagues' base rates are within half a point of each
-other (17.4% and 17.0%), so a Premier League name reading three times a
-Championship one is mostly the model, not the player. Converging the two is a
-modelling decision rather than a display one, so the page says so instead of
-quietly implying a comparison it cannot support.
+### The models are converged
+
+The three desks used to price a booking two different ways: the Premier League
+through a logistic over yellows, fouls and position; the Championship and La
+Liga through a Poisson hazard over the shrunk yellow rate. On separate pages
+that was invisible. On one page it was not — the same day's card showed
+Premier League names at 43–59% beside Championship names at 19–23%.
+
+That gap was **the model, not the league**. Measured over the shipped squads:
+
+| | observed cards/90 | logistic mean | logistic max | hazard mean | hazard max |
+|---|---:|---:|---:|---:|---:|
+| Premier League | 17.4% | 20.2% | 62.4% | **16.0%** | 40.1% |
+| Championship | 17.9% | 21.5% | 70.2% | **16.6%** | 43.1% |
+
+Run the logistic over *Championship* data and it prints 70% too, which is what
+settled it. All three desks now price through `PLDCore.pCardSeason` — the
+Poisson hazard, `1 − exp(−rate)` — for three reasons: it reproduces a division's
+own card rate by construction (`1 − exp(−0.174)` **is** 16.0%); its top end
+matches reality, where the most-carded players manage about twelve yellows in
+thirty-eight games; and the logistic's foul term dominated its top end, which is
+the same finding that took the Championship off foul-heavy pricing a year ago.
+Fouls still drive the **risk score**, which is what the desks rank by. They no
+longer set the price.
+
+The knock-on: the Premier League desk's match totals fell from 4.1 to **3.5
+expected cards**, against the 3.76 the free records show the division produced —
+about 8% conservative, the same direction and size as the Championship (3.51
+against 3.71). Every published Premier League number moved down.
+
+`scripts/check-models.mjs` pins this. It is a *calibration* check, not a
+same-numbers check: each desk must land within a tenth of the card rate its own
+division produced, no desk may price a player above 55%, and the desks'
+calibration errors must not differ by more than 8 points. It also asserts that
+neither `assets/plmodel.js` nor `index.html` has gone back to `glmProb` — the
+convergence has to be pinned in both, and for one commit during this change it
+was pinned in only one.
 
 ## Tests and CI
 
