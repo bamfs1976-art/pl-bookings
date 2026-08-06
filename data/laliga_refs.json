@@ -12,17 +12,6 @@
    "cards_per_foul": 0.2737
   },
   {
-   "name": "A. Hernandez",
-   "region": "",
-   "matches": 9,
-   "yellows": 56,
-   "ypg": 6.22,
-   "red_pg": 0.33,
-   "pen_pg": null,
-   "fouls_pg": 25.78,
-   "cards_per_foul": 0.2414
-  },
-  {
    "name": "Alejandro Mu\u00f1iz Ruiz",
    "region": "",
    "matches": 8,
@@ -34,81 +23,37 @@
    "cards_per_foul": 0.2297
   },
   {
-   "name": "I. Diaz",
-   "region": "",
-   "matches": 10,
-   "yellows": 59,
-   "ypg": 5.9,
-   "red_pg": 0.4,
-   "pen_pg": null,
-   "fouls_pg": 23.8,
-   "cards_per_foul": 0.2479
-  },
-  {
    "name": "Mateo Busquets Ferrer",
    "region": "",
-   "matches": 9,
-   "yellows": 51,
-   "ypg": 5.67,
-   "red_pg": 0.22,
+   "matches": 19,
+   "yellows": 107,
+   "ypg": 5.63,
+   "red_pg": 0.32,
    "pen_pg": null,
-   "fouls_pg": 24.22,
-   "cards_per_foul": 0.2339
-  },
-  {
-   "name": "Guillermo Cuadra Fernandez",
-   "region": "",
-   "matches": 8,
-   "yellows": 45,
-   "ypg": 5.62,
-   "red_pg": 0.25,
-   "pen_pg": null,
-   "fouls_pg": 25.75,
-   "cards_per_foul": 0.2184
-  },
-  {
-   "name": "M. Busquets",
-   "region": "",
-   "matches": 10,
-   "yellows": 56,
-   "ypg": 5.6,
-   "red_pg": 0.4,
-   "pen_pg": null,
-   "fouls_pg": 24.1,
-   "cards_per_foul": 0.2324
-  },
-  {
-   "name": "A. Quintero",
-   "region": "",
-   "matches": 10,
-   "yellows": 55,
-   "ypg": 5.5,
-   "red_pg": 0.2,
-   "pen_pg": null,
-   "fouls_pg": 28.4,
-   "cards_per_foul": 0.1937
-  },
-  {
-   "name": "Iosu Galech Apezteguia",
-   "region": "",
-   "matches": 11,
-   "yellows": 60,
-   "ypg": 5.45,
-   "red_pg": 0.27,
-   "pen_pg": null,
-   "fouls_pg": 28.45,
-   "cards_per_foul": 0.1917
+   "fouls_pg": 24.16,
+   "cards_per_foul": 0.2331
   },
   {
    "name": "Alejandro Quintero Gonzalez",
    "region": "",
-   "matches": 10,
-   "yellows": 52,
-   "ypg": 5.2,
-   "red_pg": 0.9,
+   "matches": 20,
+   "yellows": 107,
+   "ypg": 5.35,
+   "red_pg": 0.55,
    "pen_pg": null,
-   "fouls_pg": 24.7,
-   "cards_per_foul": 0.2105
+   "fouls_pg": 26.55,
+   "cards_per_foul": 0.2015
+  },
+  {
+   "name": "Isidro Diaz de Mera Escuderos",
+   "region": "",
+   "matches": 20,
+   "yellows": 101,
+   "ypg": 5.05,
+   "red_pg": 0.45,
+   "pen_pg": null,
+   "fouls_pg": 24.8,
+   "cards_per_foul": 0.2036
   },
   {
    "name": "J. Manzano",
@@ -122,6 +67,17 @@
    "cards_per_foul": 0.1829
   },
   {
+   "name": "Alejandro Hernandez",
+   "region": "",
+   "matches": 22,
+   "yellows": 108,
+   "ypg": 4.91,
+   "red_pg": 0.23,
+   "pen_pg": null,
+   "fouls_pg": 23.77,
+   "cards_per_foul": 0.2065
+  },
+  {
    "name": "Jos\u00e9 Mar\u00eda S\u00e1nchez Mart\u00ednez",
    "region": "",
    "matches": 7,
@@ -133,15 +89,15 @@
    "cards_per_foul": 0.1735
   },
   {
-   "name": "C\u00e9sar Soto Grado",
+   "name": "Iosu Galech Apezteguia",
    "region": "",
-   "matches": 10,
-   "yellows": 48,
-   "ypg": 4.8,
-   "red_pg": 0.3,
+   "matches": 19,
+   "yellows": 92,
+   "ypg": 4.84,
+   "red_pg": 0.37,
    "pen_pg": null,
-   "fouls_pg": 23.3,
-   "cards_per_foul": 0.206
+   "fouls_pg": 28.68,
+   "cards_per_foul": 0.1688
   },
   {
    "name": "Jos\u00e9 Luis Munuera Montero",
@@ -155,37 +111,15 @@
    "cards_per_foul": 0.1547
   },
   {
-   "name": "Javier Alberola Rojas",
+   "name": "C\u00e9sar Soto Grado",
    "region": "",
-   "matches": 10,
-   "yellows": 45,
-   "ypg": 4.5,
-   "red_pg": 0.3,
+   "matches": 19,
+   "yellows": 86,
+   "ypg": 4.53,
+   "red_pg": 0.37,
    "pen_pg": null,
-   "fouls_pg": 27.1,
-   "cards_per_foul": 0.1661
-  },
-  {
-   "name": "Juan Martinez Munuera",
-   "region": "",
-   "matches": 8,
-   "yellows": 36,
-   "ypg": 4.5,
-   "red_pg": 0.25,
-   "pen_pg": null,
-   "fouls_pg": 28.12,
-   "cards_per_foul": 0.16
-  },
-  {
-   "name": "M. Sesma",
-   "region": "",
-   "matches": 11,
-   "yellows": 49,
-   "ypg": 4.45,
-   "red_pg": 0.0,
-   "pen_pg": null,
-   "fouls_pg": 27.55,
-   "cards_per_foul": 0.1617
+   "fouls_pg": 22.68,
+   "cards_per_foul": 0.1995
   },
   {
    "name": "Jose Luis Guzman Mansilla",
@@ -199,15 +133,15 @@
    "cards_per_foul": 0.1653
   },
   {
-   "name": "J. Martinez",
+   "name": "Juan Martinez Munuera",
    "region": "",
-   "matches": 10,
-   "yellows": 44,
-   "ypg": 4.4,
-   "red_pg": 0.0,
+   "matches": 18,
+   "yellows": 80,
+   "ypg": 4.44,
+   "red_pg": 0.11,
    "pen_pg": null,
-   "fouls_pg": 28.7,
-   "cards_per_foul": 0.1533
+   "fouls_pg": 28.44,
+   "cards_per_foul": 0.1562
   },
   {
    "name": "Miguel Angel Ortiz Arias",
@@ -221,26 +155,15 @@
    "cards_per_foul": 0.1801
   },
   {
-   "name": "C. Soto Grado",
+   "name": "Guillermo Cuadra Fernandez",
    "region": "",
-   "matches": 9,
-   "yellows": 38,
-   "ypg": 4.22,
-   "red_pg": 0.44,
+   "matches": 17,
+   "yellows": 72,
+   "ypg": 4.24,
+   "red_pg": 0.29,
    "pen_pg": null,
-   "fouls_pg": 22.0,
-   "cards_per_foul": 0.1919
-  },
-  {
-   "name": "Isidro Diaz de Mera Escuderos",
-   "region": "",
-   "matches": 10,
-   "yellows": 42,
-   "ypg": 4.2,
-   "red_pg": 0.5,
-   "pen_pg": null,
-   "fouls_pg": 25.8,
-   "cards_per_foul": 0.1628
+   "fouls_pg": 24.12,
+   "cards_per_foul": 0.1756
   },
   {
    "name": "J. Sanchez",
@@ -254,59 +177,15 @@
    "cards_per_foul": 0.1556
   },
   {
-   "name": "A. Cordero",
+   "name": "Javier Alberola Rojas",
    "region": "",
-   "matches": 10,
-   "yellows": 41,
-   "ypg": 4.1,
-   "red_pg": 0.0,
+   "matches": 20,
+   "yellows": 81,
+   "ypg": 4.05,
+   "red_pg": 0.3,
    "pen_pg": null,
-   "fouls_pg": 21.2,
-   "cards_per_foul": 0.1934
-  },
-  {
-   "name": "Alejandro Hernandez",
-   "region": "",
-   "matches": 13,
-   "yellows": 52,
-   "ypg": 4.0,
-   "red_pg": 0.15,
-   "pen_pg": null,
-   "fouls_pg": 22.38,
-   "cards_per_foul": 0.1787
-  },
-  {
-   "name": "Ricardo De Burgos Bengoetxea",
-   "region": "",
-   "matches": 10,
-   "yellows": 40,
-   "ypg": 4.0,
-   "red_pg": 0.1,
-   "pen_pg": null,
-   "fouls_pg": 21.7,
-   "cards_per_foul": 0.1843
-  },
-  {
-   "name": "V. Garcia",
-   "region": "",
-   "matches": 9,
-   "yellows": 36,
-   "ypg": 4.0,
-   "red_pg": 0.44,
-   "pen_pg": null,
-   "fouls_pg": 26.0,
-   "cards_per_foul": 0.1538
-  },
-  {
-   "name": "I. Galech",
-   "region": "",
-   "matches": 8,
-   "yellows": 32,
-   "ypg": 4.0,
-   "red_pg": 0.5,
-   "pen_pg": null,
-   "fouls_pg": 29.0,
-   "cards_per_foul": 0.1379
+   "fouls_pg": 26.35,
+   "cards_per_foul": 0.1537
   },
   {
    "name": "Jesus Gil Manzano",
@@ -331,6 +210,28 @@
    "cards_per_foul": 0.1667
   },
   {
+   "name": "Adrian Cordero Vega",
+   "region": "",
+   "matches": 20,
+   "yellows": 77,
+   "ypg": 3.85,
+   "red_pg": 0.05,
+   "pen_pg": null,
+   "fouls_pg": 23.25,
+   "cards_per_foul": 0.1656
+  },
+  {
+   "name": "Ricardo De Burgos Bengoetxea",
+   "region": "",
+   "matches": 19,
+   "yellows": 72,
+   "ypg": 3.79,
+   "red_pg": 0.11,
+   "pen_pg": null,
+   "fouls_pg": 22.58,
+   "cards_per_foul": 0.1678
+  },
+  {
    "name": "M. Ortiz",
    "region": "",
    "matches": 9,
@@ -353,37 +254,15 @@
    "cards_per_foul": 0.1493
   },
   {
-   "name": "Adrian Cordero Vega",
+   "name": "Miguel Sesma Espinosa",
    "region": "",
-   "matches": 10,
-   "yellows": 36,
+   "matches": 20,
+   "yellows": 72,
    "ypg": 3.6,
-   "red_pg": 0.1,
+   "red_pg": 0.0,
    "pen_pg": null,
-   "fouls_pg": 25.3,
-   "cards_per_foul": 0.1423
-  },
-  {
-   "name": "J. Alberola",
-   "region": "",
-   "matches": 10,
-   "yellows": 36,
-   "ypg": 3.6,
-   "red_pg": 0.3,
-   "pen_pg": null,
-   "fouls_pg": 25.6,
-   "cards_per_foul": 0.1406
-  },
-  {
-   "name": "R. De Burgos",
-   "region": "",
-   "matches": 9,
-   "yellows": 32,
-   "ypg": 3.56,
-   "red_pg": 0.11,
-   "pen_pg": null,
-   "fouls_pg": 23.56,
-   "cards_per_foul": 0.1509
+   "fouls_pg": 27.1,
+   "cards_per_foul": 0.1328
   },
   {
    "name": "F. Maeso",
@@ -397,15 +276,15 @@
    "cards_per_foul": 0.1255
   },
   {
-   "name": "G. Cuadra",
+   "name": "Victor Garcia Verdura",
    "region": "",
-   "matches": 9,
-   "yellows": 27,
-   "ypg": 3.0,
-   "red_pg": 0.33,
+   "matches": 19,
+   "yellows": 64,
+   "ypg": 3.37,
+   "red_pg": 0.21,
    "pen_pg": null,
-   "fouls_pg": 22.67,
-   "cards_per_foul": 0.1324
+   "fouls_pg": 24.05,
+   "cards_per_foul": 0.14
   },
   {
    "name": "Francisco Hernandez Maeso",
@@ -417,28 +296,6 @@
    "pen_pg": null,
    "fouls_pg": 22.29,
    "cards_per_foul": 0.1282
-  },
-  {
-   "name": "Victor Garcia Verdura",
-   "region": "",
-   "matches": 10,
-   "yellows": 28,
-   "ypg": 2.8,
-   "red_pg": 0.0,
-   "pen_pg": null,
-   "fouls_pg": 22.3,
-   "cards_per_foul": 0.1256
-  },
-  {
-   "name": "Miguel Sesma Espinosa",
-   "region": "",
-   "matches": 9,
-   "yellows": 23,
-   "ypg": 2.56,
-   "red_pg": 0.0,
-   "pen_pg": null,
-   "fouls_pg": 26.56,
-   "cards_per_foul": 0.0962
   }
  ]
 }

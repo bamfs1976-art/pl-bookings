@@ -113,6 +113,36 @@ if (REFS.length) {
     'season — matches are being counted twice');
   const leagueYpg = REFS.reduce(
     (s, r) => s + (Number(r.ypg) || 0) * (Number(r.matches) || 0), 0) / refMatches;
+
+  /* HOW MANY OFFICIALS, not just how many matches. The feed names the same
+     referee two ways — "Mateo Busquets Ferrer" and "M. Busquets" — and before
+     build_refs merged them this table carried 40 officials for a 380-match
+     season at nine matches each, instead of 27 at fourteen. Every rate was
+     computed on half a career and the strictest-to-most-lenient spread was
+     inflated by the small samples. The total match count was RIGHT throughout,
+     which is why the existing check passed it. */
+  assert.ok(REFS.length <= 32,
+    `${REFS.length} officials for a ${SEASON_MATCHES}-match season — a top ` +
+    'division uses roughly 20-28. This is what a feed naming the same referee ' +
+    'in two spellings looks like: see build_refs.canonical_referees');
+  const perRef = refMatches / REFS.length;
+  assert.ok(perRef >= 10,
+    `officials average ${perRef.toFixed(1)} matches each — too few for a ` +
+    `${SEASON_MATCHES}-match season, so the referee identities are split`);
+
+  /* And no two rows may be the same person under two spellings. */
+  const seenRef = new Map();
+  for (const r of REFS) {
+    const flat = String(r.n || '').normalize('NFKD').replace(/[\u0300-\u036f]/g, '')
+      .toLowerCase().replace(/\./g, ' ').split(/\s+/).filter(Boolean);
+    if (flat.length < 2) continue;
+    const k = flat[0][0] + '|' + flat.slice(1).join(' ');
+    if (seenRef.has(k)) {
+      assert.fail(`two referee rows look like one official: ` +
+        `"${seenRef.get(k)}" and "${r.n}"`);
+    }
+    seenRef.set(k, r.n);
+  }
   /* Spain is the most card-heavy of the big five: 4.71 yellows a game over the
      six seasons to 2025-26. A figure down at the Premier League's 3.6 means
      the wrong division's records were read. */

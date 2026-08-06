@@ -113,6 +113,60 @@ def fd_date(raw):
     return f"{int(y):04d}-{int(m):02d}-{int(d):02d}"
 
 
+def _ref_parts(name):
+    """(initial, [surnames]) for a referee name, accent- and case-folded."""
+    flat = leagues.strip_accents(name or "").lower().replace(".", " ")
+    parts = [t for t in flat.split() if t]
+    if not parts:
+        return None, []
+    return parts[0][0], parts[1:]
+
+
+def canonical_referees(names):
+    """{feed spelling: one canonical name}, plus the merges made.
+
+    THE FEED NAMES THE SAME OFFICIAL TWO WAYS. API-Football returned both
+    "Mateo Busquets Ferrer" and "M. Busquets" across one Spanish season, nine
+    matches under one and ten under the other. Nothing errors: you get 41
+    officials for a 380-match season instead of ~27, every rate computed on
+    half a career, and a strictest-to-most-lenient spread inflated by the small
+    samples. It looks like a complete referee table.
+
+    An ABBREVIATED name is one whose first token is a single letter. It merges
+    into a full name when the initial matches and its surnames are a leading
+    run of that full name's surnames — so "R. De Burgos" reaches "Ricardo De
+    Burgos Bengoetxea", and "I. Diaz" reaches "Isidro Diaz de Mera Escuderos".
+
+    Two full names are NEVER merged with each other. "Jose Luis Munuera
+    Montero" and "Jose Luis Guzman Mansilla" share an initial and a given name
+    and are different people; a looser rule collapsed them, which is worse than
+    the problem it fixes.
+
+    An abbreviation matching more than one full name is left alone and
+    reported: a wrong merge invents a referee's record, and there is no
+    recovering from that downstream.
+    """
+    names = sorted({(n or "").strip() for n in names if (n or "").strip()})
+    full, abbrev = [], []
+    for n in names:
+        init, surs = _ref_parts(n)
+        if not init or not surs:
+            continue
+        first = leagues.strip_accents(n).lower().split()[0].replace(".", "")
+        (abbrev if len(first) == 1 else full).append((n, init, surs))
+
+    mapping, merges, ambiguous = {n: n for n in names}, [], []
+    for n, init, surs in abbrev:
+        hits = [fn for fn, finit, fsurs in full
+                if finit == init and fsurs[:len(surs)] == surs]
+        if len(hits) == 1:
+            mapping[n] = hits[0]
+            merges.append(f"{n} -> {hits[0]}")
+        elif len(hits) > 1:
+            ambiguous.append(f"{n} could be any of: {', '.join(hits)}")
+    return mapping, merges, ambiguous
+
+
 def attach_referees(rows, fixtures, code):
     """Stamp `Referee` onto free match records from a keyed fixture list.
 
@@ -127,6 +181,16 @@ def attach_referees(rows, fixtures, code):
     must not be mutated in place, or a second pass over them would see a
     referee that came from somewhere else.
     """
+    canon, merges, ambiguous = canonical_referees(
+        [fx.get("ref") for fx in fixtures or []])
+    if merges:
+        print(f"  merged {len(merges)} abbreviated referee names into their "
+              "full spelling:")
+        for m in merges:
+            print("    " + m)
+    for a in ambiguous:
+        print("  NOT merged (ambiguous): " + a)
+
     index, played = {}, set()
     for fx in fixtures or []:
         key = match_key(fx.get("d"), leagues.canon_name(code, fx.get("hn") or fx.get("h")),
@@ -136,7 +200,7 @@ def attach_referees(rows, fixtures, code):
         played.add(key)
         ref = (fx.get("ref") or "").strip()
         if ref:
-            index[key] = ref
+            index[key] = canon.get(ref, ref)
 
     out = []
     stats = {"matched": 0, "unmatched": 0, "no_referee_in_feed": 0, "misses": []}
