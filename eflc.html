@@ -501,6 +501,8 @@
 <script src="data/eflc_fixtures.js"></script>
 <script src="assets/core.js"></script>
 <script src="assets/shell.js"></script>
+<script src="assets/tour.js"></script>
+<script src="assets/palette.js"></script>
 <script src="assets/save.js"></script>
 <script src="assets/share.js"></script>
 <script src="assets/suspension.js"></script>
@@ -1355,9 +1357,33 @@
   /* Sidebar, breadcrumb and mobile bottom bar, matching the Premier League
      desk. Areas hold panels; Desk holds the three tables, so those stay on the
      existing strip and every other area hides it. */
+  var SHELL = null;
   if (window.PLDShell) {
-    window.PLDShell.build({
+    SHELL = window.PLDShell.build({
       code: 'CB', name: 'EFL Championship', accent: '#7c3aed', tag: 'Championship Bookings Desk',
+      glossary: [
+        ['Booking heat', 'The expected number of cards in a match, both sides added together, with the referee applied where one has been appointed.'],
+        ['P(card)', "A player's chance of being booked if he plays the full 90. High is 50%+, Watch is 30–50%."],
+        ['Fair odds', 'The decimal price that P(card) implies with no margin. Beat it and there is an edge; that is an estimate, not a guarantee.'],
+        ['Risk score', 'Yellows and fouls per 90 combined, shrunk toward the positional average so a small sample cannot top the table on one booking.'],
+        ['Y/90 and Fouls/90', 'Per-90 rates rather than totals, so a substitute and an ever-present can be compared.'],
+        ['×factor', 'The multiplier every probability is scaled by when a referee is appointed. Blends his yellows per game and his cards per foul equally, clamped to ×0.75–×1.30.'],
+        ['Cards/foul', 'How readily an official reaches for a card given the same provocation — the purer strictness signal, because it divides out how foul-heavy his fixtures happened to be.'],
+        ['Form basis', "Which division's form a rate is measured on. A promoted club's 2.4 measured on last season's second-tier form is not the same claim as one measured on this division."],
+        ['Sample confidence', 'The coloured dot beside minutes: green above 900, amber above 450, grey below. A 0.50 built on 90 minutes is not the 0.50 built on 2,000.'],
+        ['Thin sample', 'Fewer than twelve rated players between the two squads. The match price is still shown, but it is not a confident one.'],
+        ['Suspension watch', 'Who is closest to a ban by accumulated cautions, under this division\u2019s own rules.']
+      ],
+      tour: [
+        { sel: '.leaguebar', title: 'Three leagues, one model',
+          body: 'This desk is the Championship. The same thing exists for the other two divisions — same model, same numbers, so the percentages compare directly. Today pulls every league playing on one date into a single list.' },
+        { sel: '#panel-matchday', title: 'This Matchday',
+          body: 'Your landing view: the next round\u2019s fixtures ranked hottest to coolest by booking heat, with the referee folded in where one has been appointed.' },
+        { sel: '.as-nav', title: 'Where everything lives',
+          body: 'Desk holds the players, clubs and referees tables. Fixtures is the full season. On a phone these are the tabs along the bottom instead.' },
+        { sel: '#suspCard', title: 'Suspension watch',
+          body: 'Who is closest to a ban by accumulated cautions, under this division\u2019s own rules — which are genuinely different between England and Spain.' }
+      ],
       areas: [
         { id: 'matchday', label: 'Matchday', icon: 'matchday',
           panels: [{ id: 'panel-matchday', label: 'This Matchday' }] },
@@ -1372,6 +1398,46 @@
       ]
     });
   }
+  var SHELL_TOUR = (SHELL && SHELL.tour) || null;
+
+  /* ---- command palette --------------------------------------------------- */
+  /* The Premier League desk has had Cmd-K since it was built. Here a referee
+     could only be found by knowing which tab he lived on first. */
+  if (window.PLDPalette) {
+    window.PLDPalette.init({
+      items: function () {
+        var out = [];
+        CLUBLIST.forEach(function (c) {
+          out.push({ label: c.name, sub: c.short, group: 'Club', run: function () {
+            if (SHELL) SHELL.setArea('desk', 'panel-players');
+            $('#fClub').value = c.short; renderPlayers();
+          } });
+        });
+        PLAYERS.forEach(function (p) {
+          out.push({ label: p.n, sub: p.p + ' · ' + p.c, group: 'Player', run: function () {
+            if (SHELL) SHELL.setArea('desk', 'panel-players');
+            $('#fSearch').value = p.n; $('#fClub').value = ''; renderPlayers();
+          } });
+        });
+        REFLIST.forEach(function (r) {
+          out.push({ label: r.n, sub: n2(r.ypg) + ' yellows a game', group: 'Referee', run: function () {
+            if (SHELL) SHELL.setArea('desk', 'panel-referees');
+          } });
+        });
+        [['This Matchday','matchday','panel-matchday'],['Players','desk','panel-players'],
+         ['Clubs','desk','panel-clubs'],['Referees','desk','panel-referees'],
+         ['All fixtures','fixtures','panel-fixtures'],['Guide','guide','panel-guide']]
+          .forEach(function (v) {
+            out.push({ label: v[0], group: 'View', run: function () { if (SHELL) SHELL.setArea(v[1], v[2]); } });
+          });
+        return out;
+      }
+    });
+  }
+
+  /* First run only, keyed per desk: being shown round the Championship is not
+     being shown round La Liga. */
+  if (window.PLDTour) window.PLDTour.maybe(SHELL_TOUR, 'eflc_tour_v1');
 })();
 </script>
 <script>

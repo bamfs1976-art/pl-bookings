@@ -124,10 +124,10 @@ identical fields every dataset already carried:
 | PWA install / offline shell | ✅ | ✅ | ✅ |
 | Share sheet on iOS | ✅ | ✅ | ✅ |
 | Sidebar + mobile bottom tab bar | ✅ | ✅ | ✅ |
-| **Command palette (⌘K)** | ✅ | ❌ | ❌ |
-| **Guided tour** | ✅ | ❌ | ❌ |
-| **Glossary / help panel** | ✅ | ❌ | ❌ |
-| **Beginner / Expert density toggle** | ✅ | ❌ | ❌ |
+| Command palette (⌘K) | ✅ | ✅ | ✅ |
+| Guided tour | ✅ | ✅ | ✅ |
+| Glossary / help panel | ✅ | ✅ | ✅ |
+| Beginner / Expert density toggle | ✅ | ✅ | ✅ |
 | **Account + watchlist sync** | ✅ | ❌ | ❌ |
 | **Skip link / landmarks** | ✅ | ❌ | ❌ |
 
@@ -190,7 +190,7 @@ way for all three.
 4. ~~**Player table parity**~~ — done: confidence dot (all three), card-form arrow, CSV export. **Player notes still outstanding.**
 5. ~~**Club and referee table parity**~~ — done. One agreed set per table, applied in both directions.
 6. **H2H and derby lists** for both newer divisions (low-cost data work).
-7. **Tour, glossary, density toggle, command palette** on all three.
+7. ~~**Tour, glossary, density toggle, command palette**~~ — done on the two newer desks, as shared modules (`assets/tour.js`, `assets/palette.js`, glossary + density in `assets/shell.js`).
 8. **Photos and availability flags** (harvest work).
 9. **Account sync and Tracker** — largest, needs per-league pipelines.
 

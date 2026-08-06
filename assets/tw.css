@@ -138,3 +138,74 @@
 .as-crumb{display:flex;align-items:center;gap:7px;font-size:12.5px;color:var(--text-3);min-width:0}
 .as-crumb b{color:var(--text);font-weight:700}
 @media (max-width:560px){.as-crumb{display:none}}
+
+/* ─── Guided tour ───────────────────────────────────────────────────────── */
+.pt-back{position:fixed;inset:0;z-index:400}
+.pt-scrim{position:absolute;inset:0;background:rgba(8,10,20,.55)}
+.pt-ring{position:absolute;border:2px solid var(--accent);border-radius:12px;
+  box-shadow:0 0 0 9999px rgba(8,10,20,.55);transition:all .26s ease;pointer-events:none}
+.pt-pop{position:absolute;background:var(--surface);border:1px solid var(--border-2);
+  border-radius:14px;box-shadow:0 18px 44px rgba(8,10,20,.28);padding:16px 17px;transition:all .26s ease}
+.pt-step{font-family:var(--mono);font-size:10px;font-weight:800;letter-spacing:.15em;
+  text-transform:uppercase;color:var(--accent)}
+.pt-pop h4{font-family:'Bricolage Grotesque',sans-serif;font-size:17px;font-weight:800;
+  letter-spacing:-.02em;margin:5px 0 6px}
+.pt-body{font-size:13.5px;line-height:1.5;color:var(--text-2);margin:0 0 14px}
+.pt-actions{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.pt-next-wrap{display:inline-flex;gap:8px}
+.pt-skip{background:none;border:0;color:var(--text-3);font:inherit;font-size:12.5px;
+  font-weight:600;cursor:pointer;padding:8px 2px;min-height:44px}
+.pt-skip:hover{color:var(--text-2)}
+
+/* ─── Command palette ───────────────────────────────────────────────────── */
+.pk-back{position:fixed;inset:0;z-index:420}
+.pk-scrim{position:absolute;inset:0;background:rgba(8,10,20,.45)}
+.pk-box{position:relative;max-width:560px;margin:10vh auto 0;background:var(--surface);
+  border:1px solid var(--border-2);border-radius:14px;box-shadow:0 22px 60px rgba(8,10,20,.34);overflow:hidden}
+.pk-input{width:100%;border:0;border-bottom:1px solid var(--border);background:transparent;
+  color:var(--text);font:inherit;font-size:16px;padding:15px 17px;outline:none}
+.pk-list{max-height:52vh;overflow-y:auto}
+.pk-item{display:flex;align-items:baseline;gap:9px;padding:10px 17px;cursor:pointer}
+.pk-item.on{background:color-mix(in srgb,var(--accent) 12%,transparent)}
+.pk-label{font-weight:700;font-size:14px}
+.pk-sub{font-size:12.5px;color:var(--text-2);flex:1;min-width:0}
+.pk-group{font-size:10.5px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;color:var(--text-3)}
+.pk-empty{padding:20px 17px;color:var(--text-2);font-size:13.5px}
+.pk-foot{padding:9px 17px;border-top:1px solid var(--border);font-size:11.5px;color:var(--text-3)}
+.pk-foot kbd{font-family:var(--mono);background:var(--surface-2);border:1px solid var(--border);
+  border-radius:5px;padding:1px 5px;margin-right:2px}
+@media (max-width:560px){ .pk-box{margin-top:4vh} }
+
+/* ─── Glossary ──────────────────────────────────────────────────────────── */
+.gl-back{position:fixed;inset:0;z-index:410}
+.gl-scrim{position:absolute;inset:0;background:rgba(8,10,20,.45)}
+.gl-box{position:relative;max-width:620px;margin:8vh auto 0;background:var(--surface);
+  border:1px solid var(--border-2);border-radius:14px;box-shadow:0 22px 60px rgba(8,10,20,.34);
+  max-height:80vh;overflow-y:auto;padding:20px 22px 24px}
+.gl-box h3{font-size:19px;margin:0 0 4px}
+.gl-box dt{font-weight:800;font-size:13.5px;margin-top:14px}
+.gl-box dd{margin:3px 0 0;font-size:13.5px;line-height:1.5;color:var(--text-2)}
+.gl-close{position:absolute;top:12px;right:12px;min-width:44px;min-height:44px}
+
+/* ─── Beginner / Expert density ─────────────────────────────────────────── */
+/* Expert hides the plain-English hint lines. Default is beginner, because
+   someone arriving cold is the one who needs the help; someone who does not
+   flips it once and it sticks. */
+html[data-density="expert"] .beginner-hint,
+html[data-density="expert"] .note,
+html[data-density="expert"] .combined-note{display:none}
+.den-dot{width:8px;height:8px;border-radius:50%;background:var(--accent);display:inline-block;margin-right:5px}
+
+/* Three more controls do not fit a 390px topbar — adding them pushed the two
+   desks to 512px and the phone zoomed the whole page out to compensate, the
+   same failure the Premier League topbar had. So on a narrow screen the tour
+   button goes (the tour runs itself once, and re-running it is a desktop
+   affordance), the density switch keeps its dot and loses its word, and
+   Glossary — the one genuinely worth having on a phone — becomes "?". */
+@media (max-width:560px){
+  .as-help{display:none}
+  .as-den-lab{display:none}
+  .as-den{padding:7px 10px}
+  .as-gloss > span{display:none}
+  .as-gloss::after{content:"?";font-weight:800}
+}

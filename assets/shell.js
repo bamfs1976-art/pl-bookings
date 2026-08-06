@@ -94,6 +94,60 @@
     var spacer = hwrap.querySelector('.spacer');
     if (spacer) hwrap.insertBefore(crumb, spacer); else hwrap.appendChild(crumb);
 
+    /* ---- help, glossary and density ------------------------------------ */
+    /* The Premier League desk carries a "?" that opens a glossary and re-runs
+       the tour, and a Beginner/Expert switch that hides the plain-English hint
+       lines once you no longer need them. Both were absent here, so a reader
+       who did not know what "cards per foul" meant had nowhere to look. */
+    function glossary() {
+      var g = el('div', 'gl-back');
+      g.innerHTML = '<div class="gl-scrim"></div><div class="gl-box" role="dialog" aria-modal="true"'
+        + ' aria-label="Glossary"><button class="btn gl-close" type="button" aria-label="Close">✕</button>'
+        + '<h3>Glossary</h3><p class="muted" style="font-size:13px;margin:.3rem 0 0">'
+        + 'Every term this desk uses, in plain English.</p><dl>'
+        + (cfg.glossary || []).map(function (t) {
+            return '<dt>' + t[0] + '</dt><dd>' + t[1] + '</dd>';
+          }).join('')
+        + '</dl></div>';
+      document.body.appendChild(g);
+      function shut() { g.remove(); document.removeEventListener('keydown', k); }
+      function k(e) { if (e.key === 'Escape') shut(); }
+      g.querySelector('.gl-scrim').addEventListener('click', shut);
+      g.querySelector('.gl-close').addEventListener('click', shut);
+      document.addEventListener('keydown', k);
+    }
+
+    var DENSITY_KEY = (cfg.code || 'x') + '_density';
+    function setDensity(d) {
+      document.documentElement.dataset.density = d;
+      try { localStorage.setItem(DENSITY_KEY, d); } catch (e) {}
+      denBtn.innerHTML = '<span class="den-dot"></span><span class="as-den-lab">' + (d === 'expert' ? 'Expert' : 'Beginner') + '</span>';
+      denBtn.setAttribute('aria-pressed', d === 'expert' ? 'true' : 'false');
+    }
+    var denBtn = el('button', 'btn as-den');
+    denBtn.type = 'button';
+    denBtn.title = 'Beginner adds a plain-English line to each view; Expert hides them';
+    denBtn.addEventListener('click', function () {
+      setDensity(document.documentElement.dataset.density === 'expert' ? 'beginner' : 'expert');
+    });
+    var helpBtn = el('button', 'btn as-help', '?');
+    helpBtn.type = 'button';
+    helpBtn.setAttribute('aria-label', 'Glossary and guided tour');
+    helpBtn.title = 'Glossary and guided tour';
+    helpBtn.addEventListener('click', function () {
+      if (root.PLDTour && cfg.tour) root.PLDTour.run(cfg.tour, {});
+      else glossary();
+    });
+    var glossBtn = el('button', 'btn as-gloss', '<span>Glossary</span>');
+    glossBtn.type = 'button';
+    glossBtn.addEventListener('click', glossary);
+    if (spacer) {
+      hwrap.appendChild(denBtn); hwrap.appendChild(glossBtn); hwrap.appendChild(helpBtn);
+    }
+    var d0 = 'beginner';
+    try { d0 = localStorage.getItem(DENSITY_KEY) || 'beginner'; } catch (e) {}
+    setDensity(d0);
+
     function setOpen(on) {
       side.classList.toggle('open', on);
       overlay.classList.toggle('show', on);
@@ -181,7 +235,11 @@
     var found = areas.filter(function (a) { return a.id === want; })[0];
     setArea(found ? found.id : areas[0].id);
 
-    return { setArea: setArea, areas: areas, current: function () { return current; } };
+    /* cfg.tour and cfg.glossary are handed back so the page can start the
+       first-run tour from the same config the "?" button re-runs — two
+       copies of the steps is two tours that teach different things. */
+    return { setArea: setArea, areas: areas, tour: cfg.tour || null,
+             glossary: glossary, current: function () { return current; } };
   }
 
   root.PLDShell = { build: build, ICONS: ICONS };

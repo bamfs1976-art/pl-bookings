@@ -229,6 +229,44 @@ for (const f of ['index.html', 'eflc.html', 'laliga.html']) {
 }
 
 
+/* ---- 8. tour, palette, glossary and density on the newer desks ----------- */
+/* The Premier League desk has had all four since it was built. A reader
+   arriving at the Championship was dropped into a 974-row table with no
+   explanation of what a percentage on it meant, and no way to find a referee
+   without first knowing which tab he lived on. */
+for (const f of ['eflc.html', 'laliga.html']) {
+  const src = read(f);
+  for (const [asset, why] of [
+    ['assets/tour.js', 'has no first-run tour'],
+    ['assets/palette.js', 'has no command palette']]) {
+    assert.ok(src.includes(asset), `${f} ${why}`);
+  }
+  assert.ok(/PLDTour\.maybe\(/.test(src), `${f} never starts its tour`);
+  assert.ok(/PLDPalette\.init\(/.test(src), `${f} never initialises the palette`);
+  assert.ok(/glossary: \[/.test(src), `${f} ships no glossary terms`);
+  /* One source of steps. Two copies is two tours teaching different things. */
+  assert.equal((src.match(/tour: \[/g) || []).length, 1,
+    `${f} defines its tour steps more than once`);
+}
+/* Both the guard and the call. Matching only the call left `if (false)
+   root.PLDTour.run(...)` passing — the text was still there, unreachable.
+   A static assertion cannot see dead code in general; pinning the condition is
+   the closest it gets, and the realistic regressions (the asset dropped, the
+   listener removed) are caught by the checks above regardless. */
+{
+  const shellCode = codeOnly(read('assets/shell.js'));
+  assert.ok(/if \(root\.PLDTour && cfg\.tour\)/.test(shellCode)
+    && /root\.PLDTour\.run\(/.test(shellCode),
+    'the shell\'s "?" button no longer re-runs the tour');
+}
+/* The three added controls must collapse on a phone. Adding them pushed both
+   desks to 512px on a 390px screen, and the browser zoomed the whole page out
+   rather than overflowing. */
+assert.ok(/\.as-help\{display:none\}/.test(css) && /\.as-den-lab\{display:none\}/.test(css),
+  'the topbar controls do not collapse on a narrow screen, so the page is ' +
+  'wider than the phone and renders zoomed out');
+
+
 console.log(
   `check-nav OK: ${DESKS.length} desks, each linking to all ${DESKS.length} and ` +
   'marking itself current, all routed before the catch-all; combined views ' +
