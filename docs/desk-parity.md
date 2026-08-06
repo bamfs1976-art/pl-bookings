@@ -168,12 +168,22 @@ Recorded rather than quietly corrected, because the pattern is the lesson:
 3. **Recent form arrow** — the probe matched `▲`, which is the *sort direction* indicator.
 4. **Confidence dot** — the Premier League desk never rendered one. `.conf-dot` was dead CSS and its Guide described a feature the page did not have. The gap ran the *other* way.
 
+## Found while implementing, not in the original audit
+
+**The Premier League desk swaps to a card list on phones.** `renderPlayers()`
+returns early behind `MOBILE_MQ.matches` and renders `renderPlayerCards()`
+instead — so on a handset it shows stacked cards while the Championship and
+La Liga desks show the scrollable table. This is a real look-and-feel
+divergence on the device most people use, and it is not in any row above
+because the audit compared features, not breakpoints. It should be settled one
+way for all three.
+
 ## Recommended order
 
-1. **Navigation shell** — sidebar and bottom tab bar on all three. Biggest felt difference, no new data.
-2. **A "This Matchday" landing** on both newer desks, mirroring This Gameweek.
-3. **Fixture card parity** — High/Watch banding, thin-sample warning on all three.
-4. **Player table parity** — confidence dot, form arrow, notes, CSV, and settle one column set across all three.
+1. ~~**Navigation shell**~~ — done: `assets/shell.js`, sidebar + breadcrumb + mobile bottom bar on both newer desks.
+2. ~~**A "This Matchday" landing**~~ — done on both, priced through the same `priceFixture` as the Fixtures tab.
+3. ~~**Fixture card parity**~~ — done: thin-sample warning added; banding already existed (audit error).
+4. ~~**Player table parity**~~ — done: confidence dot (all three), card-form arrow, CSV export. **Player notes still outstanding.**
 5. **Club and referee table parity** — pick one column set per table, in both directions.
 6. **H2H and derby lists** for both newer divisions (low-cost data work).
 7. **Tour, glossary, density toggle, command palette** on all three.
