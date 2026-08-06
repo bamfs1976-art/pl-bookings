@@ -597,6 +597,12 @@
       <p>Who's most likely to be booked — fixture by fixture, with the referee folded in.</p>
     </div>
     <p class="beginner-hint">New here? Fixtures are ranked <b>hottest to coolest</b> by booking heat. Under each match, a player's percentage is his chance of a card that game — <b>High</b> is 50%+, <b>Watch</b> 30–50%. Star the ☆ on any player to pin him to your watchlist. It's a research screen, not a tip.</p>
+    <p class="combined-note">
+    <span class="cn-dots" aria-hidden="true"><i style="background:#e90052"></i><i style="background:#7c3aed"></i><i style="background:#ea580c"></i></span>
+    <span>Playing the same day as the other divisions? <a href="/today">Today&rsquo;s combined card</a>
+    ranks every league&rsquo;s matches on one date, with one share card across the lot &mdash; or open the
+    <a href="/today#all">whole-season calendar</a>.</span>
+  </p>
     <div id="gwHero" class="gw-hero" aria-live="polite"></div>
     <div id="gwSuspWrap" hidden>
       <div class="gw-seclabel" style="margin-bottom:.5rem">⚠ Suspension watch</div>
@@ -3814,9 +3820,14 @@ function flashEl(el,dir){
 }
 
 // ---- First-run guided tour (3-step spotlight, shown once) ----
-const TOUR_KEY="pl_desk_tour_seen";
+/* Key bumped from _v1 when the switcher step was added. Anyone who had already
+   dismissed the tour would otherwise never be told the other two divisions
+   exist — which is the entire reason the step was written. A one-off re-show
+   of a four-step dismissible overlay is the cheaper side of that trade. */
+const TOUR_KEY="pl_desk_tour_seen_v2";
 const TOUR=[
   {sel:".gw-hero",title:"This Gameweek",body:"Your landing view. Fixtures are ranked hottest to coolest by booking heat, and the hero carries the gameweek, a deadline countdown and the model's live track record."},
+  {sel:".leaguebar",title:"Three leagues, and a combined view",body:"This desk is the Premier League. The same thing exists for the Championship and La Liga — same model, same numbers, so the percentages compare directly across all three. Today pulls every league playing on one date into a single list, with a share card across the lot and a whole-season calendar behind it."},
   {sel:".fx-card",title:"Fixture cards",body:"Each match lists both sides' highest-risk players, banded High (50%+) and Watch (30–50%) by a fixture-aware booking probability. Assign the referee once appointments drop and every number scales to his whistle."},
   {sel:"#helpBtn",title:"Help whenever you need it",body:"Reopen this tour or the glossary here. New to card markets? The Beginner toggle adds a plain-English line to each view — flip to Expert once you know your way around."}
 ];

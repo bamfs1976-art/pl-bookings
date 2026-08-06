@@ -53,3 +53,20 @@
   .lb-item{padding:0 11px;font-size:13px;gap:5px}
   .leaguebar-in{padding:0 6px}
 }
+
+/* ─── Pointer to the combined views ─────────────────────────────────────────
+   The switcher gets you to /today, but the two things that make it worth
+   visiting — the cross-league card for a single date, and the whole-season
+   calendar behind the "Every date" toggle — are a level down from there and
+   were advertised nowhere. A link to a page is not the same as knowing what
+   the page does. */
+.combined-note{display:flex;flex-wrap:wrap;align-items:center;gap:6px 10px;
+  margin:12px 0 0;padding:10px 12px;border-radius:11px;font-size:13px;
+  line-height:1.45;color:var(--text-2,#586275);
+  background:var(--surface-2,#f4f6fa);border:1px solid var(--border,#e3e7ee)}
+.combined-note .cn-dots{display:inline-flex;gap:3px;flex:none}
+.combined-note .cn-dots i{width:8px;height:8px;border-radius:2.5px;display:block}
+.combined-note a{font-weight:700;text-decoration:none;
+  border-bottom:1.5px solid currentColor;padding-bottom:1px}
+.combined-note a:hover{opacity:.8}
+@media (pointer: coarse){ .combined-note a{display:inline-block;min-height:32px;line-height:30px} }

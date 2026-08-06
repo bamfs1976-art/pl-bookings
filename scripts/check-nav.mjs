@@ -91,7 +91,59 @@ for (const d of DESKS) {
     `${d.file}'s switcher has no abbreviated labels`);
 }
 
+/* ---- 4. the combined views are advertised, not merely linked ------------- */
+/* A link to /today is not the same as knowing what is on it. The two things
+   that make it worth opening — the cross-league card for one date, and the
+   whole-season calendar behind the "Every date" toggle — are a level down from
+   the page itself, so each league desk says so explicitly. */
+for (const d of DESKS) {
+  if (d.url === '/today') continue;
+  const src = read(d.file);
+  const note = /<p class="combined-note">[\s\S]*?<\/p>/.exec(src);
+  assert.ok(note, `${d.file} never points at the combined views`);
+  assert.ok(/href="\/today"/.test(note[0]),
+    `${d.file}'s combined-view note does not link the single-date view`);
+  assert.ok(/href="\/today#all"/.test(note[0]),
+    `${d.file} does not link the whole-season calendar — it is behind a toggle ` +
+    'inside /today and is otherwise advertised nowhere');
+}
+assert.ok(/\.combined-note\{/.test(css),
+  'the combined-view note has no styles in tw.css');
+
+/* today.html must actually honour the deep link the others send people to. */
+/* Scoped to the block that READS the hash. A bare search for "=== 'all'"
+   matched `mode() === 'all'` in the renderer, so deleting the deep-link
+   handling entirely still passed — the assertion was reading the wrong
+   comparison against the same string. */
+const today = read('today.html');
+/* Anchored on String(location.hash — the READ. Matching bare `location.hash`
+   found the WRITE in render() first, which sets the hash to 'all' or 'd=…',
+   so both strings were present there and deleting the entire deep-link
+   handler still passed. Two different sites, same two literals. */
+const hashBlock = /String\(location\.hash[\s\S]{0,500}/.exec(today);
+assert.ok(hashBlock, 'today.html never reads location.hash, so the deep links ' +
+  'the other desks point at do nothing');
+assert.ok(/'all'/.test(hashBlock[0]),
+  "today.html no longer handles the #all deep link, so every 'whole-season " +
+  "calendar' link on the other desks opens the single-date view instead");
+assert.ok(/d=\\d\{4\}|d=/.test(hashBlock[0]),
+  'today.html no longer handles the #d=YYYY-MM-DD deep link');
+
+/* ---- 5. the first-run tour names the other leagues ----------------------- */
+/* The tour is what a new visitor reads before anything else, and all three of
+   its steps used to be about the Premier League desk. Someone could finish the
+   introduction to the site without learning that two thirds of it existed. */
+const tour = /const TOUR=\[([\s\S]*?)\n\];/.exec(read('index.html'));
+assert.ok(tour, 'index.html has no guided tour');
+assert.ok(/leaguebar/.test(tour[1]),
+  'the tour never spotlights the league switcher, so a new visitor is ' +
+  'introduced to the site without being told the other leagues exist');
+for (const word of ['Championship', 'La Liga']) {
+  assert.ok(tour[1].includes(word), `the tour never mentions ${word}`);
+}
+
 console.log(
   `check-nav OK: ${DESKS.length} desks, each linking to all ${DESKS.length} and ` +
-  'marking itself current, all routed before the catch-all'
+  'marking itself current, all routed before the catch-all; combined views ' +
+  'advertised from every desk and named in the tour'
 );
