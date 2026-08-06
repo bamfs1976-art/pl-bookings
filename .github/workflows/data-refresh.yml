@@ -210,7 +210,13 @@ jobs:
           # the JSON IS the artifact for now (gitignore carries an exception for
           # it). It folds into eflc_data.js the way pl_refs.json folds into
           # pl_data.js once that file exists.
-          git add data/eflc_refs.json data/eflc_data.js 2>/dev/null || true
+          # SEPARATELY, one path per call. `git add a b` fails on the whole
+          # command when either path matches nothing, so a run that produced
+          # the referees but not the dataset staged NEITHER — which is exactly
+          # what happened the first time this ran.
+          for f in data/eflc_refs.json data/eflc_data.js; do
+            [ -f "$f" ] && git add "$f"
+          done
           if git diff --cached --quiet; then
             echo "No data or model changes."
           else
