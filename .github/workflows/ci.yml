@@ -54,5 +54,12 @@ jobs:
       - name: Data guard (pl_data.js counts, no inline dataset in index.html)
         run: node scripts/check-data.mjs
 
+      # The Championship dataset and the page that reads it. Re-derives the
+      # prices the page shows and checks they are in a range a bookings market
+      # could contain — a model that starts printing 80% is not a syntax error
+      # and nothing else would catch it.
+      - name: Championship dataset and desk guard
+        run: node scripts/check-eflc.mjs
+
       - name: Unit tests (PLDCore)
         run: node tests/test-core.mjs

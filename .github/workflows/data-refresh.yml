@@ -223,6 +223,7 @@ jobs:
       - name: Guard the dataset
         run: |
           node scripts/check-data.mjs
+          node scripts/check-eflc.mjs
           node tests/test-core.mjs
 
       - name: Commit and push if changed

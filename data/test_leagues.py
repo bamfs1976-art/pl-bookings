@@ -216,10 +216,17 @@ def test_pen_and_region_carry_over_past_added_columns():
 
 def test_missing_data_file_is_not_an_error():
     """A competition the desk has not built yet has no data file to patch.
-    That is the normal first run for a new league, not a failure."""
-    league = L.get("EFLC")
-    assert not league.path(league.data_file).exists(), \
-        "this test assumes eflc_data.js is not built yet"
+    That is the normal first run for a new league, not a failure.
+
+    Uses a league pointed at a filename that cannot exist rather than at a
+    real one: the first version asserted eflc_data.js was absent, which was
+    true the day it was written and false the day the Championship was
+    built. A test that depends on which artifacts happen to be present is a
+    test that fails for being right."""
+    league = L.League(code="NOPE", name="Nowhere League", fd_div="E9",
+                      clubs=1, matches=1, data_file="does_not_exist_data.js",
+                      refs_file="does_not_exist_refs.json")
+    assert not league.path(league.data_file).exists()
     assert B.previous_details(league) == {}
     msg = B.patch_data_file(league, [])
     assert "does not exist yet" in msg, msg

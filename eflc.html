@@ -1,0 +1,699 @@
+<!doctype html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data: https://cdn.sportmonks.com https://media.api-sports.io; connect-src 'self'">
+<title>Championship Bookings Desk — EFL Championship 2026-27</title>
+<meta name="description" content="Player booking risk, club discipline and a referee watchlist for the 2026-27 EFL Championship, built on 2025-26 form.">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="assets/tw.css">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400..800&family=Hanken+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#eef1f6; --surface:#ffffff; --surface-2:#f4f6fa; --surface-3:#eaedf3;
+    --text:#0c1322; --text-2:#586275; --text-3:#8b94a5; --border:#e3e7ee; --border-2:#d7dce6;
+    /* The EFL's own purple rather than the Premier League's, so the two desks
+       are never mistaken for one another at a glance. */
+    --accent:#4b2e83; --accent-2:#00a94f; --on-accent:#ffffff;
+    --danger:#dc2626; --warn:#d97706; --good:#16a34a; --info:#4f46e5;
+    --danger-ink:#b91c1c; --warn-ink:#a35709; --good-ink:#15803d;
+    --efl:#7c3aed;
+    --shadow-sm:0 1px 2px rgba(13,19,34,.06);
+    --shadow:0 4px 16px -4px rgba(13,19,34,.12),0 1px 3px rgba(13,19,34,.06);
+    --ring:rgba(75,46,131,.45);
+    --mono:ui-monospace,"SF Mono",SFMono-Regular,Menlo,Consolas,"Liberation Mono",monospace;
+    --topbar-h:60px;
+  }
+  html[data-theme="dark"]{
+    --bg:#0b0f1a; --surface:#141b2c; --surface-2:#1b2336; --surface-3:#232c42;
+    --text:#eef1f7; --text-2:#9aa6bb; --text-3:#6b7790; --border:#283248; --border-2:#33405a;
+    --accent:#a78bfa; --accent-2:#34d399; --on-accent:#160a24;
+    --danger:#f87171; --warn:#fbbf24; --good:#34d399; --info:#a5b4fc;
+    --danger-ink:#f87171; --warn-ink:#fbbf24; --good-ink:#34d399;
+    --efl:#c4b5fd;
+    --shadow-sm:0 1px 2px rgba(0,0,0,.4);
+    --shadow:0 10px 30px -8px rgba(0,0,0,.55),0 2px 6px rgba(0,0,0,.4);
+    --ring:rgba(167,139,250,.5);
+  }
+  *{box-sizing:border-box}
+  body{background:var(--bg);color:var(--text);font-family:'Hanken Grotesk',system-ui,sans-serif;margin:0;-webkit-font-smoothing:antialiased}
+  h1,h2,h3,.display{font-family:'Bricolage Grotesque',system-ui,sans-serif;letter-spacing:-.02em;margin:0}
+  .mono{font-family:var(--mono);font-variant-numeric:tabular-nums}
+  .muted{color:var(--text-2)} .faint{color:var(--text-3)}
+  a{color:var(--accent)}
+  .wrap{max-width:1180px;margin:0 auto;padding:0 16px}
+
+  .topbar{position:sticky;top:0;z-index:30;height:var(--topbar-h);display:flex;align-items:center;
+    background:color-mix(in srgb,var(--surface) 88%,transparent);backdrop-filter:blur(10px);
+    border-bottom:1px solid var(--border)}
+  .brand{display:flex;align-items:center;gap:10px;font-weight:700;letter-spacing:-.02em}
+  .brand .dot{width:26px;height:26px;border-radius:8px;background:var(--accent);color:var(--on-accent);
+    display:grid;place-items:center;font-size:12px;font-weight:800}
+  .spacer{flex:1}
+  .btn{font:inherit;font-size:13px;padding:7px 12px;border-radius:9px;border:1px solid var(--border-2);
+    background:var(--surface);color:var(--text);cursor:pointer}
+  .btn:hover{border-color:var(--accent)}
+  .btn:focus-visible,select:focus-visible,input:focus-visible{outline:2px solid var(--ring);outline-offset:2px}
+
+  .hero{padding:22px 0 6px}
+  .hero h1{font-size:clamp(23px,3.4vw,34px)}
+  .stats{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+  .stat{background:var(--surface);border:1px solid var(--border);border-radius:11px;padding:8px 13px;box-shadow:var(--shadow-sm)}
+  .stat b{display:block;font-size:19px;line-height:1.15}
+  .stat span{font-size:11.5px;color:var(--text-2)}
+
+  .tabs{display:flex;gap:2px;margin:18px 0 14px;border-bottom:1px solid var(--border);overflow-x:auto}
+  .tab{font:inherit;font-size:14px;font-weight:600;padding:9px 14px;border:0;background:none;color:var(--text-2);
+    cursor:pointer;border-bottom:2px solid transparent;white-space:nowrap}
+  .tab[aria-selected="true"]{color:var(--text);border-bottom-color:var(--accent)}
+  .panel[hidden]{display:none}
+
+  .card{background:var(--surface);border:1px solid var(--border);border-radius:14px;box-shadow:var(--shadow-sm);padding:14px}
+  .controls{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:12px}
+  select,input[type=search],input[type=number]{font:inherit;font-size:13px;padding:7px 10px;border-radius:9px;
+    border:1px solid var(--border-2);background:var(--surface);color:var(--text)}
+  label.chk{display:inline-flex;align-items:center;gap:6px;font-size:13px;color:var(--text-2);cursor:pointer}
+
+  .tablewrap{overflow-x:auto;-webkit-overflow-scrolling:touch}
+  table{border-collapse:collapse;width:100%;font-size:13.5px}
+  th,td{padding:7px 9px;text-align:left;border-bottom:1px solid var(--border);white-space:nowrap}
+  /* top:0, NOT the topbar height. .tablewrap has overflow-x, which makes IT
+     the scroll container for a sticky child — so a top offset pushes the
+     header down from the wrapper's edge and lays it over the first row
+     instead of pinning it to the viewport. */
+  th{position:sticky;top:0;background:var(--surface-2);font-size:11.5px;text-transform:uppercase;
+    letter-spacing:.04em;color:var(--text-2);cursor:pointer;user-select:none;z-index:2}
+  th[data-sort]:hover{color:var(--text)}
+  th .arr{opacity:.45;font-size:10px}
+  tbody tr:hover{background:var(--surface-2)}
+  td.num,th.num{text-align:right;font-family:var(--mono);font-variant-numeric:tabular-nums}
+
+  .pill{display:inline-block;font-size:10.5px;font-weight:700;padding:2px 7px;border-radius:999px;
+    border:1px solid var(--border-2);color:var(--text-2)}
+  .pill.eflc{background:color-mix(in srgb,var(--efl) 14%,transparent);border-color:transparent;color:var(--efl)}
+  .pill.pl{background:color-mix(in srgb,var(--info) 16%,transparent);border-color:transparent;color:var(--info)}
+  .pill.l1{background:color-mix(in srgb,var(--warn) 18%,transparent);border-color:transparent;color:var(--warn-ink)}
+  .pill.new{background:var(--surface-3);border-color:transparent}
+  .band{font-weight:700}
+  .band.hi{color:var(--danger-ink)} .band.mid{color:var(--warn-ink)} .band.lo{color:var(--text-2)}
+  .star{background:none;border:0;cursor:pointer;font-size:15px;line-height:1;color:var(--text-3);padding:0 2px}
+  .star[aria-pressed="true"]{color:var(--warn)}
+  /* A flex cell so a crest that fails to load cannot drag the club name off
+     its baseline — offline, or behind a blocking proxy, the alt box still
+     takes part in inline layout. */
+  .clubcell{display:flex;align-items:center;gap:6px}
+  .crest{width:18px;height:18px;object-fit:contain;flex:none}
+  .tier{font-size:11px;font-weight:700;padding:2px 8px;border-radius:999px}
+  .tier.t1{background:color-mix(in srgb,var(--danger) 15%,transparent);color:var(--danger-ink)}
+  .tier.t2{background:color-mix(in srgb,var(--warn) 16%,transparent);color:var(--warn-ink)}
+  .tier.t3{background:color-mix(in srgb,var(--good) 15%,transparent);color:var(--good-ink)}
+  .bar{height:6px;border-radius:99px;background:var(--surface-3);overflow:hidden;min-width:56px}
+  .bar i{display:block;height:100%;background:var(--accent)}
+  .empty{padding:26px;text-align:center;color:var(--text-2)}
+  .note{font-size:12.5px;color:var(--text-2);margin-top:10px;line-height:1.55}
+  .guide{max-width:74ch;line-height:1.65;font-size:14.5px}
+  .guide h3{margin:20px 0 6px;font-size:17px}
+  .guide code{font-family:var(--mono);font-size:.9em;background:var(--surface-2);padding:1px 5px;border-radius:5px}
+  .guide ul{padding-left:20px} .guide li{margin:5px 0}
+  .warnbox{border-left:3px solid var(--warn);background:var(--surface-2);padding:10px 13px;border-radius:0 9px 9px 0;margin:12px 0}
+  footer{padding:26px 0 40px;font-size:12.5px;color:var(--text-3)}
+  @media (max-width:640px){ th{position:static} .hero h1{font-size:22px} }
+</style>
+</head>
+<body>
+
+<header class="topbar">
+  <div class="wrap" style="display:flex;align-items:center;width:100%">
+    <div class="brand"><span class="dot">CB</span> Championship Bookings Desk</div>
+    <span class="spacer"></span>
+    <button class="btn" id="themeBtn" type="button" aria-label="Toggle dark mode">Dark</button>
+  </div>
+</header>
+
+<main class="wrap">
+  <section class="hero">
+    <h1>EFL Championship 2026-27</h1>
+    <p class="muted" style="margin:8px 0 0;max-width:70ch">
+      Player booking risk, club discipline and a referee watchlist, built on 2025-26 form.
+      Pick the official for a fixture and every probability rescales to his card rate.
+    </p>
+    <div class="stats" id="stats"></div>
+  </section>
+
+  <nav class="tabs" role="tablist" aria-label="Sections">
+    <button class="tab" role="tab" id="tab-players"  aria-controls="panel-players"  aria-selected="true">Players</button>
+    <button class="tab" role="tab" id="tab-clubs"    aria-controls="panel-clubs"    aria-selected="false">Clubs</button>
+    <button class="tab" role="tab" id="tab-referees" aria-controls="panel-referees" aria-selected="false">Referees</button>
+    <button class="tab" role="tab" id="tab-guide"    aria-controls="panel-guide"    aria-selected="false">Guide</button>
+  </nav>
+
+  <!-- ── Players ────────────────────────────────────────────────────────── -->
+  <section class="panel" id="panel-players" role="tabpanel" aria-labelledby="tab-players">
+    <div class="card">
+      <div class="controls">
+        <select id="fClub" aria-label="Filter by club"></select>
+        <select id="fPos" aria-label="Filter by position">
+          <option value="">All positions</option><option>GK</option><option>DF</option><option>MF</option><option>FW</option>
+        </select>
+        <select id="fRef" aria-label="Referee for the fixture"></select>
+        <input type="search" id="fSearch" placeholder="Search player…" aria-label="Search player">
+        <label class="chk"><input type="checkbox" id="fMin" checked> 450+ minutes</label>
+        <label class="chk"><input type="checkbox" id="fStar"> ★ only</label>
+        <span class="spacer"></span>
+        <span class="faint" id="count" style="font-size:12.5px"></span>
+      </div>
+      <div class="tablewrap">
+        <table id="tblPlayers">
+          <thead><tr>
+            <th style="width:26px" aria-label="Watchlist"></th>
+            <th data-sort="n">Player</th>
+            <th data-sort="c">Club</th>
+            <th data-sort="p">Pos</th>
+            <th class="num" data-sort="min">Min</th>
+            <th class="num" data-sort="yc">YC</th>
+            <th class="num" data-sort="y">Y/90</th>
+            <th class="num" data-sort="f">Fouls/90</th>
+            <th class="num" data-sort="r">Risk</th>
+            <th class="num" data-sort="prob">P(card)</th>
+            <th class="num" data-sort="odds">Fair</th>
+            <th data-sort="b">Basis</th>
+          </tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+      <div class="empty" id="emptyPlayers" hidden>Nothing matches those filters.</div>
+      <p class="note" id="refNote"></p>
+    </div>
+  </section>
+
+  <!-- ── Clubs ──────────────────────────────────────────────────────────── -->
+  <section class="panel" id="panel-clubs" role="tabpanel" aria-labelledby="tab-clubs" hidden>
+    <div class="card">
+      <div class="tablewrap">
+        <table id="tblClubs">
+          <thead><tr>
+            <th data-sort="name">Club</th>
+            <th data-sort="basis">Form basis</th>
+            <th class="num" data-sort="ca">Cards/game</th>
+            <th class="num" data-sort="caH">Home</th>
+            <th class="num" data-sort="caA">Away</th>
+            <th data-sort="tier">Discipline</th>
+            <th class="num" data-sort="squad">Squad</th>
+            <th data-sort="top">Highest risk</th>
+          </tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+      <p class="note">
+        Cards per game are counted directly from the free football-data.co.uk Championship match
+        records — every match, both sides, yellows plus reds — so the home and away split is measured
+        rather than estimated. The six clubs who were not in this division last season have no such
+        record and show “—”; the app falls back to the league median for them rather than borrowing a
+        number from a different competition.
+      </p>
+    </div>
+  </section>
+
+  <!-- ── Referees ───────────────────────────────────────────────────────── -->
+  <section class="panel" id="panel-referees" role="tabpanel" aria-labelledby="tab-referees" hidden>
+    <div class="card">
+      <div class="tablewrap">
+        <table id="tblRefs">
+          <thead><tr>
+            <th data-sort="n">Referee</th>
+            <th class="num" data-sort="matches">Matches</th>
+            <th class="num" data-sort="ypg">Yellows/game</th>
+            <th class="num" data-sort="fpg">Fouls/game</th>
+            <th class="num" data-sort="cpf">Cards/foul</th>
+            <th class="num" data-sort="factor">×factor</th>
+            <th data-sort="factor">Strictness</th>
+          </tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+      <p class="note" id="refFoot"></p>
+    </div>
+  </section>
+
+  <!-- ── Guide ──────────────────────────────────────────────────────────── -->
+  <section class="panel" id="panel-guide" role="tabpanel" aria-labelledby="tab-guide" hidden>
+    <div class="card guide">
+      <h2 style="font-size:20px">How this desk works</h2>
+      <p>Every number here comes from 2025-26 form. The Championship season 2026-27 starts in
+      mid-August; until it has minutes in it, this is a pre-season book.</p>
+
+      <h3>The risk score</h3>
+      <p>A player's booking risk is <code>yellows per 90 × 2 + fouls committed per 90</code>. Fouls
+      are the larger term because they are the thing a referee reacts to; yellows are weighted
+      double because they are the outcome being priced. It is the same formula the Premier League
+      desk uses, from the same tested code (<code>assets/core.js</code>), so the two desks cannot
+      drift apart about what risk means.</p>
+
+      <h3>From risk to a probability</h3>
+      <p>The risk score is mapped through a logistic curve anchored so that the average
+      minutes-weighted player lands on the league's actual base rate — total yellows divided by
+      total player-matches. <b>Fair odds</b> are that probability inverted. They carry no margin, so
+      a bookmaker's price will always be shorter; the gap is his edge, not an error.</p>
+
+      <h3>The referee ×factor</h3>
+      <p>Choosing an official on the Players tab rescales every probability by his card rate. The
+      factor blends two signals equally: yellows per game against the league average, and
+      <b>cards per foul</b> — which divides out how foul-heavy his fixtures happened to be and is the
+      purer measure of a strict whistle. It is applied on the odds scale and clamped to ×0.75–×1.30,
+      so a strict referee cannot push an already-likely booking to a silly number.</p>
+
+      <h3>What “basis” means</h3>
+      <ul>
+        <li><span class="pill eflc">EFLC</span> 2025-26 Championship form. Same division, directly comparable.</li>
+        <li><span class="pill pl">PL</span> Burnley, West Ham and Wolves — relegated, so last season's
+        record was earned in the Premier League. Flagged because a foul rate against Premier League
+        opponents is not the same evidence as one earned here.</li>
+        <li><span class="pill l1">L1</span> Lincoln, Cardiff and Bolton — promoted, so their form is a
+        League One record. The same caution applies in the other direction.</li>
+        <li><span class="pill new">NEW</span> No usable record: minutes too few, or no fouls data. Rates
+        are blank rather than zero, because “unknown” and “never fouls” are different claims.</li>
+      </ul>
+
+      <h3>Known limits — read these before betting anything</h3>
+      <div class="warnbox">
+        <b>No live data.</b> The Premier League desk refreshes in-season from the official FPL API.
+        The Championship has no such free feed, so this desk is a static book until it is refreshed.
+        Nothing here knows about injuries, suspensions or today's team news.
+      </div>
+      <ul>
+        <li><b>Suspension thresholds are not shown</b> because they are not confirmed. The EFL uses the
+        same 5/10/15 ladder as the Premier League with the cutoffs moved for a 46-game season, and
+        10 yellows before match 37 is a <em>two</em>-match ban — but the 5 and 15 rungs need checking
+        against the regulations, so no strip claims them.</li>
+        <li><b>Six clubs have no club card rate.</b> They were in other divisions last season.</li>
+        <li><b>Small samples lie.</b> A player with 200 minutes and one foul reads as a high rate. The
+        450-minute filter is on by default for that reason; turn it off knowing what you are seeing.</li>
+        <li><b>Fair odds are a model, not a forecast.</b> They exclude the margin every real price
+        carries. Beating them is not the same as beating the bookmaker.</li>
+      </ul>
+
+      <h3>Where the data comes from</h3>
+      <ul>
+        <li><b>Players</b> — API-Football, fetched one club at a time so a squad is a squad rather
+        than a page of a league.</li>
+        <li><b>Referees and club card rates</b> — football-data.co.uk match records, public domain,
+        free, no key. Every Championship match with both sides' cards and fouls.</li>
+      </ul>
+      <p class="faint" id="prov" style="margin-top:18px"></p>
+    </div>
+  </section>
+
+  <footer class="wrap" style="padding-left:0;padding-right:0">
+    A sibling of the <a href="/">Premier League Bookings Desk</a>. Same risk formula, same tested
+    core, different competition. Not betting advice.
+  </footer>
+</main>
+
+<script src="data/eflc_data.js"></script>
+<script src="assets/core.js"></script>
+<script>
+(function () {
+  'use strict';
+  var PLAYERS = (typeof EFLC_PLAYERS !== 'undefined' && EFLC_PLAYERS) || [];
+  var CLUBLIST = (typeof CLUBS !== 'undefined' && CLUBS) || [];
+  var REFLIST = (typeof REFS !== 'undefined' && REFS) || [];
+  var C = window.PLDCore;
+
+  var $ = function (s, r) { return (r || document).querySelector(s); };
+  var $$ = function (s, r) { return Array.prototype.slice.call((r || document).querySelectorAll(s)); };
+  var esc = function (s) {
+    return String(s == null ? '' : s).replace(/[&<>"']/g, function (ch) {
+      return ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[ch];
+    });
+  };
+  var n1 = function (x) { return x == null ? '—' : (Math.round(x * 10) / 10).toFixed(1); };
+  var n2 = function (x) { return x == null ? '—' : (Math.round(x * 100) / 100).toFixed(2); };
+  var pct = function (x) { return x == null ? '—' : (x * 100).toFixed(1) + '%'; };
+
+  /* ---- theme ------------------------------------------------------------ */
+  var THEME_KEY = 'eflc_desk_theme';
+  function setTheme(t) {
+    document.documentElement.setAttribute('data-theme', t);
+    $('#themeBtn').textContent = t === 'dark' ? 'Light' : 'Dark';
+    try { localStorage.setItem(THEME_KEY, t); } catch (e) {}
+  }
+  try {
+    var saved = localStorage.getItem(THEME_KEY);
+    setTheme(saved || (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'));
+  } catch (e) { setTheme('light'); }
+  $('#themeBtn').addEventListener('click', function () {
+    setTheme(document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark');
+  });
+
+  /* ---- watchlist -------------------------------------------------------- */
+  /* Its own key. Sharing pl_desk_v1 would let one desk's stars appear on the
+     other's players, which are different people with the same names. */
+  var STAR_KEY = 'eflc_desk_watch_v1';
+  var starred = {};
+  try { starred = JSON.parse(localStorage.getItem(STAR_KEY) || '{}') || {}; } catch (e) { starred = {}; }
+  var keyOf = function (p) { return p.c + '|' + p.n; };
+  function toggleStar(k) {
+    if (starred[k]) delete starred[k]; else starred[k] = 1;
+    try { localStorage.setItem(STAR_KEY, JSON.stringify(starred)); } catch (e) {}
+  }
+
+  /* ---- model ------------------------------------------------------------ */
+  /* Rates are SHRUNK toward a positional prior before they are priced.
+     Without it a forward with 892 minutes and a very high foul rate came out
+     at 83.7% to be booked, which is not a probability anyone should publish —
+     a rate measured over a few appearances is mostly noise, and the logistic
+     happily extrapolates it. The Premier League desk does the same thing with
+     the same function; it just carries its priors in a fitted model.js, which
+     this league does not have yet, so they are computed from the league here.
+
+     Priors are per POSITION because a centre-back and a winger are not the
+     same prior, and minutes-weighted so a full season counts for more than a
+     cameo. */
+  var SHRINK_MATCHES = 6;   /* the prior is worth six matches of evidence */
+
+  var PRIOR = (function () {
+    var acc = {};
+    PLAYERS.forEach(function (p) {
+      var m = Number(p.min) || 0;
+      if (!(m > 0)) return;
+      var a = acc[p.p] || (acc[p.p] = { yw: 0, ym: 0, fw: 0, fm: 0 });
+      if (p.y != null) { a.yw += p.y * m; a.ym += m; }
+      if (p.f != null) { a.fw += p.f * m; a.fm += m; }
+    });
+    var out = {}, allY = 0, allYm = 0, allF = 0, allFm = 0;
+    Object.keys(acc).forEach(function (k) {
+      var a = acc[k];
+      out[k] = { y: a.ym ? a.yw / a.ym : null, f: a.fm ? a.fw / a.fm : null };
+      allY += a.yw; allYm += a.ym; allF += a.fw; allFm += a.fm;
+    });
+    out._league = { y: allYm ? allY / allYm : 0.15, f: allFm ? allF / allFm : 1.2 };
+    return out;
+  })();
+
+  function priorFor(pos) {
+    var p = PRIOR[pos] || {};
+    return { y: p.y == null ? PRIOR._league.y : p.y, f: p.f == null ? PRIOR._league.f : p.f };
+  }
+
+  /* The yellow rate a price is computed from. The `r` on the row stays the
+     raw measured risk score — that is what the data says, and it is what the
+     table ranks on — while this is what that evidence is worth once a short
+     sample is pulled toward its position's prior. */
+  function shrunkY90(p) {
+    var m = Number(p.min) || 0;
+    if (!(m > 0) || p.yc == null) return null;
+    return C.shrinkRate(p.yc, m, priorFor(p.p).y, SHRINK_MATCHES);
+  }
+  PLAYERS.forEach(function (p) { p._y90 = shrunkY90(p); });
+
+  /* Kept for the league base rate in the header. */
+  var CAL = C.calibrate(PLAYERS);
+  var clubBy = {};
+  CLUBLIST.forEach(function (c) { clubBy[c.short] = c; });
+
+  /* League averages the referee factor is measured against. Weighted by the
+     matches each official actually took, so a one-off appointment does not
+     move the baseline as much as a season's work. */
+  var LEAGUE = (function () {
+    var yW = 0, cW = 0, m = 0, mc = 0;
+    REFLIST.forEach(function (r) {
+      var k = Number(r.matches) || 0;
+      if (r.ypg != null) { yW += r.ypg * k; m += k; }
+      if (r.cpf != null) { cW += r.cpf * k; mc += k; }
+    });
+    return { avgYpg: m ? yW / m : null, avgCpf: mc ? cW / mc : null };
+  })();
+
+  function refFactor(ref) { return ref ? C.refCardFactor(ref, LEAGUE, {}) : 1; }
+
+  /* A HAZARD model, not the risk score put through a curve.
+     P(booked) = 1 - exp(-y90 * minutes/90 * referee factor).
+
+     The risk score is deliberately foul-heavy — that is what makes it a good
+     RANKING of who is asking for trouble. It is a poor thing to price from.
+     Boženík fouls 3.94 times a 90 and was booked twice in 892 minutes: put
+     his risk score through a logistic and he prices at 63%, while his own
+     record says about one booking in five games. The yellow rate is the
+     direct estimate of the thing being priced; the fouls belong in the prior
+     that steadies it, not multiplied into the answer.
+
+     Minutes are taken as a full 90 — this is "if he starts and finishes",
+     which is the question a bookings market asks. */
+  var FULL_MATCH = 90;
+
+  function probFor(p, ref) {
+    if (p._y90 == null) return null;
+    var lam = C.cardLambda(p._y90, FULL_MATCH, { ref: ref ? refFactor(ref) : 1 });
+    return C.pCardFromLambda(lam);
+  }
+
+  function band(prob) {
+    if (prob == null) return ['', ''];
+    if (prob >= 0.5) return ['hi', 'High'];
+    if (prob >= 0.3) return ['mid', 'Watch'];
+    return ['lo', ''];
+  }
+
+  /* ---- header stats ----------------------------------------------------- */
+  (function () {
+    var rated = PLAYERS.filter(function (p) { return p.r != null; }).length;
+    var withRate = CLUBLIST.filter(function (c) { return c.ca != null; }).length;
+    var html = [
+      ['<b>' + CLUBLIST.length + '</b><span>clubs</span>'],
+      ['<b>' + PLAYERS.length + '</b><span>players</span>'],
+      ['<b>' + rated + '</b><span>with a risk score</span>'],
+      ['<b>' + REFLIST.length + '</b><span>referees</span>'],
+      ['<b>' + pct(CAL.baseRate) + '</b><span>base rate, a card per appearance</span>'],
+      ['<b>' + withRate + ' of ' + CLUBLIST.length + '</b><span>clubs with a measured card rate</span>']
+    ].map(function (s) { return '<div class="stat">' + s[0] + '</div>'; }).join('');
+    $('#stats').innerHTML = html;
+  })();
+
+  /* ---- tabs ------------------------------------------------------------- */
+  $$('.tab').forEach(function (t) {
+    t.addEventListener('click', function () {
+      $$('.tab').forEach(function (o) {
+        var on = o === t;
+        o.setAttribute('aria-selected', on ? 'true' : 'false');
+        $('#' + o.getAttribute('aria-controls')).hidden = !on;
+      });
+    });
+  });
+
+  /* ---- filters ---------------------------------------------------------- */
+  (function () {
+    var opts = ['<option value="">All clubs</option>'];
+    CLUBLIST.slice().sort(function (a, b) { return a.name.localeCompare(b.name); })
+      .forEach(function (c) { opts.push('<option value="' + esc(c.short) + '">' + esc(c.name) + '</option>'); });
+    $('#fClub').innerHTML = opts.join('');
+
+    var r = ['<option value="">No referee assigned</option>'];
+    REFLIST.slice().sort(function (a, b) { return (b.ypg || 0) - (a.ypg || 0); })
+      .forEach(function (x, i) {
+        r.push('<option value="' + i + '">' + esc(x.n) + ' — ' + n2(x.ypg) + ' y/g</option>');
+      });
+    $('#fRef').innerHTML = r.join('');
+  })();
+
+  var sortKey = 'prob', sortDir = -1;
+
+  function currentRef() {
+    var v = $('#fRef').value;
+    return v === '' ? null : REFLIST.slice().sort(function (a, b) { return (b.ypg || 0) - (a.ypg || 0); })[Number(v)];
+  }
+
+  function rows() {
+    var club = $('#fClub').value, pos = $('#fPos').value;
+    var q = $('#fSearch').value.trim().toLowerCase();
+    var minOnly = $('#fMin').checked, starOnly = $('#fStar').checked;
+    var ref = currentRef();
+    return PLAYERS.filter(function (p) {
+      if (club && p.c !== club) return false;
+      if (pos && p.p !== pos) return false;
+      if (minOnly && (Number(p.min) || 0) < 450) return false;
+      if (starOnly && !starred[keyOf(p)]) return false;
+      if (q && String(p.n || '').toLowerCase().indexOf(q) < 0) return false;
+      return true;
+    }).map(function (p) {
+      var prob = probFor(p, ref);
+      return { p: p, prob: prob, odds: prob ? C.fairOdds(prob) : null };
+    }).sort(function (a, b) {
+      var A, B;
+      if (sortKey === 'prob') { A = a.prob; B = b.prob; }
+      else if (sortKey === 'odds') { A = a.odds; B = b.odds; }
+      else { A = a.p[sortKey]; B = b.p[sortKey]; }
+      if (A == null && B == null) return 0;
+      if (A == null) return 1;      /* unknowns always last, both directions */
+      if (B == null) return -1;
+      if (typeof A === 'string') return A.localeCompare(B) * sortDir;
+      return (A - B) * sortDir;
+    });
+  }
+
+  function renderPlayers() {
+    var list = rows(), ref = currentRef();
+    var tb = $('#tblPlayers tbody');
+    $('#emptyPlayers').hidden = list.length > 0;
+    tb.innerHTML = list.slice(0, 400).map(function (row) {
+      var p = row.p, k = keyOf(p), b = band(row.prob), c = clubBy[p.c] || {};
+      return '<tr>'
+        + '<td><button class="star" data-k="' + esc(k) + '" aria-pressed="' + (starred[k] ? 'true' : 'false')
+        + '" aria-label="Watchlist ' + esc(p.n) + '">' + (starred[k] ? '★' : '☆') + '</button></td>'
+        + '<td>' + esc(p.n) + '</td>'
+        + '<td><span class="clubcell">' + (c.img ? '<img class="crest" src="' + esc(c.img) + '" alt="" loading="lazy">' : '')
+        + esc(p.c) + '</span></td>'
+        + '<td>' + esc(p.p) + '</td>'
+        + '<td class="num">' + (p.min || 0) + '</td>'
+        + '<td class="num">' + (p.yc == null ? '—' : p.yc) + '</td>'
+        + '<td class="num">' + n2(p.y) + '</td>'
+        + '<td class="num">' + n2(p.f) + '</td>'
+        + '<td class="num">' + n2(p.r) + '</td>'
+        + '<td class="num band ' + b[0] + '">' + pct(row.prob) + (b[1] ? ' <span class="faint">' + b[1] + '</span>' : '') + '</td>'
+        + '<td class="num">' + (row.odds ? n2(row.odds) : '—') + '</td>'
+        + '<td><span class="pill ' + esc(String(p.b || '').toLowerCase()) + '">' + esc(p.b) + '</span></td>'
+        + '</tr>';
+    }).join('');
+    $('#count').textContent = list.length + ' players'
+      + (list.length > 400 ? ' (showing 400)' : '');
+    $('#refNote').innerHTML = ref
+      ? 'Probabilities scaled to <b>' + esc(ref.n) + '</b> — ' + n2(ref.ypg) + ' yellows a game, '
+        + n2(ref.cpf) + ' cards per foul, <b>×' + n2(refFactor(ref)) + '</b> against the league average.'
+      : 'No referee assigned, so these are season-long probabilities. Pick an official above and '
+        + 'every row rescales to his card rate.';
+    $$('.star', tb).forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        toggleStar(btn.getAttribute('data-k'));
+        renderPlayers();
+      });
+    });
+  }
+
+  ['#fClub', '#fPos', '#fRef', '#fMin', '#fStar'].forEach(function (s) {
+    $(s).addEventListener('change', renderPlayers);
+  });
+  $('#fSearch').addEventListener('input', renderPlayers);
+
+  $$('#tblPlayers th[data-sort]').forEach(function (th) {
+    th.addEventListener('click', function () {
+      var k = th.getAttribute('data-sort');
+      if (sortKey === k) sortDir = -sortDir;
+      else { sortKey = k; sortDir = (k === 'n' || k === 'c' || k === 'p' || k === 'b') ? 1 : -1; }
+      $$('#tblPlayers th[data-sort]').forEach(function (o) {
+        var s = o.querySelector('.arr'); if (s) s.remove();
+      });
+      th.insertAdjacentHTML('beforeend', ' <span class="arr">' + (sortDir > 0 ? '▲' : '▼') + '</span>');
+      renderPlayers();
+    });
+  });
+
+  /* ---- clubs ------------------------------------------------------------ */
+  var clubSort = { k: 'ca', d: -1 };
+  function renderClubs() {
+    var topBy = {};
+    PLAYERS.forEach(function (p) {
+      if (p.r == null || (Number(p.min) || 0) < 450) return;
+      if (!topBy[p.c] || p.r > topBy[p.c].r) topBy[p.c] = p;
+    });
+    var rates = CLUBLIST.filter(function (c) { return c.ca != null; }).map(function (c) { return c.ca; });
+    var med = rates.slice().sort(function (a, b) { return a - b; })[Math.floor(rates.length / 2)] || 2;
+    var max = Math.max.apply(null, rates.concat([1]));
+
+    var list = CLUBLIST.slice().map(function (c) {
+      var t = c.ca == null ? null : (c.ca >= med * 1.08 ? 1 : (c.ca <= med * 0.92 ? 3 : 2));
+      return { c: c, tier: t, top: topBy[c.short] || null };
+    }).sort(function (a, b) {
+      var A, B;
+      if (clubSort.k === 'top') { A = a.top && a.top.r; B = b.top && b.top.r; }
+      else if (clubSort.k === 'tier') { A = a.tier; B = b.tier; }
+      else { A = a.c[clubSort.k]; B = b.c[clubSort.k]; }
+      if (A == null && B == null) return 0;
+      if (A == null) return 1;
+      if (B == null) return -1;
+      if (typeof A === 'string') return A.localeCompare(B) * clubSort.d;
+      return (A - B) * clubSort.d;
+    });
+
+    $('#tblClubs tbody').innerHTML = list.map(function (r) {
+      var c = r.c;
+      var tierTxt = r.tier === 1 ? 'Card-heavy' : r.tier === 3 ? 'Disciplined' : r.tier === 2 ? 'Middling' : '—';
+      var w = c.ca == null ? 0 : Math.round((c.ca / max) * 100);
+      return '<tr>'
+        + '<td><span class="clubcell">' + (c.img ? '<img class="crest" src="' + esc(c.img) + '" alt="" loading="lazy">' : '')
+        + esc(c.name) + '</span></td>'
+        + '<td><span class="pill ' + esc(String(c.basis || '').toLowerCase()) + '">' + esc(c.basis) + '</span></td>'
+        + '<td class="num">' + n2(c.ca) + (c.ca == null ? '' : ' <span class="bar" style="display:inline-block;width:52px;vertical-align:middle"><i style="width:' + w + '%"></i></span>') + '</td>'
+        + '<td class="num">' + n2(c.caH) + '</td>'
+        + '<td class="num">' + n2(c.caA) + '</td>'
+        + '<td>' + (r.tier ? '<span class="tier t' + r.tier + '">' + tierTxt + '</span>' : '<span class="faint">—</span>') + '</td>'
+        + '<td class="num">' + (c.squad || 0) + '</td>'
+        + '<td>' + (r.top ? esc(r.top.n) + ' <span class="faint mono">' + n2(r.top.r) + '</span>' : '<span class="faint">—</span>') + '</td>'
+        + '</tr>';
+    }).join('');
+  }
+  $$('#tblClubs th[data-sort]').forEach(function (th) {
+    th.addEventListener('click', function () {
+      var k = th.getAttribute('data-sort');
+      if (clubSort.k === k) clubSort.d = -clubSort.d;
+      else { clubSort.k = k; clubSort.d = (k === 'name' || k === 'basis') ? 1 : -1; }
+      renderClubs();
+    });
+  });
+
+  /* ---- referees --------------------------------------------------------- */
+  var refSort = { k: 'ypg', d: -1 };
+  function renderRefs() {
+    var list = REFLIST.slice().map(function (r) {
+      return { r: r, factor: refFactor(r) };
+    }).sort(function (a, b) {
+      var A = refSort.k === 'factor' ? a.factor : a.r[refSort.k];
+      var B = refSort.k === 'factor' ? b.factor : b.r[refSort.k];
+      if (A == null && B == null) return 0;
+      if (A == null) return 1;
+      if (B == null) return -1;
+      if (typeof A === 'string') return A.localeCompare(B) * refSort.d;
+      return (A - B) * refSort.d;
+    });
+    var maxF = list.reduce(function (m, x) { return Math.max(m, x.factor); }, 1);
+    $('#tblRefs tbody').innerHTML = list.map(function (x) {
+      var r = x.r, w = Math.round((x.factor / maxF) * 100);
+      var cls = x.factor >= 1.08 ? 't1' : x.factor <= 0.94 ? 't3' : 't2';
+      return '<tr>'
+        + '<td>' + esc(r.n) + '</td>'
+        + '<td class="num">' + (r.matches || 0) + '</td>'
+        + '<td class="num">' + n2(r.ypg) + '</td>'
+        + '<td class="num">' + n1(r.fpg) + '</td>'
+        + '<td class="num">' + (r.cpf == null ? '—' : r.cpf.toFixed(3)) + '</td>'
+        + '<td class="num"><span class="tier ' + cls + '">×' + n2(x.factor) + '</span></td>'
+        + '<td><span class="bar" style="width:110px;display:inline-block"><i style="width:' + w + '%"></i></span></td>'
+        + '</tr>';
+    }).join('');
+    $('#refFoot').innerHTML = 'League average across ' + REFLIST.length + ' officials, weighted by matches: <b>'
+      + n2(LEAGUE.avgYpg) + '</b> yellows a game and <b>' + (LEAGUE.avgCpf == null ? '—' : LEAGUE.avgCpf.toFixed(3))
+      + '</b> cards per foul. The ×factor blends the two equally and is clamped to ×0.75–×1.30. '
+      + 'Cards per foul is the purer strictness signal: it divides out how foul-heavy an official’s '
+      + 'fixtures happened to be.';
+  }
+  $$('#tblRefs th[data-sort]').forEach(function (th) {
+    th.addEventListener('click', function () {
+      var k = th.getAttribute('data-sort');
+      if (refSort.k === k) refSort.d = -refSort.d;
+      else { refSort.k = k; refSort.d = k === 'n' ? 1 : -1; }
+      renderRefs();
+    });
+  });
+
+  /* ---- provenance ------------------------------------------------------- */
+  $('#prov').textContent = 'Dataset: ' + PLAYERS.length + ' players across ' + CLUBLIST.length
+    + ' clubs, ' + REFLIST.length + ' referees. Base rate ' + pct(CAL.baseRate)
+    + ', average risk ' + n2(CAL.avgRisk) + '.';
+
+  renderPlayers();
+  renderClubs();
+  renderRefs();
+})();
+</script>
+</body>
+</html>

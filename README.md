@@ -101,7 +101,14 @@ The desk is being generalised from one league to several, Championship first and
 
 **The Championship dataset is built**: 24 clubs, 974 players (753 on Championship form, 111 on Premier League form, 110 on League One form), 30 referees, and exact card rates with home/away splits for the 18 clubs that were in the division last season. `data/eflc_status.txt` records the outcome of every build, committed, so a failure inside a `continue-on-error` step leaves a trace in the repository rather than only in a log pane.
 
-What does NOT exist yet is a Championship *site*. `eflc_data.js` has no `index.html` reading it — that is the next piece of work.
+**The Championship desk is live at `/eflc`** (`eflc.html`), a second single-file app beside the Premier League one. It shares `assets/core.js` and `assets/tw.css` and reads `data/eflc_data.js`; the two pages never share state, storage keys or club maps.
+
+- **Players** every squad player by booking probability, with club/position/search filters, a 450-minute floor and a watchlist. Assign an official from the **referee selector** and every probability rescales to his card rate.
+- **Clubs** cards per game with the home and away split measured from the free match records, a discipline tier, and each club's highest risk.
+- **Referees** all 30 officials by yellows per game, fouls per game and cards per foul, with the ×factor each carries against the league average.
+- **Guide** the method and — at length — the limits.
+
+**The prices come from a hazard model, not the risk score.** `P(booked) = 1 - exp(-y90 x minutes/90 x referee factor)`, over a yellow rate shrunk toward a positional prior. The risk score is deliberately foul-heavy, which makes it a good *ranking* and a poor *price*: Boženík fouls 3.94 times a 90 and was booked twice in 892 minutes, and putting his risk score through a logistic priced him at 63% when his own record says nearer 17%. Both numbers are on the page, because a gap between them is itself the information — it means small sample. `scripts/check-eflc.mjs` re-derives the prices in CI and fails if the top of the book leaves the 25-60% range a real bookings market occupies.
 
 What exists so far is the data layer, not a second site. The Premier League path is unchanged throughout — byte-identical output from both `build_refs.py` and `build_pl_data.py`, held there by `data/test_leagues.py`.
 
