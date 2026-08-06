@@ -89,8 +89,29 @@ MAX_PAGES = 300      # runaway guard, far above any real squad list
 # least lossy of the ones tried.
 SORT_FIELD = "goals_p90"
 SORT_ORDER = "desc"
-MAX_PASSES = 15         # a lossy pass repeats; this bounds how many times
-DRY_PASSES = 3          # consecutive passes adding nobody before giving up
+# Repeating the SAME request cannot help: the loss is deterministic. Four
+# identical passes over the Premier League returned the same 535 of 549 every
+# time, so 14 players sit permanently in the gap a page boundary leaves.
+#
+# What moves them is changing where the boundaries fall. per_page decides that
+# directly, and reversing the order walks the same list from the other end, so
+# a row lost at the seam of one variant is mid-page in the next. The union is
+# what gets collected. sort_by varies too, harmlessly: an unknown field is
+# ignored rather than rejected, so at worst a variant repeats another.
+PASS_VARIANTS = [
+    {"sort_by": "goals_p90", "sort_order": "desc", "per_page": 100},
+    {"sort_by": "goals_p90", "sort_order": "asc", "per_page": 100},
+    {"sort_by": "minutes_played", "sort_order": "desc", "per_page": 100},
+    {"sort_by": "minutes_played", "sort_order": "asc", "per_page": 75},
+    {"sort_by": "appearances", "sort_order": "desc", "per_page": 50},
+    {"sort_by": "yellow_cards", "sort_order": "desc", "per_page": 40},
+    {"sort_by": "rating", "sort_order": "desc", "per_page": 30},
+    {"sort_by": "goals_p90", "sort_order": "desc", "per_page": 25},
+]
+# A gap this small is the API's own total counting something the pages do not
+# — a mid-season transfer showing as two rows, most likely. Beyond it, the
+# harvest is missing real players and must not write.
+TOLERANCE = 0.05
 
 
 def build_url(league, season_id, page, per_page=PAGE_SIZE, min_minutes=0,
@@ -288,17 +309,32 @@ def normalise_all(rows, label):
     return out
 
 
-def one_pass(league, season_id, cookie, min_minutes, into, label):
+def club_coverage(rows):
+    """club -> (squad size, positions present). What actually matters: the
+    desk needs full squads, not a matching row count."""
+    by = {}
+    for r in rows:
+        team = r.get("team") or "?"
+        size, pos = by.get(team, (0, set()))
+        by[team] = (size + 1, pos | {build_pl_data.POS.get(r.get("pos"), r.get("pos"))})
+    return by
+
+
+def one_pass(league, season_id, cookie, min_minutes, into, label, variant=None):
     """One walk of every page, adding distinct players to `into`.
 
     Returns (meta from page one, rows seen this pass). `into` is keyed by
     player id, so a repeat within or across passes is simply an assignment
     that changes nothing.
     """
+    variant = variant or PASS_VARIANTS[0]
     page, seen, first_meta = 1, 0, {}
-    effective, total_pages = PAGE_SIZE, None
+    effective, total_pages = variant.get("per_page", PAGE_SIZE), None
     while True:
-        url = build_url(league, season_id, page, min_minutes=min_minutes)
+        url = build_url(league, season_id, page, min_minutes=min_minutes,
+                        per_page=variant.get("per_page", PAGE_SIZE),
+                        sort_by=variant.get("sort_by"),
+                        sort_order=variant.get("sort_order"))
         payload = request_json(url, cookie)
         got = players_of(payload)
         if page == 1:
@@ -347,39 +383,52 @@ def fetch_all(league, season_id, cookie, label, min_minutes=0):
     three times and every version of it looked plausible.
     """
     into = {}
-    first_meta, _ = one_pass(league, season_id, cookie, min_minutes, into, label)
+    first_meta, _ = one_pass(league, season_id, cookie, min_minutes, into, label,
+                             PASS_VARIANTS[0])
     claimed = (first_meta.get("total") or first_meta.get("total_count")
                or first_meta.get("count"))
 
-    passes, dry = 1, 0
-    while isinstance(claimed, int) and len(into) < claimed and passes < MAX_PASSES:
-        before = len(into)
-        one_pass(league, season_id, cookie, min_minutes, into, label)
-        passes += 1
-        gained = len(into) - before
-        print(f"    pass {passes}: {len(into)}/{claimed} distinct (+{gained})")
-        # One pass adding nobody is luck, not a wall — the last few players are
-        # the coupon-collector tail and a random sample often misses them
-        # twice. Give up only when several passes running find nothing new.
-        dry = dry + 1 if gained == 0 else 0
-        if dry >= DRY_PASSES:
+    used = 1
+    for variant in PASS_VARIANTS[1:]:
+        if not isinstance(claimed, int) or len(into) >= claimed:
             break
+        before = len(into)
+        one_pass(league, season_id, cookie, min_minutes, into, label, variant)
+        used += 1
+        print(f"    +{len(into) - before:<4} {len(into)}/{claimed} distinct"
+              f"  (per_page {variant['per_page']}, {variant['sort_by']} "
+              f"{variant['sort_order']})")
 
     rows = list(into.values())
     print(f"  {label}: {len(rows)} players"
-          + (f" over {passes} passes" if passes > 1 else ""))
+          + (f" over {used} variant passes" if used > 1 else ""))
 
     if isinstance(claimed, int) and len(rows) < claimed:
-        sys.exit(
-            f"ERROR: {label}: the API reports {claimed} players and "
-            f"{passes} pass(es) collected {len(rows)}, so "
-            f"{claimed - len(rows)} are still missing.\n\n"
-            "  This endpoint pages without a stable order, so a pass is a\n"
-            "  sample rather than a list. Repeating converges, but it has\n"
-            "  stopped converging here — either a pass is now returning the\n"
-            "  same subset every time, or the total is not reachable through\n"
-            "  this filter.\n\n"
-            "Refusing to write a partial league.")
+        short = claimed - len(rows)
+        cover = club_coverage(rows)
+        thin = {c: v for c, v in cover.items()
+                if v[0] < build_pl_data.MIN_SQUAD
+                or not build_pl_data.REQUIRED_POS <= v[1]}
+        if short > claimed * TOLERANCE or thin:
+            detail = "".join(
+                f"\n    {c}: {n} players, positions {sorted(p - {None})}"
+                for c, (n, p) in sorted(thin.items())[:8])
+            sys.exit(
+                f"ERROR: {label}: the API reports {claimed} players and "
+                f"{used} varied pass(es) reached {len(rows)}, "
+                f"{short} short.\n\n"
+                + (f"  Clubs that are not a usable squad:{detail}\n\n"
+                   if thin else
+                   "  Every club still has a full squad, but the gap is "
+                   f"larger than the {TOLERANCE:.0%} tolerance.\n\n")
+                + "  This endpoint pages without a stable order and the loss\n"
+                  "  is deterministic, so identical requests cannot find the\n"
+                  "  rest — only different page boundaries can, and every\n"
+                  "  variant has been tried.\n\n"
+                  "Refusing to write a partial league.")
+        print(f"    note: {short} of {claimed} unreachable ({short / claimed:.1%}), "
+              "but every club has a full squad — the API's total most likely "
+              "counts a transferred player twice. Proceeding.")
     return rows, first_meta
 
 

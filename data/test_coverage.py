@@ -379,45 +379,57 @@ def _unstable_api(total, cap=10, reject_player_id=False):
     return req
 
 
-def _reshuffling_api(total, cap=10, seed=1):
-    """What this endpoint actually does: re-sorts on every request, so each
-    page is a sample and each pass is a sample of the league."""
-    import random
+def _seam_lossy_api(total, drop_seams=True):
+    """What the endpoint actually does: it loses the row at each page seam,
+    deterministically. Four identical passes returned the same 535 of 549 —
+    so repetition cannot help, and only a different per_page (different seams)
+    or a reversed order can reach the rest."""
     import urllib.parse as up
-    rnd = random.Random(seed)
 
     def req(url, cookie, allow_400=False):
-        page = int(up.parse_qs(up.urlparse(url).query)["page"][0])
+        q = dict(up.parse_qsl(up.urlparse(url).query))
+        page, cap = int(q["page"]), min(int(q["per_page"]), 100)
         ids = list(range(total))
-        rnd.shuffle(ids)
-        chunk = ids[(page - 1) * cap:(page - 1) * cap + cap]
+        if q.get("sort_order") == "asc":
+            ids = ids[::-1]
+        keep = [x for i, x in enumerate(ids) if not drop_seams or (i + 1) % cap] \
+            if drop_seams else ids
+        chunk = keep[(page - 1) * cap:(page - 1) * cap + cap]
         rows = [{"player_id": i, "player_name": f"p{i}", "team_name": "Millwall",
-                 "position": "Defender", "minutes_played": 900,
-                 "yellow_cards": 1, "red_cards": 0,
+                 "position": ["Goalkeeper", "Defender", "Midfielder", "Attacker"][i % 4],
+                 "minutes_played": 900, "yellow_cards": 1, "red_cards": 0,
                  "fouls_committed_p90": 1.0, "fouls_drawn_p90": 0.5}
                 for i in chunk]
         return {"players": rows, "page": page, "per_page": cap,
-                "total_count": total, "total_pages": (total + cap - 1) // cap}
+                "total_count": total, "total_pages": (len(keep) + cap - 1) // cap}
     return req
 
 
-def _repeated_passes_converge_on_the_whole_league():
-    """No sort key makes this endpoint's pages disjoint — an unknown sort
-    field is ignored rather than rejected, so there is nothing to detect.
-    Completeness comes from collecting until the distinct count matches the
-    total the API reports, over as many passes as that takes."""
+def _varied_passes_reach_the_rows_a_seam_hides():
+    """Repeating an identical request is useless when the loss is
+    deterministic. Moving the page boundaries is what finds the rest."""
     real = H.request_json
     try:
-        for seed in (1, 2, 3):
-            H.request_json = _reshuffling_api(120, seed=seed)
-            rows, _ = H.fetch_all(9, "x", "c", f"seed {seed}")
-            assert len(rows) == 120, (seed, len(rows))
-            assert len({r["pid"] for r in rows}) == 120, seed
+        H.request_json = _seam_lossy_api(549)
+        rows, _ = H.fetch_all(8, "x", "c", "test")
+        assert len(rows) == 549, len(rows)
+        assert len({r["pid"] for r in rows}) == 549
     finally:
         H.request_json = real
 
 
-t("repeated passes converge on the whole league", _repeated_passes_converge_on_the_whole_league)
+t("varied page boundaries reach rows a single walk loses", _varied_passes_reach_the_rows_a_seam_hides)
+
+
+def _variants_actually_differ():
+    """If two variants request the same boundaries they are one variant, and
+    the union cannot grow. per_page is what has to vary."""
+    caps = [v["per_page"] for v in H.PASS_VARIANTS]
+    assert len(set(caps)) >= 5, caps
+    assert {v["sort_order"] for v in H.PASS_VARIANTS} == {"asc", "desc"}
+
+
+t("the pass variants request genuinely different boundaries", _variants_actually_differ)
 
 
 def _a_short_walk_is_refused():
@@ -431,7 +443,8 @@ def _a_short_walk_is_refused():
         try:
             H.fetch_all(9, "x", "c", "test")
         except SystemExit as e:
-            assert "missing" in str(e), str(e)
+            assert "short" in str(e), str(e)
+            assert "not a usable squad" in str(e), "names the clubs, not just a count"
             assert "Refusing to write a partial league" in str(e), str(e)
         else:
             assert False, "a short walk should refuse to write"
