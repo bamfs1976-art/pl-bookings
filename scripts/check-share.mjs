@@ -283,7 +283,62 @@ for (const code of ['PL', 'EFLC', 'LL']) {
     `today.html no longer lists ${code} as a source`);
 }
 
+/* ---- /today's two views must stay one implementation --------------------- */
+/* The page shows one date at a time, or every date consolidated into a
+   calendar. They are two renderings of the same priced rows, and the whole
+   value of that is that a fixture reads identically either way — so the things
+   worth pinning are the ones that would let them drift apart silently. */
+for (const v of ['one', 'all']) {
+  assert.ok(new RegExp(`name="mode"[^>]*value="${v}"`).test(todaySrc),
+    `today.html has lost its "${v}" view`);
+}
+
+/* ONE row renderer. Two would let the calendar and the single date show
+   different columns, or sort differently, for the same match. */
+assert.equal((todayCode.match(/function rowHTML\b/g) || []).length, 1,
+  'today.html must build a fixture row in exactly one place');
+/* Both paths must reach it: the single date calls rowHTML directly, the
+   calendar reaches it through dayGroupHTML. Checked as a chain rather than by
+   scanning each function for the name, because only one of them calls it. */
+const body = (name) => {
+  const m = new RegExp(`function ${name}\\([^)]*\\)\\s*\\{([\\s\\S]*?)\\n  \\}`).exec(todayCode);
+  assert.ok(m, `today.html has no ${name}()`);
+  return m[1];
+};
+assert.ok(/rowHTML/.test(body('renderOne')),
+  'renderOne() does not use the shared row renderer');
+assert.ok(/dayGroupHTML/.test(body('renderAll')),
+  'renderAll() does not build its dates from dayGroupHTML');
+assert.ok(/rowHTML/.test(body('dayGroupHTML')),
+  'dayGroupHTML() does not use the shared row renderer, so the calendar and ' +
+  'the single date could show the same fixture differently');
+/* And both must order a date the same way, or a match would sit in one place
+   when picked and another when scrolled to. */
+assert.ok(/rowsFor/.test(body('dayGroupHTML')) && /rowsFor/.test(body('selected')),
+  'the two views do not share rowsFor(), so they can sort a date differently');
+
+/* ONE card builder, and it must take the date as an argument. This is the
+   failure that motivated the assertion: the calendar draws a share button per
+   date, so a shareDay() that read the #day dropdown instead of its argument
+   would make all ~128 buttons export the SAME card — every one of them
+   downloading successfully, with the wrong day's fixtures on it. */
+assert.equal((todayCode.match(/S\.roundCard\(/g) || []).length, 1,
+  'today.html must build the combined card in exactly one place');
+const share = /function shareDay\(([^)]*)\)([\s\S]*?)\n  \}/.exec(todayCode);
+assert.ok(share, 'today.html has no shareDay()');
+assert.ok(/^\s*key\b/.test(share[1]),
+  `shareDay takes (${share[1].trim()}) — it must take the date, not read the dropdown`);
+assert.ok(!/#day/.test(share[2]),
+  'shareDay reads the #day dropdown, so every calendar date would export the ' +
+  'selected date\'s card rather than its own');
+
+/* The calendar's buttons are rebuilt on every render, so they must be handled
+   by delegation — per-node listeners would stack a fresh set per redraw. */
+assert.ok(/#list'\)\.addEventListener\(\s*'click'/.test(todayCode),
+  'the calendar\'s per-date share buttons are not delegated off #list');
+
 console.log(
   `check-share OK: ${['PL', 'EFLC', 'LL', 'ALL'].length} themes, match + round + ` +
-  'combined cards render, adapters agree with the desks, every card carries 18+'
+  'combined cards render, adapters agree with the desks, every card carries 18+, ' +
+  '/today renders one date and the whole calendar from one row builder and one card builder'
 );

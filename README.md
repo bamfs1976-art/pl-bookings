@@ -189,6 +189,31 @@ to genuinely independent than a same-match combo. The heat numbers are computed
 by the same `PLDCore` calls each desk makes, and are verified equal to the
 desks' own: a fixture must never carry two prices.
 
+**And the same consolidated list for every date, not one at a time.** The
+segmented control at the top switches between a single date and a calendar of
+the whole season: all 128 match dates in order, each one a section carrying its
+combined cross-league fixture list ranked by heat, its league counts, its total
+expected cards, and its own ⬇ share button producing exactly the card the
+single-date view would. A dropdown answers *what is on that day*; only seeing
+them together answers *which day is worth looking at* — 52 of the 128 dates
+carry more than one league, and a checkbox narrows to just those.
+
+It renders all 1,312 fixtures in one pass. They are priced at boot regardless,
+so the calendar is a string build over data that already exists; virtualising
+it would be machinery guarding a cost nobody pays. Past dates fold away by
+default, because mid-season the useful half of the page is ahead of you — at a
+January clock the view opens on 48 dates with *Show 80 earlier dates* beside
+it. `#all` and `#d=YYYY-MM-DD` deep-link both views, and a date with no matches
+falls through to the default rather than rendering an empty page.
+
+The two views are two renderings of one set of priced rows, and `check-share`
+pins the seams where they could silently diverge — one `rowHTML`, one
+`rowsFor` ordering, one `S.roundCard` call site, and a `shareDay` that takes
+the date as an **argument**. That last one is the reason the guard exists: a
+`shareDay` reading the `#day` dropdown instead would leave all 128 calendar
+buttons downloading successfully, each with the wrong day's fixtures on it.
+Seven mutations of those assertions were confirmed to fail the guard.
+
 Two implementation notes worth keeping:
 
 - Every dataset declares `const CLUBS` and `const REFS` — right in a file read

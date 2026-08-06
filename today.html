@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data: https://cdn.sportmonks.com https://media.api-sports.io; connect-src 'self'">
 <title>Today's Card — Bookings Desk</title>
-<meta name="description" content="Every match across the Championship and La Liga on one day, ranked by booking heat, with a combined share card.">
+<meta name="description" content="Every match across the Premier League, Championship and La Liga on one day — or a consolidated calendar of every date — ranked by booking heat, with a combined share card per date.">
 <link rel="icon" href="favicon.svg" type="image/svg+xml">
 <link rel="stylesheet" href="assets/tw.css">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -71,6 +71,30 @@
   .heat{font-family:var(--mono);font-weight:800;font-size:17px;flex:none;min-width:52px;text-align:right}
   .heat.hot{color:var(--good-ink)} .heat.warm{color:var(--warn-ink)} .heat.cool{color:var(--text-2)}
   .empty{padding:22px 6px;color:var(--text-2);text-align:center}
+  /* The segmented control picks between one date and the whole calendar.
+     Radios rather than buttons so the mode is keyboard-reachable and reads as
+     a single-choice group to a screen reader. */
+  .seg{display:inline-flex;border:1px solid var(--border-2);border-radius:9px;overflow:hidden}
+  .seg label{font-size:13px;padding:7px 12px;cursor:pointer;background:var(--surface);color:var(--text-2)}
+  .seg label+label{border-left:1px solid var(--border-2)}
+  .seg input{position:absolute;opacity:0;width:0;height:0}
+  .seg input:checked+span{color:var(--on-accent)}
+  .seg label:has(input:checked){background:var(--accent);color:var(--on-accent);font-weight:700}
+  .seg label:has(input:focus-visible){outline:2px solid var(--ring);outline-offset:-2px}
+  /* A date in the calendar. The header sticks so that while you scroll a
+     22-match Saturday you can still see which day you are looking at. */
+  .daygroup{border-top:1px solid var(--border-2);margin-top:6px}
+  .daygroup:first-child{border-top:0;margin-top:0}
+  .dayhead{position:sticky;top:60px;z-index:10;display:flex;align-items:center;gap:10px;
+    flex-wrap:wrap;padding:10px 4px 8px;
+    background:color-mix(in srgb,var(--surface) 94%,transparent);backdrop-filter:blur(8px)}
+  .dayhead h3{font-size:15.5px}
+  .dayhead .chips{display:flex;gap:5px;flex-wrap:wrap}
+  .daymeta{font-size:12px;color:var(--text-2);font-family:var(--mono)}
+  .daygroup .row{padding-left:4px}
+  .multi{font-size:10.5px;font-weight:800;padding:3px 8px;border-radius:999px;
+    background:color-mix(in srgb,var(--accent) 16%,transparent);color:var(--accent)}
+  .revealbar{padding:10px 4px;border-bottom:1px solid var(--border)}
   .note{font-size:12.5px;color:var(--text-2);margin:12px 0 0;line-height:1.5}
   footer{padding:26px 0 40px;font-size:12.5px;color:var(--text-3)}
 </style>
@@ -90,18 +114,28 @@
     <p class="muted" style="margin:8px 0 0;max-width:70ch">
       Matches from every desk that plays on the same date, ranked by booking heat, with one
       combined share card across the lot. The acca legs are one per match, so unlike a same-match
-      combo they are close to genuinely independent.
+      combo they are close to genuinely independent. Take one date at a time, or switch to
+      <b>Every date</b> for the whole season consolidated into a single calendar — each date
+      still ranked by heat and still exporting its own card.
     </p>
     <div class="stats" id="stats"></div>
   </section>
 
   <div class="card">
     <div class="controls">
+      <div class="seg" role="group" aria-label="View">
+        <label><input type="radio" name="mode" value="one" checked><span>One date</span></label>
+        <label><input type="radio" name="mode" value="all"><span>Every date</span></label>
+      </div>
       <select id="day" aria-label="Date"></select>
       <button class="btn primary" id="shareBtn" type="button">⬇ Share the day</button>
+      <label id="multiOnly" hidden style="font-size:13px;display:inline-flex;align-items:center;gap:6px">
+        <input type="checkbox" id="multiChk"> more than one league only
+      </label>
       <span class="spacer"></span>
       <span class="faint" id="count" style="font-size:12.5px"></span>
     </div>
+    <div class="revealbar" id="reveal" hidden></div>
     <div id="list"></div>
     <div class="empty" id="empty" hidden></div>
     <p class="note" id="cover"></p>
@@ -151,16 +185,18 @@
   /*
    * Data-driven on purpose. Adding a competition to this page is an entry in
    * this array, not another branch through the rendering — which is the same
-   * reason data/leagues.py exists on the Python side.
+   * reason data/leagues.py exists on the Python side. Both views below, the
+   * single date and the whole calendar, read the same priced rows, so a league
+   * added here appears in both without either knowing it exists.
    *
-   * The Premier League is NOT here, and the reason is worth stating: its
-   * fixtures come from the live FPL feed at runtime rather than a committed
-   * file, and its desk prices them with extra factors this page does not have
-   * (availability, derbies, the match model's game-state term). Including it
-   * from a partial model would print a DIFFERENT number for the same match
-   * than the Premier League desk itself shows, and two prices for one fixture
-   * is worse than one league missing. It drops in here unchanged the moment a
-   * committed PL fixture list exists.
+   * The Premier League was held out of this page for a while, and it is worth
+   * recording why it is no longer: its desk prices a fixture with factors the
+   * other two have no equivalent for (availability, derbies, the match model's
+   * game-state term), so pricing it here from a partial model would have shown
+   * a DIFFERENT number for the same match than the desk itself does. Two prices
+   * for one fixture is worse than one league missing. That is fixed by sharing
+   * the wiring rather than by reimplementing it — assets/plmodel.js is the
+   * desk's own model, and this page calls it.
    */
   var SOURCES = [
     { code: 'PL', name: 'Premier League', href: '/', frame: 'f-pl' },
@@ -367,14 +403,33 @@
     return out.sort(function (a, b) { return b.prob - a.prob; });
   }
 
-  function selected() {
-    var k = $('#day').value;
+  /* Every match on a date, hottest first — the one ordering both views use, so
+     a fixture sits in the same place whether you arrived by picking the date
+     or by scrolling the calendar. */
+  function rowsFor(k) {
     return (DAYS[k] || []).slice().sort(function (a, b) {
       return b.m.expected - a.m.expected;
     });
   }
+  function selected() { return rowsFor($('#day').value); }
 
-  function render() {
+  function rowHTML(p) {
+    var ch = p.L.clubBy[p.fx.h] || {}, ca = p.L.clubBy[p.fx.a] || {};
+    var top = candidates(p)[0];
+    return '<div class="row" data-lg="' + p.L.code + '" data-h="' + p.fx.h
+      + '" data-a="' + p.fx.a + '">'
+      + '<span class="lg ' + p.L.code + '">' + esc(p.L.code) + '</span>'
+      + '<span class="when">' + esc(fmtTime(p.fx.d)) + '</span>'
+      + '<span class="teams">' + esc(ch.name || p.fx.h) + ' <span class="faint">v</span> '
+      + esc(ca.name || p.fx.a) + '</span>'
+      + '<span class="top">' + (top
+          ? esc(top.name) + ' <b>' + (top.prob * 100).toFixed(0) + '%</b>'
+          : '<span class="faint">no rated players</span>') + '</span>'
+      + '<span class="heat ' + heatClass(p.m.expected) + '">' + n1(p.m.expected) + '</span>'
+      + '</div>';
+  }
+
+  function renderOne() {
     var rows = selected(), host = $('#list'), empty = $('#empty');
     $('#count').textContent = rows.length + ' match' + (rows.length === 1 ? '' : 'es');
     if (!rows.length) {
@@ -386,21 +441,7 @@
     }
     empty.hidden = true;
     $('#shareBtn').disabled = false;
-    host.innerHTML = rows.map(function (p) {
-      var ch = p.L.clubBy[p.fx.h] || {}, ca = p.L.clubBy[p.fx.a] || {};
-      var top = candidates(p)[0];
-      return '<div class="row" data-lg="' + p.L.code + '" data-h="' + p.fx.h
-        + '" data-a="' + p.fx.a + '">'
-        + '<span class="lg ' + p.L.code + '">' + esc(p.L.code) + '</span>'
-        + '<span class="when">' + esc(fmtTime(p.fx.d)) + '</span>'
-        + '<span class="teams">' + esc(ch.name || p.fx.h) + ' <span class="faint">v</span> '
-        + esc(ca.name || p.fx.a) + '</span>'
-        + '<span class="top">' + (top
-            ? esc(top.name) + ' <b>' + (top.prob * 100).toFixed(0) + '%</b>'
-            : '<span class="faint">no rated players</span>') + '</span>'
-        + '<span class="heat ' + heatClass(p.m.expected) + '">' + n1(p.m.expected) + '</span>'
-        + '</div>';
-    }).join('');
+    host.innerHTML = rows.map(rowHTML).join('');
 
     var codes = leaguesOn($('#day').value);
     var names = codes.map(function (c) {
@@ -424,17 +465,136 @@
     $('#cover').textContent = note;
   }
 
+  /* ---- the whole calendar ----------------------------------------------- */
+  /*
+   * The same consolidated list, for every date in the season rather than one
+   * at a time. Picking dates out of a dropdown answers "what is on that day";
+   * it cannot answer "which day is worth looking at", which needs them side by
+   * side.
+   *
+   * Rendered in one pass rather than lazily. The whole season is ~1,300
+   * fixtures over ~128 dates, all of them priced at boot already, so the
+   * calendar is a string build over data that exists — adding virtual
+   * scrolling here would be machinery guarding against a cost nobody pays.
+   */
+  var showPast = false;
+
+  function isPast(k) { return k < new Date().toISOString().slice(0, 10); }
+
+  /* Dates the calendar will draw, after the two filters. Past dates are folded
+     away by default: mid-season the useful part of this page is ahead of you,
+     and opening on 90 dates that have already been played buries it. */
+  function calendarKeys() {
+    var multiOnly = $('#multiChk').checked;
+    return DAYKEYS.filter(function (k) {
+      if (!showPast && isPast(k)) return false;
+      return !multiOnly || leaguesOn(k).length > 1;
+    });
+  }
+
+  function dayGroupHTML(k) {
+    var rows = rowsFor(k), codes = leaguesOn(k);
+    var counts = {};
+    rows.forEach(function (p) { counts[p.L.code] = (counts[p.L.code] || 0) + 1; });
+    /* Total expected cards across every match on the date. Summing expectations
+       is legitimate whether or not the matches are independent — that is what
+       linearity of expectation buys — so this needs no caveat, unlike the acca
+       on the share card, which does and carries one. */
+    var cards = rows.reduce(function (a, p) { return a + (p.m.expected || 0); }, 0);
+    return '<section class="daygroup" data-day="' + k + '">'
+      + '<div class="dayhead">'
+      + '<h3>' + esc(fmtDay(k)) + '</h3>'
+      + '<span class="chips">'
+      + codes.map(function (c) {
+          return '<span class="lg ' + c + '">' + esc(c) + ' ' + counts[c] + '</span>';
+        }).join('')
+      + (codes.length > 1 ? '<span class="multi">' + codes.length + ' leagues</span>' : '')
+      + '</span>'
+      + '<span class="daymeta">' + rows.length + ' match' + (rows.length === 1 ? '' : 'es')
+      + ' · ' + n1(cards) + ' cards expected</span>'
+      + '<span class="spacer"></span>'
+      + '<button class="btn" type="button" data-share="' + k + '">⬇ Share</button>'
+      + '</div>'
+      + rows.map(rowHTML).join('')
+      + '</section>';
+  }
+
+  function renderAll() {
+    var keys = calendarKeys(), host = $('#list'), empty = $('#empty');
+    var matches = keys.reduce(function (a, k) { return a + DAYS[k].length; }, 0);
+    $('#count').textContent = keys.length + ' date' + (keys.length === 1 ? '' : 's')
+      + ' · ' + matches + ' match' + (matches === 1 ? '' : 'es');
+
+    var past = DAYKEYS.filter(isPast).length;
+    var bar = $('#reveal');
+    if (past && !showPast) {
+      bar.hidden = false;
+      bar.innerHTML = '<button class="btn" type="button" id="pastBtn">Show '
+        + past + ' earlier date' + (past === 1 ? '' : 's') + '</button>';
+    } else if (past) {
+      bar.hidden = false;
+      bar.innerHTML = '<button class="btn" type="button" id="pastBtn">Hide '
+        + past + ' earlier date' + (past === 1 ? '' : 's') + '</button>';
+    } else {
+      bar.hidden = true; bar.innerHTML = '';
+    }
+
+    if (!keys.length) {
+      host.innerHTML = ''; empty.hidden = false;
+      empty.textContent = $('#multiChk').checked
+        ? 'No remaining date has more than one league on it.'
+        : 'No dates to show.';
+      $('#cover').textContent = '';
+      return;
+    }
+    empty.hidden = true;
+    host.innerHTML = keys.map(dayGroupHTML).join('');
+
+    var multi = keys.filter(function (k) { return leaguesOn(k).length > 1; }).length;
+    $('#cover').textContent = 'Every date each desk plays on, consolidated into one '
+      + 'list and ranked by booking heat within the date. ' + multi + ' of these '
+      + keys.length + ' dates carry more than one league. Heat is the expected '
+      + 'number of cards in the match, both sides added together, with the referee '
+      + 'applied where one has been appointed. Every desk prices a booking the same '
+      + 'way, calibrated to the card rate its own division produced, so the '
+      + 'percentages compare directly across leagues.';
+  }
+
+  function mode() {
+    var el = document.querySelector('input[name=mode]:checked');
+    return el ? el.value : 'one';
+  }
+
+  function render() {
+    var all = mode() === 'all';
+    $('#day').hidden = all;
+    /* Hidden in the calendar because each date carries its own button — but
+       `= all` alone would UN-hide it in single-date mode on a browser with no
+       canvas, where boot had deliberately hidden it. */
+    $('#shareBtn').hidden = all || !S;
+    $('#multiOnly').hidden = !all;
+    if (!all) { $('#reveal').hidden = true; $('#reveal').innerHTML = ''; }
+    try {
+      location.hash = all ? 'all' : 'd=' + $('#day').value;
+    } catch (e) { /* hash is a convenience, never a requirement */ }
+    if (all) renderAll(); else renderOne();
+  }
+
   /* ---- the combined card ------------------------------------------------ */
-  function shareDay() {
-    var rows = selected();
+  /* Takes the date rather than reading the dropdown, because in the calendar
+     there is no selected date — every group has its own button and they must
+     all produce exactly the card the single-date view would. One function, one
+     card, whichever view you asked from. */
+  function shareDay(key, btn) {
+    var rows = rowsFor(key);
     if (!rows.length || !S) return;
     var legs = rows.map(function (p) { return candidates(p)[0]; })
       .filter(function (l) { return l && l.prob > 0; })
       .sort(function (a, b) { return b.prob - a.prob; });
-    var codes = leaguesOn($('#day').value);
+    var codes = leaguesOn(key);
     var spec = {
       league: 'ALL',
-      title: fmtDay($('#day').value),
+      title: fmtDay(key),
       subtitle: codes.join(' · ') + ' · hottest fixtures first',
       fixtures: rows.map(function (p) {
         var top = candidates(p)[0];
@@ -449,11 +609,12 @@
       note: 'One leg a match across different leagues — closer to independent '
           + 'than a same-match combo · research, not a guarantee'
     };
-    var btn = $('#shareBtn'), label = btn.textContent;
+    btn = btn || $('#shareBtn');
+    var label = btn.textContent;
     btn.disabled = true; btn.textContent = 'Building…';
     S.roundCard(spec)
       .then(function (b) {
-        S.download(b, 'bookings-desk-' + S.slug($('#day').value) + '.png');
+        S.download(b, 'bookings-desk-' + S.slug(key) + '.png');
       })
       .catch(function (e) { console.error(e); })
       .then(function () { btn.disabled = false; btn.textContent = label; });
@@ -489,8 +650,39 @@
     }).join('');
     $('#day').value = defaultDay();
     $('#day').addEventListener('change', render);
-    $('#shareBtn').addEventListener('click', shareDay);
-    if (!S) $('#shareBtn').hidden = true;
+    $('#shareBtn').addEventListener('click', function () { shareDay($('#day').value); });
+    $('#multiChk').addEventListener('change', render);
+    Array.prototype.forEach.call(document.querySelectorAll('input[name=mode]'),
+      function (r) { r.addEventListener('change', render); });
+
+    /* Delegated, because the calendar's buttons are rebuilt by every render
+       and per-node listeners would leak one set per redraw. */
+    $('#list').addEventListener('click', function (ev) {
+      var b = ev.target.closest ? ev.target.closest('[data-share]') : null;
+      if (b) shareDay(b.getAttribute('data-share'), b);
+    });
+    $('#reveal').addEventListener('click', function (ev) {
+      if (ev.target && ev.target.id === 'pastBtn') { showPast = !showPast; render(); }
+    });
+
+    /* Deep links: #all opens the calendar, #d=YYYY-MM-DD opens a date. An
+       unknown date falls through to the default rather than rendering an empty
+       page for a link that has gone stale. */
+    var h = String(location.hash || '').replace(/^#/, '');
+    if (h === 'all') {
+      document.querySelector('input[name=mode][value=all]').checked = true;
+    } else if (/^d=\d{4}-\d{2}-\d{2}$/.test(h) && DAYS[h.slice(2)]) {
+      $('#day').value = h.slice(2);
+    }
+
+    if (!S) {
+      $('#shareBtn').hidden = true;
+      /* No canvas support: hide the calendar's buttons too, rather than
+         shipping rows of controls that silently do nothing. */
+      var st = document.createElement('style');
+      st.textContent = '[data-share]{display:none}';
+      document.head.appendChild(st);
+    }
     render();
   }
   });
