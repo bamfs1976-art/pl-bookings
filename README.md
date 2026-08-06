@@ -99,6 +99,10 @@ The `data` folder holds the build script and the raw harvests (harvest JSON giti
 
 The desk is being generalised from one league to several, Championship first and La Liga after it. `docs/la-liga-feasibility.md` is the research behind that order; the short version is that every referee number here comes from a free source that publishes the official for English and Scottish football and effectively nowhere else — measured, 0 of 33 seasons for La Liga, all of them for England's five tiers. So the Championship reuses the referee spine with a changed division code, while La Liga has to buy the referee *name* from a keyed API and keep computing the *rates* from the same free file.
 
+**The Championship dataset is built**: 24 clubs, 974 players (753 on Championship form, 111 on Premier League form, 110 on League One form), 30 referees, and exact card rates with home/away splits for the 18 clubs that were in the division last season. `data/eflc_status.txt` records the outcome of every build, committed, so a failure inside a `continue-on-error` step leaves a trace in the repository rather than only in a log pane.
+
+What does NOT exist yet is a Championship *site*. `eflc_data.js` has no `index.html` reading it — that is the next piece of work.
+
 What exists so far is the data layer, not a second site. The Premier League path is unchanged throughout — byte-identical output from both `build_refs.py` and `build_pl_data.py`, held there by `data/test_leagues.py`.
 
 - `data/leagues.py` — the league registry, including the 2026-27 Championship's 24 clubs, their feed-name aliases, and which of them arrived from which division.
