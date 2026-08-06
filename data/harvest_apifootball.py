@@ -44,6 +44,7 @@ import argparse
 import json
 import os
 import sys
+import time
 import urllib.error
 import urllib.request
 from pathlib import Path
@@ -213,9 +214,46 @@ def _headers(host, key):
     return {"x-apisports-key": key}
 
 
+# API-Football caps requests per MINUTE as well as per day, and the per-minute
+# ceiling is the one a squad walk meets: 21 clubs at three pages each is ~63
+# calls, and issued back to back that is several hundred a minute. The first
+# real run fetched seven squads in three seconds and was then refused.
+#
+# The daily quota is generous (7500 on Pro) and the whole job needs about 75
+# calls, so pacing costs nothing that matters — twenty seconds of wall clock
+# against a harvest that otherwise cannot finish.
+REQUEST_DELAY = 0.25    # seconds between requests, ~240/min
+RATE_RETRIES = 4        # a refusal is temporary; back off rather than fail
+_last_request = [0.0]
+
+
+def _rate_limited(payload):
+    """Whether this 200 is actually a rate-limit refusal."""
+    err = api_errors(payload) or ""
+    return "ratelimit" in err.lower() or "too many requests" in err.lower()
+
+
 def _get(host, key, path, params):
     q = "&".join(f"{k}={v}" for k, v in params.items())
     url = f"https://{host}/{path}?{q}"
+    for attempt in range(RATE_RETRIES + 1):
+        wait = REQUEST_DELAY - (time.monotonic() - _last_request[0])
+        if wait > 0:
+            time.sleep(wait)
+        payload = _fetch_once(host, key, url)
+        if not _rate_limited(payload) or attempt == RATE_RETRIES:
+            return payload
+        # Per-minute window, so waiting out the minute is the fix. Back off
+        # rather than retrying immediately, which only deepens the refusal.
+        backoff = 15 * (attempt + 1)
+        print(f"    rate limited — waiting {backoff}s and retrying "
+              f"({attempt + 1}/{RATE_RETRIES})")
+        time.sleep(backoff)
+    return payload
+
+
+def _fetch_once(host, key, url):
+    _last_request[0] = time.monotonic()
     req = urllib.request.Request(url, headers=_headers(host, key))
     try:
         with urllib.request.urlopen(req, timeout=60) as r:
@@ -225,8 +263,9 @@ def _get(host, key, path, params):
             sys.exit(f"ERROR: {url} answered {e.code} — API_FOOTBALL_KEY is "
                      "missing, wrong, or not entitled to this endpoint.")
         if e.code == 429:
-            sys.exit("ERROR: API-Football rate limit reached (the free tier is "
-                     "100 requests a day). Try again tomorrow or use a paid key.")
+            sys.exit("ERROR: API-Football answered 429. The per-DAY quota is "
+                     "spent (the per-minute one is handled by backing off). "
+                     "Check the day's usage with --check.")
         raise
 
 

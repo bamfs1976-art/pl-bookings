@@ -384,4 +384,44 @@ def _errors_beat_emptiness():
 
 t("a refusal and an empty league look identical to resolve_teams", _errors_beat_emptiness)
 
+def _rate_limit_is_retried_not_fatal():
+    """The first real run fetched seven full squads and then died on Ipswich:
+    21 clubs at three pages each is ~63 calls, and issued back to back that is
+    several hundred a minute. A per-minute refusal is temporary, so it must be
+    waited out — the alternative is losing a harvest that was working."""
+    import time as _t
+    real_fetch, real_delay, real_sleep = A._fetch_once, A.REQUEST_DELAY, _t.sleep
+    calls = {"n": 0}
+
+    def once(host, key, url):
+        A._last_request[0] = _t.monotonic()
+        calls["n"] += 1
+        if calls["n"] <= 2:
+            return {"errors": {"rateLimit": "Too many requests. You have exceeded the limit"}}
+        return {"errors": [], "response": [{"team": {"id": 1, "name": "Millwall"}}]}
+
+    try:
+        A._fetch_once, A.REQUEST_DELAY = once, 0.0
+        _t.sleep = lambda s: None                     # do not really wait
+        out = A._get("h", "k", "teams", {"league": 40})
+        assert calls["n"] == 3, calls
+        assert out["response"], out
+    finally:
+        A._fetch_once, A.REQUEST_DELAY = real_fetch, real_delay
+        _t.sleep = real_sleep
+
+
+t("a per-minute rate limit is waited out, not fatal", _rate_limit_is_retried_not_fatal)
+
+
+def _rate_limit_recognised_in_both_shapes():
+    assert A._rate_limited({"errors": {"rateLimit": "Too many requests"}})
+    assert A._rate_limited({"errors": ["Too Many Requests"]})
+    assert not A._rate_limited({"errors": [], "response": []})
+    assert not A._rate_limited({"errors": {"token": "Missing application key"}}), \
+        "a bad key must NOT be retried — it will never come good"
+
+
+t("a rate limit is told apart from a bad key", _rate_limit_recognised_in_both_shapes)
+
 print(f"\n{passed} tests passed")
