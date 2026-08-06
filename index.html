@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data: https://cdn.sportmonks.com https://resources.premierleague.com; connect-src 'self' https://knodunjnsxelmpziupwk.supabase.co">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data: https://cdn.sportmonks.com https://resources.premierleague.com https://media.api-sports.io; connect-src 'self' https://knodunjnsxelmpziupwk.supabase.co">
 <title>Bookings Desk · Premier League</title>
 <meta name="description" content="Premier League 2026-27 player-bookings analysis. Player card risk, club discipline, referees, fixtures and a suspension watch, on live FPL data.">
 <link rel="icon" href="favicon.svg" type="image/svg+xml">
@@ -293,6 +293,17 @@
   .fx-more{width:100%;border:0;border-top:1px solid var(--border);background:none;color:var(--accent-2);font:inherit;font-weight:700;font-size:.78rem;padding:.5rem;cursor:pointer}
   .fx-more:hover{background:var(--surface-2)}
   .fx-foot{border-top:1px solid var(--border);padding:.45rem .6rem;display:flex;justify-content:flex-end;margin-top:auto}
+  .susp{margin-bottom:12px}
+  .susp-head{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;margin-bottom:10px}
+  .susp-row{display:flex;align-items:center;gap:10px;padding:8px 4px;border-bottom:1px solid var(--border);flex-wrap:wrap}
+  .susp-row:last-child{border-bottom:0}
+  .susp-nm{font-weight:700;font-size:13.5px;flex:1 1 190px;min-width:0}
+  .pips{display:inline-flex;gap:3px;flex:none}
+  .pip{width:11px;height:14px;border-radius:2px;background:var(--surface-3);border:1px solid var(--border-2)}
+  .pip.on{background:#f7c600;border-color:#d4a900}
+  .susp-need{font-size:12.5px;color:var(--text-2);flex:none;min-width:120px}
+  .susp-need b{color:var(--danger-ink)}
+  .susp-p{font-family:var(--mono);font-weight:700;font-size:13.5px;flex:none;min-width:56px;text-align:right}
   .fx-share{border:0;background:none;color:var(--text-2);font:inherit;font-weight:700;font-size:.74rem;padding:.3rem .55rem;border-radius:8px;cursor:pointer;display:inline-flex;align-items:center;gap:.3rem}
   .fx-share:hover{background:var(--surface-2);color:var(--accent)}
   .fx-empty{padding:.7rem .9rem;font-size:.82rem;color:var(--text-3)}
@@ -557,6 +568,14 @@
        minutes-qualified set, and the complete live squad from the FPL feed.
        Both renderers are untouched — only which one owns the body changes. -->
   <section id="panel-players" class="page">
+    <div class="card susp" id="suspCard" hidden>
+      <div class="susp-head">
+        <h2 style="font-size:15px">Suspension watch</h2>
+        <span class="faint" id="suspSub" style="font-size:12.5px"></span>
+      </div>
+      <div id="suspList"></div>
+      <p class="note" id="suspNote"></p>
+    </div>
     <div class="page-head">
       <h2>Players</h2>
       <p>Every Premier League player, two ways — ranked by our season booking risk, or the complete live squad list. For this weekend’s picks, see <a href="#" id="toGameweek">This Gameweek</a>.</p>
@@ -945,6 +964,7 @@
 <script src="data/sim_model.js"></script>
 <script src="assets/core.js"></script>
 <script src="assets/plmodel.js"></script>
+<script src="assets/suspension.js"></script>
 <script>
 const STORE_KEY="pl_desk_v1", THEME_KEY="pl_desk_theme";
 const $=(id)=>document.getElementById(id);
@@ -1620,6 +1640,61 @@ async function exportPNG(){
   x.fillText("18+ · Player form via ScoutingStats · 2026-27 squads · research, not betting advice · begambleaware.org",P,H-50);
   x.fillStyle="#3d195b"; x.font=`800 20px ${disp}`; x.textAlign="right"; x.fillText("PL BOOKINGS DESK",W-P,H-50); x.textAlign="left";
   c.toBlob(blob=>{ const u=URL.createObjectURL(blob),a=document.createElement("a"); a.href=u; a.download=`pl-bookings-${cf==="all"?"top":cf.toLowerCase()}.png`; a.click(); setTimeout(()=>URL.revokeObjectURL(u),2000); },"image/png");
+}
+
+// ---- suspension watch ----
+// The rule ships in pl_data.js as SUSPENSION, generated from data/leagues.py,
+// and the maths is assets/suspension.js — shared with the Championship desk,
+// which runs the same ladder with different gates (19/37 against this desk's
+// 19/32 because its season is 46 games), and with La Liga, which runs a
+// completely different scheme. No page here defines a threshold.
+//
+// THIS DESK IS THE ONE THAT CAN BE LIVE. The other two wait on a harvest for
+// the current season's cautions; the FPL feed carries them per player, so the
+// strip shows real state from the first matchday. `p.live.yc` is the 2026-27
+// count and `p.yc` is 2025-26 — the English ladder counts only the current
+// season, so using the latter would credit a player with cards that no longer
+// exist.
+const SUSP_SCHEME=(typeof SUSPENSION!=="undefined"&&SUSPENSION)||null;
+const SU=(typeof PLDSuspension!=="undefined"&&PLDSuspension)||null;
+
+// League matches a club has PLAYED, which is what the gates are measured in.
+// A gate is a deadline: a player on four cautions after his club's 19th match
+// can no longer be caught by the five-rung at all.
+function clubPlayed(short){
+  if(!LIVE) return 0;
+  return LIVE.fixtures.filter(f=>f.finished&&(LIVE.teamMap[f.team_h]===short||LIVE.teamMap[f.team_a]===short)).length;
+}
+
+function renderSuspension(){
+  const card=$("suspCard");
+  if(!card||!SU||!SUSP_SCHEME){ if(card) card.hidden=true; return; }
+  // Stamp the live counts onto the rows the shared module reads. Only where
+  // the feed actually has the player: absent, `sc` stays undefined and the
+  // module treats the season as not started rather than as nil cards.
+  PL_PLAYERS.forEach(p=>{
+    if(p.live){ p.sc=p.live.yc; p.sm=p.live.min; }
+    else { delete p.sc; delete p.sm; }
+    // The shared module reads `_y90` — the convention the other two desks
+    // set when they load. This desk computes the same rate through
+    // shrunkY90(), so stamp it rather than teach the module a second name.
+    const y=shrunkY90(p);
+    p._y90=(y!=null&&isFinite(y))?y:null;
+  });
+  const res=SU.rows(PL_PLAYERS,SUSP_SCHEME,{seasonMatches:38,playedFor:clubPlayed});
+  if(!res.rows.length){ card.hidden=true; return; }
+  card.hidden=false;
+  $("suspList").innerHTML=SU.render($("suspList"),res,SUSP_SCHEME,{});
+  $("suspSub").textContent=res.known
+    ? "Closest to a ban — 5 by GW19 (1 game), 10 by GW32 (2), 15 all season (3)"
+    : "The season has not started, so every player is on zero. These are the likeliest to reach five first, and roughly when.";
+  $("suspNote").innerHTML=
+    "Columns are the chance of reaching the next threshold within "+res.horizons.join(", ")
+    +" matches, from each player's shrunk yellow rate and the share of a match he tends to play. "
+    +(res.known
+      ? "Counts are <b>live from the FPL feed</b>, this season only. The ladder is cumulative and does <b>not</b> reset when a ban is served, and each rung is a deadline — pass GW19 on four cautions and that rung is gone, so the watch moves you to the ten. Twenty or more goes to a Regulatory Commission, whose sanction is discretionary and is not forecast here."
+      : "<b>No cautions have been recorded yet</b>, so these are forecasts from last season's form, not a live count.")
+    +" See <code>docs/suspension-rules.md</code>.";
 }
 
 // ---- fixture & gameweek share cards ----
@@ -2551,6 +2626,9 @@ async function loadLive(){
     LIVE={bootstrap:bs,fixtures:fx,teamMap,currentGW:cur?cur.id:1,seasonStarted:bs.elements.some(el=>(el.minutes||0)>0)};
     try{ LIVE.matchedCount=attachLive(bs,teamMap); }catch(e){ console.warn("[Bookings Desk] attachLive:",e); LIVE.matchedCount=0; }
     try{ LIVE.allPlayers=buildAllPlayers(bs,teamMap); }catch(e){ console.warn("[Bookings Desk] buildAllPlayers:",e); LIVE.allPlayers=[]; }
+    // The suspension strip is only real once the feed lands: before it, every
+    // player's card count is unknown and the strip forecasts instead.
+    try{ renderSuspension(); }catch(e){ console.warn("[Bookings Desk] renderSuspension:",e); }
     status.hidden=false; status.className="chip tier-target";
     const fetchedAt=(()=>{ try{ const c=JSON.parse(localStorage.getItem(FPL_CACHE_KEY))||{}; const h=c["bootstrap-static"]; return h?new Date(h.t):null; }catch(e){ return null; } })();
     status.textContent="● Live FPL data"+(fetchedAt?" · "+fetchedAt.toLocaleTimeString("en-GB",{hour:"2-digit",minute:"2-digit"}):"");
@@ -3739,6 +3817,10 @@ HASH_READY=true;
 writeHash();
 renderPlayers();
 renderClubs();
+// After LIVE is declared: clubPlayed() reads it, and calling this any earlier
+// threw a TDZ ReferenceError that the try/catch turned into a silently empty
+// strip. The feed refreshes it again once it lands.
+try{ renderSuspension(); }catch(e){ console.warn("[Bookings Desk] renderSuspension:",e); }
 renderRefs();
 renderTracker();
 fillApClubFilter();

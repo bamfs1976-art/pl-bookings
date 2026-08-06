@@ -33,6 +33,42 @@ Two consequences that are easy to miss:
   are spent and fifteen is next, five away. Spain's ten means two bans served
   and five to go again. The same number, two different positions.
 
+## Where each strip gets its count
+
+All three strips read `sc` — cautions in the season being played — and never
+`yc`, which is last season's total. Under a cycle nothing carries between
+seasons, and under a ladder the count is per season too, so `yc` is the wrong
+number in every league. Null means *uncounted*, not zero: a player with no row
+in the season feed is left off the watch rather than placed at the safe end of
+it.
+
+Where they differ is freshness.
+
+| Desk | Source of `sc` | Refreshed |
+|---|---|---|
+| Premier League | `p.live.yc` from the FPL feed, stamped at render | every page load |
+| Championship | `sc`/`sm` emitted into `eflc_data.js` | when the workflow runs |
+| La Liga | `sc`/`sm` emitted into `laliga_data.js` | when the workflow runs |
+
+The Premier League desk was already pulling the live feed for injuries and
+prices, so its strip is current rather than as-built. The cost is that it is
+the one desk where two card counts are in scope at once — `p.yc` for 2025-26
+and `p.live.yc` for 2026-27 — which is why `check-data.mjs` asserts the strip
+reads the live one and never assigns `p.sc = p.yc`.
+
+## Premier League — checked
+
+Five cautions before the conclusion of the club's 19th league match is a
+one-game ban; ten before the 32nd is **two**; fifteen at any point in the
+season is three, with 20+ referred to a Regulatory Commission. The gates are
+19 and 32 against the Championship's 19 and 37 because the season is 38 games
+rather than 46 — the same ladder on a shorter runway, not a different rule.
+The count does not reset when a ban is served.
+
+The 19/32 pair carries the same evidence limit as everything else here: it is
+corroborated across published summaries of the Premier League handbook rather
+than read out of the handbook.
+
 ## Championship — checked
 
 Five cautions before the conclusion of the club's 19th league match is a
@@ -69,12 +105,13 @@ quotations of the article rather than the article itself.
 WebFetch is blocked in the environment these desks are built in — a control
 fetch of Wikipedia returns 403, so it is not the publishers refusing. Both
 rule sets therefore rest on search results quoting the regulations rather than
-on the regulations themselves. The Championship figures are corroborated
-across several independent sources and are the widely-published EFL rule; the
+on the regulations themselves. The English figures are corroborated across
+several independent sources and are the widely-published PL and EFL rules; the
 Spanish ones are corroborated too, but one secondary source disagreed and is
 recorded in the Spain file.
 
-Before either strip is treated as authoritative, open the EFL regulations and
+Before any of the three strips is treated as authoritative, open the Premier
+League handbook, the EFL regulations and
 the RFEF Código Disciplinario on an unrestricted network and confirm the
 thresholds, the gates and the ban lengths against the tables above.
 

@@ -214,6 +214,48 @@ assert.ok(SIM_MODEL.constants.DC_RHO < 0 && SIM_MODEL.constants.DC_RHO > -0.5,
 // lose the game-state factor. The usual cause is a rename on either side —
 // which is exactly the failure the short-code rekey exists to catch early.
 const simRated = new Set(Object.keys(SIM_MODEL.teams));
+/* ---- the suspension ladder ---------------------------------------------- */
+/* This desk and the Championship run the SAME ladder with DIFFERENT gates —
+   19/32 here against 19/37 there, because a Premier League season is 38 games
+   and a Championship one is 46. Copying the wrong pair would move every
+   player's cut-off by five matches and nothing on screen would look wrong. */
+const SUSP = vm.runInContext("typeof SUSPENSION !== 'undefined' ? SUSPENSION : null", ctx);
+let suspNote = 'no suspension scheme in pl_data.js yet';
+if (SUSP) {
+  assert.equal(SUSP.kind, 'ladder', `the PL scheme is "${SUSP.kind}", expected a ladder`);
+  assert.equal(SUSP.cumulative, true, 'the English ladder does not reset when a ban is served');
+  /* Compared as strings, not with deepEqual. These arrays are built inside a
+     vm context, so their prototype is that realm's Array — and this file
+     imports node:assert/strict, whose deepEqual is deepSTRICTEqual and
+     compares prototypes. It fails on values that are identical. */
+  assert.equal(SUSP.rungs.map((r) => r.at).join('/'), '5/10/15', 'rungs must be 5/10/15');
+  assert.equal(SUSP.rungs.map((r) => r.ban).join('/'), '1/2/3',
+    'the ten-rung is TWO matches, not one');
+  assert.equal(SUSP.rungs.map((r) => r.by ?? '-').join('/'), '19/32/-',
+    `gates are ${SUSP.rungs.map((r) => r.by).join('/')} — a 38-game season cuts ` +
+    'off at 19 and 32; 37 is the Championship, whose season is eight games longer');
+  suspNote = `ladder ${SUSP.rungs.map((r) => r.at).join('/')} gated ` +
+    `${SUSP.rungs.map((r) => r.by ?? '-').join('/')}`;
+
+  const deskCode = readFileSync(join(root, 'index.html'), 'utf8')
+    .replace(/<!--[\s\S]*?-->/g, '')
+    .replace(/\/\*[\s\S]*?\*\//g, '')
+    .replace(/(^|[^:])\/\/.*$/gm, '$1');
+  assert.ok(/PLDSuspension/.test(deskCode),
+    'index.html does not use the shared suspension module');
+  assert.ok(!/rungs\s*:/.test(deskCode),
+    'index.html defines its own rungs instead of reading SUSPENSION');
+  /* The ladder counts THIS season. `p.live.yc` is the 2026-27 count and
+     `p.yc` is 2025-26; crediting a player with last season's cards would put
+     him on the brink of a ban he is nowhere near. */
+  const strip = /function renderSuspension\(\)([\s\S]*?)\n\}/.exec(deskCode);
+  assert.ok(strip, 'index.html has no renderSuspension()');
+  assert.ok(/p\.live\.yc/.test(strip[1]),
+    'the strip does not read the live 2026-27 card count');
+  assert.ok(!/p\.sc\s*=\s*p\.yc\b/.test(strip[1]),
+    'the strip assigns last season\'s yc as this season\'s count');
+}
+
 const simMissing = CLUBS.filter((c) => !simRated.has(c.short)).map((c) => c.short);
 assert.equal(simMissing.length, 0,
   `clubs unrated by the match model: ${simMissing.join(', ')} — re-run scripts/build-sim-model.mjs ` +
@@ -250,6 +292,6 @@ assert.ok(/<script\s+src="data\/sim_model\.js"><\/script>/.test(html),
   'index.html no longer loads data/sim_model.js');
 
 console.log(`data guard OK: ${PL_PLAYERS.length} players (${promotedRows} at promoted clubs, ${efl} of them on Championship form), ` +
-  `${CLUBS.length} clubs, ${REFS.length} refs, ` +
+  `${CLUBS.length} clubs, ${REFS.length} refs, ${suspNote}, ` +
   `${REF_HISTORY.refs.length} historical refs over ${REF_HISTORY.seasons.length} seasons, ` +
   `match model ${SIM_MODEL.version} rating all ${simRated.size}, no inline dataset`);
