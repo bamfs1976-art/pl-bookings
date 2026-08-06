@@ -129,6 +129,22 @@ jobs:
           API_FOOTBALL_SEASON: ${{ inputs.season_af }}
         run: python3 data/harvest_apifootball.py --league EFLC
 
+      # The Premier League division, for the three clubs RELEGATED into the
+      # Championship — Burnley, West Ham and Wolves played there last season,
+      # so their form is a PL record and no Championship harvest contains it.
+      #
+      # Writes pl_af_players.json, NOT pl_players.json. Keeping it separate is
+      # the point: pl_data.js is still built on a ScoutingStats basis and
+      # switching that moves every published number on the live desk. The
+      # Championship gets the better source without that decision being made
+      # for the Premier League as a side effect.
+      - name: Harvest the Premier League from API-Football (the relegated three)
+        if: ${{ env.API_FOOTBALL_KEY != '' && inputs.refresh_eflc }}
+        continue-on-error: true
+        env:
+          API_FOOTBALL_SEASON: ${{ inputs.season_af }}
+        run: python3 data/harvest_apifootball.py --league PL --out pl_af_players.json
+
       # League One, for the three clubs promoted into the Championship. Only
       # the Championship desk needs it, so it never blocks the Premier League.
       - name: Harvest League One from API-Football (the promoted three)

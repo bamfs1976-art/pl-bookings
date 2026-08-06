@@ -12,7 +12,7 @@ Premier League one. Most of its clubs were in the division last season; the
 interesting minority were not:
 
   18 clubs  2025-26 Championship form   basis EFLC   champ_promoted.json
-   3 clubs  2025-26 Premier League form basis PL     pl_players.json
+   3 clubs  2025-26 Premier League form basis PL     pl_af_players.json
             (Burnley, West Ham, Wolves — relegated, so last season's record is
             from a higher division. Flagged, because a foul rate earned in the
             Premier League is not the same evidence as one earned here.)
@@ -20,10 +20,16 @@ interesting minority were not:
             (Lincoln, Cardiff, Bolton — promoted. Optional: absent, they carry
             no form and are flagged NEW.)
 
-Both of the first two files are ones data/harvest.py ALREADY writes. It fetches
-the whole of ScoutingStats league 8 and league 9 and the Premier League build
-then keeps a slice of each — so 21 of these 24 squads need no new harvesting at
-all, only a pinned 2025-26 season id (SS_SEASON_CH / SS_SEASON_PL).
+All three come from data/harvest_apifootball.py, one division per run:
+
+    python3 data/harvest_apifootball.py --league EFLC
+    python3 data/harvest_apifootball.py --league L1
+    python3 data/harvest_apifootball.py --league PL --out pl_af_players.json
+
+The last writes a SEPARATE file rather than pl_players.json. pl_data.js is
+still built on a ScoutingStats basis, and changing that moves every published
+number on the live Premier League desk — a decision of its own. This desk can
+take the better source without making it.
 
 CLUB CARD RATES COME FROM THE FREE MATCH RECORDS, NOT THE FEED. The Premier
 League desk omits its promoted clubs' team rates because Championship minutes
@@ -78,7 +84,11 @@ def rows_for(payload, keep, basis, unmapped):
         name = (p.get("team") or "").strip()
         short = resolve(name)
         if not short:
-            if name:
+            # A club the PREMIER LEAGUE desk knows is not an unmapped name, it
+            # is a club that changed division — Coventry, Ipswich and Hull are
+            # in a 2025-26 Championship harvest and belong to the other desk.
+            # Reporting those as failures buries a real misspelling among them.
+            if name and name not in P.SHORT:
                 unmapped[name] = unmapped.get(name, 0) + 1
             continue
         if short not in keep:
@@ -102,7 +112,15 @@ def build_players():
     # real rate must never be overwritten by a blank one.
     for payload, keep, basis, src in (
         (source("champ_promoted.json", "EFLC", shipped, reused), continuing, "EFLC", "Championship"),
-        (source("pl_players.json", "PL", shipped, reused), leagues.EFLC_FROM_PL, "PL", "Premier League"),
+        # Burnley, West Ham and Wolves were in the Premier League last season,
+        # so their form is a PL record. pl_af_players.json is the API-Football
+        # harvest of that division, kept SEPARATE from pl_players.json on
+        # purpose: pl_data.js is still built on a ScoutingStats basis, and
+        # changing that moves every published number on the live desk. This
+        # desk can use the better source without deciding that for the other.
+        (source("pl_af_players.json", "PL", shipped, reused)
+         or source("pl_players.json", "PL", shipped, reused),
+         leagues.EFLC_FROM_PL, "PL", "Premier League"),
         (source("l1_players.json", "L1", shipped, reused), leagues.EFLC_FROM_L1, "L1", "League One"),
         (source("eflc_squads.json", "NEW", shipped, reused), all_shorts, "NEW", "squad fill"),
     ):
@@ -297,7 +315,8 @@ def main():
     # out one club at a time across four runs is a poor way to learn it.
     faults = []
     if unmapped:
-        print("\nClub names nothing could be resolved to:")
+        print("\nClub names nothing could be resolved to (clubs that merely "
+              "changed division are not listed):")
         for name, n in sorted(unmapped.items(), key=lambda kv: -kv[1]):
             print(f"  {n:5} rows  {name!r}")
         print("  -> add each to leagues.EFLC_ALIASES (or fix EFLC_CLUBS if the "

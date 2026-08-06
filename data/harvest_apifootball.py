@@ -346,6 +346,9 @@ def main():
     ap.add_argument("--league", default="EFLC", choices=sorted(leagues.LEAGUES),
                     help="which division to harvest")
     ap.add_argument("--season", help="season START year, e.g. 2025 for 2025-26")
+    ap.add_argument("--out", help="write to this filename instead of the "
+                                  "league's default (keeps a harvest from "
+                                  "overwriting another desk's source)")
     args = ap.parse_args()
 
     key = os.environ.get("API_FOOTBALL_KEY", "").strip().strip('"').strip("'")
@@ -413,9 +416,9 @@ def main():
                  f"covered, so {league.players_file} was NOT overwritten:\n  - "
                  + "\n  - ".join(problems))
 
-    out = DATA / league.players_file
-    out.write_text(json.dumps(rows), encoding="utf-8")
-    print(f"\n{league.players_file} written ({len(rows)} players from "
+    name = args.out or league.players_file
+    (DATA / name).write_text(json.dumps(rows), encoding="utf-8")
+    print(f"\n{name} written ({len(rows)} players from "
           f"{len(ids)} clubs, API-Football)")
 
 
