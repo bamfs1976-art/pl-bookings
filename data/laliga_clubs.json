@@ -1,0 +1,86 @@
+{
+ "clubs": {
+  "Alaves": {
+   "id": 542,
+   "short": "ALA"
+  },
+  "Athletic Club": {
+   "id": 531,
+   "short": "ATH"
+  },
+  "Atletico Madrid": {
+   "id": 530,
+   "short": "ATM"
+  },
+  "Barcelona": {
+   "id": 529,
+   "short": "BAR"
+  },
+  "Celta Vigo": {
+   "id": 538,
+   "short": "CEL"
+  },
+  "Deportivo La Coruna": {
+   "id": 544,
+   "short": "DEP"
+  },
+  "Elche": {
+   "id": 797,
+   "short": "ELC"
+  },
+  "Espanyol": {
+   "id": 540,
+   "short": "ESP"
+  },
+  "Getafe": {
+   "id": 546,
+   "short": "GET"
+  },
+  "Levante": {
+   "id": 539,
+   "short": "LEV"
+  },
+  "Malaga": {
+   "id": 535,
+   "short": "MAL"
+  },
+  "Osasuna": {
+   "id": 727,
+   "short": "OSA"
+  },
+  "Racing Santander": {
+   "id": 4665,
+   "short": "RAC"
+  },
+  "Rayo Vallecano": {
+   "id": 728,
+   "short": "RAY"
+  },
+  "Real Betis": {
+   "id": 543,
+   "short": "BET"
+  },
+  "Real Madrid": {
+   "id": 541,
+   "short": "RMA"
+  },
+  "Real Sociedad": {
+   "id": 548,
+   "short": "RSO"
+  },
+  "Sevilla": {
+   "id": 536,
+   "short": "SEV"
+  },
+  "Valencia": {
+   "id": 532,
+   "short": "VAL"
+  },
+  "Villarreal": {
+   "id": 533,
+   "short": "VIL"
+  }
+ },
+ "league": "LL",
+ "season": "2026"
+}

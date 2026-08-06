@@ -19,9 +19,9 @@ const CLUBS = [
   {short:"AVL",name:"Aston Villa",img:"https://cdn.sportmonks.com/images/soccer/teams/15/15.png",basis:"PL",ca:1.55,caH:1.37,caA:1.73,fm:10.0,squad:30},
   {short:"LIV",name:"Liverpool",img:"https://cdn.sportmonks.com/images/soccer/teams/8/8.png",basis:"PL",ca:1.5,caH:1.19,caA:1.81,fm:10.2,squad:24},
   {short:"ARS",name:"Arsenal",img:"https://cdn.sportmonks.com/images/soccer/teams/19/19.png",basis:"PL",ca:1.32,caH:0.88,caA:1.76,fm:10.3,squad:25},
-  {short:"COV",name:"Coventry City",img:null,basis:"EFL",ca:null,caH:null,caA:null,fm:null,squad:62},
-  {short:"HUL",name:"Hull City",img:null,basis:"EFL",ca:null,caH:null,caA:null,fm:null,squad:73},
-  {short:"IPS",name:"Ipswich Town",img:null,basis:"EFL",ca:null,caH:null,caA:null,fm:null,squad:67},
+  {short:"COV",name:"Coventry City",img:"https://media.api-sports.io/football/teams/1346.png",basis:"EFL",ca:null,caH:null,caA:null,fm:null,squad:62},
+  {short:"HUL",name:"Hull City",img:"https://media.api-sports.io/football/teams/64.png",basis:"EFL",ca:null,caH:null,caA:null,fm:null,squad:74},
+  {short:"IPS",name:"Ipswich Town",img:"https://media.api-sports.io/football/teams/57.png",basis:"EFL",ca:null,caH:null,caA:null,fm:null,squad:68},
 ];
 const PL_PLAYERS = [
   {c:"ARS",n:"Gabriel Jesus",p:"FW",min:421,yc:2,rc:0,y:0.428,f:1.92,fw:null,r:2.776,ls:true,b:"PL"},
@@ -380,6 +380,7 @@ const PL_PLAYERS = [
   {c:"HUL",n:"Jack Butland",p:"GK",min:0,yc:null,rc:null,y:null,f:null,fw:null,r:null,ls:true,b:"NEW"},
   {c:"HUL",n:"John Egan",p:"DF",min:0,yc:null,rc:null,y:null,f:null,fw:null,r:null,ls:true,b:"NEW"},
   {c:"HUL",n:"Kieran Dowell",p:"MF",min:0,yc:null,rc:null,y:null,f:null,fw:null,r:null,ls:true,b:"NEW"},
+  {c:"HUL",n:"Konstantinos Tzolakis",p:"GK",min:0,yc:null,rc:null,y:null,f:null,fw:null,r:null,ls:true,b:"NEW"},
   {c:"HUL",n:"Lewie Coyle",p:"DF",min:0,yc:null,rc:null,y:null,f:null,fw:null,r:null,ls:true,b:"NEW"},
   {c:"HUL",n:"Liam Millar",p:"MF",min:0,yc:null,rc:null,y:null,f:null,fw:null,r:null,ls:true,b:"NEW"},
   {c:"HUL",n:"Mason Burstow",p:"FW",min:0,yc:null,rc:null,y:null,f:null,fw:null,r:null,ls:true,b:"NEW"},
@@ -448,6 +449,7 @@ const PL_PLAYERS = [
   {c:"IPS",n:"E. Baggott",p:"DF",min:0,yc:0,rc:0,y:null,f:null,fw:null,r:null,ls:true,b:"EFL"},
   {c:"IPS",n:"Emersonn Correia da Silva",p:"FW",min:0,yc:null,rc:null,y:null,f:null,fw:null,r:null,ls:true,b:"NEW"},
   {c:"IPS",n:"Finley Frank Barbrook",p:"MF",min:0,yc:0,rc:0,y:null,f:null,fw:null,r:null,ls:true,b:"EFL"},
+  {c:"IPS",n:"Florentino Ibrain Morris Luís",p:"MF",min:0,yc:null,rc:null,y:null,f:null,fw:null,r:null,ls:true,b:"NEW"},
   {c:"IPS",n:"George Hirst",p:"FW",min:0,yc:null,rc:null,y:null,f:null,fw:null,r:null,ls:true,b:"NEW"},
   {c:"IPS",n:"Issa Diop",p:"DF",min:812,yc:null,rc:null,y:null,f:null,fw:null,r:null,ls:false,b:"NEW"},
   {c:"IPS",n:"Jack Clarke",p:"MF",min:0,yc:null,rc:null,y:null,f:null,fw:null,r:null,ls:true,b:"NEW"},

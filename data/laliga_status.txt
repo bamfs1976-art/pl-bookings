@@ -1,0 +1,10 @@
+La Liga 2026-27 — build_laliga_data.py
+club rates from mirror (380 matches)
+players: 635  by basis: LL=635
+clubs with players: 16 of 20
+club rates from match records: 17 of 20
+  - ALA: no players at all
+  - DEP: no players at all
+  - MAL: no players at all
+  - RAC: no players at all
+RESULT: REFUSED — squad coverage is short, so the desk would ship clubs with no players and no error
