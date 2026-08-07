@@ -37,6 +37,13 @@ jobs:
       - name: API-Football harvest route (mapping and pagination)
         run: python3 data/test_apifootball.py
 
+      # The per-fixture training table. Both failures it guards are silent: a
+      # missing foul count read as zero fits the model as though the player
+      # never fouled, and form leaking backwards makes the fit look far better
+      # than it is while changing nothing you can see.
+      - name: Per-match training table (mapping and leakage)
+        run: python3 data/test_player_matches.py
+
       # The multi-league data layer. Holds the Premier League path byte-stable
       # while a second competition moves in beside it, and holds the rule that
       # a league whose records name no official is refused rather than shipped

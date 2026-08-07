@@ -57,6 +57,11 @@ on:
         type: boolean
         required: false
         default: true
+      player_matches:
+        description: "Harvest per-player per-fixture minutes/fouls/cards for the Championship and La Liga (one API call per finished fixture — a whole season is ~900). Off by default; turn on to backfill or refresh the training tables."
+        type: boolean
+        required: false
+        default: false
       refresh_eflc:
         description: "Also refresh EFL Championship referees (free source, no key). The first leg of the Championship desk."
         type: boolean
@@ -388,6 +393,36 @@ jobs:
       - name: Re-vendor the match model from Plsimulator
         continue-on-error: true
         run: node scripts/build-sim-model.mjs
+
+      # Tier 2, THE OTHER TWO DIVISIONS. The FPL leg below covers the Premier
+      # League only — FPL has no Championship and no La Liga — so until this
+      # step existed `build-model.mjs --fit` could not be fitted for two of the
+      # three desks at all. /fixtures/players carries per-player minutes, fouls
+      # and cards for any league the key covers: the label and both features.
+      #
+      # One call per finished fixture, so a whole completed season is ~380
+      # (La Liga) or ~552 (Championship) against a 7,500/day allowance. Run by
+      # hand with --player-matches to backfill a season; this scheduled step
+      # exists so the table keeps up once the season is under way.
+      #
+      # continue-on-error: a training table is not the live desk, and a model
+      # that cannot be refitted today must not take the data refresh down.
+      # DELIBERATELY read bare, unlike every other boolean in this file. The
+      # others use `github.event_name != 'workflow_dispatch' || inputs.x` so a
+      # cron run does not skip them. This one SHOULD skip on cron: it is ~900
+      # API calls and the training table is a backfill, not a daily need. Turn
+      # it on by hand when refreshing the tables.
+      - name: Per-match training tables (Championship, La Liga)
+        if: ${{ env.API_FOOTBALL_KEY != '' && inputs.player_matches }}
+        continue-on-error: true
+        env:
+          API_FOOTBALL_SEASON: ${{ inputs.season_af || '2025' }}
+        run: |
+          for L in EFLC LL; do
+            python3 data/harvest_apifootball.py --player-matches --league $L \
+              && python3 data/build_match_history.py --league $L \
+              || echo "::warning::$L training table unavailable this run"
+          done
 
       # Tier 2: harvest per-match booking history from the public FPL
       # element-summary endpoint and refit the logistic GLM by IRLS. Runs on

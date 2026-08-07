@@ -38,3 +38,16 @@ data/*.json
 !data/laliga_harvest.log
 data/epldata/
 __pycache__/
+
+# Training tables, not shipped data: the raw per-fixture harvest and the
+# leakage-free tables built from it. Tens of thousands of rows apiece,
+# regenerable from one command, and read only by build-model.mjs on a runner —
+# committing them would put a training set in every visitor's git clone for no
+# benefit.
+#
+# The unprefixed name is listed SEPARATELY on purpose: data/match_history.json
+# is the FPL-derived Premier League table, and `data/*_match_history.json` does
+# not match it. Its docstring has always said "gitignored" and it never was.
+data/match_history.json
+data/*_player_matches.json
+data/*_match_history.json

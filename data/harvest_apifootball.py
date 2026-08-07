@@ -463,6 +463,126 @@ def map_fixture(entry, known, code="EFLC"):
     }
 
 
+# ---- per-player, per-fixture: the training table the model has never had ----
+#
+# WHY THIS EXISTS. data/harvest_history.py builds the model's training rows from
+# the FPL element-summary endpoint. It is leakage-free and well built and it is
+# PREMIER LEAGUE ONLY, because FPL has no Championship and no La Liga. So
+# `build-model.mjs --fit` can only ever be fitted on one of the three divisions
+# this app covers: "basis: season-prior, fitRows: 0" is not "not fitted yet" for
+# the other two, it is UNFITTABLE with the sources that were wired.
+#
+# /fixtures/players returns, for ONE fixture, every player's minutes, fouls
+# committed and cards. That is the label and both features, for any league the
+# key covers. One call per fixture: a completed season is 380 (PL, La Liga) or
+# 552 (Championship), so a backfill is roughly 1,300 calls against a 7,500/day
+# allowance, and the ongoing cost is about a dozen a matchday.
+
+# API-Football writes positions as single letters.
+AF_POS = {"G": "GK", "D": "DF", "M": "MF", "F": "FW"}
+
+# Only a finished match has a complete card record. Anything else would train
+# the model on a scoreline that had not happened yet.
+FINISHED = {"FT", "AET", "PEN"}
+
+
+def map_fixture_player(entry, club_of):
+    """One player's line from a /fixtures/players response.
+
+    `club_of` maps an API-Football team id to this desk's short code; a team the
+    desk does not know is dropped rather than guessed at, the same rule the
+    fixture mapping uses.
+    """
+    stats = (entry.get("statistics") or [{}])[0] or {}
+    games = stats.get("games") or {}
+    mins = games.get("minutes")
+    # A player who did not get on has no evidence in either direction: he did
+    # not fail to be booked, he was not exposed. Dropping him is what keeps the
+    # base rate a rate per match PLAYED.
+    if not mins:
+        return None
+    cards = stats.get("cards") or {}
+    fouls = stats.get("fouls") or {}
+    name = ((entry.get("player") or {}).get("name") or "").strip()
+    if not name:
+        return None
+    return {
+        "player": name,
+        "club": club_of,
+        "pos": AF_POS.get((games.get("position") or "").upper()[:1]),
+        "min": int(mins),
+        # `committed` is null for some fixtures rather than zero. Null is not
+        # zero — a match with no foul data must not train the model as a match
+        # in which nobody fouled — so it stays None and the builder skips it.
+        "fouls": fouls.get("committed"),
+        "yc": int(cards.get("yellow") or 0),
+        "rc": int(cards.get("red") or 0),
+    }
+
+
+def harvest_player_matches(host, key, league, season, limit=None):
+    """Every finished fixture of a season, one call each."""
+    af = str(league.af_league)
+    payload = _get(host, key, "fixtures", {"league": af, "season": season})
+    err = api_errors(payload)
+    if err:
+        sys.exit(f"ERROR: /fixtures returned errors: {err}")
+    fixtures = payload.get("response") or []
+    done = [f for f in fixtures
+            if (((f.get("fixture") or {}).get("status") or {}).get("short") in FINISHED)]
+    done.sort(key=lambda f: (f.get("fixture") or {}).get("date") or "")
+    if limit:
+        done = done[:limit]
+    print(f"  {len(fixtures)} fixtures, {len(done)} finished"
+          + (f" (capped at {limit})" if limit else ""))
+
+    rows, missing = [], 0
+    for i, f in enumerate(done, 1):
+        fx = f.get("fixture") or {}
+        fid = fx.get("id")
+        if i % 25 == 0 or i == len(done):
+            print(f"  {i}/{len(done)} fixtures")
+        pl = _get(host, key, "fixtures/players", {"fixture": fid})
+        e = api_errors(pl)
+        if e:
+            # 200-with-errors is a refusal, not an empty match. Reading it as
+            # "nobody played" would train the model on a fixture of ghosts.
+            print(f"    fixture {fid}: {e} — skipped")
+            continue
+        teams = pl.get("response") or []
+        if not teams:
+            missing += 1
+            continue
+        for side in teams:
+            tm = side.get("team") or {}
+            short = short_in(league.code, canonical_for(league.code, tm.get("name")))
+            if not short:
+                continue
+            for entry in side.get("players") or []:
+                row = map_fixture_player(entry, short)
+                if not row:
+                    continue
+                row.update({
+                    "league": league.code,
+                    "fixture_id": fid,
+                    "date": fx.get("date"),
+                    "round": round_no((f.get("league") or {}).get("round")),
+                })
+                rows.append(row)
+    if missing:
+        print(f"  {missing} finished fixture(s) returned no player lines")
+    return rows
+
+
+def emit_player_matches(rows, league, season, out=None):
+    name = out or f"{league.code.lower()}_player_matches.json"
+    (DATA / name).write_text(json.dumps(rows), encoding="utf-8")
+    booked = sum(1 for r in rows if r["yc"] or r["rc"])
+    fx = len({r["fixture_id"] for r in rows})
+    print(f"\n{name} written: {len(rows)} player-matches over {fx} fixtures, "
+          f"{booked} with a card ({(100 * booked / len(rows) if rows else 0):.1f}%).")
+
+
 def harvest_fixtures(host, key, league, season):
     """Every fixture for one league-season. One call: /fixtures returns a
     whole season, and paging.total is checked rather than assumed."""
@@ -692,6 +812,14 @@ def main():
                          "league that names its own division)")
     ap.add_argument("--fixtures", action="store_true",
                     help="harvest the fixture list instead of squads")
+    ap.add_argument("--player-matches", action="store_true",
+                    help="harvest per-player per-fixture minutes, fouls and "
+                         "cards for a COMPLETED season — the training table "
+                         "for the model fit, which FPL can only provide for "
+                         "the Premier League")
+    ap.add_argument("--limit", type=int,
+                    help="cap the number of fixtures fetched (one call each), "
+                         "for a first run that should not spend the day's quota")
     ap.add_argument("--ref-fixtures", action="store_true",
                     help="harvest the COMPLETED season's officials, for the "
                          "referee join (leagues whose free records name no "
@@ -733,6 +861,11 @@ def main():
     if args.ref_fixtures:
         emit_ref_fixtures(harvest_ref_fixtures(host, key, league, season),
                           league, season)
+        return
+    if args.player_matches:
+        emit_player_matches(
+            harvest_player_matches(host, key, league, season, args.limit),
+            league, season, args.out)
         return
     teams_payload = _get(host, key, "teams", {"league": af, "season": season})
     err = api_errors(teams_payload)
