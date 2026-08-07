@@ -364,3 +364,45 @@ html[data-density="expert"] .combined-note{display:none}
 /* High / Watch banding, at the thresholds every desk uses. */
 .band{font-weight:700}
 .band.hi{color:var(--danger-ink)} .band.mid{color:var(--warn-ink)} .band.lo{color:var(--text-2)}
+
+/* ---- Your note, and the calendar button -------------------------------- */
+.pp-notes{margin-top:11px}
+.note-input{width:100%;min-height:2.4rem;resize:vertical;font:inherit;font-size:13px;
+  padding:7px 9px;border-radius:9px;border:1px solid var(--border-2);
+  background:var(--surface-2);color:var(--text);margin-top:3px}
+.note-input:focus-visible{outline:2px solid var(--ring);outline-offset:1px}
+.pp-ics{margin-top:8px;font-size:12.5px;padding:5px 10px}
+/* A player you have written about, marked in the table so the note is
+   findable without opening all 974 of them. */
+.has-note{color:var(--accent);font-weight:700;cursor:help}
+
+/* ---- All players: a card each, the Premier League desk's second view ---- */
+.ap-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(268px,1fr));gap:11px}
+.ap-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;
+  padding:11px 12px;display:flex;flex-direction:column;gap:7px;text-align:left;
+  font:inherit;color:inherit;cursor:pointer}
+.ap-card:hover{border-color:var(--accent)}
+.ap-card:focus-visible{outline:2px solid var(--ring);outline-offset:2px}
+.ap-head{display:flex;align-items:center;gap:8px;min-width:0}
+.ap-head .crest{width:32px;height:32px;border-radius:8px;font-size:11px}
+.ap-nm{font-weight:700;font-size:14px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ap-sub{font-size:11.5px;color:var(--text-2)}
+.ap-stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;
+  border-top:1px solid var(--border);padding-top:7px;margin-top:auto}
+.ap-stat b{display:block;font-family:var(--mono);font-size:14px;line-height:1.15}
+.ap-stat span{font-size:10px;color:var(--text-3);text-transform:uppercase;letter-spacing:.04em}
+/* The two views of one list. */
+.seg-view{display:inline-flex;border:1px solid var(--border-2);border-radius:9px;overflow:hidden}
+.seg-view button{font:inherit;font-size:12.5px;padding:6px 11px;border:0;cursor:pointer;
+  background:var(--surface);color:var(--text-2)}
+.seg-view button+button{border-left:1px solid var(--border-2)}
+.seg-view button[aria-selected="true"]{background:var(--accent);color:var(--on-accent);font-weight:700}
+.seg-view button:focus-visible{outline:2px solid var(--ring);outline-offset:-2px}
+
+/* Skip link. Off-screen until focused, which is the only way a keyboard user
+   gets past a sidebar and a league switcher to the content. Shared, because
+   three pages needed the same four lines. */
+.skip{position:absolute;left:-999px;top:0;z-index:500;padding:9px 14px;
+  background:var(--accent);color:var(--on-accent);font-weight:700;
+  border-radius:0 0 9px 0;text-decoration:none}
+.skip:focus{left:0}

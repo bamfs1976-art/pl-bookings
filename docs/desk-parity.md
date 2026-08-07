@@ -22,7 +22,7 @@ Championship and La Liga desks even carry two fields the Premier League dataset
 does not (`sc`/`sm`, this season's cautions and minutes), because their
 suspension strips read from a harvested season file rather than a live feed.
 
-The genuine data gaps are four, and they are listed separately at the end.
+The genuine data gaps were four. Three are closed; what remains is listed at the end.
 
 ## Views
 
@@ -34,7 +34,7 @@ The genuine data gaps are four, and they are listed separately at the end.
 | Clubs | ✅ | ✅ | ✅ |
 | Referees | ✅ | ✅ | ✅ |
 | Guide | ✅ | ✅ | ✅ |
-| Tracker (logged predictions, P/L, ROI) | ✅ | ❌ | ❌ |
+| Tracker (logged predictions, P/L, ROI) | ✅ | ❌ | ❌ | *(item 9, the one left)* |
 
 **Settled.** All three now open on a fixture-first landing view — the next
 round ranked hottest to coolest, with matches, expected cards, cards a match and
@@ -57,12 +57,12 @@ Premier League data only.
 | Odds input → edge % + verdict | ✅ | ✅ | ✅ | — |
 | Watchlist star | ✅ | ✅ | ✅ | — |
 | Suspension watch strip | ✅ | ✅ | ✅ | — |
-| **Player photos** | ✅ | ❌ | ❌ | **data** |
-| **Availability flags** (injured / doubtful / suspended) | ✅ | ❌ | ❌ | **data** |
+| Player photos | ✅ | ✅ | ✅ | *(done — the field was already in the API response and being discarded)* |
+| Availability flags | ✅ | ⏳ | ⏳ | *(wired from the same response; reads false for every player so far)* |
 | Confidence / low-sample dot | ❌ *(dead CSS)* | ✅ | ✅ | *(audit error — now on all three)* |
 | Recent card-form arrow | ✅ | ✅ | ✅ | *(done — from `sc`/`sm`)* |
-| **"All players" second view** (Starts, RC, Won/90) | ✅ | ❌ | ❌ | mixed |
-| **Player notes** | ✅ | ❌ | ❌ | interface |
+| "All players" second view | ✅ | ✅ | ✅ | *(done — a card per player beside the table)* |
+| Player notes | ✅ | ✅ | ✅ | *(done — kept beside the watchlist, marked in the table)* |
 | CSV export | ✅ | ✅ | ✅ | *(done)* |
 
 ## Per match
@@ -76,10 +76,10 @@ Premier League data only.
 | Thin-sample warning | ✅ | ✅ | ✅ | *(done)* |
 | "Hide low sample" filter | ✅ | ✅ | ✅ | *(audit error — `#fMin`, "450+ minutes")* |
 | High / Watch banding of players | ✅ | ✅ | ✅ | *(audit error — see note)* |
-| Head-to-head strip | ✅ | ⏳ *(workflow)* | ✅ | *(done — see note)* |
+| Head-to-head strip | ✅ | ✅ | ✅ | *(done — Championship built by the workflow: 185 pairs)* |
 | Derby boost | ✅ | ✅ | ✅ | *(done — 14 pairs each, priced at ×1.08)* |
 | **Match model / game-state term** | ✅ | ❌ | ❌ | **data** (no source) |
-| **ICS calendar export** | ✅ | ❌ | ❌ | interface |
+| ICS calendar export | ✅ | ✅ | ✅ | *(done — from the player record's next fixture)* |
 
 **Correction.** The banding row above originally read ❌ for both newer desks. It was
 wrong: they band at the same 50% / 30% thresholds via a `band()` returning
@@ -225,35 +225,81 @@ render broken locally on all three desks and neither can be checked here.
 
 ## Where this stands
 
-**Done and live: items 1–5 and 7.** The two newer desks now share the Premier
-League's shell, open on a fixture-first landing, and carry the same fixture
-cards, player table, club and referee tables, tour, glossary, command palette
-and density switch. Several gaps ran the other way and were folded back into the
-Premier League desk.
+**Done and live: items 1–8.** The two newer desks share the Premier League's
+shell, open on the same fixture-card grid, and carry the same fixture cards,
+player table, club and referee tables, tour, glossary, command palette, density
+switch, head-to-head history, derby lists, player photographs and calendar
+export. `/today` draws the same card as the three desks it combines. Several
+gaps ran the other way and were folded back into the Premier League desk.
 
-**Remaining: 6, 8 and 9**, and they are the three that need something this
-repository does not already have.
+**Remaining: item 9 alone.**
 
 | Item | What it needs | Blocker |
 |---|---|---|
-| 6 — H2H and derby lists | H2H built from football-data.co.uk (the *same* public-domain records already used for referees and home/away splits, covering both divisions); derby lists hand-written as the Premier League's is | The builder can be written, but the fetch is blocked from the build sandbox, so it must be written unrun and proved by a CI run |
-| 8 — Player photos, availability flags | Photos are one extra field through the API-Football call already made; availability needs the `/injuries` endpoint | An API-Football key and quota |
-| 9 — Account sync, Tracker | Per-league Supabase tables and a `log-predictions` equivalent per division | Largest of the three; a project rather than a change |
+| 9 — Account sync, Tracker | Per-league Supabase tables and a `log-predictions` equivalent per division | Scope: a project rather than a change |
 
-Nothing in 6, 8 or 9 is blocked on a *decision* — only on credentials, network
-or scope.
+### Two corrections worth keeping
+
+This table used to say item 8 was blocked on "an API-Football key and quota".
+**It was not.** `map_player` had been receiving `player.photo` and
+`player.injured` all along, on a call the harvester already made for all three
+desks, and discarding both — they were dropped alongside the bug that put a
+squad member's headshot on a club badge and never put back. The desks then went
+without photographs on the grounds that there was no source, when the source was
+the request already in flight. A note that says "blocked" is worth re-testing
+before it is believed.
+
+And item 6 was described as needing "a CI run to prove it". That was right, and
+the run found something the builder could not: the workflow built the
+head-to-head files and never staged them, so a green refresh committed nothing.
+A build step whose output is not committed looks exactly like a success.
+
+### What is left that is not an item
+
+- **Availability is unproven.** `inj` is populated but reads false for all 1,757
+  players. Plausible in pre-season; indistinguishable from "not wired" until a
+  mid-season run puts a name on it.
+- **Premier League photographs are 117 of 660.** The rest of that squad comes
+  from the legacy ScoutingStats harvest, which carries no photo field. Fixing it
+  means moving the PL squad build to API-Football, which changes every published
+  Premier League number — a decision, not a chore.
+- **Closing odds.** football-data.co.uk carries 1X2, over/under 2.5 goals and
+  Asian handicap for E0, E1 and SP1 — free, already a dependency, reachable from
+  the runner. No card markets anywhere free. Their use here is a backtest of
+  whether the fitted "tight" figure should feed booking heat, which the Guide
+  already flags as an open question.
 
 ## Recommended order
 
 1. ~~**Navigation shell**~~ — done: `assets/shell.js`, sidebar + breadcrumb + mobile bottom bar on both newer desks.
-2. ~~**A "This Matchday" landing**~~ — done on both, priced through the same `priceFixture` as the Fixtures tab.
-3. ~~**Fixture card parity**~~ — done: thin-sample warning added; banding already existed (audit error).
-4. ~~**Player table parity**~~ — done: confidence dot (all three), card-form arrow, CSV export. **Player notes still outstanding.**
+2. ~~**A "This Matchday" landing**~~ — done on both, priced through the same `priceFixture` as the Fixtures tab, and now drawing the same fixture-card grid the Premier League desk lands on.
+3. ~~**Fixture card parity**~~ — done: thin-sample warning added; banding already existed (audit error). The card itself is now `fixtureCard()`, shared between both panels, with its CSS in `assets/tw.css` so all four pages draw one card.
+4. ~~**Player table parity**~~ — done: confidence dot (all three), card-form arrow, CSV export, **player notes**, and an **All players** card view beside the table.
 5. ~~**Club and referee table parity**~~ — done. One agreed set per table, applied in both directions.
-6. ~~**H2H and derby lists**~~ — done. La Liga built (136 pairs, 1,146 meetings); the Championship builds in the data-refresh workflow, because the GitHub mirror does not carry it and the origin is unreachable from the build sandbox.
+6. ~~**H2H and derby lists**~~ — done. All three divisions carry real history: Championship 185 pairs over 1,094 meetings (3.79 yellows a meeting), Premier League 151/1,118 (4.00), La Liga 136/1,146 (4.82).
 7. ~~**Tour, glossary, density toggle, command palette**~~ — done on the two newer desks, as shared modules (`assets/tour.js`, `assets/palette.js`, glossary + density in `assets/shell.js`).
-8. **Photos and availability flags** (harvest work).
-9. **Account sync and Tracker** — largest, needs per-league pipelines.
+8. ~~**Photos and availability flags**~~ — done. 974/974 Championship and 783/783 La Liga players carry a photograph; the flag is wired but has nothing to show yet.
+9. **Account sync and Tracker** — the one item left, and the largest.
 
-Items 1–5 and 7 are interface-only and would make the three desks look and behave
-identically. Items 6 and 8 close the data gaps. Item 9 is a project in itself.
+Items 1–5 and 7 were interface work. Items 6 and 8 closed the data gaps. Item 9
+is a project in itself.
+
+## What the guards learned
+
+Every bug this audit's implementation shipped was SILENT — no exception, no
+failing selector, no red test — and each one is now pinned:
+
+| Failure | Guard |
+|---|---|
+| Markup emitting a class with no CSS rule | `check-styles.mjs` |
+| A security header refusing the site's own resources | `check-headers.mjs` |
+| A field reaching the builder and stopping at the writer | `test_coverage.py` (calls the real emitter) |
+| A build step whose output is never staged | `check-nav.mjs` |
+| A page that fails to boot and shows nothing | `today.html` names its own error |
+
+The recurring defect is not in the code but in the guards: an assertion
+satisfied by the WRONG TEXT. A substring matching inside a longer selector; a
+`:last-child` border standing in for the `display:flex` that did the work; a
+bound set by eye that failed the assertion rather than the code; a check still
+reading a file after the rule moved out of it. Every one was found by mutation
+— break the thing on purpose, confirm the guard fails — and none by reading.

@@ -192,6 +192,7 @@
 </style>
 </head>
 <body>
+<a href="#main" class="skip">Skip to content</a>
 
 <header class="topbar">
   <div class="wrap" style="display:flex;align-items:center;width:100%">
@@ -213,7 +214,7 @@
 </nav>
 
 
-<main class="wrap">
+<main class="wrap" id="main">
   <section class="hero">
     <h1>EFL Championship 2026-27</h1>
     <p class="muted" style="margin:8px 0 0;max-width:70ch">
@@ -275,10 +276,15 @@
         <button class="btn" id="csvBtn" type="button">&#8681; CSV</button>
         <span class="faint" id="csvNote" style="font-size:12.5px"></span>
         <label class="chk"><input type="checkbox" id="fStar"> ★ only</label>
+        <span class="seg-view" role="tablist" aria-label="How to show the players">
+          <button type="button" data-view="table" role="tab" aria-selected="true">Table</button>
+          <button type="button" data-view="cards" role="tab" aria-selected="false">All players</button>
+        </span>
         <span class="spacer"></span>
         <span class="faint" id="count" style="font-size:12.5px"></span>
       </div>
-      <div class="tablewrap">
+      <div id="apCards" class="ap-grid" hidden></div>
+      <div class="tablewrap" id="tableWrap">
         <table id="tblPlayers">
           <thead><tr>
             <th style="width:26px" aria-label="Watchlist"></th>
@@ -739,6 +745,8 @@
       ref: ref ? ref.n : null,
       watched: !!starred[keyOf(p)],
       onWatch: function () { toggleStar(keyOf(p)); return !!starred[keyOf(p)]; },
+      noteText: notes[keyOf(p)] || '',
+      onNote: function (t) { setNote(keyOf(p), t); },
       note: 'Season-long rate, scaled by the referee when one is picked. '
         + 'Research, not betting advice.'
     };
@@ -746,7 +754,7 @@
       var x = priceFixture(fx);
       rec.fixture = {
         home: clubBy[fx.h] || { short: fx.h }, away: clubBy[fx.a] || { short: fx.a },
-        when: whenText(fx.d), heat: x.m.expected, derby: x.derby,
+        when: whenText(fx.d), iso: fx.d, heat: x.m.expected, derby: x.derby,
         ref: x.ref && x.ref.ref ? x.ref.ref.n : null
       };
     }
@@ -776,17 +784,66 @@
     }
   }
 
+  /* ---- All players: a card each -----------------------------------------
+   * The Premier League desk's second view of the same list. A table is the
+   * right shape for comparing a column; a card is the right shape for reading
+   * one player, and on a phone the table is a horizontal scroll. Same rows,
+   * same filters, same sort — only the presentation differs, so the two can
+   * never disagree about who is in the list. */
+  var playerView = 'table';
+
+  function renderPlayerCards(list) {
+    var host = $('#apCards');
+    host.innerHTML = list.slice(0, 400).map(function (row) {
+      var p = row.p, k = keyOf(p), b = band(row.prob), c = clubBy[p.c] || { short: p.c };
+      return '<button class="ap-card" type="button" data-pk="' + esc(k) + '"'
+        + ' aria-label="Open ' + esc(p.n) + '\u2019s record">'
+        + '<span class="ap-head">'
+        + PLDProfile.crest({ short: p.c, name: c.name, img: p.ph || null })
+        + '<span style="min-width:0;flex:1">'
+        + '<span class="ap-nm">' + esc(p.n)
+        + (notes[k] ? ' <span class="has-note">\u270e</span>' : '') + '</span>'
+        + '<span class="ap-sub">' + esc(c.name || p.c) + ' \u00b7 ' + esc(p.p || '') + '</span>'
+        + '</span>'
+        + '<span class="star" aria-hidden="true">' + (starred[k] ? '\u2605' : '') + '</span>'
+        + '</span>'
+        + '<span class="pc band ' + b[0] + '" style="font-size:20px;font-family:var(--mono);font-weight:800">'
+        + pct(row.prob) + (b[1] ? ' <span class="sev" style="display:inline">' + b[1] + '</span>' : '')
+        + '</span>'
+        + '<span class="ap-stats">'
+        + '<span class="ap-stat"><b>' + (p.min || 0) + '</b><span>mins</span></span>'
+        + '<span class="ap-stat"><b>' + (p.yc == null ? '\u2014' : p.yc) + '</b><span>yellows</span></span>'
+        + '<span class="ap-stat"><b>' + n2(p.r) + '</b><span>risk</span></span>'
+        + '</span>'
+        + '</button>';
+    }).join('');
+  }
+
+  function setPlayerView(v) {
+    playerView = (v === 'cards') ? 'cards' : 'table';
+    $('#apCards').hidden = playerView !== 'cards';
+    $('#tableWrap').hidden = playerView !== 'cards' ? false : true;
+    $$('.seg-view button').forEach(function (b) {
+      b.setAttribute('aria-selected', b.getAttribute('data-view') === playerView ? 'true' : 'false');
+    });
+    renderPlayers();
+  }
+
+
   function renderPlayers() {
     var list = rows(), ref = currentRef();
     var tb = $('#tblPlayers tbody');
     $('#emptyPlayers').hidden = list.length > 0;
+    if (playerView === 'cards') renderPlayerCards(list);
     tb.innerHTML = list.slice(0, 400).map(function (row) {
       var p = row.p, k = keyOf(p), b = band(row.prob), c = clubBy[p.c] || {};
       return '<tr class="rowlink" data-pk="' + esc(k) + '" tabindex="0" role="button"'
         + ' aria-label="Open ' + esc(p.n) + '\u2019s record">'
         + '<td><button class="star" data-k="' + esc(k) + '" aria-pressed="' + (starred[k] ? 'true' : 'false')
         + '" aria-label="Watchlist ' + esc(p.n) + '">' + (starred[k] ? '★' : '☆') + '</button></td>'
-        + '<td>' + esc(p.n) + formArrow(p) + '</td>'
+        + '<td>' + esc(p.n) + formArrow(p)
+        + (notes[k] ? ' <span class="has-note" title="' + esc(notes[k]) + '">\u270e</span>' : '')
+        + '</td>'
         + '<td><span class="clubcell">' + PLDProfile.crest(c)
         + esc(p.c) + '</span></td>'
         + '<td>' + esc(p.p) + '</td>'
@@ -828,6 +885,14 @@
     var tr = e.target.closest ? e.target.closest('tr[data-pk]') : null;
     if (tr && e.target === tr) { e.preventDefault(); openPlayer(tr.getAttribute('data-pk')); }
   });
+  $$('.seg-view button').forEach(function (b) {
+    b.addEventListener('click', function () { setPlayerView(b.getAttribute('data-view')); });
+  });
+  $('#apCards').addEventListener('click', function (e) {
+    var c = e.target.closest ? e.target.closest('.ap-card[data-pk]') : null;
+    if (c) openPlayer(c.getAttribute('data-pk'));
+  });
+
   PLDProfile.wire();
 
   /* Candidate rows inside a fixture card open the same record the players
@@ -962,6 +1027,18 @@
   /* ---- fixtures --------------------------------------------------------- */
   var FIXTURES = (typeof EFLC_FIXTURES !== 'undefined' && EFLC_FIXTURES) || [];
   var S = (typeof PLDShare !== 'undefined' && PLDShare) || null;
+  /* Notes live beside the watchlist, in this browser only. Same shape the
+     Premier League desk uses: a map of player key to text. */
+  var NOTE_KEY = 'eflc_desk_notes_v1';
+  var notes = {};
+  try { notes = JSON.parse(localStorage.getItem(NOTE_KEY) || '{}') || {}; } catch (e) { notes = {}; }
+  function setNote(k, text) {
+    var t = String(text || '').trim();
+    if (t) notes[k] = t; else delete notes[k];
+    try { localStorage.setItem(NOTE_KEY, JSON.stringify(notes)); } catch (e) {}
+    renderPlayers();
+  }
+
   var REF_KEY = 'eflc_desk_refs_v1';
   var myRefs = {};
   try { myRefs = JSON.parse(localStorage.getItem(REF_KEY) || '{}') || {}; } catch (e) { myRefs = {}; }

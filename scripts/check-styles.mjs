@@ -216,6 +216,48 @@ for (const page of ['eflc.html', 'laliga.html']) {
     'opens the player record');
 }
 
+/* ---- the smaller parity items ------------------------------------------ */
+for (const page of ['eflc.html', 'laliga.html']) {
+  const src = read(page);
+  /* Notes: offered only where they can be STORED. A textarea with nowhere to
+     write to is worse than no textarea — it accepts what you type and forgets
+     it, and you find out later. */
+  assert.ok(/NOTE_KEY/.test(src) && /onNote:/.test(src),
+    `${page} offers no player notes, or offers them with nowhere to store them`);
+  assert.ok(/has-note/.test(src),
+    `${page} stores notes but does not mark which players have one, so a note ` +
+    'on 1 of 974 players is unfindable');
+  /* The calendar export needs the RAW kick-off, not the formatted one — an ICS
+     DTSTART cannot be parsed back out of "Sat, Aug 15, 05:30 PM". */
+  assert.ok(/iso: fx\.d/.test(src),
+    `${page} passes only a formatted kick-off to the record, so the calendar ` +
+    'export has no parsable start time');
+  /* All players: the same rows through a different presentation. If it built
+     its own list the two views could disagree about who is in the league. */
+  /* The CALL, not the definition. `renderPlayerCards(list)` is also the text of
+     `function renderPlayerCards(list) {`, so the obvious assertion is satisfied
+     by the function declaring itself while the call site feeds it something
+     else entirely — which is exactly what a mutation swapping the argument for
+     the unfiltered squad proved. Pin the line inside renderPlayers. */
+  assert.ok(/function renderPlayerCards/.test(src),
+    `${page} has no card view`);
+  assert.ok(/playerView === 'cards'\) renderPlayerCards\(list\);/.test(src),
+    `${page} card view is not fed renderPlayers' own filtered list, so the two ` +
+    'views can disagree about who is in the league');
+  assert.ok(/data-view="cards"/.test(src), `${page} has no All players toggle`);
+}
+
+/* Skip link, on every page that has a shell to skip past. */
+for (const page of ['eflc.html', 'laliga.html', 'today.html']) {
+  const src = read(page);
+  assert.ok(/<a href="#main" class="skip">/.test(src), `${page} has no skip link`);
+  assert.ok(/id="main"/.test(src), `${page} skip link points at #main, which does not exist`);
+}
+assert.ok(/\.skip\s*\{[^}]*left:\s*-999px/.test(shared) && /\.skip:focus\s*\{[^}]*left:\s*0/.test(shared),
+  'the skip link must be off-screen until focused and on-screen when it is; ' +
+  'without the :focus rule it is invisible and useless, and without the ' +
+  'off-screen rule it is a permanent banner');
+
 /* error does not bubble — a delegated listener MUST use capture, or the
    fallback silently never fires and every crest stays broken. */
 const prof = read('assets/profile.js');
@@ -264,6 +306,13 @@ assert.ok(/function avatar\(/.test(prof) && /crest-img/.test(prof),
 assert.ok(/rec\.injured === true/.test(prof),
   'profile.js must show availability only on an explicit true — an absent ' +
   'flag is "not known", and rendering it as fit invents news about a player');
+
+/* The ICS builder. CRLF is not a nicety — RFC 5545 requires it and Outlook is
+   the client that actually rejects LF. */
+assert.ok(/join\('\\r\\n'\)/.test(prof),
+  'assets/profile.js builds the calendar file with the wrong line endings; ' +
+  'RFC 5545 requires CRLF and Outlook enforces it');
+assert.ok(/BEGIN:VALARM/.test(prof), 'the calendar event carries no reminder');
 
 console.log(`check-styles OK: ${PAGES.length} pages, ${checked} class references, ` +
   'every one backed by a rule; matchday scoped; crests degrade; records open');

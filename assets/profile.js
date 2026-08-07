@@ -75,6 +75,48 @@
     }, true);
   }
 
+
+  /* ---- calendar export ---------------------------------------------------
+   * The Premier League desk has offered "Add to calendar" on a fixture since
+   * it was written. Built here rather than on each desk so the two cannot
+   * disagree about what a reminder says — and CRLF line endings, because
+   * RFC 5545 requires them and Outlook is the one that actually enforces it.
+   */
+  function icsEscape(v) {
+    return String(v == null ? '' : v).replace(/([\\;,])/g, '\\$1').replace(/\n/g, '\\n');
+  }
+  function icsStamp(d) {
+    return new Date(d).toISOString().replace(/[-:]/g, '').replace(/\.\d{3}/, '');
+  }
+
+  function fixtureIcs(rec) {
+    var f = rec && rec.fixture;
+    if (!f || !f.iso) return null;
+    var start = new Date(f.iso);
+    if (isNaN(start)) return null;
+    /* 115 minutes: 90 plus half time plus stoppage. A 90-minute event ends
+       before the cards that matter most tend to arrive. */
+    var end = new Date(start.getTime() + 115 * 60000);
+    var home = (f.home && f.home.name) || (f.home && f.home.short) || '';
+    var away = (f.away && f.away.name) || (f.away && f.away.short) || '';
+    var bits = [];
+    if (f.heat != null) bits.push('Booking heat ' + Number(f.heat).toFixed(1));
+    bits.push(rec.name + (rec.prob != null ? ' \u2014 ' + Math.round(rec.prob * 100) + '% for a card' : ''));
+    if (f.ref) bits.push('Referee ' + f.ref);
+    if (f.derby) bits.push('Derby');
+    bits.push('Via Bookings Desk \u2014 18+, research not betting advice.');
+    var uid = 'pld-' + String(f.iso).replace(/\W/g, '') + '-'
+      + String(rec.name).replace(/\W/g, '').slice(0, 12) + '@bookings-desk';
+    return ['BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//Bookings Desk//EN', 'CALSCALE:GREGORIAN',
+      'BEGIN:VEVENT', 'UID:' + uid,
+      'DTSTAMP:' + icsStamp(Date.now()), 'DTSTART:' + icsStamp(start), 'DTEND:' + icsStamp(end),
+      'SUMMARY:' + icsEscape(home + ' v ' + away),
+      'DESCRIPTION:' + icsEscape(bits.join(' \u00b7 ')),
+      'BEGIN:VALARM', 'TRIGGER:-PT60M', 'ACTION:DISPLAY',
+      'DESCRIPTION:' + icsEscape(home + ' v ' + away + ' kicks off in an hour'),
+      'END:VALARM', 'END:VEVENT', 'END:VCALENDAR'].join('\r\n');
+  }
+
   /* ---- the player record ------------------------------------------------ */
 
   var dlg = null;
@@ -195,6 +237,19 @@
         + '</div>'
         + '<div class="pp-note">' + esc(f.when || 'Kick-off TBC')
         + (f.ref ? ' · ' + esc(f.ref) : ' · referee not appointed') + '</div>'
+        + (f.iso ? '<button class="btn pp-ics" type="button" data-pp-ics>'
+            + '\ud83d\udcc5 Add to calendar</button>' : '')
+        + '</div>';
+    }
+    /* A note you write about a player, kept in this browser beside the
+       watchlist. Shown only when the desk supplies a handler, so a page with
+       nowhere to store one does not offer a box that forgets. */
+    if (rec.onNote) {
+      extra += '<div class="pp-notes">'
+        + '<label class="pp-lab" for="pp-note">Your note</label>'
+        + '<textarea id="pp-note" class="note-input" rows="2" '
+        + 'placeholder="Why you are watching him\u2026">' + esc(rec.noteText || '') + '</textarea>'
+        + '<div class="pp-note" id="pp-note-said" aria-live="polite"></div>'
         + '</div>';
     }
     if (rec.note) extra += '<p class="pp-foot">' + esc(rec.note) + '</p>';
@@ -211,6 +266,47 @@
     }
     var x = d.querySelector('[data-pp-close]');
     if (x) x.addEventListener('click', function () { d.close(); });
+
+    var ta = d.querySelector('#pp-note');
+    if (ta && rec.onNote) {
+      var said = d.querySelector('#pp-note-said'), timer = null;
+      ta.addEventListener('input', function () {
+        /* Debounced, not per keystroke: localStorage writes are synchronous
+           and this runs on the main thread. */
+        if (timer) clearTimeout(timer);
+        timer = setTimeout(function () {
+          rec.onNote(ta.value);
+          if (said) {
+            said.textContent = ta.value.trim() ? 'Saved' : 'Cleared';
+            setTimeout(function () { if (said) said.textContent = ''; }, 1600);
+          }
+        }, 400);
+      });
+    }
+
+    var ics = d.querySelector('[data-pp-ics]');
+    if (ics) {
+      ics.addEventListener('click', function () {
+        var text = fixtureIcs(rec);
+        if (!text) { ics.textContent = 'No kick-off time yet'; return; }
+        var blob = new Blob([text], { type: 'text/calendar' });
+        var file = (rec.name + '-' + ((rec.fixture.home || {}).short || '') + '-'
+          + ((rec.fixture.away || {}).short || '')).replace(/[^a-z0-9]+/gi, '-')
+          .toLowerCase().replace(/^-|-$/g, '') + '.ics';
+        /* Through PLDSave where the page has it: iOS Safari ignores `download`
+           on a blob URL, so a plain anchor silently does nothing there — the
+           bug that made every share button on this site dead on a phone. */
+        if (root.PLDSave && root.PLDSave.file) {
+          root.PLDSave.file(blob, file, 'text/calendar').then(function (r) {
+            ics.textContent = r === 'cancelled'
+              ? '\ud83d\udcc5 Add to calendar' : '\u2713 Calendar file ready';
+          });
+        } else {
+          var a = document.createElement('a');
+          a.href = URL.createObjectURL(blob); a.download = file; a.click();
+        }
+      });
+    }
 
     if (typeof d.showModal === 'function') d.showModal(); else d.setAttribute('open', '');
     /* Focus the close button, not the star: the star MUTATES on activation, and
