@@ -182,6 +182,45 @@ assert.ok(!existsSync(join(root, 'netlify', 'functions', 'log-predictions.js')),
   'for the calibration set, and it must cover all three leagues');
 
 const accas = readFileSync(join(root, 'scripts', 'accas.mjs'), 'utf8');
+
+/* ---- every forecast carries the model that made it ---------------------- */
+/* RUN, not read. The pool is built inside candidatesFor(), so the only way to
+   be sure the stamp survives is to build one and look at the rows. */
+{
+  const A = await import('file://' + join(root, 'scripts', 'accas.mjs'));
+  assert.ok(A.MODEL_VERSION, 'accas.mjs exports no MODEL_VERSION');
+  let checked = 0;
+  for (const L of A.LEAGUES) {
+    const { pool } = A.candidatesFor(L);
+    for (const row of pool || []) {
+      assert.equal(row.model_version, A.MODEL_VERSION,
+        `a ${L.code} forecast is written without the model that made it — the ` +
+        'first refit would pool two models with nothing to separate them');
+      checked++;
+    }
+  }
+  assert.ok(checked > 100, `only ${checked} forecast rows checked`);
+
+  /* And the acca legs, which are the record of what was advised. */
+  for (const b of A.collect()) {
+    for (const leg of b.legs) {
+      assert.equal(leg.model_version, A.MODEL_VERSION,
+        'an acca leg is logged without the model that priced it');
+    }
+  }
+
+  /* DERIVED FROM THE CONSTANT, not a literal. Shrinkage strength is the first
+     thing the calibration work will tune, so tuning it must bump the version
+     by itself — a hand-maintained string is one someone forgets, and
+     forgetting silently re-creates the bug this column exists to prevent.
+     This one has to read the source: a value check cannot tell a derived
+     'k6' from a hard-coded one while k is still 6. */
+  assert.ok(/MODEL_VERSION = `desk-hazard\/k\$\{SHRINK_MATCHES\}`/.test(accas),
+    'MODEL_VERSION is hard-coded rather than derived from SHRINK_MATCHES, so ' +
+    'retuning the shrinkage would not bump it and the two models would pool');
+  assert.equal(A.MODEL_VERSION, `desk-hazard/k${A.SHRINK_MATCHES}`);
+}
+
 for (const cmd of ['predict', 'grade']) {
   assert.ok(new RegExp(`cmd === '${cmd}'`).test(accas),
     `scripts/accas.mjs has no ${cmd} command`);
@@ -237,7 +276,16 @@ assert.ok(/plb_card_predictions/.test(calib) && !/rest\/v1\/plb_predictions/.tes
     { season: '2026-27', league: 'EFLC', md: 1, prob: 0.01, carded: false },
     /* An older season, which must never be mixed in — matchday numbers repeat. */
     { season: '2025-26', league: 'PL', md: 1, prob: 0.9, carded: false }
-  ];
+  ].map((r) => ({ ...r, model_version: 'desk-hazard/k6' }));
+  /* A SUPERSEDED MODEL's rows, in the same season and league. Pooling these
+     with the current model's would report the average of two different things
+     as one — the failure model_version exists to prevent. They are deliberately
+     terrible forecasts, so pooling them is visible in the score. */
+  rows.push(
+    { season: '2026-27', league: 'PL', md: 1, prob: 0.99, carded: false,
+      model_version: 'desk-hazard/k2' },
+    { season: '2026-27', league: 'PL', md: 1, prob: 0.99, carded: false,
+      model_version: 'desk-hazard/k2' });
   const realFetch = globalThis.fetch;
   globalThis.fetch = async () => ({ ok: true, json: async () => rows });
   process.env.SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || 'test-key';
@@ -252,6 +300,13 @@ assert.ok(/plb_card_predictions/.test(calib) && !/rest\/v1\/plb_predictions/.tes
     'calibration is not broken out per league — an aggregate hides a badly ' +
     'calibrated division, which is the thing a reader most wants separated');
   assert.equal(out.byLeague.PL.n, 2, 'the PL breakdown has the wrong sample');
+  /* The superseded rows must be excluded from the score and DECLARED, not
+     silently dropped — a record that quietly truncates itself is the same
+     failure as one that quietly pools. */
+  assert.equal(out.modelVersion, 'desk-hazard/k6',
+    `the reader scored the wrong model: ${out.modelVersion}`);
+  assert.equal(out.superseded['desk-hazard/k2'], 2,
+    'rows from a superseded model are not reported at all');
   assert.equal(out.byLeague.PL.brier, 0.25, `PL Brier ${out.byLeague.PL.brier}, expected 0.25`);
   /* Coin-flip forecasts must not beat the base rate. If this ever passes, the
      baseline is being computed on something other than the observed rate and

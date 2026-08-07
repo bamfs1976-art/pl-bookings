@@ -88,8 +88,9 @@ exports.handler = async (event) => {
 
   let all;
   try {
-    const r = await fetch(`${rest}?carded=not.is.null&select=season,league,md,prob,carded&limit=50000`,
-      { headers: H });
+    const r = await fetch(`${rest}?carded=not.is.null` +
+      '&select=season,league,md,prob,carded,model_version,logged_at' +
+      '&order=logged_at.desc&limit=50000', { headers: H });
     all = r.ok ? await r.json() : [];
   } catch (_) { return json({ n: 0 }, 300); }
   if (!all || !all.length) return json({ configured: true, n: 0 }, 300);
@@ -97,8 +98,26 @@ exports.handler = async (event) => {
   /* Latest season with graded data — never mix seasons (matchday numbers
      repeat every year). */
   const season = all.reduce((m, r) => (r.season > m ? r.season : m), all[0].season || '');
-  const inSeason = all.filter((r) => (r.season || '') === season);
+
+  /* AND NEVER MIX MODELS. A forecast is only interpretable alongside others
+     from the same model: pooling a season prior with a later refit reports the
+     average of two different things as one, silently, and no later query can
+     unpick it. The rows arrive newest-first, so the first is the model in force
+     now — which is the one a reader is being asked to trust. Earlier models are
+     reported separately as history rather than folded in or thrown away. */
+  const modelVersion = all[0].model_version || null;
+  const sameModel = all.filter((r) => (r.model_version || null) === modelVersion);
+
+  const inSeason = sameModel.filter((r) => (r.season || '') === season);
   const data = league ? inSeason.filter((r) => r.league === league) : inSeason;
+
+  /* What exists under older models, so the record is not quietly truncated. */
+  const superseded = {};
+  for (const r of all) {
+    const v = r.model_version || 'unversioned';
+    if (v === modelVersion) continue;
+    superseded[v] = (superseded[v] || 0) + 1;
+  }
   const overall = score(data);
   if (!overall) return json({ configured: true, n: 0, season, league }, 300);
 
@@ -115,6 +134,8 @@ exports.handler = async (event) => {
     configured: true,
     season,
     league,
+    modelVersion,
+    superseded,
     /* `gws` kept as an alias of `mds` so an older cached page does not lose
        its sentence when this deploys. */
     gws: overall.mds,

@@ -51,6 +51,23 @@ const SEASON = '2026-27';
 const STAKE = 0.50;
 const LEGS = 3;
 const SHRINK_MATCHES = 6;          // matches the desks' own constant
+
+/* WHICH MODEL MADE THE FORECAST, stamped on every row this file writes.
+ *
+ * Without it plb_card_predictions records what was predicted and what happened
+ * but not what did the predicting, so the first refit pools two models and any
+ * reliability curve over the lot reports the average of two different things as
+ * one. Cheap to add at one matchday; unrecoverable at twenty thousand rows.
+ *
+ * DERIVED FROM THE CONSTANT, not written out as a literal. Shrinkage strength
+ * is the first thing the calibration work will tune — it is a guess at 6 — so
+ * tuning it must bump the version automatically. A hand-maintained string is
+ * one someone forgets, and forgetting silently re-creates the bug.
+ *
+ * This desk prices from PLDCore's hazard directly and does NOT read
+ * data/model.js (which is Premier-League-only), so the version names what this
+ * file actually does rather than borrowing a model it never loads. */
+const MODEL_VERSION = `desk-hazard/k${SHRINK_MATCHES}`;
 const SUPABASE_URL = (process.env.SUPABASE_URL || 'https://knodunjnsxelmpziupwk.supabase.co').replace(/\/+$/, '');
 const SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || '';
 const AF_KEY = process.env.API_FOOTBALL_KEY || '';
@@ -184,7 +201,8 @@ function candidatesFor(league) {
         fixture_id: fx.id, kickoff: fx.d,
         player: c.p.n, club: c.p.c,
         prob: Math.round(c.prob * 10000) / 10000,
-        referee: fx.ref || null, ref_factor: Math.round(rf * 10000) / 10000
+        referee: fx.ref || null, ref_factor: Math.round(rf * 10000) / 10000,
+        model_version: MODEL_VERSION
       });
     }
     const best = [...home, ...away].sort((a, b) => b.prob - a.prob)[0];
@@ -228,7 +246,7 @@ function buildAcca(id, code, round, cands) {
          produced. Without these a settled loss cannot be read: a leg priced
          with no official and one priced under the league's strictest referee
          are the same row afterwards. */
-      referee: l.referee, ref_factor: l.ref_factor,
+      referee: l.referee, ref_factor: l.ref_factor, model_version: MODEL_VERSION,
       prob: Math.round(l.prob * 10000) / 10000,
       fair_odds: r2(fair(l.prob)), priced_odds: r2(priced(l.prob))
     }))
@@ -537,10 +555,22 @@ async function cmdGrade() {
     + `${pending ? `, ${pending} fixture(s) not finished` : ''}.`);
 }
 
-const cmd = process.argv[2] || 'verify';
-if (cmd === 'build') await cmdBuild();
-else if (cmd === 'settle') await cmdSettle();
-else if (cmd === 'predict') await cmdPredict();
-else if (cmd === 'grade') await cmdGrade();
-else if (cmd === 'sql') cmdSql();
-else cmdVerify();
+/* Exported so guards can RUN this file rather than pattern-match it. Several
+   assertions in scripts/check-referees.mjs have been satisfied by the wrong
+   text; executing the real function is the only way that cannot happen. */
+export { candidatesFor, collect, buildAcca, wasBooked, LEAGUES, MODEL_VERSION, SHRINK_MATCHES };
+
+/* Only run a command when invoked as a script. Importing it must not fire the
+   CLI — a guard that imported this file would otherwise execute `verify`, or
+   worse, whatever argv[2] happened to be. */
+const invokedDirectly = process.argv[1]
+  && fileURLToPath(import.meta.url) === process.argv[1];
+if (invokedDirectly) {
+  const cmd = process.argv[2] || 'verify';
+  if (cmd === 'build') await cmdBuild();
+  else if (cmd === 'settle') await cmdSettle();
+  else if (cmd === 'predict') await cmdPredict();
+  else if (cmd === 'grade') await cmdGrade();
+  else if (cmd === 'sql') cmdSql();
+  else cmdVerify();
+}
