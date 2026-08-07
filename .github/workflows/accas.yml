@@ -1,0 +1,54 @@
+name: Accas — log and settle
+
+# Records the recommended acca for each upcoming matchday BEFORE kick-off, and
+# settles logged ones against real cards once their matches finish.
+#
+# WHY HERE AND NOT IN A NETLIFY FUNCTION. Settlement needs card-level results,
+# and for the Championship and La Liga the only source is API-Football, whose
+# key already lives in this repository's secrets. Splitting it — Premier League
+# from the free FPL feed on Netlify, the other two here — would mean two
+# settlement paths to keep in step, and every time this project has had two of
+# something they have drifted.
+#
+# Requires SUPABASE_SERVICE_ROLE_KEY as a repository secret, alongside the
+# API_FOOTBALL_KEY the data refresh already uses. Both steps no-op with a
+# message rather than half-writing when a key is absent.
+
+on:
+  schedule:
+    # Hourly. Matches finish whenever they finish; an hourly sweep settles each
+    # one within the hour without hammering a quota-limited API. The build step
+    # is idempotent and refuses to rewrite an acca that already exists, so
+    # running it every hour cannot revise a prediction after kick-off.
+    - cron: '25 * * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  accas:
+    runs-on: ubuntu-latest
+    env:
+      SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+      SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+      API_FOOTBALL_KEY: ${{ secrets.API_FOOTBALL_KEY }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      # Printed before anything is written, so a run that logs a bad acca can
+      # be read back out of the job log rather than only out of the database.
+      - name: The acca this run would recommend
+        run: node scripts/accas.mjs verify
+
+      - name: Log it (new matchdays only)
+        run: node scripts/accas.mjs build
+
+      # Separate step, and never `continue-on-error`: a settlement that fails
+      # silently leaves an acca open forever and quietly flatters the record by
+      # omitting a loss.
+      - name: Settle anything that has finished
+        run: node scripts/accas.mjs settle

@@ -258,6 +258,49 @@ assert.ok(/\.skip\s*\{[^}]*left:\s*-999px/.test(shared) && /\.skip:focus\s*\{[^}
   'without the :focus rule it is invisible and useless, and without the ' +
   'off-screen rule it is a permanent banner');
 
+/* ---- the acca record --------------------------------------------------- */
+{
+  const t = read('today.html');
+  /* The tracker reads Supabase. Without the host in connect-src the fetch is
+     refused and the panel silently hides, which reads as "nothing was ever
+     recommended" — a different and far more flattering claim than "the record
+     could not be loaded". */
+  assert.ok(/connect-src[^"]*supabase\.co/.test(t),
+    'today.html CSP does not allow Supabase, so the acca record can never load');
+  assert.ok(/plb_accas/.test(t) && /plb_acca_legs/.test(t),
+    'today.html does not read the acca record');
+  /* Read-only, and with the PUBLISHABLE key. A service-role key in a page is a
+     write credential handed to every visitor. */
+  assert.ok(!/service_role|SUPABASE_SERVICE/i.test(t),
+    'today.html appears to carry a service-role key — that is a write ' +
+    'credential and it must never reach the browser');
+  assert.ok(/sb_publishable_/.test(t), 'today.html is not using the publishable key');
+  /* The honest framing is part of the feature, not decoration. */
+  assert.ok(/margin/i.test(t) && /not betting advice/i.test(t),
+    'the acca record must say the odds carry a margin and that it is not advice');
+}
+
+const accas = read('scripts/accas.mjs');
+/* P/L on the PRICED odds. Settling at fair odds reports winnings that were
+   never on offer, and on a treble the difference is about a sixth of the win. */
+assert.ok(/Number\(a\.stake\) \* Number\(a\.priced_odds\)/.test(accas),
+  'scripts/accas.mjs settles at something other than the priced odds');
+/* The EXPRESSION, not the name. The bare name appears in this file's own
+   header comment explaining why the margin matters, so a check for the name
+   passes with the margin removed from the arithmetic — the fourth time in this
+   session an assertion has been satisfied by prose rather than by code. */
+assert.ok(/fair\(p\)\s*\*\s*\(1 - C\.TYPICAL_CARD_MARGIN\)/.test(accas),
+  'the priced odds are not shaded by the card-market margin, so the record ' +
+  'reports winnings no bookmaker would have paid');
+/* An acca already written is the record of what was advised. Rewriting it
+   after kick-off would be revising a prediction with hindsight. */
+assert.ok(/existing\.has\(b\.acca\.id\)/.test(accas),
+  'scripts/accas.mjs would overwrite an acca that was already logged');
+/* A refusal dressed as a 200 must not settle every leg as "not booked". */
+assert.ok(/API-Football refused/.test(accas),
+  'scripts/accas.mjs treats an API-Football error object as an empty result, ' +
+  'which settles every leg as a loss the model never earned');
+
 /* error does not bubble — a delegated listener MUST use capture, or the
    fallback silently never fires and every crest stays broken. */
 const prof = read('assets/profile.js');

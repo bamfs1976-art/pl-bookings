@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data: https://cdn.sportmonks.com https://media.api-sports.io; connect-src 'self'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data: https://cdn.sportmonks.com https://media.api-sports.io; connect-src 'self' https://knodunjnsxelmpziupwk.supabase.co">
 <title>Today's Card — Bookings Desk</title>
 <meta name="description" content="Every match across the Premier League, Championship and La Liga on one day — or a consolidated calendar of every date — ranked by booking heat, with a combined share card per date.">
 <link rel="icon" href="favicon.svg" type="image/svg+xml">
@@ -194,7 +194,17 @@
     <p class="note" id="cover"></p>
   </div>
 
-  <footer class="wrap" style="padding-left:0;padding-right:0">
+  <section class="card" id="trackCard" style="margin-top:14px" hidden>
+  <div class="controls" style="margin-bottom:8px">
+    <h2 style="font-size:16px">Recommended accas — how they have actually done</h2>
+    <span class="spacer"></span>
+    <span class="faint" id="trackSum" style="font-size:12.5px"></span>
+  </div>
+  <div id="trackList"></div>
+  <p class="note" id="trackNote"></p>
+</section>
+
+<footer class="wrap" style="padding-left:0;padding-right:0">
     The <a href="/">Premier League</a>, <a href="/eflc">Championship</a> and
     <a href="/laliga">La Liga</a> desks. Same risk formula, same tested core.
     Not betting advice.
@@ -846,6 +856,105 @@
     building($('#calBtn'), S.calendarCard(spec), 'bookings-desk-calendar.png');
   }
 
+  /* ---- the acca record -------------------------------------------------
+   * Every acca the model recommended, and what it actually did. Read-only,
+   * with the publishable key — the rows are written by a scheduled job with
+   * the service role, so nothing here can revise a prediction.
+   *
+   * The record is deliberately shown WHOLE: every acca logged, won and lost,
+   * with the running P/L at 50p a go. A tracker that shows only the winners is
+   * an advert, and this one exists to be checked.
+   */
+  var SUPA = { url: 'https://knodunjnsxelmpziupwk.supabase.co',
+               key: 'sb_publishable_xCECe0czArDwwIBtR8Mzxg_tuhyGYu-' };
+  var STAKE = 0.50;
+
+  function money(v) {
+    var n = Number(v) || 0;
+    return (n < 0 ? '−£' : '£') + Math.abs(n).toFixed(2);
+  }
+
+  function renderTrack(accas, legsBy) {
+    var card = $('#trackCard');
+    if (!accas.length) { card.hidden = true; return; }
+    card.hidden = false;
+
+    var settled = accas.filter(function (a) { return a.status !== 'open'; });
+    var won = settled.filter(function (a) { return a.status === 'won'; });
+    var staked = settled.length * STAKE;
+    var pl = settled.reduce(function (t, a) { return t + (Number(a.pl) || 0); }, 0);
+    var roi = staked ? (pl / staked) * 100 : null;
+
+    $('#trackSum').innerHTML = settled.length
+      ? '<b>' + won.length + ' of ' + settled.length + '</b> landed · staked '
+        + money(staked) + ' · <b style="color:' + (pl >= 0 ? 'var(--good-ink)' : 'var(--danger-ink)')
+        + '">' + money(pl) + '</b>' + (roi == null ? '' : ' (' + roi.toFixed(0) + '% ROI)')
+      : accas.length + ' logged, none settled yet';
+
+    $('#trackList').innerHTML = accas.map(function (a) {
+      var legs = legsBy[a.id] || [];
+      /* NOT the card-risk banding: there `hi` is danger-ink, so a winning acca
+         rendered in the same red as a player most likely to be booked. Status
+         has its own colours because it means the opposite thing. */
+      var col = a.status === 'won' ? 'var(--good-ink)'
+        : a.status === 'lost' ? 'var(--danger-ink)' : 'var(--text-3)';
+      return '<div class="fx" style="margin-bottom:9px">'
+        + '<div class="fx-top"><div class="fx-topl">'
+        + '<div class="fx-teams" style="font-size:15px">'
+        + '<span class="lg ' + esc(a.league) + '">' + esc(a.league) + '</span>'
+        + (a.matchday == null ? 'Across the leagues' : 'Matchday ' + a.matchday)
+        + '</div>'
+        + '<div class="fx-when">' + a.legs + ' legs · ' + money(a.stake)
+        + ' at <b>' + Number(a.priced_odds).toFixed(2) + '</b>'
+        + ' · returns ' + money(Number(a.stake) * Number(a.priced_odds)) + ' if it lands</div>'
+        + '</div><div class="fx-topr">'
+        + '<span class="pc" style="font-family:var(--mono);font-weight:800;color:' + col + '">'
+        + (a.status === 'open' ? 'OPEN' : a.status.toUpperCase()) + '</span>'
+        + (a.status === 'open' ? '' : '<div class="fx-refline">' + money(a.pl) + '</div>')
+        + '</div></div>'
+        + '<div class="fx-cands">' + legs.map(function (l) {
+            var mark = l.carded === true ? '✓' : l.carded === false ? '✗' : '·';
+            var col = l.carded === true ? 'var(--good-ink)' : l.carded === false ? 'var(--danger-ink)' : 'var(--text-3)';
+            return '<div class="cand" style="cursor:default">'
+              + '<span style="color:' + col + ';font-weight:800;width:14px">' + mark + '</span>'
+              + '<span class="cbadge">' + esc(l.club) + '</span>'
+              + '<span class="nm">' + esc(l.player) + '</span>'
+              + '<span class="pc-wrap"><span class="pc">' + (l.prob * 100).toFixed(1) + '%</span>'
+              + '<span class="sev">' + Number(l.priced_odds).toFixed(2) + '</span></span>'
+              + '</div>';
+          }).join('') + '</div>'
+        + '</div>';
+    }).join('');
+
+    $('#trackNote').textContent = 'One acca per league per matchday plus one across all three, '
+      + 'chosen by the model before kick-off and never revised afterwards. Odds are the fair '
+      + 'price shaded by a typical card-market margin, because fair odds are not on offer '
+      + 'anywhere — on a treble that margin is taken three times. Flat ' + money(STAKE)
+      + ' a go. Research, not betting advice.';
+  }
+
+  function loadTrack() {
+    var h = { apikey: SUPA.key, Authorization: 'Bearer ' + SUPA.key };
+    var q = '?select=*&order=kickoff_first.desc&limit=40';
+    fetch(SUPA.url + '/rest/v1/plb_accas' + q, { headers: h })
+      .then(function (r) { return r.ok ? r.json() : []; })
+      .then(function (accas) {
+        if (!accas.length) return;
+        var ids = accas.map(function (a) { return '"' + a.id + '"'; }).join(',');
+        return fetch(SUPA.url + '/rest/v1/plb_acca_legs?select=*&order=leg.asc&acca_id=in.(' + ids + ')', { headers: h })
+          .then(function (r) { return r.ok ? r.json() : []; })
+          .then(function (legs) {
+            var by = {};
+            legs.forEach(function (l) { (by[l.acca_id] = by[l.acca_id] || []).push(l); });
+            renderTrack(accas, by);
+          });
+      })
+      /* A tracker that cannot load is hidden, not shown empty: an empty record
+         reads as "nothing was ever recommended", which is a different and
+         flattering claim. */
+      .catch(function () { $('#trackCard').hidden = true; });
+  }
+
   /* ---- boot ------------------------------------------------------------ */
   /* WHY THIS IS WRAPPED. Reported from an iPad: the page rendered its heading
      and controls, the date picker offered "No Options", and there were no
@@ -938,6 +1047,7 @@
       document.head.appendChild(st);
     }
     render();
+    loadTrack();
   }
   } catch (err) {
     bootFailed(err);
