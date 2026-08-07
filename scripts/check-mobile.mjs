@@ -85,12 +85,19 @@ for (const p of PAGES) {
      the left/right insets while the top padding was deleted — and top and
      bottom are the two that matter, because those are the notch and the home
      indicator. Left and right are only non-zero in landscape. */
-  for (const edge of ['top', 'bottom']) {
-    assert.ok(new RegExp(`env\\(safe-area-inset-${edge}`).test(src),
-      `${p} opts into the full screen with viewport-fit=cover but never pads ` +
-      `the ${edge} — content sits under the ` +
-      (edge === 'top' ? 'status bar and notch' : 'home indicator'));
-  }
+  /* The bottom inset moved into the SHARED footer rule, so reading the page
+     alone reported it missing on today.html — a guard aimed at a file the rule
+     has left. Widened to the CSS the page loads, but NAMED: `src + tw.css`
+     would be satisfied by the bottom-nav's own inset, so deleting the footer
+     padding on every desk at once still passed. A rule is not a substitute for
+     a different rule just because both mention the same property. */
+  assert.ok(/env\(safe-area-inset-top/.test(src),
+    `${p} opts into the full screen with viewport-fit=cover but never pads ` +
+    'the top — content sits under the status bar and notch');
+  const footer = read('assets/tw.css').match(/(^|\})\s*footer\s*\{([^}]*)\}/);
+  assert.ok(footer && /env\(safe-area-inset-bottom/.test(footer[2]),
+    'the shared footer rule in assets/tw.css no longer pads the bottom inset, ' +
+    'so on every desk the last line of the page sits under the home indicator');
 }
 
 /* ---- 3. touch targets ---------------------------------------------------- */

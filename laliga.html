@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en" data-theme="light">
+<html lang="en" class="lg-ll" data-theme="light">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
@@ -21,72 +21,18 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400..800&family=Hanken+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
-  :root{
-    --bg:#eef1f6; --surface:#ffffff; --surface-2:#f4f6fa; --surface-3:#eaedf3;
-    --text:#0c1322; --text-2:#586275; --text-3:#8b94a5; --border:#e3e7ee; --border-2:#d7dce6;
-    /* The EFL's own purple rather than the Premier League's, so the two desks
-       are never mistaken for one another at a glance. */
-    --accent:#4b2e83; --accent-2:#00a94f; --on-accent:#ffffff;
-    --danger:#dc2626; --warn:#d97706; --good:#16a34a; --info:#4f46e5;
-    --danger-ink:#b91c1c; --warn-ink:#a35709; --good-ink:#15803d;
-    --efl:#7c3aed;
-    --shadow-sm:0 1px 2px rgba(13,19,34,.06);
-    --shadow:0 4px 16px -4px rgba(13,19,34,.12),0 1px 3px rgba(13,19,34,.06);
-    --ring:rgba(75,46,131,.45);
-    --mono:ui-monospace,"SF Mono",SFMono-Regular,Menlo,Consolas,"Liberation Mono",monospace;
-    --topbar-h:60px;
-  }
-  html[data-theme="dark"]{
-    --bg:#0b0f1a; --surface:#141b2c; --surface-2:#1b2336; --surface-3:#232c42;
-    --text:#eef1f7; --text-2:#9aa6bb; --text-3:#6b7790; --border:#283248; --border-2:#33405a;
-    --accent:#a78bfa; --accent-2:#34d399; --on-accent:#160a24;
-    --danger:#f87171; --warn:#fbbf24; --good:#34d399; --info:#a5b4fc;
-    --danger-ink:#f87171; --warn-ink:#fbbf24; --good-ink:#34d399;
-    --efl:#c4b5fd;
-    --shadow-sm:0 1px 2px rgba(0,0,0,.4);
-    --shadow:0 10px 30px -8px rgba(0,0,0,.55),0 2px 6px rgba(0,0,0,.4);
-    --ring:rgba(167,139,250,.5);
-  }
+  /* The palette — neutrals, semantics and this desk's league colour — lives in
+     assets/tw.css and is selected by the lg-* class on <html>. It used to be
+     declared here, in four near-identical copies that had already drifted.
+     Do not reintroduce a :root colour block: scripts/check-palette.mjs fails
+     the build on one, because that is how La Liga came to wear the
+     Championship's purple while its own nav dot was orange. */
   *{box-sizing:border-box}
   body{background:var(--bg);color:var(--text);font-family:'Hanken Grotesk',system-ui,sans-serif;margin:0;-webkit-font-smoothing:antialiased}
-  h1,h2,h3,.display{font-family:'Bricolage Grotesque',system-ui,sans-serif;letter-spacing:-.02em;margin:0}
-  .mono{font-family:var(--mono);font-variant-numeric:tabular-nums}
-  .muted{color:var(--text-2)} .faint{color:var(--text-3)}
-  a{color:var(--accent)}
-  .wrap{max-width:1180px;margin:0 auto;padding:0 16px}
 
   .topbar{position:sticky;top:0;z-index:30;height:var(--topbar-h);display:flex;align-items:center;
     background:color-mix(in srgb,var(--surface) 88%,transparent);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);
     border-bottom:1px solid var(--border)}
-  .brand{display:flex;align-items:center;gap:10px;font-weight:700;letter-spacing:-.02em}
-  .brand .dot{width:26px;height:26px;border-radius:8px;background:var(--accent);color:var(--on-accent);
-    display:grid;place-items:center;font-size:12px;font-weight:800}
-  .spacer{flex:1}
-  .btn{font:inherit;font-size:13px;padding:7px 12px;border-radius:9px;border:1px solid var(--border-2);
-    background:var(--surface);color:var(--text);cursor:pointer}
-  .btn:hover{border-color:var(--accent)}
-  .btn:focus-visible,select:focus-visible,input:focus-visible{outline:2px solid var(--ring);outline-offset:2px}
-
-  .hero{padding:22px 0 6px}
-  .hero h1{font-size:clamp(23px,3.4vw,34px)}
-  .stats{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
-  .stat{background:var(--surface);border:1px solid var(--border);border-radius:11px;padding:8px 13px;box-shadow:var(--shadow-sm)}
-  .stat b{display:block;font-size:19px;line-height:1.15}
-  .stat span{font-size:11.5px;color:var(--text-2)}
-
-  .tabs{display:flex;gap:2px;margin:18px 0 14px;border-bottom:1px solid var(--border);overflow-x:auto}
-  .tab{font:inherit;font-size:14px;font-weight:600;padding:9px 14px;border:0;background:none;color:var(--text-2);
-    cursor:pointer;border-bottom:2px solid transparent;white-space:nowrap}
-  .tab[aria-selected="true"]{color:var(--text);border-bottom-color:var(--accent)}
-  .panel[hidden]{display:none}
-
-  .card{background:var(--surface);border:1px solid var(--border);border-radius:14px;box-shadow:var(--shadow-sm);padding:14px}
-  .controls{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:12px}
-  select,input[type=search],input[type=number]{font:inherit;font-size:13px;padding:7px 10px;border-radius:9px;
-    border:1px solid var(--border-2);background:var(--surface);color:var(--text)}
-  label.chk{display:inline-flex;align-items:center;gap:6px;font-size:13px;color:var(--text-2);cursor:pointer}
-
-  .tablewrap{overflow-x:auto;-webkit-overflow-scrolling:touch}
   table{border-collapse:collapse;width:100%;font-size:13.5px}
   th,td{padding:7px 9px;text-align:left;border-bottom:1px solid var(--border);white-space:nowrap}
   /* top:0, NOT the topbar height. .tablewrap has overflow-x, which makes IT
@@ -100,46 +46,10 @@
   tbody tr:hover{background:var(--surface-2)}
   td.num,th.num{text-align:right;font-family:var(--mono);font-variant-numeric:tabular-nums}
 
-  .pill.ll{background:color-mix(in srgb,var(--efl) 14%,transparent);border-color:transparent;color:var(--efl)}
   .pill.seg{background:color-mix(in srgb,var(--warn) 18%,transparent);border-color:transparent;color:var(--warn-ink)}
-  .pill.new{background:var(--surface-3);border-color:transparent}
-  .star{background:none;border:0;cursor:pointer;font-size:15px;line-height:1;color:var(--text-3);padding:0 2px}
-  .star[aria-pressed="true"]{color:var(--warn)}
-  /* A flex cell so a crest that fails to load cannot drag the club name off
-     its baseline — offline, or behind a blocking proxy, the alt box still
-     takes part in inline layout. */
-  .clubcell{display:flex;align-items:center;gap:6px}
-  .crest{width:18px;height:18px;object-fit:contain;flex:none}
-  .tier{font-size:11px;font-weight:700;padding:2px 8px;border-radius:999px}
-  .tier.t1{background:color-mix(in srgb,var(--danger) 15%,transparent);color:var(--danger-ink)}
-  .tier.t2{background:color-mix(in srgb,var(--warn) 16%,transparent);color:var(--warn-ink)}
-  .tier.t3{background:color-mix(in srgb,var(--good) 15%,transparent);color:var(--good-ink)}
   .bar{height:6px;border-radius:99px;background:var(--surface-3);overflow:hidden;min-width:56px}
   .bar i{display:block;height:100%;background:var(--accent)}
   .susp{margin-bottom:12px}
-  /* High / Watch banding, at the same thresholds the Premier League desk uses.
-     A list of bare percentages makes the reader do the thresholding, and two
-     desks thresholding differently is how "the same model" stops looking like
-     the same model. */
-  .band-hi{background:color-mix(in srgb,var(--danger) 18%,transparent);color:var(--danger-ink);font-weight:800}
-  .band-mid{background:color-mix(in srgb,var(--warn) 22%,transparent);color:var(--warn-ink);font-weight:800}
-  /* Sample confidence, from minutes played. The Premier League Guide has always
-     described this dot — "green high, amber medium, grey low" — and the class
-     existed in its stylesheet, but nothing ever rendered one. A 0.50 built on
-     90 minutes and one built on 2,000 are not the same number, and the row
-     gave no way to tell them apart. */
-  .conf-dot{width:9px;height:9px;border-radius:50%;flex:none;display:inline-block;margin-right:6px;vertical-align:middle}
-  .conf-hi{background:var(--good)} .conf-mid{background:var(--warn)} .conf-lo{background:var(--border-2)}
-  .form-arr{font-size:11px;font-weight:800;margin-left:5px}
-  .form-up{color:var(--danger-ink)} .form-down{color:var(--good-ink)}
-  .empty{padding:26px;text-align:center;color:var(--text-2)}
-  .note{font-size:12.5px;color:var(--text-2);margin-top:10px;line-height:1.55}
-  .guide{max-width:74ch;line-height:1.65;font-size:14.5px}
-  .guide h3{margin:20px 0 6px;font-size:17px}
-  .guide code{font-family:var(--mono);font-size:.9em;background:var(--surface-2);padding:1px 5px;border-radius:5px}
-  .guide ul{padding-left:20px} .guide li{margin:5px 0}
-  .warnbox{border-left:3px solid var(--warn);background:var(--surface-2);padding:10px 13px;border-radius:0 9px 9px 0;margin:12px 0}
-  footer{padding:26px 0 40px;font-size:12.5px;color:var(--text-3)}
   @media (max-width:640px){ th{position:static} .hero h1{font-size:22px} }
 
   /* ---- iPhone ---------------------------------------------------------- */
@@ -149,7 +59,6 @@
      bar and the footer under the home indicator. */
   body{padding-left:env(safe-area-inset-left);padding-right:env(safe-area-inset-right)}
   .topbar{padding-top:env(safe-area-inset-top);height:calc(60px + env(safe-area-inset-top))}
-  footer{padding-bottom:calc(40px + env(safe-area-inset-bottom))}
   /* Safari inflates text in landscape unless told not to. */
   html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
   /* Tapping a control twice quickly must not zoom the page. */
@@ -182,7 +91,7 @@
 
 <header class="topbar">
   <div class="wrap" style="display:flex;align-items:center;width:100%">
-    <div class="brand"><span class="dot">LL</span> La Liga Bookings Desk</div>
+    <div class="brand"><span class="dot">LL</span><span class="bname">Bookings Desk</span></div>
     <span class="spacer"></span>
     <button class="btn" id="themeBtn" type="button" aria-label="Toggle dark mode">Dark</button>
   </div>
@@ -208,7 +117,7 @@
       Pick the official for a fixture and every probability rescales to his card rate.
     </p>
     <p class="combined-note">
-      <span class="cn-dots" aria-hidden="true"><i style="background:#e90052"></i><i style="background:#7c3aed"></i><i style="background:#ea580c"></i></span>
+      <span class="cn-dots" aria-hidden="true"><i></i><i></i><i></i></span>
       <span>Playing the same day as the other divisions? <a href="/today">Today&rsquo;s combined card</a>
       ranks every league&rsquo;s matches on one date, with one share card across the lot &mdash; or open the
       <a href="/today#all">whole-season calendar</a>.</span>

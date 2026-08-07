@@ -32,27 +32,42 @@
 
   /* Per-desk identity. `strap` runs above the title in the brand band and
      `mark` sits bottom-right; both are what makes a card recognisable at
-     thumbnail size, so they are the only things a desk MUST supply. */
+     thumbnail size, so they are the only things a desk MUST supply.
+     ---------------------------------------------------------------------
+     THE COLOURS HERE ARE A COPY, and the only copy of the palette that a
+     stylesheet cannot supply — this draws to a canvas, where var(--ll) means
+     nothing. So they are pinned to assets/tw.css by scripts/check-palette.mjs,
+     under two rules it enforces in both directions:
+
+         to  === the league's own mark   (--pl / --eflc / --ll / --all)
+         ink === that desk's light --accent
+         lg  === the class its page puts on <html>
+
+     Without the guard this file is exactly where a rebrand goes unnoticed: a
+     share card is the one artefact that LEAVES the site, so nobody who sees
+     one can hold it up against the page it came from. */
   var THEMES = {
     PL: {
       from: '#3d195b', to: '#e90052', ink: '#3d195b',
       strap: 'BOOKINGS DESK · PREMIER LEAGUE', mark: 'PL BOOKINGS DESK',
-      slug: 'pl-bookings', tag: 'PL'
+      slug: 'pl-bookings', tag: 'PL', lg: 'lg-pl'
     },
     EFLC: {
-      from: '#1e1b4b', to: '#7c3aed', ink: '#4c1d95',
+      /* ink was #4c1d95 — a violet a shade off the #4b2e83 the desk itself
+         wears. Near enough to look deliberate and far enough to be wrong. */
+      from: '#1e1b4b', to: '#7c3aed', ink: '#4b2e83',
       strap: 'BOOKINGS DESK · EFL CHAMPIONSHIP', mark: 'CHAMPIONSHIP BOOKINGS',
-      slug: 'eflc-bookings', tag: 'EFLC'
+      slug: 'eflc-bookings', tag: 'EFLC', lg: 'lg-eflc'
     },
     LL: {
       from: '#7f1d1d', to: '#ea580c', ink: '#9a3412',
       strap: 'BOOKINGS DESK · LA LIGA', mark: 'LA LIGA BOOKINGS',
-      slug: 'laliga-bookings', tag: 'LL'
+      slug: 'laliga-bookings', tag: 'LL', lg: 'lg-ll'
     },
     ALL: {
       from: '#0f172a', to: '#0891b2', ink: '#0e7490',
       strap: 'BOOKINGS DESK · ALL LEAGUES', mark: 'BOOKINGS DESK',
-      slug: 'bookings-desk', tag: 'ALL'
+      slug: 'bookings-desk', tag: 'ALL', lg: 'lg-all'
     }
   };
   function theme(code) { return THEMES[code] || THEMES.ALL; }

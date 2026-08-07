@@ -1,4 +1,88 @@
 *,:after,:before{--tw-border-spacing-x:0;--tw-border-spacing-y:0;--tw-translate-x:0;--tw-translate-y:0;--tw-rotate:0;--tw-skew-x:0;--tw-skew-y:0;--tw-scale-x:1;--tw-scale-y:1;--tw-pan-x: ;--tw-pan-y: ;--tw-pinch-zoom: ;--tw-scroll-snap-strictness:proximity;--tw-gradient-from-position: ;--tw-gradient-via-position: ;--tw-gradient-to-position: ;--tw-ordinal: ;--tw-slashed-zero: ;--tw-numeric-figure: ;--tw-numeric-spacing: ;--tw-numeric-fraction: ;--tw-ring-inset: ;--tw-ring-offset-width:0px;--tw-ring-offset-color:#fff;--tw-ring-color:rgba(59,130,246,.5);--tw-ring-offset-shadow:0 0 #0000;--tw-ring-shadow:0 0 #0000;--tw-shadow:0 0 #0000;--tw-shadow-colored:0 0 #0000;--tw-blur: ;--tw-brightness: ;--tw-contrast: ;--tw-grayscale: ;--tw-hue-rotate: ;--tw-invert: ;--tw-saturate: ;--tw-sepia: ;--tw-drop-shadow: ;--tw-backdrop-blur: ;--tw-backdrop-brightness: ;--tw-backdrop-contrast: ;--tw-backdrop-grayscale: ;--tw-backdrop-hue-rotate: ;--tw-backdrop-invert: ;--tw-backdrop-opacity: ;--tw-backdrop-saturate: ;--tw-backdrop-sepia: ;--tw-contain-size: ;--tw-contain-layout: ;--tw-contain-paint: ;--tw-contain-style: }::backdrop{--tw-border-spacing-x:0;--tw-border-spacing-y:0;--tw-translate-x:0;--tw-translate-y:0;--tw-rotate:0;--tw-skew-x:0;--tw-skew-y:0;--tw-scale-x:1;--tw-scale-y:1;--tw-pan-x: ;--tw-pan-y: ;--tw-pinch-zoom: ;--tw-scroll-snap-strictness:proximity;--tw-gradient-from-position: ;--tw-gradient-via-position: ;--tw-gradient-to-position: ;--tw-ordinal: ;--tw-slashed-zero: ;--tw-numeric-figure: ;--tw-numeric-spacing: ;--tw-numeric-fraction: ;--tw-ring-inset: ;--tw-ring-offset-width:0px;--tw-ring-offset-color:#fff;--tw-ring-color:rgba(59,130,246,.5);--tw-ring-offset-shadow:0 0 #0000;--tw-ring-shadow:0 0 #0000;--tw-shadow:0 0 #0000;--tw-shadow-colored:0 0 #0000;--tw-blur: ;--tw-brightness: ;--tw-contrast: ;--tw-grayscale: ;--tw-hue-rotate: ;--tw-invert: ;--tw-saturate: ;--tw-sepia: ;--tw-drop-shadow: ;--tw-backdrop-blur: ;--tw-backdrop-brightness: ;--tw-backdrop-contrast: ;--tw-backdrop-grayscale: ;--tw-backdrop-hue-rotate: ;--tw-backdrop-invert: ;--tw-backdrop-opacity: ;--tw-backdrop-saturate: ;--tw-backdrop-sepia: ;--tw-contain-size: ;--tw-contain-layout: ;--tw-contain-paint: ;--tw-contain-style: }/*! tailwindcss v3.4.19 | MIT License | https://tailwindcss.com*/*,:after,:before{box-sizing:border-box;border:0 solid #e5e7eb}:after,:before{--tw-content:""}:host,html{line-height:1.5;-webkit-text-size-adjust:100%;-moz-tab-size:4;-o-tab-size:4;tab-size:4;font-family:ui-sans-serif,system-ui,sans-serif,Apple Color Emoji,Segoe UI Emoji,Segoe UI Symbol,Noto Color Emoji;font-feature-settings:normal;font-variation-settings:normal;-webkit-tap-highlight-color:transparent}body{margin:0;line-height:inherit}hr{height:0;color:inherit;border-top-width:1px}abbr:where([title]){-webkit-text-decoration:underline dotted;text-decoration:underline dotted}h1,h2,h3,h4,h5,h6{font-size:inherit;font-weight:inherit}a{color:inherit;text-decoration:inherit}b,strong{font-weight:bolder}code,kbd,pre,samp{font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,Liberation Mono,Courier New,monospace;font-feature-settings:normal;font-variation-settings:normal;font-size:1em}small{font-size:80%}sub,sup{font-size:75%;line-height:0;position:relative;vertical-align:baseline}sub{bottom:-.25em}sup{top:-.5em}table{text-indent:0;border-color:inherit;border-collapse:collapse}button,input,optgroup,select,textarea{font-family:inherit;font-feature-settings:inherit;font-variation-settings:inherit;font-size:100%;font-weight:inherit;line-height:inherit;letter-spacing:inherit;color:inherit;margin:0;padding:0}button,select{text-transform:none}button,input:where([type=button]),input:where([type=reset]),input:where([type=submit]){-webkit-appearance:button;background-color:transparent;background-image:none}:-moz-focusring{outline:auto}:-moz-ui-invalid{box-shadow:none}progress{vertical-align:baseline}::-webkit-inner-spin-button,::-webkit-outer-spin-button{height:auto}[type=search]{-webkit-appearance:textfield;outline-offset:-2px}::-webkit-search-decoration{-webkit-appearance:none}::-webkit-file-upload-button{-webkit-appearance:button;font:inherit}summary{display:list-item}blockquote,dd,dl,figure,h1,h2,h3,h4,h5,h6,hr,p,pre{margin:0}fieldset{margin:0}fieldset,legend{padding:0}menu,ol,ul{list-style:none;margin:0;padding:0}dialog{padding:0}textarea{resize:vertical}input::-moz-placeholder,textarea::-moz-placeholder{opacity:1;color:#9ca3af}input::placeholder,textarea::placeholder{opacity:1;color:#9ca3af}[role=button],button{cursor:pointer}:disabled{cursor:default}audio,canvas,embed,iframe,img,object,svg,video{display:block;vertical-align:middle}img,video{max-width:100%;height:auto}[hidden]:where(:not([hidden=until-found])){display:none}.absolute{position:absolute}.top-20{top:5rem}.flex{display:flex}.table{display:table}.hidden{display:none}.transform{transform:translate(var(--tw-translate-x),var(--tw-translate-y)) rotate(var(--tw-rotate)) skewX(var(--tw-skew-x)) skewY(var(--tw-skew-y)) scaleX(var(--tw-scale-x)) scaleY(var(--tw-scale-y))}.border{border-width:1px}.filter{filter:var(--tw-blur) var(--tw-brightness) var(--tw-contrast) var(--tw-grayscale) var(--tw-hue-rotate) var(--tw-invert) var(--tw-saturate) var(--tw-sepia) var(--tw-drop-shadow)}.transition{transition-property:color,background-color,border-color,text-decoration-color,fill,stroke,opacity,box-shadow,transform,filter,-webkit-backdrop-filter;transition-property:color,background-color,border-color,text-decoration-color,fill,stroke,opacity,box-shadow,transform,filter,backdrop-filter;transition-property:color,background-color,border-color,text-decoration-color,fill,stroke,opacity,box-shadow,transform,filter,backdrop-filter,-webkit-backdrop-filter;transition-timing-function:cubic-bezier(.4,0,.2,1);transition-duration:.15s}
+/* ─── Design tokens ─────────────────────────────────────────────────────────
+   ONE palette, four desks. Every page used to declare its own :root and its
+   own dark block — four copies of the same 25 neutrals — and they had already
+   drifted. La Liga was shipped by copying the Championship's <style>, so its
+   page chrome was Championship purple while its nav dot and its share cards
+   were orange: three places named the league's colour and only two agreed. The
+   copies also fell out of step on WHICH tokens existed at all — --target,
+   --mid and --fade were Premier League only, so any rule using them was silent
+   on the other three desks rather than broken, which is worse.
+
+   The neutrals and the semantics are IDENTICAL everywhere and live in :root.
+   Only the league identity changes, and it changes by ONE class on <html>, so
+   a desk cannot be handed another league's colour by failing to override a
+   token it did not know about.
+
+   Pages must not redeclare any of this. scripts/check-palette.mjs fails the
+   build if one does, and fails it again if the CSS and share.js stop agreeing
+   — share.js draws to a canvas and cannot read a stylesheet, so its copy of
+   the palette is the one that goes stale with nothing on screen looking wrong.
+   ------------------------------------------------------------------------ */
+:root{
+  --bg:#eef1f6; --surface:#ffffff; --surface-2:#f4f6fa; --surface-3:#eaedf3;
+  --text:#0c1322; --text-2:#586275; --text-3:#8b94a5;
+  --border:#e3e7ee; --border-2:#d7dce6;
+  --on-accent:#ffffff;
+  --danger:#dc2626; --warn:#d97706; --good:#16a34a; --info:#4f46e5;
+  /* Darker variants for small text on a light surface: the fill colours above
+     are tuned for badges and only reach ~2.9:1 as body text, under the 4.5:1
+     WCAG 2.2 AA needs at these sizes. */
+  --danger-ink:#b91c1c; --warn-ink:#a35709; --good-ink:#15803d;
+  --target:#16a34a; --mid:#d97706; --fade:#64748b;
+  --shadow-sm:0 1px 2px rgba(13,19,34,.06);
+  --shadow:0 4px 16px -4px rgba(13,19,34,.12),0 1px 3px rgba(13,19,34,.06);
+  --mono:ui-monospace,"SF Mono",SFMono-Regular,Menlo,Consolas,"Liberation Mono",monospace;
+  --sidebar-w:248px; --topbar-h:60px; --bottomnav-h:66px;
+  /* League marks. Every desk carries all four, because every desk SHOWS all
+     four: the switcher, the tier chips and /today's rows are cross-league. */
+  --pl:#e90052; --eflc:#7c3aed; --ll:#ea580c; --all:#0891b2;
+  --efl:var(--eflc);  /* the older name; .tier-efl and .pill.eflc still use it */
+  /* Ink variants, for the marks used as SMALL TEXT rather than as a fill. The
+     marks are chosen to read at 9px as a dot; as a 10px uppercase label on
+     white, --ll reaches 3.6:1 and --all 3.7:1, both under the 4.5:1 WCAG 2.2
+     AA wants. Same reasoning as --danger-ink, and the same trap: a colour that
+     is merely hard to read fails no check and throws nothing. */
+  --pl-ink:#be123c; --eflc-ink:#6d28d9; --ll-ink:#c2410c; --all-ink:#0e7490;
+  /* The identity of THIS desk. Defaults to the combined view, so a page that
+     forgets its class gets the neutral teal rather than another league's kit. */
+  --accent:#0e7490; --accent-2:var(--all); --accent-ink:var(--all-ink);
+  --ring:rgba(14,116,144,.45);
+}
+html.lg-pl  {--accent:#3d195b;--accent-2:var(--pl);  --accent-ink:var(--pl-ink);  --ring:rgba(61,25,91,.45)}
+html.lg-eflc{--accent:#4b2e83;--accent-2:var(--eflc);--accent-ink:var(--eflc-ink);--ring:rgba(75,46,131,.45)}
+html.lg-ll  {--accent:#9a3412;--accent-2:var(--ll);  --accent-ink:var(--ll-ink);  --ring:rgba(154,52,18,.45)}
+html.lg-all {--accent:#0e7490;--accent-2:var(--all); --accent-ink:var(--all-ink); --ring:rgba(14,116,144,.45)}
+
+html[data-theme="dark"]{
+  --bg:#0b0f1a; --surface:#141b2c; --surface-2:#1b2336; --surface-3:#232c42;
+  --text:#eef1f7; --text-2:#9aa6bb; --text-3:#6b7790;
+  --border:#283248; --border-2:#33405a;
+  /* Every dark accent below is a pastel, so the ink on top of one is the page
+     ground rather than white. */
+  --on-accent:#0b0f1a;
+  --danger:#f87171; --warn:#fbbf24; --good:#34d399; --info:#a5b4fc;
+  /* On dark surfaces the base tokens already clear AA, so ink == fill. */
+  --danger-ink:#f87171; --warn-ink:#fbbf24; --good-ink:#34d399;
+  --target:#34d399; --mid:#fbbf24; --fade:#94a3b8;
+  --shadow-sm:0 1px 2px rgba(0,0,0,.4);
+  --shadow:0 10px 30px -8px rgba(0,0,0,.55),0 2px 6px rgba(0,0,0,.4);
+  --pl:#ff2d7e; --eflc:#a78bfa; --ll:#fb923c; --all:#67e8f9;
+  /* The dark marks are already pastels clearing AA on #0b0f1a, so ink == mark. */
+  --pl-ink:#ff2d7e; --eflc-ink:#a78bfa; --ll-ink:#fb923c; --all-ink:#67e8f9;
+  --accent:#22d3ee; --ring:rgba(34,211,238,.5);
+}
+/* Two classes, so these beat the generic dark block above it whatever the
+   source order. `html[data-theme="dark"]` and `html.lg-pl` carry the same
+   specificity, and the dark one is written later — without these the Premier
+   League desk would lose its accent the moment the lights went out. Only
+   --accent moves: --accent-2 rides on --pl/--eflc/--ll, which are already
+   redefined above and resolve per theme at the point of use. */
+html[data-theme="dark"].lg-pl  {--accent:#a78bfa;--ring:rgba(167,139,250,.5)}
+html[data-theme="dark"].lg-eflc{--accent:#ddd6fe;--ring:rgba(196,181,253,.5)}
+html[data-theme="dark"].lg-ll  {--accent:#fdba74;--ring:rgba(253,186,116,.5)}
+html[data-theme="dark"].lg-all {--accent:#22d3ee;--ring:rgba(34,211,238,.5)}
+
 /* ─── League switcher ───────────────────────────────────────────────────────
    Shipped because the Championship and La Liga desks were, for practical
    purposes, unreachable. Both were live, both were in the sitemap, and the
@@ -37,10 +121,12 @@
 /* A colour chip per competition, so the current desk is identifiable at a
    glance rather than only by reading the label. */
 .lb-dot{width:9px;height:9px;border-radius:3px;flex:none}
-.lb-pl .lb-dot{background:#e90052}
-.lb-eflc .lb-dot{background:#7c3aed}
-.lb-ll .lb-dot{background:#ea580c}
-.lb-today .lb-dot{background:linear-gradient(135deg,#e90052 0%,#7c3aed 50%,#ea580c 100%)}
+/* Off the tokens, not off four more hex literals. This dot was the third
+   place La Liga's colour was written down and the only one that was right. */
+.lb-pl .lb-dot{background:var(--pl)}
+.lb-eflc .lb-dot{background:var(--eflc)}
+.lb-ll .lb-dot{background:var(--ll)}
+.lb-today .lb-dot{background:linear-gradient(135deg,var(--pl) 0%,var(--eflc) 50%,var(--ll) 100%)}
 
 /* All four have to FIT. At full length the row needs 625px and the widest
    iPhone is 430, so "La Liga" and "Today" sat off the right edge on every
@@ -66,6 +152,12 @@
   background:var(--surface-2,#f4f6fa);border:1px solid var(--border,#e3e7ee)}
 .combined-note .cn-dots{display:inline-flex;gap:3px;flex:none}
 .combined-note .cn-dots i{width:8px;height:8px;border-radius:2.5px;display:block}
+/* The three pages carrying this note each spelled the colours out in a style=""
+   attribute — a fourth copy of the palette, and one that cannot follow the
+   theme. */
+.combined-note .cn-dots i:nth-child(1){background:var(--pl)}
+.combined-note .cn-dots i:nth-child(2){background:var(--eflc)}
+.combined-note .cn-dots i:nth-child(3){background:var(--ll)}
 .combined-note a{font-weight:700;text-decoration:none;
   border-bottom:1.5px solid currentColor;padding-bottom:1px}
 .combined-note a:hover{opacity:.8}
@@ -407,6 +499,12 @@ button.mkt:hover{background:var(--surface-3);color:var(--accent)}
    the Premier League desk had the class and none of the look. */
 .pill{display:inline-block;font-size:10.5px;font-weight:700;padding:2px 7px;border-radius:999px;
   border:1px solid var(--border-2);color:var(--text-2)}
+/* Division tags, off the league tokens. Each desk defined only its own — and
+   La Liga's was a copy of the Championship's rule, --efl and all, so the LL
+   pill came out purple on an orange desk. */
+.pill.pl{background:color-mix(in srgb,var(--pl) 14%,transparent);border-color:transparent;color:var(--pl)}
+.pill.eflc{background:color-mix(in srgb,var(--eflc) 14%,transparent);border-color:transparent;color:var(--eflc)}
+.pill.ll{background:color-mix(in srgb,var(--ll) 14%,transparent);border-color:transparent;color:var(--ll)}
 
 /* High / Watch banding, at the thresholds every desk uses. */
 .band{font-weight:700}
@@ -453,3 +551,148 @@ button.mkt:hover{background:var(--surface-3);color:var(--accent)}
   background:var(--accent);color:var(--on-accent);font-weight:700;
   border-radius:0 0 9px 0;text-decoration:none}
 .skip:focus{left:0}
+
+/* ─── Desk chrome ───────────────────────────────────────────────────────────
+   The base layer of a desk: type, links, buttons, cards, tabs, tables, the
+   small status chips. It was declared THREE times — eflc.html, laliga.html and
+   today.html each carried its own near-copy — and the copies had already
+   drifted in ways nobody would call a bug and everybody would notice:
+
+     .brand .dot     12px on two desks, 11px on the third
+     .stat           box-shadow on two, flat on the third
+     .empty          26px of padding on two, 22px 6px on the third
+     .note           line-height 1.55 on two, 1.5 on the third
+     a               --accent everywhere, --accent-2 on the Premier League desk
+     .mono           tabular figures everywhere EXCEPT the Premier League desk,
+                     which is the one with the 900-row tables
+
+   None of that is visible on one page. All of it is visible moving between
+   them, which is what the league switcher now makes people do.
+
+   The Premier League desk keeps its own shell — a sidebar, a breadcrumb bar
+   and a bottom tab bar are genuinely a different layout, not a drifted copy —
+   so a few of these are overridden in index.html on purpose. What it does NOT
+   keep is a second opinion about what a link, a figure or a caption looks
+   like.
+   ------------------------------------------------------------------------ */
+h1,h2,h3,.display{font-family:'Bricolage Grotesque',system-ui,sans-serif;
+  letter-spacing:-.02em;margin:0}
+/* TABULAR FIGURES. Proportional digits make a column of percentages ragged:
+   "11.4%" is narrower than "80.0%", so the decimal points wander. The two
+   newer desks had this and the Premier League one did not — and it is the desk
+   with a 900-row table. */
+.mono{font-family:var(--mono);font-variant-numeric:tabular-nums}
+.muted{color:var(--text-2)} .faint{color:var(--text-3)}
+/* Links take the league's INK, not its accent: the accent is a deep chrome
+   colour and reads as body text rather than as something to press, and the raw
+   mark is under AA at this size on two of the four desks. */
+a{color:var(--accent-ink);text-decoration:none}
+.wrap{max-width:1180px;margin:0 auto;padding:0 16px}
+.spacer{flex:1}
+
+.brand{display:flex;align-items:center;gap:10px;font-weight:700;letter-spacing:-.02em;
+  min-width:0}
+/* The title is a SPAN, not a bare text node beside the dot. A text node in a
+   flex container becomes an anonymous flex item, which cannot be given
+   text-overflow — so "La Liga Bookings Desk" wrapped to three lines inside a
+   60px bar and the third was clipped off. It fitted in two on the Championship
+   desk, which is why it was never noticed. */
+.brand .bname{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+@media (max-width:420px){ .brand .bname{font-size:14px} }
+.brand .dot{width:26px;height:26px;border-radius:8px;background:var(--accent);
+  color:var(--on-accent);display:grid;place-items:center;font-size:12px;font-weight:800}
+
+.btn{font:inherit;font-size:13px;font-weight:600;padding:7px 12px;
+  border-radius:9px;border:1px solid var(--border-2);background:var(--surface);
+  color:var(--text);cursor:pointer;display:inline-flex;align-items:center;gap:.4rem}
+/* Two names for one pair of buttons: the Premier League desk spells them
+   .btn-primary/.btn-ghost and the other three .btn.primary. Both resolve here
+   rather than in two stylesheets that would answer differently. */
+.btn-primary{background:var(--accent);color:var(--on-accent);border-color:var(--accent);font-weight:700}
+.btn-primary:hover{filter:brightness(1.08)}
+.btn-ghost{background:var(--surface);color:var(--text);border-color:var(--border-2);box-shadow:var(--shadow-sm)}
+.btn-ghost:hover{background:var(--surface-2)}
+.btn:hover{border-color:var(--accent)}
+.btn[disabled]{opacity:.55;cursor:progress}
+/* 3px, not 2. The ring is a 45%-alpha tint of the accent, and at 2px against a
+   1px border it is easy to lose — which is the whole job of a focus ring. The
+   Premier League desk already used 3; the other three did not. */
+.btn:focus-visible,select:focus-visible,input:focus-visible,
+textarea:focus-visible,button:focus-visible,a:focus-visible,[tabindex]:focus-visible{
+  outline:3px solid var(--ring);outline-offset:2px;border-radius:8px}
+select,input[type=search],input[type=number],input[type=text],input:not([type]){
+  font:inherit;font-size:13px;padding:7px 10px;border-radius:9px;
+  border:1px solid var(--border-2);background:var(--surface);color:var(--text)}
+label.chk{display:inline-flex;align-items:center;gap:6px;font-size:13px;
+  color:var(--text-2);cursor:pointer}
+input[type=checkbox],input[type=radio]{accent-color:var(--accent)}
+
+.hero{padding:22px 0 6px}
+.hero h1{font-size:clamp(23px,3.4vw,34px)}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:14px;
+  box-shadow:var(--shadow-sm);padding:14px}
+.controls{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:12px}
+.stats{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+.stat{background:var(--surface);border:1px solid var(--border);border-radius:11px;
+  padding:8px 13px;box-shadow:var(--shadow-sm)}
+.stat b{display:block;font-size:19px;line-height:1.15}
+.stat span{font-size:11.5px;color:var(--text-2)}
+
+.tabs{display:flex;gap:2px;margin:18px 0 14px;border-bottom:1px solid var(--border);
+  overflow-x:auto}
+.tab{font:inherit;font-size:14px;font-weight:600;padding:9px 14px;border:0;
+  background:none;color:var(--text-2);cursor:pointer;
+  border-bottom:2px solid transparent;white-space:nowrap}
+.tab[aria-selected="true"]{color:var(--text);border-bottom-color:var(--accent)}
+.panel[hidden]{display:none}
+
+.tablewrap{overflow-x:auto;-webkit-overflow-scrolling:touch}
+
+/* Small chips and meters. Every one of these was three copies. */
+.tier{font-size:11px;font-weight:700;padding:2px 8px;border-radius:999px}
+.tier.t1{background:color-mix(in srgb,var(--danger) 15%,transparent);color:var(--danger-ink)}
+.tier.t2{background:color-mix(in srgb,var(--warn) 16%,transparent);color:var(--warn-ink)}
+.tier.t3{background:color-mix(in srgb,var(--good) 15%,transparent);color:var(--good-ink)}
+.pill.new{background:var(--surface-3);border-color:transparent}
+.star{background:none;border:0;cursor:pointer;font-size:15px;line-height:1;
+  color:var(--text-3);padding:0 2px}
+.star[aria-pressed="true"]{color:var(--warn)}
+/* A flex cell so a crest that fails to load cannot drag the club name off its
+   baseline — offline, or behind a blocking proxy, the alt box still takes part
+   in inline layout. */
+.clubcell{display:flex;align-items:center;gap:6px}
+.crest{width:20px;height:20px;border-radius:4px;object-fit:contain;flex:none;
+  display:inline-block;vertical-align:-5px}
+/* Sample confidence, from minutes played: a 0.50 built on 90 minutes and one
+   built on 2,000 are not the same number. */
+.conf-dot{width:9px;height:9px;border-radius:50%;flex:none;display:inline-block;
+  margin-right:6px;vertical-align:middle}
+.conf-hi{background:var(--good)} .conf-mid{background:var(--warn)} .conf-lo{background:var(--border-2)}
+.form-arr{font-size:11px;font-weight:800;margin-left:5px}
+.form-up{color:var(--danger-ink)} .form-down{color:var(--good-ink)}
+/* High / Watch banding, at the thresholds every desk uses. A list of bare
+   percentages makes the reader do the thresholding, and two desks thresholding
+   differently is how "the same model" stops looking like the same model. */
+.band-hi{background:color-mix(in srgb,var(--danger) 18%,transparent);color:var(--danger-ink);font-weight:800}
+.band-mid{background:color-mix(in srgb,var(--warn) 22%,transparent);color:var(--warn-ink);font-weight:800}
+/* League tag, on the cross-league views. /today spelled all six of these
+   colours out in hex — a fifth copy of the palette, and the one that could not
+   follow the theme, so on a dark ground the three tags stayed at their light
+   values. */
+.lg{font-size:10.5px;font-weight:800;padding:3px 8px;border-radius:999px;
+  letter-spacing:.03em;flex:none}
+.lg.PL{background:color-mix(in srgb,var(--pl) 15%,transparent);color:var(--pl-ink)}
+.lg.EFLC{background:color-mix(in srgb,var(--eflc) 16%,transparent);color:var(--eflc-ink)}
+.lg.LL{background:color-mix(in srgb,var(--ll) 18%,transparent);color:var(--ll-ink)}
+
+.empty{padding:26px;text-align:center;color:var(--text-2)}
+.note{font-size:12.5px;color:var(--text-2);margin-top:10px;line-height:1.55}
+.guide{max-width:74ch;line-height:1.65;font-size:14.5px}
+.guide h3{margin:20px 0 6px;font-size:17px}
+.guide code{font-family:var(--mono);font-size:.9em;background:var(--surface-2);
+  padding:1px 5px;border-radius:5px}
+.guide ul{padding-left:20px} .guide li{margin:5px 0}
+.warnbox{border-left:3px solid var(--warn);background:var(--surface-2);
+  padding:10px 13px;border-radius:0 9px 9px 0;margin:12px 0}
+footer{padding:26px 0 40px;font-size:12.5px;color:var(--text-3);
+  padding-bottom:calc(40px + env(safe-area-inset-bottom))}

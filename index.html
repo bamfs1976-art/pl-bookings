@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en-GB" data-theme="light">
+<html lang="en-GB" class="lg-pl" data-theme="light">
 <head>
 <meta charset="UTF-8">
 <!-- viewport-fit=cover to match the other desks: the page already pads the
@@ -37,39 +37,16 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400..800&family=Hanken+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
-  :root{
-    /* light, the default */
-    --bg:#eef1f6; --surface:#ffffff; --surface-2:#f4f6fa; --surface-3:#eaedf3;
-    --text:#0c1322; --text-2:#586275; --text-3:#8b94a5; --border:#e3e7ee; --border-2:#d7dce6;
-    --accent:#3d195b; --accent-2:#e90052; --on-accent:#ffffff;
-    --danger:#dc2626; --warn:#d97706; --good:#16a34a; --info:#4f46e5;
-    /* Darker variants for small text on a light surface: the fill colours
-       above are tuned for badges and only reach ~2.9:1 as body text, under
-       the 4.5:1 WCAG 2.2 AA needs at these sizes. */
-    --danger-ink:#b91c1c; --warn-ink:#a35709; --good-ink:#15803d;
-    --target:#16a34a; --mid:#d97706; --fade:#64748b; --efl:#7c3aed;
-    --shadow-sm:0 1px 2px rgba(13,19,34,.06); --shadow:0 4px 16px -4px rgba(13,19,34,.12),0 1px 3px rgba(13,19,34,.06);
-    --ring:rgba(61,25,91,.45);
-  }
-  html[data-theme="dark"]{
-    --bg:#0b0f1a; --surface:#141b2c; --surface-2:#1b2336; --surface-3:#232c42;
-    --text:#eef1f7; --text-2:#9aa6bb; --text-3:#6b7790; --border:#283248; --border-2:#33405a;
-    --accent:#a78bfa; --accent-2:#ff2d7e; --on-accent:#160a24;
-    --danger:#f87171; --warn:#fbbf24; --good:#34d399; --info:#a5b4fc;
-    /* On dark surfaces the base tokens already clear AA, so ink == fill. */
-    --danger-ink:#f87171; --warn-ink:#fbbf24; --good-ink:#34d399;
-    --target:#34d399; --mid:#fbbf24; --fade:#94a3b8; --efl:#c4b5fd;
-    --shadow-sm:0 1px 2px rgba(0,0,0,.4); --shadow:0 10px 30px -8px rgba(0,0,0,.55),0 2px 6px rgba(0,0,0,.4);
-    --ring:rgba(167,139,250,.5);
-  }
+  /* The palette — neutrals, semantics and this desk's league colour — lives in
+     assets/tw.css and is selected by the lg-* class on <html>. It used to be
+     declared here, in four near-identical copies that had already drifted.
+     Do not reintroduce a :root colour block: scripts/check-palette.mjs fails
+     the build on one, because that is how La Liga came to wear the
+     Championship's purple while its own nav dot was orange. */
   *{box-sizing:border-box}
   body{background:var(--bg); color:var(--text); font-family:'Hanken Grotesk',system-ui,sans-serif; margin:0; transition:background .25s,color .25s; -webkit-font-smoothing:antialiased}
-  h1,h2,h3,.display{font-family:'Bricolage Grotesque',system-ui,sans-serif; letter-spacing:-.02em}
   .surface{background:var(--surface); border:1px solid var(--border); box-shadow:var(--shadow-sm)}
   .surface-2{background:var(--surface-2)}
-  .muted{color:var(--text-2)} .faint{color:var(--text-3)}
-  a{color:var(--accent-2);text-decoration:none}
-  a:focus-visible,button:focus-visible,select:focus-visible,textarea:focus-visible,input:focus-visible{outline:3px solid var(--ring); outline-offset:2px; border-radius:8px}
   /* Responsible gambling notice — shown site-wide, required for a UK betting-research tool */
   .rg{display:flex;flex-wrap:wrap;align-items:center;gap:.5rem .85rem;padding:.85rem 1rem;border:1px solid var(--border);
       border-radius:12px;background:var(--surface-2);font-size:.76rem;line-height:1.5;color:var(--text-2)}
@@ -90,7 +67,6 @@
   tbody tr{border-top:1px solid var(--border)} tbody tr:first-child{border-top:0}
   tbody tr:hover{background:var(--surface-2)}
   .num{font-variant-numeric:tabular-nums}
-  .crest{width:20px;height:20px;border-radius:4px;object-fit:contain;vertical-align:-5px;display:inline-block}
   .crest-wrap{display:inline-flex;align-items:center;justify-content:center;overflow:hidden;flex:none}
   .crest-wrap>img{width:100%;height:100%;object-fit:contain;display:block}
   .crest-chip{border-radius:4px}
@@ -142,7 +118,6 @@
   .ap-open{margin-left:auto;font-size:.66rem;font-weight:700;color:var(--accent-2)}
   /* App shell — layout ported from Gameweek Edge (sidebar + topbar +
      mobile drawer + bottom nav), recoloured to the desk's own tokens. */
-  :root{--sidebar-w:248px;--topbar-h:60px;--bottomnav-h:66px}
   .shell{display:flex;min-height:100vh}
   .sidebar{width:var(--sidebar-w);background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;position:fixed;left:0;top:0;bottom:0;z-index:200;transition:transform .32s ease}
   .sb-brand{display:flex;align-items:center;gap:11px;padding:18px 18px 16px;border-bottom:1px solid var(--border)}
@@ -187,7 +162,7 @@
   .sb-foot-v{font-size:.66rem;color:var(--text-3)}
   .sb-foot-legal{font-size:.62rem;line-height:1.45;color:var(--text-3);margin:0}
   .main{margin-left:var(--sidebar-w);flex:1;display:flex;flex-direction:column;min-height:100vh;min-width:0}
-  .topbar{position:sticky;top:0;z-index:100;height:var(--topbar-h);padding:0 26px;background:color-mix(in srgb,var(--bg) 88%,transparent);-webkit-backdrop-filter:blur(16px);backdrop-filter:blur(16px);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;gap:.6rem}
+  .topbar{position:sticky;top:0;z-index:100;height:var(--topbar-h);padding:0 26px;background:color-mix(in srgb,var(--surface) 88%,transparent);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;gap:.6rem}
   .tb-left{display:flex;align-items:center;gap:13px;min-width:0}
   .hamburger{display:none;width:38px;height:38px;align-items:center;justify-content:center;border-radius:8px;background:var(--surface-2);border:1px solid var(--border);cursor:pointer;color:var(--text);flex:none}
   .hamburger svg{width:18px;height:18px}
@@ -231,11 +206,6 @@
   @supports(padding:max(0px)){.bottom-nav{padding-bottom:max(4px,env(safe-area-inset-bottom))}}
   select,textarea,input{background:var(--surface); color:var(--text); border:1px solid var(--border-2); border-radius:9px; padding:.5rem .65rem; font:inherit; box-shadow:var(--shadow-sm)}
   input[type=checkbox]{box-shadow:none;accent-color:var(--accent)}
-  .btn{display:inline-flex;align-items:center;gap:.4rem;border-radius:9px;padding:.5rem .9rem;font-weight:700;font-size:.88rem;cursor:pointer;border:1px solid transparent}
-  .btn-primary{background:var(--accent);color:var(--on-accent);border-color:var(--accent)}
-  .btn-primary:hover{filter:brightness(1.08)}
-  .btn-ghost{background:var(--surface);color:var(--text);border-color:var(--border-2);box-shadow:var(--shadow-sm)}
-  .btn-ghost:hover{background:var(--surface-2)}
   .riskbadge{display:inline-block;min-width:3ch;text-align:right;font-weight:800;font-variant-numeric:tabular-nums}
   .barwrap{height:5px;border-radius:999px;background:var(--surface-3);overflow:hidden;margin-top:3px}
   .bar{height:100%;border-radius:999px}
@@ -317,8 +287,6 @@
   .wl-row:first-of-type{border-top:0}
   .wl-row:hover{background:var(--surface-2)}
   /* ═══ Prototype language: mono labels, severity, pip meter, heat badge ═══ */
-  :root{--mono:ui-monospace,"SF Mono",SFMono-Regular,Menlo,Consolas,"Liberation Mono",monospace}
-  .mono{font-family:var(--mono)}
   .live-pill{display:inline-flex;align-items:center;gap:.32rem;font-family:var(--mono);font-size:.6rem;font-weight:800;letter-spacing:.12em;padding:.18rem .5rem;border-radius:6px;border:1px solid var(--border-2);color:var(--good);text-transform:uppercase}
   .live-pill.stale{color:var(--text-3)}
   .live-pill .d{width:6px;height:6px;border-radius:50%;background:currentColor}
@@ -597,7 +565,7 @@
     </div>
     <p class="beginner-hint">New here? Fixtures are ranked <b>hottest to coolest</b> by booking heat. Under each match, a player's percentage is his chance of a card that game — <b>High</b> is 50%+, <b>Watch</b> 30–50%. Star the ☆ on any player to pin him to your watchlist. It's a research screen, not a tip.</p>
     <p class="combined-note">
-    <span class="cn-dots" aria-hidden="true"><i style="background:#e90052"></i><i style="background:#7c3aed"></i><i style="background:#ea580c"></i></span>
+    <span class="cn-dots" aria-hidden="true"><i></i><i></i><i></i></span>
     <span>Playing the same day as the other divisions? <a href="/today">Today&rsquo;s combined card</a>
     ranks every league&rsquo;s matches on one date, with one share card across the lot &mdash; or open the
     <a href="/today#all">whole-season calendar</a>.</span>

@@ -280,9 +280,50 @@ A build step whose output is not committed looks exactly like a success.
 7. ~~**Tour, glossary, density toggle, command palette**~~ — done on the two newer desks, as shared modules (`assets/tour.js`, `assets/palette.js`, glossary + density in `assets/shell.js`).
 8. ~~**Photos and availability flags**~~ — done. 974/974 Championship and 783/783 La Liga players carry a photograph; the flag is wired but has nothing to show yet.
 9. **Account sync and Tracker** — the one item left, and the largest.
+10. ~~**One palette, one chrome**~~ — done: see below.
 
 Items 1–5 and 7 were interface work. Items 6 and 8 closed the data gaps. Item 9
 is a project in itself.
+
+## 10. One palette, one chrome
+
+Feature parity is not the same as looking like one product, and the audit above
+only ever asked the first question. Four pages each declared their own `:root`
+and their own dark block — four copies of the same 25 neutrals — plus their own
+buttons, cards, tabs, chips and captions. They had already drifted:
+
+| | nav dot | share card | page `--accent` |
+|---|---|---|---|
+| Premier League | `#e90052` | `#3d195b`→`#e90052` | `#3d195b` ✓ |
+| Championship | `#7c3aed` | `#1e1b4b`→`#7c3aed` | `#4b2e83` |
+| **La Liga** | **`#ea580c`** | **`#7f1d1d`→`#ea580c`** | **`#4b2e83`** ← the Championship's |
+| Today | gradient | `#0f172a`→`#0891b2` | `#0e7490` ✓ |
+
+La Liga was built by copying the Championship's page, and the palette came with
+it. So the desk wore the wrong league's purple while its own nav dot and its
+own share cards were orange. The league's colour was written down in **five**
+places — the page `:root`, the switcher dot, `share.js`, `/today`'s `.lg.*`
+tags and three `style=""` attributes on the combined-note dots — and only some
+of them agreed.
+
+The quieter half of the same problem: the four copies disagreed about which
+tokens EXISTED. `--target`, `--mid` and `--fade` were Premier League only. An
+undefined custom property is not an error and not a warning — the declaration
+is simply dropped — so a rule carried from that desk to another rendered with
+no colour at all rather than breaking.
+
+Now: every token lives in `assets/tw.css`, and a desk declares only which
+league it is, by one class on `<html>`. The chrome — type, links, buttons,
+cards, tabs, chips, captions — is one shared layer, and 137 duplicate rules
+came out of the pages. The drift it had accumulated was individually trivial
+and collectively the whole problem: `.stat` had a shadow on two desks and not
+the third, `.empty` 26px of padding on two and 22px on the third, `.mono`
+tabular figures on every desk except the one with the 900-row table.
+
+`check-palette.mjs` holds it: no page may redeclare a colour, each wears
+exactly one league class, `share.js` and the `theme-color` meta must match the
+stylesheet they cannot read, and every `var(--x)` a page references must
+resolve in both themes.
 
 ## What the guards learned
 
