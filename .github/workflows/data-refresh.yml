@@ -62,6 +62,10 @@ on:
         type: boolean
         required: false
         default: false
+      player_matches_limit:
+        description: "Cap the fixtures fetched per league (blank = the whole season). Use a small number to inspect the harvest's foul coverage without spending the day's quota."
+        required: false
+        default: ""
       refresh_eflc:
         description: "Also refresh EFL Championship referees (free source, no key). The first leg of the Championship desk."
         type: boolean
@@ -418,8 +422,10 @@ jobs:
         env:
           API_FOOTBALL_SEASON: ${{ inputs.season_af || '2025' }}
         run: |
+          LIM=""
+          [ -n "${{ inputs.player_matches_limit }}" ] && LIM="--limit ${{ inputs.player_matches_limit }}"
           for L in EFLC LL; do
-            python3 data/harvest_apifootball.py --player-matches --league $L \
+            python3 data/harvest_apifootball.py --player-matches --league $L $LIM \
               && python3 data/build_match_history.py --league $L \
               || echo "::warning::$L training table unavailable this run"
           done

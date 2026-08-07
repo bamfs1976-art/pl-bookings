@@ -574,6 +574,45 @@ def harvest_player_matches(host, key, league, season, limit=None):
     return rows
 
 
+def foul_diagnosis(rows):
+    """WHY the foul coverage is what it is, printed rather than guessed at.
+
+    The first real harvest came back with fouls on 46% of Championship rows and
+    50% of Spanish ones, and the two readings that would explain it demand
+    opposite responses:
+
+      * the feed omits some MATCHES entirely — then those fixtures are unusable
+        and the rest are fine;
+      * the feed writes null where it means ZERO — then half the league looks
+        foul-free, the gate is measuring the wrong thing, and treating null as
+        zero is not a fudge but the correct decode.
+
+    The tell is whether an explicit 0 ever appears. If a feed uses 0 for "no
+    fouls" then null must mean "not recorded"; if it never does, null IS zero.
+    """
+    n = len(rows) or 1
+    nulls = [r for r in rows if r["fouls"] is None]
+    zeros = [r for r in rows if r["fouls"] == 0]
+    by_fx = {}
+    for r in rows:
+        f = by_fx.setdefault(r["fixture_id"], [0, 0])
+        f[0] += 1
+        if r["fouls"] is None:
+            f[1] += 1
+    whole = sum(1 for c, nl in by_fx.values() if c and c == nl)
+    partial = sum(1 for c, nl in by_fx.values() if nl and c != nl)
+    mins = sorted(r["min"] for r in nulls) or [0]
+    print(f"  fouls: {len(rows) - len(nulls)}/{n} recorded "
+          f"({100 * (1 - len(nulls) / n):.0f}%), explicit zeros: {len(zeros)}")
+    print(f"  fixtures entirely without fouls: {whole}, partially: {partial}, "
+          f"of {len(by_fx)}")
+    print(f"  minutes on the null rows: median {mins[len(mins) // 2]}, "
+          f"max {mins[-1]}")
+    if not zeros and nulls:
+        print("  ::warning::the feed never writes an explicit 0 for fouls, so "
+              "null most likely MEANS zero rather than 'not recorded'.")
+
+
 def emit_player_matches(rows, league, season, out=None):
     name = out or f"{league.code.lower()}_player_matches.json"
     (DATA / name).write_text(json.dumps(rows), encoding="utf-8")
@@ -581,6 +620,7 @@ def emit_player_matches(rows, league, season, out=None):
     fx = len({r["fixture_id"] for r in rows})
     print(f"\n{name} written: {len(rows)} player-matches over {fx} fixtures, "
           f"{booked} with a card ({(100 * booked / len(rows) if rows else 0):.1f}%).")
+    foul_diagnosis(rows)
 
 
 def harvest_fixtures(host, key, league, season):
