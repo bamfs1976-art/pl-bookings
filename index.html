@@ -1774,17 +1774,28 @@ function renderSuspension(){
   // Stamp the live counts onto the rows the shared module reads. Only where
   // the feed actually has the player: absent, `sc` stays undefined and the
   // module treats the season as not started rather than as nil cards.
+  /* GATED ON banWatchActive(), NOT on seasonStarted.
+   *
+   * seasonStarted is `elements.some(el => el.minutes > 0)` — read off the very
+   * same stale element rows that carry the stale card counts. During the
+   * rollover the FPL feed serves last season's totals, so minutes are non-zero
+   * and seasonStarted is TRUE exactly when the data cannot be trusted. Gating
+   * on it changed nothing: the strip still showed seven players "one booking
+   * from" a ban on 7 August 2026, before a ball had been kicked.
+   *
+   * banWatchActive() reads events[].finished instead — season-scoped, and
+   * reset by the feed — and requires at least one finished and not all
+   * finished, so it is false both before 2026-27 starts and while the feed is
+   * still serving a completed 2025-26. It has been in this file, correct,
+   * since the older #suspWatch panel was written.
+   *
+   * The per-player check is the second line: nobody can hold more cautions
+   * than about two per match actually played, so a count that exceeds that is
+   * carry-over however plausible the rest of the feed looks. */
+  const banActive=banWatchActive(), maxPlausible=2*playedGW();
   PL_PLAYERS.forEach(p=>{
-    /* GATED ON seasonStarted, like the other nine readers of p.live.yc in this
-       file. Without it this panel took the FPL feed's card counts at face value
-       during the rollover, when they are still LAST season's — and English
-       cautions do not carry over. On 7 August 2026, before a ball was kicked,
-       the watch showed seven Premier League players "one booking from" a ban
-       on the strength of 2025-26 yellows. The older #suspWatch panel has
-       guarded against exactly this since it was written; the guard was simply
-       never carried into this one. */
-    const liveCounts=LIVE&&LIVE.seasonStarted&&p.live;
-    if(liveCounts){ p.sc=p.live.yc; p.sm=p.live.min; }
+    const trustworthy=banActive&&p.live&&(p.live.yc||0)<=maxPlausible;
+    if(trustworthy){ p.sc=p.live.yc; p.sm=p.live.min; }
     else { delete p.sc; delete p.sm; }
     // The shared module reads `_y90` — the convention the other two desks
     // set when they load. This desk computes the same rate through

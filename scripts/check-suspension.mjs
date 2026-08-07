@@ -108,37 +108,69 @@ for (const page of ['index.html', 'eflc.html', 'laliga.html']) {
 /* RUN, not grepped. The stamping block is lifted out of index.html and
    executed against a feed that still carries last season's totals — which is
    precisely what the FPL API serves in August. */
-const m = /PL_PLAYERS\.forEach\(p=>\{([\s\S]*?)\n  \}\);/.exec(
-  index.slice(index.indexOf('function renderSuspension()')));
-assert.ok(m, 'index.html no longer stamps the live counts in renderSuspension()');
+/* The whole stamping block, gate included — the gate now sits above the loop,
+   so extracting only the loop would test half the logic. */
+const fn = index.slice(index.indexOf('function renderSuspension()'));
+const a = fn.indexOf('const banActive=');
+assert.ok(a > 0, 'index.html no longer gates the live counts in renderSuspension()');
+const b = fn.indexOf('\n  });', a);
+assert.ok(b > a, 'could not find the end of the stamping loop');
+const blockSrc = fn.slice(a, b + '\n  });'.length);
 
-function stamp(seasonStarted) {
+/* The stub MODELS THE ACTUAL FAILING FEED, which the first version of this
+   check did not. It passed a clean `{seasonStarted:false}` — a state that
+   cannot occur while the bug is live — so it proved the code did what was
+   written rather than that what was written was right. The shipped fix gated
+   on seasonStarted, which is `elements.some(el => el.minutes > 0)`: read off
+   the same stale rows as the card counts, therefore true exactly when they
+   are untrustworthy. Nothing changed on the phone.
+
+   What August actually looks like: the feed still carries last season's
+   minutes and yellows, and NO event is finished. */
+function stamp(feed) {
   const players = [{ n: 'X', p: 'MF', c: 'ABC', yc: 4, min: 2000,
-    live: { yc: 4, min: 2400 } }];
+    live: { yc: feed.yc, min: feed.minutes } }];
+  const events = Array.from({ length: 38 }, (_, i) => ({ finished: i < feed.finished }));
+  const finished = () => events.filter((e) => e.finished).length;
   const c = {
     PL_PLAYERS: players,
-    LIVE: { seasonStarted },
+    /* Reproduces the real derivation, so any fix leaning on it fails here. */
+    LIVE: { bootstrap: { events }, seasonStarted: feed.minutes > 0 },
+    banWatchActive: () => finished() >= 1 && finished() < events.length,
+    playedGW: finished,
     shrunkY90: () => 0.3,
     console
   };
   c.globalThis = c;
   vm.createContext(c);
-  vm.runInContext(`PL_PLAYERS.forEach(p=>{${m[1]}\n});`, c);
+  vm.runInContext(blockSrc, c);
   return players[0];
 }
 
-const started = stamp(true);
-assert.equal(started.sc, 4, 'with the season underway the live count must be used');
-
-const notStarted = stamp(false);
-assert.equal(notStarted.sc, undefined,
+/* AUGUST: last season's totals, nothing finished. Must NOT be read as live. */
+const august = stamp({ yc: 4, minutes: 2400, finished: 0 });
+assert.equal(august.sc, undefined,
   'the Premier League suspension watch is reading the FPL feed\'s card counts ' +
-  'before the season has started. Those are LAST season\'s yellows, which do ' +
-  'not carry over — the strip would show players one booking from a ban ' +
-  'having played no matches at all.');
-assert.equal(notStarted.sm, undefined, 'stale minutes are stamped alongside the stale cards');
-/* And the module must then treat it as a forecast, not a live count. */
-assert.equal(SU.seasonKnown([notStarted]), false,
+  'while no match of this season has been played. Those are LAST season\'s ' +
+  'yellows, which do not carry over — the strip shows players one booking ' +
+  'from a ban having played no matches at all.');
+assert.equal(august.sm, undefined, 'stale minutes are stamped alongside the stale cards');
+
+/* A COMPLETED season still on the feed: every event finished. Also untrusted. */
+assert.equal(stamp({ yc: 4, minutes: 2400, finished: 38 }).sc, undefined,
+  'a fully finished season on the feed is being read as the current one');
+
+/* MID-SEASON: ten rounds played, four cautions — plausible, and must be used,
+   or the strip would never go live at all. */
+assert.equal(stamp({ yc: 4, minutes: 900, finished: 10 }).sc, 4,
+  'with the season genuinely underway the live count must be used');
+
+/* Mid-season but an impossible count: two rounds played, fourteen cautions. */
+assert.equal(stamp({ yc: 14, minutes: 180, finished: 2 }).sc, undefined,
+  'a caution count that could not have been earned in the matches played is ' +
+  'being taken at face value');
+
+assert.equal(SU.seasonKnown([august]), false,
   'a row with no sc still reads as a live season');
 
 /* ---- one copy of the styling ------------------------------------------- */
