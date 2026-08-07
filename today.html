@@ -68,17 +68,11 @@
   .stat{background:var(--surface);border:1px solid var(--border);border-radius:11px;padding:8px 13px}
   .stat b{display:block;font-size:19px;line-height:1.15}
   .stat span{font-size:11.5px;color:var(--text-2)}
-  .row{display:flex;align-items:center;gap:10px;padding:11px 4px;border-bottom:1px solid var(--border);flex-wrap:wrap}
-  .row:last-child{border-bottom:0}
   .lg{font-size:10.5px;font-weight:800;padding:3px 8px;border-radius:999px;letter-spacing:.03em;flex:none}
   .lg.EFLC{background:color-mix(in srgb,#7c3aed 16%,transparent);color:#6d28d9}
   .lg.LL{background:color-mix(in srgb,#ea580c 18%,transparent);color:#c2410c}
   .lg.PL{background:color-mix(in srgb,#e90052 15%,transparent);color:#be123c}
-  .teams{font-weight:700;font-size:14.5px;min-width:0;flex:1 1 260px}
   .when{font-size:12.5px;color:var(--text-2);flex:none;font-family:var(--mono)}
-  .top{font-size:12.5px;color:var(--text-2);flex:1 1 200px;min-width:0}
-  .heat{font-family:var(--mono);font-weight:800;font-size:17px;flex:none;min-width:52px;text-align:right}
-  .heat.hot{color:var(--good-ink)} .heat.warm{color:var(--warn-ink)} .heat.cool{color:var(--text-2)}
   .empty{padding:22px 6px;color:var(--text-2);text-align:center}
   /* The segmented control picks between one date and the whole calendar.
      Radios rather than buttons so the mode is keyboard-reachable and reads as
@@ -100,7 +94,6 @@
   .dayhead h3{font-size:15.5px}
   .dayhead .chips{display:flex;gap:5px;flex-wrap:wrap}
   .daymeta{font-size:12px;color:var(--text-2);font-family:var(--mono)}
-  .daygroup .row{padding-left:4px}
   .multi{font-size:10.5px;font-weight:800;padding:3px 8px;border-radius:999px;
     background:color-mix(in srgb,var(--accent) 16%,transparent);color:var(--accent)}
   .revealbar{padding:10px 4px;border-bottom:1px solid var(--border)}
@@ -211,6 +204,7 @@
 <script src="assets/save.js"></script>
 <script src="assets/share.js"></script>
 <script src="assets/plmodel.js"></script>
+<script src="assets/profile.js"></script>
 <!-- Every desk's committed dataset, each in its OWN GLOBAL SCOPE.
 
      They all declare `const CLUBS` and `const REFS` — correct in a file read
@@ -483,20 +477,84 @@
   }
   function selected() { return rowsFor($('#day').value); }
 
+  function pct(v) { return v == null ? '\u2014' : (v * 100).toFixed(1) + '%'; }
+  function n2(v) { return v == null ? '\u2014' : Number(v).toFixed(2); }
+  function band(prob) {
+    if (prob == null) return ['', ''];
+    if (prob >= 0.5) return ['hi', 'High'];
+    if (prob >= 0.3) return ['mid', 'Watch'];
+    return ['lo', ''];
+  }
+  /* The Premier League desk's yellow-rate meter, same 0.09-a-pip scale. */
+  function pipMeter(pl) {
+    var y = pl && pl.y;
+    if (y == null) return '';
+    var n = Math.max(0, Math.min(5, Math.round(y / 0.09))), out = '';
+    for (var i = 0; i < 5; i++) out += '<span class="pip' + (i < n ? ' on' : '') + '"></span>';
+    return '<span class="pips" aria-hidden="true" title="Yellow-card rate '
+      + n2(y) + ' per 90">' + out + '</span>';
+  }
+
+  /* The same fixture card the three desks draw, plus the league chip this page
+     needs and they do not. This was a one-line text row — league, time, team
+     names, the single hottest player, a heat number — which is what the desks
+     also showed before they moved onto cards, and it left the combined view
+     looking like a different application from the three it combines. */
   function rowHTML(p) {
-    var ch = p.L.clubBy[p.fx.h] || {}, ca = p.L.clubBy[p.fx.a] || {};
-    var top = candidates(p)[0];
-    return '<div class="row" data-lg="' + p.L.code + '" data-h="' + p.fx.h
+    var ch = p.L.clubBy[p.fx.h] || { short: p.fx.h }, ca = p.L.clubBy[p.fx.a] || { short: p.fx.a };
+    var all = [];
+    ['home', 'away'].forEach(function (k) {
+      (p[k].top || []).forEach(function (t) { all.push(t); });
+    });
+    all.sort(function (a, b) { return b.prob - a.prob; });
+
+    var cands = all.length
+      ? all.slice(0, 5).map(function (t) {
+          var b = band(t.prob), club = p.L.clubBy[t.p.c] || { short: t.p.c };
+          return '<div class="cand">'
+            + PLDProfile.crest({ short: t.p.c, name: club.name, img: t.p.ph || null })
+            + '<span class="cbadge">' + esc(t.p.c) + '</span>'
+            + '<span class="nm">' + esc(t.p.n)
+            + ' <span class="faint">' + esc(t.p.p || '') + '</span>'
+            + pipMeter(t.p) + '</span>'
+            + '<span class="pc-wrap"><span class="pc band ' + b[0] + '">' + pct(t.prob) + '</span>'
+            + (b[1] ? '<span class="sev">' + esc(b[1]) + '</span>' : '') + '</span>'
+            + '</div>';
+        }).join('')
+      : '<div class="faint" style="font-size:12.5px">No rated players.</div>';
+
+    var refLine = (p.ref && p.ref.ref) ? 'Ref ' + esc(refAbbr(p.ref.ref.n)) : 'Ref \u2014';
+    return '<div class="fx" data-lg="' + p.L.code + '" data-h="' + p.fx.h
       + '" data-a="' + p.fx.a + '">'
+      + '<div class="fx-top">'
+      + '<div class="fx-topl">'
+      + '<div class="fx-teams">'
       + '<span class="lg ' + p.L.code + '">' + esc(p.L.code) + '</span>'
-      + '<span class="when">' + esc(fmtTime(p.fx.d)) + '</span>'
-      + '<span class="teams">' + esc(ch.name || p.fx.h) + ' <span class="faint">v</span> '
-      + esc(ca.name || p.fx.a) + '</span>'
-      + '<span class="top">' + (top
-          ? esc(top.name) + ' <b>' + (top.prob * 100).toFixed(0) + '%</b>'
-          : '<span class="faint">no rated players</span>') + '</span>'
-      + '<span class="heat ' + heatClass(p.m.expected) + '">' + n1(p.m.expected) + '</span>'
+      + PLDProfile.crest(ch) + '<b>' + esc(p.fx.h) + '</b>'
+      + '<span class="faint">v</span>'
+      + PLDProfile.crest(ca) + '<b>' + esc(p.fx.a) + '</b>'
+      + '</div>'
+      + '<div class="fx-when">' + esc(fmtTime(p.fx.d)) + '</div>'
+      + '</div>'
+      + '<div class="fx-topr">'
+      + '<div class="fx-refline">' + refLine + '</div>'
+      + '<span class="fx-heat' + (p.m.expected >= 4.2 ? ' hot' : '') + '" '
+      + 'title="Booking heat: expected cards, both sides added together">'
+      + n1(p.m.expected) + '</span>'
+      + '</div>'
+      + '</div>'
+      + '<div class="fx-cands">' + cands + '</div>'
+      + '<div class="mkts">'
+      + '<span class="mkt">Over 3.5 <b>' + pct(p.m.over[3.5]) + '</b></span>'
+      + '<span class="mkt">Over 4.5 <b>' + pct(p.m.over[4.5]) + '</b></span>'
+      + '<span class="mkt">Both carded <b>' + pct(p.m.bothCarded) + '</b></span>'
+      + '</div>'
       + '</div>';
+  }
+
+  function refAbbr(n) {
+    var parts = String(n || '').trim().split(/\s+/);
+    return parts.length > 1 ? parts[parts.length - 1] : (parts[0] || '');
   }
 
   function renderOne() {
@@ -511,7 +569,7 @@
     }
     empty.hidden = true;
     $('#shareBtn').disabled = false;
-    host.innerHTML = rows.map(rowHTML).join('');
+    host.innerHTML = '<div class="fx-grid">' + rows.map(rowHTML).join('') + '</div>';
 
     var codes = leaguesOn($('#day').value);
     var names = codes.map(function (c) {
@@ -585,7 +643,7 @@
       + '<span class="spacer"></span>'
       + '<button class="btn" type="button" data-share="' + k + '">⬇ Share</button>'
       + '</div>'
-      + rows.map(rowHTML).join('')
+      + '<div class="fx-grid">' + rows.map(rowHTML).join('') + '</div>'
       + '</section>';
   }
 

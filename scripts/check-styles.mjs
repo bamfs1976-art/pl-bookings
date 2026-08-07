@@ -133,11 +133,52 @@ assert.ok(/\.fx-grid\s*\{[^}]*minmax\(330px/.test(shared),
    is minmax(auto,1fr) and auto floors at min-content, which pushed the page
    27px past the viewport the moment the candidate rows grew a face and a pip
    meter — and Safari answers that by zooming the whole page out. */
-for (const page of ['eflc.html', 'laliga.html']) {
-  assert.ok(!/\.fx-sides\{[^}]*grid-template-columns:\s*1fr 1fr/.test(read(page)),
-    `${page} .fx-sides uses a bare "1fr 1fr", which cannot shrink below its ` +
-    'min-content width and overflows the viewport');
+/* Checked in the SHARED sheet, which is where .fx-sides now lives. Left
+   pointing at the desks' inline CSS this assertion would pass because the rule
+   is not there at all — a guard satisfied by absence, which is worse than no
+   guard: it reports green on a file it is no longer looking at. */
+assert.ok(/\.fx-sides\s*\{/.test(shared), 'assets/tw.css has lost .fx-sides');
+assert.ok(!/\.fx-sides\s*\{[^}]*grid-template-columns:\s*1fr 1fr/.test(shared),
+  '.fx-sides uses a bare "1fr 1fr", which cannot shrink below its min-content ' +
+  'width and overflows the viewport — Safari answers that by zooming out');
+
+/* /today draws the SAME card as the three desks. It is the page most likely
+   to fork, because it is the only one that is cross-league and the only one
+   that never had the card to begin with — and a fork is how the Matchday
+   styles came to exist on one page and neither of the others. */
+{
+  const t = read('today.html');
+  assert.ok(/class="fx-grid"/.test(t),
+    'today.html does not use .fx-grid — the combined view has gone back to a ' +
+    'text list while the three desks it combines all draw cards');
+  assert.ok(/class="fx-cands"/.test(t) && /class="cand"/.test(t),
+    'today.html no longer draws the shared candidate rows');
+  assert.ok(/assets\/profile\.js/.test(t),
+    'today.html does not load profile.js, so its crests cannot degrade');
+  assert.ok(/PLDProfile\.crest\(/.test(t), 'today.html emits crests without the shared helper');
 }
+
+/* The card CSS lives in the SHARED sheet, not in any page's inline <style>.
+   Four pages draw this card; the moment one keeps its own copy they drift. */
+for (const sel of ['.fx-teams', '.fx-heat', '.cand', '.cbadge', '.mkts', '.band']) {
+  const decl = new RegExp(sel.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '\\s*[{,]');
+  assert.ok(decl.test(shared),
+    `assets/tw.css has no "${sel}" rule — the fixture card is drawn by four ` +
+    'pages and its styling must be shared, not copied into each');
+  for (const page of ['eflc.html', 'laliga.html']) {
+    const inline = [...read(page).matchAll(/<style[^>]*>([\s\S]*?)<\/style>/g)].map((m) => m[1]).join('\n');
+    assert.ok(!decl.test(inline),
+      `${page} keeps its own "${sel}" rule, which shadows the shared one and ` +
+      'is where the copies start to differ');
+  }
+}
+
+/* The candidate pip meter must stay scoped to .cand. Unscoped it overrode the
+   suspension strip's own .pips/.pip — card-shaped counters of real bookings —
+   and silently turned them into thin grey rate bars. */
+assert.ok(/\.cand \.pip\s*\{/.test(shared),
+  'the card pip meter is not scoped to .cand; unscoped it overrides the ' +
+  "suspension strip's pips, which are a different thing entirely");
 
 /* ---- crests must degrade, and players must be openable ------------------
  * Reported from an iPad: every club showed the browser's broken-image glyph.

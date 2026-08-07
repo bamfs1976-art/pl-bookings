@@ -105,8 +105,6 @@
   .pill.ll{background:color-mix(in srgb,var(--efl) 14%,transparent);border-color:transparent;color:var(--efl)}
   .pill.seg{background:color-mix(in srgb,var(--warn) 18%,transparent);border-color:transparent;color:var(--warn-ink)}
   .pill.new{background:var(--surface-3);border-color:transparent}
-  .band{font-weight:700}
-  .band.hi{color:var(--danger-ink)} .band.mid{color:var(--warn-ink)} .band.lo{color:var(--text-2)}
   .star{background:none;border:0;cursor:pointer;font-size:15px;line-height:1;color:var(--text-3);padding:0 2px}
   .star[aria-pressed="true"]{color:var(--warn)}
   /* A flex cell so a crest that fails to load cannot drag the club name off
@@ -132,62 +130,6 @@
   .susp-need{font-size:12.5px;color:var(--text-2);flex:none;min-width:120px}
   .susp-need b{color:var(--danger-ink)}
   .susp-p{font-family:var(--mono);font-weight:700;font-size:13.5px;flex:none;min-width:56px;text-align:right}
-  .fx{border:1px solid var(--border);border-radius:13px;padding:12px 13px;margin-bottom:11px;background:var(--surface)}
-  /* Two columns, like the Premier League card: teams and kick-off on the
-     left, referee and the heat badge on the right. */
-  .fx-top{display:flex;align-items:flex-start;justify-content:space-between;gap:10px}
-  .fx-topl{min-width:0}
-  .fx-topr{flex:none;text-align:right}
-  .fx-refline{font-family:var(--mono);font-size:11px;color:var(--text-3);white-space:nowrap}
-  .fx-teams{font-weight:700;font-size:17px;display:flex;align-items:center;gap:7px;flex-wrap:wrap}
-  .fx-teams b{letter-spacing:.01em}
-  .fx-when{font-size:12px;color:var(--text-2)}
-  /* A badge, like the Premier League card's, not a stacked number with a
-     caption. Same thresholds: 4.2 and up is hot. */
-  .fx-heat{display:inline-block;font-family:var(--mono);font-weight:800;font-size:15px;
-    padding:3px 9px;border-radius:8px;background:var(--surface-3,var(--surface-2));
-    color:var(--text-2);margin-top:4px}
-  .fx-heat.hot{background:color-mix(in srgb,var(--warn) 22%,transparent);color:var(--warn-ink)}
-  .fx-ref{display:flex;align-items:center;gap:8px;margin:10px 0 4px;flex-wrap:wrap;font-size:12.5px}
-  /* minmax(0,1fr), NOT 1fr. `1fr` is minmax(auto,1fr) and `auto` floors at the
-     track's MIN-CONTENT width, so once the candidate rows grew a face, a pip
-     meter and a band label the columns refused to shrink and pushed the page
-     27px wider than the viewport. On Safari that does not scroll — it zooms
-     the whole page out to fit, which is how this class of bug shows up on a
-     phone and stays invisible on a desktop. */
-  .fx-sides{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:12px;margin-top:8px}
-  .fx-side{min-width:0}
-  .fx-cands{margin-top:8px}
-  /* The club a candidate plays for, on the row — the Premier League card's
-     chip. It is what lets one ranked list replace two per-side columns. */
-  .cbadge{flex:none;font-family:var(--mono);font-size:10px;font-weight:800;letter-spacing:.04em;
-    padding:3px 6px;border-radius:6px;background:var(--surface-2);color:var(--text-2);
-    border:1px solid var(--border)}
-  @media (max-width:640px){ .fx-sides{grid-template-columns:1fr} }
-  .fx-side h4{margin:0 0 5px;font-size:11.5px;text-transform:uppercase;letter-spacing:.04em;color:var(--text-2);font-weight:700}
-  /* A button now, not a div: it opens the player's record. The reset is the
-     part that is easy to forget — an unstyled button brings its own font,
-     background, border and centred text, and the row silently stops matching
-     the rest of the card. */
-  .cand{display:flex;align-items:center;gap:8px;font-size:13px;padding:5px 4px;width:100%;
-    background:none;border:0;border-radius:9px;color:inherit;font-family:inherit;
-    text-align:left;cursor:pointer}
-  .cand:hover{background:var(--surface-2)}
-  .cand:focus-visible{outline:2px solid var(--ring);outline-offset:-2px}
-  .cand .crest{width:26px;height:26px;border-radius:7px;font-size:9px}
-  .cand .nm{flex:1;min-width:0}
-  .pc-wrap{flex:none;text-align:right;line-height:1.15}
-  .sev{display:block;font-size:9.5px;font-weight:800;letter-spacing:.05em;
-    text-transform:uppercase;color:var(--text-3)}
-  /* Five pips, one per 0.09 yellows a 90 — the Premier League desk's scale. */
-  .pips{display:flex;gap:2px;margin-top:3px}
-  .pip{width:11px;height:5px;border-radius:2px;background:var(--border-2)}
-  .pip.on{background:var(--warn-ink)}
-  .cand .nm{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-  .cand .pc{font-family:var(--mono);font-weight:700}
-  .mkts{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px;padding-top:9px;border-top:1px dashed var(--border)}
-  .mkt{font-size:11.5px;background:var(--surface-2);border-radius:8px;padding:4px 9px}
-  .mkt b{font-family:var(--mono)}
   /* High / Watch banding, at the same thresholds the Premier League desk uses.
      A list of bare percentages makes the reader do the thresholding, and two
      desks thresholding differently is how "the same model" stops looking like
