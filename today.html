@@ -874,10 +874,29 @@
     return (n < 0 ? '−£' : '£') + Math.abs(n).toFixed(2);
   }
 
+  /* Held so the share handler draws from the rows the tracker actually
+     rendered, rather than re-fetching and risking a card that disagrees with
+     the row above it. */
+  var TRACK = { by: {}, legs: {} };
+
+  function shareAcca(id, btn) {
+    var row = TRACK.by[id];
+    if (!row || !S) return;
+    var spec = S.accaRowSpec(row, TRACK.legs[id] || []);
+    btn.dataset.label = btn.dataset.label || btn.textContent;
+    btn.disabled = true; btn.textContent = 'Building…';
+    S.accaCard(spec)
+      .then(function (b) { S.download(b, spec.filename); })
+      .catch(function (e) { console.error(e); })
+      .then(function () { btn.disabled = false; btn.textContent = btn.dataset.label; });
+  }
+
   function renderTrack(accas, legsBy) {
     var card = $('#trackCard');
     if (!accas.length) { card.hidden = true; return; }
     card.hidden = false;
+    TRACK.by = {}; TRACK.legs = legsBy || {};
+    accas.forEach(function (a) { TRACK.by[a.id] = a; });
 
     var settled = accas.filter(function (a) { return a.status !== 'open'; });
     var won = settled.filter(function (a) { return a.status === 'won'; });
@@ -892,7 +911,22 @@
       : accas.length + ' logged, none settled yet';
 
     $('#trackList').innerHTML = accas.map(function (a) {
-      var legs = legsBy[a.id] || [];
+      return accaRowHTML(a, legsBy[a.id] || []);
+    }).join('');
+
+    $('#trackNote').textContent = 'One acca per league per matchday plus one across all three, '
+      + 'chosen by the model before kick-off and never revised afterwards. Odds are the fair '
+      + 'price shaded by a typical card-market margin, because fair odds are not on offer '
+      + 'anywhere — on a treble that margin is taken three times. Flat ' + money(STAKE)
+      + ' a go. Research, not betting advice.';
+  }
+
+  /* A NAMED FUNCTION, not an inline template, so the guard in
+     scripts/check-share.mjs can run it and assert on the markup it actually
+     produces. The thing being pinned — that a lost acca still gets a share
+     button — is one word away from being wrong and was invisible to a check
+     that could only read the source as text. */
+  function accaRowHTML(a, legs) {
       /* NOT the card-risk banding: there `hi` is danger-ink, so a winning acca
          rendered in the same red as a player most likely to be booked. Status
          has its own colours because it means the opposite thing. */
@@ -906,7 +940,12 @@
         + '</div>'
         + '<div class="fx-when">' + a.legs + ' legs · ' + money(a.stake)
         + ' at <b>' + Number(a.priced_odds).toFixed(2) + '</b>'
-        + ' · returns ' + money(Number(a.stake) * Number(a.priced_odds)) + ' if it lands</div>'
+        /* Tense follows the status, as on the card: "returns … if it lands"
+           under the word LOST reads as a live bet. */
+        + ' · ' + (a.status === 'won' ? 'returned '
+            : a.status === 'lost' ? 'would have returned ' : 'returns ')
+        + money(Number(a.stake) * Number(a.priced_odds))
+        + (a.status === 'open' ? ' if it lands' : '') + '</div>'
         + '</div><div class="fx-topr">'
         + '<span class="pc" style="font-family:var(--mono);font-weight:800;color:' + col + '">'
         + (a.status === 'open' ? 'OPEN' : a.status.toUpperCase()) + '</span>'
@@ -918,20 +957,35 @@
             return '<div class="cand" style="cursor:default">'
               + '<span style="color:' + col + ';font-weight:800;width:14px">' + mark + '</span>'
               + '<span class="cbadge">' + esc(l.club) + '</span>'
+              /* Same rule as the share card: tag the leg only when it is not
+                 from the acca's own division, so the cross-league row says
+                 which competition each pick came from and the others do not
+                 repeat themselves. */
+              + (l.league && l.league !== a.league
+                  ? '<span class="lg ' + esc(l.league) + '">' + esc(l.league) + '</span>' : '')
               + '<span class="nm">' + esc(l.player) + '</span>'
               + '<span class="pc-wrap"><span class="pc">' + (l.prob * 100).toFixed(1) + '%</span>'
               + '<span class="sev">' + Number(l.priced_odds).toFixed(2) + '</span></span>'
               + '</div>';
           }).join('') + '</div>'
+        /* The share button is drawn for EVERY acca, including the lost ones.
+           Offering it only on winners would turn a record built to be checked
+           into a highlight reel, and the card itself draws WON and LOST the
+           same way for the same reason. */
+        + '<div class="mkts"><button class="mkt fx-share" type="button"'
+        + ' data-share-acca="' + esc(a.id) + '"'
+        + ' title="Download this acca as a shareable card">⬇ Share acca</button></div>'
         + '</div>';
-    }).join('');
-
-    $('#trackNote').textContent = 'One acca per league per matchday plus one across all three, '
-      + 'chosen by the model before kick-off and never revised afterwards. Odds are the fair '
-      + 'price shaded by a typical card-market margin, because fair odds are not on offer '
-      + 'anywhere — on a treble that margin is taken three times. Flat ' + money(STAKE)
-      + ' a go. Research, not betting advice.';
   }
+
+  /* Delegated once, at boot, not per render: renderTrack replaces its whole
+     innerHTML on every load, and a listener attached to the buttons would be
+     thrown away with them. */
+  if (!S) document.documentElement.classList.add('no-share');
+  $('#trackList').addEventListener('click', function (e) {
+    var b = e.target.closest('[data-share-acca]');
+    if (b) shareAcca(b.dataset.shareAcca, b);
+  });
 
   function loadTrack() {
     var h = { apikey: SUPA.key, Authorization: 'Bearer ' + SUPA.key };

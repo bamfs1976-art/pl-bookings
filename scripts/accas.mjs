@@ -170,7 +170,11 @@ function buildAcca(id, code, round, cands) {
       fair_odds: r2(fairOdds), priced_odds: r2(pricedOdds), status: 'open'
     },
     legs: legs.map((l, i) => ({
-      acca_id: id, leg: i + 1, player: l.player, club: l.club,
+      /* The LEG's league, not the acca's. For a single-division acca they are
+         the same; for the cross-league one they are the whole point, and
+         without this column its share card could only show three club codes
+         and leave the reader to guess which division each came from. */
+      acca_id: id, leg: i + 1, league: l.league, player: l.player, club: l.club,
       fixture_id: l.fixture_id, kickoff: l.kickoff,
       prob: Math.round(l.prob * 10000) / 10000,
       fair_odds: r2(fair(l.prob)), priced_odds: r2(priced(l.prob))
@@ -376,8 +380,8 @@ function cmdSql() {
       + `${a.matchday == null ? 'null' : a.matchday},${q(a.kickoff_first)},${q(a.kickoff_last)},`
       + `${a.legs},${a.stake},${a.fair_odds},${a.priced_odds},'open') on conflict (id) do nothing;`);
     for (const l of b.legs) {
-      console.log(`insert into plb_acca_legs (acca_id,leg,player,club,fixture_id,kickoff,prob,`
-        + `fair_odds,priced_odds) values (${q(l.acca_id)},${l.leg},${q(l.player)},${q(l.club)},`
+      console.log(`insert into plb_acca_legs (acca_id,leg,league,player,club,fixture_id,kickoff,prob,`
+        + `fair_odds,priced_odds) values (${q(l.acca_id)},${l.leg},${q(l.league)},${q(l.player)},${q(l.club)},`
         + `${l.fixture_id},${q(l.kickoff)},${l.prob},${l.fair_odds},${l.priced_odds}) `
         + `on conflict (acca_id,leg) do nothing;`);
     }

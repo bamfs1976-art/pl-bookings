@@ -222,6 +222,142 @@ assert.ok(combo.some((l) => l.split(' + ').length === 3),
   'the acca never reached a treble — the dedupe is cutting before it selects, ' +
   'which is what left a card of eight rated fixtures saying "not enough players"');
 
+/* ---- the acca card ------------------------------------------------------ */
+/*
+ * These cards are the tracker's record leaving the site, and the tracker only
+ * means anything because it publishes losses. So the assertions below are
+ * mostly about the LOSING card: a winners-only share button turns a record
+ * built to be checked back into an advert, and it would do that while every
+ * test about drawing a card still passed.
+ *
+ * The numbers are chosen so no assertion can be satisfied by a different piece
+ * of text on the same card — the stake, the price, the returns and the P/L are
+ * all distinct, which is the trap that has caught several checks in this file.
+ */
+const accaRow = {
+  id: 'PL:2026-27:1', league: 'PL', season: '2026-27', matchday: 1,
+  kickoff_first: '2026-08-22T14:00:00+00:00',
+  legs: 3, stake: 0.5, fair_odds: 72.67, priced_odds: 60.36, status: 'open', pl: null
+};
+const accaLegs = [
+  { leg: 1, player: 'James Garner', club: 'EVE', prob: 0.26, priced_odds: 3.62, carded: null },
+  { leg: 2, player: 'Moisés Caicedo', club: 'CHE', prob: 0.238, priced_odds: 3.95, carded: null },
+  { leg: 3, player: 'Ethan Ampadu', club: 'LEE', prob: 0.223, priced_odds: 4.23, carded: null }
+];
+
+const aSpec = S.accaRowSpec(accaRow, accaLegs);
+assert.equal(aSpec.league, 'PL');
+assert.equal(aSpec.title, 'Matchday 1', aSpec.title);
+assert.equal(aSpec.odds, 60.36, 'the spec did not take the PRICED odds');
+assert.notEqual(aSpec.odds, accaRow.fair_odds,
+  'the card is showing the fair price — nobody could have backed that number');
+assert.equal(aSpec.legs.length, 3);
+assert.equal(aSpec.legs[0].odds, 3.62, 'a leg lost its priced odds');
+assert.ok(/\.png$/.test(aSpec.filename) && aSpec.filename.startsWith('pl-bookings-'),
+  aSpec.filename);
+
+/* matchday null is not missing data — it is what makes an acca the
+   cross-league one, and a spec that defaulted it away would title every
+   cross-league card "Matchday undefined". */
+const allSpec = S.accaRowSpec(
+  { ...accaRow, id: 'ALL:2026-27:2026-08-15', league: 'ALL', matchday: null,
+    kickoff_first: '2026-08-15T14:00:00+00:00' }, accaLegs);
+assert.equal(allSpec.title, 'Across the leagues', allSpec.title);
+assert.notEqual(allSpec.filename, aSpec.filename,
+  'two accas share a filename — the second would overwrite the first in Downloads');
+
+drawn.length = 0;
+const openBlob = await S.accaCard(aSpec);
+assert.ok(openBlob && openBlob.__blob,
+  'accaCard did not produce a blob — download() would save a 0-byte PNG');
+const aOpen = drawn.join('\n');
+for (const need of ['Matchday 1', 'James Garner', 'EVE', 'Ethan Ampadu',
+                    '26%', '3.62', '£0.50', '60.36', '£30.18', 'PL BOOKINGS DESK']) {
+  assert.ok(aOpen.includes(need), `the open acca card never drew ${JSON.stringify(need)}`);
+}
+assert.ok(aOpen.includes('OPEN · 3 LEGS'), 'the open card does not say it is open');
+assert.ok(!/\bWON\b|\bLOST\b/.test(aOpen),
+  'an unsettled acca card claims a result');
+assert.ok(/18\+/.test(aOpen) && /begambleaware/.test(aOpen),
+  'the acca card went out without the 18+ / BeGambleAware line');
+/* The margin disclosure. 60.36 is a fair-price treble shaded once per leg, and
+   a card that prints it without saying so is advertising a number that was
+   never on offer. */
+assert.ok(/margin/i.test(aOpen),
+  'the acca card shows a treble price without disclosing the margin');
+
+/* THE LOSING CARD. This is the one that matters. */
+drawn.length = 0;
+await S.accaCard(S.accaRowSpec(
+  { ...accaRow, status: 'lost', pl: -0.5 },
+  [{ ...accaLegs[0], carded: true }, { ...accaLegs[1], carded: false },
+   { ...accaLegs[2], carded: true }]));
+const aLost = drawn.join('\n');
+assert.ok(aLost.includes('LOST'), 'a lost acca card does not say it lost');
+assert.ok(!aLost.includes('WON'), 'a lost acca card also says WON');
+assert.ok(aLost.includes('−£0.50'),
+  'the lost card does not show the loss — the P/L is the point of the record');
+/* Per-leg marks: "it lost" says nothing about the model, and a card that
+   hides WHICH leg failed cannot be checked against the fixture it came from. */
+assert.ok(aLost.includes('✗') && aLost.includes('✓'),
+  'the settled card does not mark which legs came in');
+assert.ok(/WOULD HAVE RETURNED/.test(aLost),
+  'the settled card presents its return as if the acca were still live');
+
+drawn.length = 0;
+await S.accaCard(S.accaRowSpec({ ...accaRow, status: 'won', pl: 29.68 },
+  accaLegs.map((l) => ({ ...l, carded: true }))));
+const aWon = drawn.join('\n');
+assert.ok(aWon.includes('WON') && !aWon.includes('LOST'), 'the won card is mislabelled');
+assert.ok(aWon.includes('+£29.68'), 'the won card does not show the profit');
+assert.ok(!aWon.includes('✗'), 'a won card marks one of its legs as failed');
+assert.ok(/RETURNED/.test(aWon) && !/WOULD HAVE RETURNED/.test(aWon),
+  'a winning acca is labelled "would have returned" — it did return');
+assert.ok(/RETURNS/.test(aOpen) && !/RETURNED/.test(aOpen),
+  'an open acca is labelled in the past tense');
+
+/* THE CROSS-LEAGUE CARD MUST NAME ITS DIVISIONS. Three club codes and no tag
+   leaves the reader to work out which competition each leg came from — the
+   same defect the combined round card is guarded against above. */
+drawn.length = 0;
+await S.accaCard(S.accaRowSpec(
+  { ...accaRow, league: 'ALL', matchday: null },
+  [{ ...accaLegs[0], club: 'SEV', league: 'LL' },
+   { ...accaLegs[1], club: 'GET', league: 'LL' },
+   { ...accaLegs[2], club: 'QPR', league: 'EFLC' }]));
+const aAll = drawn.join('\n');
+/* Asserted on the LEG list, not the whole card: the wordmark and strap say
+   "BOOKINGS DESK · ALL LEAGUES", and an earlier version of this check passed
+   on the strap alone with every per-leg tag deleted. */
+const legTags = drawn.filter((t) => t === 'LL' || t === 'EFLC');
+assert.ok(legTags.filter((t) => t === 'LL').length === 2
+       && legTags.filter((t) => t === 'EFLC').length === 1,
+  'the cross-league acca card does not tag each leg with its division — it ' +
+  `drew ${JSON.stringify(legTags)}`);
+assert.ok(aAll.includes('Across the leagues'), 'the cross-league card lost its title');
+
+/* A single-division card must NOT repeat its own league on every row: the
+   band already says it, and three redundant tags is noise. */
+drawn.length = 0;
+await S.accaCard(S.accaRowSpec(accaRow,
+  accaLegs.map((l) => ({ ...l, league: 'PL' }))));
+assert.equal(drawn.filter((t) => t === 'PL').length, 0,
+  'a single-division card tags every leg with the league already in its header');
+
+/* Truncation must disclose itself. Unreachable at three legs, which is exactly
+   why it would ship broken: the price drawn underneath is the whole acca's. */
+drawn.length = 0;
+const many = Array.from({ length: 9 }, (_, i) => ({
+  leg: i + 1, player: 'Player ' + (i + 1), club: 'ABC', prob: 0.2,
+  priced_odds: 5, carded: null
+}));
+await S.accaCard(S.accaRowSpec({ ...accaRow, legs: 9 }, many));
+const aCut = drawn.join('\n');
+assert.ok(aCut.includes('OPEN · 9 LEGS'),
+  'a truncated card counts only the legs it drew, describing itself as complete');
+assert.ok(/not shown/.test(aCut) && /all 9/.test(aCut),
+  'the card dropped legs without saying so, while pricing all of them');
+
 /* roundRect must bound its own radius. arcTo does not: a pill drawn with
    r=999 swept arcs across the entire card the first time this was tried, and
    nothing threw. */
@@ -429,8 +565,72 @@ assert.ok(/if\s*\(usedClub\[/.test(cardFn),
 assert.ok(/max 3 a league/.test(cardFn),
   'the card does not disclose that its ranking was diversified');
 
+/* ---- the tracker offers a card for every acca, not just the good ones ---- */
+assert.equal((todayCode.match(/S\.accaCard\(/g) || []).length, 1,
+  'today.html must build the acca card in exactly one place');
+assert.ok(/S\.accaRowSpec\(/.test(todayCode),
+  'today.html builds its own acca spec instead of using the shared mapping, ' +
+  'so the card and the database row can drift apart');
+/* Delegated, because renderTrack replaces the whole list on every load and
+   listeners bound to the buttons would be discarded with them. */
+assert.ok(/#trackList'\)\.addEventListener\(\s*'click'/.test(todayCode),
+  'the per-acca share buttons are not delegated off #trackList');
+
+/* THE BUTTON IS UNCONDITIONAL. A `status === 'won'` guard around it would pass
+   every other check in this file and quietly turn the record into a showreel.
+   *
+   * RUN, not read. The first version of this check filtered renderTrack's
+   * source for the line carrying `data-share-acca` and asserted no status test
+   * appeared on it — and the markup spans three lines, so the condition landed
+   * on the line above and the assertion never saw it. Wrapping the emit in
+   * `a.status === 'won' ? … : ''` passed. So today.html builds the row in a
+   * named function and this runs it, once per status. */
+const rowFn = /\n  function accaRowHTML\(a, legs\) \{([\s\S]*?)\n  \}\n/.exec(todaySrc);
+assert.ok(rowFn, 'today.html has no accaRowHTML() — the tracker row must be a ' +
+  'named function so this check can execute it rather than pattern-match it');
+const rowCtx = { esc: (s) => String(s), money: (v) => '£' + Number(v || 0).toFixed(2) };
+vm.createContext(rowCtx);
+vm.runInContext(`function accaRowHTML(a, legs) {${rowFn[1]}\n}`, rowCtx);
+
+const sampleLegs = [{ leg: 1, player: 'A Player', club: 'ABC', prob: 0.26,
+                      priced_odds: 3.62, carded: false }];
+for (const status of ['open', 'won', 'lost']) {
+  const html = rowCtx.accaRowHTML(
+    { id: 'X:1:' + status, league: 'PL', matchday: 1, legs: 3, stake: 0.5,
+      priced_odds: 60.36, status, pl: status === 'won' ? 29.68 : -0.5 }, sampleLegs);
+  assert.ok(/data-share-acca="X:1:/.test(html),
+    `a ${status} acca gets no share button — every logged acca must be ` +
+    'shareable, or the record stops being a record');
+  assert.ok(html.includes('A Player'), `the ${status} row lost its legs`);
+}
+/* And a lost one must show the loss on the row, not only on the card — in the
+   past tense, because "returns £30.18 if it lands" under the word LOST reads
+   as a bet that is still running. */
+const lostRow = rowCtx.accaRowHTML(
+  { id: 'X', league: 'PL', matchday: 1, legs: 3, stake: 0.5, priced_odds: 60.36,
+    status: 'lost', pl: -0.5 }, sampleLegs);
+assert.ok(/LOST/.test(lostRow), 'the tracker row does not label a lost acca');
+assert.ok(!/if it lands/.test(lostRow),
+  'a settled acca row is still written as though it could still land');
+assert.ok(/if it lands/.test(rowCtx.accaRowHTML(
+  { id: 'X', league: 'PL', matchday: 1, legs: 3, stake: 0.5, priced_odds: 60.36,
+    status: 'open', pl: null }, sampleLegs)),
+  'an open acca row does not say its return is conditional');
+
+/* The handler must take the id it was clicked with. Reading a "current" acca
+   instead would make all forty buttons export the same card — every one of
+   them downloading successfully, with the wrong acca on it. Same failure the
+   calendar's shareDay() had. */
+const shareAcca = /function shareAcca\(([^)]*)\)([\s\S]*?)\n  \}/.exec(todayCode);
+assert.ok(shareAcca, 'today.html has no shareAcca()');
+assert.ok(/^\s*id\b/.test(shareAcca[1]),
+  `shareAcca takes (${shareAcca[1].trim()}) — it must take the acca's id`);
+assert.ok(/\[id\]/.test(shareAcca[2]),
+  'shareAcca does not look its acca up by the id it was given');
+
 console.log(
   `check-share OK: ${['PL', 'EFLC', 'LL', 'ALL'].length} themes, match + round + ` +
   'combined cards render, adapters agree with the desks, every card carries 18+, ' +
-  '/today renders one date and the whole calendar from one row builder and one card builder'
+  '/today renders one date and the whole calendar from one row builder and one card builder, ' +
+  'and every logged acca — won, lost and open — has a card that states its result'
 );

@@ -660,10 +660,259 @@
       .replace(/^-|-$/g, '') || 'card';
   }
 
+  /* ---- the acca card ------------------------------------------------------
+   * One recommended acca as a 4:5 portrait PNG. Two states from one drawing:
+   * OPEN is the recommendation, SETTLED is the result — and the second is the
+   * one worth having, because anyone can post a tip and almost nobody posts
+   * the tip that lost. A card that can only show winners is an advert; this
+   * one draws WON and LOST identically and puts the P/L on both.
+   *
+   * spec: { league, title, subtitle, legs:[{player,club,prob,odds,carded}],
+   *         stake, odds, status, pl, note }
+   */
+  function accaCard(spec) {
+    return ready().then(function () {
+      var th = theme(spec.league), k = canvas(), x = k.x;
+      brandBand(x, th, spec.title, spec.subtitle);
+
+      /* Seven is what fits above the money block without colliding with the
+         footer. Accas are built at three legs, so this is unreachable today —
+         but if it is ever reached the card must SAY it was cut, because the
+         price below it is the price of the whole acca and a card showing five
+         legs at a seven-leg price is a straightforwardly false claim. */
+      var all = spec.legs || [], legs = all.slice(0, 7);
+      var cut = all.length - legs.length;
+      var settled = spec.status === 'won' || spec.status === 'lost';
+
+      /* The blocks below the legs are BOTTOM-ANCHORED and the leg rows stretch
+         to meet them. Laid out top-down instead, a three-leg acca — which is
+         every acca this desk builds — left the bottom third of the card empty,
+         and a 4:5 portrait with a third of it blank reads as a card that
+         failed to load. */
+      var MONEY_H = 132, MONEY_TOP = 1048;
+      var EV_H = 112, EV_TOP = MONEY_TOP - 22 - EV_H;
+      var LEGS_TOP = 340;
+
+      /* Status first and large. On a phone timeline the card is read at about
+         a third of this size, so the one thing that must survive the shrink is
+         whether it came in. */
+      /* 300, not 244: brandBand puts the subtitle's baseline at 210, and a
+         ribbon drawn at 244 sat its box straight through it — the season and
+         date were struck out by the word LOST on every settled card. */
+      var y = 300;
+      if (settled) {
+        var won = spec.status === 'won';
+        var lab = won ? 'WON' : 'LOST';
+        x.font = '800 46px ' + DISP;
+        var lw = x.measureText(lab).width + 52;
+        x.fillStyle = won ? '#15803d' : '#b91c1c';
+        roundRect(x, P, y - 44, lw, 62, 16); x.fill();
+        x.fillStyle = '#fff'; x.textAlign = 'center';
+        x.fillText(lab, P + lw / 2, y); x.textAlign = 'left';
+        if (spec.pl != null) {
+          x.fillStyle = won ? '#15803d' : '#b91c1c';
+          x.font = '800 40px ' + DISP;
+          var pl = (Number(spec.pl) < 0 ? '\u2212£' : '+£')
+                 + Math.abs(Number(spec.pl)).toFixed(2);
+          x.textAlign = 'right'; x.fillText(pl, W - P, y); x.textAlign = 'left';
+        }
+      } else {
+        x.fillStyle = '#8b94a5'; x.font = '700 26px ' + BODY;
+        /* all.length, not legs.length: the count is the acca's, and taking it
+           from the drawn list would make a truncated card describe itself as
+           complete. */
+        x.fillText('OPEN · ' + all.length + ' LEGS', P, y - 8);
+      }
+
+      /* The legs. Numbered, because an acca is an ordered thing people read
+         down, and marked once settled so a reader can see WHICH leg failed —
+         "it lost" tells you nothing about the model. */
+      var avail = EV_TOP - 22 - LEGS_TOP;
+      var rowH = Math.max(76, Math.min(170, Math.floor(avail / Math.max(1, legs.length))));
+      legs.forEach(function (l, i) {
+        var top = LEGS_TOP + i * rowH, mid = top + rowH / 2;
+        /* The stripe is capped rather than filling the row slot. Rows stretch
+           to fill the card, and a stripe that stretched with them drew a 158px
+           panel around two lines of text — which reads as a box that failed to
+           load its contents, not as banding. */
+        var bh = Math.min(rowH - 12, 104);
+        x.fillStyle = i % 2 ? '#f7f9fc' : '#ffffff';
+        roundRect(x, P - 12, mid - bh / 2, W - 2 * P + 24, bh, 14); x.fill();
+
+        x.fillStyle = '#c3cad6'; x.font = '800 30px ' + DISP;
+        x.fillText(String(i + 1), P, mid + 8);
+
+        x.fillStyle = '#0c1322'; x.font = '800 34px ' + DISP;
+        x.fillText(fit(x, l.player, W - 2 * P - 290), P + 44, mid - 2);
+
+        x.fillStyle = '#586275'; x.font = '600 20px ' + BODY;
+        x.fillText(String(l.club || ''), P + 44, mid + 28);
+
+        /* The league tag, when the leg is not from the card's own division.
+           On the cross-league acca no leg matches, so every row is tagged —
+           which is the point: without it that card is three club codes and a
+           reader guessing which competition each came from, the same defect
+           the combined round card is already guarded against. Omitted when
+           the row never recorded a league, rather than guessed at. */
+        if (l.legLeague && l.legLeague !== spec.league) {
+          var tw = x.measureText(String(l.club || '')).width;
+          x.font = '800 15px ' + DISP;
+          var tg = String(l.legLeague), tgw = x.measureText(tg).width + 18;
+          x.fillStyle = '#e6eaf1';
+          roundRect(x, P + 56 + tw, mid + 12, tgw, 24, 8); x.fill();
+          x.fillStyle = '#586275'; x.textAlign = 'center';
+          x.fillText(tg, P + 56 + tw + tgw / 2, mid + 29); x.textAlign = 'left';
+        }
+
+        /* Probability and price on the right, price under it: the percentage
+           is the model's claim and the price is what it is worth, and putting
+           them apart invites reading one without the other. */
+        x.textAlign = 'right';
+        x.fillStyle = probHex(l.prob);
+        x.font = '800 34px ' + DISP;
+        x.fillText(Math.round(l.prob * 100) + '%', W - P - (settled ? 62 : 0), mid - 2);
+        x.fillStyle = '#586275'; x.font = '700 22px ' + BODY;
+        x.fillText(Number(l.odds).toFixed(2), W - P - (settled ? 62 : 0), mid + 28);
+        x.textAlign = 'left';
+
+        if (settled && l.carded != null) {
+          x.fillStyle = l.carded ? '#15803d' : '#b91c1c';
+          x.font = '800 40px ' + DISP;
+          x.textAlign = 'center';
+          x.fillText(l.carded ? '\u2713' : '\u2717', W - P - 22, mid + 14);
+          x.textAlign = 'left';
+        }
+      });
+      if (cut > 0) {
+        x.fillStyle = '#b91c1c'; x.font = '700 19px ' + BODY;
+        x.fillText('+ ' + cut + ' more leg' + (cut > 1 ? 's' : '')
+          + ' not shown — the price below is for all ' + all.length + '.',
+          P, LEGS_TOP + legs.length * rowH + 24);
+      }
+
+      /* ---- what the price is actually worth ------------------------------
+       * The one number that makes this card research rather than a tip. A
+       * treble at 60.36 needs to land 1.66% of the time to break even; the
+       * model says 1.38%; the difference is the edge, and here it is negative.
+       * Printing the price without it is how a share card becomes an advert.
+       *
+       * The combined chance comes from the FAIR odds where the row carries
+       * them, so the card cannot disagree with the database that logged it;
+       * the product of the legs is a fallback, and it is only defensible
+       * because these accas take at most one leg per match — two bookings in
+       * one match share a flashpoint and are not independent.
+       */
+      var p = spec.fairOdds ? 1 / Number(spec.fairOdds)
+        : legs.reduce(function (t, l) { return t * Number(l.prob); }, 1);
+      var oddsN = Number(spec.odds || 0);
+      var be = oddsN ? 1 / oddsN : 0;
+      var edge = oddsN ? p * oddsN - 1 : 0;
+      x.fillStyle = '#f2f5f9';
+      roundRect(x, P - 12, EV_TOP, W - 2 * P + 24, EV_H, 18); x.fill();
+      var ev = [
+        ['MODEL CHANCE', (p * 100).toFixed(2) + '%', '#0c1322'],
+        ['BREAK-EVEN', (be * 100).toFixed(2) + '%', '#0c1322'],
+        ['EDGE', (edge < 0 ? '\u2212' : '+') + Math.round(Math.abs(edge) * 100)
+          + 'p in £1', edge < 0 ? '#b91c1c' : '#15803d']
+      ];
+      var evw = (W - 2 * P + 24) / ev.length;
+      ev.forEach(function (c, i) {
+        var cx = P - 12 + evw * i + evw / 2;
+        x.textAlign = 'center';
+        x.fillStyle = '#7c8698'; x.font = '700 17px ' + BODY;
+        x.fillText(c[0], cx, EV_TOP + 40);
+        x.fillStyle = c[2]; x.font = '800 34px ' + DISP;
+        x.fillText(c[1], cx, EV_TOP + 84);
+        x.textAlign = 'left';
+      });
+
+      /* The money. Stake, price, and what it returns — stated once, plainly,
+         so the card cannot be read as a bigger claim than it is. */
+      x.fillStyle = th.ink;
+      roundRect(x, P - 12, MONEY_TOP, W - 2 * P + 24, MONEY_H, 18); x.fill();
+      var stake = Number(spec.stake || 0.5);
+      var cells = [
+        ['STAKE', '£' + stake.toFixed(2)],
+        ['ODDS', oddsN.toFixed(2)],
+        /* Three labels, not two. "WOULD HAVE RETURNED" on a winner is wrong —
+           it did return — and "RETURNS" on a loser implies it still might. */
+        [spec.status === 'won' ? 'RETURNED'
+          : spec.status === 'lost' ? 'WOULD HAVE RETURNED' : 'RETURNS',
+         '£' + (stake * oddsN).toFixed(2)]
+      ];
+      var cw = (W - 2 * P + 24) / cells.length;
+      cells.forEach(function (c, i) {
+        var cx = P - 12 + cw * i + cw / 2;
+        x.textAlign = 'center';
+        x.fillStyle = 'rgba(255,255,255,.72)'; x.font = '700 17px ' + BODY;
+        x.fillText(c[0], cx, MONEY_TOP + 44);
+        x.fillStyle = '#ffffff'; x.font = '800 40px ' + DISP;
+        x.fillText(c[1], cx, MONEY_TOP + 96);
+        x.textAlign = 'left';
+      });
+
+      /* The margin note is NOT optional decoration. These odds are the fair
+         price shaded by a typical card-market margin, taken once per leg, and
+         a card that shows a 60.00 treble without saying so is advertising a
+         number nobody could have backed. */
+      /* Kept short on purpose: footer() gives the note whatever room the 18+
+         line and the wordmark leave, and the longer first draft was cut off
+         mid-word on every card. */
+      /* Short enough to survive the widest wordmark ("CHAMPIONSHIP BOOKINGS"),
+         which is the one that truncated the previous draft mid-word. */
+      footer(x, th, spec.note || 'Model price, margin per leg. Set pre-KO.');
+      /* A BLOB, like every other card here. Returning the canvas would have
+         worked right up to `download()`, which hands it to PLDSave.file() and
+         gets a File constructed from an object with no bytes — a 0-byte PNG
+         that saves without erroring. */
+      return toBlob(k.c);
+    });
+  }
+
+  /* A logged acca row (and its legs) as a card spec.
+   *
+   * HERE RATHER THAN IN THE PAGE. The tracker is the only reader today, but
+   * the row shape is the database's, not the page's, and every time this
+   * project has kept a mapping next to one of its readers a second reader has
+   * appeared and copied it. The columns are named once, in the module that
+   * draws them.
+   *
+   * Titles come from the row, not from a lookup: `matchday` is null for the
+   * cross-league acca by design, and that null is the thing that distinguishes
+   * "across the leagues on one date" from "matchday 3", so it is read rather
+   * than defaulted away.
+   */
+  function accaRowSpec(row, legs) {
+    var th = theme(row.league);
+    var md = row.matchday == null;
+    var day = String(row.kickoff_first || '').slice(0, 10);
+    return {
+      league: row.league,
+      title: md ? 'Across the leagues' : 'Matchday ' + row.matchday,
+      subtitle: [row.season, day].filter(Boolean).join(' · '),
+      legs: (legs || []).map(function (l) {
+        return {
+          player: l.player, club: l.club, legLeague: l.league || null,
+          prob: Number(l.prob),
+          odds: Number(l.priced_odds),
+          carded: l.carded
+        };
+      }),
+      stake: Number(row.stake), odds: Number(row.priced_odds),
+      /* Carried so the card's "model chance" is the number the job logged,
+         not one the card recomputes from rounded leg probabilities and then
+         quietly disagrees with the row it came from. */
+      fairOdds: Number(row.fair_odds) || null,
+      status: row.status, pl: row.pl,
+      filename: th.slug + '-acca-' + slug(md ? 'all-' + day : 'md' + row.matchday) + '.png'
+    };
+  }
+
   root.PLDShare = {
     W: W, H: H, PAD: P,
     THEMES: THEMES, theme: theme,
     matchCard: matchCard, roundCard: roundCard, calendarCard: calendarCard,
+    accaCard: accaCard, accaRowSpec: accaRowSpec,
     deskMatchSpec: deskMatchSpec, deskRoundSpec: deskRoundSpec,
     download: download, slug: slug,
     heatHex: heatHex, probHex: probHex, textOn: textOn,
