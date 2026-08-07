@@ -79,34 +79,64 @@ for (const page of PAGES) {
   checked += used.size;
 }
 
-/* The specific rules whose absence broke the Matchday list. Named explicitly
-   because the sweep above only proves SOMETHING matches — these are the ones
-   that must be in the SHARED sheet, or the next desk built from this pattern
-   inherits the same silent breakage. */
-for (const sel of ['#mdList .row', '#mdList .teams', '#mdList .top',
-  '#mdList .heat', '#mdList .when', '.btn.primary']) {
-  /* Matched as a COMPLETE selector opening a rule — the name, then optional
-     whitespace, then `{` or `,`. Not with includes(): "#mdList .row" is a
-     substring of "#mdList .rowgroup", so a rename would have satisfied it
-     while the layout rule was gone. Requiring the brace also stops
-     "#mdList .row:last-child" — a border tweak — from standing in for the
-     display:flex rule that actually does the work. Both of those escaped the
-     first version of this guard. */
-  const decl = new RegExp(sel.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '\\s*[{,]');
+/* .btn.primary must stay in the SHARED sheet. It was ported to two desks
+   without it and "Share matchday" — marked up as the primary action —
+   rendered as an ordinary outlined button. */
+{
+  const decl = new RegExp('\\.btn\\.primary\\s*[{,]');
   assert.ok(decl.test(shared),
-    `assets/tw.css has no rule opening with "${sel}" — the Matchday fixture ` +
-    'list renders as one unstyled paragraph without it, and nothing else in ' +
-    'the suite notices');
+    'assets/tw.css has no rule opening with ".btn.primary" — the primary ' +
+    'action on both newer desks renders as an ordinary outlined button');
 }
 
-/* .row/.top/.heat are generic. They are scoped to #mdList precisely so that
-   fixing two desks cannot restyle a third — index.html styles its own
-   class="heat" chip in the fixtures list. */
-for (const sel of ['.row', '.teams', '.top', '.heat']) {
-  const bare = new RegExp('^\\s*\\' + sel + '\\s*[,{]', 'm');
-  assert.ok(!bare.test(shared),
-    `assets/tw.css defines "${sel}" unscoped. It must stay under #mdList — ` +
-    'index.html uses class="heat" for a fixtures chip and would be restyled.');
+/* The Matchday panel lands on the same fixture-card GRID the Premier League
+   desk does. It used to be a plain single-column text list carrying the same
+   numbers, which is what made the two desks read as different applications.
+   Asserted on both the renderer and the grid, because either alone regresses
+   silently: cards outside a grid stack one-up, and a grid with the old list
+   inside it is still a list. */
+for (const page of ['eflc.html', 'laliga.html']) {
+  const src = read(page);
+  assert.ok(/function fixtureCard\(/.test(src),
+    `${page} has no shared fixtureCard() — the Matchday and Fixtures panels ` +
+    'must draw the same card rather than two that drift');
+  const grids = (src.match(/class="fx-grid"/g) || []).length;
+  assert.ok(grids >= 2,
+    `${page} wraps ${grids} panel(s) in .fx-grid; both Matchday and Fixtures ` +
+    'must use it or one of them stacks single-column');
+  /* 2600, measured, not guessed: renderMatchday's body reaches fixtureCard at
+     ~2040 characters. A bound set by eye failed the assertion rather than the
+     code the first time, which is the second time that has happened in this
+     file. Still bounded — unbounded would match a fixtureCard call anywhere
+     later in the page and pass whatever renderMatchday actually draws. */
+  assert.ok(/renderMatchday[\s\S]{0,2600}?fixtureCard\(/.test(src),
+    `${page} renderMatchday does not draw fixture cards — it has regressed ` +
+    'to the plain text list the Premier League desk never had');
+  /* The old list's classes must not come back with it. */
+  assert.ok(!/class="teams"/.test(src) && !/class="row"/.test(src),
+    `${page} still emits the retired Matchday list markup`);
+}
+
+/* The grid rule itself, not merely the STRING ".fx-grid" somewhere in the
+   sheet. Deleting `.fx-grid{display:grid;...}` left `.fx-grid > .fx{...}`
+   behind, which kept the class-is-styled sweep quiet while every card stacked
+   one-up — the same decoy that let a :last-child border stand in for the
+   Matchday list's display:flex. Pin the declaration that does the work. */
+assert.ok(/\.fx-grid\s*\{[^}]*display:\s*grid/.test(shared),
+  'assets/tw.css has no ".fx-grid{...display:grid...}" rule — the fixture ' +
+  'cards stack one per row instead of the grid the Premier League desk uses');
+assert.ok(/\.fx-grid\s*\{[^}]*minmax\(330px/.test(shared),
+  'the .fx-grid column minimum no longer matches index.html\'s 330px, so the ' +
+  'three desks wrap to one column at different widths');
+
+/* minmax(0,1fr), never a bare 1fr, for the side columns inside a card. `1fr`
+   is minmax(auto,1fr) and auto floors at min-content, which pushed the page
+   27px past the viewport the moment the candidate rows grew a face and a pip
+   meter — and Safari answers that by zooming the whole page out. */
+for (const page of ['eflc.html', 'laliga.html']) {
+  assert.ok(!/\.fx-sides\{[^}]*grid-template-columns:\s*1fr 1fr/.test(read(page)),
+    `${page} .fx-sides uses a bare "1fr 1fr", which cannot shrink below its ` +
+    'min-content width and overflows the viewport');
 }
 
 /* ---- crests must degrade, and players must be openable ------------------

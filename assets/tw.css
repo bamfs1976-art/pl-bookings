@@ -135,8 +135,14 @@
 }
 @supports(padding:max(0px)){@media (max-width:900px){.as-bottom{padding-bottom:max(4px,env(safe-area-inset-bottom))}}}
 /* The breadcrumb the PL topbar carries: area, then panel. */
-.as-crumb{display:flex;align-items:center;gap:7px;font-size:12.5px;color:var(--text-3);min-width:0}
-.as-crumb b{color:var(--text);font-weight:700}
+/* Area over panel, with a rule separating it from the desk title. Inline and
+   flush against the title it read "Bookings DeskMatchday › This Matchday". */
+.as-crumb{display:flex;flex-direction:column;justify-content:center;min-width:0;
+  margin-left:14px;padding-left:14px;border-left:1px solid var(--border-2);line-height:1.25}
+.as-crumb-area{font-size:10px;font-weight:800;letter-spacing:.09em;text-transform:uppercase;
+  color:var(--text-3)}
+.as-crumb b{color:var(--text);font-weight:700;font-size:14.5px;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 @media (max-width:560px){.as-crumb{display:none}}
 
 /* ─── Guided tour ───────────────────────────────────────────────────────── */
@@ -210,32 +216,12 @@ html[data-density="expert"] .combined-note{display:none}
   .as-gloss::after{content:"?";font-weight:800}
 }
 
-/* ---- Matchday fixture list (Championship, La Liga) --------------------- */
-/* renderMatchday() was ported to both newer desks without these five rules,
-   which live in today.html's inline <style> and nowhere else. The markup was
-   therefore correct and completely unstyled: .teams and .top are spans, so
-   with no flex container they flowed inline and ran together — the fixture
-   list read "Derby CountyL. Travis 19%" as one wrapping paragraph. Nothing
-   errors, which is why it shipped; a missing rule has no console.
-   .stat came across in the same port, which is why the stats strip above the
-   list looked right and made the breakage read as a formatting nit.
-
-   SCOPED TO #mdList DELIBERATELY. .row, .top and .heat are generic enough to
-   be in use elsewhere — index.html styles its own class="heat" chip in the
-   fixtures list — so putting these in the shared sheet unscoped would fix two
-   desks by restyling a third. #mdList exists only on the two desks that need
-   them (today.html's equivalent container is #list, with its own copy). */
-#mdList .row{display:flex;align-items:center;gap:10px;padding:11px 4px;
-  border-bottom:1px solid var(--border);flex-wrap:wrap}
-#mdList .row:last-child{border-bottom:0}
-#mdList .teams{font-weight:700;font-size:14.5px;min-width:0;flex:1 1 260px}
-#mdList .when{font-size:12.5px;color:var(--text-2);flex:none;font-family:var(--mono)}
-#mdList .top{font-size:12.5px;color:var(--text-2);flex:1 1 200px;min-width:0}
-#mdList .heat{font-family:var(--mono);font-weight:800;font-size:17px;flex:none;
-  min-width:52px;text-align:right}
-#mdList .heat.hot{color:var(--good-ink)}
-#mdList .heat.warm{color:var(--warn-ink)}
-#mdList .heat.cool{color:var(--text-2)}
+/* ---- Matchday ---------------------------------------------------------
+   The Matchday panel used to be a plain text list with its own .row/.teams/
+   .top/.heat rules ported from today.html. It now renders the SAME fixture
+   card the Fixtures tab draws, in the same grid the Premier League desk lands
+   on, so those rules are gone rather than left to rot — and check-styles now
+   asserts the cards, not the list they replaced. */
 
 /* Ported from today.html alongside the Matchday list and missed in the same
    way, with the same silent result: "Share matchday" is marked up as the
@@ -298,3 +284,14 @@ html[data-density="expert"] .combined-note{display:none}
 .pp-avatar{width:46px;height:46px;border-radius:11px;font-size:15px}
 .pp-crest-sm{width:14px;height:14px;font-size:7px;border-radius:4px}
 .pp-out{color:var(--warn-ink);font-weight:700}
+
+/* ---- Fixture card grid ------------------------------------------------- */
+/* The Premier League desk lands on a grid of fixture cards; the Championship
+   and La Liga desks landed on a single-column text list carrying the same
+   numbers, which is the difference that made them read as a different
+   application rather than the same one for another division. Same breakpoint
+   and same minimum column as index.html's .fx-grid, so the three wrap to one
+   column at the same width instead of at three arbitrary ones. */
+.fx-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(330px,1fr));gap:14px}
+.fx-grid > .fx{margin-bottom:0}
+@media (max-width:700px){ .fx-grid{grid-template-columns:1fr} }

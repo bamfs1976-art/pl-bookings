@@ -133,17 +133,56 @@
   .susp-need b{color:var(--danger-ink)}
   .susp-p{font-family:var(--mono);font-weight:700;font-size:13.5px;flex:none;min-width:56px;text-align:right}
   .fx{border:1px solid var(--border);border-radius:13px;padding:12px 13px;margin-bottom:11px;background:var(--surface)}
-  .fx-top{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
-  .fx-teams{font-weight:700;font-size:15px;display:flex;align-items:center;gap:7px}
+  /* Two columns, like the Premier League card: teams and kick-off on the
+     left, referee and the heat badge on the right. */
+  .fx-top{display:flex;align-items:flex-start;justify-content:space-between;gap:10px}
+  .fx-topl{min-width:0}
+  .fx-topr{flex:none;text-align:right}
+  .fx-refline{font-family:var(--mono);font-size:11px;color:var(--text-3);white-space:nowrap}
+  .fx-teams{font-weight:700;font-size:17px;display:flex;align-items:center;gap:7px;flex-wrap:wrap}
+  .fx-teams b{letter-spacing:.01em}
   .fx-when{font-size:12px;color:var(--text-2)}
-  .fx-heat{margin-left:auto;text-align:right}
-  .fx-heat b{font-size:19px;line-height:1}
-  .fx-heat span{display:block;font-size:10.5px;color:var(--text-2)}
+  /* A badge, like the Premier League card's, not a stacked number with a
+     caption. Same thresholds: 4.2 and up is hot. */
+  .fx-heat{display:inline-block;font-family:var(--mono);font-weight:800;font-size:15px;
+    padding:3px 9px;border-radius:8px;background:var(--surface-3,var(--surface-2));
+    color:var(--text-2);margin-top:4px}
+  .fx-heat.hot{background:color-mix(in srgb,var(--warn) 22%,transparent);color:var(--warn-ink)}
   .fx-ref{display:flex;align-items:center;gap:8px;margin:10px 0 4px;flex-wrap:wrap;font-size:12.5px}
-  .fx-sides{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:8px}
+  /* minmax(0,1fr), NOT 1fr. `1fr` is minmax(auto,1fr) and `auto` floors at the
+     track's MIN-CONTENT width, so once the candidate rows grew a face, a pip
+     meter and a band label the columns refused to shrink and pushed the page
+     27px wider than the viewport. On Safari that does not scroll — it zooms
+     the whole page out to fit, which is how this class of bug shows up on a
+     phone and stays invisible on a desktop. */
+  .fx-sides{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:12px;margin-top:8px}
+  .fx-side{min-width:0}
+  .fx-cands{margin-top:8px}
+  /* The club a candidate plays for, on the row — the Premier League card's
+     chip. It is what lets one ranked list replace two per-side columns. */
+  .cbadge{flex:none;font-family:var(--mono);font-size:10px;font-weight:800;letter-spacing:.04em;
+    padding:3px 6px;border-radius:6px;background:var(--surface-2);color:var(--text-2);
+    border:1px solid var(--border)}
   @media (max-width:640px){ .fx-sides{grid-template-columns:1fr} }
   .fx-side h4{margin:0 0 5px;font-size:11.5px;text-transform:uppercase;letter-spacing:.04em;color:var(--text-2);font-weight:700}
-  .cand{display:flex;align-items:center;gap:8px;font-size:13px;padding:3px 0}
+  /* A button now, not a div: it opens the player's record. The reset is the
+     part that is easy to forget — an unstyled button brings its own font,
+     background, border and centred text, and the row silently stops matching
+     the rest of the card. */
+  .cand{display:flex;align-items:center;gap:8px;font-size:13px;padding:5px 4px;width:100%;
+    background:none;border:0;border-radius:9px;color:inherit;font-family:inherit;
+    text-align:left;cursor:pointer}
+  .cand:hover{background:var(--surface-2)}
+  .cand:focus-visible{outline:2px solid var(--ring);outline-offset:-2px}
+  .cand .crest{width:26px;height:26px;border-radius:7px;font-size:9px}
+  .cand .nm{flex:1;min-width:0}
+  .pc-wrap{flex:none;text-align:right;line-height:1.15}
+  .sev{display:block;font-size:9.5px;font-weight:800;letter-spacing:.05em;
+    text-transform:uppercase;color:var(--text-3)}
+  /* Five pips, one per 0.09 yellows a 90 — the Premier League desk's scale. */
+  .pips{display:flex;gap:2px;margin-top:3px}
+  .pip{width:11px;height:5px;border-radius:2px;background:var(--border-2)}
+  .pip.on{background:var(--warn-ink)}
   .cand .nm{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
   .cand .pc{font-family:var(--mono);font-weight:700}
   .mkts{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px;padding-top:9px;border-top:1px dashed var(--border)}
@@ -878,6 +917,15 @@
   });
   PLDProfile.wire();
 
+  /* Candidate rows inside a fixture card open the same record the players
+     table opens. Delegated on document, because these cards are rebuilt by
+     the Matchday panel AND the Fixtures panel and per-node listeners would
+     leak a set per redraw. */
+  document.addEventListener('click', function (e) {
+    var b = e.target.closest ? e.target.closest('.cand[data-pk]') : null;
+    if (b) openPlayer(b.getAttribute('data-pk'));
+  });
+
   ['#fClub', '#fPos', '#fRef', '#fMin', '#fStar'].forEach(function (s) {
     $(s).addEventListener('change', renderPlayers);
   });
@@ -1116,9 +1164,78 @@
     }
     $('#fxCount').textContent = list.length + ' fixtures';
 
-    var refOpts = REFLIST.slice().sort(function (a, b) { return (b.ypg || 0) - (a.ypg || 0); });
+    var refOpts = refOptions();
 
-    host.innerHTML = list.map(function (x) {
+    host.innerHTML = '<div class="fx-grid">'
+      + list.map(function (x) { return fixtureCard(x, refOpts); }).join('')
+      + '</div>';
+
+    $$('.fxref', host).forEach(function (sel) {
+      sel.addEventListener('change', function () {
+        var id = sel.getAttribute('data-fx');
+        if (sel.value) myRefs[id] = sel.value; else delete myRefs[id];
+        try { localStorage.setItem(REF_KEY, JSON.stringify(myRefs)); } catch (e) {}
+        renderFixtures();
+      });
+    });
+  }
+
+  function refOptions() {
+    return REFLIST.slice().sort(function (a, b) { return (b.ypg || 0) - (a.ypg || 0); });
+  }
+
+  /* ONE fixture card, used by both the Matchday landing and the Fixtures tab.
+     The Premier League desk lands on a grid of these; these desks landed on a
+     plain text list, which is the difference that made them look like a
+     different application rather than the same one for another division. */
+  /* The Premier League desk's yellow-rate meter, same scale: five pips, one
+     per 0.09 yellows a 90. A shape you can compare down a column faster than
+     four decimal numbers. */
+  function pipMeter(p) {
+    var y = p.y;
+    if (y == null) return '';
+    var n = Math.max(0, Math.min(5, Math.round(y / 0.09))), s = '';
+    for (var i = 0; i < 5; i++) s += '<span class="pip' + (i < n ? ' on' : '') + '"></span>';
+    return '<span class="pips" aria-hidden="true" title="Yellow-card rate '
+      + n2(y) + ' per 90">' + s + '</span>';
+  }
+
+  /* A referee's surname, for the card header where there is room for one word.
+     "Ref Attwell", not "Ref Stuart Attwell" — the same shortening the Premier
+     League desk uses in the same place. */
+  function refAbbr(n) {
+    var parts = String(n || '').trim().split(/\s+/);
+    return parts.length > 1 ? parts[parts.length - 1] : (parts[0] || '');
+  }
+
+  /* ONE ranked list across both sides, each row carrying its club — the
+     Premier League card's shape. Splitting home and away into two columns
+     inside a 435px card left about 90px for a name, so "José Ángel Carmona"
+     rendered as "José Ángel Car...". Nothing is lost by merging: the per-side
+     totals are already in the markets strip as Home and Away, and the club is
+     on every row. */
+  function candidateList(x, ch, ca) {
+    var all = [];
+    (x.home.top || []).forEach(function (t) { all.push(t); });
+    (x.away.top || []).forEach(function (t) { all.push(t); });
+    all.sort(function (a, b) { return b.prob - a.prob; });
+    if (!all.length) return '<div class="faint" style="font-size:12.5px">No rated players.</div>';
+    return all.slice(0, 5).map(function (t) {
+      var b = band(t.prob), club = clubBy[t.p.c] || { short: t.p.c };
+      return '<button class="cand" type="button" data-pk="' + esc(keyOf(t.p)) + '"'
+        + ' aria-label="Open ' + esc(t.p.n) + '\u2019s record">'
+        + PLDProfile.crest({ short: t.p.c, name: club.name, img: t.p.ph || null }, 'cand-face')
+        + '<span class="cbadge">' + esc(t.p.c) + '</span>'
+        + '<span class="nm">' + esc(t.p.n)
+        + ' <span class="faint">' + esc(t.p.p) + '</span>'
+        + pipMeter(t.p) + '</span>'
+        + '<span class="pc-wrap"><span class="pc band ' + b[0] + '">' + pct(t.prob) + '</span>'
+        + (b[1] ? '<span class="sev">' + esc(b[1]) + '</span>' : '') + '</span>'
+        + '</button>';
+    }).join('');
+  }
+
+  function fixtureCard(x, refOpts) {
       var f = x.fx, ch = clubBy[f.h] || {}, ca = clubBy[f.a] || {};
       var refCell;
       if (x.ref.appointed && x.ref.ref) {
@@ -1139,32 +1256,57 @@
           + (x.ref.ref ? '<span class="faint">×' + n2(x.factor) + '</span>' : '');
       }
 
+      /* A candidate row shaped like the Premier League desk's: face, name and
+         position, a five-pip yellow-rate meter, the percentage and its band.
+         A BUTTON, because it opens the player's record — the same record the
+         players table opens, so the two ways in agree. */
       function side(label, club, s) {
         return '<div class="fx-side"><h4>' + esc(label) + '</h4>'
           + (s.top.length ? s.top.map(function (t) {
               var b = band(t.prob);
-              return '<div class="cand"><span class="nm">' + esc(t.p.n)
-                + ' <span class="faint">' + esc(t.p.p) + '</span></span>'
-                + '<span class="pc band ' + b[0] + '">' + pct(t.prob) + '</span></div>';
+              return '<button class="cand" type="button" data-pk="' + esc(keyOf(t.p)) + '"'
+                + ' aria-label="Open ' + esc(t.p.n) + '\u2019s record">'
+                + PLDProfile.crest({ short: t.p.c, name: (clubBy[t.p.c] || {}).name,
+                                     img: t.p.ph || null }, 'cand-face')
+                + '<span class="nm">' + esc(t.p.n)
+                + ' <span class="faint">' + esc(t.p.p) + '</span>'
+                + pipMeter(t.p) + '</span>'
+                + '<span class="pc-wrap"><span class="pc band ' + b[0] + '">' + pct(t.prob) + '</span>'
+                + (b[1] ? '<span class="sev">' + esc(b[1]) + '</span>' : '') + '</span>'
+                + '</button>';
             }).join('') : '<div class="faint" style="font-size:12.5px">No rated players.</div>')
           + '</div>';
       }
 
+      /* SHORT CODES in the header, as the Premier League desk has always done.
+         Full names wrapped to two lines on any club with a long one —
+         "Wolverhampton Wanderers v Blackburn Rovers" took three — which left
+         the cards ragged and unlike the other desk. Nothing is lost: the full
+         name is the title, and both appear in full as the side headings
+         directly below. */
+      var refLine = (x.ref.appointed && x.ref.ref)
+        ? 'Ref ' + esc(refAbbr(x.ref.ref.n))
+        : 'Ref \u2014';
       return '<div class="fx">'
         + '<div class="fx-top">'
+        + '<div class="fx-topl">'
         + '<div class="fx-teams">'
-        + PLDProfile.crest(ch) + esc(ch.name || f.h)
+        + PLDProfile.crest(ch) + '<b>' + esc(f.h) + '</b>'
         + '<span class="faint">v</span>'
-        + PLDProfile.crest(ca) + esc(ca.name || f.a)
+        + PLDProfile.crest(ca) + '<b>' + esc(f.a) + '</b>'
+        + derbyTag(x) + thinTag(x)
         + '</div>'
-        + '<div class="fx-when">' + esc(whenText(f.d)) + derbyTag(x) + thinTag(x) + '</div>'
-        + '<div class="fx-heat"><b>' + n1(x.m.expected) + '</b><span>expected cards</span></div>'
+        + '<div class="fx-when">' + esc(whenText(f.d)) + '</div>'
+        + '</div>'
+        + '<div class="fx-topr">'
+        + '<div class="fx-refline">' + refLine + '</div>'
+        + '<span class="fx-heat' + (x.m.expected >= 4.2 ? ' hot' : '') + '" '
+        + 'title="Booking heat: expected cards in the match, both sides added together">'
+        + n1(x.m.expected) + '</span>'
+        + '</div>'
         + '</div>'
         + '<div class="fx-ref">' + refCell + '</div>'
-        + '<div class="fx-sides">'
-        + side(ch.name || f.h, ch, x.home)
-        + side(ca.name || f.a, ca, x.away)
-        + '</div>'
+        + '<div class="fx-cands">' + candidateList(x, ch, ca) + '</div>'
         + '<div class="mkts">'
         + '<button class="mkt fx-share" type="button" data-share="' + f.id + '">\u2b07 Share match</button>'
         + '<span class="mkt">Home <b>' + n1(x.m.expectedHome) + '</b></span>'
@@ -1177,16 +1319,6 @@
         + bookingPointsChips(x)
         + '</div>'
         + '</div>';
-    }).join('');
-
-    $$('.fxref', host).forEach(function (sel) {
-      sel.addEventListener('change', function () {
-        var id = sel.getAttribute('data-fx');
-        if (sel.value) myRefs[id] = sel.value; else delete myRefs[id];
-        try { localStorage.setItem(REF_KEY, JSON.stringify(myRefs)); } catch (e) {}
-        renderFixtures();
-      });
-    });
   }
   $('#fxRound').addEventListener('change', renderFixtures);
   $('#fxOrder').addEventListener('change', renderFixtures);
@@ -1499,28 +1631,6 @@
     return pool.reduce(function (m, f) { return m == null ? f.r : Math.min(m, f.r); }, null);
   }
 
-  /* Renders the EXISTING band() — which already returns [class, label] and is
-     what the fixture cards use — as a pill. Declaring a second function band()
-     here is what the first version did, and because function declarations
-     hoist and the last wins, it silently replaced the fixture cards' banding
-     with an HTML string whose [0] is "<". The cards kept rendering; their
-     High/Watch pills turned into a class called "<". */
-  function bandPill(p) {
-    var b = band(p);
-    return b[1] ? '<span class="pill band-' + b[0] + '">' + b[1] + '</span>' : '';
-  }
-
-  function mdCandidates(x) {
-    var out = [];
-    ['home', 'away'].forEach(function (k) {
-      var short = x.fx[k === 'home' ? 'h' : 'a'];
-      (x[k].top || []).forEach(function (t) {
-        out.push({ name: t.p.n, club: short, prob: t.prob });
-      });
-    });
-    return out.sort(function (a, b) { return b.prob - a.prob; });
-  }
-
   /* Fewer than twelve rated players between two squads is not a confident
      price and must not look like one. */
   function thinTag(x) {
@@ -1560,21 +1670,24 @@
       ['<b>' + withRef + ' of ' + list.length + '</b><span>referees appointed</span>']
     ].map(function (h) { return '<div class="stat">' + h + '</div>'; }).join('');
 
-    host.innerHTML = list.map(function (x) {
-      var f = x.fx, ch = clubBy[f.h] || {}, ca = clubBy[f.a] || {};
-      var cands = mdCandidates(x).slice(0, 4);
-      return '<div class="row">'
-        + '<span class="teams">' + esc(ch.name || f.h) + ' <span class="faint">v</span> '
-        + esc(ca.name || f.a) + derbyTag(x) + thinTag(x) + '</span>'
-        + '<span class="top">' + (cands.length
-            ? cands.map(function (c) {
-                return esc(c.name) + ' <b>' + (c.prob * 100).toFixed(0) + '%</b> ' + bandPill(c.prob);
-              }).join(' &middot; ')
-            : '<span class="faint">no rated players</span>') + '</span>'
-        + '<span class="heat ' + (x.m.expected >= 4.2 ? 'hot' : x.m.expected >= 3.5 ? 'warm' : 'cool') + '">'
-        + x.m.expected.toFixed(1) + '</span>'
-        + '</div>';
-    }).join('');
+    /* The SAME card the Fixtures tab draws, in the same grid the Premier
+       League desk lands on. This was a plain text list — team names, four
+       names and percentages, a heat number — which carried the same numbers
+       but read as a different application. Nothing here is new: it is the
+       card that already existed, shown on the page people arrive at. */
+    var refOpts = refOptions();
+    host.innerHTML = '<div class="fx-grid">'
+      + list.map(function (x) { return fixtureCard(x, refOpts); }).join('')
+      + '</div>';
+
+    $$('.fxref', host).forEach(function (sel) {
+      sel.addEventListener('change', function () {
+        var id = sel.getAttribute('data-fx');
+        if (sel.value) myRefs[id] = sel.value; else delete myRefs[id];
+        try { localStorage.setItem(REF_KEY, JSON.stringify(myRefs)); } catch (e) {}
+        renderMatchday();
+      });
+    });
 
     $('#mdNote').textContent = 'Ranked hottest to coolest by booking heat — the expected number of '
       + 'cards in the match, both sides added together, with the referee applied where one has been '

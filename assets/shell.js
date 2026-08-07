@@ -194,7 +194,12 @@
         b.classList.toggle('active', b.dataset.area === id);
       });
       var panel = area.panels.filter(function (p) { return p.id === pid; })[0] || area.panels[0];
-      crumb.innerHTML = area.label + ' <span aria-hidden="true">›</span> <b>' + panel.label + '</b>';
+      /* Two lines, area over panel, like the Premier League topbar — not one
+         run-on string. Inline it rendered as "Bookings DeskMatchday › This
+         Matchday", because the crumb sits directly beside the title with
+         nothing between them. */
+      crumb.innerHTML = '<span class="as-crumb-area">' + area.label + '</span>'
+        + '<b>' + panel.label + '</b>';
       setOpen(false);
       try { history.replaceState(null, '', '#' + id); } catch (e) { /* file:// */ }
       if (cfg.onArea) cfg.onArea(id, pid);
