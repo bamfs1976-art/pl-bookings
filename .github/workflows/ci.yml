@@ -122,5 +122,13 @@ jobs:
       - name: Security headers do not break the site
         run: node scripts/check-headers.mjs
 
+      # The referee is the largest multiplier the desks apply, and applying it
+      # to nothing looks exactly like applying it — a neutral referee and no
+      # referee produce the same page. index.html never loaded the harvested
+      # fixture list, so every unassigned Premier League fixture priced at
+      # refFactor = 1 for as long as the desk has existed.
+      - name: The referee path, end to end
+        run: node scripts/check-referees.mjs
+
       - name: Unit tests (PLDCore)
         run: node tests/test-core.mjs

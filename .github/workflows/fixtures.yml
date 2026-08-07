@@ -1,0 +1,103 @@
+name: Fixtures and referee appointments
+
+# The cheap, frequent half of the data refresh.
+#
+# WHY THIS IS SEPARATE FROM data-refresh.yml. Referee appointments are
+# published very late and the window differs by country:
+#
+#   * La Liga  — the CTA publishes the day BEFORE the match, by 16:00 local
+#                (a 2025-26 rule change). That is ~14:00 UTC in summer.
+#   * Premier League / EFL — PGMOL and the EFL publish a few days out,
+#                typically early in the week before a weekend round.
+#
+# The Spanish window is the binding one: a nightly job cannot carry a La Liga
+# appointment for the next day's fixtures at all. So this runs three times a
+# day and costs three API calls a run — one /fixtures per league returns a
+# whole season. The expensive squad/injury/caution harvest stays daily in
+# data-refresh.yml.
+#
+# It writes ONLY the fixture files. A run that cannot reach the API leaves the
+# committed fixtures exactly as they were, which is the right failure: a stale
+# appointment is wrong, but an erased one silently reprices every fixture in
+# the division at refFactor = 1.
+
+on:
+  schedule:
+    # Morning (PGMOL / EFL), mid-afternoon and evening (after the Spanish
+    # 16:00 CEST publication, with a second pass in case it runs late).
+    - cron: '20 7 * * *'
+    - cron: '20 15 * * *'
+    - cron: '20 19 * * *'
+  workflow_dispatch:
+    inputs:
+      season_fixtures:
+        description: "API-Football season START YEAR for the fixture list (2026 = 2026-27)."
+        required: false
+        default: "2026"
+
+permissions:
+  contents: write
+
+concurrency:
+  # Three schedules plus manual runs can overlap, and two runs committing the
+  # same generated files race each other. Later run wins; the earlier is
+  # cancelled rather than pushed on top of.
+  group: fixtures
+  cancel-in-progress: true
+
+jobs:
+  fixtures:
+    runs-on: ubuntu-latest
+    env:
+      API_FOOTBALL_KEY: ${{ secrets.API_FOOTBALL_KEY }}
+      API_FOOTBALL_SEASON: ${{ inputs.season_fixtures || '2026' }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      # Named rather than silent: without the key this job can do nothing, and
+      # a green tick on a run that fetched nothing is how the referee layer
+      # stayed off for a season without anyone noticing.
+      - name: Refuse to run blind
+        if: ${{ env.API_FOOTBALL_KEY == '' }}
+        run: |
+          echo "::error::API_FOOTBALL_KEY is not set — no fixtures or appointments can be fetched."
+          exit 1
+
+      - name: Harvest fixtures and appointments
+        run: |
+          for L in PL EFLC LL; do
+            python3 data/harvest_apifootball.py --fixtures --league $L \
+              || echo "::warning::$L fixtures unavailable this run — keeping the committed file"
+          done
+
+      # The measurement the sourcing note asked for: how many appointments are
+      # known, and how far ahead. Printed every run so the lead time by league
+      # becomes an observed fact rather than an assumption.
+      - name: How many referees are appointed, and how far out
+        run: node scripts/ref-coverage.mjs
+
+      - name: Guard the fixture files
+        run: |
+          node scripts/check-data.mjs
+          node scripts/check-eflc.mjs
+          node scripts/check-laliga.mjs
+
+      - name: Commit if anything changed
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          for f in data/pl_fixtures.js data/eflc_fixtures.js data/laliga_fixtures.js; do
+            [ -f "$f" ] && git add "$f"
+          done
+          # --quiet exits non-zero when there IS something staged, so this is
+          # the check, not an error. Three runs a day over a season is ~1,000
+          # commits if it pushes unconditionally.
+          if git diff --cached --quiet; then
+            echo "No fixture or appointment changed."
+          else
+            git commit -m "Fixtures and referee appointments"
+            git push
+          fi

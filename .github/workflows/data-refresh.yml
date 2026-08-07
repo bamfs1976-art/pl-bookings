@@ -11,6 +11,25 @@ name: Data refresh
 # variables -> Actions -> New secret). Without it, that part is skipped and
 # only the referee data updates.
 on:
+  # DAILY, because the things this rebuilds change daily: transfers, injuries
+  # and this season's caution counts. Until this cron existed the Championship
+  # and La Liga desks were photographs — neither page makes a single fetch at
+  # runtime, so every number on them was whatever the last manual run produced.
+  #
+  # 04:10 UTC: after the previous evening's fixtures have been processed by the
+  # upstream feeds, and well before any kick-off.
+  #
+  # Cost is not a concern — harvest_apifootball.py documents the whole job at
+  # roughly 75 calls against a 7,500/day allowance, and it paces itself to stay
+  # under the per-minute ceiling.
+  #
+  # NOTE ON INPUTS. On a scheduled run every `inputs.*` is empty. The boolean
+  # ones are therefore falsy, which would have skipped the Championship and
+  # La Liga steps on every cron run while the workflow reported success — so
+  # they are read as `github.event_name != 'workflow_dispatch' || inputs.x`,
+  # and the season strings carry explicit `|| 'default'` fallbacks.
+  schedule:
+    - cron: '10 4 * * *'
   workflow_dispatch:
     inputs:
       refs_season:
@@ -78,14 +97,14 @@ jobs:
           echo "La Liga harvest — run ${{ github.run_number }}" > data/laliga_harvest.log
 
       - name: Refresh referees (free source, always runs)
-        run: python3 data/build_refs.py --season "${{ inputs.refs_season }}"
+        run: python3 data/build_refs.py --season "${{ inputs.refs_season || '2526' }}"
 
       # Extends the referee career history past the frozen epldata baseline
       # (1992/93-2017/18) from the same free match records. Idempotent: the
       # baseline is pristine in ref_history_base.json and the football-data era
       # is always recomputed, so re-running cannot double-count.
       - name: Extend the referee history (free source, always runs)
-        run: python3 data/extend_ref_history.py --to "${{ inputs.refs_season }}"
+        run: python3 data/extend_ref_history.py --to "${{ inputs.refs_season || '2526' }}"
 
       # The Championship's referee spine — the first leg of the second desk.
       # Free and keyless for exactly the same reason the Premier League's is:
@@ -97,9 +116,9 @@ jobs:
       # on. An origin outage must leave the shipped Championship seed in place,
       # not take the Premier League refresh down with it.
       - name: Refresh EFL Championship referees (free source, no key)
-        if: ${{ inputs.refresh_eflc }}
+        if: ${{ (github.event_name != 'workflow_dispatch' || inputs.refresh_eflc) }}
         continue-on-error: true
-        run: python3 data/build_refs.py --league EFLC --season "${{ inputs.refs_season }}"
+        run: python3 data/build_refs.py --league EFLC --season "${{ inputs.refs_season || '2526' }}"
 
       # Head-to-head card history, from the same public-domain match records the
       # referee and venue-split builds already read. No key, no new source.
@@ -158,17 +177,17 @@ jobs:
         env:
           # NOT season_ch: that is a ScoutingStats season id (five digits),
           # while API-Football names a season by its starting year.
-          API_FOOTBALL_SEASON: ${{ inputs.season_af }}
+          API_FOOTBALL_SEASON: ${{ inputs.season_af || '2025' }}
         run: python3 data/harvest_apifootball.py --league EFLC
 
       # THIS season's Championship cautions, for the suspension ladder. A
       # different harvest from the squads: those are 2025-26 FORM, this is
       # 2026-27 STATE, and the English ladder counts only the current season.
       - name: Harvest this season's Championship cautions (suspension ladder)
-        if: ${{ env.API_FOOTBALL_KEY != '' && inputs.refresh_eflc }}
+        if: ${{ env.API_FOOTBALL_KEY != '' && (github.event_name != 'workflow_dispatch' || inputs.refresh_eflc) }}
         continue-on-error: true
         env:
-          API_FOOTBALL_SEASON: ${{ inputs.season_fixtures }}
+          API_FOOTBALL_SEASON: ${{ inputs.season_fixtures || '2026' }}
         run: python3 data/harvest_apifootball.py --league EFLC --out eflc_season_cards.json
 
       # The Premier League division, for the three clubs RELEGATED into the
@@ -181,10 +200,10 @@ jobs:
       # Championship gets the better source without that decision being made
       # for the Premier League as a side effect.
       - name: Harvest the Premier League from API-Football (the relegated three)
-        if: ${{ env.API_FOOTBALL_KEY != '' && inputs.refresh_eflc }}
+        if: ${{ env.API_FOOTBALL_KEY != '' && (github.event_name != 'workflow_dispatch' || inputs.refresh_eflc) }}
         continue-on-error: true
         env:
-          API_FOOTBALL_SEASON: ${{ inputs.season_af }}
+          API_FOOTBALL_SEASON: ${{ inputs.season_af || '2025' }}
         run: python3 data/harvest_apifootball.py --league PL --out pl_af_players.json
 
       # The Championship fixture list. Separate from the squads because it
@@ -192,10 +211,10 @@ jobs:
       # once, fixtures gain a referee as each appointment is published, so
       # this is the step worth re-running weekly in season.
       - name: Harvest the Championship fixtures from API-Football
-        if: ${{ env.API_FOOTBALL_KEY != '' && inputs.refresh_eflc }}
+        if: ${{ env.API_FOOTBALL_KEY != '' && (github.event_name != 'workflow_dispatch' || inputs.refresh_eflc) }}
         continue-on-error: true
         env:
-          API_FOOTBALL_SEASON: ${{ inputs.season_fixtures }}
+          API_FOOTBALL_SEASON: ${{ inputs.season_fixtures || '2026' }}
         run: python3 data/harvest_apifootball.py --fixtures --league EFLC
 
       # ── La Liga ─────────────────────────────────────────────────────────
@@ -206,19 +225,19 @@ jobs:
       # names through that registry. Run the squads first and they resolve
       # against an empty vocabulary, which is a harvest of nothing.
       - name: Discover the La Liga division (writes the club registry)
-        if: ${{ env.API_FOOTBALL_KEY != '' && inputs.refresh_laliga }}
+        if: ${{ env.API_FOOTBALL_KEY != '' && (github.event_name != 'workflow_dispatch' || inputs.refresh_laliga) }}
         continue-on-error: true
         env:
-          API_FOOTBALL_SEASON: ${{ inputs.season_fixtures }}
+          API_FOOTBALL_SEASON: ${{ inputs.season_fixtures || '2026' }}
         run: |
           echo "== discover ==" >> data/laliga_harvest.log
           python3 data/harvest_apifootball.py --league LL --clubs 2>&1 | tee -a data/laliga_harvest.log
 
       - name: Harvest the La Liga squads from API-Football
-        if: ${{ env.API_FOOTBALL_KEY != '' && inputs.refresh_laliga }}
+        if: ${{ env.API_FOOTBALL_KEY != '' && (github.event_name != 'workflow_dispatch' || inputs.refresh_laliga) }}
         continue-on-error: true
         env:
-          API_FOOTBALL_SEASON: ${{ inputs.season_af }}
+          API_FOOTBALL_SEASON: ${{ inputs.season_af || '2025' }}
         run: |
           echo "== squads ==" >> data/laliga_harvest.log
           python3 data/harvest_apifootball.py --league LL 2>&1 | tee -a data/laliga_harvest.log
@@ -231,10 +250,10 @@ jobs:
       # zero. Empty until the season starts, which is why the strip is built to
       # say so rather than to show nothing.
       - name: Harvest this season's Spanish cautions (for the suspension strip)
-        if: ${{ env.API_FOOTBALL_KEY != '' && inputs.refresh_laliga }}
+        if: ${{ env.API_FOOTBALL_KEY != '' && (github.event_name != 'workflow_dispatch' || inputs.refresh_laliga) }}
         continue-on-error: true
         env:
-          API_FOOTBALL_SEASON: ${{ inputs.season_fixtures }}
+          API_FOOTBALL_SEASON: ${{ inputs.season_fixtures || '2026' }}
         run: |
           echo "== season-cards ==" >> data/laliga_harvest.log
           python3 data/harvest_apifootball.py --league LL --out laliga_season_cards.json 2>&1 \
@@ -244,10 +263,10 @@ jobs:
       # form is a second-tier record and appears in no La Liga harvest. The
       # Spanish counterpart of the League One step below.
       - name: Harvest Segunda from API-Football (the promoted clubs)
-        if: ${{ env.API_FOOTBALL_KEY != '' && inputs.refresh_laliga }}
+        if: ${{ env.API_FOOTBALL_KEY != '' && (github.event_name != 'workflow_dispatch' || inputs.refresh_laliga) }}
         continue-on-error: true
         env:
-          API_FOOTBALL_SEASON: ${{ inputs.season_af }}
+          API_FOOTBALL_SEASON: ${{ inputs.season_af || '2025' }}
         run: |
           echo "== segunda ==" >> data/laliga_harvest.log
           python3 data/harvest_apifootball.py --league SEG 2>&1 | tee -a data/laliga_harvest.log
@@ -262,19 +281,19 @@ jobs:
       # season just played, while the fixture list below is the season about to
       # be. Conflating the two gives a desk with no referee data at all.
       - name: Harvest last season's Spanish officials (for the referee join)
-        if: ${{ env.API_FOOTBALL_KEY != '' && inputs.refresh_laliga }}
+        if: ${{ env.API_FOOTBALL_KEY != '' && (github.event_name != 'workflow_dispatch' || inputs.refresh_laliga) }}
         continue-on-error: true
         env:
-          API_FOOTBALL_SEASON: ${{ inputs.season_af }}
+          API_FOOTBALL_SEASON: ${{ inputs.season_af || '2025' }}
         run: |
           echo "== ref-fixtures ==" >> data/laliga_harvest.log
           python3 data/harvest_apifootball.py --ref-fixtures --league LL 2>&1 | tee -a data/laliga_harvest.log
 
       - name: Harvest the La Liga fixtures from API-Football
-        if: ${{ env.API_FOOTBALL_KEY != '' && inputs.refresh_laliga }}
+        if: ${{ env.API_FOOTBALL_KEY != '' && (github.event_name != 'workflow_dispatch' || inputs.refresh_laliga) }}
         continue-on-error: true
         env:
-          API_FOOTBALL_SEASON: ${{ inputs.season_fixtures }}
+          API_FOOTBALL_SEASON: ${{ inputs.season_fixtures || '2026' }}
         run: |
           echo "== fixtures ==" >> data/laliga_harvest.log
           python3 data/harvest_apifootball.py --fixtures --league LL 2>&1 | tee -a data/laliga_harvest.log
@@ -287,16 +306,16 @@ jobs:
         if: ${{ env.API_FOOTBALL_KEY != '' }}
         continue-on-error: true
         env:
-          API_FOOTBALL_SEASON: ${{ inputs.season_fixtures }}
+          API_FOOTBALL_SEASON: ${{ inputs.season_fixtures || '2026' }}
         run: python3 data/harvest_apifootball.py --fixtures --league PL
 
       # League One, for the three clubs promoted into the Championship. Only
       # the Championship desk needs it, so it never blocks the Premier League.
       - name: Harvest League One from API-Football (the promoted three)
-        if: ${{ env.API_FOOTBALL_KEY != '' && inputs.refresh_eflc }}
+        if: ${{ env.API_FOOTBALL_KEY != '' && (github.event_name != 'workflow_dispatch' || inputs.refresh_eflc) }}
         continue-on-error: true
         env:
-          API_FOOTBALL_SEASON: ${{ inputs.season_af }}
+          API_FOOTBALL_SEASON: ${{ inputs.season_af || '2025' }}
         run: python3 data/harvest_apifootball.py --league L1
 
       # The squads themselves, free and keyless. This is the leg that closes
@@ -318,7 +337,7 @@ jobs:
       # After build_pl_data regenerates CLUBS, re-add the home/away
       # cards-against splits (same free source as the referees step).
       - name: Refresh club home/away splits
-        run: python3 data/build_club_splits.py --season "${{ inputs.refs_season }}"
+        run: python3 data/build_club_splits.py --season "${{ inputs.refs_season || '2526' }}"
 
       # Keep the season-prior model in sync with any refreshed player data.
       - name: Refresh the season-prior model
@@ -334,9 +353,9 @@ jobs:
       # short. It refuses to write rather than shipping a partial league, so a
       # failure here leaves the previous eflc_data.js exactly as it was.
       - name: Build the Championship dataset
-        if: ${{ inputs.refresh_eflc && env.SS_COOKIE != '' }}
+        if: ${{ (github.event_name != 'workflow_dispatch' || inputs.refresh_eflc) && env.SS_COOKIE != '' }}
         continue-on-error: true
-        run: python3 data/build_eflc_data.py --season "${{ inputs.refs_season }}"
+        run: python3 data/build_eflc_data.py --season "${{ inputs.refs_season || '2526' }}"
 
       # The La Liga dataset, then its referees — in that order, because
       # build_refs.py --league LL patches the REFS block of a file the build
@@ -344,18 +363,18 @@ jobs:
       # failure inside continue-on-error still leaves a record in the repo
       # rather than only in a log pane somebody has to open.
       - name: Build the La Liga dataset
-        if: ${{ inputs.refresh_laliga }}
+        if: ${{ (github.event_name != 'workflow_dispatch' || inputs.refresh_laliga) }}
         continue-on-error: true
         run: |
           echo "== build ==" >> data/laliga_harvest.log
-          python3 data/build_laliga_data.py --season "${{ inputs.season_sp }}" 2>&1 | tee -a data/laliga_harvest.log
+          python3 data/build_laliga_data.py --season "${{ inputs.season_sp || '2526' }}" 2>&1 | tee -a data/laliga_harvest.log
 
       - name: Join the Spanish referees onto the free match records
-        if: ${{ inputs.refresh_laliga }}
+        if: ${{ (github.event_name != 'workflow_dispatch' || inputs.refresh_laliga) }}
         continue-on-error: true
         run: |
           echo "== referee-join ==" >> data/laliga_harvest.log
-          python3 data/build_refs.py --league LL --season "${{ inputs.season_sp }}" 2>&1 | tee -a data/laliga_harvest.log
+          python3 data/build_refs.py --league LL --season "${{ inputs.season_sp || '2526' }}" 2>&1 | tee -a data/laliga_harvest.log
 
       # Re-vendor Plsimulator's match model, which it refits weekly and
       # publishes CORS-open at plsimulation.netlify.app/model.json. Feeds the
@@ -377,7 +396,7 @@ jobs:
       # a no-op early in the season and quietly flips the model to "match-fit"
       # once games accumulate. Never fails the refresh.
       - name: Fit the card model on match history (Tier 2)
-        if: ${{ inputs.fit_model }}
+        if: ${{ (github.event_name != 'workflow_dispatch' || inputs.fit_model) }}
         continue-on-error: true
         run: |
           python3 data/harvest_history.py

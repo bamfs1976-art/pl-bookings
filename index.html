@@ -1043,6 +1043,11 @@
 </div>
 
 <script src="data/pl_data.js"></script>
+<!-- The harvested fixture list, for its `ref` field: the appointed official.
+     /today and scripts/accas.mjs have read this file all along; this desk did
+     not, so every fixture here was priced at refFactor = 1 unless somebody
+     picked a referee by hand from the dropdown. See docs/referee-sourcing.md. -->
+<script src="data/pl_fixtures.js"></script>
 <script src="data/ref_history.js"></script>
 <script src="data/h2h.js"></script>
 <script src="data/model.js"></script>
@@ -2750,6 +2755,10 @@ async function loadLive(){
     const teamMap=buildTeamMap(bs.teams);
     const cur=bs.events.find(e=>e.is_current&&!e.finished)||bs.events.find(e=>e.is_next)||bs.events.find(e=>!e.finished)||bs.events[bs.events.length-1]||bs.events[0]||null;
     LIVE={bootstrap:bs,fixtures:fx,teamMap,currentGW:cur?cur.id:1,seasonStarted:bs.elements.some(el=>(el.minutes||0)>0)};
+    /* The appointment lookup is keyed off LIVE.fixtures, so it must be rebuilt
+       whenever LIVE is. Caching it across a reload would keep pointing at the
+       previous load's fixture ids. */
+    APPOINTED=null;
     try{ LIVE.matchedCount=attachLive(bs,teamMap); }catch(e){ console.warn("[Bookings Desk] attachLive:",e); LIVE.matchedCount=0; }
     try{ LIVE.allPlayers=buildAllPlayers(bs,teamMap); }catch(e){ console.warn("[Bookings Desk] buildAllPlayers:",e); LIVE.allPlayers=[]; }
     // The suspension strip is only real once the feed lands: before it, every
@@ -2951,7 +2960,45 @@ const REF_AVG_YPG=(()=>{ const v=REFS.map(r=>r.ypg).filter(x=>x!=null); return v
 // on yellows-per-game exactly as before.
 const REF_AVG_CPF=(()=>{ const v=REFS.map(r=>r.cpf).filter(x=>typeof x==="number"&&x>0); return v.length?v.reduce((a,b)=>a+b,0)/v.length:null; })();
 function refByName(n){ return REFS.find(r=>r.n===n)||null; }
-function refFor(fid){ const n=refAssign[SEASON+"|"+fid]; return n?refByName(n):null; }
+
+/* ---- the appointed official, from the harvested fixture list --------------
+   The two fixture lists do NOT share an id space: this desk runs on the live
+   FPL feed, whose fixture ids are its own, while data/pl_fixtures.js comes
+   from API-Football. Keying on id would silently match nothing. They do agree
+   on club short codes, and a given home/away pairing happens once a season,
+   so that is the join.
+
+   Built lazily and cached, because LIVE does not exist at parse time. */
+let APPOINTED=null;
+function appointedRefName(fid){
+  if(typeof PL_FIXTURES==="undefined"||!LIVE) return null;
+  if(!APPOINTED){
+    const byPair={};
+    PL_FIXTURES.forEach(f=>{ if(f.ref) byPair[f.h+"|"+f.a]=f.ref; });
+    APPOINTED={};
+    (LIVE.fixtures||[]).forEach(f=>{
+      const h=LIVE.teamMap[f.team_h], a=LIVE.teamMap[f.team_a];
+      if(!h||!a) return;
+      const n=byPair[h+"|"+a];
+      if(n) APPOINTED[f.id]=n;
+    });
+  }
+  return APPOINTED[fid]||null;
+}
+
+/* A HAND PICK ALWAYS WINS. An appointment can be changed after publication,
+   and a desk that cannot be corrected is worse than one that must be told. The
+   harvested name is the default, not the authority. */
+function refFor(fid){
+  const n=refAssign[SEASON+"|"+fid]||appointedRefName(fid);
+  return n?refByName(n):null;
+}
+/* Whether this fixture's referee came from the feed rather than the dropdown —
+   the desk labels those, so a reader can tell a published appointment from
+   somebody's guess. */
+function refIsAppointed(fid){
+  return !refAssign[SEASON+"|"+fid] && !!appointedRefName(fid);
+}
 // Heat multiplier: the official's yellows/game against the league average, clamped.
 /* Referee card multiplier: yellows-per-game blended with cards-per-foul,
    which divides out how foul-heavy his fixtures happened to be. Pure maths in
@@ -2975,10 +3022,25 @@ function refChip(ref){
   return ` <span class="chip" style="color:${s.col};background:color-mix(in srgb,${s.col} 12%,transparent);border:1px solid color-mix(in srgb,${s.col} 35%,transparent)" title="${esc(ref.n)} — ${ref.ypg.toFixed(2)} yellows/game (league avg ${REF_AVG_YPG.toFixed(2)})">${esc(ref.n.split(" ").pop())} · ${s.label}</span>`;
 }
 function refSelect(fid){
-  const cur=refAssign[SEASON+"|"+fid]||"";
-  const opts=['<option value="">Ref: unknown</option>']
+  /* Falls back to the appointment so the dropdown SHOWS what the desk is
+     actually pricing with. Leaving it on "unknown" while refFor() quietly used
+     a harvested name would put a different referee in the control than in the
+     numbers beside it. */
+  const appointed=appointedRefName(fid);
+  const cur=refAssign[SEASON+"|"+fid]||appointed||"";
+  /* Blank DELETES the override, which falls back to the appointment — it does
+     not mean "no referee". Labelling it "unknown" when picking it would put
+     the appointed official straight back was simply wrong. */
+  const blank=appointed?`Use the appointment (${esc(appointed)})`:"Ref: unknown";
+  const opts=[`<option value="">${blank}</option>`]
     .concat([...REFS].sort((a,b)=>a.n.localeCompare(b.n)).map(r=>`<option value="${esc(r.n)}"${r.n===cur?" selected":""}>${esc(r.n)}${r.ypg!=null?` (${r.ypg.toFixed(1)})`:""}</option>`));
-  return `<select class="ref-sel" data-fid="${fid}" aria-label="Assign referee" style="padding:.25rem .35rem;font-size:.74rem;max-width:170px">${opts.join("")}</select>`;
+  /* An appointed name that has no card record still has to appear, or the
+     dropdown would silently drop back to "unknown" for a referee we DO know
+     about — a promoted official in his first season, most obviously. */
+  if(appointed&&!refByName(appointed))
+    opts.splice(1,0,`<option value="${esc(appointed)}" selected>${esc(appointed)} (no card record)</option>`);
+  const tag=refIsAppointed(fid)?` <span class="pill" title="Published appointment, harvested from the fixture feed">appointed</span>`:"";
+  return `<select class="ref-sel" data-fid="${fid}" aria-label="Assign referee" style="padding:.25rem .35rem;font-size:.74rem;max-width:170px">${opts.join("")}</select>${tag}`;
 }
 // Next unfinished fixture for a club (for the watchlist strict-ref alert).
 function nextFixtureFor(short){
