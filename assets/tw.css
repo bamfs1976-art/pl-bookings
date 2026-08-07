@@ -366,6 +366,42 @@ html[data-density="expert"] .combined-note{display:none}
 button.mkt{border:0;font:inherit;color:var(--text-2);font-weight:700;cursor:pointer}
 button.mkt:hover{background:var(--surface-3);color:var(--accent)}
 .no-share .fx-share{display:none}
+/* ─── Suspension watch ──────────────────────────────────────────────────────
+   Was defined three times, byte-identical, in index.html, eflc.html and
+   laliga.html. Shared here so a fix lands on all three desks at once.
+
+   GRID, NOT A WRAPPING FLEX ROW. The old rule was `display:flex;flex-wrap:wrap`
+   with the name, the pips, the label and three percentages as siblings. That
+   holds together only while every label is short: the moment one grew — "5 ≈
+   match 20 — likely misses the cut-off" on the Championship, "one booking from
+   2 matches by match 32" on the Premier League — the third percentage was
+   pushed onto a line of its own, left-aligned under the prose, where it read
+   as a stray number rather than a column. A grid gives the figures their own
+   cell, so the label can be any length and the columns stay columns. */
+.susp-head{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;margin-bottom:10px}
+.susp-row{display:grid;grid-template-columns:minmax(0,1fr) auto;
+  column-gap:10px;row-gap:3px;align-items:center;
+  padding:9px 4px;border-bottom:1px solid var(--border)}
+.susp-row:last-child{border-bottom:0}
+.susp-top{grid-column:1 / -1;grid-row:1;display:flex;align-items:center;gap:10px}
+.susp-nm{flex:1 1 auto;font-weight:700;font-size:13.5px;min-width:0}
+.susp-top .pips{flex:none}
+.susp-need{grid-column:1;grid-row:2;font-size:12.5px;color:var(--text-2);min-width:0}
+.susp-need b{color:var(--danger-ink)}
+/* One cell holding all three figures, on a grid of its own so they line up
+   down the list however long the label beside them runs. */
+.susp-nums{grid-column:2;grid-row:2;display:grid;
+  grid-template-columns:repeat(3,minmax(46px,1fr));column-gap:6px}
+.susp-p{font-family:var(--mono);font-weight:700;font-size:13.5px;text-align:right}
+/* The header, on the same two-column geometry so the labels sit over the
+   figures they describe. */
+.susp-cols{display:grid;grid-template-columns:minmax(0,1fr) auto;column-gap:10px;
+  align-items:end;padding:0 4px 7px;border-bottom:1px solid var(--border)}
+.susp-cols-lab{font-size:11.5px;color:var(--text-3);line-height:1.3}
+.susp-cols .susp-p{font-family:inherit;font-size:11.5px;color:var(--text-3)}
+.pips{display:inline-flex;gap:3px;flex:none}
+.pip{width:11px;height:14px;border-radius:2px;background:var(--surface-3);border:1px solid var(--border-2)}
+.pip.on{background:#f7c600;border-color:#d4a900}
 /* Small status label — "appointed", "NEW", a division tag. Was defined
    identically in eflc.html and laliga.html and not at all in index.html, so
    the Premier League desk had the class and none of the look. */

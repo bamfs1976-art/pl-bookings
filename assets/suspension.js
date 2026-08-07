@@ -139,8 +139,8 @@
           /* Projected to arrive after the cut-off. Saying "reaches 5 around
              match 21, by match 19" without this reads as a warning when it
              is the opposite. */
-          label = '<span class="faint">5 ≈ match ' + Math.ceil(r.eta)
-            + ' — likely misses the cut-off</span>';
+          label = '<span class="faint">' + n.at + ' ≈ match ' + Math.ceil(r.eta)
+            + ' · likely misses the cut-off</span>';
         } else {
           label = 'reaches ' + n.at + ' ≈ match ' + Math.ceil(r.eta);
         }
@@ -151,18 +151,51 @@
       }
       var gate = (n.by && r.beatsGate !== false)
         ? ' <span class="faint">by match ' + n.by + '</span>' : '';
+      /* Name and pips share a FULL-WIDTH row of their own. Left as siblings in
+         the two-column grid they sat in the same columns as the figures below,
+         so the ~166px the three percentages need was taken out of the name —
+         and "M. Stamenic MF . SWA" broke across two lines on a 393px phone. */
       return '<div class="susp-row">'
+        + '<span class="susp-top">'
         + '<span class="susp-nm">' + esc(r.p.n)
         + ' <span class="faint">' + esc(r.p.p) + ' · ' + esc(r.p.c) + '</span></span>'
         + '<span class="pips" role="img" aria-label="' + filled + ' of ' + total
         + ' toward ' + n.at + '">' + pips + '</span>'
+        + '</span>'
         + '<span class="susp-need">' + label + gate + '</span>'
+        /* The three figures live in ONE cell, not three siblings of the row.
+           As siblings of a wrapping flex row they reflowed the moment the
+           label got long: on the Championship and Premier League desks the
+           third percentage dropped to a line of its own, left-aligned under
+           the text, reading as a stray number. Columns of figures that can
+           reflow are not columns. */
+        + '<span class="susp-nums">'
         + res.horizons.map(function (k, i) {
             return '<span class="susp-p" title="chance within ' + k
               + ' match' + (k === 1 ? '' : 'es') + '">' + pct(r.ps[i]) + '</span>';
           }).join('')
+        + '</span>'
         + '</div>';
     }).join('');
+  }
+
+  /* The column header.
+   *
+   * NOT decoration. The horizons CHANGE with the time of year — [10, 19, 38]
+   * matches before a season starts, [1, 3, 5] once it is live — so the same
+   * three positions answer completely different questions depending on when
+   * you look, and until now nothing on screen said which. A reader comparing
+   * the Premier League desk (live, 1/3/5) with La Liga (pre-season, 10/19/38)
+   * saw 36.6% beside 20.7% with no way to know they were not comparable.
+   * The explanation existed, eight rows below the fold. */
+  function header(res) {
+    return '<div class="susp-cols">'
+      + '<span class="susp-cols-lab">Chance of the next ban within (matches)</span>'
+      + '<span class="susp-nums">'
+      + res.horizons.map(function (k) {
+          return '<span class="susp-p">' + k + '</span>';
+        }).join('')
+      + '</span></div>';
   }
 
   /* The rung below `at`, so the pips measure the current stretch rather than
@@ -175,7 +208,7 @@
   }
 
   root.PLDSuspension = {
-    rows: rows, render: render, prevRung: prevRung,
+    rows: rows, render: render, header: header, prevRung: prevRung,
     HORIZ_LIVE: HORIZ_LIVE, seasonKnown: seasonKnown
   };
 })(typeof globalThis !== 'undefined' ? globalThis : this);

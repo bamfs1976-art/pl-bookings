@@ -310,16 +310,6 @@
   .fx-more:hover{background:var(--surface-2)}
   .fx-foot{border-top:1px solid var(--border);padding:.45rem .6rem;display:flex;justify-content:flex-end;margin-top:auto}
   .susp{margin-bottom:12px}
-  .susp-head{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;margin-bottom:10px}
-  .susp-row{display:flex;align-items:center;gap:10px;padding:8px 4px;border-bottom:1px solid var(--border);flex-wrap:wrap}
-  .susp-row:last-child{border-bottom:0}
-  .susp-nm{font-weight:700;font-size:13.5px;flex:1 1 190px;min-width:0}
-  .pips{display:inline-flex;gap:3px;flex:none}
-  .pip{width:11px;height:14px;border-radius:2px;background:var(--surface-3);border:1px solid var(--border-2)}
-  .pip.on{background:#f7c600;border-color:#d4a900}
-  .susp-need{font-size:12.5px;color:var(--text-2);flex:none;min-width:120px}
-  .susp-need b{color:var(--danger-ink)}
-  .susp-p{font-family:var(--mono);font-weight:700;font-size:13.5px;flex:none;min-width:56px;text-align:right}
   .fx-share{border:0;background:none;color:var(--text-2);font:inherit;font-weight:700;font-size:.74rem;padding:.3rem .55rem;border-radius:8px;cursor:pointer;display:inline-flex;align-items:center;gap:.3rem}
   .fx-share:hover{background:var(--surface-2);color:var(--accent)}
   .fx-empty{padding:.7rem .9rem;font-size:.82rem;color:var(--text-3)}
@@ -1785,7 +1775,16 @@ function renderSuspension(){
   // the feed actually has the player: absent, `sc` stays undefined and the
   // module treats the season as not started rather than as nil cards.
   PL_PLAYERS.forEach(p=>{
-    if(p.live){ p.sc=p.live.yc; p.sm=p.live.min; }
+    /* GATED ON seasonStarted, like the other nine readers of p.live.yc in this
+       file. Without it this panel took the FPL feed's card counts at face value
+       during the rollover, when they are still LAST season's — and English
+       cautions do not carry over. On 7 August 2026, before a ball was kicked,
+       the watch showed seven Premier League players "one booking from" a ban
+       on the strength of 2025-26 yellows. The older #suspWatch panel has
+       guarded against exactly this since it was written; the guard was simply
+       never carried into this one. */
+    const liveCounts=LIVE&&LIVE.seasonStarted&&p.live;
+    if(liveCounts){ p.sc=p.live.yc; p.sm=p.live.min; }
     else { delete p.sc; delete p.sm; }
     // The shared module reads `_y90` — the convention the other two desks
     // set when they load. This desk computes the same rate through
@@ -1796,7 +1795,7 @@ function renderSuspension(){
   const res=SU.rows(PL_PLAYERS,SUSP_SCHEME,{seasonMatches:38,playedFor:clubPlayed});
   if(!res.rows.length){ card.hidden=true; return; }
   card.hidden=false;
-  $("suspList").innerHTML=SU.render($("suspList"),res,SUSP_SCHEME,{});
+  $("suspList").innerHTML=SU.header(res)+SU.render($("suspList"),res,SUSP_SCHEME,{});
   $("suspSub").textContent=res.known
     ? "Closest to a ban — 5 by GW19 (1 game), 10 by GW32 (2), 15 all season (3)"
     : "The season has not started, so every player is on zero. These are the likeliest to reach five first, and roughly when.";

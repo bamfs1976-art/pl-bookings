@@ -117,16 +117,6 @@
   .bar{height:6px;border-radius:99px;background:var(--surface-3);overflow:hidden;min-width:56px}
   .bar i{display:block;height:100%;background:var(--accent)}
   .susp{margin-bottom:12px}
-  .susp-head{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;margin-bottom:10px}
-  .susp-row{display:flex;align-items:center;gap:10px;padding:8px 4px;border-bottom:1px solid var(--border);flex-wrap:wrap}
-  .susp-row:last-child{border-bottom:0}
-  .susp-nm{font-weight:700;font-size:13.5px;flex:1 1 190px;min-width:0}
-  .pips{display:inline-flex;gap:3px;flex:none}
-  .pip{width:11px;height:14px;border-radius:2px;background:var(--surface-3);border:1px solid var(--border-2)}
-  .pip.on{background:#f7c600;border-color:#d4a900}
-  .susp-need{font-size:12.5px;color:var(--text-2);flex:none;min-width:120px}
-  .susp-need b{color:var(--danger-ink)}
-  .susp-p{font-family:var(--mono);font-weight:700;font-size:13.5px;flex:none;min-width:56px;text-align:right}
   /* High / Watch banding, at the same thresholds the Premier League desk uses.
      A list of bare percentages makes the reader do the thresholding, and two
      desks thresholding differently is how "the same model" stops looking like
@@ -1370,7 +1360,7 @@
     });
     if (!res.rows.length) { card.hidden = true; return; }
     card.hidden = false;
-    $('#suspList').innerHTML = SU.render($('#suspList'), res, SUSP, {});
+    $('#suspList').innerHTML = SU.header(res) + SU.render($('#suspList'), res, SUSP, {});
     $('#suspSub').textContent = res.known
       ? 'Closest to a one-match ban — five cautions, then the cycle repeats'
       : 'The 2026-27 season has not started, so every player is on zero. '

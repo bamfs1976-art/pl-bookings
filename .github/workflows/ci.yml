@@ -129,5 +129,14 @@ jobs:
       - name: The referee path, end to end
         run: node scripts/check-referees.mjs
 
+      # The suspension watch. Two silent failures: the Premier League strip
+      # counted last season's cautions during the rollover — showing players
+      # one booking from a ban having played no matches — and the row was a
+      # wrapping flex box, so the third percentage dropped onto a line of its
+      # own the moment a label grew. Neither throws; the first renders a
+      # plausible list of the wrong players.
+      - name: The suspension watch counts and lays out correctly
+        run: node scripts/check-suspension.mjs
+
       - name: Unit tests (PLDCore)
         run: node tests/test-core.mjs
