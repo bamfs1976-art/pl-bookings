@@ -142,10 +142,19 @@ def main():
     (DATA / name).write_text(json.dumps(out), encoding="utf-8")
     booked = sum(r["y"] for r in out)
     zeroed = stats["no_fouls"]
-    print(f"{name} written: {len(out)} match rows over {stats['players']} "
-          f"players, {booked} carded ({100 * booked / len(out):.1f}%); "
-          f"{zeroed} row(s) ({100 * zeroed / len(out):.0f}%) had a null foul "
-          "count, decoded as nought.")
+    line = (f"{name}: {len(out)} match rows over {stats['players']} players, "
+            f"{booked} carded ({100 * booked / len(out):.1f}%); {zeroed} row(s) "
+            f"({100 * zeroed / len(out):.0f}%) had a null foul count, decoded "
+            "as nought.")
+    print(line)
+    # APPENDED to the harvest's own status file, so the whole pipeline reports
+    # itself in one committed place. The harvest wrote its findings there and
+    # this step did not, which left "did a training table actually get built?"
+    # answerable only by scraping a job log — the exact thing that file exists
+    # to avoid.
+    status = DATA / "player_matches_status.txt"
+    with status.open("a", encoding="utf-8") as fh:
+        fh.write(line + "\n")
     if len(out) < 200:
         print(f"NOTE: build-model.mjs keeps the season prior below 200 rows, "
               f"so {len(out)} will not change the model yet.")
