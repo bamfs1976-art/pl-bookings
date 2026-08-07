@@ -170,6 +170,99 @@ for (const [name, dflt] of [['refs_season', '2526'], ['season_af', '2025'],
     'season to the harvester');
 }
 
+/* ---- the calibration loop has exactly one writer ------------------------ */
+/* Two writers logging the same Premier League forecast from two code paths is
+   how every pair of things in this project has drifted. The Netlify hourly
+   logger was retired for that reason AND because it could only ever cover one
+   league: it keyed on the FPL `element` id and graded from the FPL result
+   feed, neither of which exists for the Championship or La Liga. */
+import { existsSync } from 'node:fs';
+assert.ok(!existsSync(join(root, 'netlify', 'functions', 'log-predictions.js')),
+  'the retired Netlify prediction logger is back — there must be one writer ' +
+  'for the calibration set, and it must cover all three leagues');
+
+const accas = readFileSync(join(root, 'scripts', 'accas.mjs'), 'utf8');
+for (const cmd of ['predict', 'grade']) {
+  assert.ok(new RegExp(`cmd === '${cmd}'`).test(accas),
+    `scripts/accas.mjs has no ${cmd} command`);
+}
+const accasWf = readFileSync(join(root, '.github', 'workflows', 'accas.yml'), 'utf8');
+for (const cmd of ['predict', 'grade']) {
+  assert.ok(new RegExp(`accas\\.mjs ${cmd}`).test(accasWf),
+    `nothing runs \`accas.mjs ${cmd}\` on a schedule, so the calibration set ` +
+    'never fills or never grades');
+}
+
+/* The forecast pool must be EVERY candidate, not the acca legs. The legs are
+   by construction the top of the distribution; calibrating on them would bake
+   that selection in, and 12 rows a matchday cannot calibrate anything. */
+assert.ok(/plb_card_predictions/.test(accas),
+  'accas.mjs does not write the league-agnostic prediction table');
+assert.ok(/home\.slice\(0, 8\), \.\.\.away\.slice\(0, 8\)/.test(accas),
+  'the calibration pool is no longer both sides of every fixture');
+/* Write-once. `merge-duplicates` would let an hourly job revise its own
+   earlier forecast as kick-off approached, grading the model on its last
+   guess rather than its published one. */
+assert.ok(/resolution=ignore-duplicates/.test(accas),
+  'forecasts are upserted rather than written once, so a later run could ' +
+  'revise a published prediction');
+
+/* Ambiguity must not be recorded as "not booked". Two players sharing a
+   surname is not evidence of anything, and calling it a miss drags the
+   observed rate below the forecast one in exactly those matches. */
+assert.ok(/if \(hits > 1\) return null;/.test(accas),
+  'wasBooked() resolves an ambiguous surname to false again — that is not ' +
+  '"we do not guess", it is guessing "not booked"');
+
+const calib = readFileSync(join(root, 'netlify', 'functions', 'model-calibration.js'), 'utf8');
+assert.ok(/plb_card_predictions/.test(calib) && !/rest\/v1\/plb_predictions/.test(calib),
+  'model-calibration still reads the PL-only table, so the Championship and ' +
+  'La Liga can never be graded in public');
+
+/* RUN the reader against a known set rather than grepping it. A text check for
+   "byLeague" passed with the variable renamed at its declaration — the return
+   still mentioned it, so the assertion matched a word that no longer computed
+   anything. The scores below are hand-checkable. */
+{
+  const { createRequire } = await import('node:module');
+  const req = createRequire(import.meta.url);
+  const rows = [
+    /* PL: two forecasts at 50%, one booked. Brier = ((.5-1)^2+(.5-0)^2)/2 = .25
+       Observed rate .5, so the base-rate Brier is also .25 — a model that
+       knows nothing beyond the average must NOT look ahead. */
+    { season: '2026-27', league: 'PL', md: 1, prob: 0.5, carded: true },
+    { season: '2026-27', league: 'PL', md: 1, prob: 0.5, carded: false },
+    /* EFLC: perfectly separated, so Brier ~0 and clearly ahead of base rate. */
+    { season: '2026-27', league: 'EFLC', md: 1, prob: 0.99, carded: true },
+    { season: '2026-27', league: 'EFLC', md: 1, prob: 0.01, carded: false },
+    /* An older season, which must never be mixed in — matchday numbers repeat. */
+    { season: '2025-26', league: 'PL', md: 1, prob: 0.9, carded: false }
+  ];
+  const realFetch = globalThis.fetch;
+  globalThis.fetch = async () => ({ ok: true, json: async () => rows });
+  process.env.SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || 'test-key';
+  delete req.cache[req.resolve(join(root, 'netlify', 'functions', 'model-calibration.js'))];
+  const mod = req(join(root, 'netlify', 'functions', 'model-calibration.js'));
+  const out = JSON.parse((await mod.handler({ queryStringParameters: {} })).body);
+  globalThis.fetch = realFetch;
+
+  assert.equal(out.season, '2026-27', 'the reader mixed seasons or picked the wrong one');
+  assert.equal(out.n, 4, `seasons are being mixed: n=${out.n}, expected 4`);
+  assert.ok(out.byLeague && out.byLeague.PL && out.byLeague.EFLC,
+    'calibration is not broken out per league — an aggregate hides a badly ' +
+    'calibrated division, which is the thing a reader most wants separated');
+  assert.equal(out.byLeague.PL.n, 2, 'the PL breakdown has the wrong sample');
+  assert.equal(out.byLeague.PL.brier, 0.25, `PL Brier ${out.byLeague.PL.brier}, expected 0.25`);
+  /* Coin-flip forecasts must not beat the base rate. If this ever passes, the
+     baseline is being computed on something other than the observed rate and
+     the desk would claim an edge it does not have. */
+  assert.ok(out.byLeague.PL.brier >= out.byLeague.PL.baseBrier,
+    'a 50/50 forecast is being scored as better than the base rate');
+  assert.ok(out.byLeague.EFLC.brier < out.byLeague.EFLC.baseBrier,
+    'a perfectly separated forecast is not being scored ahead of the base rate');
+  assert.ok(out.byLeague.EFLC.brier < 0.01, `EFLC Brier ${out.byLeague.EFLC.brier}`);
+}
+
 console.log('check-referees OK: the appointment joins across two id spaces, a ' +
   'hand pick still wins, the dropdown shows what the model prices with, all ' +
   'three leagues are harvested on a schedule that can catch them');

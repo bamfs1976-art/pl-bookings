@@ -62,8 +62,8 @@ const LEAGUES = [
 ];
 
 /* The data files declare bare `const`s, which are lexical and never become
-   properties of anything. Captured out of the function scope, the same way
-   log-predictions.js reads them. */
+   properties of anything, so they cannot be read off any object — they are
+   captured out of the function scope instead. */
 function loadConsts(rel, names) {
   const txt = readFileSync(join(root, rel), 'utf8');
   const ret = names.map((n) => `${n}: typeof ${n}!=="undefined"?${n}:null`).join(',');
@@ -97,18 +97,40 @@ function shrunk(p, pr) {
   return C.shrinkRate(p.yc, m, prior, SHRINK_MATCHES);
 }
 
+/* League averages the referee factor is measured against — the same weighting
+   the desks use, matches-weighted so a single appointment does not move the
+   baseline as far as a season's work. */
+function leagueAverages(refs) {
+  let yW = 0, cW = 0, m = 0, mc = 0;
+  for (const r of refs || []) {
+    const k = Number(r.matches) || 0;
+    if (r.ypg != null) { yW += r.ypg * k; m += k; }
+    if (r.cpf != null) { cW += r.cpf * k; mc += k; }
+  }
+  return { avgYpg: m ? yW / m : null, avgCpf: mc ? cW / mc : null };
+}
+
 /* The four likeliest bookings for one side of one fixture, exactly as the
    fixture card computes them: minutes-weighted expected minutes into the
-   hazard model, no referee factor because no official is appointed at the time
-   an acca is recommended. */
-function sideTop(players, short) {
+   hazard model.
+ *
+ * THE REFEREE FACTOR IS APPLIED WHEN THERE IS ONE. The previous version passed
+ * ref: 1 unconditionally, with a comment saying no official is appointed when
+ * an acca is recommended. That was true while nothing fetched appointments; it
+ * stopped being true when fixtures.yml started harvesting them three times a
+ * day. An acca that ignores a published appointment prices a match at a
+ * neutral official the desk beside it does not — and the referee is the
+ * largest single multiplier either of them applies.
+ */
+function sideTop(players, short, refFactor) {
   const squad = players.filter((p) => p.c === short && p._y90 != null);
   if (!squad.length) return [];
+  const rf = refFactor == null ? 1 : refFactor;
   const w = C.minuteWeights(squad.map((p) => p.min), 11);
   return squad
     .map((p, i) => ({
       p,
-      prob: C.pCardFromLambda(C.cardLambda(p._y90, Math.max(0, w[i]) * 90, { ref: 1 })) || 0
+      prob: C.pCardFromLambda(C.cardLambda(p._y90, Math.max(0, w[i]) * 90, { ref: rf })) || 0
     }))
     .sort((a, b) => b.prob - a.prob);
 }
@@ -126,7 +148,7 @@ function nextRound(fixtures) {
    same game share a referee and a flashpoint, so treating them as independent
    multiplies a correlation the model does not carry. */
 function candidatesFor(league) {
-  const d = loadConsts(league.data, [league.players]);
+  const d = loadConsts(league.data, [league.players, 'REFS']);
   const f = loadConsts(league.fixtures, [league.fx]);
   const players = d[league.players] || [];
   const fixtures = f[league.fx] || [];
@@ -137,19 +159,45 @@ function candidatesFor(league) {
   const round = nextRound(fixtures);
   if (round == null) return { round: null, cands: [] };
 
+  const refs = d.REFS || [];
+  const avgs = leagueAverages(refs);
+  const refByName = (n) => refs.find((r) => r.n === n) || null;
+
   const cands = [];
+  const pool = [];
   for (const fx of fixtures.filter((x) => x.r === round)) {
-    const best = [...sideTop(players, fx.h), ...sideTop(players, fx.a)]
-      .sort((a, b) => b.prob - a.prob)[0];
+    /* An appointed official we have no card record for gets factor 1 and is
+       still RECORDED. "Priced without a referee" and "priced with a referee we
+       know nothing about" are different failures, and the settled record has
+       to be able to tell them apart later. */
+    const ref = fx.ref ? refByName(fx.ref) : null;
+    const rf = ref ? C.refCardFactor(ref, avgs, {}) : 1;
+    const home = sideTop(players, fx.h, rf), away = sideTop(players, fx.a, rf);
+    /* THE CALIBRATION POOL. Eight a side is what the fixture card ranks, and
+       it is the set the desk actually shows — so grading it grades what a
+       reader saw, not a private shortlist. The acca takes the single best of
+       these; everything else is thrown away today. */
+    for (const c of [...home.slice(0, 8), ...away.slice(0, 8)]) {
+      if (!(c.prob > 0)) continue;
+      pool.push({
+        season: SEASON, league: league.code, md: round,
+        fixture_id: fx.id, kickoff: fx.d,
+        player: c.p.n, club: c.p.c,
+        prob: Math.round(c.prob * 10000) / 10000,
+        referee: fx.ref || null, ref_factor: Math.round(rf * 10000) / 10000
+      });
+    }
+    const best = [...home, ...away].sort((a, b) => b.prob - a.prob)[0];
     if (best && best.prob > 0) {
       cands.push({
         league: league.code, player: best.p.n, club: best.p.c,
-        fixture_id: fx.id, kickoff: fx.d, prob: best.prob
+        fixture_id: fx.id, kickoff: fx.d, prob: best.prob,
+        referee: fx.ref || null, ref_factor: Math.round(rf * 10000) / 10000
       });
     }
   }
   cands.sort((a, b) => b.prob - a.prob);
-  return { round, cands };
+  return { round, cands, pool };
 }
 
 const fair = (p) => 1 / p;
@@ -176,6 +224,11 @@ function buildAcca(id, code, round, cands) {
          and leave the reader to guess which division each came from. */
       acca_id: id, leg: i + 1, league: l.league, player: l.player, club: l.club,
       fixture_id: l.fixture_id, kickoff: l.kickoff,
+      /* The referee AT THE TIME OF THE PREDICTION, and the multiplier it
+         produced. Without these a settled loss cannot be read: a leg priced
+         with no official and one priced under the league's strictest referee
+         are the same row afterwards. */
+      referee: l.referee, ref_factor: l.ref_factor,
       prob: Math.round(l.prob * 10000) / 10000,
       fair_odds: r2(fair(l.prob)), priced_odds: r2(priced(l.prob))
     }))
@@ -298,9 +351,14 @@ function wasBooked(playerName, booked) {
   if (!surname || surname.length < 4) return false;
   let hits = 0;
   for (const b of booked) if (C.normName(b).split(' ').pop() === surname) hits++;
-  /* Only when the surname is unambiguous in this match. Two Silvas booked and
-     we cannot say which, so we do not guess. */
-  return hits === 1;
+  if (hits === 1) return true;
+  /* NULL, not false. Two Silvas booked and we cannot say which is ours — and
+     the previous version returned false, which is not "we do not guess", it is
+     guessing "not booked". On three acca legs a month that was survivable; as
+     the calibration set it would bias every ambiguous match toward the model
+     looking over-confident. Callers must leave an unknown unsettled. */
+  if (hits > 1) return null;
+  return false;
 }
 
 async function cmdSettle() {
@@ -323,6 +381,14 @@ async function cmdSettle() {
     if (!booked) continue;                       // not finished yet
     for (const l of legs) {
       const hit = wasBooked(l.player, booked);
+      /* Ambiguous stays OPEN and is named. Writing `false` here would record a
+         loss the match record does not actually support, and an acca tracker
+         that invents losses is no more honest than one that hides them. */
+      if (hit === null) {
+        console.log(`  ::warning:: ${l.player} (fixture ${fixtureId}): more than one booked ` +
+          `player shares that surname — left open for a human to resolve.`);
+        continue;
+      }
       const res = await fetch(`${rest('plb_acca_legs')}?acca_id=eq.${encodeURIComponent(l.acca_id)}&leg=eq.${l.leg}`, {
         method: 'PATCH', headers: { ...H, Prefer: 'return=minimal' },
         body: JSON.stringify({ carded: hit, settled_at: new Date().toISOString() })
@@ -381,15 +447,100 @@ function cmdSql() {
       + `${a.legs},${a.stake},${a.fair_odds},${a.priced_odds},'open') on conflict (id) do nothing;`);
     for (const l of b.legs) {
       console.log(`insert into plb_acca_legs (acca_id,leg,league,player,club,fixture_id,kickoff,prob,`
-        + `fair_odds,priced_odds) values (${q(l.acca_id)},${l.leg},${q(l.league)},${q(l.player)},${q(l.club)},`
-        + `${l.fixture_id},${q(l.kickoff)},${l.prob},${l.fair_odds},${l.priced_odds}) `
+        + `fair_odds,priced_odds,referee,ref_factor) values (${q(l.acca_id)},${l.leg},${q(l.league)},${q(l.player)},${q(l.club)},`
+        + `${l.fixture_id},${q(l.kickoff)},${l.prob},${l.fair_odds},${l.priced_odds},${q(l.referee)},${l.ref_factor}) `
         + `on conflict (acca_id,leg) do nothing;`);
     }
   }
 }
 
+
+/* ---- the calibration set ------------------------------------------------
+ * Log every candidate the model rated for the upcoming round, in all three
+ * leagues, before kick-off. This is the thing that makes the desk gradeable:
+ * an acca is three legs a matchday and cannot calibrate anything, while this
+ * is roughly twenty thousand forecasts a season across the three divisions.
+ *
+ * IDEMPOTENT AND WRITE-ONCE. `do nothing` on conflict, not merge: a row is the
+ * record of what was forecast, and an hourly job that revised its own earlier
+ * prediction as kick-off approached would grade the model on its last guess
+ * rather than its published one.
+ */
+async function cmdPredict() {
+  if (!SERVICE_KEY) { console.log('No SUPABASE_SERVICE_ROLE_KEY — nothing written.'); return; }
+  let total = 0;
+  for (const L of LEAGUES) {
+    const { round, pool } = candidatesFor(L);
+    if (round == null || !pool.length) { console.log(`${L.code}: no open round.`); continue; }
+    /* Never log a fixture that has already kicked off. The round stays "next"
+       until every match in it is finished, so without this a Sunday job would
+       log a Saturday match as a forecast. */
+    const now = Date.now();
+    const fresh = pool.filter((r) => !r.kickoff || new Date(r.kickoff).getTime() > now);
+    const late = pool.length - fresh.length;
+    if (!fresh.length) { console.log(`${L.code}: round ${round} has all kicked off.`); continue; }
+    const res = await fetch(`${rest('plb_card_predictions')}?on_conflict=season,league,fixture_id,player`, {
+      method: 'POST',
+      headers: { ...H, Prefer: 'resolution=ignore-duplicates,return=minimal' },
+      body: JSON.stringify(fresh)
+    });
+    if (!res.ok) throw new Error(`plb_card_predictions: ${res.status} ${await res.text()}`);
+    total += fresh.length;
+    console.log(`${L.code}: round ${round} — ${fresh.length} forecasts logged`
+      + (late ? ` (${late} skipped, already kicked off)` : ''));
+  }
+  console.log(`\n${total} forecast(s) offered.`);
+}
+
+/* Grade them from the same match records the accas settle on. Separate from
+ * cmdSettle only because it reads a different table; the identification is the
+ * SAME wasBooked(), so a leg and a forecast for the same player in the same
+ * match can never disagree about whether he was booked. */
+async function cmdGrade() {
+  if (!SERVICE_KEY || !AF_KEY) {
+    console.log('Need SUPABASE_SERVICE_ROLE_KEY and API_FOOTBALL_KEY to grade. Nothing done.');
+    return;
+  }
+  const q = `?carded=is.null&kickoff=lt.${encodeURIComponent(new Date().toISOString())}`
+    + '&select=season,league,fixture_id,player&limit=5000';
+  const open = await (await fetch(`${rest('plb_card_predictions')}${q}`, { headers: H })).json();
+  if (!open.length) { console.log('Nothing to grade.'); return; }
+  const byFixture = new Map();
+  for (const r of open) {
+    if (!byFixture.has(r.fixture_id)) byFixture.set(r.fixture_id, []);
+    byFixture.get(r.fixture_id).push(r);
+  }
+  let graded = 0, unknown = 0, pending = 0;
+  for (const [fixtureId, rows] of byFixture) {
+    let booked;
+    try { booked = await afEvents(fixtureId); }
+    catch (e) { console.log(`  fixture ${fixtureId}: ${e.message} — left open`); continue; }
+    if (!booked) { pending++; continue; }             // not finished yet
+    const stamp = new Date().toISOString();
+    for (const r of rows) {
+      const hit = wasBooked(r.player, booked);
+      /* Ambiguous stays null and is COUNTED. Recording it as "not booked"
+         would quietly drag the observed rate below the forecast one and make
+         the model look over-confident in exactly the matches where two
+         players share a surname. */
+      if (hit === null) { unknown++; continue; }
+      const key = `season=eq.${encodeURIComponent(r.season)}&league=eq.${encodeURIComponent(r.league)}`
+        + `&fixture_id=eq.${r.fixture_id}&player=eq.${encodeURIComponent(r.player)}`;
+      const res = await fetch(`${rest('plb_card_predictions')}?${key}`, {
+        method: 'PATCH', headers: { ...H, Prefer: 'return=minimal' },
+        body: JSON.stringify({ carded: hit, settled_at: stamp })
+      });
+      if (res.ok) graded++;
+    }
+  }
+  console.log(`Graded ${graded}${unknown ? `, ${unknown} left unknown (ambiguous surname)` : ''}`
+    + `${pending ? `, ${pending} fixture(s) not finished` : ''}.`);
+}
+
 const cmd = process.argv[2] || 'verify';
 if (cmd === 'build') await cmdBuild();
 else if (cmd === 'settle') await cmdSettle();
+else if (cmd === 'predict') await cmdPredict();
+else if (cmd === 'grade') await cmdGrade();
 else if (cmd === 'sql') cmdSql();
 else cmdVerify();

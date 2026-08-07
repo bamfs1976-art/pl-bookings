@@ -296,25 +296,52 @@ all exist; none of them is scheduled.
 
 ---
 
-## 4. Suggested order of work
+## 4. What was built
 
-0. **Check whether `SUPABASE_SERVICE_ROLE_KEY` is set in Netlify**, not just in
-   GitHub Actions. If it is missing, the hourly calibration logger has been
-   silently no-opping since it shipped. *(minutes)*
-1. Cron the **whole refresh** daily, and the fixture harvest twice daily; commit
-   only on change. This is the single fix for referees, transfers, injuries and
-   cautions on the Championship and La Liga at once. *(small)*
-2. PL desk seeds its referee from `PL_FIXTURES[].ref`, override retained. *(small)*
-3. Record referee-at-prediction-time on logged accas. *(small)*
-4. Make the logger fail loudly rather than returning 200 on every error path.
-   *(small — and it is why step 0 is needed at all)*
-5. Extend prediction logging to the Championship and La Liga. *(medium —
-   unlocks everything below)*
-6. Publish per-league calibration once ~500 settled predictions exist. *(medium)*
-7. Then, and only then, refit shrinkage / decay / GLM against the backtest. *(large)*
+Steps 1–5 are done. Step 0 is the one thing only you can do.
 
-Steps 0–3 are worth doing regardless of what the numbers say. Step 5 is the one
-that makes the desk self-improving rather than static.
+| | Status |
+|---|---|
+| **0. `SUPABASE_SERVICE_ROLE_KEY` in *Netlify*** | **Still needs checking by hand.** It is a different store from GitHub Actions secrets. The GitHub-side jobs read from Actions secrets and are fine; `model-calibration` runs on Netlify. |
+| 1. Cron the refresh | Done — `data-refresh.yml` daily at 04:10, plus `fixtures.yml` three times a day for appointments. |
+| 2. PL desk reads its appointment | Done — joined on club codes, hand pick still wins. |
+| 3. Referee at prediction time | Done — `referee` and `ref_factor` on `plb_acca_legs`, and the accas now *apply* the factor rather than pricing at a neutral official. |
+| 4. Fail loudly | Done differently: the silent logger was retired rather than repaired (below). |
+| 5. Log every candidate, all three leagues | Done — `accas.mjs predict` / `grade` into `plb_card_predictions`, ~512 forecasts a matchday, ~20,000 a season. |
+| 6. Publish per-league calibration | Reader is done and broken out per league; it needs ~500 graded rows before it says anything. |
+| 7. Refit | Not started, and correctly so — it is gated on step 6 having data and on the backtest beating the prior. |
+
+### Two decisions worth recording
+
+**The Netlify hourly logger was retired, not fixed.** It could only ever cover
+one league: it keyed predictions on the FPL `element` id and graded them from
+the FPL result feed, and neither exists for the Championship or La Liga. Keeping
+it alongside the new writer would have meant two code paths logging the same
+Premier League forecast — which is how every pair of things in this project has
+drifted. `scripts/accas.mjs` now has both keys and identifies a booked player
+with the *same* `wasBooked()` the acca settler uses, so a leg and a forecast for
+the same player in the same match cannot disagree.
+
+**`wasBooked()` returned the wrong answer for ambiguous names.** Two booked
+players sharing a surname made it return `false` — under a comment saying "we do
+not guess", which is exactly what returning `false` is. On three acca legs a
+month that was survivable. As the basis of a twenty-thousand-row calibration set
+it would have dragged the observed rate below the forecast rate in precisely the
+matches where surnames collide, and made the model look over-confident for a
+reason that has nothing to do with the model. It now returns `null`, the acca
+settler leaves that leg open and names it in the log, and the grader leaves the
+row unscored.
+
+### Still open
+
+- **Injuries remain a snapshot.** `inj` comes from API-Football's `injured` flag
+  at harvest time. The daily cron makes it at most a day stale instead of
+  indefinitely stale, which is the fix available without a live feed — there is
+  no free Spanish or EFL equivalent of the FPL bootstrap.
+- **PL photos: 117 of 660.** Unrelated to this work, still outstanding.
+- **The observed lead times are still assumptions.** `ref-coverage.mjs` prints
+  them on every harvest; in a fortnight the table in §1 can be replaced with
+  measurements.
 
 ---
 

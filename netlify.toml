@@ -14,11 +14,20 @@
 [functions]
   directory = "netlify/functions"
 
-# The scheduled prediction logger runs hourly and reuses the shipped pure
-# maths + data, so bundle them alongside the function.
-[functions."log-predictions"]
-  schedule = "@hourly"
-  included_files = ["assets/core.js", "data/pl_data.js", "data/model.js"]
+# The scheduled prediction logger USED to live here, hourly, writing
+# plb_predictions. It has been retired in favour of scripts/accas.mjs
+# `predict` / `grade`, run from .github/workflows/accas.yml.
+#
+# Not because it was broken — because it could only ever cover one league. It
+# keyed predictions on the FPL `element` id and graded them from the FPL result
+# feed, neither of which exists for the Championship or La Liga, so two thirds
+# of the desk was ungradeable by construction. The replacement keys on the
+# fixture and the player, grades through the same API-Football records the acca
+# settler uses, and applies the referee factor the desks apply.
+#
+# Keeping both would have meant two writers logging the same Premier League
+# forecast from two code paths, which is how every pair of things in this
+# project has drifted.
 
 [[headers]]
   for = "/*"

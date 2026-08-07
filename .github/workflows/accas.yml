@@ -52,3 +52,19 @@ jobs:
       # omitting a loss.
       - name: Settle anything that has finished
         run: node scripts/accas.mjs settle
+
+      # THE CALIBRATION SET. Every candidate the model rated for the upcoming
+      # round in all three leagues — about 500 forecasts a matchday against the
+      # accas' twelve. The accas cannot calibrate anything: they are three legs
+      # of the very top of the distribution, which is both too small a sample
+      # and a biased one. This is the pool that can answer whether 25% means
+      # 25%, and until it exists there is no way to tell a run of bad luck from
+      # a model that is simply over-confident.
+      #
+      # Write-once and pre-kick-off only, so a forecast cannot be revised into
+      # a better one after the fact.
+      - name: Log the round's forecasts
+        run: node scripts/accas.mjs predict
+
+      - name: Grade the ones that have been played
+        run: node scripts/accas.mjs grade
