@@ -602,15 +602,29 @@ def foul_diagnosis(rows):
     whole = sum(1 for c, nl in by_fx.values() if c and c == nl)
     partial = sum(1 for c, nl in by_fx.values() if nl and c != nl)
     mins = sorted(r["min"] for r in nulls) or [0]
-    print(f"  fouls: {len(rows) - len(nulls)}/{n} recorded "
-          f"({100 * (1 - len(nulls) / n):.0f}%), explicit zeros: {len(zeros)}")
-    print(f"  fixtures entirely without fouls: {whole}, partially: {partial}, "
-          f"of {len(by_fx)}")
-    print(f"  minutes on the null rows: median {mins[len(mins) // 2]}, "
-          f"max {mins[-1]}")
+    out = [
+        f"fouls recorded on {len(rows) - len(nulls)}/{n} rows "
+        f"({100 * (1 - len(nulls) / n):.0f}%)",
+        f"explicit zeros: {len(zeros)}",
+        f"fixtures wholly without fouls: {whole}, partly: {partial}, of {len(by_fx)}",
+        f"minutes on null rows: median {mins[len(mins) // 2]}, max {mins[-1]}",
+    ]
+    # The verdict, stated rather than left for a reader to derive. These are the
+    # only three shapes the numbers can take and each has a different fix.
     if not zeros and nulls:
-        print("  ::warning::the feed never writes an explicit 0 for fouls, so "
-              "null most likely MEANS zero rather than 'not recorded'.")
+        out.append("VERDICT: the feed never writes an explicit 0, so null MEANS "
+                   "zero — decode it as zero rather than as missing.")
+    elif zeros and whole:
+        out.append("VERDICT: explicit zeros DO occur, so null means 'not "
+                   "recorded'. The wholly-null fixtures are feed gaps to drop; "
+                   "the rest are usable.")
+    elif zeros:
+        out.append("VERDICT: explicit zeros occur and no fixture is wholly "
+                   "null, so the nulls are scattered missing values rather "
+                   "than a whole-match gap.")
+    for line in out:
+        print("  " + line)
+    return out
 
 
 def emit_player_matches(rows, league, season, out=None):
@@ -620,7 +634,14 @@ def emit_player_matches(rows, league, season, out=None):
     fx = len({r["fixture_id"] for r in rows})
     print(f"\n{name} written: {len(rows)} player-matches over {fx} fixtures, "
           f"{booked} with a card ({(100 * booked / len(rows) if rows else 0):.1f}%).")
-    foul_diagnosis(rows)
+    diag = foul_diagnosis(rows)
+    # WRITTEN DOWN, not only printed — the same reason data/laliga_harvest.log
+    # is committed. A finding that lives only in a job log is one somebody has
+    # to go and open, and this one decides how the training table is decoded.
+    (DATA / "player_matches_status.txt").write_text(
+        f"{league.name} {season}: {len(rows)} player-matches over {fx} "
+        f"fixtures, {booked} carded.\n" + "\n".join(diag) + "\n",
+        encoding="utf-8")
 
 
 def harvest_fixtures(host, key, league, season):

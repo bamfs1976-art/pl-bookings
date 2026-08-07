@@ -478,7 +478,8 @@ jobs:
                    data/h2h.js data/eflc_h2h.js data/laliga_h2h.js \
                    data/eflc_refs.json data/eflc_data.js data/eflc_status.txt data/eflc_fixtures.js \
                    data/laliga_clubs.json data/laliga_refs.json data/laliga_data.js \
-                   data/laliga_status.txt data/laliga_fixtures.js data/laliga_ref_fixtures.js; do
+                   data/laliga_status.txt data/laliga_fixtures.js data/laliga_ref_fixtures.js \
+                   data/player_matches_status.txt; do
             [ -f "$f" ] && git add "$f"
           done
           if git diff --cached --quiet; then
