@@ -157,7 +157,7 @@ without a referee". Today we cannot tell those apart.
 | Referee y/g, fouls/g | Same — and only from *last* season's completed records. |
 | Suspension counts | Yes, via the season-cards harvest. |
 | **Model parameters** | **Never.** `basis: "season-prior"`, `fitRows: 0`. |
-| **Calibration** | **Never measured** against outcomes. |
+| **Calibration** | Logged hourly for the **Premier League only**, by a Netlify scheduled function. `plb_predictions` is nonetheless empty — see Rung 1a. |
 
 The model is an honest, well-documented *prior* — `docs/modelling-review.md` is
 explicit that `basis:"season-prior"` is "not an empirical fit". It has been that
@@ -170,8 +170,20 @@ the weights `{yc90: 2.2, foul90: 1.1}` hand-set with position terms at zero.
 happened). Twelve rows today. That is a calibration dataset, and nothing reads it.
 
 `plb_predictions` already exists with exactly the right shape — `season, gw,
-element, name, club, pcard, carded, logged_at` — and has **zero rows**. It was
-created and never wired up.
+element, name, club, pcard, carded, logged_at` — and has **zero rows**.
+
+> **Correction.** The first version of this note said that table "was created
+> and never wired up". That is wrong, and the error is worth recording because
+> it was made by reading `scripts/` and the GitHub workflows and concluding the
+> job did not exist. It does — it is a **Netlify** scheduled function,
+> `netlify/functions/log-predictions.js`, `schedule = "@hourly"`, and it does
+> exactly what "Rung 1" below proposes: it logs P(card) for every Premier
+> League player with a fixture in the upcoming gameweek, freezes at the
+> deadline, and backfills `carded` from the FPL `event/N/live/` endpoint. It
+> even reuses `assets/core.js` rather than reimplementing the maths.
+>
+> So the loop is built for the Premier League. The open questions are why it
+> has written nothing (see below) and that it covers one league of three.
 
 **The gap is volume.** Acca legs alone give ~3 legs × 4 accas × ~40 matchdays ≈
 **460 rows a season**. Logging the top ~8 candidates per fixture instead gives
@@ -181,12 +193,21 @@ calibrate anything; the second can. The players are there — 568 PL, 932 EFLC,
 
 ### The ladder, cheapest and most valuable first
 
-**Rung 1 — log every candidate, not just the ones we bet.** Extend the hourly
-acca job to write the matchday's top candidates per fixture into
-`plb_predictions` before kick-off, and settle them with the same
-`wasBooked()` the accas already use. Needs a `league` column added (the table is
-PL-shaped today, with `element` being an FPL id). This is the single highest-value
-change and it buys the next three rungs.
+**Rung 1a — find out why the logger writes nothing.** The function no-ops and
+returns 200 on every failure path: no service key, model not bundled, FPL
+unavailable, and both write blocks are wrapped in `catch {}` that leave the
+counters at zero. It cannot fail loudly, so an empty table looks identical to a
+healthy one. **The most likely cause is that `SUPABASE_SERVICE_ROLE_KEY` was
+added to GitHub Actions secrets but not to Netlify's environment variables —
+they are two separate stores, and this function runs on Netlify.** Check
+`/api/model-calibration` and the function log before changing any code.
+
+**Rung 1b — extend it to the Championship and La Liga.** The logger is
+PL-shaped: it keys on `element` (an FPL id) and grades from the FPL live
+endpoint, neither of which exists for the other two leagues. Those need a
+`league` column, a different key, and settlement via the same API-Football
+`wasBooked()` the accas already use. Two thirds of the calibration data is
+missing until this is done.
 
 **Rung 2 — measure calibration before changing anything.** `PLDCore` already has
 `brier`, `logLoss` and `reliability`. Publish, per league: predicted vs observed
@@ -224,17 +245,75 @@ not make the bet good, and the cards should keep saying so.
 
 ---
 
+## 3a. Does anything else update itself? An audit
+
+Asked separately: do transfers, injuries, suspensions and results reach the app
+on their own? Measured, per desk:
+
+| | Premier League `/` | Championship `/eflc` · La Liga `/laliga` | `/today` |
+|---|---|---|---|
+| Results / played matches | **Live** — FPL `fixtures`, 5-min edge cache | **Frozen** | **Frozen** |
+| Cautions (suspension watch) | **Live** — `yellow_cards`, `red_cards` | **Frozen** — `sc`/`sm` baked | **Frozen** |
+| Injuries / availability | **Live** — FPL `status` + `news` | **Frozen** — `inj` baked | **Frozen** |
+| Transfers / squads | **Partial** — see below | **Frozen** | **Frozen** |
+| Referee allocation | Manual dropdown only | `ref` is null everywhere | — |
+
+**The Premier League desk is live; the other two are photographs.** `index.html`
+fetches `bootstrap-static` and `fixtures` through the `/api/fpl` proxy on every
+load. `eflc.html` and `laliga.html` contain **no `fetch` call at all** — every
+number is a committed `.js` file. `today.html` fetches only Supabase, for the
+acca tracker; its three datasets come from static frames.
+
+Nothing changes those files except `data-refresh.yml`, which is
+`workflow_dispatch` — **no `cron:`**. So for two of the three desks, "the latest
+data" means "whenever someone last clicked Run workflow".
+
+**Transfers are partial even on the Premier League.** The FPL `elements` list is
+live, so a new signing appears immediately — but a player's *card rate* is
+matched by name against the baked `pl_data.js`. A signing not in that file has
+no rate, and the desk cannot price him until the next refresh.
+
+**Three baked fields are currently empty across all three leagues**, which
+matters because an empty field renders as "nothing to report" rather than "not
+loaded":
+
+- `inj` (injured/unavailable): **0 of 2,417 players**, all leagues.
+- `sc` (this season's cautions): **0 players above zero** — correct today, since
+  no matches have been played, but it will stay 0 for the Championship and
+  La Liga all season unless the refresh runs.
+- Photos: 974/974 EFLC and 783/783 LL, but only **117 of 660** PL.
+
+The `inj` figure is the one to be uneasy about. It comes from API-Football's
+`injured` flag at harvest time, so it is a snapshot that ages from the moment it
+is written — and a suspension/availability strip showing nobody unavailable is
+indistinguishable from one that is working and has nothing to say.
+
+**Fix, in the same shape as the referee fix:** the cron proposed in §2 should
+rebuild the datasets, not just the fixtures. One scheduled job that runs the
+existing refresh steps daily would make transfers, injuries and cautions current
+on the Championship and La Liga, and would fill `inj` on all three. The pieces
+all exist; none of them is scheduled.
+
+---
+
 ## 4. Suggested order of work
 
-1. Cron the fixture harvest twice daily; commit only on change. *(small)*
+0. **Check whether `SUPABASE_SERVICE_ROLE_KEY` is set in Netlify**, not just in
+   GitHub Actions. If it is missing, the hourly calibration logger has been
+   silently no-opping since it shipped. *(minutes)*
+1. Cron the **whole refresh** daily, and the fixture harvest twice daily; commit
+   only on change. This is the single fix for referees, transfers, injuries and
+   cautions on the Championship and La Liga at once. *(small)*
 2. PL desk seeds its referee from `PL_FIXTURES[].ref`, override retained. *(small)*
 3. Record referee-at-prediction-time on logged accas. *(small)*
-4. Add `league` to `plb_predictions`; log every candidate pre-kick-off; settle
-   them with the existing `wasBooked()`. *(medium — unlocks everything below)*
-5. Publish per-league calibration once ~500 settled predictions exist. *(medium)*
-6. Then, and only then, refit shrinkage / decay / GLM against the backtest. *(large)*
+4. Make the logger fail loudly rather than returning 200 on every error path.
+   *(small — and it is why step 0 is needed at all)*
+5. Extend prediction logging to the Championship and La Liga. *(medium —
+   unlocks everything below)*
+6. Publish per-league calibration once ~500 settled predictions exist. *(medium)*
+7. Then, and only then, refit shrinkage / decay / GLM against the backtest. *(large)*
 
-Steps 1–3 are worth doing regardless of what the numbers say. Step 4 is the one
+Steps 0–3 are worth doing regardless of what the numbers say. Step 5 is the one
 that makes the desk self-improving rather than static.
 
 ---
