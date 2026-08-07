@@ -58,9 +58,10 @@ def test_unused_substitute_is_dropped():
     assert H.map_fixture_player(entry("Bench", "M", None, 0), "ABC") is None
 
 
-def test_missing_fouls_stays_none():
-    """null is NOT zero. A fixture with no foul data must not train the model
-    as one in which nobody fouled."""
+def test_the_mapper_preserves_the_raw_null():
+    """The harvester records what the feed said; the DECODE happens in the
+    builder. Coercing here would destroy the only signal that tells us whether
+    the null-means-zero assumption still holds."""
     e = entry("A Player", "M", 90, None)
     r = H.map_fixture_player(e, "ABC")
     assert r["fouls"] is None, r
@@ -74,8 +75,11 @@ def test_features_are_strictly_before_the_match():
          "fixture_id": 1, "round": 1, "min": 90, "fouls": 2, "yc": 1, "rc": 0},
         {"player": "P", "club": "ABC", "pos": "MF", "date": "2025-08-08",
          "fixture_id": 2, "round": 2, "min": 90, "fouls": 4, "yc": 0, "rc": 0},
+        # null rather than 0: this feed never writes an explicit zero, and the
+        # builder refuses input that does. See the note at the top of
+        # data/build_match_history.py.
         {"player": "P", "club": "ABC", "pos": "MF", "date": "2025-08-15",
-         "fixture_id": 3, "round": 3, "min": 90, "fouls": 0, "yc": 1, "rc": 0},
+         "fixture_id": 3, "round": 3, "min": 90, "fouls": None, "yc": 1, "rc": 0},
     ]
     out, _ = B.build(rows)
     assert len(out) == 3, out
@@ -116,26 +120,44 @@ def test_a_red_counts_as_carded():
     assert out[0]["y"] == 1, out
 
 
-def test_missing_fouls_do_not_dilute_the_rate():
-    """A match with no foul figure contributes neither fouls nor minutes to the
-    foul rate. Counting its minutes but not its fouls would halve the rate of
-    anyone whose data is patchy."""
+def test_null_fouls_are_decoded_as_nought():
+    """MEASURED, not assumed. Over 667 player-matches the feed never wrote an
+    explicit 0, every fixture carried some foul data, and the null rows had a
+    median of 70 minutes — regular starters. Null is how this feed spells
+    nought, so it counts as a played 90 with no fouls in it."""
     rows = [
         {"player": "P", "club": "ABC", "pos": "MF", "date": "2025-08-01",
          "fixture_id": 1, "round": 1, "min": 90, "fouls": 4, "yc": 0, "rc": 0},
         {"player": "P", "club": "ABC", "pos": "MF", "date": "2025-08-08",
          "fixture_id": 2, "round": 2, "min": 90, "fouls": None, "yc": 0, "rc": 0},
         {"player": "P", "club": "ABC", "pos": "MF", "date": "2025-08-15",
-         "fixture_id": 3, "round": 3, "min": 90, "fouls": 0, "yc": 0, "rc": 0},
+         "fixture_id": 3, "round": 3, "min": 90, "fouls": None, "yc": 0, "rc": 0},
     ]
     out, stats = B.build(rows)
-    assert stats["no_fouls"] == 1, stats
-    # ONE 90 of measured play before the third match, not two: match 2 carried
-    # no foul figure, so it contributes neither its fouls nor its minutes.
-    # Four fouls in the 90 minutes we can actually see is 4.00 per 90. Counting
-    # match 2's minutes in the denominator would report 2.00 and quietly
-    # describe a dirty player as an averagely clean one.
-    assert out[2]["foul90"] == 4.0, out[2]
+    assert stats["no_fouls"] == 2, stats
+    # Two prior 90s, four fouls between them: 2.00 per 90. Dropping the null
+    # match from the denominator instead would report 4.00 and describe an
+    # average player as one of the division's dirtiest.
+    assert out[2]["foul90"] == 2.0, out[2]
+
+
+def test_an_explicit_zero_stops_the_build():
+    """The decode is only sound while the feed never writes 0. If it starts,
+    null means 'not recorded' again and reading it as nought would train the
+    model to think half the league never fouls — so it refuses rather than
+    building a table that is half decoded one way and half the other."""
+    rows = [
+        {"player": "P", "club": "ABC", "pos": "MF", "date": "2025-08-01",
+         "fixture_id": 1, "round": 1, "min": 90, "fouls": 0, "yc": 0, "rc": 0},
+        {"player": "Q", "club": "ABC", "pos": "MF", "date": "2025-08-01",
+         "fixture_id": 1, "round": 1, "min": 90, "fouls": None, "yc": 0, "rc": 0},
+    ]
+    try:
+        B.build(rows)
+    except ValueError as e:
+        assert "explicit fouls=0" in str(e), e
+        return
+    raise AssertionError("an explicit zero did not stop the build")
 
 
 def test_finished_only():

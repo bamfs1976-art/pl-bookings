@@ -36,10 +36,29 @@ DATA = Path(__file__).resolve().parent
 sys.path.insert(0, str(DATA))
 import leagues  # noqa: E402
 
-# A match with no foul figure cannot contribute a foul rate. Below this share
-# of usable rows the harvest is reporting something other than what it claims,
-# and building a training table from it would fit the model to a gap.
-MIN_FOUL_COVERAGE = 0.80
+# NULL MEANS ZERO, and that is measured rather than assumed.
+#
+# The first backfill came back with fouls on 46% of Championship rows and 50%
+# of Spanish ones, and this file refused to build a table from it. The refusal
+# was right to fire and wrong about the cause. The diagnostic
+# (data/player_matches_status.txt) settled it over 667 player-matches:
+#
+#   explicit zeros: 0
+#   fixtures wholly without fouls: 0, partly: 25, of 25
+#   minutes on null rows: median 70, max 90
+#
+# API-Football never writes `committed: 0`. Every fixture carries some foul
+# data, so nothing is a feed gap, and the null rows are regular starters rather
+# than unused substitutes. A feed that recorded fouls properly would produce
+# explicit zeros somewhere in 667 rows. It produces none, so null is how it
+# spells nought. The arithmetic agrees: 348 players with at least one foul over
+# 25 La Liga matches is about 625 fouls, or 25 a match, which is the division's
+# actual rate.
+#
+# THE ASSUMPTION IS GUARDED, not just documented. The decode is only sound
+# while the feed never writes an explicit 0; the day it starts, null reverts to
+# meaning "not recorded" and reading it as zero would train the model to think
+# half the league never fouls. So an explicit zero anywhere is a hard refusal.
 
 
 def build(rows):
@@ -47,6 +66,19 @@ def build(rows):
     by_player = {}
     for r in rows:
         by_player.setdefault((r.get("player"), r.get("club")), []).append(r)
+
+    # If the feed has started writing explicit zeros, the null-means-zero
+    # decode is no longer sound. Checked over the whole input before a single
+    # row is built, because a table half-decoded one way and half the other is
+    # worse than no table.
+    explicit_zeros = sum(1 for r in rows if r.get("fouls") == 0)
+    if explicit_zeros:
+        raise ValueError(
+            f"{explicit_zeros} row(s) carry an explicit fouls=0. This feed has "
+            "always used null for nought, and the null-means-zero decode "
+            "depends on that. If it now writes both, null means 'not recorded' "
+            "again and every null row would train the model as foul-free. "
+            "Re-check data/player_matches_status.txt before building.")
 
     out = []
     no_fouls = 0
@@ -61,9 +93,11 @@ def build(rows):
             mins = m.get("min") or 0
             if mins <= 0:
                 continue
+            # null IS nought here — see the note at the top of this file.
             fouls = m.get("fouls")
             if fouls is None:
                 no_fouls += 1
+                fouls = 0
             y90 = (cum_yc / (cum_min / 90.0)) if cum_min > 0 else 0.0
             f90 = (cum_fouls / (cum_foul_min / 90.0)) if cum_foul_min > 0 else 0.0
             out.append({
@@ -78,9 +112,8 @@ def build(rows):
             })
             cum_yc += m.get("yc") or 0
             cum_min += mins
-            if fouls is not None:
-                cum_fouls += fouls
-                cum_foul_min += mins
+            cum_fouls += fouls
+            cum_foul_min += mins
     return out, {"players": len(by_player), "no_fouls": no_fouls}
 
 
@@ -105,22 +138,14 @@ def main():
     if not out:
         sys.exit("ERROR: no usable training rows — every line had zero minutes.")
 
-    covered = 1 - (stats["no_fouls"] / len(out))
-    if covered < MIN_FOUL_COVERAGE:
-        # Refuse rather than fit. A foul rate that is zero for a third of the
-        # table is not a weak signal, it is a wrong one, and it would be fitted
-        # as though those players never fouled.
-        sys.exit(f"ERROR: only {covered:.0%} of rows carry a foul count "
-                 f"(need {MIN_FOUL_COVERAGE:.0%}). The harvest is missing the "
-                 "fouls field — check the /fixtures/players response before "
-                 "fitting anything on this.")
-
     name = args.out or f"{league.code.lower()}_match_history.json"
     (DATA / name).write_text(json.dumps(out), encoding="utf-8")
     booked = sum(r["y"] for r in out)
+    zeroed = stats["no_fouls"]
     print(f"{name} written: {len(out)} match rows over {stats['players']} "
-          f"players, {booked} carded ({100 * booked / len(out):.1f}%), "
-          f"fouls on {covered:.0%}.")
+          f"players, {booked} carded ({100 * booked / len(out):.1f}%); "
+          f"{zeroed} row(s) ({100 * zeroed / len(out):.0f}%) had a null foul "
+          "count, decoded as nought.")
     if len(out) < 200:
         print(f"NOTE: build-model.mjs keeps the season prior below 200 rows, "
               f"so {len(out)} will not change the model yet.")
