@@ -1,0 +1,20 @@
+Championship: 11884 out-of-sample predictions over 47 rounds
+model            Brier     logLoss
+base           0.1085    0.3745
+prior          0.1428    0.4772
+fit            0.1074    0.3688
+fit vs base:  BEATS it — mean Brier difference -0.00113 ± 0.00039 (2 s.e.)
+fit vs prior: BEATS it — mean Brier difference -0.03548 ± 0.00311 (2 s.e.)
+a difference whose interval spans zero is not a difference — on a control of pure noise the raw comparison still called the fit a winner by 0.0004.
+note: "prior" is the shipped Premier League GLM (data/model.js). The Championship and La Liga desks do not use it — they price from the PLDCore hazard — so this measures whether the signal is there, not what those desks would gain. NOTHING here changes a published price.
+
+La Liga: 9105 out-of-sample predictions over 38 rounds
+model            Brier     logLoss
+base           0.1231    0.4120
+prior          0.1710    0.5555
+fit            0.1218    0.4063
+fit vs base:  BEATS it — mean Brier difference -0.00130 ± 0.00056 (2 s.e.)
+fit vs prior: BEATS it — mean Brier difference -0.04921 ± 0.00441 (2 s.e.)
+a difference whose interval spans zero is not a difference — on a control of pure noise the raw comparison still called the fit a winner by 0.0004.
+note: "prior" is the shipped Premier League GLM (data/model.js). The Championship and La Liga desks do not use it — they price from the PLDCore hazard — so this measures whether the signal is there, not what those desks would gain. NOTHING here changes a published price.
+
