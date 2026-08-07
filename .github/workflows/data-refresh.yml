@@ -424,11 +424,21 @@ jobs:
         run: |
           LIM=""
           [ -n "${{ inputs.player_matches_limit }}" ] && LIM="--limit ${{ inputs.player_matches_limit }}"
+          # One run's worth, not an ever-growing pile.
+          : > data/fit_report.txt
           for L in EFLC LL; do
+            NAME=$([ "$L" = "LL" ] && echo "La Liga" || echo "Championship")
             python3 data/harvest_apifootball.py --player-matches --league $L $LIM \
               && python3 data/build_match_history.py --league $L \
+              && node scripts/backtest.mjs "data/$(echo $L | tr A-Z a-z)_match_history.json" \
+                   --label "$NAME" --out data/fit_report.txt \
               || echo "::warning::$L training table unavailable this run"
           done
+          # REPORT ONLY. Nothing above writes data/model.js or any file a desk
+          # reads — the backtest prints and appends, and that is the whole
+          # point: it answers whether a fit would help before anybody changes a
+          # published price.
+          cat data/fit_report.txt || true
 
       # Tier 2: harvest per-match booking history from the public FPL
       # element-summary endpoint and refit the logistic GLM by IRLS. Runs on
@@ -479,7 +489,7 @@ jobs:
                    data/eflc_refs.json data/eflc_data.js data/eflc_status.txt data/eflc_fixtures.js \
                    data/laliga_clubs.json data/laliga_refs.json data/laliga_data.js \
                    data/laliga_status.txt data/laliga_fixtures.js data/laliga_ref_fixtures.js \
-                   data/player_matches_status.txt; do
+                   data/player_matches_status.txt data/fit_report.txt; do
             [ -f "$f" ] && git add "$f"
           done
           if git diff --cached --quiet; then

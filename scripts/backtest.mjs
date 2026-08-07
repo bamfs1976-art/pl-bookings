@@ -10,7 +10,7 @@
 //   fit       a GLM refit each week on prior rounds (what a live model would do)
 // Lower Brier / log-loss is better. Needs data/match_history.json from
 // data/harvest_history.py; without it, prints how to produce it.
-import { readFileSync } from 'node:fs';
+import { readFileSync, appendFileSync } from 'node:fs';
 import { createRequire } from 'node:module';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
@@ -18,7 +18,12 @@ import { dirname, join } from 'node:path';
 const require = createRequire(import.meta.url);
 const core = require('../assets/core.js');
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
-const path = process.argv[2] || join(root, 'data', 'match_history.json');
+const argv = process.argv.slice(2);
+const flag = (name) => { const i = argv.indexOf(name); return i > -1 ? argv[i + 1] : null; };
+const path = argv.find((a) => !a.startsWith('--') && argv[argv.indexOf(a) - 1] !== '--label'
+  && argv[argv.indexOf(a) - 1] !== '--out') || join(root, 'data', 'match_history.json');
+const label = flag('--label') || 'Premier League';
+const outFile = flag('--out');
 
 let rows;
 try { rows = JSON.parse(readFileSync(path, 'utf8')); }
@@ -63,7 +68,6 @@ const glmFromBeta = (b) => ({ intercept: b[0], weights: { yc90: b[1], foul90: b[
 const rounds = [...new Set(rows.map((r) => r.round))].filter((x) => x != null).sort((a, b) => a - b);
 const WARMUP = Math.max(rounds[0] + 3, rounds[Math.min(4, rounds.length - 1)]);
 const preds = { base: [], prior: [], fit: [] };
-const base = model.baseRate;
 
 for (const R of rounds) {
   if (R < WARMUP) continue;
@@ -75,6 +79,12 @@ for (const R of rounds) {
   const decay = model.recencyDecay || 0.97;
   const sw = train.map((r) => Math.pow(decay, Math.max(0, (R - 1) - (Number(r.round) || 0))));
   try { fitCoef = glmFromBeta(irls(train.map(design), train.map((r) => r.y), 40, sw)); } catch { fitCoef = model.glm; }
+  /* THE BASELINE IS THE TRAINING SET'S OWN RATE, walk-forward — not the
+     shipped model.baseRate. That constant is the PREMIER LEAGUE's, and scoring
+     a La Liga backtest against it would not be a naive baseline but a
+     strawman: it would make any model look good simply by not being wrong
+     about which division it is in. */
+  const base = train.reduce((s2, r) => s2 + (r.y ? 1 : 0), 0) / train.length;
   for (const r of test) {
     preds.base.push({ p: base, y: r.y });
     preds.prior.push({ p: core.glmProb(feats(r), model.glm), y: r.y });
@@ -84,7 +94,54 @@ for (const R of rounds) {
 
 if (!preds.base.length) { console.error('Not enough rounds to backtest (need history spanning several gameweeks).'); process.exit(1); }
 const fmt = (x) => x == null ? '  —  ' : x.toFixed(4);
-console.log(`Walk-forward backtest — ${preds.base.length} out-of-sample predictions over ${rounds.length} gameweeks\n`);
-console.log('model            Brier     logLoss');
-for (const m of ['base', 'prior', 'fit']) console.log(m.padEnd(14), fmt(core.brier(preds[m])), '  ', fmt(core.logLoss(preds[m])));
-console.log('\nLower is better. "fit" refits each week on prior rounds; "prior" is the shipped season model; "base" is the league rate for everyone.');
+const out = [];
+out.push(`${label}: ${preds.base.length} out-of-sample predictions over ${rounds.length} rounds`);
+out.push('model            Brier     logLoss');
+for (const m of ['base', 'prior', 'fit']) {
+  out.push(m.padEnd(14) + ' ' + fmt(core.brier(preds[m])) + '    ' + fmt(core.logLoss(preds[m])));
+}
+const bB = core.brier(preds.base), fB = core.brier(preds.fit), pB = core.brier(preds.prior);
+
+/* PAIRED, WITH A STANDARD ERROR — not `fB < bB`.
+ *
+ * On a control set of pure noise, where booking risk was a flat 20% unrelated
+ * to any feature, a strict comparison declared the fit a winner by 0.0004. It
+ * would have reported "a league-specific fit BEATS the naive base rate" about
+ * a dataset containing no signal whatsoever, which is the single most
+ * misleading thing this report could say.
+ *
+ * The predictions are paired — same rows, same order — so the difference in
+ * squared error is a per-row quantity with a standard error of its own. A win
+ * is only a win if the interval excludes zero. */
+function beats(a, b) {
+  const d = a.map((r, i) => ((r.p - r.y) ** 2) - ((b[i].p - b[i].y) ** 2));
+  const n = d.length;
+  const mean = d.reduce((s2, x) => s2 + x, 0) / n;
+  const varr = d.reduce((s2, x) => s2 + (x - mean) ** 2, 0) / Math.max(1, n - 1);
+  const se = Math.sqrt(varr / n);
+  return { mean, se, better: mean + 2 * se < 0, worse: mean - 2 * se > 0 };
+}
+const vsBase = beats(preds.fit, preds.base);
+const vsPrior = beats(preds.fit, preds.prior);
+const verdict = (v) => v.better ? 'BEATS' : v.worse ? 'is WORSE than' : 'is indistinguishable from';
+out.push(`fit vs base:  ${verdict(vsBase)} it — mean Brier difference `
+  + `${vsBase.mean.toFixed(5)} ± ${(2 * vsBase.se).toFixed(5)} (2 s.e.)`);
+out.push(`fit vs prior: ${verdict(vsPrior)} it — mean Brier difference `
+  + `${vsPrior.mean.toFixed(5)} ± ${(2 * vsPrior.se).toFixed(5)} (2 s.e.)`);
+out.push('a difference whose interval spans zero is not a difference — on a '
+  + 'control of pure noise the raw comparison still called the fit a winner '
+  + 'by 0.0004.');
+/* NAMED, because "prior" means something different away from the Premier
+   League. data/model.js is the PL model and the Championship and La Liga desks
+   do not use a GLM at all — they price from PLDCore's hazard. So this answers
+   "is there signal a fit could capture in this division?", NOT "the desk would
+   improve by exactly this much". */
+out.push('note: "prior" is the shipped Premier League GLM (data/model.js). The '
+  + 'Championship and La Liga desks do not use it — they price from the '
+  + 'PLDCore hazard — so this measures whether the signal is there, not what '
+  + 'those desks would gain. NOTHING here changes a published price.');
+console.log(out.join('\n'));
+if (outFile) {
+  appendFileSync(outFile, out.join('\n') + '\n\n');
+  console.log(`\nappended to ${outFile}`);
+}

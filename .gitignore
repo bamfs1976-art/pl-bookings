@@ -52,3 +52,4 @@ data/match_history.json
 data/*_player_matches.json
 data/*_match_history.json
 !data/player_matches_status.txt
+!data/fit_report.txt
