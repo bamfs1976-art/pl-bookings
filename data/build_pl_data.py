@@ -404,6 +404,32 @@ def jsval(x):
     return str(x)
 
 
+def player_row(p):
+    """One shipped player as the text that goes in the file.
+
+    A FUNCTION, not an inline join, so a test can call the real emitter rather
+    than reimplement it. That distinction is not academic: ph and inj were
+    added to mk() and left out of the writer's key list, the refresh ran green,
+    and pl_data.js came out byte-identical with no photographs in it. A test
+    that rebuilds the row itself passes happily through exactly that.
+
+    ph/inj are emitted only when present, so a source that never carried them
+    adds nothing rather than a column of nulls — the desks already read a
+    missing field as "no photo, nothing known".
+    """
+    parts = [
+        f'c:{jsval(p["c"])}', f'n:{jsval(p["n"])}', f'p:{jsval(p["p"])}',
+        f'min:{p["min"]}', f'yc:{jsval(p["yc"])}', f'rc:{jsval(p["rc"])}',
+        f'y:{jsval(p["y"])}', f'f:{jsval(p["f"])}', f'fw:{jsval(p["fw"])}',
+        f'r:{jsval(p["r"])}', f'ls:{jsval(p["ls"])}', f'b:{jsval(p["b"])}',
+    ]
+    if p.get("ph"):
+        parts.append(f'ph:{jsval(p["ph"])}')
+    if p.get("inj"):
+        parts.append('inj:true')
+    return "{" + ",".join(parts) + "}"
+
+
 def main():
     players = build_players()
     problems = coverage_problems(players)
@@ -443,12 +469,7 @@ def main():
     lines.append("const PL_PLAYERS = [")
     pout = sorted(players, key=lambda x: (x["c"], x["r"] is None, -(x["r"] or 0), x["n"] or ""))
     for p in pout:
-        lines.append("  {" + ",".join([
-            f'c:{jsval(p["c"])}', f'n:{jsval(p["n"])}', f'p:{jsval(p["p"])}',
-            f'min:{p["min"]}', f'yc:{jsval(p["yc"])}', f'rc:{jsval(p["rc"])}',
-            f'y:{jsval(p["y"])}', f'f:{jsval(p["f"])}', f'fw:{jsval(p["fw"])}',
-            f'r:{jsval(p["r"])}', f'ls:{jsval(p["ls"])}', f'b:{jsval(p["b"])}',
-        ]) + "},")
+        lines.append("  " + player_row(p) + ",")
     lines.append("];")
     lines.append("const REFS = [")
     for r in refs:

@@ -332,6 +332,8 @@ def emit(clubs, players, refs):
             f'fw:{j(p["fw"])}', f'r:{j(p["r"])}', f'ls:{j(p["ls"])}', f'b:{j(p["b"])}',
             # THIS season: cautions and minutes so far, null until harvested.
             f'sc:{j(p.get("_sc"))}', f'sm:{j(p.get("_sm"))}',
+        ] + ([f'ph:{j(p["ph"])}'] if p.get("ph") else [])
+          + (['inj:true'] if p.get("inj") else []) + [
         ]) + "},")
     lines.append("];")
     lines.append("const REFS = [")

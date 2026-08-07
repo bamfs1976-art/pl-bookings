@@ -454,4 +454,63 @@ def _a_short_walk_is_refused():
 
 t("a short walk refuses rather than shipping a partial league", _a_short_walk_is_refused)
 
+
+# ---- the emitted FILE, not the mapped dict -------------------------------
+# A field can exist all the way from the API response to the builder and still
+# never reach the shipped file, because the writers list their keys explicitly.
+# That is exactly what happened: ph and inj were added to mk(), the harvest ran
+# green, and pl_data.js came out byte-identical with no photographs in it. A
+# test on mk() alone passes throughout. So this one reads the TEXT a writer
+# produces.
+
+def _emitted_row(**extra):
+    """The line build_pl_data ACTUALLY writes for one player.
+
+    Calls the real emitter. An earlier version of this helper rebuilt the row
+    itself, which meant the test passed with the writer broken — the precise
+    failure it was written to catch."""
+    p = {"c": "ARS", "n": "A Player", "p": "MF", "min": 900, "yc": 3, "rc": 0,
+         "y": 0.3, "f": 1.2, "fw": 0.8, "r": 1.8, "ls": False, "b": "PL"}
+    p.update(extra)
+    return B.player_row(p)
+
+
+def _photo_reaches_the_file():
+    url = "https://media.api-sports.io/football/players/1234.png"
+    out = _emitted_row(ph=url, inj=True)
+    assert f'ph:"{url}"' in out, out
+    assert 'inj:true' in out, out
+
+
+t("a player's photo and availability reach the emitted file", _photo_reaches_the_file)
+
+
+def _absent_photo_adds_nothing():
+    """No source, no column. A dataset that has never been harvested for
+    photographs must not grow 974 `ph:null` entries — the desks already treat
+    a missing field as "no photo", and nulls are just weight."""
+    out = _emitted_row()
+    assert "ph:" not in out, out
+    assert "inj:" not in out, out
+    # and a false flag is not an injury
+    assert "inj:" not in _emitted_row(inj=False), _emitted_row(inj=False)
+
+
+t("no photo means no field, not a column of nulls", _absent_photo_adds_nothing)
+
+
+def _every_builder_emits_it():
+    """All three desks, not just the one that was checked. The Championship
+    and La Liga writers are separate functions with their own key lists."""
+    import re as _re
+    for name in ("build_pl_data.py", "build_eflc_data.py", "build_laliga_data.py"):
+        src = (DATA / name).read_text(encoding="utf-8")
+        assert _re.search(r"ph:\{js?val?\(?p\[.ph.\]\)?\}", src) or "p[\"ph\"]" in src, \
+            f"{name} never emits the player photo"
+        assert "inj:true" in src, f"{name} never emits the availability flag"
+
+
+t("all three dataset builders emit the photo, not just the Premier League one",
+  _every_builder_emits_it)
+
 print(f"\n{passed} tests passed")

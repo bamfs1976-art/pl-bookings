@@ -374,6 +374,8 @@ def emit(clubs, players, refs):
             # THIS season: cautions and minutes so far. Null until the season
             # has been harvested — see season_cards().
             f'sc:{j(p.get("_sc"))}', f'sm:{j(p.get("_sm"))}',
+        ] + ([f'ph:{j(p["ph"])}'] if p.get("ph") else [])
+          + (['inj:true'] if p.get("inj") else []) + [
         ]) + "},")
     lines.append("];")
     lines.append(refs)
