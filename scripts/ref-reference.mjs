@@ -137,6 +137,28 @@ ${table(thin)}
 | Darren England | 4.3, HIGH | 4.30 over 23 — HIGH | The only entry that was correct |
 
 Officials with a real sample that the old file omitted entirely: ${OMITTED}.
+
+## EUROPEAN REFEREES — CARRIED OVER, NOT VERIFIED
+
+**These are the only figures in this file this repository cannot check.** They
+were in the hand-maintained version and are kept so regenerating does not
+silently delete content, but nothing here measures them: the dataset behind
+every table above is Premier League match records only.
+
+Treat them with the suspicion the rest of that file earned. Of its twelve
+Premier League entries, ten were in the wrong tier — so a figure from the same
+source, for a competition with no coverage here at all, is a starting point for
+a lookup and not an input to a score.
+
+| Referee | Claimed Yellows/Game | Competition |
+|---|---|---|
+| João Pinheiro (Portugal) | 4.7 | All comps. 3.71 in UCL. |
+| Daniel Siebert (Germany) | 3.8 | UCL. |
+| Danny Makkelie (Netherlands) | 3.5 | Experienced; books cynical fouls. |
+
+To put these on the same footing as the Premier League tables, harvest the
+competition into \`data/\` and extend \`data/build_refs.py\` — the league registry
+in \`data/leagues.py\` already takes a new competition without a rewrite.
 `;
 
 const i = process.argv.indexOf('--out');
