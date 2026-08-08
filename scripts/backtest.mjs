@@ -68,6 +68,7 @@ const glmFromBeta = (b) => ({ intercept: b[0], weights: { yc90: b[1], foul90: b[
 const rounds = [...new Set(rows.map((r) => r.round))].filter((x) => x != null).sort((a, b) => a - b);
 const WARMUP = Math.max(rounds[0] + 3, rounds[Math.min(4, rounds.length - 1)]);
 const preds = { base: [], prior: [], fit: [] };
+const ratios = [];
 
 for (const R of rounds) {
   if (R < WARMUP) continue;
@@ -79,6 +80,14 @@ for (const R of rounds) {
   const decay = model.recencyDecay || 0.97;
   const sw = train.map((r) => Math.pow(decay, Math.max(0, (R - 1) - (Number(r.round) || 0))));
   try { fitCoef = glmFromBeta(irls(train.map(design), train.map((r) => r.y), 40, sw)); } catch { fitCoef = model.glm; }
+  /* THE RATIO THE DATA ASKS FOR. The shipped model does not fit these weights
+     — build-model.mjs writes yc90 = 2 * SLOPE and foul90 = SLOPE, so the "2"
+     in PLDCore.riskScore(y90, f90) = y90 * 2 + f90 is the SAME two, asserted
+     once and used both to sort the desk and to price it. Nothing anywhere
+     tested it. This records what a weekly refit actually converges to, so the
+     next time a match history exists the question is answered by a number
+     instead of by the fact that nobody has looked. */
+  if (fitCoef && fitCoef.weights.foul90) ratios.push(fitCoef.weights.yc90 / fitCoef.weights.foul90);
   /* THE BASELINE IS THE TRAINING SET'S OWN RATE, walk-forward — not the
      shipped model.baseRate. That constant is the PREMIER LEAGUE's, and scoring
      a La Liga backtest against it would not be a naive baseline but a
@@ -131,6 +140,16 @@ out.push(`fit vs prior: ${verdict(vsPrior)} it — mean Brier difference `
 out.push('a difference whose interval spans zero is not a difference — on a '
   + 'control of pure noise the raw comparison still called the fit a winner '
   + 'by 0.0004.');
+/* The coefficient the desk asserts, against the one the data asks for. */
+if (ratios.length) {
+  const sorted = ratios.slice().sort((a, b) => a - b);
+  const med = sorted[Math.floor(sorted.length / 2)];
+  const shipped = model.glm.weights.yc90 / model.glm.weights.foul90;
+  out.push(`yc90:foul90 weight ratio — shipped ${shipped.toFixed(2)} (asserted, `
+    + `never fitted: model.js basis="${model.basis}", fitRows=${model.fitRows}); `
+    + `refit median ${med.toFixed(2)} over ${ratios.length} rounds `
+    + `[${sorted[0].toFixed(2)} … ${sorted[sorted.length - 1].toFixed(2)}]`);
+}
 /* NAMED, because "prior" means something different away from the Premier
    League. data/model.js is the PL model and the Championship and La Liga desks
    do not use a GLM at all — they price from PLDCore's hazard. So this answers
