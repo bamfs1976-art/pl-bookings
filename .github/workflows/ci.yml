@@ -23,6 +23,10 @@ jobs:
           node --check data/pl_data.js
           node --check data/model.js
           node --check data/sim_model.js
+          # The football-data.org probe needs a key and a network, so CI can
+          # never run it — a syntax check is the only guard available, and
+          # without it the script rots silently until someone dispatches it.
+          node --check scripts/probe-football-data.mjs
           node scripts/check-inline.mjs
 
       - name: Model builder is reproducible (season prior regenerates cleanly)
