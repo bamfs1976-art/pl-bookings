@@ -966,4 +966,48 @@ t('the board reports the rate it priced with, so the number can be checked', () 
   assert.ok(m.over[35.5] > 0 && m.over[35.5] < 1);
 });
 
+/* ---- the two-stage hazard, one definition for three desks --------------- */
+/* build-model.mjs bakes this into data/model.js for the Premier League; the
+   Championship and La Liga have no model file and derive it at runtime from
+   the same function. Two implementations of one line is how the three desks
+   would go back to pricing different things. */
+t('the shared hazard reproduces the Premier League constant it was lifted from', () => {
+  const model = require('../data/model.js');
+  const g = {};
+  new Function('globalThis', readFileSync(join(root, 'data', 'pl_data.js'), 'utf8')
+    + ';globalThis.P=PL_PLAYERS;')(g);
+  const rated = g.P.filter((p) => p.y != null && p.f != null);
+  const cal = core.calibrate(g.P);
+  const foulLeague = core.leagueRate90(rated, 'f');
+  const hz = core.twoStageHazard(cal.baseRate, foulLeague);
+  /* Within a thousandth: build-model.mjs rounds to 4dp and filters `rated`
+     the same way, so anything wider means the two have drifted apart. */
+  assert.ok(Math.abs(hz - model.twoStage.baseHazard) < 0.001,
+    `shared hazard ${hz.toFixed(4)} vs shipped ${model.twoStage.baseHazard} — ` +
+    'the runtime derivation and the baked one no longer agree, so the ' +
+    'Championship and La Liga are pricing fouls on a different definition ' +
+    'from the Premier League');
+});
+
+t('the hazard refuses inputs that would make it meaningless', () => {
+  assert.equal(core.twoStageHazard(0, 1), null);        // no base rate
+  assert.equal(core.twoStageHazard(1, 1), null);        // certainty -> infinite
+  assert.equal(core.twoStageHazard(0.17, 0), null);     // no foul exposure
+  assert.equal(core.twoStageHazard(0.17, null), null);
+  /* And it is monotonic in the way the maths requires: more fouls for the
+     same card rate means each foul carries LESS hazard. */
+  assert.ok(core.twoStageHazard(0.17, 2) < core.twoStageHazard(0.17, 1));
+});
+
+t('leagueRate90 weights by minutes, not by heads', () => {
+  const rows = [{ min: 3000, f: 1.0 }, { min: 90, f: 9.0 }];
+  const w = core.leagueRate90(rows, 'f');
+  assert.ok(w < 1.3, `minutes-weighted mean ${w} looks like a per-player mean`);
+  assert.equal(core.leagueRate90([], 'f'), null);
+  assert.equal(core.leagueRate90(null, 'f'), null);
+  /* A missing rate is skipped, not read as nought — the whole reason fouls
+     won was null rather than zero on 456 rows. */
+  assert.equal(core.leagueRate90([{ min: 900, fw: null }, { min: 900, fw: 2 }], 'fw'), 2);
+});
+
 console.log(`\n${passed} tests passed`);

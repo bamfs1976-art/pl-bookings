@@ -652,6 +652,50 @@
    * this since it was written; these two showed a percentage in a table cell
    * and no way to ask why. Rendering lives in assets/profile.js, shared with
    * the other desk — the record below is the only league-specific part. */
+  /* THE LEAGUE'S OWN FOUL MODEL, derived once from its own dataset.
+     The Premier League bakes these into data/model.js at build time; this desk
+     has no model file, so it computes the same two constants at load from the
+     same shared functions. Deriving rather than copying the Premier League's
+     numbers is the whole point: The Championship fouls at a different rate and cards at
+     a different rate, and borrowing another division's hazard would price this
+     one on England's discipline. */
+  var FOUL_MODEL = (function () {
+    var rated = PLAYERS.filter(function (p) { return p.y != null && p.f != null; });
+    var foulLeague = C.leagueRate90(rated, 'f');
+    var wonLeague = C.leagueRate90(PLAYERS.filter(function (p) { return p.fw != null; }), 'fw');
+    return {
+      foulLeague: foulLeague,
+      wonLeague: wonLeague,
+      hazard: C.twoStageHazard(CAL.baseRate, foulLeague),
+      /* The NB size, shared with the Premier League build. It is a shape
+         parameter about how much a player's fouls vary match to match, not a
+         league rate — but it is a PRIOR here, not a fit, and it is written
+         down as one rather than presented as measured. */
+      dispersion: 6
+    };
+  })();
+
+  /* Expected fouls, the over-lines, and the fouls->card cross-check for one
+     player over a full 90. Null the whole way down when the player has no
+     foul rate, so the profile omits the block rather than printing dashes. */
+  function foulForecast(p) {
+    if (!p || p.f == null || !FOUL_MODEL.hazard) return null;
+    var ef = C.expectedFouls(p.f, 90);
+    var out = {
+      expFouls: ef,
+      over1: C.nbTailProb(ef, FOUL_MODEL.dispersion, 1),
+      over2: C.nbTailProb(ef, FOUL_MODEL.dispersion, 2),
+      twoStage: C.cardProbFromFouls(ef, FOUL_MODEL.hazard)
+    };
+    if (p.fw != null) {
+      var ew = C.expectedFouls(p.fw, 90);
+      out.wonExp = ew;
+      out.wonOver1 = C.nbTailProb(ew, FOUL_MODEL.dispersion, 1);
+      out.wonOver2 = C.nbTailProb(ew, FOUL_MODEL.dispersion, 2);
+    }
+    return out;
+  }
+
   function playerRecord(p) {
     var ref = currentRef();
     var prob = probFor(p, ref), b = band(prob);
@@ -666,7 +710,8 @@
          claim about a player's fitness that nothing supports. */
       photo: p.ph || null, injured: p.inj === true,
       minutes: p.min, yellows: p.yc, reds: p.rc,
-      yc90: p.y, fouls90: p.f, foulsForm: p.fw, risk: p.r,
+      yc90: p.y, fouls90: p.f, foulsWon90: p.fw, risk: p.r,
+      forecast: foulForecast(p),
       prob: prob, odds: prob ? C.fairOdds(prob) : null,
       band: { label: b[1] || 'Low', colour: b[0] === 'hi' ? 'var(--danger-ink)'
               : b[0] === 'mid' ? 'var(--warn-ink)' : '' },

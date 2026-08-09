@@ -688,6 +688,51 @@ for (const page of DESKS_WITH_A_TOUR) {
   }
 }
 
+/* ---- 10a. a metric is labelled as the metric it is ---------------------- */
+/* The shared profile carried a cell reading `rec.foulsForm` under the label
+   "Recent fouls / 90", captioned "trending up" or "trending down" against
+   fouls conceded. Both sibling desks passed `p.fw` into it — fouls DRAWN. So a
+   Championship midfielder who wins 2.0 fouls a game and commits 1.0 read as a
+   player whose fouling was trending up: wrong metric, wrong label, and a
+   comparison between two quantities with no trend relationship at all. It
+   shipped on two live desks and nothing could see it, because a mislabelled
+   number renders perfectly.
+ *
+ * The field name is pinned as well as the label. `foulsForm` is what invited
+ * a fouls-won figure to be read as a form trend. */
+{
+  /* codeOnly, because the comment explaining this bug NAMES the field it
+     forbids — the first run of this assertion failed on its own prose, which
+     is the same trap from the other side. */
+  const prof = codeOnly(read('assets/profile.js'));
+  assert.ok(/cell\('Fouls won \/ 90'/.test(prof),
+    'the shared profile no longer labels fouls won as fouls won');
+  assert.ok(!/foulsForm/.test(prof),
+    'assets/profile.js is back to a `foulsForm` field. The name is the bug: it ' +
+    'invites a fouls-DRAWN rate to be rendered as a form trend, which is what ' +
+    'both sibling desks did.');
+  /* THE LABEL AND THE VALUE IN THE SAME CALL. A file-wide search for
+     rec.foulsWon90 is satisfied by the null check and the ratio caption a
+     line below, so swapping the rendered value to rec.fouls90 kept the guard
+     green while the cell showed fouls CONCEDED under the fouls-won label —
+     the original bug, restored past its own check. */
+  const wonCell = /cell\('Fouls won \/ 90',\s*([^,]+),/.exec(prof);
+  assert.ok(wonCell, 'the fouls-won cell is gone or has been reshaped');
+  assert.ok(/rec\.foulsWon90/.test(wonCell[1]),
+    `the fouls-won cell renders ${wonCell[1].trim()} — the label says fouls won ` +
+    'and the number is something else, which is the bug this block exists for');
+  /* Every caller feeds it under the same name. A desk passing p.fw as
+     anything else puts the number back under a label it does not match. */
+  for (const page of ['eflc.html', 'laliga.html']) {
+    const src = read(page);
+    assert.ok(/foulsWon90:\s*p\.fw/.test(src),
+      `${page} no longer passes p.fw as foulsWon90 — either the fouls-won cell ` +
+      'is empty or it is being fed something that is not fouls won');
+    assert.ok(!/foulsForm/.test(src),
+      `${page} is back to passing foulsForm`);
+  }
+}
+
 /* ---- 10b. the band a card prints is the band the key defines ------------ */
 /* severity() and the Legend key sat three inches apart on one page and
    disagreed, and severity() is what every candidate row printed. The key said

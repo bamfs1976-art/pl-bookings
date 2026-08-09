@@ -1401,6 +1401,30 @@ function pImp(p){ return pModelBase(p); }
 // Tier 3 fouls forecast: expected fouls this match and over/under a line.
 function expFoulsFor(p,expMin){ return MODEL_OK?PLDCore.expectedFouls(shrunkF90(p),expMin==null?90:expMin):null; }
 function pFoulsOver(p,line,expMin){ return MODEL_OK?PLDCore.nbTailProb(expFoulsFor(p,expMin),MODEL.nbFouls.dispersion,line):null; }
+/* THE OTHER SIDE OF THE FOUL. The desk has forecast fouls COMMITTED since the
+   count model went in and said nothing about fouls WON — which for 456 Premier
+   League players was moot, because the field was empty. It is not any more.
+
+   Deliberately NOT shrunk, unlike the committed side: shrunkF90 pulls a rate
+   toward the positional mean using priors that build-model.mjs fitted on fouls
+   conceded. There is no fouls-won prior, and borrowing the conceded one would
+   pull a winger's 3.0 toward a number describing a different act. The raw rate
+   with its sample flag is the honest version until a prior exists. */
+function expFoulsWonFor(p,expMin){
+  return (MODEL_OK&&p&&p.fw!=null)?PLDCore.expectedFouls(p.fw,expMin==null?90:expMin):null;
+}
+function pFoulsWonOver(p,line,expMin){
+  const ew=expFoulsWonFor(p,expMin);
+  return ew==null?null:PLDCore.nbTailProb(ew,MODEL.nbFouls.dispersion,line);
+}
+function wonBlockHtml(p){
+  const ew=expFoulsWonFor(p,90);
+  if(ew==null) return "";
+  const w1=pFoulsWonOver(p,1,90), w2=pFoulsWonOver(p,2,90);
+  return `Expected fouls won <b class="num">${ew.toFixed(1)}</b>`
+    +` · over 1.5 <b class="num">${w1==null?"—":(w1*100).toFixed(0)+"%"}</b>`
+    +` · over 2.5 <b class="num">${w2==null?"—":(w2*100).toFixed(0)+"%"}</b><br>`;
+}
 // Watchlist keys are club|name — names repeat across clubs, the pair doesn't.
 function watchKey(p){ return p.c+"|"+p.n; }
 function isWatched(p){ return state.watch.includes(watchKey(p)); }
@@ -2549,6 +2573,7 @@ function openPlayerProfile(k){
         Expected fouls <b class="num">${ef==null?"—":ef.toFixed(1)}</b>
         · over 1.5 <b class="num">${po1==null?"—":(po1*100).toFixed(0)+"%"}</b>
         · over 2.5 <b class="num">${po2==null?"—":(po2*100).toFixed(0)+"%"}</b><br>
+        ${wonBlockHtml(p)}
         <span class="faint">Two-stage card check (fouls→card): <b class="num">${two==null?"—":(two*100).toFixed(0)+"%"}</b> vs model ${pc==null?"—":(pc*100).toFixed(0)+"%"}. Referee scaling is applied per fixture.</span>
       </div>
     </div>`;

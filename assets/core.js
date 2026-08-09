@@ -647,6 +647,40 @@
     if (expFouls == null || perFoulHazard == null || !(perFoulHazard >= 0)) return null;
     return Math.min(0.95, Math.max(0.005, 1 - Math.exp(-expFouls * perFoulHazard)));
   }
+  /* Minutes-weighted league mean of a per-90 rate. The same weighting
+     build-model.mjs uses, because a rate averaged over PLAYERS rather than
+     over MINUTES is dominated by squad players with 90 minutes and a fluke. */
+  function leagueRate90(players, key) {
+    var sw = 0, sv = 0;
+    (players || []).forEach(function (p) {
+      var m = Number(p && p.min) || 0, v = p ? p[key] : null;
+      if (m > 0 && v != null && isFinite(v)) { sw += m; sv += v * m; }
+    });
+    return sw > 0 ? sv / sw : null;
+  }
+  /* THE TWO-STAGE HAZARD, in one place.
+   *
+   * Cards per foul, anchored so a player on the league's average foul rate
+   * comes out at the league's base card rate:
+   *
+   *     P(card) = 1 - exp(-fouls x hazard),  solved at the league average
+   *     =>  hazard = -ln(1 - baseRate) / foulLeague
+   *
+   * This is NOT the raw cards-per-foul the referee table carries. On Premier
+   * League data the referee tables average 0.174 and this anchoring gives
+   * 0.196 — a 12% gap, because the referee figure counts every card in the
+   * match against every foul in it, while this one is calibrated to the
+   * per-player probability the desk actually prints.
+   *
+   * It lives here because build-model.mjs bakes it for the Premier League and
+   * the other two desks have no model file and must derive it at runtime. Two
+   * implementations of that line is how the three desks would go back to
+   * pricing different things — which is what check-models.mjs exists to catch.
+   */
+  function twoStageHazard(baseRate, foulLeague) {
+    if (!(baseRate > 0) || !(baseRate < 1) || !(foulLeague > 0)) return null;
+    return -Math.log(1 - baseRate) / foulLeague;
+  }
   /* A referee's card multiplier, from two signals rather than one.
 
      Yellows per game (ypg) is the obvious measure but it is contaminated: a
@@ -888,6 +922,7 @@
     pCardsAtLeast, suspensionCycle, nextSuspension,
     brier, logLoss, reliability, glmProb,
     gammaln, expectedFouls, nbTailProb, cardProbFromFouls, recencyWeight, refCardFactor,
+    leagueRate90, twoStageHazard,
   };
 
   if (typeof module !== 'undefined' && module.exports) module.exports = PLDCore;

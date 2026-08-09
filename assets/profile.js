@@ -213,10 +213,23 @@
           rec.reds ? rec.reds + ' red' + (rec.reds === 1 ? '' : 's') : 'no reds')
       + cell('Yellows / 90', n2(rec.yc90), 'per full match')
       + cell('Fouls / 90', n2(rec.fouls90), 'conceded')
-      + cell('Recent fouls / 90', n2(rec.foulsForm),
-          rec.foulsForm == null ? 'awaiting refresh'
-            : rec.fouls90 == null ? ''
-            : rec.foulsForm > rec.fouls90 ? 'trending up' : 'trending down')
+      /* FOULS WON, under its own name.
+       *
+       * This cell said "Recent fouls / 90" and captioned it "trending up" or
+       * "trending down" against fouls conceded — and both sibling desks were
+       * passing p.fw, which is fouls DRAWN. So a Championship midfielder who
+       * wins 2.0 fouls a game and commits 1.0 read as a player whose fouling
+       * was trending up. Wrong metric, wrong label, and a comparison between
+       * two quantities that have no trend relationship at all.
+       *
+       * Renamed on the record too: `foulsForm` is the name that invited it. */
+      + cell('Fouls won / 90', n2(rec.foulsWon90),
+          rec.foulsWon90 == null ? 'awaiting refresh'
+            : rec.fouls90 == null || !(rec.fouls90 > 0) ? 'drawn'
+            /* Sinned against, or sinning. The ratio is the reason to carry
+               both numbers: a player who wins more than he gives away is a
+               different proposition to a referee than one who does not. */
+            : (rec.foulsWon90 / rec.fouls90).toFixed(2) + '× fouls conceded')
       + '</div>';
 
     var extra = '';
@@ -239,6 +252,46 @@
         + (f.ref ? ' · ' + esc(f.ref) : ' · referee not appointed') + '</div>'
         + (f.iso ? '<button class="btn pp-ics" type="button" data-pp-ics>'
             + '\ud83d\udcc5 Add to calendar</button>' : '')
+        + '</div>';
+    }
+    /* THE MATCH FORECAST — expected fouls and the over-lines.
+     *
+     * The Premier League desk has carried this on its own profile since the
+     * Negative-Binomial foul model went in; the Championship and La Liga had
+     * the same shared maths available in PLDCore and rendered none of it, so
+     * two desks showed a foul RATE and the third showed what the rate implies
+     * for a match. Rendered here rather than three times, and only when the
+     * desk hands over a forecast — a page with no model shows nothing rather
+     * than a row of dashes.
+     *
+     * The two-stage card figure is a CROSS-CHECK, not a second price: it comes
+     * from fouls x the league hazard, where the headline probability comes
+     * from the player's own card rate. Two routes to one number, and their
+     * disagreement is the point — a big gap means the player's cards and his
+     * fouls tell different stories. */
+    if (rec.forecast) {
+      var fc = rec.forecast;
+      extra += '<div class="pp-fc">'
+        + '<div class="pp-lab">Match forecast · full 90</div>'
+        + '<div class="pp-fcline">Expected fouls <b class="num">'
+        + (fc.expFouls == null ? '—' : Number(fc.expFouls).toFixed(1)) + '</b>'
+        + (fc.over1 == null ? '' : ' · over 1.5 <b class="num">'
+            + Math.round(fc.over1 * 100) + '%</b>')
+        + (fc.over2 == null ? '' : ' · over 2.5 <b class="num">'
+            + Math.round(fc.over2 * 100) + '%</b>')
+        + '</div>'
+        + (fc.wonExp == null ? '' : '<div class="pp-fcline">Expected fouls won <b class="num">'
+            + Number(fc.wonExp).toFixed(1) + '</b>'
+            + (fc.wonOver1 == null ? '' : ' · over 1.5 <b class="num">'
+                + Math.round(fc.wonOver1 * 100) + '%</b>')
+            + (fc.wonOver2 == null ? '' : ' · over 2.5 <b class="num">'
+                + Math.round(fc.wonOver2 * 100) + '%</b>')
+            + '</div>')
+        + (fc.twoStage == null ? '' : '<div class="pp-note">Two-stage card check '
+            + '(fouls → card): <b class="num">' + Math.round(fc.twoStage * 100)
+            + '%</b>' + (rec.prob == null ? '' : ' vs model <b class="num">'
+            + Math.round(rec.prob * 100) + '%</b>') + '. Referee scaling is '
+            + 'applied per fixture.</div>')
         + '</div>';
     }
     /* A note you write about a player, kept in this browser beside the
