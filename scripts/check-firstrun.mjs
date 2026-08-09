@@ -666,6 +666,69 @@ for (const page of DESKS_WITH_A_TOUR) {
   }
 }
 
+/* ---- 10b. the band a card prints is the band the key defines ------------ */
+/* severity() and the Legend key sat three inches apart on one page and
+   disagreed, and severity() is what every candidate row printed. The key said
+   High is 50%+ and Watch is 30-50%; the function said Critical at 45% and High
+   at 30%, and never returned "Watch" at all. So a 40% player was labelled HIGH
+   on his row and Watch by the key defining the label; a 46% player was
+   CRITICAL against a key with no such band; and "Watch" — which the Guide, the
+   glossary and the tour all explain — appeared nowhere on the desk.
+ *
+ * Nothing threw. Both halves were internally consistent, both had guards, and
+ * neither guard had ever been asked whether they agreed with each other.
+ * Parsed from both sides and compared, because a hand-written list here would
+ * be a third copy to drift. */
+{
+  const src = read('index.html');
+  const code = codeOnly(src);
+  const body = /function severity\(prob\)\{([\s\S]*?)\n\}/.exec(code);
+  assert.ok(body, 'severity() is gone or has been reshaped past recognition');
+  /* Ordered: each `if(prob>=X) return {label:"Y"...}`, then the bare return. */
+  const fn = [...body[1].matchAll(/if\(prob>=([\d.]+)\)\s*return \{label:"([^"]+)"/g)]
+    .map((m) => ({ min: Math.round(parseFloat(m[1]) * 100), label: m[2] }));
+  const last = /\n\s*return \{label:"([^"]+)"/.exec(body[1]);
+  assert.ok(last, 'severity() has no fallback band');
+  fn.push({ min: 0, label: last[1] });
+
+  const key = /<div class="legend-key" id="legendKey" hidden>([\s\S]*?)<\/div>/.exec(src);
+  assert.ok(key, 'the legend key is gone');
+  /* Every band row in the key: the bold label, then the range it claims. */
+  const rows = [...key[1].matchAll(/<b>(?:<span aria-hidden="true">.<\/span>\s*)?([A-Za-z]+)<\/b>\s*([^<]*)/g)]
+    .map((m) => ({ label: m[1], range: m[2].trim() }))
+    .filter((r) => fn.some((f) => f.label === r.label) || /%/.test(r.range));
+
+  assert.deepStrictEqual(rows.map((r) => r.label), fn.map((f) => f.label),
+    `the Legend key lists ${JSON.stringify(rows.map((r) => r.label))} and severity() ` +
+    `prints ${JSON.stringify(fn.map((f) => f.label))}. Every band a card draws ` +
+    'must be a band the key defines, in the same order — the key is the only ' +
+    'place a reader can find out what the word on the row means.');
+  for (let i = 0; i < fn.length; i++) {
+    /* Two forms in the key. "50%+" and "30–50%" open with the band's own lower
+       bound; the bottom band reads "under 18%", where 18 is the bound of the
+       band ABOVE it. Both are checked against severity() rather than one being
+       waved through — the bottom band is exactly where an off-by-one hides. */
+    const under = /under\s*(\d+)/i.exec(rows[i].range);
+    if (under) {
+      assert.equal(fn[i].min, 0,
+        `the key describes "${fn[i].label}" as an open bottom band but ` +
+        `severity() gives it a floor of ${fn[i].min}%`);
+      assert.ok(i > 0 && Number(under[1]) === fn[i - 1].min,
+        `the key says "${fn[i].label}" is under ${under[1]}%, but the band ` +
+        `above it ("${i > 0 ? fn[i - 1].label : '?'}") starts at ` +
+        `${i > 0 ? fn[i - 1].min : '?'}% — so a row between the two is in ` +
+        'neither band as the key describes them');
+    } else {
+      const n = /(\d+)/.exec(rows[i].range);
+      assert.ok(n, `the "${fn[i].label}" row of the key states no threshold`);
+      assert.equal(Number(n[1]), fn[i].min,
+        `the key says "${fn[i].label}" starts at ${n[1]}% and severity() starts ` +
+        `it at ${fn[i].min}%. A card then prints a band the key defines as a ` +
+        'different one, which is worse than no key at all.');
+    }
+  }
+}
+
 /* ---- 11. the Premier League route opens on numbers, like its siblings --- */
 /* The Championship and La Liga desks open on a title, a lead and a wall of
    stat tiles. This one opened on four stacked boxes of chrome — a framing

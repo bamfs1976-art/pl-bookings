@@ -238,9 +238,20 @@
   /* ═══ This Gameweek — the fixture-first landing view ═══ */
   .gw-hero{display:flex;flex-wrap:wrap;gap:1rem 1.4rem;align-items:center;justify-content:space-between;border-radius:16px;padding:1.05rem 1.3rem;margin-bottom:1rem;background:linear-gradient(135deg,color-mix(in srgb,var(--accent) 18%,var(--surface)) 0%,var(--surface) 62%);border:1px solid var(--border);box-shadow:var(--shadow-sm)}
   .gw-hero-l{display:flex;align-items:center;gap:.9rem;min-width:0}
-  .gw-hero-badge{font-size:.6rem;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:var(--accent-ink)}
-  .gw-hero-num{font-family:'Bricolage Grotesque',sans-serif;font-size:2.5rem;font-weight:800;letter-spacing:-.04em;line-height:.9}
+  /* line-height 1, not .9. A 40px face in a 36px line box sits proud of its
+     own block: the number rode high against the deadline line beside it and
+     the descender space went to the row below. */
+  .gw-hero-num{font-family:'Bricolage Grotesque',sans-serif;font-size:2.5rem;font-weight:800;letter-spacing:-.04em;line-height:1}
+  /* The live/sched pill used to sit on a line of ITS OWN above the deadline,
+     which read as a floating chip attached to nothing — it qualifies the
+     deadline, so it sits with it.
+
+     INLINE, not a flex row. As flex siblings the pill and the sentence are two
+     items, and at 390px the sentence cannot fit beside the pill, so it wraps
+     to the next line and the pill is stranded alone again — the same picture,
+     reached a different way. Inline, the sentence simply flows on after it. */
   .gw-hero-dl{font-size:.86rem;color:var(--text-2);margin-top:.15rem}
+  .gw-hero-dl .live-pill{vertical-align:2px;margin-right:.4rem}
   .gw-hero-dl b{color:var(--warn);font-weight:700}
   .gw-hero-r{display:flex;flex-direction:column;gap:.3rem;align-items:flex-end;text-align:right}
   .fx-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(330px,1fr));gap:1rem}
@@ -298,7 +309,13 @@
   /* Team-card market strip: total cards and both-teams-carded per fixture */
   .mk-strip{display:flex;align-items:center;gap:1.15rem;flex-wrap:wrap;padding:.45rem .85rem;
             border-bottom:1px solid var(--border);background:var(--surface-2)}
-  .mk-cell{display:flex;flex-direction:column;gap:.05rem;line-height:1.15}
+  /* align-items:flex-start. A flex column stretches its items across the cross
+     axis by default, and .mlab carries a dotted underline as its "there is a
+     definition here" affordance — so any cell whose VALUE is wider than its
+     label would draw that rule past the end of the words. Today every label
+     happens to be the wider of the two, so this changes nothing on screen; it
+     stops a longer value from breaking the affordance later. */
+  .mk-cell{display:flex;flex-direction:column;align-items:flex-start;gap:.05rem;line-height:1.15}
   .mk-lab{font-family:var(--mono);font-size:.64rem;letter-spacing:.08em;color:var(--text-2);font-weight:700}
   .mk-val{font-family:var(--mono);font-size:.86rem;font-weight:800;font-variant-numeric:tabular-nums;color:var(--text)}
   .mk-note{font-family:var(--mono);font-size:.56rem;color:var(--text-3);align-self:center}
@@ -317,6 +334,17 @@
   .name-cell{display:flex;align-items:center;gap:.45rem;min-width:0}
   .gwsusp-yc{font-family:var(--mono);font-size:.72rem;color:var(--warn)}
   @media(max-width:700px){.fx-grid{grid-template-columns:1fr}.gw-hero-num{font-size:2.1rem}}
+  /* THE HERO STACKS ON A PHONE. Two columns at 390px left the text column
+     about 210px wide, and every line in it broke somewhere it should not:
+     "Deadline / Sat, 15 Aug, 10:00 · / 5d 20h to lock" over three lines with
+     the SCHED pill stranded beside the orphaned word. Every no-wrap patch just
+     moved which word was orphaned — the column was too narrow for any of it.
+     Stacked, the number reads as a heading and the detail gets the full width. */
+  @media(max-width:560px){
+    .gw-hero-l{display:block}
+    .gw-hero-l>div:first-child{margin-bottom:.15rem}
+    .gw-hero-num{font-size:2.3rem;line-height:1.05}
+  }
   /* Phones: the club crest rides on the avatar, so the separate club box is
      redundant chrome — dropping it gives long names the width they need. */
   @media(max-width:600px){
@@ -626,9 +654,14 @@
          panel, which is not somewhere a reader looks when they hit an
          unfamiliar label at the top of it. -->
     <div class="legend-key" id="legendKey" hidden>
-      <span class="lk"><i style="background:var(--danger)"></i><b>High</b> 50%+ chance of a card</span>
-      <span class="lk"><i style="background:var(--warn)"></i><b>Watch</b> 30&ndash;50%</span>
-      <span class="lk"><i style="background:var(--text-3)"></i><b>Moderate</b> under 30%</span>
+      <!-- FOUR BANDS, because four are printed. The key listed three and the
+           cards drew four, so "Moderate under 30%" was doing duty for both the
+           Moderate and Low rows and the reader had no way to tell them apart.
+           The icon beside each is the one the row carries. -->
+      <span class="lk"><i style="background:var(--danger)"></i><b><span aria-hidden="true">◆</span> High</b> 50%+ chance of a card</span>
+      <span class="lk"><i style="background:var(--warn)"></i><b><span aria-hidden="true">▲</span> Watch</b> 30&ndash;50%</span>
+      <span class="lk"><i style="background:var(--text-2)"></i><b><span aria-hidden="true">■</span> Moderate</b> 18&ndash;30%</span>
+      <span class="lk"><i style="background:var(--text-3)"></i><b><span aria-hidden="true">·</span> Low</b> under 18%</span>
       <span class="lk"><span class="cmeter" aria-hidden="true"><span class="cmeter-p on"></span><span class="cmeter-p on"></span><span class="cmeter-p on"></span><span class="cmeter-p"></span><span class="cmeter-p"></span></span> card rate per 90</span>
       <span class="lk"><b>Heat</b> expected cards in the match</span>
       <span class="lk">Press any dotted label for its definition.</span>
@@ -3561,9 +3594,22 @@ function marketStripHtml(board,h2h){
    readable in greyscale, in a screenshot, and by someone who cannot separate
    the hues at all. The shapes ascend in weight rather than being four
    arbitrary glyphs, so the order survives without the colour too. */
+/* THE BANDS THE REST OF THE PAGE PUBLISHES.
+ *
+ * This function and the Legend key three inches above it disagreed, and the
+ * function is what every card printed. The legend, the Guide, the glossary and
+ * the tour all say High is 50%+ and Watch is 30-50%; severity() said Critical
+ * at 45% and High at 30%, and never returned "Watch" at all. So a 40% player
+ * was labelled HIGH on his row and Watch by the key defining the label, a 46%
+ * player was CRITICAL against a key with no such band, and the word "Watch" —
+ * which the Guide spends a paragraph on — appeared nowhere on the desk.
+ *
+ * Nothing threw. Both halves were internally consistent and had been shipping
+ * side by side. Found by reading a rendered card against the key above it.
+ */
 function severity(prob){
-  if(prob>=0.45) return {label:"Critical",col:"var(--danger)",icon:"◆"};
-  if(prob>=0.30) return {label:"High",col:"var(--warn)",icon:"▲"};
+  if(prob>=0.50) return {label:"High",col:"var(--danger)",icon:"◆"};
+  if(prob>=0.30) return {label:"Watch",col:"var(--warn)",icon:"▲"};
   if(prob>=0.18) return {label:"Moderate",col:"var(--text-2)",icon:"■"};
   return {label:"Low",col:"var(--text-3)",icon:"·"};
 }
@@ -3723,7 +3769,10 @@ function deadlineHtml(){
   if(ms<=0) return "Deadline passed · gameweek underway";
   const hrs=Math.floor(ms/3600000), mins=Math.floor((ms%3600000)/60000), days=Math.floor(hrs/24);
   const human=days>=1?`${days}d ${hrs%24}h to lock`:hrs>=1?`${hrs}h ${mins}m to lock`:`${mins}m to lock`;
-  return `Deadline ${fmtKO(ev.deadline_time)} · <b>${human}</b>`;
+  /* The date and the countdown each kept whole. Left to wrap freely at 390px
+     the line broke inside the date itself — "Deadline Sat, 15 / Aug, 10:00" —
+     which is a date split across two lines rather than a sentence wrapping. */
+  return `Deadline <span class="nowrap">${fmtKO(ev.deadline_time)}</span> · <b class="nowrap">${human}</b>`;
 }
 function renderGwHero(){
   const el=$("gwHero"); if(!el) return;
@@ -3747,14 +3796,25 @@ function renderGwHero(){
   if(LIVE){
     const fx=sortFixturesByHeat(LIVE.fixtures.filter(f=>f.event===LIVE.currentGW));
     const m=fx.length?fixtureMeta(fx[0]):null;
-    if(m) top=`<div class="gw-hero-top">Hottest this week <b>${esc(m.h)} v ${esc(m.a)}</b> <span class="gw-hero-heat">${m.heat.toFixed(1)}</span> expected cards</div>`;
+    /* The fixture and its number kept as one unbreakable run: at 390px the
+       line wrapped between them, so the hottest match of the round was split
+       across two lines from its own figure. */
+    /* "Hottest this week ARS v CHE 4.1 expected cards" ran to two lines at
+       390px and orphaned "expected cards" on the second. Shorter, and the
+       fixture and its own number are one unbreakable run so the match can
+       never be split from the figure describing it. */
+    if(m) top=`<div class="gw-hero-top">Hottest <span class="nowrap"><b>${esc(m.h)} v ${esc(m.a)}</b> &middot; <span class="gw-hero-heat">${m.heat.toFixed(1)}</span> cards</span></div>`;
   }
   el.innerHTML=`
     <div class="gw-hero-l">
-      <div><div class="gw-hero-badge">Bookings Desk</div><div class="gw-hero-num">GW ${gw}</div></div>
+      <!-- The "BOOKINGS DESK" eyebrow that stood above this number said what
+           the topbar two inches higher already says, and at 390px it wrapped
+           onto two lines and squeezed the gameweek number into the corner
+           under it. The gradient carries the league's colour; the wordmark
+           does not need saying twice. -->
+      <div><div class="gw-hero-num">GW ${gw}</div></div>
       <div style="min-width:0">
-        <div style="margin-bottom:.25rem">${pill}</div>
-        <div class="gw-hero-dl">${deadlineHtml()}</div>
+        <div class="gw-hero-dl">${pill}<span>${deadlineHtml()}</span></div>
         <div class="faint" style="font-size:.68rem;margin-top:.2rem">${basis}</div>
         ${top}
       </div>

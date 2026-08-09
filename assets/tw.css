@@ -1167,6 +1167,8 @@ details.model-detail:not([open]) .fx-simrow{display:none}
 /* The one line the hero was missing: where the cards are most likely to be.
    It was a mostly-empty banner restating a gameweek number the page gives
    twice more, occupying the space above the fold. */
+/* A run that must not be broken across lines — a fixture and its own number. */
+.nowrap{white-space:nowrap}
 .gw-hero-top{font-size:.78rem;color:var(--text-2);margin-top:.35rem}
 .gw-hero-top b{color:var(--text)}
 .gw-hero-heat{font-family:var(--mono);font-variant-numeric:tabular-nums;
