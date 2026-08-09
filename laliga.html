@@ -1333,6 +1333,7 @@
           }).join('')
         + h2hChip(x)
         + '<span class="mkt">Both teams carded <b>' + pct(x.m.bothCarded) + '</b></span>'
+        + '<span class="mkt" title="Each side picks up two or more. The two sides are priced independently, and real matches produce joint outcomes more often than that — so this is a floor.">Both 2+ <b>' + pct(x.m.bothTwo) + '</b></span>'
         + bookingPointsChips(x)
         + '</div>'
         + '</div>';

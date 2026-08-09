@@ -405,6 +405,37 @@ t('both teams carded is the product of each side not staying clean', () => {
   assert.equal(core.probBothCarded([0.5], []), 0);
   assert.ok(core.probBothCarded([0.3, 0.3], [0.3, 0.3]) > core.probBothCarded([0.3], [0.3]));
 });
+/* BOTH TEAMS TO N+ CARDS.
+ *
+ * The n = 1 case has a closed form the desk has been shipping for months
+ * (1 minus the product of every man staying clean, per side), and the general
+ * case walks the Poisson-binomial count distribution instead. If the two ever
+ * disagree at n = 1 one of them is wrong, and the tail is the half nobody
+ * would notice — so the agreement is asserted, not assumed. */
+t('both teams to n+ cards agrees with the closed form at n = 1', () => {
+  const home = [0.31, 0.24, 0.18, 0.12], away = [0.27, 0.22, 0.16, 0.09];
+  const closed = core.probBothCarded(home, away);
+  const walked = core.probBothAtLeast(home, away, 1);
+  assert.ok(Math.abs(closed - walked) < 1e-12,
+    `n=1 should reproduce probBothCarded exactly, got ${walked} vs ${closed}`);
+  // a hand-checkable case: one man each at 0.5, both needing two cards, is
+  // impossible — a single player cannot be booked twice in this model
+  assert.equal(core.probBothAtLeast([0.5], [0.5], 2), 0);
+  // two men each at 0.5 -> each side needs both booked -> 0.25 * 0.25
+  assert.ok(Math.abs(core.probBothAtLeast([0.5, 0.5], [0.5, 0.5], 2) - 0.0625) < 1e-12);
+});
+t('both teams to n+ cards falls as the bar rises', () => {
+  const home = [0.4, 0.35, 0.3, 0.25, 0.2], away = [0.38, 0.3, 0.28, 0.22, 0.18];
+  const one = core.probBothAtLeast(home, away, 1);
+  const two = core.probBothAtLeast(home, away, 2);
+  const three = core.probBothAtLeast(home, away, 3);
+  assert.ok(one > two && two > three, `should be monotone, got ${one}, ${two}, ${three}`);
+  assert.ok(two > 0 && two < 1, `two should be a live probability, got ${two}`);
+  // an empty side can never reach any bar
+  assert.equal(core.probBothAtLeast(home, [], 2), 0);
+  // asking for fewer than one card is asking for one
+  assert.equal(core.probBothAtLeast(home, away, 0), one);
+});
 t('teamCardMarkets assembles the board consistently', () => {
   const home = [0.3, 0.25, 0.2], away = [0.28, 0.2, 0.15];
   const m = core.teamCardMarkets(home, away);
@@ -412,6 +443,9 @@ t('teamCardMarkets assembles the board consistently', () => {
   assert.ok(m.over[3.5] < m.over[4.5] === false);           // 4.5 must be the harder line
   assert.ok(m.over[4.5] < m.over[3.5]);
   assert.ok(m.bothCarded > 0 && m.bothCarded < 1);
+  // the board's BTC2 is the same walk, not a second implementation
+  assert.ok(Math.abs(m.bothTwo - core.probBothAtLeast(home, away, 2)) < 1e-12);
+  assert.ok(m.bothTwo < m.bothCarded, 'two cards each cannot beat one card each');
 });
 t('minute weights spread an XI across the squad', () => {
   const w = core.minuteWeights([3000, 3000, 3000, 300], 11);

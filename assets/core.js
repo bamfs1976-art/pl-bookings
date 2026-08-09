@@ -853,6 +853,33 @@
     return Math.min(1, Math.max(0, (1 - clean(homePs)) * (1 - clean(awayPs))));
   }
 
+  /* BOTH TEAMS TO GET n OR MORE CARDS — the generalisation of the above.
+   *
+   * probBothCarded is this at n = 1, and its shortcut (1 minus the product of
+   * every player staying clean) only works at n = 1. For n >= 2 the side's
+   * whole Poisson-binomial distribution is needed, which cardCountDist
+   * already builds.
+   *
+   * THE TWO SIDES ARE TREATED AS INDEPENDENT, and that is an assumption, not
+   * a derivation. They are not independent: one flashpoint books a man from
+   * each team, and a referee losing control books five across both. The error
+   * runs one way — real matches produce joint outcomes more often than
+   * independence predicts — so this UNDERSTATES the true chance, and the
+   * understatement grows with n. Treat BTC2 as a floor rather than a price,
+   * the same caution the Guide already gives for O5.5 and above.
+   */
+  function probBothAtLeast(homePs, awayPs, n) {
+    const need = Math.max(1, Math.floor(Number(n) || 1));
+    const side = (ps) => {
+      const dist = cardCountDist(ps);
+      if (!dist || !dist.length) return 0;
+      let acc = 0;
+      for (let k = need; k < dist.length; k++) acc += dist[k];
+      return Math.min(1, Math.max(0, acc));
+    };
+    return Math.min(1, Math.max(0, side(homePs) * side(awayPs)));
+  }
+
   /* ---- booking points ---------------------------------------------------
    * The market bookmakers actually price for cards is BOOKING POINTS, not a
    * card count: 10 a yellow, 25 a red. The desks priced only the count, so
@@ -947,13 +974,16 @@
       expectedAway: Math.round(expectedCards(awayPs) * 100) / 100,
       over,
       bothCarded: probBothCarded(homePs, awayPs),
+      /* Both sides on two or more. The liquid step up from BTC, and the one
+         the desk had every input for and did not price. */
+      bothTwo: probBothAtLeast(homePs, awayPs, 2),
     };
   }
 
   const PLDCore = {
     riskScore, normName, pickPL, summarisePicks, calibrate, impliedProb, fairOdds, edgePct, LOGISTIC_SLOPE,
     marketProb, marketProbDeVig, valuePoint, TYPICAL_CARD_MARGIN,
-    cardCountDist, probOverCards, expectedCards, probBothCarded, teamCardMarkets,
+    cardCountDist, probOverCards, expectedCards, probBothCarded, probBothAtLeast, teamCardMarkets,
     bookingPointsDist, expectedPoints, probOverPoints, leagueRedRate,
     bookingPointsMarkets, YELLOW_POINTS, RED_POINTS,
     minuteWeights, matchLambdas,

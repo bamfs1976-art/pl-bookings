@@ -758,6 +758,64 @@ for (const page of DESKS_WITH_A_TOUR) {
     'the fixture card no longer passes a foul board to the strip');
 }
 
+/* ---- 10d. both teams to two cards, on every match on every desk --------- */
+/* The strip has always priced "both teams carded" — one booking a side, which
+   on most fixtures is a coin flip you have already won. The interesting
+   version is two each, and it is the same walk down the same Poisson-binomial
+   the desk already builds, so the only way to get it wrong is to compute it
+   locally on one desk and drift.
+ *
+ * Guarded per desk, from the parsed cell rather than from the file. `bothTwo`
+ * appears in core.js's export list and in three other desks' source, so a
+ * file-wide /bothTwo/ is green on a desk that never prints it — the same hole
+ * that let `data-club` be vouched for by its own click handler. */
+{
+  /* Each desk's own cell, sliced by the label the reader sees. The slice is
+     the point: the assertion must fail if THIS desk stops rendering it, not
+     merely if the string leaves the repository. */
+  const TITLE = /title="([^"]*)"[^"]*Both 2\+/;   // the sibling desks' plain span
+  const CELLS = [
+    { file: 'index.html',
+      slice: /\$\{cell\("Both teams 2\+ cards"[\s\S]{0,700}?\)\}/,
+      help: /,\s*board\.bothTwo\s*,\s*"([^"]*)"/ },
+    { file: 'eflc.html', slice: /<span class="mkt"[^>]*>Both 2\+ <b>[\s\S]{0,120}?<\/b>/, help: TITLE },
+    { file: 'laliga.html', slice: /<span class="mkt"[^>]*>Both 2\+ <b>[\s\S]{0,120}?<\/b>/, help: TITLE },
+    { file: 'today.html', slice: /<span class="mkt"[^>]*>Both 2\+ <b>[\s\S]{0,120}?<\/b>/, help: TITLE },
+  ];
+  for (const { file, slice } of CELLS) {
+    const src = read(file);
+    assert.ok(/[Bb]oth (teams )?carded/.test(src),
+      `${file} no longer prices both teams carded at all`);
+    const m = slice.exec(src);
+    assert.ok(m, `${file} prices both teams to ONE card but not to two. Every ` +
+      'match on every desk carries the pair, or the reader gets a different ' +
+      'board depending on which league he opened.');
+    /* Sourced from the model, not recomputed beside it. */
+    assert.ok(/\bbothTwo\b/.test(m[0]),
+      `${file}'s two-card cell does not read the model's bothTwo — a second ` +
+      'implementation of the same number is a second thing to drift');
+  }
+  /* THE CAVEAT TRAVELS WITH THE NUMBER. The two sides are priced as
+     independent, and they are not: one flashpoint books a man from each. The
+     figure is therefore a floor, and a floor printed as a point estimate with
+     no note is a number the reader will trust further than it deserves. */
+  for (const { file, slice, help: rx } of CELLS) {
+    const m = slice.exec(read(file));
+    const help = rx.exec(m[0]);
+    assert.ok(help, `${file}'s two-card cell has no explanation at all`);
+    assert.ok(/independent/i.test(help[1]) && /floor/i.test(help[1]),
+      `${file}'s two-card cell no longer says the two sides are priced ` +
+      'independently and that the figure is therefore a floor. Without it the ' +
+      'number reads as the desk\'s best estimate rather than its lower bound.');
+  }
+  /* THE SHARED SOURCE. One walk, in core.js, feeding all four. */
+  const core = read('assets/core.js');
+  assert.ok(/bothTwo:\s*probBothAtLeast\(homePs,\s*awayPs,\s*2\)/.test(core),
+    'teamCardMarkets no longer derives bothTwo from probBothAtLeast at n = 2');
+  assert.ok(/function probBothAtLeast\s*\(/.test(core),
+    'probBothAtLeast is gone or has been renamed away from its callers');
+}
+
 /* ---- 10b. the band a card prints is the band the key defines ------------ */
 /* severity() and the Legend key sat three inches apart on one page and
    disagreed, and severity() is what every candidate row printed. The key said

@@ -3680,7 +3680,8 @@ function marketStripHtml(board,h2h,fouls){
     <div class="mk-cell">${PLDMetric.label("Expected cards",{abbr:"EXP",help:"The total yellows the model expects in this match, adding up every rated player's own chance. Typically 2 to 6; the league average is 3.7."})}<span class="mk-val">${board.expected.toFixed(1)}</span></div>
     ${cell("3.5+ cards","O3.5",board.over[3.5],"The chance of 4 or more cards in the match. Runs roughly 20% to 70%.")}
     ${cell("4.5+ cards","O4.5",board.over[4.5],"The chance of 5 or more cards in the match. Runs roughly 10% to 50%.")}
-    ${cell("Both teams carded","BTC",board.bothCarded,"The chance each side picks up at least one card. Usually 60% to 90% — the most likely of these three.")}
+    ${cell("Both teams carded","BTC",board.bothCarded,"The chance each side picks up at least one card. Usually 60% to 90% — the most likely of these four.")}
+    ${cell("Both teams 2+ cards","BTC2",board.bothTwo,"The chance each side picks up two or more — both halves of the match booked twice. The two sides are priced independently, but real matches produce joint outcomes more often than that: one flashpoint books a man from each side. Read it as a floor.")}
     ${h2hCell}
     ${foulCells}
     ${board.thin?'<span class="mk-note">thin sample</span>':''}
