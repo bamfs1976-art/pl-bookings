@@ -909,7 +909,14 @@
       var c = r.c;
       var tierTxt = r.tier === 1 ? 'Card-heavy' : r.tier === 3 ? 'Disciplined' : r.tier === 2 ? 'Middling' : '—';
       var w = c.ca == null ? 0 : Math.round((c.ca / max) * 100);
-      return '<tr>'
+      /* DRILL-THROUGH. The club table answered "which sides are card-heavy"
+         and then stopped: the obvious next question — WHICH PLAYERS — meant
+         going to another tab and finding the club in a select. The Premier
+         League desk has opened the filtered player list on a row tap since it
+         was built; these two shipped the same table with the row inert. */
+      return '<tr data-club="' + esc(c.short) + '" tabindex="0" role="link"'
+        + ' aria-label="View ' + esc(c.name) + ' players"'
+        + ' title="View ' + esc(c.name) + '\u2019s players">'
         + '<td><span class="clubcell">' + PLDProfile.crest(c)
         + esc(c.name)
         + ((c.ca != null && c.ca >= 2.0 && c.fm != null && c.fm >= 12.0)
@@ -926,6 +933,25 @@
         + '</tr>';
     }).join('');
   }
+  /* A club row opens that club's players, the same drill-through the Premier
+     League desk has. SHELL is read lazily: it is assigned further down this
+     file, and by the time anybody clicks a row it exists — the same order the
+     command palette's club entries already rely on. */
+  function openClubPlayers(short) {
+    if (SHELL) SHELL.setArea('desk', 'panel-players');
+    var sel = $('#fClub'); if (sel) sel.value = short;
+    var q = $('#fSearch'); if (q) q.value = '';
+    renderPlayers();
+  }
+  $('#tblClubs').addEventListener('click', function (e) {
+    var tr = e.target.closest('tr[data-club]');
+    if (tr) openClubPlayers(tr.getAttribute('data-club'));
+  });
+  $('#tblClubs').addEventListener('keydown', function (e) {
+    if (e.key !== 'Enter' && e.key !== ' ') return;
+    var tr = e.target.closest('tr[data-club]');
+    if (tr) { e.preventDefault(); openClubPlayers(tr.getAttribute('data-club')); }
+  });
   $$('#tblClubs th[data-sort]').forEach(function (th) {
     th.addEventListener('click', function () {
       var k = th.getAttribute('data-sort');

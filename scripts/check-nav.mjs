@@ -367,8 +367,74 @@ assert.ok(/desks are unaffected/.test(today),
   'working when only the combined view breaks');
 
 
+/* ---- a club row opens that club's players, on every desk ---------------- */
+/* The club table answers "which sides are card-heavy" and the next question is
+   always WHICH PLAYERS. The Premier League desk has opened the filtered player
+   list on a row tap since it was built; the Championship and La Liga shipped
+   the same table, sorted the same way, with the row inert — so the answer was
+   two tabs and a select away on two desks out of three and one tap on the
+   third. Nothing failed: an inert row throws nothing and looks identical.
+
+   Keyboard as well as pointer, because a row is not a link element: without
+   tabindex and a key handler this is a drill-through that exists only for a
+   mouse. */
+/* THE ROW EMIT AND THE BINDING ARE CHECKED SEPARATELY, because a file-wide
+   search for "data-club" is answered by the HANDLER'S OWN SELECTOR. Stripping
+   the attribute off every row left all four of these green on the first
+   attempt: the code that looks for the rows was vouching for the rows. Same
+   shape as the data-open-tour hole, found the same way — by mutation. */
+/* The CLUB ROW's own markup, sliced out first. A file-wide search for
+   tabindex="0" is answered by the PLAYER rows, which have carried it all
+   along — so the club row could lose it while the check stayed green. Every
+   attribute is asserted against this slice and nothing else. */
+const CLUB_ROWS = [
+  { page: 'index.html', table: 'clubRows', bind: 'clubRows',
+    /* built with createElement: the marks are property assignments, from the
+       data-club line to the point the row's cells are written */
+    slice: /tr\.dataset\.club\s*=[\s\S]{0,400}?tr\.innerHTML\s*=/,
+    marks: { focusable: /tabIndex\s*=\s*0/, link: /"role"\s*,\s*"link"/ } },
+  { page: 'eflc.html', table: 'tblClubs', bind: 'tblClubs',
+    /* built as an HTML string: attributes inside one template, from the
+       opening tag to the first cell */
+    slice: /<tr data-club="[\s\S]{0,400}?<td>/,
+    marks: { focusable: /tabindex="0"/, link: /role="link"/ } },
+  { page: 'laliga.html', table: 'tblClubs', bind: 'tblClubs',
+    slice: /<tr data-club="[\s\S]{0,400}?<td>/,
+    marks: { focusable: /tabindex="0"/, link: /role="link"/ } }
+];
+for (const d of CLUB_ROWS) {
+  const src = read(d.page);
+  const row = d.slice.exec(src);
+  assert.ok(row,
+    `${d.page} does not EMIT data-club on its club rows. A search of the file ` +
+    "finds the handler's selector; this looks at what is rendered.");
+  assert.ok(d.marks.focusable.test(row[0]),
+    `${d.page} club rows are not focusable — the drill-through works for a ` +
+    'mouse and does not exist for a keyboard. (The player rows carry ' +
+    'tabindex too, so this is checked on the club row alone.)');
+  assert.ok(d.marks.link.test(row[0]),
+    `${d.page} club rows do not announce themselves as a link, so a screen ` +
+    'reader reads a table cell and no affordance');
+  /* WIRED, and both events. A passing pointer path is exactly what hides a
+     missing key handler — the row still says role="link" to a screen reader
+     while Enter does nothing. */
+  for (const ev of ['click', 'keydown']) {
+    const bound = new RegExp('[("\'#]' + d.bind + '["\')\\]]*\\s*\\)?\\s*\\.addEventListener\\(\\s*["\']' + ev);
+    assert.ok(bound.test(src),
+      `${d.page} never binds ${ev} on #${d.bind} — its club rows are marked up ` +
+      'as links and do nothing');
+  }
+  /* The DEFINITION. `/openClubPlayers\(/` over the file is matched by the
+     handler's CALL, so renaming the function out from under it left this
+     green while every row threw on click. */
+  assert.ok(/function openClubPlayers\s*\(/.test(src),
+    `${d.page} has no openClubPlayers() definition — the rows call a function ` +
+    'that does not exist and throw on the first tap');
+}
+
 console.log(
   `check-nav OK: ${DESKS.length} desks, each linking to all ${DESKS.length} and ` +
   'marking itself current, all routed before the catch-all; combined views ' +
-  'advertised from every desk and named in the tour'
+  'advertised from every desk and named in the tour; a club row opens its ' +
+  'players on all three league desks, by pointer and by keyboard'
 );
