@@ -21,14 +21,17 @@
    ------------------------------------------------------------------------ */
 :root{
   --bg:#eef1f6; --surface:#ffffff; --surface-2:#f4f6fa; --surface-3:#eaedf3;
-  --text:#0c1322; --text-2:#586275; --text-3:#8b94a5;
+  --text:#0c1322; --text-2:#586275; --text-3:#7d8595;
   --border:#e3e7ee; --border-2:#d7dce6;
   --on-accent:#ffffff;
   --danger:#dc2626; --warn:#d97706; --good:#16a34a; --info:#4f46e5;
   /* Darker variants for small text on a light surface: the fill colours above
      are tuned for badges and only reach ~2.9:1 as body text, under the 4.5:1
-     WCAG 2.2 AA needs at these sizes. */
-  --danger-ink:#b91c1c; --warn-ink:#a35709; --good-ink:#15803d;
+     WCAG 2.2 AA needs at these sizes. Every value here is checked against
+     every ground by scripts/check-contrast.mjs — --good-ink sat at 4.43:1 on
+     --bg for as long as the token had existed, which is exactly the kind of
+     near-miss nobody sees and nobody reports. */
+  --danger-ink:#b91c1c; --warn-ink:#a35709; --good-ink:#147a3a;
   --target:#16a34a; --mid:#d97706; --fade:#64748b;
   --shadow-sm:0 1px 2px rgba(13,19,34,.06);
   --shadow:0 4px 16px -4px rgba(13,19,34,.12),0 1px 3px rgba(13,19,34,.06);
@@ -69,7 +72,7 @@ html[data-theme="dark"]{
   --shadow:0 10px 30px -8px rgba(0,0,0,.55),0 2px 6px rgba(0,0,0,.4);
   --pl:#ff2d7e; --eflc:#a78bfa; --ll:#fb923c; --all:#67e8f9;
   /* The dark marks are already pastels clearing AA on #0b0f1a, so ink == mark. */
-  --pl-ink:#ff2d7e; --eflc-ink:#a78bfa; --ll-ink:#fb923c; --all-ink:#67e8f9;
+  --pl-ink:#ff418a; --eflc-ink:#a78bfa; --ll-ink:#fb923c; --all-ink:#67e8f9;
   --accent:#22d3ee; --ring:rgba(34,211,238,.5);
 }
 /* Two classes, so these beat the generic dark block above it whatever the
@@ -961,3 +964,44 @@ details.model-detail:not([open]) .fx-simrow{display:none}
 .gw-table .cmeter{margin-top:0}
 @media (pointer:coarse){ .gw-table th button{min-height:44px} .gw-table td{padding:12px 10px} }
 .gw-table .arr{opacity:.55;font-size:10px}
+
+/* ─── Heat as a length, not three digits ────────────────────────────────────
+   "5.3", "4.3", "4.2" beside each other are three numbers a reader compares
+   arithmetically. Relative severity is the actual question, and a bar answers
+   it without reading. Scaled 2.0–6.0, the range a fixture's expected total
+   really occupies. */
+.heatbar{display:inline-flex;align-items:center;gap:6px}
+.heatbar-t{width:42px;height:6px;border-radius:999px;background:var(--surface-3);
+  overflow:hidden;flex:none;display:block}
+.heatbar-t i{display:block;height:100%;border-radius:999px;background:var(--warn)}
+.heatbar.hot .heatbar-t i{background:var(--danger)}
+.heatbar-n{font-family:var(--mono);font-variant-numeric:tabular-nums;
+  font-weight:700;font-size:.82rem;color:var(--text-2)}
+.heatbar.hot .heatbar-n{color:var(--danger-ink)}
+
+/* MONO IS FOR FIGURES. Kick-off times, the referee line and the card counts
+   were all set in a monospace face at 10-11px, which reads as debug output
+   rather than as a caption. The numbers keep it — tabular figures are the one
+   thing it is genuinely for. */
+.fxh2-ko{font-size:.7rem;color:var(--text-3);margin-top:.18rem;
+  font-variant-numeric:tabular-nums}
+.fxh2-ref{font-size:.68rem;color:var(--text-3)}
+
+/* One share per card, in the header. It was a full-width footer row on every
+   card — a secondary action given primary weight, ten times over. */
+.fx-shareico{background:none;border:1px solid var(--border-2);border-radius:8px;
+  width:28px;height:28px;flex:none;cursor:pointer;color:var(--text-3);
+  font-size:13px;line-height:1;display:inline-flex;align-items:center;justify-content:center}
+.fx-shareico:hover{color:var(--text);border-color:var(--accent)}
+.fx-shareico:focus-visible{outline:3px solid var(--ring);outline-offset:2px}
+@media (pointer:coarse){ .fx-shareico{width:44px;height:44px} }
+
+/* The band's shape, beside its word. */
+.sev{font-size:.68rem;font-weight:700;margin-top:.1rem}
+/* The one line the hero was missing: where the cards are most likely to be.
+   It was a mostly-empty banner restating a gameweek number the page gives
+   twice more, occupying the space above the fold. */
+.gw-hero-top{font-size:.78rem;color:var(--text-2);margin-top:.35rem}
+.gw-hero-top b{color:var(--text)}
+.gw-hero-heat{font-family:var(--mono);font-variant-numeric:tabular-nums;
+  font-weight:700;color:var(--danger-ink)}

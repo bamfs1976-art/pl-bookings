@@ -128,6 +128,14 @@ jobs:
       - name: The first run shows the product, not an overlay
         run: node scripts/check-firstrun.mjs
 
+      # Contrast has a right answer, is invisible to whoever picked the colour,
+      # and degrades for the people least able to report it. --good-ink sat at
+      # 4.43:1 on --bg for as long as the token had existed; --text-3 at 2.70:1;
+      # and ten rules used --accent-2 — the league's bright FILL colour — as
+      # small uppercase text. 17 failing pairs, none of which anything checked.
+      - name: Every text colour clears WCAG AA
+        run: node scripts/check-contrast.mjs
+
       # One palette, four desks. La Liga was built by copying the Championship
       # page, palette and all, so it shipped in the wrong league's purple while
       # its own nav dot and its own share cards were orange. Nothing failed:
