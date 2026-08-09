@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-/* The UX brief's structural claims, pinned. Sections 1, 2, 4 and 6.
+/* The UX brief's structural claims, pinned. Sections 1, 2, 4, 6 and 7.
  *
  * Named for the first thing it guarded and grown since. What it holds:
  * nothing auto-opens over an unseen page (1); every metric on the fixture card
@@ -295,6 +295,59 @@ for (const page of DESKS_WITH_A_TOUR) {
   });
   assert.ok(/\$\("gwRefresh"\)/.test(code), 'nothing wires the retry button');
 }
+
+/* ---- 8. the watchlist teaches, follows, and sign-in states its price ----- */
+/* Section 7. The panel hid itself entirely when nothing was starred, so the
+   one feature that makes the desk yours was invisible to everybody who had not
+   already found it — you had to discover the star to discover the watchlist,
+   and the watchlist is the reason to press the star. */
+{
+  const src = read('index.html');
+  const code = codeOnly(src);
+  const css = read('assets/tw.css');
+
+  assert.ok(!/id="gwWatchWrap"[^>]*\shidden/.test(src),
+    'the watchlist panel hides itself when empty again — the feature is then ' +
+    'invisible to everyone who has not already found it');
+  assert.ok(/class="wl-empty"/.test(code) && /Star a player/.test(code),
+    'the empty watchlist no longer explains what starring does');
+  assert.ok(/wl-egrow/.test(code), 'the empty state shows no worked example');
+  /* Local first, sync second. */
+  /* IN THE DIALOG, at the point of action — not merely somewhere on the page.
+     The phrase is also the topbar button's title, so a search of the whole
+     file was answered by the tooltip while the dialog said nothing. Fifth
+     time a presence check has been satisfied by a second copy; pin the block
+     that has to carry it. */
+  /* 1400, measured: the block runs 966 characters from the heading to the
+     reset link, and a bound set by eye failed the assertion rather than the
+     code — which is the third time that has happened in this repo. Still
+     bounded, because an unbounded [\s\S]* would match the heading here and an
+     acctReset anywhere later and vouch for whatever sits between them. */
+  const signin = /id="acctTitle"[^']*Sign in to sync[\s\S]{0,1400}?acctReset/.exec(code);
+  assert.ok(signin, 'the signed-out account dialog is gone or has been reshaped');
+  assert.ok(/Sync your watchlist and tracker across devices/.test(signin[0]),
+    'the sign-in dialog no longer states what an account buys. It was a button ' +
+    'labelled "Sign in" and nothing else, so the only way to find out was to ' +
+    'do it — and everything already works signed out.');
+  assert.ok(/works signed out|already works/.test(signin[0]),
+    'the dialog does not say the desk works without an account, so sign-in ' +
+    'reads as a gate rather than as sync');
+  /* The rail and the sheet: two placements, one panel, no DOM move. */
+  assert.ok(/@media \(min-width:1280px\)\{[\s\S]{0,400}#gwWatchWrap\{grid-column:2/.test(css),
+    'the desktop watchlist rail is gone — comparing a starred player against ' +
+    'the round means scrolling away from what you are comparing him to');
+  assert.ok(/#gwWatchWrap\.sheet\{position:fixed/.test(css),
+    'the mobile watchlist sheet is gone');
+  /* The desk's record leads the Tracker. */
+  assert.ok(/id="trackerRecord"/.test(src) && /function modelRecordHtml/.test(code),
+    "the Tracker no longer leads with the model's own hit rate — a research " +
+    "tool's credibility rests on visible calibration, and it opened with the " +
+    "user's staking figures");
+  assert.ok(/aria-label="Hit rate over the last/.test(code),
+    'the track-record sparkline carries no text alternative, so to a screen ' +
+    'reader the headline claim has no evidence behind it');
+}
 console.log(`check-firstrun OK: ${DESKS_WITH_A_TOUR.length} desks, none auto-opens, ` +
   'all reachable at both widths, intro card bounded, jargon defined, ' +
-  'toolbar sticky, both views on one filter, mobile chrome yields');
+  'toolbar sticky, both views on one filter, mobile chrome yields, ' +
+  'watchlist teaches and follows');

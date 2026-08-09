@@ -538,7 +538,7 @@
         <button id="densityBtn" class="btn btn-ghost" type="button" aria-pressed="false" title="Switch between beginner hints and expert view"><span class="den-dot" aria-hidden="true"></span><span id="densityLabel">Beginner</span></button>
         <button id="tourBtn" class="tb-tour" type="button" title="A four-step walk through this page">How to read this page</button>
         <button id="helpBtn" class="tb-icon" type="button" aria-label="Help, glossary and guided tour" title="Help &amp; glossary">?</button>
-        <button id="acctBtn" class="btn btn-ghost" title="Account and sync">
+        <button id="acctBtn" class="btn btn-ghost" title="Sync your watchlist and tracker across devices — everything works signed out">
           <span aria-hidden="true">👤</span> <span id="acctLabel">Sign in</span>
         </button>
       </div>
@@ -606,8 +606,14 @@
       <div class="gw-seclabel" style="margin-bottom:.5rem">⚠ Suspension watch</div>
       <div id="gwSusp" class="gwsusp"></div>
     </div>
-    <div id="gwWatchWrap" style="margin-bottom:1rem" hidden>
-      <div style="display:flex;align-items:baseline;justify-content:space-between;margin-bottom:.5rem">
+    <div id="gwWatchWrap" style="margin-bottom:1rem">
+      <!-- The handle is the sheet's whole chrome on a phone; the head is the
+           rail's on a desktop. One of the two shows, never both. -->
+      <button class="wl-handle" id="gwWatchHandle" type="button" aria-expanded="true" aria-controls="gwWatch">
+        <span aria-hidden="true" style="color:var(--warn)">★</span> My watchlist
+        <span class="wl-n" id="gwWatchN"></span><span class="wl-c" aria-hidden="true">⌄</span>
+      </button>
+      <div class="wl-head" style="display:flex;align-items:baseline;justify-content:space-between;margin-bottom:.5rem">
         <h3 style="margin:0;font-size:1.05rem;font-family:'Bricolage Grotesque',sans-serif">★ My watchlist</h3>
         <button class="btn btn-ghost" id="gwWatchManage" style="padding:.25rem .6rem;font-size:.74rem" type="button">Season table ›</button>
       </div>
@@ -863,6 +869,10 @@
       <p>Log picks with odds and stake, settle results, and track hit-rate, P/L and ROI.</p>
     </div>
     <p class="beginner-hint">Keep an honest record: log each bet with its odds and stake, then mark it won, lost or void. <b>Hit-rate</b> is the share settled that won; <b>ROI</b> is profit per pound staked. Sign in (top right) to sync picks across your devices.</p>
+    <!-- The DESK's record, above the user's. A research tool's credibility
+         rests on visible calibration, and this was a small line inside the
+         gameweek hero while the page led with staking figures. -->
+    <div id="trackerRecord"></div>
     <div id="trackerSummary" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:.7rem;margin-bottom:1rem"></div>
     <details class="surface" style="border-radius:12px;padding:1rem;margin-bottom:1rem" open>
       <summary style="cursor:pointer;font-weight:600;font-family:'Bricolage Grotesque',sans-serif">Log a pick</summary>
@@ -1683,8 +1693,48 @@ function renderRefHistory(){
 const STATUSES=["pending","won","lost","void"];
 const pickPL=PLDCore.pickPL;
 function statCell(label,val,sub,col){ return `<div class="surface" style="border-radius:10px;padding:.6rem .8rem"><div class="faint" style="font-size:.7rem;text-transform:uppercase;letter-spacing:.04em">${esc(label)}</div><div class="display" style="font-size:1.4rem;margin:.1rem 0;color:${col||'var(--text)'}">${esc(String(val))}</div><div class="muted" style="font-size:.72rem">${esc(sub||'')}</div></div>`; }
+/* THE MODEL'S OWN RECORD, LEADING. A research tool's credibility rests on
+   visible calibration, and the Tracker opened with the user's staking figures
+   — how the DESK has scored is the thing that says whether any of it is worth
+   acting on, and it was a small line inside the gameweek hero.
+   
+   ACC.results is one entry per settled gameweek: {gw, hits, total}. The
+   sparkline is drawn as an inline SVG polyline rather than pulled in as a
+   chart library — it is 38 points of one series. */
+function modelRecordHtml(){
+  const rs=(typeof ACC!=="undefined"&&ACC.results)?ACC.results:[];
+  if(!rs.length){
+    return `<div class="mrec mrec-empty">
+      <div class="mrec-h">Model track record</div>
+      <p class="muted" style="margin:.2rem 0 0;font-size:.8rem">Nothing settled yet. After each gameweek the desk scores its own top-20 risks against what actually happened, and the running hit rate appears here.</p></div>`;
+  }
+  const hits=rs.reduce((a,r)=>a+r.hits,0), tot=rs.reduce((a,r)=>a+r.total,0);
+  const pct=tot?100*hits/tot:0;
+  const pts=rs.map(r=>r.total?100*r.hits/r.total:0);
+  const lo=Math.min(...pts,0), hi=Math.max(...pts,100);
+  const W=180,H=34;
+  const d=pts.map((v,i)=>`${(i/(Math.max(1,pts.length-1))*W).toFixed(1)},${(H-((v-lo)/(hi-lo||1))*H).toFixed(1)}`).join(" ");
+  const last=pts[pts.length-1], prev=pts.length>1?pts[pts.length-2]:null;
+  const trend=prev==null?"":(last>=prev
+    ? `<span class="mrec-t up"><span aria-hidden="true">▲</span> ${(last-prev).toFixed(0)} pts on last</span>`
+    : `<span class="mrec-t dn"><span aria-hidden="true">▼</span> ${(prev-last).toFixed(0)} pts on last</span>`);
+  return `<div class="mrec">
+    <div class="mrec-h">Model track record</div>
+    <div class="mrec-row">
+      <div><div class="mrec-n">${pct.toFixed(0)}%</div>
+        <div class="muted" style="font-size:.74rem">of the desk's top-20 risks were carded · ${rs.length} gameweek${rs.length===1?"":"s"}</div></div>
+      <svg class="mrec-s" viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" role="img"
+           aria-label="Hit rate over the last ${rs.length} gameweeks, ${pts.map(v=>v.toFixed(0)+'%').join(', ')}">
+        <polyline points="${d}" fill="none" stroke="var(--accent-ink)" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+      </svg>
+    </div>
+    ${trend}
+    <a href="#p=guide" class="mrec-l">How we calculate ›</a>
+  </div>`;
+}
 function renderTracker(){
   const picks=state.picks;
+  const mr=$("trackerRecord"); if(mr) mr.innerHTML=modelRecordHtml();
   const sum=PLDCore.summarisePicks(picks);
   const plCol=sum.pl>0?"var(--good)":sum.pl<0?"var(--danger)":"var(--text-2)";
   $("trackerSummary").innerHTML=[
@@ -3576,11 +3626,64 @@ function renderGwHero(){
       .then(()=>{ renderGameweek(); });
   });
 }
+/* The sheet only exists on a phone, and only once something is starred —
+   a fixed panel over the foot of the page announcing an empty list would be
+   taking screen space to say nothing. */
+function wlSheetSync(n){
+  const wrap=$("gwWatchWrap"), lbl=$("gwWatchN");
+  if(!wrap) return;
+  if(lbl) lbl.textContent=n?`${n} player${n===1?"":"s"}`:"none yet";
+  const phone=window.matchMedia&&matchMedia("(max-width:900px)").matches;
+  const on=phone&&n>0;
+  wrap.classList.toggle("sheet",on);
+  document.documentElement.classList.toggle("wl-sheet",on);
+}
+(function(){
+  const h=document.getElementById("gwWatchHandle");
+  if(!h) return;
+  const KEY="pl_desk_wl_shut";
+  let shut=false; try{ shut=localStorage.getItem(KEY)==="1"; }catch(e){}
+  const apply=()=>{ const w=document.getElementById("gwWatchWrap");
+    if(!w) return;
+    w.classList.toggle("shut",shut);
+    h.setAttribute("aria-expanded",shut?"false":"true"); };
+  apply();
+  h.addEventListener("click",()=>{ shut=!shut;
+    try{ localStorage.setItem(KEY,shut?"1":"0"); }catch(e){}
+    apply(); });
+})();
 function renderWatchDash(){
   const wrap=$("gwWatchWrap"), el=$("gwWatch");
   const watched=PL_PLAYERS.filter(isWatched);
-  if(!watched.length){ wrap.hidden=true; return; }
+  /* AN EMPTY STATE THAT TEACHES. The panel hid itself entirely when nothing
+     was starred, so the one feature that makes the desk yours was invisible to
+     everyone who had not already found it — you had to discover the star to
+     discover the watchlist, and the watchlist is the reason to press the star.
+     Shows the round's highest-risk player as a worked example. */
+  if(!watched.length){
+    wrap.hidden=false;
+    let eg=null;
+    try{
+      const pool=PL_PLAYERS.filter(x=>!x.ls&&rEff(x)!=null).sort((x,y)=>rEff(y)-rEff(x));
+      eg=pool[0]||null;
+    }catch(e){}
+    el.innerHTML=`<div class="wl-empty">
+      <p><b>Star a player to pin him here.</b> The ☆ on any row adds him to a list
+      that follows you across the desk — with his next fixture, its referee and his
+      booking chance, sorted so the likeliest sit first.</p>
+      ${eg?`<div class="wl-eg"><span class="faint">For example</span>
+        <button class="wl-egrow" data-pk="${esc(watchKey(eg))}" type="button">
+          <span aria-hidden="true">☆</span> ${esc(eg.n)}
+          <span class="faint">${esc(eg.c)}${eg.p?" · "+esc(eg.p):""}</span>
+          <span class="wl-egp">${(pImp(eg)*100).toFixed(0)}%</span>
+        </button></div>`:""}
+      <p class="faint">Saved in this browser. Signing in only syncs it to your other devices.</p>
+    </div>`;
+    wlSheetSync(0);
+    return;
+  }
   wrap.hidden=false;
+  wlSheetSync(watched.length);
   const rows=watched.map(p=>{
     let opp="—", ha="", gw="", prob=pImp(p), ref=null;
     if(LIVE){
@@ -4005,7 +4108,12 @@ function openAccount(){
   }else{
     body.innerHTML=
       '<h2 id="acctTitle" style="margin:0 0 .3rem;font-size:1.15rem">Sign in to sync</h2>'+
-      '<p class="faint" style="margin:0 0 .9rem;font-size:.8rem">Optional — the desk works without it. Sign in and your tracker picks follow you across devices.</p>'+
+      /* SYNC, NOT A GATE. The button said "Sign in" and nothing else, so the
+         only way to learn what it bought you was to do it. Everything works
+         signed out — the watchlist and the tracker are in this browser
+         already — and the one thing an account adds is that they follow you
+         to another device. Say that, at the point of action. */
+      '<p class="faint" style="margin:0 0 .9rem;font-size:.8rem"><b style="color:var(--text)">Sync your watchlist and tracker across devices.</b> Everything already works signed out and stays in this browser; an account only carries it to your phone as well. Local and cloud are merged on first sign-in, so nothing is lost.</p>'+
       '<input id="acctEmail" type="email" inputmode="email" autocomplete="email" placeholder="Email" style="margin-bottom:.6rem">'+
       '<input id="acctPass" type="password" autocomplete="current-password" placeholder="Password (min 6 characters)">'+
       '<div class="modal-err" id="acctErr" role="alert"></div>'+
