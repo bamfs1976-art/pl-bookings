@@ -1,10 +1,17 @@
 #!/usr/bin/env node
-/* The UX brief's structural claims, pinned. Sections 1, 2 and 4.
+/* The UX brief's structural claims, pinned. Sections 1, 2, 4 and 6.
  *
  * Named for the first thing it guarded and grown since. What it holds:
  * nothing auto-opens over an unseen page (1); every metric on the fixture card
  * is defined where it appears (2); the gameweek toolbar, the two views and the
- * grid density (4).
+ * grid density (4); and the mobile chrome, league labels and live pill (6).
+ *
+ * TAP TARGETS ARE NOT HERE, deliberately. They are a rendered-geometry
+ * question — a 20px checkbox inside a 44px label IS a 44px target, and an
+ * invisible ::after hit area either works or is painted under its neighbour —
+ * so they are measured in a browser (see the mobile probe in the session
+ * scratchpad) rather than asserted against source. A source check would have
+ * passed the ::after that did not work.
  *
  * Nothing opens itself over a page the visitor has not seen yet.
  *
@@ -235,6 +242,59 @@ for (const page of DESKS_WITH_A_TOUR) {
     'filtering no longer narrows the fixture list, so searching one club ' +
     'leaves the other nine on screen as empty cards');
 }
+
+/* ---- 7. mobile: chrome that moves, labels that survive, targets ---------- */
+/* Section 6. Measured at 390x844 before any of this: topbar 60 + league bar 45
+   + bottom nav 66 = 171px of permanent chrome, a fifth of the screen; the
+   league bar abbreviating "La Liga" and "Today" to fit — the two desks the
+   switcher exists to expose being the two that lost their names; and 40
+   interactive elements under 44px. */
+{
+  const src = read('index.html');
+  const code = codeOnly(src);
+  const css = read('assets/tw.css');
+
+  assert.ok(/html\.nav-hidden \.topbar\{transform:translateY\(-100%\)\}/.test(css),
+    'the topbar no longer collapses on scroll — 171px of permanent chrome on ' +
+    'an 844px screen is a fifth of it');
+  assert.ok(/nav-hidden/.test(code),
+    'nothing toggles nav-hidden, so the collapse rule can never fire');
+  /* Back at the top, always. A header that can be left stranded off-screen is
+     worse than one that never moves. */
+  assert.ok(/y<=0[\s\S]{0,80}remove\("nav-hidden"\)/.test(code),
+    'the topbar is not restored at scroll position 0 — it can be left ' +
+    'stranded off-screen with no way to bring it back');
+
+  /* Full labels. The abbreviation swap is what hid two desks' names. */
+  assert.ok(/@media \(max-width:560px\)\{\s*\.lb-full\{display:inline\}/.test(css),
+    'the league bar abbreviates again below 560px, which is where "La Liga" ' +
+    'and "Today" lose their names — the two desks the bar exists to expose');
+  assert.ok(/\.leaguebar-in\{scroll-snap-type:x/.test(css),
+    'the league bar scrolls without snapping, so a half-cut tab is a resting state');
+  assert.ok(/aria-current="page"[\s\S]{0,120}scrollIntoView/.test(code),
+    'the current desk is not scrolled into view — on a narrow screen the one ' +
+    'item that must never be hidden can start off the right-hand edge');
+
+  /* The live pill is a control, not a caption. */
+  /* BOTH BRANCHES. The pill is built by a ternary — live/scheduled, and
+     offline — and a check for the string was satisfied by whichever branch I
+     had not just broken. That is the fourth time in this brief that a presence
+     check has been answered by a second copy of the thing it was looking for,
+     so this parses the expression and asserts on every branch in it. */
+  const pill = /const pill=LIVE([\s\S]*?);\n/.exec(code);
+  assert.ok(pill, 'the live pill is no longer built where renderGwHero builds it');
+  const branches = pill[1].split('    :');
+  assert.ok(branches.length >= 2, 'the live pill lost its offline branch');
+  branches.forEach((br, i) => {
+    assert.ok(/<button class="live-pill/.test(br),
+      `live-pill branch ${i + 1} is not a <button> — it reports state and offers ` +
+      'no way to retry, and on a phone the browser chrome is then the only recourse');
+    assert.ok(/id="gwRefresh"/.test(br),
+      `live-pill branch ${i + 1} carries no id, so the retry is never wired on ` +
+      'that path — the control renders and does nothing');
+  });
+  assert.ok(/\$\("gwRefresh"\)/.test(code), 'nothing wires the retry button');
+}
 console.log(`check-firstrun OK: ${DESKS_WITH_A_TOUR.length} desks, none auto-opens, ` +
   'all reachable at both widths, intro card bounded, jargon defined, ' +
-  'toolbar sticky, both views on one filter');
+  'toolbar sticky, both views on one filter, mobile chrome yields');

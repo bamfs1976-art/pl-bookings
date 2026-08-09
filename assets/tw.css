@@ -749,7 +749,9 @@ footer{padding:26px 0 40px;font-size:12.5px;color:var(--text-3);
   border-bottom:1.5px solid currentColor;line-height:inherit}
 .linkish:hover{opacity:.8}
 .linkish:focus-visible{outline:3px solid var(--ring);outline-offset:2px;border-radius:4px}
-@media (pointer:coarse){ .linkish{display:inline-block;min-height:32px;line-height:30px} }
+/* Standalone, so it can carry a real 44px box. The inline ones inside a
+   sentence get a hit area instead — see .gw-intro a::after. */
+@media (pointer:coarse){ .linkish{display:inline-block;min-height:44px;line-height:42px} }
 
 /* ─── Metric labels and the confidence meter ────────────────────────────────
    The fixture card shipped EXP CARDS, O3.5, O4.5, BTC, H2H 10 and a five-dot
@@ -767,7 +769,21 @@ footer{padding:26px 0 40px;font-size:12.5px;color:var(--text-3);
    who has learnt "BTC" should not have to relearn the page to gain a label
    somebody else needed. */
 .mlab-a{font-size:9px;font-weight:600;opacity:.65;letter-spacing:.04em}
-@media (pointer:coarse){ .mlab{min-height:32px;align-items:center} }
+/* 24px, and that is a decision rather than a shortfall.
+   
+   The first attempt gave these a 44px hit area through an invisible ::after.
+   Probing it with elementFromPoint showed it does not work: the pseudo-element
+   paints below the .mk-val that follows it, so the value wins the hit test —
+   and where it HAD worked it would have made tapping the number open the
+   definition popover, which is a behaviour nobody asked for.
+   
+   So: 44px is Apple's HIG figure for PRIMARY controls. The WCAG 2.2 AA
+   requirement (2.5.8 Target Size Minimum) is 24x24, and these are
+   supplementary — a definition beside a figure, in a dense strip where 44px
+   apiece would triple the height of the thing being explained. The primary
+   controls on this card (open a player, pick a referee, expand, share) are all
+   44. These are 24 and clear the standard that applies to them. */
+@media (pointer:coarse){ .mlab{min-height:24px;align-items:center} }
 
 .mpop{position:absolute;z-index:400;max-width:min(280px,calc(100vw - 16px));
   background:var(--surface);color:var(--text);border:1px solid var(--border-2);
@@ -869,7 +885,7 @@ details.model-detail:not([open]) .fx-simrow{display:none}
 .rp-d.hi{color:var(--danger-ink)} .rp-d.lo{color:var(--good-ink)} .rp-d.mid{color:var(--text-2)}
 .rp-n{grid-column:1/-1;font-size:10.5px;color:var(--text-3)}
 .rp-n.thin{color:var(--warn-ink)}
-@media (pointer:coarse){ .rp-row{padding:11px 10px} .rp-open{min-height:32px} }
+@media (pointer:coarse){ .rp-row{padding:11px 10px} .rp-open{min-height:44px} }
 
 /* What the pick changed. A referee moves the heat and every percentage on the
    card, and the old control moved them all in one silent repaint. */
@@ -1005,3 +1021,81 @@ details.model-detail:not([open]) .fx-simrow{display:none}
 .gw-hero-top b{color:var(--text)}
 .gw-hero-heat{font-family:var(--mono);font-variant-numeric:tabular-nums;
   font-weight:700;color:var(--danger-ink)}
+
+/* ─── Mobile: reclaiming the top of the screen ──────────────────────────────
+   Measured at 390x844: topbar 60 + league bar 45 + bottom nav 66 = 171px, a
+   fifth of the viewport, permanently. The bottom nav earns its place — it is
+   how you move between views. The topbar carries a brand and three controls
+   you need occasionally, so it gets out of the way while you are reading and
+   comes back the moment you look for it. */
+@media (max-width:900px){
+  .topbar{transition:transform .22s ease}
+  html.nav-hidden .topbar{transform:translateY(-100%)}
+  /* The league bar rides up with it rather than leaving a 60px hole. */
+  .leaguebar{transition:top .22s ease}
+  html.nav-hidden .leaguebar{top:env(safe-area-inset-top)}
+  html.nav-hidden .gwt{top:calc(env(safe-area-inset-top) + 46px)}
+}
+@media (prefers-reduced-motion:reduce){
+  .topbar,.leaguebar{transition:none}
+}
+
+/* FULL LABELS. The bar abbreviated to "PL" and "Today" below 560px to make
+   four items fit — so the two desks the switcher exists to expose were the
+   two that lost their names. It scrolls and snaps instead: everything keeps
+   its label, and the active item is scrolled into view on load so you can
+   always see where you are. */
+.leaguebar-in{scroll-snap-type:x proximity;scroll-padding-left:12px}
+.lb-item{scroll-snap-align:start}
+@media (max-width:560px){
+  .lb-full{display:inline}
+  .lb-abbr{display:none}
+  .lb-item{padding:0 12px;font-size:13px;gap:5px}
+}
+
+/* ─── 44px ──────────────────────────────────────────────────────────────────
+   Measured, not assumed: 40 interactive elements were under it at 390px. The
+   segmented controls were 47x29, the checkboxes 13x13, and the inline links
+   17px tall. Apple's minimum is 44 and a thumb is not a mouse. */
+@media (pointer:coarse){
+  .seg-btn{min-height:44px;padding:0 14px;display:inline-flex;align-items:center}
+  .seg-view button{min-height:44px}
+  .gwt .chk,.ref-global .chk{min-height:44px}
+  /* EVERY checkbox, not the two I happened to have added. Two 13x13 boxes
+     elsewhere on the page were still 13x13 after the first pass, because the
+     rule named the containers I was working in rather than the control. */
+  input[type=checkbox],input[type=radio]{width:20px;height:20px}
+  label.chk{min-height:44px}
+  /* An inline link inside a sentence cannot be 44px tall without wrecking the
+     line, so it gets 44px of TARGET through padding that does not affect
+     layout — the pointer area grows, the text box does not. */
+  .gw-intro a,.gw-intro .linkish,.combined-note a{position:relative}
+  .gw-intro a::after,.gw-intro .linkish::after,.combined-note a::after{
+    content:"";position:absolute;left:0;right:0;top:50%;height:44px;
+    transform:translateY(-50%)}
+  .lb-item{min-height:48px}
+}
+
+/* Player rows: the number is the answer, so it looks like one. The meter sits
+   under the name where it belongs to the player, not in the right-hand stack
+   where it competed with the value. */
+.cand2-prob{font-size:1.5rem!important;letter-spacing:-.02em}
+/* The live pill is a button now — it reported the feed's state and offered no
+   way to try again, which on a phone means the browser chrome is the only
+   recourse. */
+.live-pill{cursor:pointer}
+.live-pill .lp-r{margin-left:5px;font-size:11px;opacity:.75}
+.live-pill.spin .lp-r{display:inline-block;animation:lpSpin .8s linear infinite}
+@keyframes lpSpin{to{transform:rotate(360deg)}}
+@media (prefers-reduced-motion:reduce){ .live-pill.spin .lp-r{animation:none} }
+@media (pointer:coarse){ .live-pill{min-height:44px;padding-left:10px;padding-right:10px} }
+/* The responsible-gambling links get a real target. They came out of the
+   measurement at 14px tall — BeGambleAware, GamCare, GAMSTOP and the helpline
+   number, in a paragraph of footer small print. Of every link on the site
+   these are the ones where a missed tap matters most, and they were the
+   smallest. Inline-block with padding rather than a hit-area trick, because
+   they sit in their own block and can afford the height. */
+@media (pointer:coarse){
+  footer a,.rg a,.sb-foot-legal a,.sb-foot a{display:inline-block;min-height:44px;
+    line-height:44px;padding:0 2px}
+}

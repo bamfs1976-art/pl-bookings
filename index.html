@@ -276,7 +276,7 @@
   .ref-bar i{display:block;height:100%;background:var(--accent-2,var(--accent));border-radius:999px}
   .conf-dot{width:9px;height:9px;border-radius:50%;flex:none;display:inline-block;margin-right:6px;vertical-align:middle}
   .conf-hi{background:var(--good)} .conf-mid{background:var(--warn)} .conf-lo{background:var(--border-2)}
-  .fx-more{width:100%;border:0;border-top:1px solid var(--border);background:none;color:var(--accent-ink);font:inherit;font-weight:700;font-size:.78rem;padding:.5rem;cursor:pointer}
+  .fx-more{width:100%;border:0;border-top:1px solid var(--border);background:none;color:var(--accent-ink);font:inherit;font-weight:700;font-size:.78rem;padding:.5rem;cursor:pointer;min-height:44px}
   .fx-more:hover{background:var(--surface-2)}
   .fx-foot{border-top:1px solid var(--border);padding:.45rem .6rem;display:flex;justify-content:flex-end;margin-top:auto}
   .susp{margin-bottom:12px}
@@ -3531,9 +3531,14 @@ function renderGwHero(){
   const el=$("gwHero"); if(!el) return;
   const gw=LIVE?LIVE.currentGW:"—";
   const live=LIVE&&LIVE.seasonStarted;
+  /* AN EXPLICIT REFRESH. The pill said whether the feed was live and gave no
+     way to try again — on a phone, where a stale card is most likely and a
+     hard reload is the least convenient, the only recourse was the browser
+     chrome. Pull-to-refresh is the other option the brief offers, but it
+     fights the scroll on a page that already hides its header on scroll. */
   const pill=LIVE
-    ? `<span class="live-pill${live?"":" stale"}"><span class="d"></span>${live?"LIVE":"SCHED"}</span>`
-    : `<span class="live-pill stale"><span class="d"></span>OFFLINE</span>`;
+    ? `<button class="live-pill${live?"":" stale"}" id="gwRefresh" type="button" title="Reload the live feed" aria-label="${live?"Live":"Scheduled"} — reload the feed"><span class="d"></span>${live?"LIVE":"SCHED"}<span class="lp-r" aria-hidden="true">↻</span></button>`
+    : `<button class="live-pill stale" id="gwRefresh" type="button" title="Retry the live feed" aria-label="Feed offline — retry"><span class="d"></span>OFFLINE<span class="lp-r" aria-hidden="true">↻</span></button>`;
   const basis=LIVE?(live?"Live FPL card counts":"Live schedule · pre-season form"):"Baked 2025-26 form";
   const rec=trackRecordSummary();
   /* THE HOTTEST FIXTURE, named. The hero was a mostly-empty banner carrying a
@@ -3561,6 +3566,15 @@ function renderGwHero(){
         ? `<div class="gw-seclabel">${jt("Model track record","How many of the desk's top-20 risks each finished gameweek actually got carded — an honest, self-scored hit rate.")}</div><div style="font-family:'Bricolage Grotesque',sans-serif;font-weight:800;font-size:1.15rem">${rec}</div><a href="#p=guide" class="faint" style="font-size:.68rem">How we calculate ›</a>`
         : `<a href="#p=guide" class="btn btn-ghost" style="padding:.3rem .7rem;font-size:.74rem">How we calculate ›</a>`}
     </div>`;
+  const rb=$("gwRefresh");
+  if(rb) rb.addEventListener("click",()=>{
+    rb.disabled=true; rb.classList.add("spin");
+    /* loadLive() is the same path the page uses on boot, so a retry cannot
+       diverge from a cold start — one code path, one set of failure modes. */
+    Promise.resolve(typeof loadLive==="function"?loadLive():null)
+      .catch(()=>{})
+      .then(()=>{ renderGameweek(); });
+  });
 }
 function renderWatchDash(){
   const wrap=$("gwWatchWrap"), el=$("gwWatch");
@@ -4378,6 +4392,41 @@ else initAuth();
 // referee change, a filter and a gameweek switch — listeners bound to the
 // buttons themselves would be dropped each time and quietly stop working.
 if(window.PLDMetric) PLDMetric.wire();
+/* THE TOPBAR GETS OUT OF THE WAY. 171px of permanent chrome on a 844px screen
+   is a fifth of it; the bottom nav earns its keep because it is how you move
+   between views, and the topbar carries a brand and three occasional controls.
+   Hidden on the way down, back on the way up — and always back at the top, so
+   it can never be stranded off-screen.
+
+   Threshold and floor both deliberate: under 6px of movement is a thumb
+   resting, and above 120px of scroll means the header is not what you are
+   looking at. Without the floor the bar flickers on every small correction. */
+(function(){
+  if(!window.matchMedia||!matchMedia("(max-width:900px)").matches) return;
+  let last=window.scrollY, ticking=false;
+  const root=document.documentElement;
+  addEventListener("scroll",()=>{
+    if(ticking) return;
+    ticking=true;
+    requestAnimationFrame(()=>{
+      const y=window.scrollY, dy=y-last;
+      if(Math.abs(dy)>6){
+        if(dy>0&&y>120) root.classList.add("nav-hidden");
+        else root.classList.remove("nav-hidden");
+        last=y;
+      }
+      if(y<=0) root.classList.remove("nav-hidden");
+      ticking=false;
+    });
+  },{passive:true});
+})();
+/* The current desk, scrolled into view. The bar scrolls horizontally now
+   rather than abbreviating, so on a narrow screen the item you are on can
+   start off the right-hand edge — which is the one item it must never hide. */
+(function(){
+  const cur=document.querySelector('.lb-item[aria-current="page"]');
+  if(cur&&cur.scrollIntoView) cur.scrollIntoView({block:"nearest",inline:"center"});
+})();
 /* The referee picker. A pick moves the heat and every percentage on the card,
    so the old numbers are captured before the repaint and tweened to the new
    ones after — the pick used to change nine figures in one silent redraw. */
