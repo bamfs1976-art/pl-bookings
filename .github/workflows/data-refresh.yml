@@ -45,9 +45,9 @@ on:
         required: false
         default: ""
       season_af:
-        description: "API-Football season START YEAR for last season's FORM (2025 = 2025-26). NOT a ScoutingStats id."
+        description: "API-Football season START YEAR, overriding the automatic form-season choice (2025 = 2025-26). Blank = let scripts/form-season.mjs decide. NOT a ScoutingStats id."
         required: false
-        default: "2025"
+        default: ""
       season_fixtures:
         description: "API-Football season START YEAR for the FIXTURE LIST — the season being played (2026 = 2026-27)."
         required: false
@@ -99,6 +99,26 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 20
+
+      # WHICH SEASON'S FORM, decided from the fixture files rather than from a
+      # literal in this file.
+      #
+      # Every player rate on all three desks came from a squad harvest pinned
+      # to `'2025'`. In August that is right — nobody has 2026-27 form because
+      # nobody has played. In October it is wrong in the way no guard catches
+      # and no page shows: the numbers still look like numbers, they are simply
+      # last year's, and nothing here would ever have changed that. The
+      # transition depended on a human remembering, on a schedule with no
+      # reminder attached.
+      #
+      # scripts/form-season.mjs answers it per league, flipping at round 6 (the
+      # point the k=6 shrinkage already treats as the balance between a
+      # player's own record and the prior) and never later than round 10.
+      # Emits nothing for a league whose fixtures it cannot read, so the `||`
+      # fallbacks below keep the old behaviour rather than guessing.
+      - name: Decide which season's form to harvest
+        id: form
+        run: node scripts/form-season.mjs --github >> "$GITHUB_OUTPUT"
 
       # One run's worth, not an ever-growing pile.
       - name: Start this run's Spanish harvest log
@@ -186,7 +206,8 @@ jobs:
         env:
           # NOT season_ch: that is a ScoutingStats season id (five digits),
           # while API-Football names a season by its starting year.
-          API_FOOTBALL_SEASON: ${{ inputs.season_af || '2025' }}
+          # FORM, so it transitions — see "Decide which season's form" above.
+          API_FOOTBALL_SEASON: ${{ inputs.season_af || steps.form.outputs.form_eflc || '2025' }}
         run: python3 data/harvest_apifootball.py --league EFLC
 
       # THIS season's Championship cautions, for the suspension ladder. A
@@ -212,7 +233,9 @@ jobs:
         if: ${{ env.API_FOOTBALL_KEY != '' && (github.event_name != 'workflow_dispatch' || inputs.refresh_eflc) }}
         continue-on-error: true
         env:
-          API_FOOTBALL_SEASON: ${{ inputs.season_af || '2025' }}
+          # FORM (the relegated three's own record), so it transitions with the
+          # Championship harvest it feeds.
+          API_FOOTBALL_SEASON: ${{ inputs.season_af || steps.form.outputs.form_eflc || '2025' }}
         run: python3 data/harvest_apifootball.py --league PL --out pl_af_players.json
 
       # The Championship fixture list. Separate from the squads because it
@@ -246,7 +269,8 @@ jobs:
         if: ${{ env.API_FOOTBALL_KEY != '' && (github.event_name != 'workflow_dispatch' || inputs.refresh_laliga) }}
         continue-on-error: true
         env:
-          API_FOOTBALL_SEASON: ${{ inputs.season_af || '2025' }}
+          # FORM, so it transitions — see "Decide which season's form" above.
+          API_FOOTBALL_SEASON: ${{ inputs.season_af || steps.form.outputs.form_ll || '2025' }}
         run: |
           echo "== squads ==" >> data/laliga_harvest.log
           python3 data/harvest_apifootball.py --league LL 2>&1 | tee -a data/laliga_harvest.log
@@ -275,6 +299,10 @@ jobs:
         if: ${{ env.API_FOOTBALL_KEY != '' && (github.event_name != 'workflow_dispatch' || inputs.refresh_laliga) }}
         continue-on-error: true
         env:
+          # PINNED, deliberately. A club promoted into La Liga has no La Liga
+          # record to transition TO — its prior-tier form is last season's by
+          # definition, and always will be. Not an oversight; do not "fix" it
+          # for consistency with the form harvests above.
           API_FOOTBALL_SEASON: ${{ inputs.season_af || '2025' }}
         run: |
           echo "== segunda ==" >> data/laliga_harvest.log
@@ -293,6 +321,10 @@ jobs:
         if: ${{ env.API_FOOTBALL_KEY != '' && (github.event_name != 'workflow_dispatch' || inputs.refresh_laliga) }}
         continue-on-error: true
         env:
+          # PINNED. This is the COMPLETED season, whose officials are joined
+          # onto the free match records to build a referee's card rate. The
+          # season being played has barely any finished matches and would give
+          # a referee table of nothing.
           API_FOOTBALL_SEASON: ${{ inputs.season_af || '2025' }}
         run: |
           echo "== ref-fixtures ==" >> data/laliga_harvest.log
@@ -324,6 +356,8 @@ jobs:
         if: ${{ env.API_FOOTBALL_KEY != '' && (github.event_name != 'workflow_dispatch' || inputs.refresh_eflc) }}
         continue-on-error: true
         env:
+          # PINNED, for the same reason as Segunda below: a club promoted into
+          # the Championship has no Championship record to transition to.
           API_FOOTBALL_SEASON: ${{ inputs.season_af || '2025' }}
         run: python3 data/harvest_apifootball.py --league L1
 
@@ -420,6 +454,9 @@ jobs:
         if: ${{ env.API_FOOTBALL_KEY != '' && inputs.player_matches }}
         continue-on-error: true
         env:
+          # PINNED. A backfill of a whole completed season, run by hand; the
+          # operator names the season they are backfilling. Following the form
+          # transition would silently repoint a backfill mid-run.
           API_FOOTBALL_SEASON: ${{ inputs.season_af || '2025' }}
         run: |
           LIM=""

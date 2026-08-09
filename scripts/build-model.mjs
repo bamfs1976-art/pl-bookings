@@ -24,6 +24,28 @@ const NB_DISPERSION = 6;       // NegBin size for match fouls (prior; refined on
 const RECENCY_DECAY = 0.97;    // per-gameweek weight decay for the match fit (recent form counts more)
 const POS = ['GK', 'DF', 'MF', 'FW'];
 
+/* ---- when a match fit is allowed to replace the season prior -------------
+ *
+ * The gate was 200 rows, and one Premier League gameweek produces about 280:
+ * a six-parameter logistic estimated from a single round of football replaced
+ * a prior derived from a whole season of aggregates, silently, on the Sunday
+ * night after the opening weekend.
+ *
+ * Events per parameter was never the binding constraint — 280 rows at a 17%
+ * base rate is ~48 events over 6 parameters, thin but not absurd. What is
+ * binding is that ONE ROUND IS ONE SAMPLE OF EVERYTHING ELSE: one set of
+ * referees, one weekend's weather, one week of team news. A fit on it does not
+ * estimate how a foul becomes a card, it estimates how it did on that Saturday.
+ * The recency weighting makes it worse, not better, by concentrating what
+ * little there is.
+ *
+ * So both bars have to clear. The gameweek count is the one that matters and
+ * the row count is the guard on it: a round where half the division was
+ * postponed clears FIT_MIN_GWS while carrying almost nothing.
+ */
+const FIT_MIN_ROWS = 1500;     // ~5 Premier League gameweeks at ~280 rows each
+const FIT_MIN_GWS = 5;         // and drawn from at least five distinct rounds
+
 function loadData() {
   const src = readFileSync(join(root, 'data', 'pl_data.js'), 'utf8');
   const ctx = {}; vm.createContext(ctx);
@@ -130,13 +152,30 @@ function main() {
         const ago = (latestGw != null && Number.isFinite(gw)) ? Math.max(0, latestGw - gw) : 0;
         sw.push(Math.pow(RECENCY_DECAY, ago));
       });
-      if (X.length >= 200) {
+      /* Rounds actually represented in the fitted rows, not in the file: rows
+         with an unusable outcome are dropped above, and counting the file
+         would let a round that contributed nothing vote for its own inclusion. */
+      const fitGws = new Set();
+      rows.forEach((r) => {
+        if (r.y !== 0 && r.y !== 1) return;
+        const gw = Number(r.round ?? r.gw);
+        if (Number.isFinite(gw)) fitGws.add(gw);
+      });
+      const enoughRows = X.length >= FIT_MIN_ROWS;
+      /* No gameweek numbering at all means the rows cannot be shown to span
+         more than one round, so they are treated as if they do not. */
+      const enoughGws = fitGws.size >= FIT_MIN_GWS;
+      if (enoughRows && enoughGws) {
         const b = irls(X, y, 50, sw);
         glm.intercept = round(b[0], 4);
         glm.weights = { yc90: round(b[1], 4), foul90: round(b[2], 4), DF: round(b[3], 4), MF: round(b[4], 4), FW: round(b[5], 4) };
         basis = 'match-fit'; fitN = X.length;
       } else {
-        console.warn(`--fit: only ${X.length} match rows (<200) — keeping the season prior.`);
+        console.warn(`--fit: ${X.length} match rows over ${fitGws.size} gameweek(s) ` +
+          `— needs ${FIT_MIN_ROWS} rows AND ${FIT_MIN_GWS} gameweeks. Keeping the ` +
+          'season prior. One round of football is one sample of the referees, ' +
+          'the weather and the team news, not an estimate of how a foul ' +
+          'becomes a card.');
       }
     } catch (e) { console.warn('--fit failed, keeping season prior:', e.message); }
   }
@@ -159,8 +198,16 @@ function main() {
     "if (typeof window !== 'undefined') window.CARD_MODEL = CARD_MODEL;",
     '',
   ].join('\n');
-  writeFileSync(join(root, 'data', 'model.js'), out);
-  console.log(`data/model.js written (basis=${basis}). baseRate=${(baseRate * 100).toFixed(1)}% ` +
+  /* `--out` exists so the fit gate can be EXERCISED without the guard writing
+     over the shipped model. A test that has to save and restore data/model.js
+     leaves it corrupted the one time it is interrupted, which is the run where
+     nobody is watching. */
+  const outArg = process.argv.indexOf('--out');
+  const dest = outArg > -1 && process.argv[outArg + 1]
+    ? process.argv[outArg + 1]
+    : join(root, 'data', 'model.js');
+  writeFileSync(dest, out);
+  console.log(`${dest === join(root, 'data', 'model.js') ? 'data/model.js' : dest} written (basis=${basis}). baseRate=${(baseRate * 100).toFixed(1)}% ` +
     `avgShrunkRisk=${avgShrunkRisk.toFixed(3)} intercept=${glm.intercept} baseHazard=${model.twoStage.baseHazard} refPivot=${model.twoStage.refPivotYpg}`);
 }
 

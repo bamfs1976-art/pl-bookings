@@ -148,6 +148,196 @@ assert.ok(!/glmProb/.test(deskBase[1]),
   'index.html is pricing through glmProb again — that is the model that sat ' +
   '26% high and made this desk incomparable with the other two');
 
+/* ---- a match fit must not replace the prior on one round of football ----- */
+/*
+ * The gate was 200 rows and a Premier League gameweek produces about 280, so
+ * on the Sunday night after the opening weekend a six-parameter logistic
+ * estimated from a single round silently replaced a prior derived from a whole
+ * season of aggregates. Nothing threw and nothing on the page said so.
+ *
+ * Events per parameter was never the binding constraint. What binds is that
+ * one round is one sample of the referees, the weather and the team news, and
+ * the recency weighting concentrates rather than dilutes it.
+ *
+ * RUN, with synthetic histories, because the gate is two conditions and a
+ * source check would pass on either of them alone. The fits go to a scratch
+ * file via --out: a guard that saves and restores data/model.js leaves it
+ * corrupted the one time it is interrupted.
+ */
+{
+  const { execFileSync } = await import('node:child_process');
+  const { writeFileSync, mkdtempSync, rmSync } = await import('node:fs');
+  const { tmpdir } = await import('node:os');
+  const dir = mkdtempSync(join(tmpdir(), 'fitgate-'));
+  const basisOf = (rows) => {
+    const hist = join(dir, 'h.json'), out = join(dir, 'm.js');
+    writeFileSync(hist, JSON.stringify(rows));
+    const log = execFileSync('node',
+      [join(root, 'scripts', 'build-model.mjs'), '--fit', hist, '--out', out],
+      { encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] });
+    const m = /basis=([a-z-]+)/.exec(log);
+    assert.ok(m, `build-model printed no basis:\n${log}`);
+    return m[1];
+  };
+  /* Deterministic rows — a fixed pattern, so a run cannot pass or fail on the
+     luck of a seed. The features are irrelevant to the gate; only the count of
+     rows and of distinct rounds decide it. */
+  const rows = (gws, perGw) => {
+    const out = [];
+    for (let gw = 1; gw <= gws; gw++) {
+      for (let i = 0; i < perGw; i++) {
+        out.push({ round: gw, pos: ['DF', 'MF', 'FW'][i % 3],
+          yc90: (i % 7) / 20, foul90: 0.5 + (i % 11) / 8, y: i % 6 === 0 ? 1 : 0 });
+      }
+    }
+    return out;
+  };
+  try {
+    assert.equal(basisOf(rows(1, 280)), 'season-prior',
+      'ONE gameweek of football is being fitted over a whole season of ' +
+      'aggregates. That is not an estimate of how a foul becomes a card, it ' +
+      'is an estimate of how it did on that Saturday.');
+    /* Rows without rounds: enough rows, but nothing showing they span more
+       than one, so the gate must refuse rather than assume. */
+    assert.equal(basisOf(rows(1, 280).map(({ round, ...r }) => r)), 'season-prior',
+      'a history with no gameweek numbering is being fitted — the rows cannot ' +
+      'be shown to span more than one round, so they must be treated as if ' +
+      'they do not');
+    /* EACH BAR ISOLATED. Both of these clear one bar and fail the other, which
+       is the only way to tell a two-condition gate from whichever single
+       condition happens to decide every case you thought to write down. */
+    assert.equal(basisOf(rows(4, 280)), 'season-prior',
+      'four gameweeks (1,120 rows) clears the fit gate: plenty of rounds, not ' +
+      'enough rows, so the ROW bar is not being applied');
+    assert.equal(basisOf(rows(2, 800)), 'season-prior',
+      'two gameweeks of 1,600 rows clears the fit gate: plenty of rows, two ' +
+      'rounds of football, so the GAMEWEEK bar is not being applied. A fit ' +
+      'on two rounds still estimates two weekends of referees.');
+    assert.equal(basisOf(rows(5, 60)), 'season-prior',
+      'five near-empty gameweeks (300 rows) clears the fit gate — a round ' +
+      'where half the division was postponed must not buy a refit');
+    /* Rounds counted from the ROWS THAT WERE FITTED, not from the file. Five
+       rounds in the file, one of them entirely unusable outcomes, is four
+       rounds of evidence — and counting the file lets a round that
+       contributed nothing vote for its own inclusion. */
+    assert.equal(
+      basisOf([...rows(4, 400), ...rows(1, 400).map((r) => ({ ...r, round: 5, y: null }))]),
+      'season-prior',
+      'a fifth round of unusable outcomes is being counted toward the ' +
+      'gameweek bar — the rounds are read off the file rather than off the ' +
+      'rows that actually entered the fit');
+    assert.equal(basisOf(rows(6, 280)), 'match-fit',
+      'six full gameweeks (1,680 rows) is being refused, so the gate can ' +
+      'never open and the fit machinery is dead code');
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+}
+
+/* ---- the desks stop pricing from last season, and by a stated round ------ */
+/*
+ * Every player rate came from a squad harvest pinned to a literal season in
+ * data-refresh.yml. Right in August, wrong in October, and wrong invisibly:
+ * the numbers still look like numbers, they are simply last year's. Nothing in
+ * the repository would ever have changed it.
+ *
+ * RUN AT REAL DATES from the shipped fixture lists, so this also fails if a
+ * league's fixtures or round numbering go missing.
+ */
+{
+  const F = await import('file://' + join(root, 'scripts', 'form-season.mjs'));
+  assert.ok(F.FLIP_AT <= 10,
+    `the form season flips at round ${F.FLIP_AT}, past the round-10 ceiling.`);
+  assert.ok(F.FLIP_AT >= 2,
+    `flipping at round ${F.FLIP_AT} prices the desks off a season barely ` +
+    'begun — before the k=6 shrinkage gives a player his own record any weight');
+  assert.ok(F.FLIP_DEADLINE <= 10,
+    `the deadline itself has moved to round ${F.FLIP_DEADLINE}`);
+  /* THE CEILING, EXERCISED PAST THE VALUES IT CURRENTLY TAKES. With the switch
+     at 6 the deadline never binds, so a real ceiling and a decorative one
+     compute the same number today and differ only on the day someone raises
+     the switch — the day nobody is testing. Called here with a switch beyond
+     the deadline, which is the only way to tell them apart. */
+  assert.equal(F.flipAt(14, 10), 10,
+    'the round-10 deadline is decorative: raising the switch would push the ' +
+    'flip past it, and the desks would price off last season into November');
+  assert.equal(F.flipAt(3, 10), 3, 'the deadline is overriding an earlier switch');
+  assert.equal(F.FLIP_AT, F.flipAt(F.SWITCH_AT, F.FLIP_DEADLINE),
+    'FLIP_AT is no longer the ceiling applied to the switch');
+
+  const firstKick = (fixtures, round) => Math.min(...fixtures
+    .filter((f) => f.r === round && f.d).map((f) => new Date(f.d).getTime()));
+
+  for (const L of F.LEAGUES) {
+    const ctx = {}; vm.createContext(ctx);
+    vm.runInContext(readFileSync(join(root, L.file), 'utf8'), ctx);
+    const fixtures = vm.runInContext(L.konst, ctx) || [];
+    assert.ok(fixtures.length, `${L.name} has no fixtures to decide a season from`);
+
+    const beforeAny = firstKick(fixtures, 1) - 3600000;   // an hour before the opener
+    const atTen = firstKick(fixtures, 10) + 3600000;      // an hour into round 10
+    const byRound = (t) => F.decide(t).find((r) => r.code === L.code);
+
+    const pre = byRound(beforeAny);
+    assert.equal(pre.form, pre.current - 1,
+      `${L.name} is priced off ${pre.form}-form before a ball is kicked in ` +
+      `${pre.current}. An unplayed season rates every player at the ` +
+      'positional mean.');
+
+    const ten = byRound(atTen);
+    assert.equal(ten.form, ten.current,
+      `${L.name} is STILL priced off ${ten.form}-form once round 10 has ` +
+      `started. The deadline is round 10 and this is ${ten.progress} rounds in.`);
+
+    /* THE CALENDAR ALONE MUST CARRY IT. Every shipped fixture is "NS" — the
+       statuses only fill in as the season runs — so if the flip depended on
+       the status field it would never happen from this data at all. That is
+       exactly the stale-feed failure the two signals exist to survive, and
+       the assertion above would pass on a status-only implementation the day
+       the feed was healthy. */
+    assert.equal(ten.played, 0,
+      `${L.name}'s shipped fixtures already carry finished statuses, so this ` +
+      'no longer proves the calendar signal works on its own');
+    assert.ok(ten.elapsed >= 10,
+      `${L.name}: the calendar signal counted only ${ten.elapsed} rounds an ` +
+      'hour into round 10');
+  }
+}
+
+/* ---- and the workflow actually asks ------------------------------------- */
+/*
+ * A transition nothing calls is a script with a passing test. The three FORM
+ * harvests must read the computed answer; the four PINNED ones must not — a
+ * promoted club has no top-flight record to transition to, and the referee
+ * join needs the completed season by construction.
+ */
+{
+  const wf = readFileSync(join(root, '.github', 'workflows', 'data-refresh.yml'), 'utf8');
+  assert.ok(/id: form\b[\s\S]{0,200}?form-season\.mjs --github >> "\$GITHUB_OUTPUT"/.test(wf),
+    'nothing runs form-season.mjs into the job outputs, so the transition ' +
+    'below can never fire');
+  const uses = [...wf.matchAll(/API_FOOTBALL_SEASON: \$\{\{([^}]*)\}\}/g)].map((m) => m[1]);
+  const transitioning = uses.filter((u) => /steps\.form\.outputs\.form_/.test(u));
+  assert.equal(transitioning.length, 3,
+    `${transitioning.length} harvest(s) follow the form transition, expected 3 ` +
+    '(Championship squads, the relegated three, La Liga squads). Either a form ' +
+    'harvest has been left on last season for ever, or a pinned one — a ' +
+    'promoted club\'s prior-tier record, or the completed-season referee join ' +
+    '— has been swept along with them.');
+  /* Every pinned use says so in the line above it, so the next reader making
+     them consistent has to argue with a reason rather than a blank. */
+  const pinned = wf.split('\n').map((l, i, all) =>
+    /API_FOOTBALL_SEASON: \$\{\{/.test(l) && !/steps\.form\.outputs/.test(l)
+      && /season_af/.test(l) ? all.slice(Math.max(0, i - 5), i).join(' ') : null)
+    .filter(Boolean);
+  for (const before of pinned) {
+    assert.ok(/PINNED/.test(before),
+      'a season_af harvest is pinned to last season with no note saying why — ' +
+      'the next reader will "fix" it for consistency with the three that ' +
+      'transition, and repoint the referee join or a promoted-club backfill');
+  }
+}
+
 console.log(
   'check-models OK: ' + seen.map((s) =>
     `${s.code} prices ${(s.mean * 100).toFixed(1)}% against ` +
