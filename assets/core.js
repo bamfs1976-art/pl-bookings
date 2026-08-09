@@ -632,6 +632,19 @@
   function nbTailProb(mu, r, line) {
     if (mu == null || !(mu > 0)) return null;
     const size = r > 0 ? r : 8;
+    /* r -> infinity IS Poisson, and this function said so in its own comment
+       while returning NaN for it: gammaln(k + Infinity) is Infinity, and the
+       log-pmf then differences two infinities. sumNegBin hands back an
+       infinite size whenever the moment match comes out under-dispersed, so
+       this is reachable, and a NaN here renders as "NaN%" on a fixture card. */
+    if (!isFinite(size)) {
+      let cdfP = 0, term = Math.exp(-mu);
+      for (let k = 0; k <= line; k++) {
+        cdfP += term;
+        term *= mu / (k + 1);
+      }
+      return Math.min(1, Math.max(0, 1 - cdfP));
+    }
     const p = size / (size + mu);
     let cdf = 0;
     for (let k = 0; k <= line; k++) {
@@ -680,6 +693,35 @@
   function twoStageHazard(baseRate, foulLeague) {
     if (!(baseRate > 0) || !(baseRate < 1) || !(foulLeague > 0)) return null;
     return -Math.log(1 - baseRate) / foulLeague;
+  }
+  /* MATCH FOULS: the sum of a set of player-level Negative Binomials.
+   *
+   * A sum of independent NB(mu_i, r) is NOT itself Negative Binomial unless
+   * every mu_i is equal, so this moment-matches one instead — exact in the
+   * mean and the variance, approximate only in the shape:
+   *
+   *     mu  = SUM mu_i
+   *     var = SUM (mu_i + mu_i^2 / r)      each player's own NB variance
+   *     r_eff = mu^2 / (var - mu)
+   *
+   * REUSING THE PLAYER-LEVEL r WOULD BE WRONG, and wrong in the direction
+   * that matters: a match total of ~22 fouls with r = 6 implies a standard
+   * deviation near 10, which prices the tails of a foul market at roughly
+   * twice their real width. Twenty-odd fouls from twenty-two players is a
+   * much tighter thing than one player's two.
+   *
+   * Falls back to Poisson (r_eff -> Infinity) when the matched variance is
+   * not above the mean, which is what under-dispersed input means.
+   */
+  function sumNegBin(mus, r) {
+    var list = (Array.isArray(mus) ? mus : []).map(Number)
+      .filter(function (m) { return isFinite(m) && m > 0; });
+    if (!list.length) return null;
+    var size = r > 0 ? r : 8, mu = 0, vr = 0;
+    list.forEach(function (m) { mu += m; vr += m + (m * m) / size; });
+    if (!(mu > 0)) return null;
+    var eff = vr > mu ? (mu * mu) / (vr - mu) : Infinity;
+    return { mu: mu, size: eff };
   }
   /* A referee's card multiplier, from two signals rather than one.
 
@@ -922,7 +964,7 @@
     pCardsAtLeast, suspensionCycle, nextSuspension,
     brier, logLoss, reliability, glmProb,
     gammaln, expectedFouls, nbTailProb, cardProbFromFouls, recencyWeight, refCardFactor,
-    leagueRate90, twoStageHazard,
+    leagueRate90, twoStageHazard, sumNegBin,
   };
 
   if (typeof module !== 'undefined' && module.exports) module.exports = PLDCore;

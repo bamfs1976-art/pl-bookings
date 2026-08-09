@@ -1010,4 +1010,46 @@ t('leagueRate90 weights by minutes, not by heads', () => {
   assert.equal(core.leagueRate90([{ min: 900, fw: null }, { min: 900, fw: 2 }], 'fw'), 2);
 });
 
+/* ---- match fouls: a sum of player Negative Binomials ------------------- */
+t('summing player fouls tightens the match total, it does not widen it', () => {
+  const mus = Array(22).fill(1.0);
+  const s = core.sumNegBin(mus, 6);
+  assert.equal(Math.round(s.mu), 22);
+  const sd = Math.sqrt(s.mu + (s.mu * s.mu) / s.size);
+  /* Reusing the PLAYER-level dispersion at match level would give sd ~10 on a
+     22-foul match, which prices the tails at about twice their real width.
+     Twenty-odd fouls from twenty-two players is a much tighter thing than one
+     player's two. */
+  const naive = Math.sqrt(22 + (22 * 22) / 6);
+  assert.ok(sd < naive / 1.5,
+    `match sd ${sd.toFixed(2)} is not meaningfully tighter than the naive ` +
+    `${naive.toFixed(2)} — the moment match is not being applied`);
+  assert.ok(sd > 3 && sd < 7, `match sd ${sd.toFixed(2)} is outside anything plausible`);
+});
+
+t('the match total is exact in the mean whatever the split', () => {
+  /* Moment matching is approximate in SHAPE and exact in mean and variance.
+     The mean is the one a reader can check against a league average, so it
+     must not drift with how the fouls are distributed between players. */
+  const even = core.sumNegBin(Array(20).fill(1.1), 6);
+  const lumpy = core.sumNegBin([8, 5, 3, 2, 2, 1, 1].concat(Array(13).fill(0)), 6);
+  assert.ok(Math.abs(even.mu - 22) < 1e-9);
+  assert.ok(Math.abs(lumpy.mu - 22) < 1e-9);
+  /* And the lumpier split IS wider — same mean, more variance. */
+  const sd = (d) => Math.sqrt(d.mu + (d.mu * d.mu) / d.size);
+  assert.ok(sd(lumpy) > sd(even),
+    'a total concentrated in a few players should be more variable, not less');
+});
+
+t('sumNegBin refuses input it cannot describe', () => {
+  assert.equal(core.sumNegBin([], 6), null);
+  assert.equal(core.sumNegBin(null, 6), null);
+  assert.equal(core.sumNegBin([0, 0], 6), null);
+  /* Under-dispersed input falls back to Poisson rather than a negative size,
+     which would make every tail probability NaN. */
+  const d = core.sumNegBin([2], Infinity);
+  assert.ok(d.size === Infinity || d.size > 1e6, `size ${d.size} is not Poisson-like`);
+  assert.ok(core.nbTailProb(d.mu, d.size, 2) > 0);
+});
+
 console.log(`\n${passed} tests passed`);

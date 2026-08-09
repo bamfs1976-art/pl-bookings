@@ -3564,6 +3564,44 @@ function teamCardBoard(h,a,ref,derby){
   board.thin=cands.length<12;   // too few rated players to trust the tails
   return board;
 }
+/* MATCH FOULS, the same shape as the card board beside it.
+ *
+ * Every rated available player's foul rate, weighted by the share of his
+ * side's minutes he takes and scaled to an eleven — the identical weighting
+ * teamCardBoard uses, so the two cells on the strip cannot describe different
+ * teams. The tail comes from summing the players' own Negative Binomials and
+ * moment-matching one at match level (PLDCore.sumNegBin); reusing the
+ * player-level dispersion here would price the tails at about twice their
+ * real width.
+ *
+ * NOT SCALED BY THE REFEREE, deliberately. He decides how readily a foul
+ * becomes a card, which is where refFactor already applies; how many fouls
+ * two sides commit is a fact about the sides. Scaling both by the same
+ * multiplier would count him twice.
+ */
+function teamFoulBoard(h,a){
+  if(!MODEL_OK) return null;
+  const rated=PL_PLAYERS.filter(p=>(p.c===h||p.c===a)&&p.f!=null&&!p.ls
+    &&!(p.live&&"isu".includes(p.live.st)));
+  if(rated.length<12) return null;      // same floor the card board uses
+  const mus=[];
+  [h,a].forEach(c=>{
+    const s=rated.filter(p=>p.c===c);
+    if(!s.length) return;
+    const w=PLDCore.minuteWeights(s.map(p=>p.min));
+    s.forEach((p,i)=>{ const m=p.f*(w[i]||0); if(m>0) mus.push(m); });
+  });
+  const dist=PLDCore.sumNegBin(mus,MODEL.nbFouls.dispersion);
+  if(!dist) return null;
+  /* Lines either side of the expectation rather than fixed ones: a division
+     averaging 21 fouls and one averaging 24 do not share a sensible line, and
+     a hardcoded 22.5 would be dead on one desk and trivial on the other. */
+  const lo=Math.round(dist.mu)-2.5, hi=Math.round(dist.mu)+1.5;
+  return { expected:dist.mu, size:dist.size,
+           lines:[{line:lo,p:PLDCore.nbTailProb(dist.mu,dist.size,Math.floor(lo))},
+                  {line:hi,p:PLDCore.nbTailProb(dist.mu,dist.size,Math.floor(hi))}],
+           n:rated.length };
+}
 /* The match model's line on a fixture: who is expected to win, how tight
    the game projects, and what that did to every player's number.
 
@@ -3605,7 +3643,7 @@ function h2hFor(h,a){
   const p=H2H.pairs[[h,a].sort().join("|")];
   return (p&&p.n>=3)?p:null;   // under three meetings is anecdote, not history
 }
-function marketStripHtml(board,h2h){
+function marketStripHtml(board,h2h,fouls){
   if(!board) return "";
   const pc=v=>Math.round(v*100)+"%";
   const col=v=>v>=0.6?"var(--danger-ink)":v>=0.45?"var(--warn-ink)":"var(--text-2)";
@@ -3627,12 +3665,24 @@ function marketStripHtml(board,h2h){
       ${PLDMetric.label(`Last ${h2h.n} H2H`,{abbr:"H2H",help:`What actually happened when these two met: ${h2h.avg} yellows on average across ${h2h.n} games (${h2h.last.join(", ")}, most recent first), ${Math.round(h2h.o45*100)}% of them producing 5 or more. Shown beside the model, never folded into it — the disagreement is the useful part.`})}
       <span class="mk-val" style="color:${tone}">${h2h.avg.toFixed(1)}</span></div>`;
   }
+  /* FOULS, beside the cards. The strip priced what the referee DID and said
+     nothing about what he was reacting to — and fouls are the liquid market
+     the desk had the inputs for all along. Both lines are placed relative to
+     this fixture's own expectation rather than at a fixed number, so they mean
+     the same thing on a 21-foul division and a 24-foul one. */
+  let foulCells = "";
+  if (fouls) {
+    const fl = (o) => `<div class="mk-cell">${PLDMetric.label(o.line + "+ fouls", {abbr:"O" + o.line, help:"The chance the two sides commit more than " + o.line + " fouls between them. Placed either side of this match's expected total, so the line moves with the fixture rather than sitting at a number borrowed from another division."})}<span class="mk-val">${o.p==null?"—":Math.round(o.p*100)+"%"}</span></div>`;
+    foulCells = `<div class="mk-cell">${PLDMetric.label("Expected fouls",{abbr:"FLS",help:"Every rated available player's fouls per 90, weighted by the share of his side's minutes he takes and scaled to an eleven — the same weighting the expected-cards figure uses. Not scaled by the referee: he decides how readily a foul becomes a card, not how many are committed."})}<span class="mk-val">${fouls.expected.toFixed(1)}</span></div>`
+      + fouls.lines.map(fl).join("");
+  }
   return `<div class="mk-strip"${board.thin?' data-thin="1"':''}>
     <div class="mk-cell">${PLDMetric.label("Expected cards",{abbr:"EXP",help:"The total yellows the model expects in this match, adding up every rated player's own chance. Typically 2 to 6; the league average is 3.7."})}<span class="mk-val">${board.expected.toFixed(1)}</span></div>
     ${cell("3.5+ cards","O3.5",board.over[3.5],"The chance of 4 or more cards in the match. Runs roughly 20% to 70%.")}
     ${cell("4.5+ cards","O4.5",board.over[4.5],"The chance of 5 or more cards in the match. Runs roughly 10% to 50%.")}
     ${cell("Both teams carded","BTC",board.bothCarded,"The chance each side picks up at least one card. Usually 60% to 90% — the most likely of these three.")}
     ${h2hCell}
+    ${foulCells}
     ${board.thin?'<span class="mk-note">thin sample</span>':''}
   </div>`;
 }
@@ -3804,7 +3854,7 @@ function fixtureCardHtml(f,opts){
     <div class="fx-body">
       <div class="fx-refrow">${refSelect(f.id)}${refDelta}</div>
       ${simStripHtml(M)}
-      ${marketStripHtml(teamCardBoard(h,a,ref,derby),h2hFor(h,a))}
+      ${marketStripHtml(teamCardBoard(h,a,ref,derby),h2hFor(h,a),teamFoulBoard(h,a))}
       ${body}
     </div>
   </section>`;

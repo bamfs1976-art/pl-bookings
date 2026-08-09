@@ -733,6 +733,31 @@ for (const page of DESKS_WITH_A_TOUR) {
   }
 }
 
+/* ---- 10c. the fixture strip prices fouls as well as cards -------------- */
+/* The strip priced what the referee DID — expected cards, the over-lines,
+   both teams carded — and said nothing about what he was reacting to, while
+   every input for the foul side sat in the same dataset. */
+{
+  const src = read('index.html');
+  const code = codeOnly(src);
+  const board = /function teamFoulBoard\([\s\S]*?\n\}/.exec(code);
+  assert.ok(board, 'teamFoulBoard() is gone — the strip prices no fouls');
+  assert.ok(/PLDCore\.minuteWeights\(/.test(board[0]),
+    'the foul total is not minutes-weighted, so it prices a match with the ' +
+    "whole squad on the pitch — the same bug the card board's weighting fixes");
+  assert.ok(/PLDCore\.sumNegBin\(/.test(board[0]),
+    'the match foul total no longer sums the players\' own distributions. ' +
+    'Reusing the player-level dispersion at match level prices the tails at ' +
+    'about twice their real width.');
+  /* NOT referee-scaled. He decides how readily a foul becomes a card, which
+     is where refFactor already applies; scaling both by him counts him twice. */
+  assert.ok(!/refFactor|\bref\b/.test(board[0]),
+    'teamFoulBoard has taken a referee argument. The referee scales cards per ' +
+    'foul, not the number of fouls — applying him to both counts him twice.');
+  assert.ok(/marketStripHtml\(teamCardBoard\([^)]*\),\s*h2hFor\([^)]*\),\s*teamFoulBoard\(/.test(code),
+    'the fixture card no longer passes a foul board to the strip');
+}
+
 /* ---- 10b. the band a card prints is the band the key defines ------------ */
 /* severity() and the Legend key sat three inches apart on one page and
    disagreed, and severity() is what every candidate row printed. The key said
