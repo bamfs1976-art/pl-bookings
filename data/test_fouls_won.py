@@ -97,6 +97,24 @@ def _accents_do_not_block_the_join():
 t("an accent on one side only still matches", _accents_do_not_block_the_join)
 
 
+def _nordic_letters_are_not_accents():
+    """ø, æ, ß and ł are LETTERS, not letters carrying a mark, so NFKD leaves
+    them exactly as they are and strip_accents cannot help.
+
+    This is the case the matched-nothing guard is blind to: it fires when the
+    join finds nobody, and a handful of Scandinavians dropping out of 456
+    matches is not nobody. Both feeds happen to write "Nørgaard" today, which
+    is luck rather than a property of either — Fabianski and Larsen are already
+    spelled both ways across the sources this repo reads."""
+    rows = [row("ARS", "Christian Norgaard"), row("EVE", "Lukasz Fabianski")]
+    src = [af("Arsenal", "C. Nørgaard", 1.1), af("Everton", "Ł. Fabiański", 0.4)]
+    assert with_source(rows, src) == 2
+    assert rows[0]["fw"] == 1.1 and rows[1]["fw"] == 0.4, rows
+
+
+t("Nordic and Polish letters fold to the same key", _nordic_letters_are_not_accents)
+
+
 def _wrong_club_does_not_match():
     """Two feeds, one surname, two clubs. The club is part of the key because
     a name alone is not unique in a league.

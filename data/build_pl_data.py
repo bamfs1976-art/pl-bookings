@@ -357,6 +357,30 @@ def mk(p, basis, resolve=None):
     }
 
 
+# strip_accents removes COMBINING marks — every Spanish, French and Portuguese
+# diacritic, and Gyökeres's umlaut. It does not touch ø, æ, ß, ł or ð, which
+# are distinct letters rather than a letter plus a mark and survive NFKD whole.
+# So "Nørgaard" and "Norgaard" share no key at all, on either stage, and two
+# feeds that disagree about one character drop the player silently: the
+# matched-nothing guard only fires when the join finds NOBODY, and a handful of
+# Scandinavians going missing among 456 matches is exactly the size of failure
+# it cannot see. Both feeds happen to write "Nørgaard" today, which is luck
+# rather than a property of either.
+#
+# Folded here rather than in leagues.strip_accents, which the club joins for
+# three leagues depend on — a shared primitive is the wrong place to widen for
+# one caller's benefit.
+FOLD = {"ø": "o", "æ": "ae", "œ": "oe", "ß": "ss", "đ": "d", "ð": "d",
+        "ł": "l", "þ": "th", "ŋ": "n", "ı": "i"}
+
+
+def fold_letters(text):
+    """The letters NFKD leaves alone, in their conventional Latin form."""
+    for a, b in FOLD.items():
+        text = text.replace(a, b).replace(a.upper(), b.upper())
+    return text
+
+
 def name_keys(name):
     """A player's name as join keys, longest-confidence first.
 
@@ -369,7 +393,7 @@ def name_keys(name):
 
     Returns (full, initial) or (None, None) for a name with no letters in it.
     """
-    flat = leagues.strip_accents(name or "").lower()
+    flat = fold_letters(leagues.strip_accents(name or "")).lower()
     parts = "".join(ch if ch.isalpha() else " " for ch in flat).split()
     if not parts:
         return None, None
