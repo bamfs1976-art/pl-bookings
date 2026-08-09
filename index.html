@@ -536,6 +536,7 @@
         <span id="liveStatus" class="chip tier-fade" hidden></span>
         <button id="cmdkBtn" class="btn btn-ghost cmdk-btn" title="Command palette (Cmd/Ctrl-K)" aria-label="Open command palette" style="padding:.3rem .55rem">⌘K</button>
         <button id="densityBtn" class="btn btn-ghost" type="button" aria-pressed="false" title="Switch between beginner hints and expert view"><span class="den-dot" aria-hidden="true"></span><span id="densityLabel">Beginner</span></button>
+        <button id="tourBtn" class="tb-tour" type="button" title="A four-step walk through this page">How to read this page</button>
         <button id="helpBtn" class="tb-icon" type="button" aria-label="Help, glossary and guided tour" title="Help &amp; glossary">?</button>
         <button id="acctBtn" class="btn btn-ghost" title="Account and sync">
           <span aria-hidden="true">👤</span> <span id="acctLabel">Sign in</span>
@@ -563,13 +564,19 @@
       <h2>This Gameweek</h2>
       <p>Who's most likely to be booked — fixture by fixture, with the referee folded in.</p>
     </div>
-    <p class="beginner-hint">New here? Fixtures are ranked <b>hottest to coolest</b> by booking heat. Under each match, a player's percentage is his chance of a card that game — <b>High</b> is 50%+, <b>Watch</b> 30–50%. Star the ☆ on any player to pin him to your watchlist. It's a research screen, not a tip.</p>
-    <p class="combined-note">
-    <span class="cn-dots" aria-hidden="true"><i></i><i></i><i></i></span>
-    <span>Playing the same day as the other divisions? <a href="/today">Today&rsquo;s combined card</a>
-    ranks every league&rsquo;s matches on one date, with one share card across the lot &mdash; or open the
-    <a href="/today#all">whole-season calendar</a>.</span>
-  </p>
+    <!-- ONE card, not two stacked ones. This was a `.beginner-hint` paragraph
+         and a `.combined-note` block, one under the other, and on a phone the
+         pair pushed the gameweek hero — the thing the page is for — below the
+         fold before a single fixture had been drawn. The guidance and the two
+         cross-league links say what they said; they say it in one place and in
+         two lines. -->
+    <p class="gw-intro" id="gwHint" hidden>
+      <span class="cn-dots" aria-hidden="true"><i></i><i></i><i></i></span>
+      <span>Ranked by booking heat, hottest first.
+        <button type="button" class="linkish" data-open-tour>How to read this page</button> &middot;
+        <a href="/today">Today&rsquo;s card</a> &middot; <a href="/today#all">Season calendar</a></span>
+      <button class="gw-intro-x" type="button" data-hint-dismiss aria-label="Dismiss this hint">&times;</button>
+    </p>
     <div id="gwHero" class="gw-hero" aria-live="polite"></div>
     <div id="gwSuspWrap" hidden>
       <div class="gw-seclabel" style="margin-bottom:.5rem">⚠ Suspension watch</div>
@@ -3913,6 +3920,10 @@ function flashEl(el,dir){
    exist — which is the entire reason the step was written. A one-off re-show
    of a four-step dismissible overlay is the cheaper side of that trade. */
 const TOUR_KEY="pl_desk_tour_seen_v2";
+// Separate from TOUR_KEY: dismissing a one-line hint is not the same
+// statement as having sat through four steps, and one key for both meant
+// either dismissal silently suppressed the other.
+const HINT_KEY="pl_desk_hint_seen_v1";
 const TOUR=[
   {sel:".gw-hero",title:"This Gameweek",body:"Your landing view. Fixtures are ranked hottest to coolest by booking heat, and the hero carries the gameweek, a deadline countdown and the model's live track record."},
   {sel:".leaguebar",title:"Three leagues, and a combined view",body:"This desk is the Premier League. The same thing exists for the Championship and La Liga — same model, same numbers, so the percentages compare directly across all three. Today pulls every league playing on one date into a single list, with a share card across the lot and a whole-season calendar behind it."},
@@ -4016,12 +4027,38 @@ loadLiveCalibration();   // server-verified accuracy on the Guide (best-effort, 
 if(document.readyState==="loading") document.addEventListener("DOMContentLoaded",initAuth);
 else initAuth();
 
-// First-run guided tour — once per browser, only on the landing view, after
-// the layout has settled so the spotlight lands on real elements.
+// THE TOUR IS OFFERED, NOT FIRED.
+//
+// It used to open itself 900ms after load. A first-time visitor met a dimmed
+// screen and "Step 1 of 4" before seeing a single number — and because
+// tourAt() scrolls its target into view, the page also arrived scrolled past
+// its own H1 on a phone. That is the whole first-run experience spent on an
+// overlay explaining a product nobody had been allowed to look at.
+//
+// Nothing opens on load now. "How to read this page" sits in the header
+// beside the ? and runs the same four steps on demand, and a one-line hint
+// under the H1 points at it until it is dismissed. TOUR_KEY still records
+// that the tour has been taken — it decides whether the hint is worth
+// showing, not whether to seize the screen.
 (function(){
-  let seen=false; try{ seen=localStorage.getItem(TOUR_KEY)==="1"; }catch(e){}
-  if(seen) return;
-  setTimeout(()=>{ if(currentPanel==="panel-gameweek") tourStart(); },900);
+  const btn=$("tourBtn");
+  const openTour=()=>{ openPanel("panel-gameweek"); tourAt(0); };
+  if(btn) btn.addEventListener("click",openTour);
+  // The topbar button is hidden below 560px — six controls do not fit a 390px
+  // bar, and forcing it in wrapped the label over four lines and crushed the
+  // brand to "B…". So the hint carries the same offer, which is the surface a
+  // phone user actually meets.
+  document.querySelectorAll("[data-open-tour]").forEach(b=>b.addEventListener("click",openTour));
+  const hint=$("gwHint");
+  if(!hint) return;
+  let done=false;
+  try{ done=localStorage.getItem(HINT_KEY)==="1"||localStorage.getItem(TOUR_KEY)==="1"; }catch(e){}
+  hint.hidden=done;
+  const x=hint.querySelector("[data-hint-dismiss]");
+  if(x) x.addEventListener("click",()=>{
+    hint.hidden=true;
+    try{ localStorage.setItem(HINT_KEY,"1"); }catch(e){}
+  });
 })();
 </script>
 </body>

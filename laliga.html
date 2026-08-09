@@ -93,6 +93,7 @@
   <div class="wrap" style="display:flex;align-items:center;width:100%">
     <div class="brand"><span class="dot">LL</span><span class="bname">Bookings Desk</span></div>
     <span class="spacer"></span>
+    <button class="tb-tour" id="tourBtn" type="button">How to read this page</button>
     <button class="btn" id="themeBtn" type="button" aria-label="Toggle dark mode">Dark</button>
   </div>
 </header>
@@ -120,7 +121,7 @@
       <span class="cn-dots" aria-hidden="true"><i></i><i></i><i></i></span>
       <span>Playing the same day as the other divisions? <a href="/today">Today&rsquo;s combined card</a>
       ranks every league&rsquo;s matches on one date, with one share card across the lot &mdash; or open the
-      <a href="/today#all">whole-season calendar</a>.</span>
+      <a href="/today#all">whole-season calendar</a>. <button type="button" class="linkish" data-open-tour>How to read this page</button></span>
     </p>
     <div class="stats" id="stats"></div>
   </section>
@@ -1707,9 +1708,15 @@
     });
   }
 
-  /* First run only, keyed per desk: being shown round the Championship is not
-     being shown round La Liga. */
-  if (window.PLDTour) window.PLDTour.maybe(SHELL_TOUR, 'laliga_tour_v1');
+  /* OFFERED, never fired. Keyed per desk: being shown round the Championship
+     is not being shown round La Liga. The tour used to open itself 600ms
+     after load, so the first thing a new visitor saw was an overlay on a
+     page they had not read yet — and the spotlight's scroll left the desk
+     sitting past its own heading on a phone. */
+  if (window.PLDTour) window.PLDTour.offer(SHELL_TOUR, 'laliga_tour_v1', { button: document.getElementById('tourBtn') });
+  document.querySelectorAll('[data-open-tour]').forEach(function (b) {
+    b.addEventListener('click', function () { window.PLDTour.run(SHELL_TOUR, {}); });
+  });
 })();
 </script>
 <script>

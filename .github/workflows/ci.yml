@@ -119,6 +119,15 @@ jobs:
       - name: Every emitted class has a rule behind it
         run: node scripts/check-styles.mjs
 
+      # Nothing opens itself over a page the visitor has not seen. Three desks
+      # each fired a guided tour a few hundred ms after load, so a first-time
+      # visitor met a dimmed screen and "Step 1 of 4" before a single number —
+      # and because the spotlight scrolls its target into view, the page also
+      # arrived scrolled past its own heading on a phone. It threw nothing and
+      # was the intended behaviour of code that read perfectly well.
+      - name: The first run shows the product, not an overlay
+        run: node scripts/check-firstrun.mjs
+
       # One palette, four desks. La Liga was built by copying the Championship
       # page, palette and all, so it shipped in the wrong league's purple while
       # its own nav dot and its own share cards were orange. Nothing failed:

@@ -696,3 +696,54 @@ input[type=checkbox],input[type=radio]{accent-color:var(--accent)}
   padding:10px 13px;border-radius:0 9px 9px 0;margin:12px 0}
 footer{padding:26px 0 40px;font-size:12.5px;color:var(--text-3);
   padding-bottom:calc(40px + env(safe-area-inset-bottom))}
+
+/* ─── The tour, offered rather than fired ───────────────────────────────────
+   Every desk used to open its own tour a few hundred milliseconds after load,
+   so the first thing a new visitor saw was a dimmed page and "Step 1 of 4" —
+   and since the spotlight scrolls its target into view, the page arrived
+   scrolled past its own heading on a phone. The overlay is still there and
+   still worth taking; it is now something you press.
+
+   Hidden below 560px: the topbar already carries a brand, a theme toggle and
+   a help button in 390px, and a fifth control there pushes the title into an
+   ellipsis. The inline hint under the H1 carries the same offer on a phone,
+   which is where a new visitor is more likely to be. */
+.tb-tour{font:inherit;font-size:12.5px;font-weight:600;padding:6px 11px;
+  border-radius:9px;border:1px solid var(--border-2);background:var(--surface);
+  color:var(--text-2);cursor:pointer;white-space:nowrap}
+.tb-tour:hover{color:var(--text);border-color:var(--accent)}
+.tb-tour:focus-visible{outline:3px solid var(--ring);outline-offset:2px}
+@media (max-width:560px){ .tb-tour{display:none} }
+
+/* The single intro card that replaced two stacked explainer blocks. Bounded
+   on purpose: two lines on a desktop, four on a phone. The pair it replaced
+   pushed the gameweek hero below the fold on a 390px screen, which is the
+   one measurement that decides whether an explainer helps or is in the way. */
+.gw-intro{display:flex;align-items:flex-start;gap:8px 10px;margin:.1rem 0 1rem;
+  padding:10px 12px;border-radius:11px;font-size:13px;line-height:1.45;
+  color:var(--text-2);background:var(--surface-2);border:1px solid var(--border)}
+.gw-intro .cn-dots{display:inline-flex;gap:3px;flex:none;padding-top:5px}
+.gw-intro .cn-dots i{width:8px;height:8px;border-radius:2.5px;display:block}
+.gw-intro .cn-dots i:nth-child(1){background:var(--pl)}
+.gw-intro .cn-dots i:nth-child(2){background:var(--eflc)}
+.gw-intro .cn-dots i:nth-child(3){background:var(--ll)}
+.gw-intro a{font-weight:700;border-bottom:1.5px solid currentColor;padding-bottom:1px}
+.gw-intro a:hover{opacity:.8}
+.gw-intro-x{margin-left:auto;flex:none;background:none;border:0;cursor:pointer;
+  color:var(--text-3);font-size:18px;line-height:1;padding:0 2px}
+.gw-intro-x:hover{color:var(--text)}
+.gw-intro-x:focus-visible{outline:3px solid var(--ring);outline-offset:2px;border-radius:6px}
+/* 44px of thumb on a touch device — it is a dismiss control on a phone, which
+   is exactly where a 12px × is a coin toss. */
+@media (pointer:coarse){ .gw-intro-x{min-width:44px;min-height:44px;
+  display:inline-flex;align-items:center;justify-content:center} }
+/* A button that reads as a link. Used for the tour offer inside the intro
+   card, which is the only path to the tour on a phone once .tb-tour is hidden
+   — so it must look pressable and be a real <button>, not an <a href="#">
+   that a screen reader announces as navigation to nowhere. */
+.linkish{background:none;border:0;padding:0;font:inherit;cursor:pointer;
+  color:var(--accent-ink);font-weight:700;
+  border-bottom:1.5px solid currentColor;line-height:inherit}
+.linkish:hover{opacity:.8}
+.linkish:focus-visible{outline:3px solid var(--ring);outline-offset:2px;border-radius:4px}
+@media (pointer:coarse){ .linkish{display:inline-block;min-height:32px;line-height:30px} }

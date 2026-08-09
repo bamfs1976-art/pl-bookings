@@ -106,7 +106,13 @@ for (const d of DESKS) {
 for (const d of DESKS) {
   if (d.url === '/today') continue;
   const src = read(d.file);
-  const note = /<p class="combined-note">[\s\S]*?<\/p>/.exec(src);
+  /* Either container. The Premier League desk used to carry a `.combined-note`
+     block stacked under a separate "New here?" paragraph; the pair pushed the
+     gameweek hero off a 390px screen, so they were collapsed into one
+     `.gw-intro` card that carries the same two links. What matters is that
+     each desk advertises the combined views somewhere — not which element
+     does it, which is what this used to pin. */
+  const note = /<p class="(?:combined-note|gw-intro)"[^>]*>[\s\S]*?<\/p>/.exec(src);
   assert.ok(note, `${d.file} never points at the combined views`);
   assert.ok(/href="\/today"/.test(note[0]),
     `${d.file}'s combined-view note does not link the single-date view`);
@@ -241,7 +247,12 @@ for (const f of ['eflc.html', 'laliga.html']) {
     ['assets/palette.js', 'has no command palette']]) {
     assert.ok(src.includes(asset), `${f} ${why}`);
   }
-  assert.ok(/PLDTour\.maybe\(/.test(src), `${f} never starts its tour`);
+  /* offer(), not maybe(). maybe() opened the tour on a 600ms timer, so a
+     first-time visitor met a dimmed page and "Step 1 of 4" before seeing a
+     number — and the spotlight's scroll left the desk sitting past its own
+     heading on a phone. The tour is pressed now; scripts/check-firstrun.mjs
+     holds the rest of that, including the mobile path. */
+  assert.ok(/PLDTour\.offer\(/.test(src), `${f} never wires up its tour`);
   assert.ok(/PLDPalette\.init\(/.test(src), `${f} never initialises the palette`);
   assert.ok(/glossary: \[/.test(src), `${f} ships no glossary terms`);
   /* One source of steps. Two copies is two tours teaching different things. */

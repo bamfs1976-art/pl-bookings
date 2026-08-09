@@ -115,12 +115,68 @@
     show(0);
   }
 
-  /* Runs once ever, unless the key is missing. */
-  function maybe(steps, key) {
-    var seen = false;
-    try { seen = !!localStorage.getItem(key); } catch (e) { /* private mode: show it */ }
-    if (!seen) setTimeout(function () { run(steps, { key: key }); }, 600);
+  /* OFFERED, NOT FIRED.
+   *
+   * This used to be maybe(): unseen key, 600ms timer, tour opens over the top
+   * of a page nobody had looked at yet. A first-time visitor met a dimmed
+   * screen and "Step 1 of 4" before seeing a single number, and because the
+   * spotlight scrolls its target into view, the page also arrived scrolled
+   * past its own heading on a phone. An overlay is a reasonable thing to
+   * offer and an unreasonable thing to impose.
+   *
+   * So nothing opens on load. This wires a persistent button that opens the
+   * same tour on demand, and returns a start() so a caller can hang it off
+   * something else too. The key still records that the tour has been seen —
+   * it is used to decide whether the inline hint is worth showing, not
+   * whether to seize the screen.
+   *
+   * opts.button  an existing element to wire, or
+   * opts.into    a container to append a fresh button to
+   * opts.label   button text (default "How to read this page")
+   */
+  function offer(steps, key, opts) {
+    opts = opts || {};
+    var start = function () { run(steps, { key: key }); };
+    var btn = opts.button;
+    if (!btn && opts.into) {
+      btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'btn pt-offer';
+      btn.textContent = opts.label || 'How to read this page';
+      opts.into.appendChild(btn);
+    }
+    if (btn) btn.addEventListener('click', start);
+    return { start: start, button: btn, seen: seen(key) };
   }
 
-  root.PLDTour = { run: run, maybe: maybe };
+  function seen(key) {
+    try { return !!localStorage.getItem(key); } catch (e) { return false; }
+  }
+
+  /* A one-line hint under the H1, dismissed for good on the X.
+   * Separate key from the tour's: dismissing a sentence is not the same
+   * statement as having taken a four-step tour, and conflating them meant
+   * one dismissal silently suppressed the other. */
+  function hint(el, key) {
+    if (!el) return;
+    if (seen(key)) { el.hidden = true; return; }
+    el.hidden = false;
+    var x = el.querySelector('[data-hint-dismiss]');
+    if (x) x.addEventListener('click', function () {
+      el.hidden = true;
+      try { localStorage.setItem(key, '1'); } catch (e) { /* private mode: it comes back */ }
+    });
+  }
+
+  /* Kept so an un-migrated caller still works — but it no longer fires.
+   * Silently turning an auto-open into a no-op would be worse than either
+   * behaviour, so it says so once in the console. */
+  function maybe(steps, key) {
+    if (typeof console !== 'undefined' && console.warn) {
+      console.warn('PLDTour.maybe no longer auto-opens. Use PLDTour.offer(steps, key, {button}).');
+    }
+    return offer(steps, key, {});
+  }
+
+  root.PLDTour = { run: run, offer: offer, hint: hint, seen: seen, maybe: maybe };
 })(typeof globalThis !== 'undefined' ? globalThis : this);
