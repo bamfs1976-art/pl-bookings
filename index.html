@@ -618,11 +618,44 @@
         <div class="gw-seclabel">Top probabilities <span style="color:var(--text-3);text-transform:none;letter-spacing:0">· hottest first</span></div>
         <button class="btn btn-primary" id="gwShareBtn" style="padding:.32rem .75rem;font-size:.78rem" type="button" title="Download a shareable card of this gameweek's fixtures by booking heat">⬇ Share gameweek</button>
       </div>
-      <div class="seg" id="gwPosSeg" role="tablist" aria-label="Filter candidates by position" style="margin-bottom:.7rem">
-        <button class="seg-btn on" data-pos="all" type="button">ALL</button>
-        <button class="seg-btn" data-pos="DF" type="button">DEF</button>
-        <button class="seg-btn" data-pos="MF" type="button">MID</button>
-        <button class="seg-btn" data-pos="FW" type="button">FWD</button>
+      <!-- STICKY. Ten near-identical cards and the only control was
+           ALL/DEF/MID/FWD, which does not answer "which of these 200 players
+           is the one I want" — and scrolled off the top the moment you started
+           looking. -->
+      <div class="gwt">
+        <div class="gwt-row">
+          <input id="gwSearch" class="gwt-find" type="search" placeholder="Search player or team" aria-label="Search players or teams">
+          <kbd class="gwt-kbd" aria-hidden="true">/</kbd>
+          <span class="gwt-grp"><label class="gwt-lab" for="gwSort">Sort</label>
+          <select id="gwSort" aria-label="Sort fixtures">
+            <option value="heat">Booking heat</option>
+            <option value="ko">Kick-off time</option>
+            <option value="exp">Expected cards</option>
+            <option value="ref">Referee severity</option>
+          </select></span>
+          <div class="seg-view" id="gwViewSeg" role="tablist" aria-label="Fixture view">
+            <button data-view="cards" type="button" aria-selected="true" role="tab">Cards</button>
+            <button data-view="table" type="button" aria-selected="false" role="tab">Table</button>
+          </div>
+        </div>
+        <div class="gwt-row">
+          <div class="seg" id="gwPosSeg" role="tablist" aria-label="Filter candidates by position">
+            <button class="seg-btn on" data-pos="all" type="button">ALL</button>
+            <button class="seg-btn" data-pos="DF" type="button">DEF</button>
+            <button class="seg-btn" data-pos="MF" type="button">MID</button>
+            <button class="seg-btn" data-pos="FW" type="button">FWD</button>
+          </div>
+          <span class="gwt-grp"><label class="gwt-lab" for="gwMinP">Min chance</label>
+          <select id="gwMinP" aria-label="Minimum booking chance">
+            <option value="0">Any</option><option value="0.2">20%+</option>
+            <option value="0.3">30%+</option><option value="0.4">40%+</option>
+            <option value="0.5">50%+</option>
+          </select></span>
+          <span class="gwt-grp"><label class="gwt-lab" for="gwTeam">Team</label>
+          <select id="gwTeam" aria-label="Filter by team"><option value="">All teams</option></select></span>
+          <label class="chk"><input type="checkbox" id="gwWatchOnly"> Only my watchlist</label>
+          <span class="gwt-count" id="gwCount" role="status" aria-live="polite"></span>
+        </div>
       </div>
     </div>
     <div id="gwFixtures"></div>
@@ -3173,6 +3206,35 @@ function renderFixtures(){
 // ═══════════════════════════════════════════════════════════
 const GW_EXPANDED=new Set();
 let gwPos="all"; // This Gameweek position filter (ALL / DF / MF / FW)
+/* The rest of the toolbar. Held together so every renderer reads one object
+   and no view can filter differently from another — the Cards and Table views
+   must never disagree about who is in the gameweek. */
+const gwF={q:"",sort:"heat",minP:0,team:"",watchOnly:false,view:"cards"};
+const GW_COLLAPSED=new Set((()=>{ try{ return JSON.parse(localStorage.getItem("pl_desk_folded")||"[]"); }catch(e){ return []; } })());
+/* Accent-insensitive substring. "Munoz" has to find "Muñoz" and "odegaard"
+   has to find "Ødegaard" — a research tool people type club names into
+   cannot demand the diacritics. */
+function gwNorm(s){ return String(s||"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase(); }
+function gwMatches(c){
+  if(!gwF.q) return true;
+  const q=gwNorm(gwF.q);
+  /* The PLAYER's own name and club — searching "Liverpool" means Liverpool's
+     players, not everyone on a pitch Liverpool happen to be using. Matching
+     the fixture instead pulled the opposition in too, which is not what
+     anybody typing a club name is asking for. */
+  return gwNorm(c.p.n).includes(q)||gwNorm(c.p.c).includes(q)
+      ||gwNorm(CLUBMAP[c.p.c]&&CLUBMAP[c.p.c].name).includes(q);
+}
+/* One place that decides who survives the toolbar, used by both views. */
+function gwFilterCands(cands){
+  return cands.filter(c=>
+    (gwPos==="all"||c.p.p===gwPos)
+    &&(!gwF.minP||c.prob>=gwF.minP)
+    &&(!gwF.team||c.p.c===gwF.team)
+    &&(!gwF.watchOnly||isWatched(c.p))
+    &&gwMatches(c));
+}
+function gwFiltering(){ return !!(gwF.q||gwF.minP||gwF.team||gwF.watchOnly||gwPos!=="all"); }
 
 // Sample-size confidence from minutes played (live once the season is under way).
 function confidence(p){
@@ -3326,10 +3388,10 @@ function pipMeter(p){
   const note=`${y.toFixed(2)} yellows per 90`+(mins?`, over ${Math.round(mins/90)} matches of football`:"");
   return PLDMetric.confidence(n,5,note,"Card rate");
 }
-function candRowHtml(c,ref){
+function candRowHtml(c,ref,isNew){
   const p=c.p, prob=c.prob, sev=severity(prob), conf=confidence(p);
   const live=(p.liveRate)?' <span title="Live 2026-27 yellow rate" style="color:var(--good)">●</span>':'';
-  return `<button class="cand2" data-pk="${esc(watchKey(p))}" type="button" aria-label="Open ${esc(p.n)}'s profile">
+  return `<button class="cand2${isNew?" cand-in":""}" data-pk="${esc(watchKey(p))}" type="button" aria-label="Open ${esc(p.n)}'s profile">
     ${playerAvatar(p,"avatar-sm",null,{crest:true})}
     <span class="cbadge" title="${esc(conf.label)}">${esc(p.c)}</span>
     <span style="flex:1;min-width:0">
@@ -3389,33 +3451,47 @@ function fixtureCardHtml(f,opts){
   const heatBadge=`<span class="heat-badge${heat>=4.2?" hot":""}" data-num="heat-${f.id}" title="Booking heat: ${base.toFixed(1)} base × ${rf.toFixed(2)} ref${derby?" × "+DERBY_BOOST+" derby":""}">${heat.toFixed(1)}</span>`;
   const refDelta=(ref&&Math.abs(rf-1)>=0.02)?` <span class="mono" style="font-size:.64rem;color:${rf>1?"var(--warn)":"var(--fade)"}" title="Every player's chance scaled ×${rf.toFixed(2)} by ${esc(ref.n)}">×${rf.toFixed(2)} on every player</span>`:"";
   // Candidates, ranked by fixture-aware probability, position-filtered.
-  let cands=gwCandidates(h,a,ref,derby);
-  if(opts.pos&&opts.pos!=="all") cands=cands.filter(c=>c.p.p===opts.pos);
+  let cands=gwFilterCands(gwCandidates(h,a,ref,derby));
   let body;
   if(!cands.length){
-    body='<div class="fx-empty">'+(opts.pos&&opts.pos!=="all"?"No available "+({DF:"defenders",MF:"midfielders",FW:"forwards"}[opts.pos]||"players")+" rated for this fixture.":"No rated available players for this fixture yet.")+'</div>';
+    /* A filtered fixture with nothing in it is dropped from the grid entirely
+       (see renderGameweek) — this branch is for a fixture that simply has no
+       rated players yet, which is a fact about the data rather than the query. */
+    body='<div class="fx-empty">No rated available players for this fixture yet.</div>';
   }else{
     const DEF_SHOW=4, shown=opts.expanded?cands:cands.slice(0,DEF_SHOW), hidden=cands.length-shown.length;
-    body=shown.map(c=>candRowHtml(c,ref)).join("");
+    body=shown.map((c,i)=>candRowHtml(c,ref,opts.expanded&&i>=DEF_SHOW)).join("");
+    /* HOW MANY ARE WORTH IT. "Show 35 more candidates" says nothing about
+       whether any of the 35 clears the Watch band, so the honest answer to
+       "is this worth expanding" was to expand it and find out. */
+    const above=cands.slice(DEF_SHOW).filter(c=>c.prob>=0.3).length;
     if(opts.expanded&&cands.length>DEF_SHOW) body+=`<button class="fx-more" data-expand="${f.id}" type="button">Show fewer ‹</button>`;
-    else if(hidden>0) body+=`<button class="fx-more" data-expand="${f.id}" type="button">Show ${hidden} more candidate${hidden===1?"":"s"} ›</button>`;
+    else if(hidden>0) body+=`<button class="fx-more" data-expand="${f.id}" type="button">Show ${hidden} more candidate${hidden===1?"":"s"} ›${above?` <span class="faint">· ${above} above Watch</span>`:` <span class="faint">· none above Watch</span>`}</button>`;
   }
-  return `<div class="fx-card" data-fid="${f.id}">
-    <div class="fxh2">
+  const folded=GW_COLLAPSED.has(f.id);
+  return `<div class="fx-card${folded?" collapsed":""}" data-fid="${f.id}">
+    <div class="fxh2" role="button" tabindex="0" aria-expanded="${!folded}" data-fold="${f.id}" aria-label="${esc(h)} versus ${esc(a)} — ${folded?"expand":"collapse"}">
       <div style="min-width:0">
         <div class="fxh2-teams">${crest(h,22)} ${esc(h)} <span class="faint mono" style="font-weight:500;font-size:.78rem">vs</span> ${crest(a,22)} ${esc(a)}${derbyChip}${score}</div>
         <div class="mono" style="color:var(--text-3);font-size:.66rem;margin-top:.18rem">${f.kickoff_time?fmtKOShort(f.kickoff_time):"TBC"}</div>
       </div>
-      <div style="text-align:right;flex:none">
-        <div class="mono" style="font-size:.66rem;color:var(--text-3)">${refLine}${strictChip}</div>
-        <div style="margin-top:.28rem">${heatBadge}</div>
+      <div style="text-align:right;flex:none;display:flex;align-items:center;gap:.4rem">
+        <div>
+          <div class="mono" style="font-size:.66rem;color:var(--text-3)">${refLine}${strictChip}</div>
+          <div style="margin-top:.28rem">${heatBadge}</div>
+        </div>
+        <span class="fx-fold" aria-hidden="true">⌄</span>
       </div>
     </div>
-    <div class="fx-refrow">${refSelect(f.id)}${refDelta}</div>
-    ${simStripHtml(M)}
-    ${marketStripHtml(teamCardBoard(h,a,ref,derby),h2hFor(h,a))}
-    ${body}
-    <div class="fx-foot"><button class="fx-share" data-share-fid="${f.id}" type="button" title="Download a shareable card of this match">⬇ Share match</button></div>
+    <!-- WRAPPED. The collapse used to target .fx-body, which did not exist —
+         the rule matched nothing and a "collapsed" card rendered in full. -->
+    <div class="fx-body">
+      <div class="fx-refrow">${refSelect(f.id)}${refDelta}</div>
+      ${simStripHtml(M)}
+      ${marketStripHtml(teamCardBoard(h,a,ref,derby),h2hFor(h,a))}
+      ${body}
+      <div class="fx-foot"><button class="fx-share" data-share-fid="${f.id}" type="button" title="Download a shareable card of this match">⬇ Share match</button></div>
+    </div>
   </div>`;
 }
 // Cumulative self-score for the hero (honest live tracking, not a backtest).
@@ -3522,10 +3598,49 @@ function renderGameweek(){
     return;
   }
   const gw=LIVE.currentGW;
-  const fx=sortFixturesByHeat(LIVE.fixtures.filter(f=>f.event===gw));
+  let fx=sortFixturesByHeat(LIVE.fixtures.filter(f=>f.event===gw));
+  /* Heat is the default and stays the default; the other three answer
+     questions heat cannot — "what is on first", "where are the most cards
+     coming", "who has the strictest whistle". */
+  if(gwF.sort!=="heat") fx=fx.slice().sort((x,y)=>{
+    const mx=fixtureMeta(x), my=fixtureMeta(y);
+    if(gwF.sort==="ko") return String(x.kickoff_time||"9").localeCompare(String(y.kickoff_time||"9"));
+    if(gwF.sort==="exp"){ const bx=mx&&mx.board?mx.board.expected:-1, by=my&&my.board?my.board.expected:-1; return by-bx; }
+    if(gwF.sort==="ref"){ const rx=refFor(x.id), ry=refFor(y.id);
+      return ((ry&&ry.ypg!=null?ry.ypg:-1)-(rx&&rx.ypg!=null?rx.ypg:-1)); }
+    return 0;
+  });
   $("gwToolbar").hidden=!fx.length;
   if(!fx.length){ el.innerHTML='<div class="surface" style="border-radius:14px;padding:1rem"><p class="muted" style="margin:0">No fixtures scheduled for GW'+gw+' yet — check back once the schedule firms up.</p></div>'; return; }
-  el.innerHTML='<div class="fx-grid">'+fx.map(f=>fixtureCardHtml(f,{expanded:GW_EXPANDED.has(f.id),pos:gwPos})).join("")+'</div>';
+  if(window.gwFillTeams) gwFillTeams(fx);
+  /* A FILTER NARROWS THE LIST. Searching "Liverpool" used to leave the other
+     nine fixtures on screen as empty cards, so the answer to the query was
+     buried in the noise it was supposed to remove. */
+  const shownFx=gwFiltering()
+    ? fx.filter(f=>{ const m=fixtureMeta(f); return m&&gwFilterCands(gwCandidates(m.h,m.a,m.ref,m.derby)).length; })
+    : fx;
+  if(!shownFx.length){
+    el.innerHTML='<div class="surface" style="border-radius:14px;padding:1rem"><p class="muted" style="margin:0">Nothing in GW'+gw+' matches these filters. <button class="linkish" id="gwClear" type="button">Clear them</button></p></div>';
+    gwReport(shownFx);
+    const cl=$("gwClear"); if(cl) cl.addEventListener("click",gwClearFilters);
+    return;
+  }
+  el.innerHTML='<div class="fx-grid">'+shownFx.map(f=>fixtureCardHtml(f,{expanded:GW_EXPANDED.has(f.id),pos:gwPos})).join("")+'</div>';
+  gwReport(shownFx);
+}
+/* WHAT THE FILTERS LEFT. A filter that quietly empties the page reads as
+   "there is nothing on this weekend", which is a very different claim from
+   "nothing matches what you asked for". Announced politely for a screen
+   reader, which otherwise gets no signal that anything happened at all. */
+function gwReport(fx){
+  const c=$("gwCount"); if(!c) return;
+  let players=0;
+  fx.forEach(f=>{ const m=fixtureMeta(f); if(!m) return;
+    players+=gwFilterCands(gwCandidates(m.h,m.a,m.ref,m.derby)).length; });
+  const filtered=gwFiltering();
+  c.textContent=filtered
+    ? `${players} candidate${players===1?"":"s"} across ${fx.length} fixture${fx.length===1?"":"s"}`
+    : `${fx.length} fixture${fx.length===1?"":"s"}`;
 }
 // Shared wiring for both fixture grids (This Gameweek + All fixtures):
 // expand/collapse lower-risk candidates, open a profile, assign a referee.
@@ -3535,9 +3650,25 @@ function wireFixtureGrid(id,rerender){
     const share=e.target.closest("[data-share-fid]");
     if(share){ exportFixturePNG(Number(share.dataset.shareFid)); return; }
     const more=e.target.closest(".fx-more");
-    if(more){ const fid=Number(more.dataset.expand); GW_EXPANDED.has(fid)?GW_EXPANDED.delete(fid):GW_EXPANDED.add(fid); rerender(); return; }
+    if(more){ const fid=Number(more.dataset.expand); GW_EXPANDED.has(fid)?GW_EXPANDED.delete(fid):GW_EXPANDED.add(fid);
+      const y=window.scrollY; rerender(); window.scrollTo({top:y}); return; }
+    /* Collapse a fixture you have finished with. Anything interactive inside
+       the header keeps working — the guard is on the header itself, not on
+       whether the click landed in it. */
+    const fold=e.target.closest("[data-fold]");
+    if(fold&&!e.target.closest("button,select,a,input,.mlab,.rp")){
+      const fid=Number(fold.dataset.fold);
+      GW_COLLAPSED.has(fid)?GW_COLLAPSED.delete(fid):GW_COLLAPSED.add(fid);
+      try{ localStorage.setItem("pl_desk_folded",JSON.stringify([...GW_COLLAPSED])); }catch(err){}
+      const y=window.scrollY; rerender(); window.scrollTo({top:y}); return; }
     const cand=e.target.closest(".cand[data-pk]");
     if(cand) openPlayerProfile(cand.dataset.pk);
+  });
+  el.addEventListener("keydown",e=>{
+    const fold=e.target.closest("[data-fold]");
+    if(!fold||(e.key!=="Enter"&&e.key!==" ")) return;
+    if(e.target.closest("button,select,a,input,.mlab,.rp")) return;
+    e.preventDefault(); fold.click();
   });
   el.addEventListener("change",e=>{
     const s=e.target.closest(".ref-sel"); if(!s) return;
@@ -3554,6 +3685,58 @@ wireFixtureGrid("fixtureList",renderFixtures);
 $("gwWatch").addEventListener("click",e=>{ const row=e.target.closest(".wl-row[data-pk]"); if(row) openPlayerProfile(row.dataset.pk); });
 $("gwSusp").addEventListener("click",e=>{ const c=e.target.closest(".gwsusp-card[data-pk]"); if(c) openPlayerProfile(c.dataset.pk); });
 // Position filter chips (ALL / DEF / MID / FWD) for the gameweek feed.
+/* Scroll position survives a re-render. Expanding "show 35 more" rebuilds the
+   whole grid, so without this the page jumped to wherever the shorter document
+   put you — which on a phone is somewhere else entirely. */
+function gwClearFilters(){
+  gwF.q=""; gwF.minP=0; gwF.team=""; gwF.watchOnly=false; gwPos="all";
+  const set=(id,v)=>{ const el=$(id); if(el) el.value=v; };
+  set("gwSearch",""); set("gwMinP","0"); set("gwTeam","");
+  const w=$("gwWatchOnly"); if(w) w.checked=false;
+  document.querySelectorAll("#gwPosSeg .seg-btn").forEach(b=>b.classList.toggle("on",b.dataset.pos==="all"));
+  gwRerender();
+}
+function gwRerender(){
+  const y=window.scrollY;
+  renderGameweek();
+  window.scrollTo({top:y});
+}
+(function(){
+  const on=(id,ev,fn)=>{ const el=$(id); if(el) el.addEventListener(ev,fn); };
+  /* Debounced: re-rendering ten cards on every keystroke of a club name is a
+     lot of layout for a search box. */
+  let t=null;
+  on("gwSearch","input",e=>{ clearTimeout(t); const v=e.target.value;
+    t=setTimeout(()=>{ gwF.q=v; gwRerender(); },140); });
+  on("gwSort","change",e=>{ gwF.sort=e.target.value; gwRerender(); });
+  on("gwMinP","change",e=>{ gwF.minP=Number(e.target.value)||0; gwRerender(); });
+  on("gwTeam","change",e=>{ gwF.team=e.target.value; gwRerender(); });
+  on("gwWatchOnly","change",e=>{ gwF.watchOnly=e.target.checked; gwRerender(); });
+  /* "/" to focus, the convention every search-first tool uses — and NOT while
+     something is already taking typing, or it eats the slash you meant. */
+  document.addEventListener("keydown",e=>{
+    if(e.key!=="/"&&e.key!=="?") return;
+    const t2=e.target, tag=(t2&&t2.tagName)||"";
+    if(/INPUT|TEXTAREA|SELECT/.test(tag)||t2.isContentEditable) return;
+    if(currentPanel!=="panel-gameweek") return;
+    const box=$("gwSearch"); if(!box) return;
+    e.preventDefault(); box.focus(); box.select();
+  });
+  /* The team list is built from the clubs actually playing, not all 20 — a
+     filter offering a club with no fixture this week is a dead end. */
+  window.gwFillTeams=function(fx){
+    const sel=$("gwTeam"); if(!sel||!LIVE) return;
+    const seen=new Set();
+    fx.forEach(f=>{ const h=LIVE.teamMap[f.team_h],a=LIVE.teamMap[f.team_a];
+      if(h) seen.add(h); if(a) seen.add(a); });
+    const want=[...seen].sort();
+    if(sel.dataset.for===want.join(",")) return;   // unchanged: leave the selection alone
+    sel.dataset.for=want.join(",");
+    const cur=gwF.team;
+    sel.innerHTML='<option value="">All teams</option>'
+      +want.map(c=>`<option value="${esc(c)}"${c===cur?" selected":""}>${esc((CLUBMAP[c]&&CLUBMAP[c].name)||c)}</option>`).join("");
+  };
+})();
 $("gwPosSeg").addEventListener("click",e=>{
   const b=e.target.closest(".seg-btn"); if(!b) return;
   gwPos=b.dataset.pos;
