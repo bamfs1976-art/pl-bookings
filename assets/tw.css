@@ -50,12 +50,19 @@
   /* The identity of THIS desk. Defaults to the combined view, so a page that
      forgets its class gets the neutral teal rather than another league's kit. */
   --accent:#0e7490; --accent-2:var(--all); --accent-ink:var(--all-ink);
-  --ring:rgba(14,116,144,.45);
+  /* THE FOCUS RING IS OPAQUE. It was a 45% tint of the accent, which composites
+     over white to about 2.7:1 on the Premier League desk — under the 3:1 WCAG
+     2.2 requires of a focus indicator (1.4.11), and under it on all four desks
+     in both themes. A ring is the only thing telling a keyboard user where they
+     are, so it is the last place to spend contrast on softness. The opaque
+     accent already clears 4.5:1 on every ground here, which check-contrast
+     asserts independently. */
+  --ring:var(--accent);
 }
-html.lg-pl  {--accent:#3d195b;--accent-2:var(--pl);  --accent-ink:var(--pl-ink);  --ring:rgba(61,25,91,.45)}
-html.lg-eflc{--accent:#4b2e83;--accent-2:var(--eflc);--accent-ink:var(--eflc-ink);--ring:rgba(75,46,131,.45)}
-html.lg-ll  {--accent:#9a3412;--accent-2:var(--ll);  --accent-ink:var(--ll-ink);  --ring:rgba(154,52,18,.45)}
-html.lg-all {--accent:#0e7490;--accent-2:var(--all); --accent-ink:var(--all-ink); --ring:rgba(14,116,144,.45)}
+html.lg-pl  {--accent:#3d195b;--accent-2:var(--pl);  --accent-ink:var(--pl-ink);  --ring:var(--accent)}
+html.lg-eflc{--accent:#4b2e83;--accent-2:var(--eflc);--accent-ink:var(--eflc-ink);--ring:var(--accent)}
+html.lg-ll  {--accent:#9a3412;--accent-2:var(--ll);  --accent-ink:var(--ll-ink);  --ring:var(--accent)}
+html.lg-all {--accent:#0e7490;--accent-2:var(--all); --accent-ink:var(--all-ink); --ring:var(--accent)}
 
 html[data-theme="dark"]{
   --bg:#0b0f1a; --surface:#141b2c; --surface-2:#1b2336; --surface-3:#232c42;
@@ -73,7 +80,7 @@ html[data-theme="dark"]{
   --pl:#ff2d7e; --eflc:#a78bfa; --ll:#fb923c; --all:#67e8f9;
   /* The dark marks are already pastels clearing AA on #0b0f1a, so ink == mark. */
   --pl-ink:#ff418a; --eflc-ink:#a78bfa; --ll-ink:#fb923c; --all-ink:#67e8f9;
-  --accent:#22d3ee; --ring:rgba(34,211,238,.5);
+  --accent:#22d3ee; --ring:var(--accent);
 }
 /* Two classes, so these beat the generic dark block above it whatever the
    source order. `html[data-theme="dark"]` and `html.lg-pl` carry the same
@@ -81,10 +88,10 @@ html[data-theme="dark"]{
    League desk would lose its accent the moment the lights went out. Only
    --accent moves: --accent-2 rides on --pl/--eflc/--ll, which are already
    redefined above and resolve per theme at the point of use. */
-html[data-theme="dark"].lg-pl  {--accent:#a78bfa;--ring:rgba(167,139,250,.5)}
-html[data-theme="dark"].lg-eflc{--accent:#ddd6fe;--ring:rgba(196,181,253,.5)}
-html[data-theme="dark"].lg-ll  {--accent:#fdba74;--ring:rgba(253,186,116,.5)}
-html[data-theme="dark"].lg-all {--accent:#22d3ee;--ring:rgba(34,211,238,.5)}
+html[data-theme="dark"].lg-pl  {--accent:#a78bfa;--ring:var(--accent)}
+html[data-theme="dark"].lg-eflc{--accent:#ddd6fe;--ring:var(--accent)}
+html[data-theme="dark"].lg-ll  {--accent:#fdba74;--ring:var(--accent)}
+html[data-theme="dark"].lg-all {--accent:#22d3ee;--ring:var(--accent)}
 
 /* ─── League switcher ───────────────────────────────────────────────────────
    Shipped because the Championship and La Liga desks were, for practical
@@ -617,9 +624,9 @@ a{color:var(--accent-ink);text-decoration:none}
 .btn-ghost:hover{background:var(--surface-2)}
 .btn:hover{border-color:var(--accent)}
 .btn[disabled]{opacity:.55;cursor:progress}
-/* 3px, not 2. The ring is a 45%-alpha tint of the accent, and at 2px against a
-   1px border it is easy to lose — which is the whole job of a focus ring. The
-   Premier League desk already used 3; the other three did not. */
+/* 3px, not 2. At 2px against a 1px border the ring is easy to lose, which is
+   the whole job of a focus ring. The Premier League desk already used 3; the
+   other three did not. */
 .btn:focus-visible,select:focus-visible,input:focus-visible,
 textarea:focus-visible,button:focus-visible,a:focus-visible,[tabindex]:focus-visible{
   outline:3px solid var(--ring);outline-offset:2px;border-radius:8px}
@@ -924,6 +931,10 @@ details.model-detail:not([open]) .fx-simrow{display:none}
 .seg-view button+button{border-left:1px solid var(--border-2)}
 .seg-view button[aria-selected="true"]{background:var(--accent);color:var(--on-accent);font-weight:700}
 .seg-view button:focus-visible{outline:3px solid var(--ring);outline-offset:-3px}
+/* The one control where the ring is drawn INSIDE an accent-filled box. Now that
+   --ring is the opaque accent, an accent ring on an accent fill is no ring at
+   all — the selected tab rings in its own foreground instead. */
+.seg-view button[aria-selected="true"]:focus-visible{outline-color:var(--on-accent)}
 @media (pointer:coarse){ .seg-view button{min-height:40px} }
 
 /* DENSITY. auto-fill at a 330px minimum gave FOUR columns at 1440px, which is
@@ -943,6 +954,40 @@ details.model-detail:not([open]) .fx-simrow{display:none}
 .fx-card.collapsed .fx-fold{transform:rotate(-90deg)}
 @media (pointer:coarse){ .fx-fold{min-width:44px;min-height:44px;
   display:inline-flex;align-items:center;justify-content:center} }
+
+/* THE THREE STATES A FIXTURE LIST CAN BE IN THAT ARE NOT "here are the
+   fixtures". The desk had one branch for all of them: renderGameweek() runs at
+   boot, BEFORE loadLive() has been called, so the first thing a visitor read on
+   a cold load was "the live FPL feed is unreachable right now" — an error, for
+   a request that had not yet been made. Two seconds later the fixtures
+   appeared. The states are distinct now and so is what each one says.
+
+   The skeleton is shaped like the card it is standing in for — a header, a
+   heat block, four candidate rows — so the layout does not jump when the real
+   thing lands. */
+@keyframes skelSheen{0%{background-position:180% 0}to{background-position:-80% 0}}
+.skel{border-radius:6px;display:block;
+  background:linear-gradient(90deg,var(--surface-3) 22%,var(--surface-2) 42%,var(--surface-3) 62%);
+  background-size:260% 100%;animation:skelSheen 1.4s ease-in-out infinite}
+.skel-card{border:1px solid var(--border);border-radius:14px;background:var(--surface);
+  padding:.75rem .8rem;box-shadow:var(--shadow-sm)}
+.skel-head{display:flex;align-items:center;justify-content:space-between;gap:.6rem}
+.skel-row{display:flex;align-items:center;gap:.55rem;margin-top:.62rem}
+.skel-av{width:28px;height:28px;border-radius:50%;flex:none}
+@media (prefers-reduced-motion:reduce){ .skel{animation:none} }
+/* The state cards — error and empty — share the fixture card's surface so the
+   list does not visibly change shape depending on why it is not a list. */
+.fx-state{border:1px solid var(--border);border-radius:14px;background:var(--surface);
+  padding:1rem;box-shadow:var(--shadow-sm)}
+.fx-state h3{margin:0 0 .3rem;font-size:1rem}
+.fx-state p{margin:0;font-size:.86rem;color:var(--text-2);line-height:1.5}
+.fx-state .fx-state-act{margin-top:.7rem;display:flex;gap:.5rem;flex-wrap:wrap;align-items:center}
+
+/* The candidate rows are a list, and now say so. Preflight already strips
+   markers and padding from ul; this is the rule that makes the class real and
+   keeps each row a full-width block whatever the grid around it does. */
+.cand-list{list-style:none;margin:0;padding:0;display:block}
+.cand-list>li{display:block;margin:0}
 
 /* Newly revealed candidates slide in rather than appearing, so "show 35 more"
    reads as an expansion rather than a repaint. */
@@ -1125,9 +1170,17 @@ details.model-detail:not([open]) .fx-simrow{display:none}
    Desktop: a sticky right rail. #panel-gameweek's children are all siblings,
    so this is a two-column grid with everything in column 1 and the watchlist
    spanning column 2 — no DOM move, no shell rewrite, and it collapses back to
-   normal flow the moment the viewport cannot afford 300px. */
+   normal flow the moment the viewport cannot afford 300px.
+
+   `.active` IS LOAD-BEARING HERE. Routing on this desk is `.page{display:none}`
+   / `.page.active{display:block}`, and an id selector setting `display:grid`
+   outranks both — so the bare `#panel-gameweek` this rule shipped with kept the
+   whole Gameweek route on screen underneath every other route at >=1280px.
+   Nothing threw and the route being LEFT still rendered correctly on top of it,
+   which is why it survived a viewport check; the page simply had two of
+   everything, including two <h1>s. */
 @media (min-width:1280px){
-  #panel-gameweek{display:grid;grid-template-columns:minmax(0,1fr) 300px;
+  #panel-gameweek.active{display:grid;grid-template-columns:minmax(0,1fr) 300px;
     column-gap:22px;align-items:start}
   #panel-gameweek>*{grid-column:1;min-width:0}
   #gwWatchWrap{grid-column:2;grid-row:1/-1;align-self:start;margin:0;

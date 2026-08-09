@@ -347,7 +347,209 @@ for (const page of DESKS_WITH_A_TOUR) {
     'the track-record sparkline carries no text alternative, so to a screen ' +
     'reader the headline claim has no evidence behind it');
 }
+/* ---- 9. states, semantics and the focus ring ---------------------------- */
+/* Section 8. Everything here is asserted on PARSED STRUCTURE rather than on a
+   string appearing somewhere in the file. Five separate guards in this repo
+   have now been satisfied by the wrong copy of the text they were looking for
+   — a binder vouching for the thing it binds, a render site vouching for a
+   definition, a tooltip vouching for a dialog — so a presence check is not an
+   assertion here, it is a coincidence waiting to happen. */
+{
+  const src = read('index.html');
+  const code = codeOnly(src);
+  const css = read('assets/tw.css');
+  /* Body of a top-level function declaration, brace-matched. */
+  const fnBody = (name, text) => {
+    const m = new RegExp('function ' + name + '\\s*\\([^)]*\\)\\s*\\{').exec(text);
+    if (!m) return null;
+    let i = m.index + m[0].length, depth = 1, start = i;
+    while (i < text.length && depth > 0) {
+      const c = text[i];
+      if (c === '{') depth++; else if (c === '}') depth--;
+      i++;
+    }
+    return depth === 0 ? text.slice(start, i - 1) : null;
+  };
+
+  /* LOADING, ERROR AND EMPTY ARE THREE STATES. renderGameweek() paints the
+     landing view before loadLive() has been called, so the single `if(!LIVE)`
+     branch it shipped with greeted every cold load with a feed-unreachable
+     message for a request that had not been made yet. */
+  const rg = fnBody('renderGameweek', code);
+  assert.ok(rg, 'renderGameweek() is gone or has been reshaped past recognition');
+  const notLive = /if\(!LIVE\)\{([\s\S]*?)\n  \}/.exec(rg);
+  assert.ok(notLive, 'renderGameweek() no longer has a no-data branch');
+  assert.ok(/LIVE_STATE\s*===?\s*"loading"/.test(notLive[1]),
+    'the no-data branch does not distinguish LOADING from FAILED. It runs at ' +
+    'boot, before the feed has been asked, so without that test a cold load ' +
+    'reports an error for a request that has not been made.');
+  assert.ok(/gwSkeletonHtml\(\)/.test(notLive[1]) && /gwErrorHtml\(\)/.test(notLive[1]),
+    'the loading and error branches do not render their own states');
+  /* The two state renderers, checked on their own bodies — a search of the
+     file would be answered by this branch calling them. */
+  const skel = fnBody('gwSkeletonHtml', code);
+  assert.ok(skel && /skel-card/.test(skel), 'the fixture skeleton renders no cards');
+  assert.ok(/aria-hidden="true"/.test(skel),
+    'the skeleton bones are exposed to a screen reader, which reads eighteen ' +
+    'empty boxes rather than "loading"');
+  assert.ok(/role="status"/.test(skel),
+    'the skeleton announces nothing — a screen reader gets silence while the ' +
+    'page waits');
+  const errHtml = fnBody('gwErrorHtml', code);
+  assert.ok(errHtml, 'gwErrorHtml() is gone');
+  assert.ok(/id="gwRetry"/.test(errHtml),
+    'the error state offers no retry, so a whole-page reload is the only way ' +
+    'back — and on a phone that also discards the tab');
+  assert.ok(/role="alert"/.test(errHtml), 'the error state is not announced');
+  assert.ok(/\$\("gwRetry"\)/.test(notLive[1]) && /loadLive\(\)/.test(notLive[1]),
+    'nothing wires the retry button to the load path — the control renders ' +
+    'and does nothing, which is the exact bug the live pill had');
+  /* LIVE_STATE must be MOVED, not merely declared. A tri-state that never
+     leaves "loading" is a spinner that never stops. */
+  const load = fnBody('loadLive', code);
+  assert.ok(load, 'loadLive() is gone or has been reshaped');
+  assert.ok(/LIVE_STATE\s*=\s*"error"/.test(load) && /LIVE_STATE\s*=\s*"ok"/.test(load),
+    'loadLive() no longer moves LIVE_STATE off "loading" on both paths — the ' +
+    'skeleton then animates forever whatever the feed does');
+
+  /* The empty week says how long the wait is. */
+  assert.ok(/starts in/.test(rg) && /nextGwStartsIn\(\)/.test(rg),
+    '"No fixtures" no longer says when the next gameweek starts. Between ' +
+    'rounds the feed knows the next deadline exactly and the reader was told ' +
+    'to "check back", which could mean hours or a fortnight.');
+  const nx = fnBody('nextGwStartsIn', code);
+  assert.ok(nx && /deadline_time/.test(nx),
+    'the countdown is not read off the feed\'s own deadline, so it can ' +
+    'disagree with the one the hero counts down to');
+
+  /* ONE <h1> PER ROUTE. Seven routes shared one document whose only h1 was the
+     wordmark in the topbar, so every route's heading outline began at h2 with
+     nothing above it. */
+  const h1s = [...src.matchAll(/<h1[^>]*>/g)];
+  const pages = [...src.matchAll(/<section id="(panel-[\w-]+)" class="page/g)].map((m) => m[1]);
+  assert.equal(h1s.length, pages.length,
+    `${h1s.length} <h1> for ${pages.length} routes. Each route owns exactly ` +
+    'one; a second visible h1 means two routes are on screen at once.');
+  for (const p of pages) {
+    const sec = new RegExp('<section id="' + p + '" class="page[\\s\\S]*?<div class="page-head">\\s*<h1>').exec(src);
+    assert.ok(sec, `${p} does not open with an <h1> in its page head`);
+  }
+  assert.ok(!/<h1 class="tb-name"/.test(src),
+    'the topbar wordmark is an <h1> again. It is the site name, not the ' +
+    "page's heading, and it made every route's real heading an h2 under it.");
+  /* THE ROUTING RULE. `.page{display:none}` / `.page.active{display:block}` is
+     how this desk routes, and an ID selector setting `display` outranks both.
+     The desktop watchlist rail shipped as a bare `#panel-gameweek{display:grid}`
+     and kept the entire Gameweek route on screen underneath every other route
+     above 1280px — two of everything, including two <h1>s, and nothing threw. */
+  for (const m of css.matchAll(/#(panel-[\w-]+)([^{,]*)\{([^}]*display:[^;}]*)/g)) {
+    assert.ok(/\.active/.test(m[2]),
+      `assets/tw.css sets display on #${m[1]} without requiring .active ` +
+      `("${m[0].slice(0, 60)}…"). That outranks .page{display:none} and leaves ` +
+      'the route on screen underneath whichever route the reader has opened.');
+  }
+
+  /* PER-ROUTE TITLE AND DESCRIPTION, one per panel, none repeated. */
+  const meta = fnBody('applyRouteMeta', code);
+  assert.ok(meta && /document\.title/.test(meta) && /meta\[name="description"\]/.test(meta),
+    'applyRouteMeta() no longer sets both the title and the description');
+  const open = fnBody('openPanel', code);
+  assert.ok(open && /applyRouteMeta\(/.test(open),
+    'openPanel() does not apply the route meta, so seven routes share one tab ' +
+    'title, one bookmark and one share preview');
+  const rm = /const ROUTE_META=\{([\s\S]*?)\n\};/.exec(code);
+  assert.ok(rm, 'ROUTE_META is gone or has been reshaped');
+  const keys = [...rm[1].matchAll(/"(panel-[\w-]+)":/g)].map((m) => m[1]);
+  const missing = pages.filter((p) => !keys.includes(p));
+  assert.deepStrictEqual(missing, [],
+    `${missing.join(', ')} have no title or description of their own — those ` +
+    'routes keep whichever route was open before them.');
+  const titles = [...rm[1].matchAll(/t:"([^"]+)"/g)].map((m) => m[1]);
+  assert.equal(new Set(titles).size, titles.length,
+    'two routes share a title: ' + titles.join(' | '));
+  assert.equal(titles.length, keys.length, 'a ROUTE_META entry has no title');
+
+  /* THE FIXTURE CARD IS A SECTION WITH A HEADING. Ten fixtures were ten
+     sibling divs, so the heading outline of the busiest page on the desk had
+     one entry and jumping between matches by heading was impossible. */
+  const card = fnBody('fixtureCardHtml', code);
+  assert.ok(card, 'fixtureCardHtml() is gone or has been reshaped');
+  assert.ok(/<section class="fx-card/.test(card) && /<\/section>/.test(card),
+    'the fixture card is not a <section>, so it carries no landmark for its ' +
+    'own heading to name');
+  assert.ok(/aria-labelledby="fxh-\$\{f\.id\}"/.test(card) && /<h2 class="visually-hidden" id="fxh-\$\{f\.id\}"/.test(card),
+    'the fixture card has no <h2> of its own, or the heading no longer names ' +
+    'the section');
+  /* The heading must sit OUTSIDE the disclosure control: a heading nested in
+     role="button" is consumed into the button's accessible name and exposed
+     as no heading at all — which reads as a fix and is not one. */
+  const headingAt = card.indexOf('<h2 class="visually-hidden"');
+  const buttonAt = card.indexOf('role="button"');
+  assert.ok(headingAt >= 0 && buttonAt >= 0 && headingAt < buttonAt,
+    "the fixture card's heading has moved inside the role=\"button\" header. " +
+    "A heading in a button's subtree is folded into the button's name and " +
+    'exposed as no heading, so the outline is back to one entry.');
+
+  /* PLAYER ROWS ARE A REAL LIST. Forty sibling buttons is forty controls with
+     no "list of 12" to say how far the thing goes. */
+  assert.ok(/<ul class="cand-list"/.test(card) && /<li>'\+candRowHtml/.test(card),
+    'the fixture card\'s candidates are no longer a list, or the rows are no ' +
+    'longer its items');
+  assert.ok(/\.cand-list\{/.test(css), '.cand-list has no rule behind it');
+  const wl = fnBody('renderWatchDash', code);
+  assert.ok(wl && /<ul class="cand-list"/.test(wl) && /<li><button class="wl-row"/.test(wl),
+    'the watchlist rows are no longer a list');
+
+  /* EVERY EMITTED <img> RESERVES ITS BOX. */
+  const imgs = [...code.matchAll(/<img [^>]*>/g)].map((m) => m[0]);
+  assert.ok(imgs.length >= 2, `only ${imgs.length} <img> found — the renderers moved`);
+  const unsized = imgs.filter((i) => !/\bwidth="/.test(i) || !/\bheight="/.test(i));
+  assert.deepStrictEqual(unsized, [],
+    `${unsized.length} <img> ship without explicit width and height: ` +
+    unsized.join(' | '));
+  const unlazy = imgs.filter((i) => !/loading="lazy"/.test(i));
+  assert.deepStrictEqual(unlazy, [], 'an <img> is no longer lazy-loaded');
+
+  /* THE FOCUS RING IS OPAQUE. A 45% tint of the accent composites to about
+     2.7:1 over white on the Premier League desk — under the 3:1 WCAG 2.2 asks
+     of a focus indicator, on all four desks in both themes. The ring is the
+     only thing telling a keyboard user where they are. */
+  const rings = [...css.matchAll(/--ring:\s*([^;}]+)/g)].map((m) => m[1].trim());
+  assert.ok(rings.length >= 4, 'the --ring token has disappeared');
+  const tinted = rings.filter((v) => /rgba?\(|color-mix|\/\s*\.?\d/.test(v));
+  assert.deepStrictEqual(tinted, [],
+    `${tinted.length} --ring value(s) are translucent (${tinted.join(', ')}). ` +
+    'A tinted ring reads under 3:1 against the surfaces it lands on, which is ' +
+    'the one place on the page contrast cannot be spent on softness.');
+  assert.ok(/\.seg-view button\[aria-selected="true"\]:focus-visible\{outline-color:var\(--on-accent\)/.test(css),
+    'the selected segmented tab rings in the accent over an accent fill — an ' +
+    'invisible focus ring on the one control that is filled with the ring colour');
+
+  /* DYNAMIC CHANGES ARE ANNOUNCED. The tween tells the eye what a referee pick
+     moved; without this a screen reader gets nine numbers silently becoming
+     nine different numbers. */
+  const ann = fnBody('announce', code);
+  assert.ok(ann && /aria-live"?,\s*"polite"/.test(ann) && /role"?,\s*"status"/.test(ann),
+    'announce() no longer creates a polite status region');
+  assert.ok(/textContent\s*=\s*""/.test(ann),
+    'announce() does not clear the region first, so setting the same message ' +
+    'twice — the same official picked on two cards — is not a change and is ' +
+    'therefore silent');
+  const applyRef = fnBody('applyRef', code);
+  assert.ok(applyRef && /refAnnounce\(/.test(applyRef),
+    'a referee pick repaints the card and announces nothing');
+  const refAnn = fnBody('refAnnounce', code);
+  assert.ok(refAnn && /m\.heat/.test(refAnn) && /m\.rf/.test(refAnn),
+    'the referee announcement no longer carries the new expected total and ' +
+    'multiplier — "referee changed" is not what the reader asked the control');
+  assert.ok(/id="gwCount"[^>]*aria-live="polite"/.test(src),
+    'the filter result count is no longer announced, so a filter that empties ' +
+    'the page is silent');
+}
+
 console.log(`check-firstrun OK: ${DESKS_WITH_A_TOUR.length} desks, none auto-opens, ` +
   'all reachable at both widths, intro card bounded, jargon defined, ' +
   'toolbar sticky, both views on one filter, mobile chrome yields, ' +
-  'watchlist teaches and follows');
+  'watchlist teaches and follows, three load states distinct, one h1 per ' +
+  'route with its own title, fixtures are sections and candidates are lists, ' +
+  'focus rings opaque, referee simulation announced');

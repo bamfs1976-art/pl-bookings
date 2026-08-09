@@ -181,7 +181,7 @@
   @media(prefers-reduced-motion:no-preference){.page.active{animation:plbfade .32s ease}}
   @keyframes plbfade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
   .page-head{margin-bottom:18px}
-  .page-head h2{font-family:'Bricolage Grotesque',sans-serif;font-size:1.5rem;font-weight:800;letter-spacing:-.03em;margin:0}
+  .page-head h1{font-family:'Bricolage Grotesque',sans-serif;font-size:1.5rem;font-weight:800;letter-spacing:-.03em;margin:0}
   .page-head p{font-size:.85rem;color:var(--text-3);margin:.25rem 0 0}
   .overlay{display:none;position:fixed;inset:0;z-index:190;background:rgba(8,10,20,.5);-webkit-backdrop-filter:blur(2px);backdrop-filter:blur(2px);border:0;padding:0}
   .overlay.show{display:block}
@@ -201,7 +201,7 @@
     .bn-label{font-size:.6rem;font-weight:700;letter-spacing:.02em}
     .toast{bottom:calc(var(--bottomnav-h) + 18px)}
     .tb-divider,.tb-crumb{display:none}
-    .page-head h2{font-size:1.3rem}
+    .page-head h1{font-size:1.3rem}
   }
   @supports(padding:max(0px)){.bottom-nav{padding-bottom:max(4px,env(safe-area-inset-bottom))}}
   select,textarea,input{background:var(--surface); color:var(--text); border:1px solid var(--border-2); border-radius:9px; padding:.5rem .65rem; font:inherit; box-shadow:var(--shadow-sm)}
@@ -522,7 +522,7 @@
             </g>
           </svg>
           <span class="tb-logo-text">
-            <h1 class="tb-name">Bookings Desk</h1>
+            <span class="tb-name">Bookings Desk</span>
             <span class="tb-tag">Premier League</span>
           </span>
         </span>
@@ -561,7 +561,7 @@
   <!-- THIS GAMEWEEK (fixture-first landing) -->
   <section id="panel-gameweek" class="page active">
     <div class="page-head">
-      <h2>This Gameweek</h2>
+      <h1>This Gameweek</h1>
       <p>Who's most likely to be booked — fixture by fixture, with the referee folded in.</p>
     </div>
     <!-- ONE card, not two stacked ones. This was a `.beginner-hint` paragraph
@@ -684,7 +684,7 @@
       <p class="note" id="suspNote"></p>
     </div>
     <div class="page-head">
-      <h2>Players</h2>
+      <h1>Players</h1>
       <p>Every Premier League player, two ways — ranked by our season booking risk, or the complete live squad list. For this weekend’s picks, see <a href="#" id="toGameweek">This Gameweek</a>.</p>
     </div>
     <div class="seg lensbar" id="dkViews" role="tablist" aria-label="Choose a view of the player list">
@@ -790,7 +790,7 @@
   <!-- CLUBS -->
   <section id="panel-clubs" class="page">
     <div class="page-head">
-      <h2>Clubs</h2>
+      <h1>Clubs</h1>
       <p>The 20 clubs by cards received per game, tiered for targeting, with each club's top booking risk.</p>
     </div>
     <p class="beginner-hint">Tiers rank how card-prone a side is: <b>target</b> 2.0+ cards a game, <b>mid</b> 1.5–1.9, <b>fade</b> below. The 🔥 flame marks a combustible side. Tap a row to see that club's players.</p>
@@ -817,7 +817,7 @@
   <!-- REFEREES -->
   <section id="panel-refs" class="page">
     <div class="page-head">
-      <h2>Referees</h2>
+      <h1>Referees</h1>
       <p>2025-26 officials by yellows per game — the busiest whistles carry the most booking value.</p>
     </div>
     <p class="beginner-hint">The referee is the single strongest card signal. A strict whistle lifts every player's booking chance in his games — that's the <b>×factor</b> you'll see on fixture cards once you assign the official.</p>
@@ -848,7 +848,7 @@
   <!-- FIXTURES -->
   <section id="panel-fixtures" class="page">
     <div class="page-head">
-      <h2>Fixtures</h2>
+      <h1>Fixtures</h1>
       <p>The 2026-27 schedule by gameweek, with booking heat and each match's top risks.</p>
     </div>
     <div style="display:flex;gap:.6rem;flex-wrap:wrap;align-items:center;margin-bottom:.8rem">
@@ -865,7 +865,7 @@
   <!-- TRACKER -->
   <section id="panel-tracker" class="page">
     <div class="page-head">
-      <h2>My Picks</h2>
+      <h1>My Picks</h1>
       <p>Log picks with odds and stake, settle results, and track hit-rate, P/L and ROI.</p>
     </div>
     <p class="beginner-hint">Keep an honest record: log each bet with its odds and stake, then mark it won, lost or void. <b>Hit-rate</b> is the share settled that won; <b>ROI</b> is profit per pound staked. Sign in (top right) to sync picks across your devices.</p>
@@ -912,7 +912,7 @@
   <!-- GUIDE -->
   <section id="panel-guide" class="page">
     <div class="page-head">
-      <h2>Guide</h2>
+      <h1>Guide</h1>
       <p>The method, the risk formula, the tiers and the known limits.</p>
     </div>
     <div class="surface" style="border-radius:12px;padding:1.2rem;line-height:1.6;max-width:760px">
@@ -1162,8 +1162,18 @@ function crest(c,px){
   const size=px?`width:${px}px;height:${px}px;`:"";
   if(!src) return `<span class="crest crest-chip" style="${size}background:${clubColour(c)}" title="${esc(club?club.name:c)}" aria-hidden="true"></span>`;
   const fb=(official&&baked)?` data-fb="${esc(baked)}"`:"";
-  return `<span class="crest crest-wrap" style="${size}--cc:${clubColour(c)}" title="${esc(club?club.name:c)}">`
-    +`<img src="${src}"${fb} alt="" loading="lazy" decoding="async" onerror="crestFallback(this)">`
+  /* EXPLICIT DIMENSIONS. The <img> is stretched to its wrapper by CSS, so the
+     attributes are not what sizes it — they give the box an intrinsic aspect
+     ratio, which is what the browser reserves space from before any of these
+     50 badges over a CDN have arrived. 22 is the size the fixture header asks
+     for and 18 is the .crest default in tw.css.
+
+     alt="" and aria-hidden, deliberately: every crest on this desk sits beside
+     the club's own name in text. "Arsenal badge Arsenal" is what alt text here
+     would actually produce. */
+  const d=px||18;
+  return `<span class="crest crest-wrap" style="${size}--cc:${clubColour(c)}" title="${esc(club?club.name:c)}" aria-hidden="true">`
+    +`<img src="${src}"${fb} alt="" width="${d}" height="${d}" loading="lazy" decoding="async" onerror="crestFallback(this)">`
     +`</span>`;
 }
 /* Official FPL player cutout. The code comes from the live feed: first from a
@@ -1194,12 +1204,19 @@ function initials(n){
    players (and gameweekedge.co.uk hits the same gaps with the same URL), so on
    error the <img> removes itself and the coloured tile remains — every row
    keeps its shape and reads as designed instead of leaving a hole. */
+/* The tile is sized by its class and the photo is absolutely positioned inside
+   it, so the headshot has never been able to shift the layout — the box is
+   already reserved and the initials hold it until the CDN answers. The
+   attributes are carried anyway so the intrinsic ratio travels with the markup
+   rather than depending on a CSS rule staying put. */
+const AV_PX={"avatar-xs":26,"avatar-sm":34,"avatar-md":46,"avatar-lg":54};
 function playerAvatar(p,cls,size,opts){
   const col=clubColour(p&&p.c), fg=textOn(col), u=photoUrl(p,size);
   const badge=(opts&&opts.crest&&p&&p.c)?`<span class="pl-av-crest">${crest(p.c)}</span>`:"";
+  const d=AV_PX[String(cls||"").trim()]||34;
   return `<span class="pl-av ${cls||""}" style="background:${col};color:${fg}" aria-hidden="true">`
     +`<i>${esc(initials(p&&p.n))}</i>`
-    +(u?`<img src="${u}" alt="" loading="lazy" decoding="async" onload="this.parentNode.classList.add('has-photo')" onerror="this.remove()">`:"")
+    +(u?`<img src="${u}" alt="" width="${d}" height="${d}" loading="lazy" decoding="async" onload="this.parentNode.classList.add('has-photo')" onerror="this.remove()">`:"")
     +badge
     +`</span>`;
 }
@@ -2118,6 +2135,41 @@ const PANELMAP={};
 NAV.forEach(a=>a.panels.forEach(p=>PANELMAP[p.id]={...p,areaId:a.id,areaLabel:a.label}));
 let currentPanel="panel-gameweek";
 
+/* PER-ROUTE TITLE AND DESCRIPTION. Seven routes share one document, so the tab,
+   the bookmark, the history entry, the share preview and the browser's own
+   back-button list all read "Bookings Desk · Premier League" wherever you were
+   — seven identical entries for seven different pages. A screen reader is worse
+   off again: a route change here fires no navigation, so the only signal a new
+   view has loaded is the title, and the title never changed.
+
+   Written for what each route ACTUALLY answers rather than as a label, because
+   the same string is the tab, the search result and the link preview. */
+const ROUTE_META={
+  "panel-gameweek":{t:"This Gameweek — Premier League booking risk by fixture",
+    d:"Every fixture in the current Premier League gameweek ranked by booking heat, with each match's highest-risk players and the appointed referee's card rate folded into the price."},
+  "panel-players":{t:"Players — Premier League booking risk table",
+    d:"Every Premier League squad player ranked by season booking risk: yellow cards and fouls per 90, sample confidence from minutes played, and the bookmaker prices you have checked."},
+  "panel-clubs":{t:"Clubs — Premier League club discipline",
+    d:"Premier League club discipline — cards conceded and drawn per match, home and away splits, and which sides are most combustible when they meet."},
+  /* A GETTER, because REF_AVG_YPG is derived from the referee table further
+     down this script and reading it here would hit the temporal dead zone. The
+     description is only ever read on a route change, long after boot. */
+  "panel-refs":{t:"Referees — Premier League card rates",
+    get d(){ return "Premier League referees ranked by cards per game, with the multiplier each one applies to a player's booking chance against the "+REF_AVG_YPG.toFixed(2)+" league average."; }},
+  "panel-fixtures":{t:"All fixtures — Premier League booking heat calendar",
+    d:"The full Premier League fixture calendar ordered by booking heat, with referee appointments, derby flags and the highest-risk booking candidates in each match."},
+  "panel-tracker":{t:"My Picks — booking tracker and model record",
+    d:"Your logged booking picks scored against results, alongside the desk's own published hit rate on its top-20 risks in every finished gameweek."},
+  "panel-guide":{t:"Guide — how the bookings model works",
+    d:"How the Bookings Desk model works: the season prior, the referee multiplier, derby and game-state adjustments, where the data comes from and what the numbers do not tell you."}
+};
+function applyRouteMeta(panelId){
+  const m=ROUTE_META[panelId]; if(!m) return;
+  document.title=m.t+" · Bookings Desk";
+  const md=document.querySelector('meta[name="description"]');
+  if(md) md.setAttribute("content",m.d);
+}
+
 // ── The players hub: two readings of the same squad ────────────────
 // Season risk is our model over the minutes-qualified baked set; All players
 // is the complete live FPL squad. Different columns and a different question,
@@ -2223,6 +2275,7 @@ function openPanel(panelId,opts){
   if(!PANELMAP[panelId]) panelId="panel-gameweek";
   currentPanel=panelId;
   document.querySelectorAll(".page").forEach(s=>s.classList.toggle("active",s.id===panelId));
+  applyRouteMeta(panelId);
   $("tbArea").textContent=PANELMAP[panelId].areaLabel;
   $("tbTitle").textContent=PANELMAP[panelId].label;
   // Re-render the gameweek view on entry so the watchlist dashboard reflects
@@ -2537,6 +2590,11 @@ applyTheme((()=>{ try{ return localStorage.getItem(THEME_KEY)||"light"; }catch(e
 // ═══════════════════════════════════════════════════════════
 const FPL_CACHE_KEY="plb_fpl_v1", FPL_TTL=30*60*1000;
 let LIVE=null;
+/* "loading" | "error" | "ok". LIVE being null told you the feed had not
+   produced data; it could not tell you whether that was because the request
+   was still in flight, which is why the boot paint reported an error before a
+   request had been made. */
+let LIVE_STATE="loading";
 
 function yEff(p){ return p.yLive!=null?p.yLive:p.y; }
 function rEff(p){ return p.rLive!=null?p.rLive:p.r; }
@@ -2836,6 +2894,7 @@ async function loadLive(){
     ]);
   }catch(e){
     console.warn("[Bookings Desk] FPL feed unreachable:",e);
+    LIVE_STATE="error";
     status.hidden=false; status.className="chip tier-fade";
     status.textContent="Baked 2025-26 form";
     status.title="Live FPL feed unreachable — showing the baked 2025-26 basis. ("+((e&&e.message)||e)+")";
@@ -2849,6 +2908,7 @@ async function loadLive(){
     const teamMap=buildTeamMap(bs.teams);
     const cur=bs.events.find(e=>e.is_current&&!e.finished)||bs.events.find(e=>e.is_next)||bs.events.find(e=>!e.finished)||bs.events[bs.events.length-1]||bs.events[0]||null;
     LIVE={bootstrap:bs,fixtures:fx,teamMap,currentGW:cur?cur.id:1,seasonStarted:bs.elements.some(el=>(el.minutes||0)>0)};
+    LIVE_STATE="ok";
     /* The appointment lookup is keyed off LIVE.fixtures, so it must be rebuilt
        whenever LIVE is. Caching it across a reload would keep pointing at the
        previous load's fixture ids. */
@@ -3523,7 +3583,12 @@ function fixtureCardHtml(f,opts){
     body='<div class="fx-empty">No rated available players for this fixture yet.</div>';
   }else{
     const DEF_SHOW=4, shown=opts.expanded?cands:cands.slice(0,DEF_SHOW), hidden=cands.length-shown.length;
-    body=shown.map((c,i)=>candRowHtml(c,ref,opts.expanded&&i>=DEF_SHOW)).join("");
+    /* A REAL LIST. Four to forty sibling buttons with nothing grouping them is
+       four to forty separate controls to a screen reader, with no "list of 12"
+       to say how far this goes or where it ends. */
+    body='<ul class="cand-list" aria-label="Booking candidates, highest chance first">'
+      +shown.map((c,i)=>'<li>'+candRowHtml(c,ref,opts.expanded&&i>=DEF_SHOW)+'</li>').join("")
+      +'</ul>';
     /* HOW MANY ARE WORTH IT. "Show 35 more candidates" says nothing about
        whether any of the 35 clears the Watch band, so the honest answer to
        "is this worth expanding" was to expand it and find out. */
@@ -3532,7 +3597,16 @@ function fixtureCardHtml(f,opts){
     else if(hidden>0) body+=`<button class="fx-more" data-expand="${f.id}" type="button">Show ${hidden} more candidate${hidden===1?"":"s"} ›${above?` <span class="faint">· ${above} above Watch</span>`:` <span class="faint">· none above Watch</span>`}</button>`;
   }
   const folded=GW_COLLAPSED.has(f.id);
-  return `<div class="fx-card${folded?" collapsed":""}" data-fid="${f.id}">
+  /* A SECTION WITH A HEADING. Ten fixtures were ten sibling <div>s, so the
+     heading outline of the busiest page on the desk was one entry — "This
+     Gameweek" — and jumping between matches by heading, which is how a screen
+     reader user skims a page like this, was not possible at all.
+
+     The heading is visually hidden and NOT the header row, because the header
+     row is the disclosure control: a heading nested inside role="button" is
+     consumed into the button's name and exposed as no heading at all. */
+  return `<section class="fx-card${folded?" collapsed":""}" data-fid="${f.id}" aria-labelledby="fxh-${f.id}">
+    <h2 class="visually-hidden" id="fxh-${f.id}">${esc(h)} v ${esc(a)}, ${f.kickoff_time?esc(fmtKOShort(f.kickoff_time)):"kick-off to be confirmed"}, ${heat.toFixed(1)} expected cards</h2>
     <div class="fxh2" role="button" tabindex="0" aria-expanded="${!folded}" data-fold="${f.id}" aria-label="${esc(h)} versus ${esc(a)} — ${folded?"expand":"collapse"}">
       <div style="min-width:0">
         <div class="fxh2-teams">${crest(h,22)} ${esc(h)} <span class="faint mono" style="font-weight:500;font-size:.78rem">vs</span> ${crest(a,22)} ${esc(a)}${derbyChip}${score}</div>
@@ -3558,7 +3632,7 @@ function fixtureCardHtml(f,opts){
       ${marketStripHtml(teamCardBoard(h,a,ref,derby),h2hFor(h,a))}
       ${body}
     </div>
-  </div>`;
+  </section>`;
 }
 // Cumulative self-score for the hero (honest live tracking, not a backtest).
 function trackRecordSummary(){
@@ -3692,11 +3766,12 @@ function renderWatchDash(){
     }
     return {p,opp,ha,gw,ref,prob:prob==null?-1:prob};
   }).sort((x,y)=>y.prob-x.prob);
-  el.innerHTML=rows.map(({p,opp,ha,gw,ref,prob})=>{
+  el.innerHTML='<ul class="cand-list" aria-label="Watchlist, highest booking chance first">'
+    +rows.map(({p,opp,ha,gw,ref,prob})=>{
     const col=prob>=0.50?"var(--danger)":prob>=0.30?"var(--warn)":"var(--text-2)";
     const sub=opp==="—"?'<span class="faint">next fixture TBC</span>'
       :`vs ${esc(opp)} (${ha})${gw?" · "+gw:""}${ref?" · "+esc(ref.n.split(" ").pop()):""}${suspFlagInline(p)}`;
-    return `<button class="wl-row" data-pk="${esc(watchKey(p))}" type="button" aria-label="Open ${esc(p.n)}'s profile">
+    return `<li><button class="wl-row" data-pk="${esc(watchKey(p))}" type="button" aria-label="Open ${esc(p.n)}'s profile">
       <span aria-hidden="true" style="color:var(--warn);font-size:.95rem">★</span>
       ${playerAvatar(p,"avatar-sm",null,{crest:true})}
       <span style="flex:1;min-width:0">
@@ -3704,8 +3779,8 @@ function renderWatchDash(){
         <span class="cand-sub">${sub}</span>
       </span>
       <span style="font-family:'Bricolage Grotesque',sans-serif;font-weight:800;font-size:1.05rem;color:${col};flex:none">${prob<0?"—":(prob*100).toFixed(0)+"%"}</span>
-    </button>`;
-  }).join("");
+    </button></li>`;
+  }).join("")+'</ul>';
 }
 // Suspension-watch strip for the feed: players one booking from a ban, as
 // horizontal cards with the prototype's yellow spine.
@@ -3732,13 +3807,68 @@ function renderGwSusp(){
     </button>`;
   }).join("");
 }
+/* Shaped like the card it stands in for, so nothing jumps when the feed lands.
+   aria-hidden on the bones and one sentence in a status region: a screen reader
+   wants "Loading this gameweek's fixtures", not eighteen empty boxes. */
+function gwSkeletonHtml(){
+  const row='<div class="skel-row"><span class="skel skel-av"></span>'
+    +'<span class="skel" style="height:11px;flex:1"></span>'
+    +'<span class="skel" style="height:11px;width:38px"></span></div>';
+  const card='<div class="skel-card">'
+    +'<div class="skel-head"><span class="skel" style="height:15px;width:58%"></span>'
+    +'<span class="skel" style="height:22px;width:52px;border-radius:8px"></span></div>'
+    +'<div class="skel" style="height:10px;width:34%;margin-top:.5rem"></div>'
+    +row+row+row+row+'</div>';
+  return '<p class="visually-hidden" role="status">Loading this gameweek&rsquo;s fixtures.</p>'
+    +'<div class="fx-grid" aria-hidden="true">'+card+card+card+'</div>';
+}
+/* A DEAD END WITH A WAY OUT. The old copy explained the failure and then left
+   the reader with nothing to press — a reload of the whole page was the only
+   retry, and on a phone that also discards the tab. */
+function gwErrorHtml(){
+  return '<div class="fx-state" role="alert"><h3>Couldn&rsquo;t load this gameweek</h3>'
+    +'<p>The fixture cards come from the live FPL feed and it didn&rsquo;t answer. '
+    +'Your watchlist above still shows each player&rsquo;s season booking chance, and the '
+    +'<a href="#p=players">Season table</a> works fully offline.</p>'
+    +'<div class="fx-state-act"><button class="btn btn-primary" id="gwRetry" type="button">Try again</button>'
+    +'<a class="btn btn-ghost" href="#p=players">Open the Season table</a></div></div>';
+}
+/* How long the wait actually is. Read off the next event that still has a
+   deadline in the future — which is the same field the hero counts down to, so
+   the two cannot disagree. */
+function nextGwStartsIn(){
+  if(!LIVE||!LIVE.bootstrap) return null;
+  const now=Date.now();
+  const ev=(LIVE.bootstrap.events||[])
+    .filter(e=>e.deadline_time&&new Date(e.deadline_time).getTime()>now)
+    .sort((a,b)=>new Date(a.deadline_time)-new Date(b.deadline_time))[0];
+  if(!ev) return null;
+  const ms=new Date(ev.deadline_time).getTime()-now;
+  const d=Math.floor(ms/864e5), h=Math.floor(ms%864e5/36e5), m=Math.floor(ms%36e5/6e4);
+  const unit=(n,u)=>n+" "+u+(n===1?"":"s");
+  const txt=d>0?unit(d,"day")+" "+unit(h,"hour")
+    :h>0?unit(h,"hour")+" "+unit(m,"minute")
+    :unit(Math.max(1,m),"minute");
+  return {ev,txt,at:fmtKO(ev.deadline_time)};
+}
 function renderGameweek(){
   renderGwHero();
   renderGwSusp();
   renderWatchDash();
   const el=$("gwFixtures"); if(!el) return;
   if(!LIVE){
-    el.innerHTML='<div class="surface" style="border-radius:14px;padding:1rem"><p class="muted" style="margin:0;font-size:.9rem">This weekend\'s fixture cards come from the live FPL feed, which is unreachable right now. Your watchlist above still shows each player\'s season booking chance, and the <a href="#p=players">Season table</a> works fully offline.</p></div>';
+    /* LOADING IS NOT AN ERROR. renderGameweek() paints the landing view before
+       loadLive() is even called, so this branch used to greet every cold load
+       with "the live FPL feed is unreachable right now" for the second or two
+       before the feed answered. */
+    if(LIVE_STATE==="loading"){ el.innerHTML=gwSkeletonHtml(); return; }
+    el.innerHTML=gwErrorHtml();
+    const rt=$("gwRetry");
+    if(rt) rt.addEventListener("click",()=>{
+      rt.disabled=true; rt.textContent="Retrying…";
+      LIVE_STATE="loading"; renderGameweek();
+      Promise.resolve(loadLive()).catch(()=>{}).then(()=>renderGameweek());
+    });
     return;
   }
   const gw=LIVE.currentGW;
@@ -3755,7 +3885,17 @@ function renderGameweek(){
     return 0;
   });
   $("gwToolbar").hidden=!fx.length;
-  if(!fx.length){ el.innerHTML='<div class="surface" style="border-radius:14px;padding:1rem"><p class="muted" style="margin:0">No fixtures scheduled for GW'+gw+' yet — check back once the schedule firms up.</p></div>'; return; }
+  /* AN EMPTY WEEK IS A WAIT, NOT A FAULT. "Check back once the schedule firms
+     up" gave a reader nothing to act on and no idea whether that meant hours
+     or a fortnight; between rounds the feed knows the next deadline exactly. */
+  if(!fx.length){
+    const nx=nextGwStartsIn();
+    el.innerHTML='<div class="fx-state"><h3>No fixtures in GW'+gw+' yet</h3><p>'
+      +(nx?'The next gameweek starts in <b>'+esc(nx.txt)+'</b> — deadline '+esc(nx.at)+'. Fixture cards appear as soon as the schedule and referee appointments are published.'
+          :'Fixture cards appear as soon as the schedule is published. The <a href="#p=players">Season table</a> and your watchlist work in the meantime.')
+      +'</p></div>';
+    return;
+  }
   if(window.gwFillTeams) gwFillTeams(fx);
   /* A FILTER NARROWS THE LIST. Searching "Liverpool" used to leave the other
      nine fixtures on screen as empty cards, so the answer to the query was
@@ -4271,7 +4411,11 @@ function initKeys(){
     if((e.metaKey||e.ctrlKey)&&e.key.toLowerCase()==="k"){ e.preventDefault(); $("cmdk").hidden?cmdkOpen():cmdkClose(); return; }
     if(e.metaKey||e.ctrlKey||e.altKey)return;
     const t=e.target;
-    if(t&&(t.matches("input,textarea,select")||t.isContentEditable))return;
+    /* t.matches, not t.matches?. — a keydown dispatched at `document` rather
+       than at an element (which is what assistive tech and any programmatic
+       dispatch produce) has no matches(), and the shortcut handler threw
+       before it could decide anything. */
+    if(t&&(typeof t.matches==="function"&&t.matches("input,textarea,select")||t.isContentEditable))return;
     if(!$("cmdk").hidden)return;
     const kbd=$("kbdOverlay");
     if(e.key==="Escape"&&!kbd.hidden){ kbd.hidden=true; return; }
@@ -4535,6 +4679,38 @@ if(window.PLDMetric) PLDMetric.wire();
   const cur=document.querySelector('.lb-item[aria-current="page"]');
   if(cur&&cur.scrollIntoView) cur.scrollIntoView({block:"nearest",inline:"center"});
 })();
+/* ONE POLITE ANNOUNCER for changes that repaint the page without moving focus.
+   The tween added for the referee pick tells the EYE what moved; a screen
+   reader got nothing at all — nine numbers silently became nine different
+   numbers and the only clue was a control that had already been read. */
+function announce(msg){
+  let r=$("srLive");
+  if(!r){
+    r=document.createElement("div");
+    r.id="srLive"; r.className="visually-hidden";
+    r.setAttribute("role","status");
+    r.setAttribute("aria-live","polite");
+    r.setAttribute("aria-atomic","true");
+    document.body.appendChild(r);
+  }
+  /* A live region speaks on a CHANGE. Setting the same string twice — picking
+     the same official on two cards, clearing an already-clear filter — is not
+     a change and would be silent, so the region is emptied first. */
+  r.textContent="";
+  setTimeout(()=>{ r.textContent=msg; },40);
+}
+/* WHAT THE PICK DID, in words. Not "referee changed": the reason to simulate an
+   official is to see how far he moves the price, so the announcement carries
+   the new expected total, the multiplier and the candidate now at the top. */
+function refAnnounce(fid,name){
+  const f=(LIVE&&LIVE.fixtures)?LIVE.fixtures.find(x=>String(x.id)===String(fid)):null;
+  const m=f?fixtureMeta(f):null;
+  if(!m){ announce(name?("Simulated referee "+name):"Referee cleared"); return; }
+  const cands=gwFilterCands(gwCandidates(m.h,m.a,m.ref,m.derby));
+  const top=cands.length?`, ${cands[0].p.n} now ${(cands[0].prob*100).toFixed(0)} percent`:"";
+  announce((name?`Simulated ${name} on `:"Referee cleared on ")
+    +`${m.h} versus ${m.a}. Expected cards ${m.heat.toFixed(1)}, referee factor times ${m.rf.toFixed(2)}${top}.`);
+}
 /* The referee picker. A pick moves the heat and every percentage on the card,
    so the old numbers are captured before the repaint and tweened to the new
    ones after — the pick used to change nine figures in one silent redraw. */
@@ -4547,6 +4723,7 @@ function applyRef(fid,name){
   if(gwInit) renderFixtures();
   renderSuspWatch();
   PLDRefPicker.animate(was);
+  refAnnounce(fid,name);
 }
 if(window.PLDRefPicker) PLDRefPicker.wire({
   onPick:(fid,name)=>applyRef(fid,name),
@@ -4574,6 +4751,9 @@ function refModeSet(m){
   const was=PLDRefPicker.capture();
   refModeApply(); renderGameweek(); if(gwInit) renderFixtures(); renderSuspWatch();
   PLDRefPicker.animate(was);
+  announce(m==="average"
+    ? "Published appointments ignored. Every fixture is now priced on the "+REF_AVG_YPG.toFixed(2)+" league-average referee."
+    : "Published appointments applied. Fixtures with an announced official now use his card rate.");
 }
 ["refModeA","refModeL"].forEach(id=>{ const el=$(id); if(el) el.addEventListener("change",()=>refModeSet(el.value)); });
 refModeApply();
