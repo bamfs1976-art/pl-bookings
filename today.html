@@ -122,8 +122,10 @@
     <h1>Every league, one day</h1>
     <p class="muted" style="margin:8px 0 0;max-width:70ch">
       Matches from every desk that plays on the same date, ranked by booking heat, with one
-      combined share card across the lot. The acca legs are one per match, so unlike a same-match
-      combo they are close to genuinely independent. Take one date at a time, or switch to
+      combined share card across the lot. Below the list, <b>the day's acca</b> takes the
+      likeliest market in each match — one leg a match, so unlike a same-match combo the legs
+      are close to genuinely independent — and prices it with the bookmaker's margin left in.
+      Take one date at a time, or switch to
       <b>Every date</b> for the whole season consolidated into a single calendar — each date
       still ranked by heat and still exporting its own card.
     </p>
@@ -150,6 +152,26 @@
     <div class="empty" id="empty" hidden></div>
     <p class="note" id="cover"></p>
   </div>
+
+  <!-- THE DAY'S ACCA, over match markets rather than players.
+       Single-date view only: "one day" is the whole premise, and in the
+       calendar every date would want its own. -->
+  <section class="card" id="accaCard" style="margin-top:14px" hidden>
+    <div class="controls" style="margin-bottom:4px">
+      <h2 style="font-size:16px" id="accaHead">The day's acca</h2>
+      <span class="spacer"></span>
+      <div class="seg" role="group" aria-label="Number of legs">
+        <label><input type="radio" name="legs" value="2"><span>2</span></label>
+        <label><input type="radio" name="legs" value="3" checked><span>3</span></label>
+        <label><input type="radio" name="legs" value="4"><span>4</span></label>
+        <label><input type="radio" name="legs" value="5"><span>5</span></label>
+      </div>
+    </div>
+    <p class="faint" id="accaSub" style="font-size:12.5px;margin:0"></p>
+    <div class="acca-legs" id="accaLegs"></div>
+    <div class="acca-sum" id="accaSum"></div>
+    <p class="note" id="accaNote"></p>
+  </section>
 
   <section class="card" id="trackCard" style="margin-top:14px" hidden>
   <div class="controls" style="margin-bottom:8px">
@@ -682,6 +704,122 @@
       + 'percentages compare directly across leagues.';
   }
 
+  /* ---- the day's acca ---------------------------------------------------
+   *
+   * The site already logs a player acca — three men most likely to be booked
+   * in a round. This is the same question one level up, and the one this page
+   * is uniquely placed to answer: given everything played on a single date
+   * across three divisions, which MATCH markets are the likeliest, and what
+   * does combining them actually pay?
+   *
+   * ONE LEG PER MATCH, always. Over 3.5 and both-teams-carded in the same
+   * fixture are two readings of one distribution — the outcomes producing four
+   * cards are largely the outcomes booking both sides — so multiplying them
+   * prices a strong correlation as independence. Each match therefore offers
+   * its single likeliest market and no more, which is why the leg count is
+   * capped by the number of matches on the date rather than by the number of
+   * markets available.
+   *
+   * ACROSS MATCHES IS CLOSER TO INDEPENDENT, NOT INDEPENDENT. Different
+   * referees, different players, different grounds, but a weekend where
+   * officials are strict is strict across the card. The residual correlation
+   * is positive, so the product slightly OVERSTATES the acca's chance — the
+   * opposite direction to the both-teams-2+ floor, and the note says both.
+   *
+   * THE MARGIN IS SHOWN, not stripped out and forgotten. Fair odds are 1/p,
+   * which no bookmaker offers; the priced column shades every leg by the card
+   * margin the app already models, and the drag is what that costs once it has
+   * compounded. It is the honest argument against a fourth leg, and it is
+   * printed next to the button that adds one.
+   */
+  function accaLegCount() {
+    var el = document.querySelector('input[name=legs]:checked');
+    return el ? Number(el.value) : 3;
+  }
+
+  /* Every match on the date reduced to its single likeliest market, most
+     likely first. The market choice comes from PLDCore, so the legs are the
+     same numbers the fixture cards below print — not a second derivation. */
+  function dayLegs(key) {
+    return rowsFor(key).map(function (p) {
+      var best = PLDCore.matchLegOptions(p.m)[0];
+      return best ? { p: p, leg: best } : null;
+    }).filter(Boolean).sort(function (a, b) { return b.leg.prob - a.leg.prob; });
+  }
+
+  function accaLegHTML(r, i) {
+    var p = r.p, ch = p.L.clubBy[p.fx.h] || { short: p.fx.h },
+        ca = p.L.clubBy[p.fx.a] || { short: p.fx.a };
+    return '<div class="acca-leg">'
+      + '<span class="acca-n">' + (i + 1) + '</span>'
+      + '<span class="lg ' + p.L.code + '">' + esc(p.L.code) + '</span>'
+      + PLDProfile.crest(ch) + PLDProfile.crest(ca)
+      + '<span class="acca-fx">' + esc(p.fx.h) + ' v ' + esc(p.fx.a) + '</span>'
+      + '<span class="acca-mkt">' + esc(r.leg.label) + '</span>'
+      + '<span class="spacer"></span>'
+      + '<span class="acca-p">' + pct(r.leg.prob) + '</span>'
+      + '<span class="acca-odds" title="Fair odds, before any bookmaker margin">'
+      + (1 / r.leg.prob).toFixed(2) + '</span>'
+      + '</div>';
+  }
+
+  function renderAcca() {
+    var card = $('#accaCard');
+    /* The calendar has no selected date, and 128 accas is not one acca. */
+    if (mode() === 'all') { card.hidden = true; return; }
+
+    var key = $('#day').value, all = dayLegs(key);
+    /* The control cannot offer more legs than the date has matches — one leg
+       per match is the rule, so a 2-match Tuesday has no 5-leg acca. */
+    var opts = [].slice.call(document.querySelectorAll('input[name=legs]'));
+    opts.forEach(function (o) { o.disabled = Number(o.value) > all.length; });
+    var checked = opts.filter(function (o) { return o.checked; })[0];
+    if (checked && checked.disabled) {
+      var fits = opts.filter(function (o) { return !o.disabled; });
+      if (fits.length) fits[fits.length - 1].checked = true;
+    }
+
+    var legs = all.slice(0, accaLegCount());
+    var price = PLDCore.accaPrice(legs.map(function (l) { return l.leg.prob; }));
+    if (!price) {
+      /* Fewer than two priced matches is a single, and a single dressed as an
+         acca is the page lying about what it is showing. */
+      card.hidden = true;
+      return;
+    }
+    card.hidden = false;
+
+    $('#accaHead').textContent = fmtDay(key) + ' — the day\'s acca';
+    var codes = leaguesOn(key);
+    $('#accaSub').textContent = price.legs + ' legs from ' + all.length + ' match'
+      + (all.length === 1 ? '' : 'es') + ' across ' + codes.join(', ')
+      + ' — the likeliest market in each, one leg a match.';
+    $('#accaLegs').innerHTML = legs.map(accaLegHTML).join('');
+    $('#accaSum').innerHTML =
+      '<div><span class="k">All ' + price.legs + ' land</span>'
+      + '<span class="v">' + pct(price.prob) + '</span></div>'
+      + '<div><span class="k">Fair odds</span>'
+      + '<span class="v">' + price.fairOdds.toFixed(2) + '</span></div>'
+      + '<div><span class="k">Priced odds</span>'
+      + '<span class="v">' + price.pricedOdds.toFixed(2) + '</span></div>'
+      + '<div><span class="k">Margin takes</span>'
+      + '<span class="v drag">' + (price.marginDrag * 100).toFixed(1) + '%</span></div>';
+
+    var floors = legs.filter(function (l) { return l.leg.market === 'BTC2'; }).length;
+    $('#accaNote').textContent =
+      'One leg a match: two markets on the same fixture are two readings of one '
+      + 'distribution, and multiplying them would price a strong correlation as '
+      + 'independence. Matches on the same date are closer to independent than '
+      + 'that but not fully — a round where officials are strict is strict across '
+      + 'the card — so the combined figure slightly overstates the real chance. '
+      + (floors ? 'A both-teams-2+ leg runs the other way and is a floor. ' : '')
+      + 'Fair odds carry no margin, which no bookmaker offers; priced odds shade '
+      + 'every leg by ' + Math.round(PLDCore.TYPICAL_CARD_MARGIN * 100) + '%, which '
+      + 'compounds once per leg — that is the ' + (price.marginDrag * 100).toFixed(1)
+      + '% above, and the reason a longer acca is worse value rather than better. '
+      + 'Research, not betting advice.';
+  }
+
   function mode() {
     var el = document.querySelector('input[name=mode]:checked');
     return el ? el.value : 'one';
@@ -701,6 +839,7 @@
       location.hash = all ? 'all' : 'd=' + $('#day').value;
     } catch (e) { /* hash is a convenience, never a requirement */ }
     if (all) renderAll(); else renderOne();
+    renderAcca();
   }
 
   /* ---- the combined card ------------------------------------------------ */
@@ -1054,6 +1193,10 @@
     $('#multiChk').addEventListener('change', render);
     Array.prototype.forEach.call(document.querySelectorAll('input[name=mode]'),
       function (r) { r.addEventListener('change', render); });
+    /* Only the acca redraws — the fixture list below is unchanged by how many
+       of its matches you are combining. */
+    Array.prototype.forEach.call(document.querySelectorAll('input[name=legs]'),
+      function (r) { r.addEventListener('change', renderAcca); });
 
     /* Delegated, because the calendar's buttons are rebuilt by every render
        and per-node listeners would leak one set per redraw. */

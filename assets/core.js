@@ -980,6 +980,69 @@
     };
   }
 
+  /* ---- accas over MATCH markets -----------------------------------------
+   *
+   * The desks already log a player acca — three men most likely to be booked
+   * in a round. This is the same idea one level up: the markets on the board
+   * above, one leg a match.
+   *
+   * TWO RULES, and they are the whole of it.
+   *
+   * ONE LEG PER MATCH. Over 3.5 and both-teams-carded in the same fixture are
+   * two readings of one distribution: the outcomes that produce four cards are
+   * largely the outcomes that book both sides. Multiplying them prices a
+   * strong correlation as independence, which is the single most flattering
+   * mistake an acca can make. So a board contributes at most one leg, and the
+   * caller picks which.
+   *
+   * ACROSS MATCHES IS NOT INDEPENDENT EITHER — it is only much closer. Two
+   * fixtures on one afternoon share nothing but the competition's temperament
+   * and whatever a round of football has in common; different referees,
+   * different players, different grounds. The residual correlation is positive
+   * (a strict weekend is strict everywhere), so the product OVERSTATES a
+   * multi-leg acca's chance slightly, in the opposite direction to BTC2's
+   * floor. Both are stated where the number is printed.
+   */
+  function matchLegOptions(board) {
+    if (!board) return [];
+    const out = [];
+    const push = (market, label, prob) => {
+      const p = Number(prob);
+      /* A leg at 0 or 1 is not a leg: one cannot be won and the other pays
+         nothing, and both would poison the product. */
+      if (isFinite(p) && p > 0 && p < 1) out.push({ market, label, prob: p });
+    };
+    push('BTC', 'Both teams carded', board.bothCarded);
+    push('BTC2', 'Both teams 2+ cards', board.bothTwo);
+    Object.keys(board.over || {}).forEach((line) => {
+      push('O' + line, 'Over ' + line + ' cards', board.over[line]);
+    });
+    return out.sort((a, b) => b.prob - a.prob);
+  }
+
+  /* Price a set of legs. `margin` defaults to the card-market margin the app
+     already models; the priced odds are what a book would actually offer, and
+     the drag is how much of the fair price the margin takes once it has
+     compounded over every leg — which is the honest argument against adding a
+     fourth. */
+  function accaPrice(legs, margin) {
+    const ps = (Array.isArray(legs) ? legs : [])
+      .map((l) => Number(l && typeof l === 'object' ? l.prob : l))
+      .filter((p) => isFinite(p) && p > 0 && p < 1);
+    if (ps.length < 2) return null;             // a single is not an acca
+    const m = margin == null ? TYPICAL_CARD_MARGIN : Number(margin);
+    const prob = ps.reduce((a, p) => a * p, 1);
+    const fair = ps.reduce((a, p) => a / p, 1);
+    const priced = ps.reduce((a, p) => a * ((1 / p) * (1 - m)), 1);
+    return {
+      legs: ps.length,
+      prob,
+      fairOdds: fair,
+      pricedOdds: priced,
+      marginDrag: fair > 0 ? 1 - priced / fair : 0,
+    };
+  }
+
   const PLDCore = {
     riskScore, normName, pickPL, summarisePicks, calibrate, impliedProb, fairOdds, edgePct, LOGISTIC_SLOPE,
     marketProb, marketProbDeVig, valuePoint, TYPICAL_CARD_MARGIN,
@@ -995,6 +1058,7 @@
     brier, logLoss, reliability, glmProb,
     gammaln, expectedFouls, nbTailProb, cardProbFromFouls, recencyWeight, refCardFactor,
     leagueRate90, twoStageHazard, sumNegBin,
+    matchLegOptions, accaPrice,
   };
 
   if (typeof module !== 'undefined' && module.exports) module.exports = PLDCore;

@@ -816,6 +816,93 @@ for (const page of DESKS_WITH_A_TOUR) {
     'probBothAtLeast is gone or has been renamed away from its callers');
 }
 
+/* ---- 10e. the day's acca is one leg a match, and says what it costs ----- */
+/* An acca is the one thing on this site where a modelling shortcut turns
+   directly into a flattering number, and there are exactly three ways to get
+   it wrong: take two markets off one fixture, price the product as if matches
+   were independent, or quote fair odds as though a book offered them. Each is
+   invisible in the output — the page looks identical and the number is just
+   better — so each is pinned here rather than left to review. */
+{
+  const src = read('today.html');
+  const code = codeOnly(src);
+  const fn = (name) => {
+    const m = new RegExp('function ' + name + '\\s*\\(').exec(code);
+    assert.ok(m, `${name}() is gone from today.html`);
+    let i = code.indexOf('{', m.index + m[0].length - 1) + 1, depth = 1;
+    const start = i;
+    while (i < code.length && depth > 0) {
+      const c = code[i];
+      if (c === '{') depth++; else if (c === '}') depth--;
+      i++;
+    }
+    return code.slice(start, i - 1);
+  };
+
+  assert.ok(/id="accaCard"[^>]*\bhidden\b/.test(src),
+    'the acca card no longer starts hidden — it would flash an empty acca ' +
+    'on every load, before any date has been priced');
+
+  /* ONE LEG PER MATCH. Over 3.5 and both-teams-carded on one fixture are two
+     readings of one distribution; multiplying them prices a strong positive
+     correlation as independence, which is the most flattering mistake
+     available here. Each match offers its single likeliest market. */
+  const legs = fn('dayLegs');
+  assert.ok(/PLDCore\.matchLegOptions\(p\.m\)\[0\]/.test(legs),
+    'dayLegs no longer takes exactly the first (likeliest) market from each ' +
+    'match. Two legs off one fixture is one fixture counted twice, and the ' +
+    'acca would price a correlation of nearly 1 as independence.');
+  /* The leg count is bounded by MATCHES, not by markets — the same rule seen
+     from the control's side. */
+  const acca = fn('renderAcca');
+  assert.ok(/Number\(o\.value\) > all\.length/.test(acca),
+    'the leg-count control is no longer capped by the number of matches on ' +
+    'the date, so a two-match Tuesday can be asked for a five-leg acca and ' +
+    'would have to take two legs off one fixture to fill it');
+  assert.ok(/mode\(\) === 'all'[\s\S]{0,80}?hidden = true/.test(acca),
+    "the acca no longer hides itself in the calendar view, where there is no " +
+    'selected date for it to be the acca of');
+
+  /* PRICED THROUGH THE SHARED FUNCTION, and the margin shown rather than
+     stripped and forgotten. Fair odds are 1/p, which no bookmaker offers. */
+  assert.ok(/PLDCore\.accaPrice\(/.test(acca),
+    'the acca is no longer priced by PLDCore.accaPrice — a second ' +
+    'implementation of a product is a second thing to drift');
+  /* IN THE SUMMARY, not merely somewhere in the function. Both figures are
+     also named in the note below it, so a whole-function search for
+     `price.marginDrag` stays green after the drag has been deleted from the
+     numbers the reader actually sees — the prose vouching for the figure it
+     describes. Same hole as a click handler vouching for the rows it selects;
+     twelfth time, and the reason this parses the assignment. */
+  const sum = /\$\('#accaSum'\)\.innerHTML\s*=([\s\S]*?);\n/.exec(acca);
+  assert.ok(sum, 'the acca prints no summary figures at all');
+  for (const k of ['prob', 'fairOdds', 'pricedOdds', 'marginDrag']) {
+    assert.ok(new RegExp('price\\.' + k + '\\b').test(sum[1]),
+      `the acca summary no longer shows ${k}. Quoting fair odds alone ` +
+      'advertises a price available nowhere, and dropping the drag hides the ' +
+      'one fact that makes a longer acca worse rather than better.');
+  }
+
+  /* THE CAVEAT, IN BOTH DIRECTIONS. Same-match legs are ruled out; same-DAY
+     legs are still positively correlated, so the product overstates. Saying
+     only "one leg a match" would leave a reader thinking the number is
+     unbiased when it is optimistic. */
+  const note = /\$\('#accaNote'\)\.textContent\s*=([\s\S]*?);\n/.exec(acca);
+  assert.ok(note, 'the acca prints no note at all');
+  const text = note[1].replace(/[^']*'([^']*)'/g, '$1');
+  assert.ok(/one leg a match/i.test(text),
+    'the note no longer explains that legs are one to a match');
+  assert.ok(/overstates/i.test(text) && /independen/i.test(text),
+    'the note no longer says that same-day matches are not fully independent ' +
+    'and that the combined figure therefore overstates the real chance. ' +
+    'Without it the number reads as unbiased when it is optimistic.');
+  assert.ok(/margin/i.test(text) && /compound/i.test(text),
+    'the note no longer explains that the margin compounds once per leg — ' +
+    'the whole argument against adding another one');
+  assert.ok(/not betting advice/i.test(text),
+    'the acca note has lost its research-not-advice line');
+}
+
 /* ---- 10b. the band a card prints is the band the key defines ------------ */
 /* severity() and the Legend key sat three inches apart on one page and
    disagreed, and severity() is what every candidate row printed. The key said

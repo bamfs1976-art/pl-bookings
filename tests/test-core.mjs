@@ -1086,4 +1086,71 @@ t('sumNegBin refuses input it cannot describe', () => {
   assert.ok(core.nbTailProb(d.mu, d.size, 2) > 0);
 });
 
+/* ---- accas over match markets ------------------------------------------ */
+
+t('a board offers its markets as legs, most likely first', () => {
+  const board = core.teamCardMarkets([0.32, 0.26, 0.2, 0.15], [0.3, 0.24, 0.18, 0.12]);
+  const legs = core.matchLegOptions(board);
+  assert.ok(legs.length >= 4, `expected the four card markets, got ${legs.length}`);
+  for (let i = 1; i < legs.length; i++) {
+    assert.ok(legs[i - 1].prob >= legs[i].prob,
+      `legs are out of order at ${i}: ${legs[i - 1].prob} then ${legs[i].prob}`);
+  }
+  /* Every leg names a market and reads a live probability — a leg at 0 cannot
+     be won and a leg at 1 pays nothing, and either would poison the product. */
+  for (const l of legs) {
+    assert.ok(l.market && l.label, 'a leg with no market or no label');
+    assert.ok(l.prob > 0 && l.prob < 1, `leg ${l.market} is at ${l.prob}`);
+  }
+  /* The markets are the board's own numbers, not a second derivation. */
+  const btc = legs.find((l) => l.market === 'BTC');
+  assert.equal(btc.prob, board.bothCarded);
+  assert.equal(legs.find((l) => l.market === 'BTC2').prob, board.bothTwo);
+  assert.equal(legs.find((l) => l.market === 'O3.5').prob, board.over[3.5]);
+  assert.deepStrictEqual(core.matchLegOptions(null), []);
+  /* A certainty and an impossibility are both dropped rather than shipped. */
+  assert.deepStrictEqual(
+    core.matchLegOptions({ bothCarded: 1, bothTwo: 0, over: { 3.5: 0.4 } })
+      .map((l) => l.market), ['O3.5']);
+});
+
+t('an acca multiplies its legs and the margin compounds', () => {
+  const p = core.accaPrice([0.8, 0.5], 0);
+  assert.ok(Math.abs(p.prob - 0.4) < 1e-12);
+  assert.ok(Math.abs(p.fairOdds - 2.5) < 1e-12, `fair odds should be 1/0.4, got ${p.fairOdds}`);
+  // with no margin the priced odds ARE the fair odds
+  assert.ok(Math.abs(p.pricedOdds - p.fairOdds) < 1e-12);
+  assert.ok(Math.abs(p.marginDrag) < 1e-12);
+  // and with one, the drag is 1 - (1-m)^legs, compounding per leg
+  const m = 0.06;
+  const two = core.accaPrice([0.8, 0.5], m);
+  const three = core.accaPrice([0.8, 0.5, 0.5], m);
+  assert.ok(Math.abs(two.marginDrag - (1 - Math.pow(1 - m, 2))) < 1e-12,
+    `two-leg drag should be ${1 - Math.pow(1 - m, 2)}, got ${two.marginDrag}`);
+  assert.ok(Math.abs(three.marginDrag - (1 - Math.pow(1 - m, 3))) < 1e-12);
+  assert.ok(three.marginDrag > two.marginDrag,
+    'the argument against a fourth leg is that the drag grows — if it does ' +
+    'not, the page is telling the reader something untrue');
+  // a longer acca is longer odds and less likely, always
+  assert.ok(three.prob < two.prob && three.fairOdds > two.fairOdds);
+});
+
+t('an acca refuses to be a single, and reads legs or bare numbers', () => {
+  assert.equal(core.accaPrice([0.8]), null, 'one leg is a single, not an acca');
+  assert.equal(core.accaPrice([]), null);
+  assert.equal(core.accaPrice(null), null);
+  // a certainty and an impossibility are dropped, so two legs can become one
+  assert.equal(core.accaPrice([0.8, 1]), null);
+  assert.equal(core.accaPrice([0.8, 0]), null);
+  // objects with a prob and bare numbers price identically
+  const a = core.accaPrice([{ prob: 0.7 }, { prob: 0.6 }]);
+  const b = core.accaPrice([0.7, 0.6]);
+  assert.deepStrictEqual(a, b);
+  // the default margin is the app's, not zero — a page that forgets to pass
+  // one must not silently advertise fair odds as available
+  assert.ok(core.accaPrice([0.7, 0.6]).marginDrag > 0);
+  assert.ok(Math.abs(core.accaPrice([0.7, 0.6]).marginDrag
+    - (1 - Math.pow(1 - core.TYPICAL_CARD_MARGIN, 2))) < 1e-12);
+});
+
 console.log(`\n${passed} tests passed`);
