@@ -357,5 +357,27 @@ assert.ok(/join\('\\r\\n'\)/.test(prof),
   'RFC 5545 requires CRLF and Outlook enforces it');
 assert.ok(/BEGIN:VALARM/.test(prof), 'the calendar event carries no reminder');
 
+/* ---- `hidden` outranks the component's own display ---------------------- */
+/* Preflight ships [hidden]:where(...){display:none}, and :where() contributes
+   ZERO specificity — so any class rule setting `display` beats it and the
+   attribute silently does nothing. Eight elements across the four desks were
+   in that state, including #legendKey, whose Legend button therefore did
+   nothing and whose two-line key sat permanently above the fold on a phone.
+   `el.hidden = true` returns cleanly either way, so nothing threw and nothing
+   logged; the only symptom was a page that looked busier than it should. */
+{
+  const shared = readFileSync(join(root, 'assets', 'tw.css'), 'utf8');
+  const m = /\[hidden\]:not\(\[hidden="until-found"\]\)\{display:none!important\}/.exec(shared);
+  assert.ok(m,
+    'assets/tw.css no longer forces [hidden] to win. Preflight\'s rule scores ' +
+    '(0,0,0) because of :where(), so every component with display:flex or ' +
+    'display:grid ignores the attribute — the control that sets it then looks ' +
+    'wired and does nothing.');
+  /* And it must come AFTER preflight, or the cascade decides it on order. */
+  const pre = shared.indexOf('[hidden]:where(');
+  assert.ok(pre === -1 || m.index > pre,
+    'the [hidden] override sits before preflight\'s own rule');
+}
+
 console.log(`check-styles OK: ${PAGES.length} pages, ${checked} class references, ` +
   'every one backed by a rule; matchday scoped; crests degrade; records open');

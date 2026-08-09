@@ -333,9 +333,26 @@ for (const page of DESKS_WITH_A_TOUR) {
     'the dialog does not say the desk works without an account, so sign-in ' +
     'reads as a gate rather than as sync');
   /* The rail and the sheet: two placements, one panel, no DOM move. */
-  assert.ok(/@media \(min-width:1280px\)\{[\s\S]{0,400}#gwWatchWrap\{grid-column:2/.test(css),
+  /* 900, measured against the block as it stands with its comments; bounded
+     rather than open so a stray @media and a stray #gwWatchWrap 300 lines
+     apart cannot vouch for each other. */
+  const rail = /@media \(min-width:1280px\)\{[\s\S]{0,900}?#gwWatchWrap\{([^}]*)\}/.exec(css);
+  assert.ok(rail && /grid-column:2/.test(rail[1]),
     'the desktop watchlist rail is gone — comparing a starred player against ' +
     'the round means scrolling away from what you are comparing him to');
+  /* THE ROW SPAN, NOT JUST THE COLUMN. `grid-row:1/-1` names the last line of
+     the EXPLICIT grid, and #panel-gameweek declares no rows — so -1 resolved
+     to line 1, the rail sat in row 1 alone, and row 1 grew to the height of
+     the watchlist card. ~170px of dead white space under the page heading on
+     every desktop load, from a rule that reads exactly right. */
+  assert.ok(!/grid-row:\s*1\s*\/\s*-1/.test(rail[1]),
+    'the watchlist rail is back to grid-row:1/-1. This grid has no explicit ' +
+    'rows, so -1 resolves to line 1 and the rail occupies row 1 only — which ' +
+    'stretches row 1 to the rail\'s height and leaves a column of blank space ' +
+    'under the page heading.');
+  assert.ok(/grid-row:\s*1\s*\/\s*span\s*\d+/.test(rail[1]),
+    'the watchlist rail no longer spans the implicit rows, so it cannot ' +
+    'follow the fixture list it exists to sit beside');
   assert.ok(/#gwWatchWrap\.sheet\{position:fixed/.test(css),
     'the mobile watchlist sheet is gone');
   /* The desk's record leads the Tracker. */
@@ -649,10 +666,101 @@ for (const page of DESKS_WITH_A_TOUR) {
   }
 }
 
+/* ---- 11. the Premier League route opens on numbers, like its siblings --- */
+/* The Championship and La Liga desks open on a title, a lead and a wall of
+   stat tiles. This one opened on four stacked boxes of chrome — a framing
+   note, a hint, a referee panel and a legend bar — with the hero SIXTH and the
+   first fixture card 1,609px down a 390px screen against their 887px. */
+{
+  const src = read('index.html');
+  const code = codeOnly(src);
+  const css = read('assets/tw.css');
+  const gw = /<section id="panel-gameweek"[\s\S]*?<\/section>/.exec(src)[0];
+  const at = (needle) => gw.indexOf(needle);
+
+  /* THE ORDER. The hero and the round's numbers come before the framing, the
+     hint and the controls — everything is still here, below the thing the
+     page is for. */
+  const order = ['id="gwHero"', 'id="gwStats"', 'class="deskline"', 'class="gw-controls"', 'id="gwFixtures"'];
+  for (let i = 0; i < order.length; i++) {
+    assert.ok(at(order[i]) >= 0, `${order[i]} is gone from the gameweek route`);
+    if (i) assert.ok(at(order[i - 1]) < at(order[i]),
+      `${order[i - 1]} now sits below ${order[i]}. The route opens on its ` +
+      'numbers; chrome goes under them.');
+  }
+  /* THE SHARED TILES, not a private copy. .stats/.stat are the primitive both
+     sibling desks already open with. */
+  assert.ok(/class="stats" id="gwStats"/.test(gw), 'the gameweek stat strip is gone');
+  /* The open paren is load-bearing: a bare /function renderGwStats/ is matched
+     by `function renderGwStatsX(`, so renaming the definition out from under
+     its call sites left the guard green while the route threw on every render.
+     Eighth time a check here has been satisfied by text that was not the thing
+     it names. Both directions pinned — the definition AND the two calls. */
+  assert.ok(/function renderGwStats\s*\(/.test(code),
+    'the stat strip renderer is gone or has been renamed away from its calls');
+  /* IN renderGameweek's BODY, not anywhere in the file. `/renderGwStats\(fx\)/`
+     over the whole source is matched by the DEFINITION — `function
+     renderGwStats(fx){` — so deleting the only call left the guard green while
+     the strip went stale on every render. The definition vouching for its own
+     call site; same hole, one line further on. */
+  {
+    const m = /function renderGameweek\(\)\{/.exec(code);
+    assert.ok(m, 'renderGameweek() is gone');
+    let i = m.index + m[0].length, depth = 1;
+    const start = i;
+    while (i < code.length && depth > 0) {
+      const c = code[i];
+      if (c === '{') depth++; else if (c === '}') depth--;
+      i++;
+    }
+    const body = code.slice(start, i - 1);
+    assert.ok(/renderGwStats\(fx\)/.test(body),
+      'renderGameweek() never fills the stat strip, so the round\'s numbers ' +
+      'are whatever the last render left there');
+    assert.ok(/renderGwStats\(null\)/.test(body),
+      'the no-data path never clears the stat strip, so a failed refresh ' +
+      'leaves the previous gameweek\'s figures on screen as if they were live');
+  }
+  assert.ok(/^\.stats\{/m.test(css) && /^\.stat\{/m.test(css),
+    'the shared .stats/.stat tiles have gone from tw.css — the Premier League ' +
+    'strip would then be styled by nothing and the siblings by nothing');
+
+  /* ONE control row, not two stacked bordered bars. */
+  assert.ok(/<div class="gw-controls">[\s\S]{0,900}?id="legendBtn"/.test(gw),
+    'the Legend button has left the referee control row — two full-width bars ' +
+    'stacked is what .gw-controls exists to replace');
+  assert.ok(/\.gw-controls \.ref-global\{flex:1 1 300px/.test(css),
+    'the referee panel is back to sizing on its own content, which pushes the ' +
+    'Legend button onto a second row — the stacked bars again, in a wrapper');
+
+  /* THE PHONE'S FILTER DISCLOSURE, and specifically NOT a <details>. */
+  assert.ok(!/<details class="gwt-filters"/.test(src),
+    'the filter row is back inside a <details>. Chromium hides a closed ' +
+    "<details>'s content through content-visibility on ::details-content, " +
+    'which no author display rule can override — so the desktop lost the ' +
+    'position, min-chance, team and watchlist filters entirely while the CSS ' +
+    'read exactly right.');
+  assert.ok(/id="gwFiltersBtn"[\s\S]{0,200}?aria-controls="gwFilters"/.test(src),
+    'the phone filter toggle is gone or no longer names what it controls');
+  assert.ok(/class="gwt-row" id="gwFilters"/.test(src),
+    'the second filter row has lost the id its toggle points at');
+  assert.ok(/\$\("gwFiltersBtn"\)/.test(code),
+    'the filter toggle is never wired — it renders and does nothing');
+  assert.ok(/matchMedia\("\(max-width:560px\)"\)/.test(code),
+    'the filter toggle no longer checks the width, so either the desktop ' +
+    'hides its filters or the phone shows all of them');
+  /* THE COUNT SURVIVES THE COLLAPSE. It is the answer to whatever the filters
+     did, so it must not be inside the thing they hide. */
+  assert.ok(at('id="gwCount"') > at('id="gwFilters"'),
+    'the result count has moved inside the collapsible filter row — collapsing ' +
+    'the filters would then hide the one line saying what they left');
+}
+
 console.log(`check-firstrun OK: ${DESKS_WITH_A_TOUR.length} desks, none auto-opens, ` +
   'all reachable at both widths, intro card bounded, jargon defined, ' +
   'toolbar sticky, both views on one filter, mobile chrome yields, ' +
   'watchlist teaches and follows, three load states distinct, one h1 per ' +
   'route with its own title, fixtures are sections and candidates are lists, ' +
   'focus rings opaque, referee simulation announced, four footers in three ' +
-  'named groups each carrying the age notice and the helplines');
+  'named groups each carrying the age notice and the helplines, and the ' +
+  'Premier League route opening on its numbers like its siblings');

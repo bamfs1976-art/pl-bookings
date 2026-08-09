@@ -562,6 +562,27 @@ button.mkt:hover{background:var(--surface-3);color:var(--accent)}
   border-radius:0 0 9px 0;text-decoration:none}
 .skip:focus{left:0}
 
+/* THE `hidden` ATTRIBUTE HAS TO WIN.
+ *
+ * Preflight ships `[hidden]:where(:not([hidden=until-found])){display:none}`,
+ * and `:where()` contributes ZERO specificity — so the rule scores (0,0,0) and
+ * ANY class rule that sets `display` beats it. Every component here whose
+ * resting state is a flex or grid box did exactly that, so setting `hidden` on
+ * it in JavaScript did nothing at all:
+ *
+ *   #legendKey (.legend-key, display:flex)   the Legend key was permanently
+ *     open on the Premier League desk and the Legend button did nothing — two
+ *     lines of key sat above the fold on a phone, for every visitor, forever
+ *   #apCards (.ap-grid, display:grid)        on both sibling desks
+ *   .tabs, #calBtn, #apMoreBtn, #multiOnly   four more across the four pages
+ *
+ * Eight elements, four desks, nothing thrown and nothing logged: `el.hidden =
+ * true` returns cleanly whether or not the element goes away. It is the same
+ * shape as the <details> that would not collapse — author `display` defeating a
+ * UA rule — and it is worth an !important precisely because `hidden` is not a
+ * style preference. It is the attribute that means "not rendered". */
+[hidden]:not([hidden="until-found"]){display:none!important}
+
 /* ─── Desk chrome ───────────────────────────────────────────────────────────
    The base layer of a desk: type, links, buttons, cards, tabs, tables, the
    small status chips. It was declared THREE times — eflc.html, laliga.html and
@@ -862,6 +883,16 @@ footer{padding:26px 0 40px;font-size:12.5px;color:var(--text-3);
    thresholds were previously stated only in a paragraph of small print at the
    bottom of the panel. */
 .legend-bar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:0 0 .7rem}
+/* The referee choice and the Legend button on ONE row. They were a full-width
+   bordered panel with a second full-width bar stacked under it — two boxes of
+   chrome carrying one radio pair and one button, above the fold on a phone. */
+.gw-controls{display:flex;align-items:stretch;gap:.5rem;flex-wrap:wrap;margin:0 0 .7rem}
+/* basis 300px, NOT auto. The referee panel's max-content width includes its
+   explanatory note, so `flex:1 1 auto` sized it to that and wrapped the Legend
+   button onto a second line — which is the two stacked bars this rule exists
+   to replace. A small basis lets it share the row and wrap its own text. */
+.gw-controls .ref-global{flex:1 1 300px;margin:0}
+.gw-controls>.btn{flex:none}
 .legend-key{display:flex;align-items:center;gap:6px 14px;flex-wrap:wrap;
   padding:8px 11px;border-radius:10px;font-size:12px;line-height:1.5;
   color:var(--text-2);background:var(--surface-2);border:1px solid var(--border)}
@@ -973,7 +1004,32 @@ details.model-detail:not([open]) .fx-simrow{display:none}
 @media (max-width:560px){ .gwt-kbd{display:none} }
 .gwt-lab{font-size:11.5px;font-weight:700;color:var(--text-3);
   text-transform:uppercase;letter-spacing:.05em}
-.gwt-count{margin-left:auto;font-size:12px;color:var(--text-2);white-space:nowrap}
+.gwt-count{margin-left:auto;font-size:12px;color:var(--text-2);white-space:nowrap;
+  display:block;text-align:right;padding:2px 2px 0}
+/* THE SECOND FILTER ROW, BEHIND A BUTTON ON A PHONE ONLY.
+   Search, sort and the view switch are what a reader reaches for; position,
+   minimum chance, team and watchlist-only are what they reach for second. All
+   of it stacked put 320px of filter bar between a 390px screen and the first
+   fixture card, on a route whose entire job is the fixture cards.
+
+   THIS WAS A <details> AND IT DID NOT WORK. The summary showed only under
+   560px and a media rule was meant to reveal the row above it, but modern
+   Chromium hides a closed <details>'s content through content-visibility on
+   ::details-content — which no author `display` can override, in either
+   direction. The desktop simply lost its filters, and the CSS read correctly.
+   A button and the `hidden` attribute instead: one state, set in one place,
+   and visible in the DOM. */
+.gwt-more{display:none}
+@media (max-width:560px){
+  .gwt-more{display:block;width:100%;text-align:left;font:inherit;font-size:12px;
+    font-weight:700;color:var(--text-2);background:none;border:0;cursor:pointer;
+    padding:7px 2px;min-height:44px}
+  .gwt-more::after{content:" ⌄";color:var(--text-3)}
+  .gwt-more[aria-expanded="true"]::after{content:" ⌃"}
+  /* The referee panel's note repeats what the two radios already say, and on a
+     phone it is three wrapped lines of it. */
+  .gw-controls .ref-global #refModeNote{display:none}
+}
 .seg-view{display:inline-flex;border:1px solid var(--border-2);border-radius:9px;overflow:hidden;flex:none}
 .seg-view button{font:inherit;font-size:12.5px;font-weight:600;padding:6px 12px;border:0;
   cursor:pointer;background:var(--surface);color:var(--text-2)}
@@ -1202,6 +1258,11 @@ details.model-detail:not([open]) .fx-simrow{display:none}
 .wl-empty{padding:14px;font-size:13px;line-height:1.5;color:var(--text-2)}
 .wl-empty p{margin:0 0 .6rem}
 .wl-empty p:last-child{margin:0;font-size:12px}
+/* On a phone the empty watchlist sits between the round's numbers and the
+   fixture list, so it is charged against the scroll to the product. The worked
+   example stays — it IS the teaching — and the storage footnote goes; it is
+   also in the account dialog, which is where somebody asking the question is. */
+@media (max-width:560px){ .wl-empty p:last-child{display:none} }
 .wl-empty b{color:var(--text)}
 .wl-eg{margin:0 0 .7rem}
 .wl-egrow{display:flex;align-items:center;gap:8px;width:100%;text-align:left;
@@ -1232,7 +1293,12 @@ details.model-detail:not([open]) .fx-simrow{display:none}
   #panel-gameweek.active{display:grid;grid-template-columns:minmax(0,1fr) 300px;
     column-gap:22px;align-items:start}
   #panel-gameweek>*{grid-column:1;min-width:0}
-  #gwWatchWrap{grid-column:2;grid-row:1/-1;align-self:start;margin:0;
+  /* span 99, NOT 1/-1. `-1` names the last line of the EXPLICIT grid, and this
+     grid declares no rows at all — so -1 resolved to line 1, the rail occupied
+     row 1 only, and row 1 grew to the height of the watchlist card. The result
+     was ~170px of dead white space under the page heading on every desktop
+     load: the layout was not broken, it was correct for a grid with one row. */
+  #gwWatchWrap{grid-column:2;grid-row:1/span 99;align-self:start;margin:0;
     position:sticky;top:calc(60px + env(safe-area-inset-top) + 58px)}
   #gwWatchWrap #gwWatch{max-height:calc(100vh - 220px);overflow-y:auto}
 }

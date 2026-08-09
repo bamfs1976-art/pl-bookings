@@ -561,16 +561,29 @@
       <h1>This Gameweek</h1>
       <p>Who's most likely to be booked — fixture by fixture, with the referee folded in.</p>
     </div>
-    <!-- WHAT THIS IS, AND WHO IT IS NOT FOR — at the top, in two sentences.
+    <!-- THE NUMBERS COME FIRST.
+         The hero — the gameweek, the deadline countdown, the hottest fixture
+         and the model's track record — used to sit SIXTH, under four stacked
+         chrome cards. On a 390px screen that was the entire first viewport
+         spent on framing, a hint, a radio group and a legend, and the sibling
+         desks open on a wall of figures. Everything below is still here; it is
+         below the thing the page is for now. -->
+    <div id="gwHero" class="gw-hero" aria-live="polite"></div>
+    <!-- THE ROUND IN FOUR NUMBERS, on the same .stat tiles the Championship
+         and La Liga desks open with. Those two put a wall of figures directly
+         under the heading; this desk had the same data and spent the first
+         screen on prose instead. Shared primitive, not a copy — the tiles are
+         `.stats`/`.stat` in tw.css and were already used by both siblings. -->
+    <div class="stats" id="gwStats" hidden></div>
+    <!-- WHAT THIS IS, AND WHO IT IS NOT FOR — in two sentences.
          It used to be five lines of 0.78rem print at the FOOT of this panel,
          under ten fixture cards, and the age notice was a separate paragraph
          in the footer below that. They answer the same question and neither
          was anywhere a first-time reader would meet them. -->
     <p class="deskline">
       <span class="rg-18" aria-hidden="true">18+</span>
-      <span><b>A research screen, not a tip.</b> Every percentage here is a modelled
-        estimate from season form and the appointed referee — not a prediction, not a
-        price, and not betting advice. Over 18s only.
+      <span><b>A research screen, not a tip.</b> Modelled estimates from season form
+        and the referee — not predictions, not prices, not betting advice. Over 18s only.
         <a href="#p=guide">How the model works</a> &middot;
         <a href="https://www.begambleaware.org/" target="_blank" rel="noopener noreferrer">BeGambleAware</a></span>
     </p>
@@ -582,27 +595,36 @@
          two lines. -->
     <p class="gw-intro" id="gwHint" hidden>
       <span class="cn-dots" aria-hidden="true"><i></i><i></i><i></i></span>
-      <span>Ranked by booking heat, hottest first.
-        <button type="button" class="linkish" data-open-tour>How to read this page</button> &middot;
+      <!-- "Ranked by booking heat, hottest first" was here, in the toolbar's own
+           section label AND in the note under the list. Three statements of one
+           fact; this card is kept for the links and the tour, which are the two
+           things nothing else offers. -->
+      <span><button type="button" class="linkish" data-open-tour>How to read this page</button> &middot;
         <a href="/today">Today&rsquo;s card</a> &middot; <a href="/today#all">Season calendar</a></span>
       <button class="gw-intro-x" type="button" data-hint-dismiss aria-label="Dismiss this hint">&times;</button>
     </p>
+    <!-- ONE ROW OF CONTROLS, not two bordered cards stacked.
+         The referee choice and the Legend button are both settings for this
+         view; they were a full-width panel and a second full-width bar under
+         it, which is two boxes of chrome to carry one radio pair and one
+         button. The key itself still opens below, on demand.
+
+         ONE choice, not ten: the referee control repeats on every fixture
+         card, so without this a reader who wants the whole round priced on
+         league-average assumptions makes the same decision ten times. -->
+    <div class="gw-controls">
+      <div class="ref-global">
+        <b>Referees</b>
+        <label class="chk"><input type="radio" name="refMode" value="appointed" id="refModeA"> Use announced appointments</label>
+        <label class="chk"><input type="radio" name="refMode" value="average" id="refModeL"> Assume league average (<span class="mono" id="refAvgTxt">—</span>)</label>
+        <span class="faint" id="refModeNote"></span>
+      </div>
+      <button class="btn" id="legendBtn" type="button" aria-expanded="false" aria-controls="legendKey">Legend</button>
+    </div>
     <!-- THE KEY, on the page. High / Watch / Moderate and the dot meter were
          defined only in a paragraph of 0.78rem print at the bottom of the
          panel, which is not somewhere a reader looks when they hit an
          unfamiliar label at the top of it. -->
-    <!-- ONE choice, not ten. The referee control repeats on every card, so
-         without this a reader who wants the whole gameweek on league-average
-         assumptions makes the same decision ten times. -->
-    <div class="ref-global">
-      <b>Referees</b>
-      <label class="chk"><input type="radio" name="refMode" value="appointed" id="refModeA"> Use announced appointments</label>
-      <label class="chk"><input type="radio" name="refMode" value="average" id="refModeL"> Assume league average (<span class="mono" id="refAvgTxt">—</span>)</label>
-      <span class="faint" id="refModeNote"></span>
-    </div>
-    <div class="legend-bar">
-      <button class="btn" id="legendBtn" type="button" aria-expanded="false" aria-controls="legendKey">Legend</button>
-    </div>
     <div class="legend-key" id="legendKey" hidden>
       <span class="lk"><i style="background:var(--danger)"></i><b>High</b> 50%+ chance of a card</span>
       <span class="lk"><i style="background:var(--warn)"></i><b>Watch</b> 30&ndash;50%</span>
@@ -611,7 +633,6 @@
       <span class="lk"><b>Heat</b> expected cards in the match</span>
       <span class="lk">Press any dotted label for its definition.</span>
     </div>
-    <div id="gwHero" class="gw-hero" aria-live="polite"></div>
     <div id="gwSuspWrap" hidden>
       <div class="gw-seclabel" style="margin-bottom:.5rem">⚠ Suspension watch</div>
       <div id="gwSusp" class="gwsusp"></div>
@@ -654,7 +675,21 @@
             <button data-view="table" type="button" aria-selected="false" role="tab">Table</button>
           </div>
         </div>
-        <div class="gwt-row">
+        <!-- ROW TWO, ON DEMAND ON A PHONE. Search, sort and the view switch are
+             what you reach for; position, minimum chance, team and watchlist-only
+             are what you reach for second. All of it stacked put 320px of filter
+             bar between a 390px screen and the first fixture card, on a route
+             whose whole job is the fixture cards.
+
+             A BUTTON AND `hidden`, NOT <details>. The <details> version showed
+             its summary only under 560px and relied on a CSS rule to reveal the
+             row above it — and the row stayed hidden on the desktop anyway,
+             because modern Chromium hides a closed <details>'s content through
+             content-visibility, which no author `display` can override. Caught
+             by looking at a 1440px screenshot, not by reading the rule. -->
+        <button class="gwt-more" id="gwFiltersBtn" type="button"
+                aria-expanded="false" aria-controls="gwFilters">Filters</button>
+        <div class="gwt-row" id="gwFilters">
           <div class="seg" id="gwPosSeg" role="tablist" aria-label="Filter candidates by position">
             <button class="seg-btn on" data-pos="all" type="button">ALL</button>
             <button class="seg-btn" data-pos="DF" type="button">DEF</button>
@@ -670,8 +705,11 @@
           <span class="gwt-grp"><label class="gwt-lab" for="gwTeam">Team</label>
           <select id="gwTeam" aria-label="Filter by team"><option value="">All teams</option></select></span>
           <label class="chk"><input type="checkbox" id="gwWatchOnly"> Only my watchlist</label>
-          <span class="gwt-count" id="gwCount" role="status" aria-live="polite"></span>
         </div>
+        <!-- OUTSIDE the disclosure. It is the answer to whatever the filters
+             did, so collapsing the filters must not take the count with them —
+             "3 fixtures" is the one line that has to survive. -->
+        <span class="gwt-count" id="gwCount" role="status" aria-live="polite"></span>
       </div>
     </div>
     <div id="gwFixtures"></div>
@@ -3778,9 +3816,8 @@ function renderWatchDash(){
       eg=pool[0]||null;
     }catch(e){}
     el.innerHTML=`<div class="wl-empty">
-      <p><b>Star a player to pin him here.</b> The ☆ on any row adds him to a list
-      that follows you across the desk — with his next fixture, its referee and his
-      booking chance, sorted so the likeliest sit first.</p>
+      <p><b>Star a player to pin him here.</b> The ☆ on any row follows him across
+      the desk — next fixture, referee and booking chance, likeliest first.</p>
       ${eg?`<div class="wl-eg"><span class="faint">For example</span>
         <button class="wl-egrow" data-pk="${esc(watchKey(eg))}" type="button">
           <span aria-hidden="true">☆</span> ${esc(eg.n)}
@@ -3887,12 +3924,39 @@ function nextGwStartsIn(){
     :unit(Math.max(1,m),"minute");
   return {ev,txt,at:fmtKO(ev.deadline_time)};
 }
+/* THE ROUND IN FOUR NUMBERS. The Championship and La Liga desks open on a row
+   of stat tiles — matches, cards expected, a match — and this desk, which has
+   all of it and a High-band count besides, opened on four stacked boxes of
+   prose. Same figures the fixture cards are built from, so the strip and the
+   list cannot disagree; hidden entirely when there is no round to describe. */
+function renderGwStats(fx){
+  const el=$("gwStats"); if(!el) return;
+  if(!fx||!fx.length){ el.hidden=true; el.innerHTML=""; return; }
+  let heat=0, high=0, cands=0;
+  fx.forEach(f=>{
+    const m=fixtureMeta(f); if(!m) return;
+    heat+=m.heat;
+    gwCandidates(m.h,m.a,m.ref,m.derby).forEach(c=>{ cands++; if(c.prob>=0.5) high++; });
+  });
+  const tile=(n,label,title)=>`<div class="stat"${title?` title="${esc(title)}"`:""}><b class="num">${n}</b><span>${label}</span></div>`;
+  el.innerHTML=
+    tile(fx.length,"matches")
+    +tile(heat.toFixed(1),"cards expected","Sum of every fixture's booking heat: each club's cards-against rate, scaled by the referee and any derby boost.")
+    +tile((heat/fx.length).toFixed(2),"a match")
+    /* Only once there are rated players behind it. Pre-season, and any time
+       the squad join has not landed, this is 0 out of 0 — a tile reading "0 in
+       the High band" states a fact about the data as though it were a fact
+       about the round. */
+    +(cands?tile(high,"in the High band","Booking candidates the model puts at 50% or better across the round, out of "+cands+" rated."):"");
+  el.hidden=false;
+}
 function renderGameweek(){
   renderGwHero();
   renderGwSusp();
   renderWatchDash();
   const el=$("gwFixtures"); if(!el) return;
   if(!LIVE){
+    renderGwStats(null);
     /* LOADING IS NOT AN ERROR. renderGameweek() paints the landing view before
        loadLive() is even called, so this branch used to greet every cold load
        with "the live FPL feed is unreachable right now" for the second or two
@@ -3921,6 +3985,10 @@ function renderGameweek(){
     return 0;
   });
   $("gwToolbar").hidden=!fx.length;
+  /* The FULL round, not the filtered view — a search for "Liverpool" narrows
+     the fixture list below, but "12 matches, 42.3 cards expected" is a fact
+     about the gameweek and does not change because you typed a club name. */
+  renderGwStats(fx);
   /* AN EMPTY WEEK IS A WAIT, NOT A FAULT. "Check back once the schedule firms
      up" gave a reader nothing to act on and no idea whether that meant hours
      or a fortnight; between rounds the feed knows the next deadline exactly. */
@@ -4793,6 +4861,25 @@ function refModeSet(m){
 }
 ["refModeA","refModeL"].forEach(id=>{ const el=$(id); if(el) el.addEventListener("change",()=>refModeSet(el.value)); });
 refModeApply();
+/* The phone's filter disclosure. One state, and the WIDTH decides whether it
+   applies at all — above 560px the row is simply always on, because the button
+   that would reopen it is not on screen there. Bound to the resize as well as
+   the click, so rotating a phone into a tablet width cannot strand the filters
+   closed with no control to open them. */
+(function(){
+  const btn=$("gwFiltersBtn"), row=$("gwFilters");
+  if(!btn||!row) return;
+  let open=false;
+  const phone=()=>window.matchMedia&&matchMedia("(max-width:560px)").matches;
+  const apply=()=>{
+    const on=!phone()||open;
+    row.hidden=!on;
+    btn.setAttribute("aria-expanded",open?"true":"false");
+  };
+  btn.addEventListener("click",()=>{ open=!open; apply(); });
+  addEventListener("resize",apply,{passive:true});
+  apply();
+})();
 (function(){
   const b=$("legendBtn"), k=$("legendKey");
   if(!b||!k) return;
