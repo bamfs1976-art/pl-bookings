@@ -47,14 +47,9 @@
   body{background:var(--bg); color:var(--text); font-family:'Hanken Grotesk',system-ui,sans-serif; margin:0; transition:background .25s,color .25s; -webkit-font-smoothing:antialiased}
   .surface{background:var(--surface); border:1px solid var(--border); box-shadow:var(--shadow-sm)}
   .surface-2{background:var(--surface-2)}
-  /* Responsible gambling notice — shown site-wide, required for a UK betting-research tool */
-  .rg{display:flex;flex-wrap:wrap;align-items:center;gap:.5rem .85rem;padding:.85rem 1rem;border:1px solid var(--border);
-      border-radius:12px;background:var(--surface-2);font-size:.76rem;line-height:1.5;color:var(--text-2)}
-  .rg-18{flex:none;display:inline-grid;place-items:center;width:26px;height:26px;border-radius:50%;
-         background:var(--danger);color:#fff;font-weight:800;font-size:.68rem;letter-spacing:-.02em}
-  .rg a{color:var(--text);text-decoration:underline;text-underline-offset:2px}
-  .rg a:hover{color:var(--accent-ink)}
-  .rg-sep{color:var(--text-3)}
+  /* The responsible-gambling notice and the footer groups now live in
+     assets/tw.css — three of the four desks carried no notice at all, and a
+     compliance line cannot be a rule that only one page has. */
   .tier-target{background:color-mix(in srgb,var(--target) 14%,transparent); color:var(--target); border:1px solid color-mix(in srgb,var(--target) 35%,transparent)}
   .tier-mid{background:color-mix(in srgb,var(--mid) 14%,transparent); color:var(--mid); border:1px solid color-mix(in srgb,var(--mid) 35%,transparent)}
   .tier-fade{background:color-mix(in srgb,var(--fade) 12%,transparent); color:var(--text-2); border:1px solid color-mix(in srgb,var(--fade) 30%,transparent)}
@@ -498,7 +493,9 @@
         </button>
       </div>
       <a href="https://gameweekedge.netlify.app" rel="noopener" class="faint" style="font-size:.72rem;font-weight:600">Part of the Edge family · Gameweek Edge ↗</a>
-      <p class="sb-foot-legal">18+ only. Research, not betting advice — no result is guaranteed. Help: <a href="https://www.begambleaware.org/" target="_blank" rel="noopener noreferrer">BeGambleAware</a>. Form via ScoutingStats, live data via the official FPL API, referee data from football-data.co.uk.</p>
+      <!-- The sources moved to the footer's own group; what is left here is
+           the part that has to travel with the navigation. -->
+      <p class="sb-foot-legal">18+ only. Research, not betting advice — no result is guaranteed. Help: <a href="https://www.begambleaware.org/" target="_blank" rel="noopener noreferrer">BeGambleAware</a>.</p>
     </div>
   </aside>
 
@@ -564,6 +561,19 @@
       <h1>This Gameweek</h1>
       <p>Who's most likely to be booked — fixture by fixture, with the referee folded in.</p>
     </div>
+    <!-- WHAT THIS IS, AND WHO IT IS NOT FOR — at the top, in two sentences.
+         It used to be five lines of 0.78rem print at the FOOT of this panel,
+         under ten fixture cards, and the age notice was a separate paragraph
+         in the footer below that. They answer the same question and neither
+         was anywhere a first-time reader would meet them. -->
+    <p class="deskline">
+      <span class="rg-18" aria-hidden="true">18+</span>
+      <span><b>A research screen, not a tip.</b> Every percentage here is a modelled
+        estimate from season form and the appointed referee — not a prediction, not a
+        price, and not betting advice. Over 18s only.
+        <a href="#p=guide">How the model works</a> &middot;
+        <a href="https://www.begambleaware.org/" target="_blank" rel="noopener noreferrer">BeGambleAware</a></span>
+    </p>
     <!-- ONE card, not two stacked ones. This was a `.beginner-hint` paragraph
          and a `.combined-note` block, one under the other, and on a phone the
          pair pushed the gameweek hero — the thing the page is for — below the
@@ -665,7 +675,13 @@
       </div>
     </div>
     <div id="gwFixtures"></div>
-    <p class="faint" style="font-size:.78rem;margin-top:.8rem">Fixtures are ordered <strong>hottest to coolest</strong> by booking heat. Each fixture's booking candidates are its highest-risk available players, ranked by a <strong>fixture-aware booking probability</strong>: the season model chance scaled by the assigned referee's card rate (the ×factor), a small derby bump and the game state — the side the match model expects to be chasing fouls more. Bands: <span style="color:var(--danger);font-weight:700">High</span> 50%+, <span style="color:var(--warn);font-weight:700">Watch</span> 30–50%. The dot is sample confidence (minutes played). Assign referees on each card once appointments are published. An estimate for research, not a price — see the Guide.</p>
+    <!-- The 108-word version of this paragraph stood here. Every clause in it
+         is now carried by something the reader can actually reach at the
+         moment they need it: the bands and the confidence dot by the Legend
+         key above, each metric by its own dotted label and popover, the
+         referee by the picker on the card, and the method by the Guide. What
+         is left is the one instruction the page cannot demonstrate. -->
+    <p class="faint" style="font-size:.78rem;margin-top:.8rem">Fixtures run <strong>hottest to coolest</strong>. Referee appointments aren&rsquo;t in the live feed — assign the official on each card once PGMOL publishes them and every number rescales to his whistle. Full method in the <a href="#p=guide">Guide</a>.</p>
   </section>
 
   <!-- PLAYERS — one panel, two lenses.
@@ -975,21 +991,41 @@
   </section>
     </main>
 
-    <footer class="muted" style="padding:0 26px 2rem;font-size:.78rem">
-      <div class="rg" role="note" aria-label="Responsible gambling">
-        <span class="rg-18" aria-hidden="true">18+</span>
-        <span><strong>Over 18s only.</strong> This desk is statistical research, not betting advice, and no result is guaranteed. Never stake more than you can afford to lose.</span>
-        <span>
-          <a href="https://www.begambleaware.org/" target="_blank" rel="noopener noreferrer">BeGambleAware</a>
-          <span class="rg-sep" aria-hidden="true">·</span>
-          <a href="https://www.gamcare.org.uk/" target="_blank" rel="noopener noreferrer">GamCare</a>
-          <span class="rg-sep" aria-hidden="true">·</span>
-          <a href="https://www.gamstop.co.uk/" target="_blank" rel="noopener noreferrer">GAMSTOP</a>
-          <span class="rg-sep" aria-hidden="true">·</span>
-          National Gambling Helpline <a href="tel:08088020133">0808 8020 133</a> (free, 24/7)
-        </span>
+    <!-- THREE NAMED GROUPS. This was one grey paragraph doing three unrelated
+         jobs, with the age notice and the helpline in the middle of it. -->
+    <footer class="muted" style="padding:0 26px 2rem">
+      <div class="ft">
+        <section class="ft-col" aria-labelledby="ftAbout">
+          <h2 class="ft-h" id="ftAbout">About &amp; method</h2>
+          <p>A statistical filter for Premier League player-bookings markets. It ranks players by how often they are carded and give away fouls and rescales that for the appointed referee. It does not pick players or price markets.</p>
+          <ul class="ft-list">
+            <li><a href="#p=guide">How the model works</a></li>
+            <li><a href="/eflc">Championship desk</a> &middot; <a href="/laliga">La Liga desk</a> &middot; <a href="/today">Today&rsquo;s Card</a></li>
+          </ul>
+        </section>
+        <section class="ft-col" aria-labelledby="ftData">
+          <h2 class="ft-h" id="ftData">Data sources</h2>
+          <ul class="ft-list">
+            <li><span class="ft-src">Player &amp; club form</span> — ScoutingStats, 2025-26</li>
+            <li><span class="ft-src">Live squads, cards, availability</span> — the official FPL API</li>
+            <li><span class="ft-src">Referees, fouls, home/away splits</span> — public-domain <a href="https://www.football-data.co.uk/" target="_blank" rel="noopener noreferrer">football-data.co.uk</a> match records</li>
+            <li><span class="ft-src">Match model</span> — <a href="https://plsimulation.netlify.app" target="_blank" rel="noopener noreferrer">Plsimulator</a> Dixon&ndash;Coles ratings</li>
+          </ul>
+        </section>
+        <section class="ft-col" aria-labelledby="ftRG">
+          <h2 class="ft-h" id="ftRG">Responsible gambling</h2>
+          <div class="rg" role="note">
+            <span class="rg-18" aria-hidden="true">18+</span>
+            <span><strong>Over 18s only.</strong> Research, not betting advice — no result is guaranteed. Never stake more than you can afford to lose.
+              <br><a href="https://www.begambleaware.org/" target="_blank" rel="noopener noreferrer">BeGambleAware</a>
+              <span class="rg-sep" aria-hidden="true">·</span>
+              <a href="https://www.gamcare.org.uk/" target="_blank" rel="noopener noreferrer">GamCare</a>
+              <span class="rg-sep" aria-hidden="true">·</span>
+              <a href="https://www.gamstop.co.uk/" target="_blank" rel="noopener noreferrer">GAMSTOP</a>
+              <br>National Gambling Helpline <a href="tel:08088020133">0808 8020 133</a> (free, 24/7)</span>
+          </div>
+        </section>
       </div>
-      <p style="margin:.9rem 0 0">Premier League Bookings Desk. Player and club form via ScoutingStats, live data via the official FPL API, referee data from football-data.co.uk records.</p>
     </footer>
 
   </div><!-- /.main -->

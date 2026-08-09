@@ -707,6 +707,55 @@ input[type=checkbox],input[type=radio]{accent-color:var(--accent)}
 footer{padding:26px 0 40px;font-size:12.5px;color:var(--text-3);
   padding-bottom:calc(40px + env(safe-area-inset-bottom))}
 
+/* ─── The footer, in three named groups ─────────────────────────────────────
+   It was one run-on sentence of grey 12.5px print doing three unrelated jobs:
+   saying what the desk is, crediting four data sources, and carrying the
+   18+/BeGambleAware notice — the one line on the page with a legal reason to
+   be findable, buried in the middle of the other two. Three of the four desks
+   did not carry the notice AT ALL: the Championship, La Liga and Today footers
+   said "Not betting advice" and nothing else, no age statement, no helpline.
+
+   Groups, headed, so each is scannable and the notice can be linked to. The
+   heading level is h2 because the footer sits outside the routes, each of
+   which owns the page's single h1. */
+.ft{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:1.1rem 1.6rem;
+  padding-top:1.1rem;border-top:1px solid var(--border)}
+@media (max-width:760px){ .ft{grid-template-columns:1fr;gap:1.3rem} }
+.ft-col{min-width:0}
+.ft-h{font-family:'Bricolage Grotesque',system-ui,sans-serif;font-size:11px;font-weight:800;
+  text-transform:uppercase;letter-spacing:.07em;color:var(--text-2);margin:0 0 .45rem}
+.ft-col p{margin:0 0 .4rem;line-height:1.55;color:var(--text-3)}
+.ft-list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:.28rem}
+.ft-list li{line-height:1.5}
+.ft-col a{color:var(--text-2);text-decoration:underline;text-underline-offset:2px}
+.ft-col a:hover{color:var(--accent-ink)}
+.ft-src{color:var(--text-2);font-weight:600}
+
+/* The age gate and helplines. Kept visually distinct from the two credit
+   columns beside it — this is the group somebody comes looking for. */
+.rg{display:flex;flex-wrap:wrap;align-items:flex-start;gap:.5rem .7rem;padding:.7rem .8rem;
+  border:1px solid var(--border);border-radius:12px;background:var(--surface-2);
+  font-size:12px;line-height:1.5;color:var(--text-2)}
+.rg-18{flex:none;display:inline-grid;place-items:center;width:26px;height:26px;border-radius:50%;
+  background:var(--danger);color:#fff;font-weight:800;font-size:.68rem;letter-spacing:-.02em}
+.rg a{color:var(--text);text-decoration:underline;text-underline-offset:2px}
+.rg a:hover{color:var(--accent-ink)}
+.rg-sep{color:var(--text-3)}
+
+/* ─── What this page is, said once, where the numbers are ───────────────────
+   The framing ran to five lines of 0.78rem print at the FOOT of the gameweek
+   panel, under ten fixture cards — past the point anyone reads, and repeating
+   the legend and the method that the legend key, the metric popovers and the
+   Guide already carry properly. What is left is the part none of those say:
+   what kind of number this is, and who it is not for. Paired with the age
+   notice, because the two sentences answer the same question. */
+.deskline{display:flex;align-items:flex-start;gap:.55rem;margin:0 0 1rem;
+  padding:.6rem .75rem;border-radius:11px;background:var(--surface-2);
+  border:1px solid var(--border);font-size:12.5px;line-height:1.5;color:var(--text-2)}
+.deskline b{color:var(--text)}
+.deskline a{color:var(--text);text-decoration:underline;text-underline-offset:2px}
+.deskline a:hover{color:var(--accent-ink)}
+
 /* ─── The tour, offered rather than fired ───────────────────────────────────
    Every desk used to open its own tour a few hundred milliseconds after load,
    so the first thing a new visitor saw was a dimmed page and "Step 1 of 4" —

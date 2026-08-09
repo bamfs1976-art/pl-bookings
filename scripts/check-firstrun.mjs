@@ -547,9 +547,112 @@ for (const page of DESKS_WITH_A_TOUR) {
     'the page is silent');
 }
 
+/* ---- 10. the copy: what this is, and the footer in three named groups --- */
+/* Section 9. The framing ran to 108 words of 0.78rem print at the FOOT of the
+   gameweek panel, under ten fixture cards, and the age notice was a separate
+   paragraph in the footer below that — two halves of one answer, neither
+   anywhere a first-time reader would meet them.
+ *
+ * And the notice only existed on ONE desk. The Championship, La Liga and Today
+ * footers were a single sentence ending "Not betting advice": no age
+ * statement, no helpline, nothing a reader in trouble could reach. Every check
+ * in this repo passed while three of four desks shipped without one, because
+ * every check asked about the desk it was pointed at. */
+{
+  const ALL = ['index.html', 'eflc.html', 'laliga.html', 'today.html'];
+  const GROUPS = ['About &amp; method', 'Data sources', 'Responsible gambling'];
+  /* Every one of these must sit INSIDE the responsible-gambling group. A search
+     of the page would be answered by the sidebar's own BeGambleAware link on
+     index.html — the sixth time a presence check in this repo would have been
+     satisfied by a second copy of the text it was looking for. */
+  const HELP = [
+    ['begambleaware.org', 'BeGambleAware'],
+    ['gamcare.org.uk', 'GamCare'],
+    ['gamstop.co.uk', 'GAMSTOP'],
+    ['tel:08088020133', 'the National Gambling Helpline number']
+  ];
+  for (const page of ALL) {
+    const src = read(page);
+    const foot = /<footer[^>]*>([\s\S]*?)<\/footer>/.exec(src);
+    assert.ok(foot, `${page} has no <footer>`);
+    const cols = [...foot[1].matchAll(/<section class="ft-col"([^>]*)>([\s\S]*?)<\/section>/g)];
+    assert.equal(cols.length, 3,
+      `${page}'s footer has ${cols.length} groups, expected 3. It was one grey ` +
+      'paragraph doing three unrelated jobs with the age notice in the middle.');
+    const heads = cols.map((c) => (/<h2 class="ft-h"[^>]*>([\s\S]*?)<\/h2>/.exec(c[2]) || [, ''])[1].trim());
+    assert.deepStrictEqual(heads, GROUPS,
+      `${page}'s footer groups are ${JSON.stringify(heads)} — the three are ` +
+      'named identically across the four desks so a reader who learns one ' +
+      'footer has learned all of them');
+    for (const c of cols) {
+      const id = (/aria-labelledby="([^"]+)"/.exec(c[1]) || [])[1];
+      assert.ok(id, `${page} has a footer group with no aria-labelledby`);
+      assert.ok(new RegExp('id="' + id + '"').test(foot[1]),
+        `${page}'s footer group points at #${id}, which is not in the footer`);
+    }
+    const rg = cols[2][2];
+    assert.ok(/class="rg-18"/.test(rg),
+      `${page}'s responsible-gambling group carries no 18+ mark`);
+    assert.ok(/Over 18s only/.test(rg),
+      `${page} no longer states the age restriction in words. The 18+ badge is ` +
+      'aria-hidden, so without the sentence there is no age statement at all ' +
+      'for anyone not looking at it.');
+    for (const [needle, what] of HELP) {
+      assert.ok(rg.includes(needle),
+        `${page}'s responsible-gambling group is missing ${what}. It must be in ` +
+        'THAT group — a check on the whole page is answered by the sidebar ' +
+        'notice on index.html and by nothing at all on the other three.');
+    }
+    /* The three sibling desks shipped for months with "Not betting advice" and
+       no notice. That sentence is not a substitute and must not read as one. */
+    assert.ok(!/Not betting advice\.\s*<\/footer>/.test(src),
+      `${page}'s footer is back to a bare "Not betting advice" line`);
+  }
+
+  /* THE FRAMING, SHORTENED AND PAIRED WITH THE AGE NOTICE, ABOVE THE FIXTURES. */
+  {
+    const src = read('index.html');
+    const gw = /<section id="panel-gameweek"[\s\S]*?<\/section>/.exec(src);
+    assert.ok(gw, 'the gameweek panel is gone or has been reshaped');
+    const dl = /<p class="deskline">([\s\S]*?)<\/p>/.exec(gw[0]);
+    assert.ok(dl, 'the gameweek route carries no framing line');
+    assert.ok(gw[0].indexOf('class="deskline"') < gw[0].indexOf('id="gwFixtures"'),
+      'the framing line has moved below the fixture list, which is where it ' +
+      'was buried in the first place');
+    assert.ok(/research screen, not a tip/i.test(dl[1]),
+      'the framing no longer says what kind of number this is');
+    assert.ok(/rg-18/.test(dl[1]) && /Over 18s only|18\+/i.test(dl[1]) && /begambleaware/i.test(dl[1]),
+      'the framing is no longer paired with the age notice and a help link — ' +
+      'they answer the same question and were in two different places');
+    /* SHORTENED IS A LENGTH CLAIM, so it is measured. The trailing paragraph
+       ran to 108 words repeating the legend key, the metric popovers and the
+       Guide; what is left is the one instruction the page cannot demonstrate.
+       50 is a ceiling with room, not the current count.
+
+       EVERYTHING BELOW THE FIXTURE LIST, SUMMED — not the last paragraph. The
+       first version of this took the last <p> in the panel and was satisfied
+       by re-adding the whole 108-word block ABOVE the short one: the guard
+       measured a paragraph while the wall of print it exists to prevent sat
+       directly beside it. Seventh time an assertion here has been answered by
+       the wrong copy of the text, and the only reason this one was caught is
+       that it was mutated rather than read. */
+    const below = gw[0].slice(gw[0].indexOf('id="gwFixtures"'));
+    const paras = [...below.matchAll(/<p[^>]*>([\s\S]*?)<\/p>/g)];
+    assert.ok(paras.length, 'the note under the fixture list is gone entirely');
+    const words = paras.reduce((n, p) =>
+      n + p[1].replace(/<[^>]+>/g, ' ').trim().split(/\s+/).filter(Boolean).length, 0);
+    assert.ok(words <= 50,
+      `there are ${words} words of prose below the fixture list across ` +
+      `${paras.length} paragraph(s). It is 0.78rem print under ten fixture ` +
+      'cards; anything that long there is not read, and every clause it used ' +
+      'to carry is now on a control the reader can reach.');
+  }
+}
+
 console.log(`check-firstrun OK: ${DESKS_WITH_A_TOUR.length} desks, none auto-opens, ` +
   'all reachable at both widths, intro card bounded, jargon defined, ' +
   'toolbar sticky, both views on one filter, mobile chrome yields, ' +
   'watchlist teaches and follows, three load states distinct, one h1 per ' +
   'route with its own title, fixtures are sections and candidates are lists, ' +
-  'focus rings opaque, referee simulation announced');
+  'focus rings opaque, referee simulation announced, four footers in three ' +
+  'named groups each carrying the age notice and the helplines');
