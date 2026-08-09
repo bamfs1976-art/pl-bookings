@@ -34,9 +34,70 @@ function load(file, konst) {
   return vm.runInContext(konst, ctx) || [];
 }
 
-const now = Date.now();
+/* `--at <iso>` runs the whole report against a simulated clock. It exists so
+   the escalation below can be EXERCISED rather than asserted: the three levels
+   differ only by how close kick-off is, and without a way to move the clock
+   the only test possible is a grep of the source, which is how a threshold
+   comes to be checked by the comment above it. Never used in the workflow. */
+const atArg = process.argv.indexOf('--at');
+const now = atArg > -1 && process.argv[atArg + 1]
+  ? new Date(process.argv[atArg + 1]).getTime()
+  : Date.now();
+if (!isFinite(now)) {
+  console.error('--at needs a parseable ISO timestamp');
+  process.exit(2);
+}
 const DAY = 86400000;
+const HOUR = 3600000;
 let warned = 0;
+let urgent = 0;
+
+/* THREE SIGNALS, NOT ONE.
+ *
+ * The single warning below fired the moment a fixture entered its publication
+ * window, which in the week before a season starts is every run of every day
+ * for as long as the league takes to name its officials — normal August
+ * behaviour, annotated as if something were wrong. A canary that cries for
+ * four days running is one nobody reads on the fifth, which is precisely the
+ * day it matters.
+ *
+ * So the volume now tracks the urgency:
+ *
+ *   notice   inside the publication window and still empty. Expected early;
+ *            worth recording, not worth alarming about.
+ *   warning  inside 48 hours. The league is now late by its own convention.
+ *   error    inside 12 hours. Kick-off is tonight or tomorrow morning and the
+ *            desk is about to price the match at a neutral referee — which
+ *            for a strict official is the difference between a 3.2 and a 4.4
+ *            expected-cards line, invisibly.
+ *
+ * It never exits non-zero. This runs BETWEEN the harvest and the commit in
+ * fixtures.yml: failing here would discard the fixtures the run just fetched,
+ * which is a worse outcome than any missing referee. The annotation is the
+ * alarm; the job still has to finish its work.
+ */
+const escalate = (hours) => (hours <= 12 ? 'error' : hours <= 48 ? 'warning' : 'notice');
+
+/* The round a league is about to play, named rather than inferred from a
+   fixture count. Before a season starts "552 upcoming" is true and useless:
+   the question is whether the twelve matches of the opening weekend have
+   officials, and how long is left to get them. */
+function nextRound(future) {
+  const withRound = future.filter((f) => f.r != null);
+  if (!withRound.length) return null;
+  const first = withRound.slice().sort((a, b) => new Date(a.d) - new Date(b.d))[0];
+  const round = withRound.filter((f) => f.r === first.r);
+  const times = round.map((f) => new Date(f.d).getTime()).sort((a, b) => a - b);
+  return {
+    no: first.r,
+    fixtures: round,
+    appointed: round.filter((f) => f.ref).length,
+    first: times[0],
+    last: times[times.length - 1],
+  };
+}
+
+const day = (t) => new Date(t).toISOString().slice(0, 10);
 
 for (const L of LEAGUES) {
   let fixtures;
@@ -66,18 +127,46 @@ for (const L of LEAGUES) {
     (furthest ? ` · known up to ${furthest}d ahead` : '')
   );
 
+  /* THE ROUND ABOUT TO BE PLAYED, which is the thing anyone actually wants to
+     know the state of. Printed every run, so the days before a season opens
+     read as a countdown rather than as a fixture count that does not move. */
+  const next = nextRound(future);
+  if (next) {
+    const hrs = (next.first - now) / HOUR;
+    const span = day(next.first) === day(next.last)
+      ? day(next.first) : `${day(next.first)} to ${day(next.last)}`;
+    console.log(
+      `${''.padEnd(18)} round ${String(next.no).padEnd(3)} ${span} · ` +
+      `${next.appointed}/${next.fixtures.length} appointed · ` +
+      `first kick-off in ${hrs >= 48 ? (hrs / 24).toFixed(1) + 'd' : hrs.toFixed(1) + 'h'}`
+    );
+  }
+
   /* The canary. Fixtures are due and none has an official — either the source
      stopped carrying appointments or the harvest is silently failing. Neither
-     is visible on the desk, which just prices everything at a neutral referee. */
+     is visible on the desk, which just prices everything at a neutral referee.
+
+     Graded by how close the SOONEST unappointed kick-off is, not merely by
+     whether the window has opened: "twelve matches this weekend, none named"
+     four days out is a different fact from the same sentence twelve hours
+     out, and they were being reported identically. */
   if (due.length && !dueWithRef.length) {
-    console.log(`::warning::${L.name}: ${due.length} fixture(s) kick off within ` +
-      `${L.lead} day(s) and NONE has a referee appointed. Either the feed has ` +
-      `stopped publishing them or this harvest is failing — the desks will ` +
-      `price every one of them at a neutral referee.`);
-    warned++;
+    const soonest = Math.min(...due.map((f) => new Date(f.d).getTime()));
+    const hrs = (soonest - now) / HOUR;
+    const level = escalate(hrs);
+    console.log(`::${level}::${L.name}: ${due.length} fixture(s) kick off within ` +
+      `${L.lead} day(s) and NONE has a referee appointed — the soonest in ` +
+      `${hrs < 48 ? hrs.toFixed(1) + ' hours' : (hrs / 24).toFixed(1) + ' days'}. ` +
+      (level === 'notice'
+        ? 'Expected this far out; recorded so the publication lead time is measured rather than assumed.'
+        : 'Either the feed has stopped publishing them or this harvest is ' +
+          'failing — the desks will price every one of them at a neutral referee.'));
+    if (level === 'error') urgent++; else if (level === 'warning') warned++;
   }
 }
 
-console.log(warned
-  ? `\n${warned} league(s) with no appointments inside their publication window.`
-  : '\nAppointment coverage is as expected for the current date.');
+console.log(urgent
+  ? `\n${urgent} league(s) kicking off within 12 hours with no official named.`
+  : warned
+    ? `\n${warned} league(s) late by their own publication convention.`
+    : '\nAppointment coverage is as expected for the current date.');

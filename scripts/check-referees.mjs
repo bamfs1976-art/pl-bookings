@@ -381,6 +381,63 @@ assert.ok(/plb_card_predictions/.test(calib) && !/rest\/v1\/plb_predictions/.tes
   assert.ok(out.byLeague.EFLC.brier < 0.01, `EFLC Brier ${out.byLeague.EFLC.brier}`);
 }
 
+/* ---- the appointment canary gets louder as kick-off approaches ---------- */
+/*
+ * The canary fired identically four days out and four hours out, and in the
+ * week before a season opens the four-days-out case is every run of every day
+ * — normal behaviour, annotated as a warning. A canary that cries for four
+ * days running is one nobody reads on the fifth.
+ *
+ * RUN AT THREE CLOCKS rather than grepped for three thresholds. The levels
+ * differ only by how close the soonest unappointed kick-off is, so a source
+ * check here would be a check of the comment above the code: the `--at` flag
+ * exists precisely so the escalation can be exercised. The clocks below are
+ * pinned to the real opening fixtures, so this also fails if a season's
+ * fixtures go missing from the repository entirely.
+ */
+{
+  const { execFileSync } = await import('node:child_process');
+  const at = (iso) => execFileSync('node',
+    [join(root, 'scripts', 'ref-coverage.mjs'), '--at', iso], { encoding: 'utf8' });
+  /* The first EFL Championship kick-off in the file, whenever the season is —
+     hard-coding 2026-08-14 would need editing every August. */
+  const eflc = vm.runInContext('EFLC_FIXTURES', (() => {
+    const ctx = {}; vm.createContext(ctx);
+    vm.runInContext(readFileSync(join(root, 'data', 'eflc_fixtures.js'), 'utf8'), ctx);
+    return ctx;
+  })()) || [];
+  const unappointed = eflc.filter((f) => f.d && !f.ref)
+    .map((f) => new Date(f.d).getTime()).sort((a, b) => a - b);
+  assert.ok(unappointed.length,
+    'every Championship fixture has an official, which cannot be true for a ' +
+    'whole season — the canary below can no longer be exercised');
+  const kick = unappointed[0];
+  const before = (hours) => new Date(kick - hours * 3600000).toISOString();
+
+  const HOURS = [[96, 'notice'], [30, 'warning'], [6, 'error']];
+  for (const [hours, level] of HOURS) {
+    const out = at(before(hours));
+    assert.ok(new RegExp('::' + level + '::EFL Championship').test(out),
+      `${hours}h before the first unappointed Championship kick-off the canary ` +
+      `should annotate at ${level}, and it printed:\n${out}`);
+    /* And NOT at either neighbouring level — a canary stuck on `error` would
+       pass a check that only looked for the level it expected. */
+    for (const other of ['notice', 'warning', 'error']) {
+      if (other === level) continue;
+      assert.ok(!new RegExp('::' + other + '::EFL Championship').test(out),
+        `at ${hours}h the Championship is annotated ${other} as well as ` +
+        `${level}. One kick-off, one level.`);
+    }
+  }
+  /* The countdown line, which is what makes the days before an opener legible:
+     the round about to be played, how many of it have officials, and how long
+     is left — not "552 upcoming", which is true and does not move. */
+  const now = at(before(96));
+  assert.ok(/round \d+\s+\d{4}-\d{2}-\d{2}[\s\S]*?\d+\/\d+ appointed[\s\S]*?first kick-off in/.test(now),
+    'ref-coverage no longer reports the round about to be played, its ' +
+    'appointment count and the time to its first kick-off:\n' + now);
+}
+
 console.log('check-referees OK: the appointment joins across two id spaces, a ' +
   'hand pick still wins, the dropdown shows what the model prices with, all ' +
   'three leagues are harvested on a schedule that can catch them');
