@@ -391,4 +391,155 @@ t("a league that declares its clubs has no discovered registry",
   _a_league_that_declares_its_clubs_has_no_registry)
 
 
+
+# ---- one official, one row: the abbreviation merge ------------------------
+#
+# THE SHAPE OF THE BUG. API-Football spells every Spanish official two ways —
+# "Mateo Busquets Ferrer" and "M. Busquets" — so a 380-match season arrives as
+# 41 distinct strings. build_refs merges them, and the merge rule decided that
+# an abbreviation belongs to a full name when its surnames are a LEADING run of
+# that name's surnames. That is the same test as "anywhere" for an English
+# referee and a different one for most of Spain, so it merged 13 of 20 and left
+# seven officials split across two rows apiece: a 27-referee table for a
+# 20-referee division, every split career rated on half its matches.
+#
+# Nothing raised. The match total stayed right — which is what the existing
+# guard checked — and the table looked complete.
+
+
+def _the_abbreviation_merge_survives_spanish_names():
+    # Every pairing below is one real official under the two spellings the feed
+    # actually used in 2025-26, with the reason a leading-run test misses it.
+    cases = [
+        # the abbreviation cites the SECOND surname, so it can never lead
+        ("J. Manzano", "Jesus Gil Manzano"),
+        ("A. Ruiz", "Alejandro Muñiz Ruiz"),
+        ("F. Maeso", "Francisco Hernandez Maeso"),
+        # a COMPOUND GIVEN NAME shifts the whole run one token along
+        ("M. Ortiz", "Miguel Angel Ortiz Arias"),
+        ("J. Guzman", "Jose Luis Guzman Mansilla"),
+        ("J. Sanchez", "José María Sánchez Martínez"),
+        # and the cases a leading-run test already got right, which must stay
+        ("R. De Burgos", "Ricardo De Burgos Bengoetxea"),
+        ("I. Diaz", "Isidro Diaz de Mera Escuderos"),
+        ("M. Busquets", "Mateo Busquets Ferrer"),
+        ("J. Martinez", "Juan Martinez Munuera"),
+    ]
+    names = [n for pair in cases for n in pair]
+    # every full name present at once, so each merge has to pick its man out of
+    # the whole division rather than out of a two-name file
+    mapping, merges, ambiguous = R.canonical_referees(names)
+    for abbrev, full in cases:
+        assert mapping[abbrev] == full, (
+            f"{abbrev!r} resolved to {mapping[abbrev]!r}, not {full!r}")
+        assert mapping[full] == full, f"{full!r} was itself merged away"
+    assert not ambiguous, f"unexpected ambiguity: {ambiguous}"
+    assert len(set(mapping.values())) == len(cases), (
+        f"{len(set(mapping.values()))} officials out of {len(cases)} men")
+
+
+t("the abbreviation merge survives Spanish names",
+  _the_abbreviation_merge_survives_spanish_names)
+
+
+def _two_officials_are_never_collapsed_into_one():
+    # Sharing an initial and a given name is not sharing an identity. A rule
+    # loose enough to merge these is worse than the split it fixes: a wrong
+    # merge invents a career and nothing downstream can undo it.
+    names = ["Jose Luis Munuera Montero", "Jose Luis Guzman Mansilla",
+             "Juan Martinez Munuera", "José María Sánchez Martínez"]
+    mapping, merges, ambiguous = R.canonical_referees(names)
+    assert not merges, f"two full names were merged: {merges}"
+    assert len(set(mapping.values())) == 4, "four officials became fewer"
+
+
+t("two full names are never collapsed into one",
+  _two_officials_are_never_collapsed_into_one)
+
+
+def _an_unresolvable_abbreviation_is_reported_not_guessed():
+    # "J. Munuera" is Juan Martinez MUNUERA or José Luis MUNUERA Montero and no
+    # spelling rule can say which. With no dates to consult it must be left
+    # alone and named — a guess here fabricates one man's record out of
+    # another's.
+    names = ["J. Munuera", "Juan Martinez Munuera", "José Luis Munuera Montero"]
+    mapping, merges, ambiguous = R.canonical_referees(names)
+    assert mapping["J. Munuera"] == "J. Munuera", "an ambiguous name was merged"
+    assert any("J. Munuera" in a for a in ambiguous), (
+        f"the ambiguity was not reported: {ambiguous}")
+
+
+t("an unresolvable abbreviation is reported, not guessed",
+  _an_unresolvable_abbreviation_is_reported_not_guessed)
+
+
+def _the_calendar_resolves_what_the_spelling_cannot():
+    # Nobody referees two matches in one division on one day. Juan works the
+    # 21st, so the "J. Munuera" of the 21st is the other man — exclusion by
+    # physical impossibility, not preference.
+    #
+    # The clashing dates are filed under "J. Martinez", which merges into Juan
+    # in the first pass. Testing a candidate against his FULL SPELLING alone
+    # finds no clash at all and resolves nothing, which is why the calendar
+    # pass runs after every unambiguous merge and reads the merged identity.
+    names = ["J. Munuera", "J. Martinez", "Juan Martinez Munuera",
+             "José Luis Munuera Montero"]
+    dates = {
+        "J. Munuera": {"2026-02-21", "2026-05-23", "2026-03-07"},
+        "J. Martinez": {"2026-02-21", "2026-05-23"},
+        "Juan Martinez Munuera": {"2025-08-25"},
+        "José Luis Munuera Montero": {"2025-09-13"},
+    }
+    mapping, merges, ambiguous = R.canonical_referees(names, dates)
+    assert not ambiguous, f"the calendar should have settled it: {ambiguous}"
+    assert mapping["J. Munuera"] == "José Luis Munuera Montero", (
+        f"J. Munuera went to {mapping['J. Munuera']!r}")
+    assert mapping["J. Martinez"] == "Juan Martinez Munuera"
+    # and with the clash removed it is unresolvable again, so the calendar is
+    # doing the work rather than an alphabetical accident
+    loose = dict(dates, **{"J. Martinez": {"2026-04-01"}})
+    _, _, amb2 = R.canonical_referees(names, loose)
+    assert amb2, "with no clash to exclude anyone, this must stay ambiguous"
+
+
+t("the calendar resolves what the spelling cannot",
+  _the_calendar_resolves_what_the_spelling_cannot)
+
+
+def _english_referees_are_untouched():
+    # The rule got looser, and the leagues it was not written for must not
+    # start merging. English officials carry one surname, so leading-run and
+    # anywhere-run are the same test and the answer is no merges at all.
+    names = ["Michael Oliver", "Anthony Taylor", "Craig Pawson",
+             "Paul Tierney", "Simon Hooper", "Andrew Madley", "Andy Madley"]
+    mapping, merges, ambiguous = R.canonical_referees(names)
+    assert not merges, f"English names merged: {merges}"
+    assert len(set(mapping.values())) == len(names)
+
+
+t("English referee names are untouched by the looser rule",
+  _english_referees_are_untouched)
+
+
+
+def _surname_order_is_identity():
+    # CONTIGUITY AND ORDER, not set membership. Spanish surnames run paterno
+    # then materno, and the order is part of who someone is: "Busquets Ferrer"
+    # and "Ferrer Busquets" are two different families, not one man written two
+    # ways. A membership test — are these tokens all in that name — merges them,
+    # and every abbreviation in this league carries a single surname, so nothing
+    # else here would ever notice.
+    names = ["M. Ferrer Busquets", "Mateo Busquets Ferrer"]
+    mapping, merges, ambiguous = R.canonical_referees(names)
+    assert not merges, f"a reversed surname pair was merged: {merges}"
+    # and the right way round still merges, so this is testing the order and
+    # not merely refusing everything with two surnames
+    ok, ok_merges, _ = R.canonical_referees(["M. Busquets Ferrer",
+                                             "Mateo Busquets Ferrer"])
+    assert ok["M. Busquets Ferrer"] == "Mateo Busquets Ferrer", ok_merges
+
+
+t("surname order is identity, not a set of tokens", _surname_order_is_identity)
+
+
 print(f"\n{passed} tests passed")

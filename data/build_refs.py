@@ -122,7 +122,7 @@ def _ref_parts(name):
     return parts[0][0], parts[1:]
 
 
-def canonical_referees(names):
+def canonical_referees(names, dates=None):
     """{feed spelling: one canonical name}, plus the merges made.
 
     THE FEED NAMES THE SAME OFFICIAL TWO WAYS. API-Football returned both
@@ -133,9 +133,34 @@ def canonical_referees(names):
     samples. It looks like a complete referee table.
 
     An ABBREVIATED name is one whose first token is a single letter. It merges
-    into a full name when the initial matches and its surnames are a leading
-    run of that full name's surnames — so "R. De Burgos" reaches "Ricardo De
-    Burgos Bengoetxea", and "I. Diaz" reaches "Isidro Diaz de Mera Escuderos".
+    into a full name when the initial matches and its surnames appear as a
+    CONTIGUOUS RUN anywhere in that full name's surnames — so "R. De Burgos"
+    reaches "Ricardo De Burgos Bengoetxea", and "I. Diaz" reaches "Isidro Diaz
+    de Mera Escuderos".
+
+    ANYWHERE, not a leading run, and the difference is most of Spain. The rule
+    was written against names where it happens to be the same test, and it left
+    seven of twenty officials split across two rows apiece — a 27-referee table
+    for a 20-referee division, with both halves of each career carrying the
+    wrong card rate. Two things break a leading-run test:
+
+      * A SECOND SURNAME. Spanish names carry two, paterno then materno, and
+        the feed abbreviates to whichever it likes. "J. Manzano" is Jesús GIL
+        MANZANO and "A. Ruiz" is Alejandro MUÑIZ RUIZ — the surname cited is
+        the second one, so it can never lead.
+      * A COMPOUND GIVEN NAME. "Miguel Ángel Ortiz Arias" splits into an
+        initial and [angel, ortiz, arias]: nothing here knows "Ángel" is half a
+        forename rather than a surname, so the run the test compares against
+        starts one token too early. Same for every José Luis and José María.
+
+    Both are the same mistake — assuming a POSITION rather than testing for
+    MEMBERSHIP — and the contiguous-run test fixes both at once.
+
+    It cannot merge a full name into the wrong person, because a run of
+    surnames that matches two different officials is caught by the ambiguity
+    check below rather than resolved. "J. Munuera" is exactly that: Juan
+    Martínez MUNUERA and José Luis MUNUERA Montero both answer to it, and no
+    amount of name-matching can say which refereed a given match.
 
     Two full names are NEVER merged with each other. "Jose Luis Munuera
     Montero" and "Jose Luis Guzman Mansilla" share an initial and a given name
@@ -155,16 +180,75 @@ def canonical_referees(names):
         first = leagues.strip_accents(n).lower().split()[0].replace(".", "")
         (abbrev if len(first) == 1 else full).append((n, init, surs))
 
-    mapping, merges, ambiguous = {n: n for n in names}, [], []
+    def run_in(surs, fsurs):
+        """Is `surs` a contiguous run of tokens anywhere within `fsurs`?"""
+        if not surs or len(surs) > len(fsurs):
+            return False
+        return any(fsurs[i:i + len(surs)] == surs
+                   for i in range(len(fsurs) - len(surs) + 1))
+
+    mapping, merges, ambiguous, resolved = {n: n for n in names}, [], [], []
+
+    def candidates(surs, init):
+        cands = [(fn, fsurs) for fn, finit, fsurs in full if finit == init]
+        # TWO TIERS, and the order is the whole reason this resolves. The FIRST
+        # surname is the primary one — paterno — and the one an abbreviation
+        # normally cites, so a leading-run match is preferred over an interior
+        # one and settles the case outright when it is unique. Widening to
+        # "anywhere" without this loses a merge the narrow rule got right:
+        # "J. Martinez" is Juan MARTINEZ Munuera at the leading position, but
+        # José María Sánchez MARTINEZ also contains the token, so a flat
+        # anywhere-test sees two candidates and gives up on both.
+        lead = [fn for fn, fsurs in cands if fsurs[:len(surs)] == surs]
+        return lead or [fn for fn, fsurs in cands if run_in(surs, fsurs)]
+
+    # PASS 1: everything the spelling alone settles.
+    pending = []
     for n, init, surs in abbrev:
-        hits = [fn for fn, finit, fsurs in full
-                if finit == init and fsurs[:len(surs)] == surs]
+        hits = candidates(surs, init)
         if len(hits) == 1:
             mapping[n] = hits[0]
             merges.append(f"{n} -> {hits[0]}")
         elif len(hits) > 1:
-            ambiguous.append(f"{n} could be any of: {', '.join(hits)}")
-    return mapping, merges, ambiguous
+            pending.append((n, hits))
+
+    # PASS 2: THE CALENDAR BREAKS WHAT IS LEFT, by exclusion rather than by
+    # preference. Nobody referees two matches in one division on one day, so a
+    # candidate already working on a date the abbreviation also worked is not
+    # that abbreviation — no guess, a physical impossibility.
+    #
+    # "J. Munuera" is the case this exists for. Juan Martínez MUNUERA and José
+    # Luis MUNUERA Montero both answer to it and no spelling rule can separate
+    # them. It clashes with Juan twice and with Munuera Montero never, and the
+    # two spellings turn out to cover disjoint, contiguous halves of the season
+    # — the feed simply changed how it wrote his name in January.
+    #
+    # A SECOND PASS, not a branch inside the first, because a candidate's dates
+    # are those of his whole MERGED identity and not of one spelling. Both of
+    # the clashes that identify Juan are filed under "J. Martinez", which pass 1
+    # folds into him; testing against the full spelling alone finds no clash at
+    # all and resolves nothing. Doing it after every unambiguous merge is also
+    # what stops the answer depending on the order the names happen to sort in.
+    def dates_of(canonical):
+        out = set()
+        for spelling, target in mapping.items():
+            if target == canonical:
+                out |= dates.get(spelling) or set()
+        return out
+
+    for n, hits in pending:
+        clear = hits
+        if dates:
+            mine = dates.get(n) or set()
+            clear = [fn for fn in hits if not (mine & dates_of(fn))] or hits
+        if len(clear) == 1:
+            mapping[n] = clear[0]
+            resolved.append(f"{n} -> {clear[0]} (the other {len(hits) - 1} were "
+                            "already refereeing on dates he worked)")
+        else:
+            ambiguous.append(f"{n} could be any of: {', '.join(clear)}")
+
+    return mapping, merges + resolved, ambiguous
 
 
 def attach_referees(rows, fixtures, code):
@@ -181,8 +265,13 @@ def attach_referees(rows, fixtures, code):
     must not be mutated in place, or a second pass over them would see a
     referee that came from somewhere else.
     """
+    by_name = {}
+    for fx in fixtures or []:
+        nm, d = fx.get("ref"), fx.get("d") or fx.get("date")
+        if nm and d:
+            by_name.setdefault(nm, set()).add(str(d)[:10])
     canon, merges, ambiguous = canonical_referees(
-        [fx.get("ref") for fx in fixtures or []])
+        [fx.get("ref") for fx in fixtures or []], by_name)
     if merges:
         print(f"  merged {len(merges)} abbreviated referee names into their "
               "full spelling:")
