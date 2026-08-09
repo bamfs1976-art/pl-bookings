@@ -542,4 +542,66 @@ def _surname_order_is_identity():
 t("surname order is identity, not a set of tokens", _surname_order_is_identity)
 
 
+
+def _two_officials_sharing_an_initial_and_surname():
+    # LA LIGA HAS TWO VÍCTOR GARCÍAS — García Verdura, who takes about twenty
+    # matches a season, and García Acosta, who took one. "V. Garcia" is both of
+    # them and merging it into the busy one would hand Verdura a match he never
+    # refereed, invisibly, because the total would still be right.
+    #
+    # This is the shape of the worst failure available here, so it is pinned
+    # both ways: unresolvable on names alone, and resolvable the moment the
+    # calendar has something to exclude with.
+    names = ["V. Garcia", "Victor Garcia Verdura", "Víctor García Acosta"]
+    mapping, merges, ambiguous = R.canonical_referees(names)
+    assert mapping["V. Garcia"] == "V. Garcia", (
+        f"V. Garcia was merged into {mapping['V. Garcia']!r} — there are two of "
+        "them and nothing here can tell which")
+    assert ambiguous, "the collision was not reported"
+
+    # One man cannot referee two matches on one day, so a clash excludes him.
+    dates = {"V. Garcia": {"2026-01-10", "2026-02-14"},
+             "Victor Garcia Verdura": {"2026-02-14"},
+             "Víctor García Acosta": {"2025-09-01"}}
+    m2, _, amb2 = R.canonical_referees(names, dates)
+    assert not amb2, f"the calendar should have settled it: {amb2}"
+    assert m2["V. Garcia"] == "Víctor García Acosta", m2["V. Garcia"]
+
+
+t("two officials sharing an initial and a surname are not merged",
+  _two_officials_sharing_an_initial_and_surname)
+
+
+def _an_abbreviation_may_cover_someone_who_never_appears_in_full():
+    # THE ONE HOLE NAME-MATCHING CANNOT CLOSE, pinned so it is a known limit
+    # rather than a surprise.
+    #
+    # José María Sánchez MARTÍNEZ took 16 La Liga matches in 2025-26 and José
+    # María Sánchez SANTOS took one. The feed wrote Santos's match "J. Sanchez"
+    # and never wrote his full name at all, so the ambiguity check has no second
+    # candidate to fire on: the merge sees one hit, takes it, and files Santos's
+    # match under Martínez. Our bucket comes to 17 where the published table has
+    # 16 and 1.
+    #
+    # A unique hit is therefore NOT proof of a unique person — only that one
+    # person was named in full. The error is bounded by how much the invisible
+    # official worked (here one match, about 2% on Martínez's card rate) and is
+    # found by reconciling against a published roster, not by any rule here.
+    names = ["J. Sanchez", "José María Sánchez Martínez"]
+    mapping, merges, ambiguous = R.canonical_referees(names)
+    assert mapping["J. Sanchez"] == "José María Sánchez Martínez"
+    assert not ambiguous, "nothing here can know a second Sánchez exists"
+    # Name him and the merge correctly refuses, which is the whole mitigation:
+    # the hole closes as soon as the feed spells the second man out once.
+    named = names + ["José María Sánchez Santos"]
+    m2, _, amb2 = R.canonical_referees(named)
+    assert m2["J. Sanchez"] == "J. Sanchez", (
+        "with both Sánchezes named, the abbreviation must stop resolving")
+    assert amb2, "the collision was not reported once both were named"
+
+
+t("an abbreviation may cover an official who never appears in full",
+  _an_abbreviation_may_cover_someone_who_never_appears_in_full)
+
+
 print(f"\n{passed} tests passed")
