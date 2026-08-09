@@ -16,6 +16,21 @@ Optional input (free FPL feed, no cookie — data/harvest_fpl_squads.py):
                         the squad out and are flagged NEW, not EFL, because
                         they carry no rate at all.
 
+Optional input (API-Football — data/harvest_apifootball.py --league PL):
+  pl_af_players.json    The same 2025-26 Premier League season, from the other
+                        feed. Read for ONE field: fouls won. ScoutingStats maps
+                        fd90 <- fouls_drawn_p90 and returns it empty, so 456 of
+                        the 456 PL rows shipped fw:null while the Championship
+                        desk had the number for its own three clubs all along —
+                        the call that carries it is already made daily for the
+                        relegated three (see the data-refresh workflow).
+                        FILL ONLY: it never overwrites a value, never adds a
+                        player, and touches no other field. Booking risk is
+                        yc_p90*2 + fouls_COMMITTED_p90, so nothing here can move
+                        a published price — which is what keeps this separate
+                        from the open question of whether pl_data.js should be
+                        built on an API-Football basis at all.
+
 Output: pl_data.js with PL_PLAYERS, CLUBS and REFS. index.html loads this file
 directly via <script src="data/pl_data.js"> — there is no hand-copy step, so
 regenerating this file is all a data refresh needs. Keep the const names stable.
@@ -41,8 +56,17 @@ import sys
 from pathlib import Path
 
 DATA = Path(__file__).resolve().parent
+sys.path.insert(0, str(DATA))
+import leagues  # noqa: E402
+
 OUT = DATA / "pl_data.js"
 LOW_MIN = 450
+
+# The API-Football harvest of this same season, read for fouls won only.
+# Written by the refresh workflow's "--league PL --out" step, which exists for
+# the Championship desk; this build is a second reader of a file it already
+# pays for, not a new call.
+AF_FILL = "pl_af_players.json"
 
 DROP = {"Burnley", "West Ham United", "Wolverhampton Wanderers"}  # relegated
 
@@ -256,6 +280,11 @@ def build_players():
             continue
         seen.add(key)
         deduped.append(r)
+    # After the de-duplication, so a player is filled once and on the row that
+    # actually ships, and after the basis labels are set, because a fill must
+    # never look like a change of source: a row filled here is still a
+    # ScoutingStats row that gained one field.
+    fill_fouls_won(deduped)
     return deduped
 
 
@@ -300,6 +329,105 @@ def mk(p, basis, resolve=None):
         "_club": club, "_tid": p.get("tid"), "_img": p.get("img"),
         "_fouls": (fc90 * mins / 90) if (fc90 is not None) else 0,
     }
+
+
+def name_keys(name):
+    """A player's name as join keys, longest-confidence first.
+
+    The two feeds do not spell a player the same way. ScoutingStats writes him
+    out ("Christian Nørgaard"); API-Football abbreviates the forename
+    ("C. Nørgaard"). Accents survive in one and not always the other. So the
+    full name is tried first and an initial-plus-surname key second — the same
+    two-stage join build_refs.py already uses for officials, for the same
+    reason.
+
+    Returns (full, initial) or (None, None) for a name with no letters in it.
+    """
+    flat = leagues.strip_accents(name or "").lower()
+    parts = "".join(ch if ch.isalpha() else " " for ch in flat).split()
+    if not parts:
+        return None, None
+    return " ".join(parts), parts[0][0] + " " + parts[-1]
+
+
+def fouls_won_index(rows):
+    """(club, name key) -> fouls won, from the API-Football squads.
+
+    Ambiguity is dropped rather than guessed. Two players at one club who share
+    an initial and a surname collapse to the same second-stage key, and picking
+    either would attach one man's fouls to the other silently — so the key is
+    removed and those players simply keep their dash.
+    """
+    exact, initial, clash = {}, {}, set()
+    for r in rows or []:
+        short = SHORT.get(r.get("team"))
+        fw = num(r.get("fd90"))
+        if not short or fw is None:
+            continue
+        full, ini = name_keys(r.get("n"))
+        if not full:
+            continue
+        exact[(short, full)] = fw
+        key = (short, ini)
+        if key in initial and initial[key] != fw:
+            clash.add(key)
+        initial[key] = fw
+    for key in clash:
+        initial.pop(key, None)
+    return exact, initial, len(clash)
+
+
+def fill_fouls_won(rows):
+    """Fill fw from the API-Football harvest, where and only where it is null.
+
+    A fill, not a merge: an existing number always wins, no row is created, and
+    no other field is read. The failure this guards against is the one a join
+    makes silently — matching almost nothing and looking exactly like a feed
+    that simply had no data. So the match rate is printed every run, and a join
+    that had gaps to fill and closed none of them stops the build instead of
+    shipping a league of dashes that reads as "the source has no fouls".
+    """
+    src = load_optional(AF_FILL)
+    gaps = [r for r in rows if r.get("fw") is None]
+    if not src:
+        if gaps:
+            print(f"Fouls won: {AF_FILL} not harvested, so the dash stays on "
+                  f"{_n_players(len(gaps))}.")
+        return 0
+    if not gaps:
+        print(f"Fouls won: every row already carries one; {AF_FILL} not needed.")
+        return 0
+
+    exact, initial, clashes = fouls_won_index(src)
+    by_exact = by_initial = 0
+    for r in gaps:
+        full, ini = name_keys(r["n"])
+        if full is None:
+            continue
+        if (r["c"], full) in exact:
+            r["fw"] = exact[(r["c"], full)]
+            by_exact += 1
+        elif (r["c"], ini) in initial:
+            r["fw"] = initial[(r["c"], ini)]
+            by_initial += 1
+
+    filled = by_exact + by_initial
+    if not filled:
+        sys.exit(
+            f"ERROR: {AF_FILL} holds {len(src)} rows and {len(gaps)} players "
+            "want a fouls-won number, but the join matched none of them.\n"
+            "That is a broken join, not an empty feed — the two are "
+            "indistinguishable in the shipped file, which is why this stops "
+            "here.\n  a source row names: "
+            + ", ".join(str(r.get("n")) for r in src[:3])
+            + "\n  a player wanting one: "
+            + ", ".join(r["n"] for r in gaps[:3])
+            + "\n\nIf the clubs are right and the names are not, the two-stage "
+              "key in name_keys() needs a third stage.")
+    print(f"Fouls won: filled {filled} of {len(gaps)} missing "
+          f"({by_exact} on full name, {by_initial} on initial + surname)"
+          + (f"; {clashes} ambiguous key(s) left alone" if clashes else ""))
+    return filled
 
 
 def club_basis(bases):

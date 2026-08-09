@@ -57,6 +57,18 @@ jobs:
       - name: FPL squads harvest and the previous-build fallback
         run: python3 data/test_fpl_squads.py
 
+      # Fouls won, filled from the API-Football squads the refresh already
+      # harvests for the Championship desk. The whole risk is in the join: the
+      # two feeds spell a player differently ("Christian Nørgaard" against
+      # "C. Nørgaard"), so a full-name match alone finds 19 of 456 and a join
+      # that finds nothing at all is indistinguishable, in the shipped file,
+      # from a feed that simply carries no fouls. Also pins the fill to being a
+      # fill — it may not overwrite a number, invent a player, or read a null
+      # rate as nought, because any of those would quietly move the Premier
+      # League onto a different source's basis.
+      - name: Fouls won fills without moving anything else
+        run: python3 data/test_fouls_won.py
+
       # The La Liga leg. Two failure modes neither English desk has: three
       # feeds spelling the same club three ways (two of them with accents),
       # and a referee join that can half-work and produce a table that looks
