@@ -44,12 +44,18 @@ def af(team, name, fd90):
     return {"team": team, "n": name, "fd90": fd90}
 
 
-def with_source(rows, src):
-    """Run the fill against a temporary harvest file, always cleaning up."""
+def with_source(rows, src, season=B.FORM_SEASON, league="PL", stamped=True):
+    """Run the fill against a temporary harvest file, always cleaning up.
+
+    Stamped by default, because that is what the harvester now writes; the
+    bare-array form is what already exists on disk and is tested separately.
+    """
+    payload = ({"league": league, "season": season, "players": src}
+               if stamped else src)
     path = DATA / B.AF_FILL
     existed = path.exists()
     keep = path.read_text(encoding="utf-8") if existed else None
-    path.write_text(json.dumps(src), encoding="utf-8")
+    path.write_text(json.dumps(payload), encoding="utf-8")
     try:
         return B.fill_fouls_won(rows)
     finally:
@@ -196,6 +202,80 @@ def _no_gaps_is_not_a_failure():
 
 t("a run with nothing to fill is not treated as a broken join",
   _no_gaps_is_not_a_failure)
+
+
+# --- the season stamp ----------------------------------------------------
+
+def _wrong_season_stops_the_build():
+    """The failure the stamp exists for. Last season's fouls won on this
+    season's players is not a visible error — every number reads as fine."""
+    rows = [row("ARS", "Mikel Merino")]
+    try:
+        with_source(rows, [af("Arsenal", "Mikel Merino", 1.0)], season="2024")
+    except SystemExit as e:
+        assert "season 2024" in str(e), str(e)
+        assert rows[0]["fw"] is None, rows
+        return
+    raise AssertionError("a harvest of another season must stop the build")
+
+
+t("a harvest stamped with another season is refused", _wrong_season_stops_the_build)
+
+
+def _wrong_league_stops_the_build():
+    """--out makes it possible to point any league's harvest at this file."""
+    rows = [row("ARS", "Mikel Merino")]
+    try:
+        with_source(rows, [af("Arsenal", "Mikel Merino", 1.0)], league="LL")
+    except SystemExit as e:
+        assert "LL season" in str(e), str(e)
+        return
+    raise AssertionError("another league's harvest must stop the build")
+
+
+t("a harvest stamped with another league is refused", _wrong_league_stops_the_build)
+
+
+def _right_season_fills():
+    rows = [row("ARS", "Mikel Merino")]
+    assert with_source(rows, [af("Arsenal", "Mikel Merino", 1.0)],
+                       season=B.FORM_SEASON) == 1
+    assert rows[0]["fw"] == 1.0, rows
+
+
+t("a harvest stamped with this season fills as normal", _right_season_fills)
+
+
+def _unstamped_file_still_works():
+    """What is on disk today. A harvest written before stamps existed is a bare
+    array: "cannot tell" is not "wrong", so it is used and the build says so."""
+    rows = [row("ARS", "Mikel Merino")]
+    assert with_source(rows, [af("Arsenal", "Mikel Merino", 1.0)],
+                       stamped=False) == 1
+    assert rows[0]["fw"] == 1.0, rows
+
+
+t("a harvest with no stamp is still used", _unstamped_file_still_works)
+
+
+def _stamp_reads_back_what_the_harvester_writes():
+    """Pins the two halves together: the shape harvest_apifootball.py writes is
+    the shape stamp() reads. They are in different files and nothing else would
+    notice them drifting apart."""
+    path = DATA / B.AF_FILL
+    assert not path.exists(), f"{B.AF_FILL} exists, so this test cannot run"
+    payload = {"league": "PL", "season": "2025",
+               "players": [af("Arsenal", "Mikel Merino", 1.0)]}
+    path.write_text(json.dumps(payload), encoding="utf-8")
+    try:
+        assert B.stamp(B.AF_FILL) == ("PL", "2025"), B.stamp(B.AF_FILL)
+        assert B.load(B.AF_FILL) == payload["players"], B.load(B.AF_FILL)
+    finally:
+        path.unlink()
+
+
+t("the stamp the harvester writes is the stamp the build reads",
+  _stamp_reads_back_what_the_harvester_writes)
 
 
 def _absent_source_is_not_a_failure():

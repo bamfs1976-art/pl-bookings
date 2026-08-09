@@ -67,6 +67,15 @@ LOW_MIN = 450
 # the Championship desk; this build is a second reader of a file it already
 # pays for, not a new call.
 AF_FILL = "pl_af_players.json"
+# The season the shipped FORM describes, in API-Football's vocabulary (a season
+# named by its starting year, so 2025 is 2025-26). NOT the season being played:
+# this desk is built for 2026-27 and prices it off the last completed season.
+#
+# It is a constant here because the two feeds have no season in common to check
+# against — ScoutingStats names seasons by an internal id (25583) that does not
+# convert. So this is the one place that says which season the form is, and the
+# fill refuses a harvest stamped as any other. Move it when the form moves.
+FORM_SEASON = "2025"
 
 DROP = {"Burnley", "West Ham United", "Wolverhampton Wanderers"}  # relegated
 
@@ -151,6 +160,23 @@ def load_optional(name):
 def load(name):
     d = json.loads((DATA / name).read_text(encoding="utf-8"))
     return d["players"] if isinstance(d, dict) and "players" in d else d
+
+
+def stamp(name):
+    """(league, season) off a harvest file, or (None, None) if it carries none.
+
+    Harvests written before the stamp existed are bare arrays. Absent is
+    therefore "cannot tell", which is not the same as "wrong" — the caller
+    reports it and carries on rather than refusing to build on a file that was
+    perfectly good yesterday.
+    """
+    path = DATA / name
+    if not path.exists():
+        return None, None
+    d = json.loads(path.read_text(encoding="utf-8"))
+    if not isinstance(d, dict):
+        return None, None
+    return d.get("league"), d.get("season")
 
 
 # --- reading the shipped file back in -------------------------------------
@@ -394,6 +420,27 @@ def fill_fouls_won(rows):
             print(f"Fouls won: {AF_FILL} not harvested, so the dash stays on "
                   f"{_n_players(len(gaps))}.")
         return 0
+
+    # Which season, and whose. Both would produce a page of entirely plausible
+    # numbers if they were wrong, which is the only reason this is checked at
+    # all: last season's fouls on this season's players is not a visible error.
+    af_league, af_season = stamp(AF_FILL)
+    if af_season is None:
+        print(f"Fouls won: {AF_FILL} carries no season stamp (harvested before "
+              f"they existed), so it is being taken as {FORM_SEASON}. The next "
+              "refresh stamps it.")
+    elif af_season != FORM_SEASON or (af_league or "PL") != "PL":
+        sys.exit(
+            f"ERROR: {AF_FILL} holds {af_league or '?'} season {af_season}, but "
+            f"this build's form is PL season {FORM_SEASON}.\n"
+            "Filling from it would put one season's fouls won on another "
+            "season's players, and every number would look right.\n\n"
+            "Either re-harvest that season:\n"
+            f"    API_FOOTBALL_SEASON={FORM_SEASON} python3 "
+            f"data/harvest_apifootball.py --league PL --out {AF_FILL}\n"
+            "or, if the form itself has moved on, move FORM_SEASON in this "
+            "file to match it.")
+
     if not gaps:
         print(f"Fouls won: every row already carries one; {AF_FILL} not needed.")
         return 0

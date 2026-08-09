@@ -982,9 +982,16 @@ def main():
                  + "\n  - ".join(problems))
 
     name = args.out or league.players_file
-    (DATA / name).write_text(json.dumps(rows), encoding="utf-8")
+    # Stamped with what was asked for, not just what came back. A squads file
+    # is a season's form, and nothing about the rows themselves says which
+    # season — so a build reading last season's fouls onto this season's
+    # players had no way to notice, and the numbers would look entirely
+    # plausible. build_pl_data.load() has always unwrapped {"players": [...]},
+    # so every existing reader takes this shape unchanged.
+    payload = {"league": league.code, "season": season, "players": rows}
+    (DATA / name).write_text(json.dumps(payload), encoding="utf-8")
     print(f"\n{name} written ({len(rows)} players from "
-          f"{len(ids)} clubs, API-Football)")
+          f"{len(ids)} clubs, API-Football, {league.code} season {season})")
 
 
 if __name__ == "__main__":
