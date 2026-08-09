@@ -507,6 +507,28 @@ for (const page of DESKS_WITH_A_TOUR) {
     "A heading in a button's subtree is folded into the button's name and " +
     'exposed as no heading, so the outline is back to one entry.');
 
+  /* THE HEADER IS FLAT, so the grid can align it. Nested in two wrapper divs
+     it was four independently-positioned blocks and nothing in the right half
+     lined up with anything in the left — the referee label on the team names'
+     top edge instead of level with them, the controls floating at the midpoint
+     of the whole header. A grid cannot reach through a wrapper, so the five
+     children have to be children. */
+  for (const cls of ['fxh2-teams', 'fxh2-ref', 'fxh2-act', 'fxh2-ko', 'fxh2-heat']) {
+    assert.ok(new RegExp('<div class="' + cls + '"').test(card),
+      `the fixture header has no .${cls} — its five parts are the grid's five ` +
+      'cells, and one of them has been folded back into a wrapper');
+  }
+  assert.ok(/\.fxh2\{display:grid/.test(src),
+    'the fixture header is not a grid, so its two rows and its controls are ' +
+    'positioned independently of each other again');
+  /* align-items:baseline was the first attempt and measured 8px out: a flex
+     container takes its baseline from its FIRST flex item, and both metric
+     cells lead with a box that has no text in it (a 22px crest, a 42px bar). */
+  assert.ok(/\.fxh2\{display:grid[\s\S]{0,220}?align-items:center/.test(src),
+    "the fixture header no longer centres its rows. Baseline alignment does " +
+    'not work here — the cells lead with a crest and a bar, whose baseline is ' +
+    'their bottom edge, so the text lands half a line out.');
+
   /* PLAYER ROWS ARE A REAL LIST. Forty sibling buttons is forty controls with
      no "list of 12" to say how far the thing goes. */
   assert.ok(/<ul class="cand-list"/.test(card) && /<li>'\+candRowHtml/.test(card),

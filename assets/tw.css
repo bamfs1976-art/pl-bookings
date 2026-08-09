@@ -1149,7 +1149,10 @@ details.model-detail:not([open]) .fx-simrow{display:none}
    were all set in a monospace face at 10-11px, which reads as debug output
    rather than as a caption. The numbers keep it — tabular figures are the one
    thing it is genuinely for. */
-.fxh2-ko{font-size:.7rem;color:var(--text-3);margin-top:.18rem;
+/* No margin-top. The header is a grid and its row-gap owns the spacing between
+   the two rows; a margin here stacked on top of it and pushed the kick-off
+   time off the heat bar's baseline beside it. */
+.fxh2-ko{font-size:.7rem;color:var(--text-3);
   font-variant-numeric:tabular-nums}
 .fxh2-ref{font-size:.68rem;color:var(--text-3)}
 

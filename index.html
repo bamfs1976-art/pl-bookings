@@ -301,7 +301,31 @@
   .seg-btn:hover{color:var(--text)}
   .seg-btn.on{background:var(--text);color:var(--bg);border-color:var(--text)}
   .gw-seclabel{font-family:var(--mono);font-size:.68rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--text-3)}
-  .fxh2{display:flex;align-items:flex-start;justify-content:space-between;gap:.6rem;padding:.6rem .85rem;border-bottom:1px solid var(--border);background:color-mix(in srgb,var(--surface-2) 70%,var(--surface))}
+  /* A THREE-COLUMN GRID, baseline-aligned. As a flex row of two nested stacks
+     nothing in the right half lined up with anything in the left: the referee
+     label sat on the team names' top edge rather than their baseline, and the
+     two controls were centred against the full header height so they were
+     level with neither row of text. Columns: names/kick-off, referee/heat
+     right-aligned to one edge, then the controls.
+
+     align-items:center rather than baseline, which was the first attempt and
+     measured 8px out. A flex container takes its baseline from its FIRST flex
+     item, and both of these lead with a 22px crest and a 42px heat bar — boxes
+     with no text in them, whose baseline is their bottom edge. Centring each
+     row is what "aligned" actually means for a row of mixed type, badges and
+     bars, and it does not depend on what happens to come first in the box. */
+  .fxh2{display:grid;grid-template-columns:minmax(0,1fr) auto auto;
+    column-gap:.7rem;row-gap:.15rem;align-items:center;
+    padding:.55rem .85rem;border-bottom:1px solid var(--border);
+    background:color-mix(in srgb,var(--surface-2) 70%,var(--surface))}
+  .fxh2-teams{grid-column:1;grid-row:1}
+  .fxh2-ref{grid-column:2;grid-row:1;justify-self:end;text-align:right}
+  .fxh2-ko{grid-column:1;grid-row:2}
+  .fxh2-heat{grid-column:2;grid-row:2;justify-self:end}
+  /* The controls span both rows and centre against them — the one thing in
+     this header that belongs to the card rather than to a row of it. */
+  .fxh2-act{grid-column:3;grid-row:1/span 2;align-self:center;
+    display:flex;align-items:center;gap:.35rem}
   .fxh2-teams{font-family:'Bricolage Grotesque',sans-serif;font-weight:800;font-size:1rem;letter-spacing:-.01em;display:flex;align-items:center;gap:.3rem;flex-wrap:wrap}
   .heat-badge{font-family:var(--mono);font-weight:700;font-size:.82rem;padding:.14rem .48rem;border-radius:7px;background:var(--surface-3);color:var(--text-2);display:inline-block}
   .heat-badge.hot{background:color-mix(in srgb,var(--warn) 22%,transparent);color:var(--warn)}
@@ -3728,21 +3752,27 @@ function fixtureCardHtml(f,opts){
   return `<section class="fx-card${folded?" collapsed":""}" data-fid="${f.id}" aria-labelledby="fxh-${f.id}">
     <h2 class="visually-hidden" id="fxh-${f.id}">${esc(h)} v ${esc(a)}, ${f.kickoff_time?esc(fmtKOShort(f.kickoff_time)):"kick-off to be confirmed"}, ${heat.toFixed(1)} expected cards</h2>
     <div class="fxh2" role="button" tabindex="0" aria-expanded="${!folded}" data-fold="${f.id}" aria-label="${esc(h)} versus ${esc(a)} — ${folded?"expand":"collapse"}">
-      <div style="min-width:0">
-        <div class="fxh2-teams">${crest(h,22)} ${esc(h)} <span class="faint mono" style="font-weight:500;font-size:.78rem">vs</span> ${crest(a,22)} ${esc(a)}${derbyChip}${score}</div>
-        <div class="fxh2-ko">${f.kickoff_time?fmtKOShort(f.kickoff_time):"TBC"}</div>
-      </div>
-      <div style="text-align:right;flex:none;display:flex;align-items:center;gap:.4rem">
-        <div>
-          <div class="fxh2-ref">${refLine}${strictChip}</div>
-          <div style="margin-top:.28rem">${heatBadge}</div>
-        </div>
-        <!-- ONE share affordance. It was a full-width footer row repeating on
-             every card, which gave a secondary action the visual weight of a
-             primary one ten times over. -->
+      <!-- FLAT, so the grid can align it. Nested in two wrapper divs the
+           header was four independently-positioned blocks: "Ref —" sat on the
+           team names' TOP edge rather than their baseline, so a 0.68rem label
+           and a 1rem title started level and read half a line apart; the heat
+           bar and the kick-off time were each centred in their own box; and
+           the share button and the chevron floated at the midpoint of the
+           whole 65px header, level with neither row. Five children in a
+           three-column grid now: names and referee share row one's baseline,
+           kick-off and heat share row two's, and the two controls own a column
+           of their own. -->
+      <div class="fxh2-teams">${crest(h,22)} ${esc(h)} <span class="faint mono" style="font-weight:500;font-size:.78rem">vs</span> ${crest(a,22)} ${esc(a)}${derbyChip}${score}</div>
+      <div class="fxh2-ref">${refLine}${strictChip}</div>
+      <!-- ONE share affordance. It was a full-width footer row repeating on
+           every card, which gave a secondary action the visual weight of a
+           primary one ten times over. -->
+      <div class="fxh2-act">
         <button class="fx-shareico" data-share-fid="${f.id}" type="button" title="Download a shareable card of this match" aria-label="Share ${esc(h)} versus ${esc(a)}">⬇</button>
         <span class="fx-fold" aria-hidden="true">⌄</span>
       </div>
+      <div class="fxh2-ko">${f.kickoff_time?fmtKOShort(f.kickoff_time):"TBC"}</div>
+      <div class="fxh2-heat">${heatBadge}</div>
     </div>
     <!-- WRAPPED. The collapse used to target .fx-body, which did not exist —
          the rule matched nothing and a "collapsed" card rendered in full. -->
