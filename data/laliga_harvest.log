@@ -1,4 +1,4 @@
-La Liga harvest — run 87
+La Liga harvest — run 88
 == discover ==
 La Liga: API-Football league 140, season 2026
 
@@ -45,7 +45,7 @@ La Liga: API-Football league 140, season 2025
     Valencia                    44 players
     Villarreal                  43 players
 
-laliga_players.json written (673 players from 17 clubs, API-Football)
+laliga_players.json written (673 players from 17 clubs, API-Football, LL season 2025)
 == season-cards ==
 La Liga: API-Football league 140, season 2026
   fetching 20 squads
@@ -70,7 +70,7 @@ La Liga: API-Football league 140, season 2026
     Valencia                     0 players
     Villarreal                   0 players
 
-laliga_season_cards.json written (0 players from 20 clubs, API-Football)
+laliga_season_cards.json written (0 players from 20 clubs, API-Football, LL season 2026)
 == segunda ==
 Segunda División: API-Football league 141, season 2025
   not in this desk's club list (19): AD Ceuta FC, Albacete, Almeria, Burgos, Cadiz, Castellón, Cordoba, Cultural Leonesa, Eibar, FC Andorra, Granada CF, Huesca, Las Palmas, Leganes, Mirandes, Real Sociedad II, Sporting Gijon, Valladolid, Zaragoza
@@ -79,7 +79,7 @@ Segunda División: API-Football league 141, season 2025
     Malaga                      32 players
     Racing Santander            40 players
 
-segunda_players.json written (110 players from 3 clubs, API-Football)
+segunda_players.json written (110 players from 3 clubs, API-Football, SEG season 2025)
 == ref-fixtures ==
 La Liga: API-Football league 140, season 2025
 
