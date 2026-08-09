@@ -3625,7 +3625,9 @@ function renderGameweek(){
     const cl=$("gwClear"); if(cl) cl.addEventListener("click",gwClearFilters);
     return;
   }
-  el.innerHTML='<div class="fx-grid">'+shownFx.map(f=>fixtureCardHtml(f,{expanded:GW_EXPANDED.has(f.id),pos:gwPos})).join("")+'</div>';
+  el.innerHTML=gwF.view==="table"
+    ? gwTableHtml(shownFx)
+    : '<div class="fx-grid">'+shownFx.map(f=>fixtureCardHtml(f,{expanded:GW_EXPANDED.has(f.id),pos:gwPos})).join("")+'</div>';
   gwReport(shownFx);
 }
 /* WHAT THE FILTERS LEFT. A filter that quietly empties the page reads as
@@ -3688,6 +3690,60 @@ $("gwSusp").addEventListener("click",e=>{ const c=e.target.closest(".gwsusp-card
 /* Scroll position survives a re-render. Expanding "show 35 more" rebuilds the
    whole grid, so without this the page jumped to wherever the shorter document
    put you — which on a phone is somewhere else entirely. */
+/* THE TABLE VIEW. The card grid is fixture-siloed: it answers "who is at risk
+   in THIS match" ten times and never "who are the ten riskiest players this
+   weekend", because the answer is spread across ten separate lists each sorted
+   within itself. One row per player across every fixture, sortable.
+
+   A real <table> with <th scope>, not a grid of divs — it is tabular data, a
+   screen reader should be able to navigate it as such, and the brief asks for
+   exactly that in section 8. */
+let gwTableSort={k:"prob",dir:-1};
+function gwTableRows(fx){
+  const rows=[];
+  fx.forEach(f=>{
+    const m=fixtureMeta(f); if(!m) return;
+    gwFilterCands(gwCandidates(m.h,m.a,m.ref,m.derby)).forEach(c=>{
+      rows.push({p:c.p,prob:c.prob,fx:m.h+" v "+m.a,ko:f.kickoff_time||"",
+        ref:m.ref,home:c.p.c===m.h});
+    });
+  });
+  const k=gwTableSort.k, d=gwTableSort.dir;
+  const val=r=> k==="prob"?r.prob : k==="player"?r.p.n : k==="team"?r.p.c
+    : k==="fx"?r.fx : k==="pos"?(r.p.p||"") : k==="conf"?(r.p.min||0)
+    : k==="ref"?((r.ref&&r.ref.ypg!=null)?r.ref.ypg:-1) : 0;
+  return rows.sort((x,y)=>{
+    const a=val(x), b=val(y);
+    if(typeof a==="string") return d*a.localeCompare(b);
+    return d*(a-b);
+  });
+}
+function gwTableHtml(fx){
+  const rows=gwTableRows(fx);
+  if(!rows.length) return '<div class="fx-empty">No candidates match these filters.</div>';
+  const th=(k,label,cls)=>{
+    const on=gwTableSort.k===k;
+    return `<th scope="col"${cls?` class="${cls}"`:""} aria-sort="${on?(gwTableSort.dir<0?"descending":"ascending"):"none"}">`
+      +`<button type="button" data-tsort="${k}">${esc(label)}${on?`<span class="arr" aria-hidden="true">${gwTableSort.dir<0?"▾":"▴"}</span>`:""}</button></th>`;
+  };
+  return `<div class="tablewrap gw-tablewrap"><table class="gw-table">
+    <caption class="visually-hidden">Every booking candidate in this gameweek, ${rows.length} rows</caption>
+    <thead><tr>
+      ${th("player","Player")}${th("team","Team")}${th("fx","Fixture")}
+      ${th("pos","Pos")}${th("prob","P(card)","num")}${th("conf","Confidence")}${th("ref","Referee")}
+    </tr></thead><tbody>${rows.map(r=>{
+      const sev=severity(r.prob);
+      const rd=r.ref&&r.ref.ypg!=null?PLDRefPicker.delta(r.ref.ypg,REF_AVG_YPG):null;
+      return `<tr class="rowlink" data-pk="${esc(watchKey(r.p))}" tabindex="0">
+        <td>${esc(r.p.n)}</td>
+        <td>${crest(r.p.c,16)} ${esc(r.p.c)}</td>
+        <td class="muted">${esc(r.fx)} <span class="faint">${r.home?"H":"A"}</span></td>
+        <td>${esc(r.p.p||"")}</td>
+        <td class="num"><b style="color:${sev.col}">${(r.prob*100).toFixed(0)}%</b> <span class="faint" style="font-size:.68rem">${esc(sev.label)}</span></td>
+        <td>${pipMeter(r.p)}</td>
+        <td class="muted">${r.ref?esc(refAbbr(r.ref.n)):"—"}${rd?` <span class="faint">${esc(rd.txt.replace(" vs avg",""))}</span>`:""}</td>
+      </tr>`;}).join("")}</tbody></table></div>`;
+}
 function gwClearFilters(){
   gwF.q=""; gwF.minP=0; gwF.team=""; gwF.watchOnly=false; gwPos="all";
   const set=(id,v)=>{ const el=$(id); if(el) el.value=v; };
@@ -3712,6 +3768,26 @@ function gwRerender(){
   on("gwMinP","change",e=>{ gwF.minP=Number(e.target.value)||0; gwRerender(); });
   on("gwTeam","change",e=>{ gwF.team=e.target.value; gwRerender(); });
   on("gwWatchOnly","change",e=>{ gwF.watchOnly=e.target.checked; gwRerender(); });
+  const seg=$("gwViewSeg");
+  if(seg) seg.addEventListener("click",e=>{
+    const b=e.target.closest("[data-view]"); if(!b) return;
+    gwF.view=b.dataset.view;
+    try{ localStorage.setItem("pl_desk_gw_view",gwF.view); }catch(err){}
+    seg.querySelectorAll("[data-view]").forEach(x=>x.setAttribute("aria-selected",String(x===b)));
+    gwRerender();
+  });
+  try{ const v=localStorage.getItem("pl_desk_gw_view"); if(v==="table"||v==="cards") gwF.view=v; }catch(err){}
+  if(seg) seg.querySelectorAll("[data-view]").forEach(x=>x.setAttribute("aria-selected",String(x.dataset.view===gwF.view)));
+  /* Sorting the table. Same column twice reverses, which is what every table
+     anyone has ever used does. */
+  const fxEl=$("gwFixtures");
+  if(fxEl) fxEl.addEventListener("click",e=>{
+    const b=e.target.closest("[data-tsort]"); if(!b) return;
+    const k=b.dataset.tsort;
+    if(gwTableSort.k===k) gwTableSort.dir*=-1;
+    else gwTableSort={k,dir:(k==="prob"||k==="conf"||k==="ref")?-1:1};
+    gwRerender();
+  });
   /* "/" to focus, the convention every search-first tool uses — and NOT while
      something is already taking typing, or it eats the slash you meant. */
   document.addEventListener("keydown",e=>{

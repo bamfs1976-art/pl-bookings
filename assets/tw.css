@@ -936,3 +936,28 @@ details.model-detail:not([open]) .fx-simrow{display:none}
    its select at the start of the next, which reads as a stray word. */
 .gwt-grp{display:inline-flex;align-items:center;gap:6px;min-width:0}
 .gwt-grp select{min-width:0}
+
+/* ─── The Table view ────────────────────────────────────────────────────────
+   The card grid is fixture-siloed: it answers "who is at risk in THIS match"
+   ten times and never "who are the ten riskiest players this weekend", because
+   that answer is spread across ten lists each sorted only within itself. */
+.gw-tablewrap{background:var(--surface);border:1px solid var(--border);
+  border-radius:14px;box-shadow:var(--shadow-sm)}
+.gw-table{width:100%;border-collapse:collapse;font-size:13px}
+.gw-table th,.gw-table td{padding:8px 10px;text-align:left;
+  border-bottom:1px solid var(--border);white-space:nowrap}
+.gw-table thead th{position:sticky;top:0;z-index:2;background:var(--surface-2);
+  padding:0;font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--text-2)}
+.gw-table thead th button{width:100%;text-align:left;font:inherit;font-weight:700;
+  background:none;border:0;padding:9px 10px;cursor:pointer;color:inherit;
+  display:inline-flex;align-items:center;gap:4px}
+.gw-table thead th button:hover{color:var(--text)}
+.gw-table thead th button:focus-visible{outline:3px solid var(--ring);outline-offset:-3px}
+.gw-table th.num,.gw-table td.num{text-align:right}
+.gw-table th.num button{justify-content:flex-end}
+.gw-table tbody tr:last-child td{border-bottom:0}
+.gw-table tbody tr:hover{background:var(--surface-2);cursor:pointer}
+.gw-table tbody tr:focus-visible{outline:3px solid var(--ring);outline-offset:-3px}
+.gw-table .cmeter{margin-top:0}
+@media (pointer:coarse){ .gw-table th button{min-height:44px} .gw-table td{padding:12px 10px} }
+.gw-table .arr{opacity:.55;font-size:10px}

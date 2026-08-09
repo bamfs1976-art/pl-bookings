@@ -1,5 +1,12 @@
 #!/usr/bin/env node
-/* Nothing opens itself over a page the visitor has not seen yet.
+/* The UX brief's structural claims, pinned. Sections 1, 2 and 4.
+ *
+ * Named for the first thing it guarded and grown since. What it holds:
+ * nothing auto-opens over an unseen page (1); every metric on the fixture card
+ * is defined where it appears (2); the gameweek toolbar, the two views and the
+ * grid density (4).
+ *
+ * Nothing opens itself over a page the visitor has not seen yet.
  *
  * WHY THIS EXISTS. Three desks each opened a guided tour a few hundred
  * milliseconds after load — index.html on a 900ms timer of its own, the
@@ -171,5 +178,63 @@ for (const page of DESKS_WITH_A_TOUR) {
     'the page again');
 }
 
+
+/* ---- 6. the gameweek toolbar and the two views -------------------------- */
+/* Section 4. Ten near-identical cards and the only control was
+   ALL/DEF/MID/FWD, which cannot answer "which of these 200 players is the one
+   I want". */
+{
+  const src = read('index.html');
+  const code = codeOnly(src);
+  const css = read('assets/tw.css');
+
+  for (const id of ['gwSearch', 'gwSort', 'gwMinP', 'gwTeam', 'gwWatchOnly', 'gwViewSeg']) {
+    assert.ok(new RegExp(`id="${id}"`).test(src), `index.html has lost the ${id} control`);
+  }
+  assert.ok(/\.gwt\{position:sticky/.test(css),
+    'the gameweek toolbar is no longer sticky — it scrolls away exactly when ' +
+    'you start looking through the fixtures it filters');
+
+  /* ONE filter for both views. Two code paths deciding who is in the gameweek
+     is two answers to the same question, and the Cards and Table views would
+     disagree about it without anything looking wrong. */
+  assert.ok(/function gwFilterCands\(/.test(code), 'the shared candidate filter is gone');
+  assert.ok(/gwF\.view==="table"[\s\S]{0,80}gwTableHtml\(/.test(code)
+    && /gwFilterCands\(gwCandidates/.test(code),
+    'the Table view does not go through gwFilterCands — the two views can now ' +
+    'disagree about who is in the gameweek');
+
+  /* A REAL table. It is tabular data; a screen reader should navigate it as
+     such, and section 8 of the brief asks for exactly this. */
+  assert.ok(/<table class="gw-table">/.test(code), 'the Table view is not a real <table>');
+  assert.ok(/<th scope="col"/.test(code), 'the Table view headers carry no scope');
+  assert.ok(/aria-sort=/.test(code), 'the Table view never reports its sort to assistive tech');
+
+  /* Density, exactly as specified: 3 at 1440, 2 at ~1100, 1 below 768. */
+  assert.ok(/@media \(min-width:1101px\)\{ \.fx-grid\{grid-template-columns:repeat\(3,/.test(css),
+    'the desktop grid is no longer capped at three columns — auto-fill gave ' +
+    'four dense near-identical cards abreast at 1440px');
+  assert.ok(/@media \(max-width:767px\)\{ \.fx-grid\{grid-template-columns:1fr\}/.test(css),
+    'the grid no longer drops to one column on a phone');
+
+  /* The collapse needs something to collapse. The first cut targeted .fx-body
+     when the card had no such wrapper, so the rule matched nothing and a
+     "collapsed" card rendered in full. */
+  assert.ok(/<div class="fx-body">/.test(code),
+    'the fixture card has no .fx-body wrapper, so the collapse rule matches ' +
+    'nothing and a folded card renders in full');
+  assert.ok(/\.fx-card\.collapsed \.fx-body/.test(css), 'nothing hides a collapsed card body');
+
+  /* "Show 35 more" must say whether any of the 35 are worth it. */
+  assert.ok(/above Watch/.test(code),
+    'the show-more button no longer says how many hidden candidates clear the ' +
+    'Watch band — the only way to answer "is this worth expanding" is to expand it');
+
+  /* A filter that empties the grid must narrow it, not leave empty cards. */
+  assert.ok(/gwFiltering\(\)[\s\S]{0,200}fx\.filter\(/.test(code),
+    'filtering no longer narrows the fixture list, so searching one club ' +
+    'leaves the other nine on screen as empty cards');
+}
 console.log(`check-firstrun OK: ${DESKS_WITH_A_TOUR.length} desks, none auto-opens, ` +
-  'all reachable at both widths, intro card bounded, jargon defined');
+  'all reachable at both widths, intro card bounded, jargon defined, ' +
+  'toolbar sticky, both views on one filter');
