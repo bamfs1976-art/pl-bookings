@@ -43,6 +43,7 @@ const ctx = {
   SEASON: '2026-27',
   REFS: [{ n: 'Michael Oliver', ypg: 3.4 }, { n: 'Anthony Taylor', ypg: 4.1 }],
   refAssign: {},
+  REF_AVG_YPG: 3.71,
   esc: (s) => String(s),
   refByName(n) { return ctx.REFS.find((r) => r.n === n) || null; },
   /* API-Football ids, deliberately nothing like the FPL ones below. */
@@ -63,6 +64,11 @@ const ctx = {
 };
 ctx.globalThis = ctx;
 vm.createContext(ctx);
+/* refSelect() builds its markup through the shared RefereePicker now, so the
+   module has to be in the context. Loading it here rather than stubbing it is
+   deliberate: a stub would let refSelect() pass this guard while calling a
+   primitive that does not do what it is asked. */
+vm.runInContext(readFileSync(join(root, 'assets', 'refpicker.js'), 'utf8'), ctx);
 vm.runInContext(src + '\n' + selSrc, ctx);
 
 /* The join finds the appointment across two unrelated id spaces. */
@@ -98,29 +104,86 @@ assert.equal(ctx.refIsAppointed(11), true, 'an appointed fixture is not labelled
 assert.equal(ctx.refIsAppointed(12), false, 'an unappointed fixture claims to be appointed');
 
 /* ---- the control agrees with the numbers beside it ---------------------- */
-/* The dropdown must SHOW the referee the desk is pricing with. Leaving it on
+/* The control must SHOW the referee the desk is pricing with. Leaving it on
    "unknown" while refFor() used a harvested name puts a different official in
-   the control than in the model. */
+   the control than in the model.
+
+   The markup changed — a native <select> of 22 options sorted alphabetically
+   became a picker whose rows carry the card rate and a delta — so these
+   assertions moved with it. The claims did not: preselection, the appointed
+   label, an official with no record still reachable, and a default state that
+   says what the model is doing rather than "Ref —". */
 const sel = ctx.refSelect(11);
-assert.ok(/<option value="Michael Oliver" selected>/.test(sel),
-  'the dropdown does not preselect the appointed referee, so the control and ' +
-  `the pricing disagree: ${sel.slice(0, 200)}`);
-assert.ok(/appointed<\/span>/.test(sel), 'the appointed fixture carries no label');
+assert.ok(/class="rp-row on" data-ref="Michael Oliver"|data-ref="Michael Oliver" role="option" aria-selected="true"/.test(sel)
+       || /<button type="button" class="rp-row on" data-ref="Michael Oliver"/.test(sel),
+  'the picker does not preselect the appointed referee, so the control and ' +
+  `the pricing disagree: ${sel.slice(0, 240)}`);
+assert.ok(/class="rp-appointed"/.test(sel), 'the appointed fixture carries no label');
+/* And it must NOT be dressed as a simulation — a published appointment
+   labelled "Simulated" is the same lie in the opposite direction. */
+assert.ok(!/class="rp-sim"/.test(sel),
+  'an appointed referee is labelled as a simulated pick');
+
+/* A hand pick MUST be labelled simulated, with a way back. A hypothetical
+   that looks exactly like a published appointment is the one genuinely
+   misleading thing a research tool can do. */
+ctx.refAssign['2026-27|11'] = 'Anthony Taylor';
+const picked = ctx.refSelect(11);
+assert.ok(/class="rp-sim"/.test(picked),
+  'a hand-picked referee is not marked as simulated — it is indistinguishable ' +
+  'from a published appointment while changing every number on the card');
+assert.ok(/data-ref-reset="11"/.test(picked), 'a simulated pick offers no way back');
+delete ctx.refAssign['2026-27|11'];
 
 /* An appointed official with no card record still has to be selectable, or a
-   promoted referee in his first season silently reverts the control to
-   "unknown" while the desk shows his name elsewhere. */
+   promoted referee in his first season silently vanishes from the control
+   while the desk shows his name elsewhere. */
 const sel13 = ctx.refSelect(13);
-assert.ok(/A Promoted Official \(no card record\)/.test(sel13),
-  'an appointed referee absent from REFS vanishes from the dropdown');
+assert.ok(/data-ref="A Promoted Official"/.test(sel13),
+  'an appointed referee absent from REFS vanishes from the picker');
+assert.ok(/no card record/.test(sel13),
+  'a referee with no card record is listed without saying so');
 
-/* Blank means "use the appointment", because clearing the override falls
-   straight back to it. Labelling that "unknown" was simply wrong. */
-assert.ok(/Use the appointment \(Michael Oliver\)/.test(sel),
-  'the blank option is mislabelled — picking it restores the appointment ' +
-  'rather than clearing the referee');
-assert.ok(/Ref: unknown/.test(ctx.refSelect(12)),
-  'a fixture with no appointment should still offer a plain unknown option');
+/* The default state is a statement about the PRICE. "Ref —" read as missing
+   data; what it means is that the model is using the league average — and the
+   number shown must be the one refFactor() actually divides by. */
+const sel12 = ctx.refSelect(12);
+assert.ok(/Referee not announced/.test(sel12),
+  'a fixture with no appointment still reads as missing data rather than ' +
+  'saying what the model is doing');
+assert.ok(sel12.includes(ctx.REF_AVG_YPG.toFixed(2)),
+  'the default state advertises an average that is not REF_AVG_YPG — the ' +
+  'number the model divides by. A control quoting a different average than ' +
+  'the maths uses is off by a third of the spread across the whole list.');
+
+/* Ordered by card rate, descending. The reason to open the list is to find a
+   strict whistle; the old alphabetical <select> put him wherever his surname
+   fell. Taylor (4.1) must precede Oliver (3.4). */
+/* A REFEREE WHOSE NAME AND RATE DISAGREE. The two fixture officials happen to
+   sort the same way alphabetically as by card rate — Anthony Taylor 4.10
+   before Michael Oliver 3.40, A before M — so this assertion passed with the
+   sort reverted to localeCompare and proved nothing. It took a mutation to
+   notice; the fixture, not the assertion, was the weak part. */
+ctx.REFS.push({ n: 'Zachary Whistle', ypg: 4.80, matches: 20 });
+const ordered = ctx.refSelect(12);
+assert.ok(ordered.indexOf('data-ref="Zachary Whistle"') < ordered.indexOf('data-ref="Anthony Taylor"'),
+  'the picker is not ordered by cards per game — the strictest official (4.80) ' +
+  'sits below a more lenient one because his surname is later in the alphabet, ' +
+  'which is exactly what the old <select> did');
+ctx.REFS.pop();
+
+/* THIN SAMPLES SINK. Sorted on rate alone the top of the list was an official
+   on 5.00 over THREE matches — so the first pick anyone makes applies a ×1.35
+   multiplier to every player on the card off three afternoons. He stays in the
+   list and keeps his number; he does not sit above a season's evidence. */
+ctx.REFS.push({ n: 'Three Match Wonder', ypg: 5.0, matches: 3 });
+const thinSel = ctx.refSelect(12);
+assert.ok(thinSel.indexOf('data-ref="Anthony Taylor"') < thinSel.indexOf('data-ref="Three Match Wonder"'),
+  'a referee with three matches behind a 5.00 rate sorts above officials with ' +
+  'a full season — the first pick a reader makes would rest on three afternoons');
+assert.ok(/too few to rely on/.test(thinSel),
+  'a thin-sample referee is listed without saying how little is behind the number');
+ctx.REFS.pop();
 
 /* ---- the cache cannot outlive the fixture list it was built from -------- */
 assert.ok(/APPOINTED=null;/.test(index.slice(index.indexOf('LIVE={bootstrap:bs'))),

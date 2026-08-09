@@ -35,6 +35,7 @@ const SHELL = [
   '/assets/plmodel.js',
   '/assets/suspension.js',
   '/assets/metric.js',
+  '/assets/refpicker.js',
   '/assets/palette.js',
   '/assets/shell.js',
   '/assets/tour.js',

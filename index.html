@@ -581,6 +581,15 @@
          defined only in a paragraph of 0.78rem print at the bottom of the
          panel, which is not somewhere a reader looks when they hit an
          unfamiliar label at the top of it. -->
+    <!-- ONE choice, not ten. The referee control repeats on every card, so
+         without this a reader who wants the whole gameweek on league-average
+         assumptions makes the same decision ten times. -->
+    <div class="ref-global">
+      <b>Referees</b>
+      <label class="chk"><input type="radio" name="refMode" value="appointed" id="refModeA"> Use announced appointments</label>
+      <label class="chk"><input type="radio" name="refMode" value="average" id="refModeL"> Assume league average (<span class="mono" id="refAvgTxt">—</span>)</label>
+      <span class="faint" id="refModeNote"></span>
+    </div>
     <div class="legend-bar">
       <button class="btn" id="legendBtn" type="button" aria-expanded="false" aria-controls="legendKey">Legend</button>
     </div>
@@ -1037,6 +1046,7 @@
 <script src="assets/plmodel.js"></script>
 <script src="assets/suspension.js"></script>
 <script src="assets/metric.js"></script>
+<script src="assets/refpicker.js"></script>
 <script>
 const STORE_KEY="pl_desk_v1", THEME_KEY="pl_desk_theme";
 const $=(id)=>document.getElementById(id);
@@ -2994,7 +3004,12 @@ function appointedRefName(fid){
    and a desk that cannot be corrected is worse than one that must be told. The
    harvested name is the default, not the authority. */
 function refFor(fid){
-  const n=refAssign[SEASON+"|"+fid]||appointedRefName(fid);
+  /* A hand pick always wins: the global control is an assumption about
+     fixtures nobody has chosen, not an override of one somebody has. */
+  const picked=refAssign[SEASON+"|"+fid];
+  if(picked) return refByName(picked);
+  if(typeof refMode!=="undefined"&&refMode==="average") return null;
+  const n=appointedRefName(fid);
   return n?refByName(n):null;
 }
 /* Whether this fixture's referee came from the feed rather than the dropdown —
@@ -3026,25 +3041,22 @@ function refChip(ref){
   return ` <span class="chip" style="color:${s.col};background:color-mix(in srgb,${s.col} 12%,transparent);border:1px solid color-mix(in srgb,${s.col} 35%,transparent)" title="${esc(ref.n)} — ${ref.ypg.toFixed(2)} yellows/game (league avg ${REF_AVG_YPG.toFixed(2)})">${esc(ref.n.split(" ").pop())} · ${s.label}</span>`;
 }
 function refSelect(fid){
-  /* Falls back to the appointment so the dropdown SHOWS what the desk is
+  /* Falls back to the appointment so the control SHOWS what the desk is
      actually pricing with. Leaving it on "unknown" while refFor() quietly used
      a harvested name would put a different referee in the control than in the
      numbers beside it. */
-  const appointed=appointedRefName(fid);
+  const appointed=appointedRefName(fid)||"";
   const cur=refAssign[SEASON+"|"+fid]||appointed||"";
-  /* Blank DELETES the override, which falls back to the appointment — it does
-     not mean "no referee". Labelling it "unknown" when picking it would put
-     the appointed official straight back was simply wrong. */
-  const blank=appointed?`Use the appointment (${esc(appointed)})`:"Ref: unknown";
-  const opts=[`<option value="">${blank}</option>`]
-    .concat([...REFS].sort((a,b)=>a.n.localeCompare(b.n)).map(r=>`<option value="${esc(r.n)}"${r.n===cur?" selected":""}>${esc(r.n)}${r.ypg!=null?` (${r.ypg.toFixed(1)})`:""}</option>`));
-  /* An appointed name that has no card record still has to appear, or the
-     dropdown would silently drop back to "unknown" for a referee we DO know
+  /* An appointed official with no card record still has to appear, or the
+     list would silently drop back to "not announced" for a referee we DO know
      about — a promoted official in his first season, most obviously. */
-  if(appointed&&!refByName(appointed))
-    opts.splice(1,0,`<option value="${esc(appointed)}" selected>${esc(appointed)} (no card record)</option>`);
-  const tag=refIsAppointed(fid)?` <span class="pill" title="Published appointment, harvested from the fixture feed">appointed</span>`:"";
-  return `<select class="ref-sel" data-fid="${fid}" aria-label="Assign referee" style="padding:.25rem .35rem;font-size:.74rem;max-width:170px">${opts.join("")}</select>${tag}`;
+  const refs=[...REFS];
+  if(appointed&&!refByName(appointed)) refs.push({n:appointed,ypg:null,matches:null});
+  /* REF_AVG_YPG, not a round 4.0: it is the average refFactor() divides by, so
+     the delta shown beside each official is the one the model applies. A
+     control that advertises a different average than the maths uses is off by
+     a third of the spread between the strictest whistle and the most lenient. */
+  return PLDRefPicker.html({fid,refs,current:cur,appointed,avg:REF_AVG_YPG});
 }
 // Next unfinished fixture for a club (for the watchlist strict-ref alert).
 function nextFixtureFor(short){
@@ -3326,7 +3338,7 @@ function candRowHtml(c,ref){
     </span>
     <span style="display:flex;align-items:center;gap:.55rem;flex:none">
       <span style="text-align:right">
-        <span class="cand2-prob" style="color:${sev.col}">${(prob*100).toFixed(0)}%</span>
+        <span class="cand2-prob" data-num="p-${esc(watchKey(p))}" style="color:${sev.col}">${(prob*100).toFixed(0)}%</span>
         <div class="sev" style="color:${sev.col}">${sev.label}</div>
       </span>
       <span class="faint" aria-hidden="true" style="font-size:1.1rem;line-height:1">⌄</span>
@@ -3371,7 +3383,10 @@ function fixtureCardHtml(f,opts){
   const score=f.finished?` <span class="mono muted" style="font-weight:700;font-size:.72rem">FT ${f.hs==null?"":f.hs}–${f.as==null?"":f.as}</span>`:"";
   const refLine=ref?`Ref ${esc(refAbbr(ref.n))}`:"Ref —";
   const strictChip=s?` <span class="mono" style="font-size:.56rem;color:${s.col}">${s.label}</span>`:"";
-  const heatBadge=`<span class="heat-badge${heat>=4.2?" hot":""}" title="Booking heat: ${base.toFixed(1)} base × ${rf.toFixed(2)} ref${derby?" × "+DERBY_BOOST+" derby":""}">${heat.toFixed(1)}</span>`;
+  /* data-num keys the before/after tween: a referee pick moves this number and
+     every candidate percentage below it, and the old control moved them all in
+     one silent repaint. */
+  const heatBadge=`<span class="heat-badge${heat>=4.2?" hot":""}" data-num="heat-${f.id}" title="Booking heat: ${base.toFixed(1)} base × ${rf.toFixed(2)} ref${derby?" × "+DERBY_BOOST+" derby":""}">${heat.toFixed(1)}</span>`;
   const refDelta=(ref&&Math.abs(rf-1)>=0.02)?` <span class="mono" style="font-size:.64rem;color:${rf>1?"var(--warn)":"var(--fade)"}" title="Every player's chance scaled ×${rf.toFixed(2)} by ${esc(ref.n)}">×${rf.toFixed(2)} on every player</span>`:"";
   // Candidates, ranked by fixture-aware probability, position-filtered.
   let cands=gwCandidates(h,a,ref,derby);
@@ -4077,6 +4092,48 @@ else initAuth();
 // referee change, a filter and a gameweek switch — listeners bound to the
 // buttons themselves would be dropped each time and quietly stop working.
 if(window.PLDMetric) PLDMetric.wire();
+/* The referee picker. A pick moves the heat and every percentage on the card,
+   so the old numbers are captured before the repaint and tweened to the new
+   ones after — the pick used to change nine figures in one silent redraw. */
+function applyRef(fid,name){
+  const was=PLDRefPicker.capture();
+  const k=SEASON+"|"+fid;
+  if(name) refAssign[k]=name; else delete refAssign[k];
+  saveRefs();
+  renderGameweek();
+  if(gwInit) renderFixtures();
+  renderSuspWatch();
+  PLDRefPicker.animate(was);
+}
+if(window.PLDRefPicker) PLDRefPicker.wire({
+  onPick:(fid,name)=>applyRef(fid,name),
+  onReset:(fid)=>applyRef(fid,null)
+});
+/* ONE choice for the whole gameweek. The control repeats on every card, so a
+   reader who wants the round priced on league-average assumptions otherwise
+   makes the same decision ten times over. "Average" is not a referee — it
+   suppresses the harvested appointment so refFactor() falls back to 1. */
+const REFMODE_KEY="pl_desk_ref_mode";
+let refMode="appointed";
+try{ refMode=localStorage.getItem(REFMODE_KEY)||"appointed"; }catch(e){}
+function refModeApply(){
+  const a=$("refModeA"), l=$("refModeL"), note=$("refModeNote"), avg=$("refAvgTxt");
+  if(avg) avg.textContent=REF_AVG_YPG.toFixed(2);
+  if(a) a.checked=refMode==="appointed";
+  if(l) l.checked=refMode==="average";
+  if(note) note.textContent = refMode==="average"
+    ? "Published appointments ignored — every fixture priced on the average."
+    : "Fixtures with a published official use it; the rest use the average.";
+}
+function refModeSet(m){
+  refMode=m;
+  try{ localStorage.setItem(REFMODE_KEY,m); }catch(e){}
+  const was=PLDRefPicker.capture();
+  refModeApply(); renderGameweek(); if(gwInit) renderFixtures(); renderSuspWatch();
+  PLDRefPicker.animate(was);
+}
+["refModeA","refModeL"].forEach(id=>{ const el=$(id); if(el) el.addEventListener("change",()=>refModeSet(el.value)); });
+refModeApply();
 (function(){
   const b=$("legendBtn"), k=$("legendKey");
   if(!b||!k) return;
