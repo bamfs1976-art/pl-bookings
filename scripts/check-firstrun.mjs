@@ -118,5 +118,58 @@ for (const page of DESKS_WITH_A_TOUR) {
     'the hint dismissal is not persisted, so it returns on every visit');
 }
 
+
+/* ---- 5. the jargon is defined where it appears -------------------------- */
+/* Section 2 of the UX brief. The market strip shipped EXP CARDS, O3.5, O4.5,
+   BTC and H2H 10 with no definition anywhere on the page, and a five-dot
+   meter carrying aria-hidden — invisible to a screen reader and a pattern to
+   everyone else. */
+{
+  const src = read('index.html');
+  const code = codeOnly(src);
+  /* EACH CALL SITE, not "the string appears somewhere". A check for
+     /PLDMetric.label(/ passed with the Expected-cards label swapped out for a
+     hand-rolled span, because the other four calls satisfied it — one site can
+     regress while the guard stays green. Pin the site AND the plain label
+     together, so neither can drift without the other. */
+  for (const [plain, abbr, site] of [
+    ['Expected cards', 'EXP', `PLDMetric.label("Expected cards"`],
+    ['3.5+ cards', 'O3.5', `cell("3.5+ cards","O3.5"`],
+    ['4.5+ cards', 'O4.5', `cell("4.5+ cards","O4.5"`],
+    ['Both teams carded', 'BTC', `cell("Both teams carded","BTC"`],
+    ['Last n H2H', 'H2H', 'PLDMetric.label(`Last ${h2h.n} H2H`'],
+  ]) {
+    assert.ok(code.includes(site),
+      `index.html no longer labels the market strip "${plain}" through the ` +
+      `shared primitive — the raw "${abbr}" was the label with no definition ` +
+      'anywhere on the page. Expected to find: ' + site);
+  }
+  assert.ok(/PLDMetric\.wire\(\)/.test(code),
+    'index.html never calls PLDMetric.wire(), so every metric label renders ' +
+    'and does nothing when pressed');
+  assert.ok(/assets\/metric\.js/.test(src), 'index.html does not load assets/metric.js');
+  /* The meter must not go back to being decoration. */
+  assert.ok(/PLDMetric\.confidence\(/.test(code),
+    'pipMeter no longer goes through PLDMetric.confidence, so the five dots ' +
+    'have lost their aria-label and are decoration again');
+  assert.ok(!/class="pips" aria-hidden/.test(code),
+    'the confidence meter carries aria-hidden again — to a screen reader it ' +
+    'is not there at all');
+  /* Model internals stay behind the disclosure, and the disclosure stays shut.
+     AUTHOR CSS BEATS UA CSS regardless of specificity, so a bare
+     `.fx-simrow{display:...}` re-shows a closed <details> — which it did, and
+     moving the declaration between stylesheets did not fix it. */
+  assert.ok(/<details class="model-detail">/.test(code),
+    'the model internals ("tight 66%", "game state EVE ×0.98") are back on the ' +
+    'face of the card rather than behind a disclosure');
+  assert.ok(/details\.model-detail:not\(\[open\]\) \.fx-simrow\{display:none\}/.test(read('assets/tw.css')),
+    'the collapsed model detail is left to the UA stylesheet to hide. Author ' +
+    'CSS outranks UA CSS whatever the specificity, so the .fx-simrow display ' +
+    'rule re-shows it and the disclosure renders open while its arrow says shut.');
+  assert.ok(/id="legendKey"/.test(src) && /id="legendBtn"/.test(src),
+    'the legend is gone — High/Watch/Moderate and the meter are undefined on ' +
+    'the page again');
+}
+
 console.log(`check-firstrun OK: ${DESKS_WITH_A_TOUR.length} desks, none auto-opens, ` +
-  'all reachable at both widths, intro card bounded and dismissible');
+  'all reachable at both widths, intro card bounded, jargon defined');

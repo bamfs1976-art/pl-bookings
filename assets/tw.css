@@ -747,3 +747,79 @@ footer{padding:26px 0 40px;font-size:12.5px;color:var(--text-3);
 .linkish:hover{opacity:.8}
 .linkish:focus-visible{outline:3px solid var(--ring);outline-offset:2px;border-radius:4px}
 @media (pointer:coarse){ .linkish{display:inline-block;min-height:32px;line-height:30px} }
+
+/* ─── Metric labels and the confidence meter ────────────────────────────────
+   The fixture card shipped EXP CARDS, O3.5, O4.5, BTC, H2H 10 and a five-dot
+   meter and defined none of them on the page. Some carried a `title`, which is
+   invisible on a touchscreen, unreachable by keyboard and announced
+   inconsistently — the explanation existed and almost nobody could reach it.
+   These are the styles for the labels that replaced them. */
+.mlab{display:inline-flex;align-items:baseline;gap:4px;background:none;border:0;
+  padding:0;font:inherit;font-size:10px;font-weight:700;letter-spacing:.06em;
+  text-transform:uppercase;color:var(--text-3);cursor:help;
+  border-bottom:1px dotted var(--border-2);line-height:1.5}
+.mlab:hover{color:var(--text-2);border-bottom-color:var(--text-3)}
+.mlab:focus-visible{outline:3px solid var(--ring);outline-offset:2px;border-radius:4px}
+/* The abbreviation is KEPT beside the plain name, not replaced by it. Somebody
+   who has learnt "BTC" should not have to relearn the page to gain a label
+   somebody else needed. */
+.mlab-a{font-size:9px;font-weight:600;opacity:.65;letter-spacing:.04em}
+@media (pointer:coarse){ .mlab{min-height:32px;align-items:center} }
+
+.mpop{position:absolute;z-index:400;max-width:min(280px,calc(100vw - 16px));
+  background:var(--surface);color:var(--text);border:1px solid var(--border-2);
+  border-radius:10px;box-shadow:var(--shadow);padding:9px 11px;font-size:12.5px;
+  line-height:1.45;text-transform:none;letter-spacing:normal;font-weight:400}
+.mpop-b{display:block}
+.mpop-more{display:inline-block;margin-top:6px;font-size:11.5px;font-weight:700;
+  color:var(--accent-ink);text-decoration:none;
+  border-bottom:1.5px solid currentColor}
+
+/* Five dots that say what they are. They used to carry aria-hidden and a
+   title, so to a screen reader they did not exist and to everyone else they
+   were a pattern. role="img" with a real label makes them one figure. */
+.cmeter{display:inline-flex;gap:2px;margin-top:3px;vertical-align:middle}
+.cmeter-p{width:11px;height:5px;border-radius:2px;background:var(--border-2);display:block}
+.cmeter-p.on{background:var(--warn-ink)}
+
+/* The legend. One row, revealed on demand, so the bands and the meter are
+   defined somewhere the reader can reach without leaving the page — the
+   thresholds were previously stated only in a paragraph of small print at the
+   bottom of the panel. */
+.legend-bar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:0 0 .7rem}
+.legend-key{display:flex;align-items:center;gap:6px 14px;flex-wrap:wrap;
+  padding:8px 11px;border-radius:10px;font-size:12px;line-height:1.5;
+  color:var(--text-2);background:var(--surface-2);border:1px solid var(--border)}
+.legend-key b{color:var(--text);font-weight:700}
+.legend-key .lk{display:inline-flex;align-items:center;gap:5px;white-space:nowrap}
+.legend-key .lk i{width:9px;height:9px;border-radius:3px;flex:none;display:block}
+
+/* Model internals, behind a disclosure. "tight 66%" and "game state EVE ×0.98"
+   are real and worth keeping; they are also the two things on the card that
+   read as debug output to anyone who has not read the Guide. Collapsed by
+   default, present for anyone who wants them. */
+.model-detail{margin:.15rem 0 .35rem}
+.model-detail>summary{cursor:pointer;font-size:11px;font-weight:600;
+  color:var(--text-3);list-style:none;display:inline-flex;align-items:center;gap:4px}
+.model-detail>summary::-webkit-details-marker{display:none}
+.model-detail>summary::after{content:"⌄";font-size:13px;line-height:1}
+.model-detail[open]>summary::after{content:"⌃"}
+.model-detail>summary:hover{color:var(--text-2)}
+.model-detail>summary:focus-visible{outline:3px solid var(--ring);outline-offset:2px;border-radius:6px}
+@media (pointer:coarse){ .model-detail>summary{min-height:32px} }
+/* .fx-simrow carried its layout in a style="" attribute, display:flex and all.
+   Inside a closed <details> that is not a style choice but a BUG, and moving
+   it into this file did not fix it — which is the interesting part.
+   
+   A UA stylesheet hides a closed disclosure's contents with `display:none`,
+   and AUTHOR CSS BEATS UA CSS REGARDLESS OF SPECIFICITY. So any author
+   `display` on a details child — inline, or a bare `.fx-simrow{}` rule here —
+   re-shows it. The "collapsed by default" model detail rendered fully expanded
+   on every card while its arrow said shut, and the first fix moved the
+   declaration without changing which sheet it was in.
+   
+   Stated explicitly rather than left to the UA, so it does not depend on a
+   default that a future `display` anywhere can quietly outrank. Caught by
+   measuring the height of something that should have had none. */
+.fx-simrow{display:flex;flex-wrap:wrap;align-items:center;gap:.5rem;padding:.15rem 0 .35rem}
+details.model-detail:not([open]) .fx-simrow{display:none}

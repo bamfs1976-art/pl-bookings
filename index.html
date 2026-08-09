@@ -577,6 +577,21 @@
         <a href="/today">Today&rsquo;s card</a> &middot; <a href="/today#all">Season calendar</a></span>
       <button class="gw-intro-x" type="button" data-hint-dismiss aria-label="Dismiss this hint">&times;</button>
     </p>
+    <!-- THE KEY, on the page. High / Watch / Moderate and the dot meter were
+         defined only in a paragraph of 0.78rem print at the bottom of the
+         panel, which is not somewhere a reader looks when they hit an
+         unfamiliar label at the top of it. -->
+    <div class="legend-bar">
+      <button class="btn" id="legendBtn" type="button" aria-expanded="false" aria-controls="legendKey">Legend</button>
+    </div>
+    <div class="legend-key" id="legendKey" hidden>
+      <span class="lk"><i style="background:var(--danger)"></i><b>High</b> 50%+ chance of a card</span>
+      <span class="lk"><i style="background:var(--warn)"></i><b>Watch</b> 30&ndash;50%</span>
+      <span class="lk"><i style="background:var(--text-3)"></i><b>Moderate</b> under 30%</span>
+      <span class="lk"><span class="cmeter" aria-hidden="true"><span class="cmeter-p on"></span><span class="cmeter-p on"></span><span class="cmeter-p on"></span><span class="cmeter-p"></span><span class="cmeter-p"></span></span> card rate per 90</span>
+      <span class="lk"><b>Heat</b> expected cards in the match</span>
+      <span class="lk">Press any dotted label for its definition.</span>
+    </div>
     <div id="gwHero" class="gw-hero" aria-live="polite"></div>
     <div id="gwSuspWrap" hidden>
       <div class="gw-seclabel" style="margin-bottom:.5rem">⚠ Suspension watch</div>
@@ -1021,6 +1036,7 @@
 <script src="assets/save.js"></script>
 <script src="assets/plmodel.js"></script>
 <script src="assets/suspension.js"></script>
+<script src="assets/metric.js"></script>
 <script>
 const STORE_KEY="pl_desk_v1", THEME_KEY="pl_desk_theme";
 const $=(id)=>document.getElementById(id);
@@ -3227,11 +3243,19 @@ function simStripHtml(M){
     : `<span class="mono" style="font-size:.6rem;color:var(--text-3)" title="Evenly matched — the game-state factor is neutral here.">game state neutral</span>`;
   /* "Tight" is P(margin ≤ 1): a draw or a one-goal win either way. */
   const tight=`<span class="mono" style="font-size:.6rem;color:${sim.close>=0.66?"var(--warn)":"var(--text-3)"}" title="Fitted closeness: the model's chance this finishes within one goal (a draw or a one-goal win). Cards follow games that stay live. Shown as a signal — it does not move the heat score, which still uses the recognised-derby list.">tight ${pct(sim.close)}</span>`;
-  return `<div class="fx-simrow" style="display:flex;flex-wrap:wrap;align-items:center;gap:.5rem;padding:.15rem 0 .35rem">
-    <span class="mono" style="font-size:.63rem;color:var(--text-2)" title="Plsimulator's fitted match model (bundle ${esc(SIM.version)}): expected goals ${sim.expH.toFixed(2)}–${sim.expA.toFixed(2)}.">${esc(h)} ${pct(sim.home)} · draw ${pct(sim.draw)} · ${esc(a)} ${pct(sim.away)}</span>
-    ${tight}
-    ${chaseBit}
-  </div>`;
+  /* COLLAPSED BY DEFAULT. "tight 66%" and "game state EVE ×0.98 · CRY ×1.02"
+     are real, useful and worth keeping — and they are the two things on the
+     card that read as debug output to anyone who has not read the Guide. They
+     are model internals, so they sit behind a disclosure that says so, on
+     every card, closed until asked for. Nothing is removed. */
+  return `<details class="model-detail">
+    <summary>Model detail</summary>
+    <div class="fx-simrow">
+      <span class="mono" style="font-size:.63rem;color:var(--text-2)" title="Plsimulator's fitted match model (bundle ${esc(SIM.version)}): expected goals ${sim.expH.toFixed(2)}–${sim.expA.toFixed(2)}.">${esc(h)} ${pct(sim.home)} · draw ${pct(sim.draw)} · ${esc(a)} ${pct(sim.away)}</span>
+      ${tight}
+      ${chaseBit}
+    </div>
+  </details>`;
 }
 /* Past meetings between these two clubs, from the public-domain
    football-data.co.uk records (data/h2h.js). Null for pairs that have not
@@ -3245,8 +3269,12 @@ function marketStripHtml(board,h2h){
   if(!board) return "";
   const pc=v=>Math.round(v*100)+"%";
   const col=v=>v>=0.6?"var(--danger-ink)":v>=0.45?"var(--warn-ink)":"var(--text-2)";
-  const cell=(label,val,title)=>
-    `<div class="mk-cell" title="${esc(title)}"><span class="mk-lab">${label}</span>`+
+  /* PLAIN LANGUAGE FIRST, abbreviation second. "O3.5" and "BTC" are the
+     market's shorthand, not the reader's, and they were labels with no
+     definition anywhere on the page. The old `title` is now a real popover:
+     keyboard-reachable, tappable, and dismissible on Esc. */
+  const cell=(label,abbr,val,help)=>
+    `<div class="mk-cell">${PLDMetric.label(label,{abbr,help})}`+
     `<span class="mk-val" style="color:${col(val)}">${pc(val)}</span></div>`;
   /* The history sits beside the model, never inside it: two independent
      reads of the same question, and the disagreement is the interesting
@@ -3255,15 +3283,15 @@ function marketStripHtml(board,h2h){
   if(h2h){
     const gap=h2h.avg-board.expected;
     const tone=Math.abs(gap)>=1?(gap>0?"var(--danger-ink)":"var(--text-2)"):"var(--text)";
-    h2hCell=`<div class="mk-cell mk-h2h" title="${esc(`Past meetings: ${h2h.avg} yellows on average across ${h2h.n} games (${h2h.last.join(", ")} most recent first). ${Math.round(h2h.o45*100)}% of them produced 5 or more.`)}">
-      <span class="mk-lab">H2H ${h2h.n}</span>
+    h2hCell=`<div class="mk-cell mk-h2h">
+      ${PLDMetric.label(`Last ${h2h.n} H2H`,{abbr:"H2H",help:`What actually happened when these two met: ${h2h.avg} yellows on average across ${h2h.n} games (${h2h.last.join(", ")}, most recent first), ${Math.round(h2h.o45*100)}% of them producing 5 or more. Shown beside the model, never folded into it — the disagreement is the useful part.`})}
       <span class="mk-val" style="color:${tone}">${h2h.avg.toFixed(1)}</span></div>`;
   }
   return `<div class="mk-strip"${board.thin?' data-thin="1"':''}>
-    <div class="mk-cell"><span class="mk-lab">EXP CARDS</span><span class="mk-val">${board.expected.toFixed(1)}</span></div>
-    ${cell("O3.5",board.over[3.5],"Chance of 4 or more cards in the match")}
-    ${cell("O4.5",board.over[4.5],"Chance of 5 or more cards in the match")}
-    ${cell("BTC",board.bothCarded,"Both teams carded: each side picks up at least one")}
+    <div class="mk-cell">${PLDMetric.label("Expected cards",{abbr:"EXP",help:"The total yellows the model expects in this match, adding up every rated player's own chance. Typically 2 to 6; the league average is 3.7."})}<span class="mk-val">${board.expected.toFixed(1)}</span></div>
+    ${cell("3.5+ cards","O3.5",board.over[3.5],"The chance of 4 or more cards in the match. Runs roughly 20% to 70%.")}
+    ${cell("4.5+ cards","O4.5",board.over[4.5],"The chance of 5 or more cards in the match. Runs roughly 10% to 50%.")}
+    ${cell("Both teams carded","BTC",board.bothCarded,"The chance each side picks up at least one card. Usually 60% to 90% — the most likely of these three.")}
     ${h2hCell}
     ${board.thin?'<span class="mk-note">thin sample</span>':''}
   </div>`;
@@ -3276,12 +3304,15 @@ function severity(prob){
   return {label:"Low",col:"var(--text-3)"};
 }
 // Five-square meter of a player's yellow-card rate (yc/90) — card propensity.
+/* It used to carry aria-hidden and a title: invisible to a screen reader,
+   unreachable by keyboard, and a pattern to everyone else. It now says what
+   it counts and what it rests on. */
 function pipMeter(p){
   const y=yEff(p); if(y==null) return "";
   const n=Math.max(0,Math.min(5,Math.round(y/0.09)));
-  let s='<span class="pips" aria-hidden="true" title="Yellow-card rate '+y.toFixed(2)+' per 90">';
-  for(let i=0;i<5;i++) s+='<span class="pip'+(i<n?" on":"")+'"></span>';
-  return s+'</span>';
+  const mins=(p.live&&p.live.min!=null)?p.live.min:p.min;
+  const note=`${y.toFixed(2)} yellows per 90`+(mins?`, over ${Math.round(mins/90)} matches of football`:"");
+  return PLDMetric.confidence(n,5,note,"Card rate");
 }
 function candRowHtml(c,ref){
   const p=c.p, prob=c.prob, sev=severity(prob), conf=confidence(p);
@@ -4042,7 +4073,21 @@ else initAuth();
 // showing, not whether to seize the screen.
 (function(){
   const btn=$("tourBtn");
-  const openTour=()=>{ openPanel("panel-gameweek"); tourAt(0); };
+  // Metric popovers: delegated once, because every card is re-rendered on a
+// referee change, a filter and a gameweek switch — listeners bound to the
+// buttons themselves would be dropped each time and quietly stop working.
+if(window.PLDMetric) PLDMetric.wire();
+(function(){
+  const b=$("legendBtn"), k=$("legendKey");
+  if(!b||!k) return;
+  const KEY="pl_desk_legend_open";
+  const set=(on)=>{ k.hidden=!on; b.setAttribute("aria-expanded",on?"true":"false");
+    try{ localStorage.setItem(KEY,on?"1":"0"); }catch(e){} };
+  let open=false; try{ open=localStorage.getItem(KEY)==="1"; }catch(e){}
+  set(open);
+  b.addEventListener("click",()=>set(k.hidden));
+})();
+const openTour=()=>{ openPanel("panel-gameweek"); tourAt(0); };
   if(btn) btn.addEventListener("click",openTour);
   // The topbar button is hidden below 560px — six controls do not fit a 390px
   // bar, and forcing it in wrapped the label over four lines and crushed the

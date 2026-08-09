@@ -130,6 +130,21 @@ for (const p of PAGES) {
     `${p} is not in the offline shell — installed on a phone it is a blank ` +
     'screen with no connection');
 }
+/* EVERY ASSET A PAGE LOADS IS IN THE SHELL. The existing check runs the other
+   way — that nothing precached is missing from disk — and that direction
+   cannot see a NEW module which no one added. assets/metric.js shipped
+   unlisted, and because marketStripHtml() calls PLDMetric.label() directly, an
+   installed app offline would not have degraded: it would have thrown a
+   ReferenceError and taken the whole fixture card render with it. */
+for (const p of PAGES) {
+  const loaded = [...read(p).matchAll(/<script src="(assets\/[^"]+)"/g)].map((m) => '/' + m[1]);
+  const unshelled = loaded.filter((a) => !paths.includes(a));
+  assert.deepStrictEqual(unshelled, [],
+    `${p} loads ${unshelled.join(', ')} but the service worker does not ` +
+    'precache it. Installed and offline, the script 404s — and a module the ' +
+    'page calls directly takes the render down with it rather than degrading.');
+}
+
 /* addAll is atomic: one 404 rejects the install and the app has NO offline
    shell rather than one page fewer. With four desks in the list that stopped
    being an acceptable failure mode. */
