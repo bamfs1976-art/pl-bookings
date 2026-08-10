@@ -77,6 +77,14 @@ AF_FILL = "pl_af_players.json"
 # fill refuses a harvest stamped as any other. Move it when the form moves.
 FORM_SEASON = "2025"
 
+# The share of players that must end up carrying a fouls-won number before
+# the build will ship. This is what the fouls-won guard actually protects:
+# not that any particular top-up matched, but that the column is not a page
+# of dashes reading as "the source has none". Comfortably under the ~72%
+# the primary source alone provides, and far above the ~0% a real outage
+# would leave.
+FW_MIN_COVERAGE = 0.5
+
 DROP = {"Burnley", "West Ham United", "Wolverhampton Wanderers"}  # relegated
 
 # The promoted three. Their form comes from the Championship feed, which is the
@@ -510,19 +518,53 @@ def fill_fouls_won(rows):
 
     filled = by_exact + by_initial
     if not filled:
+        # WHAT THE GUARD IS ACTUALLY FOR, restated because the original test
+        # was a proxy that stopped tracking it.
+        #
+        # The fear is shipping a league of DASHES that reads as "the source has
+        # no fouls won" — indistinguishable, in the file, from a source that
+        # genuinely had none. That is a fact about the SHIPPED COVERAGE, and the
+        # test was "did this top-up match anything", which is a different
+        # question and answers the first one only while the two move together.
+        #
+        # They stopped moving together the day the promoted clubs arrived. This
+        # is a FILL: it touches only rows the primary source left null, and by
+        # August those rows are precisely the players last season's Premier
+        # League cannot describe — 120 of the 186 gaps are Coventry, Hull and
+        # Ipswich, who spent it in the Championship. A source that cannot reach
+        # them matching none of them is arithmetic, not a broken join, and it
+        # took every desk down for a day over a column that was 72% populated.
+        #
+        # So the refusal now asks the real question: would this build ship
+        # without meaningful fouls-won coverage? If the primary source is
+        # working, no, and the fill is supplementary. If it is not, that is the
+        # league of dashes and it still stops.
+        reachable = {SHORT.get(r.get("team")) for r in src}
+        reachable.discard(None)
+        stranded = sum(1 for r in gaps if r["c"] not in reachable)
+        have = sum(1 for r in rows if r.get("fw") is not None)
+        coverage = have / len(rows) if rows else 0.0
+        why = (f"{AF_FILL} holds {len(src)} rows, {carrying} of them carrying a "
+               f"fouls-won number, and {len(gaps)} players want one — but the "
+               f"join matched none of them.\n"
+               f"  {stranded} of those {len(gaps)} play for a club the source "
+               "does not cover at all, so no key could ever reach them.\n"
+               "  a source row WITH a number: "
+               + ", ".join([str(r.get("n")) for r in src
+                            if num(r.get("fd90")) is not None][:3])
+               + "\n  a player wanting one: "
+               + ", ".join(r["n"] for r in gaps[:3]))
+        if coverage >= FW_MIN_COVERAGE:
+            print(f"::warning::Fouls won: {why}\n  Shipping anyway: "
+                  f"{have} of {len(rows)} players ({coverage:.0%}) carry a "
+                  "fouls-won number from the primary source, so this is a "
+                  "top-up that reached nobody, not a league of dashes.")
+            return 0
         sys.exit(
-            f"ERROR: {AF_FILL} holds {len(src)} rows, {carrying} of them "
-            f"carrying a fouls-won number, and {len(gaps)} players want one — "
-            "but the join matched none of them.\n"
-            "That is a broken join and not an empty feed: the numbers are "
-            "there and the keys are not reaching them.\n"
-            "  a source row WITH a number: "
-            + ", ".join([str(r.get("n")) for r in src
-                         if num(r.get("fd90")) is not None][:3])
-            + "\n  a player wanting one: "
-            + ", ".join(r["n"] for r in gaps[:3])
-            + "\n\nIf the clubs are right and the names are not, the two-stage "
-              "key in name_keys() needs a third stage.")
+            f"ERROR: {why}\n\nAnd only {have} of {len(rows)} players "
+            f"({coverage:.0%}) carry a fouls-won number at all, which is under "
+            f"the {FW_MIN_COVERAGE:.0%} floor — this would ship a column of "
+            "dashes that reads as 'the source has none'.")
     print(f"Fouls won: filled {filled} of {len(gaps)} missing "
           f"({by_exact} on full name, {by_initial} on initial + surname)"
           + (f"; {clashes} ambiguous key(s) left alone" if clashes else ""))

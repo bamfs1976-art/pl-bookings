@@ -347,7 +347,7 @@ def _a_source_with_numbers_and_no_matches_still_stops_the_build():
     try:
         with_source(rows, src)
     except SystemExit as e:
-        assert "broken join" in str(e), str(e)
+        assert "dashes" in str(e), str(e)
         # and it must name a row that HAS a number, not merely the first row in
         # the file — sampling blind is what sent the last reader into
         # name_keys() when the names were never the problem
@@ -378,6 +378,98 @@ def _one_usable_number_is_enough_to_arm_the_guard():
 
 t("one usable number is enough to arm the guard",
   _one_usable_number_is_enough_to_arm_the_guard)
+
+
+
+# --- the fill is a top-up, not the source ---------------------------------
+#
+# WHAT THIS GUARD IS FOR, restated because the original test was a proxy that
+# stopped tracking it. The fear is shipping a column of DASHES that reads as
+# "the source has no fouls won". That is a fact about the SHIPPED COVERAGE; the
+# test was "did this top-up match anything", which answers it only while the
+# two move together.
+#
+# They stopped moving together the day the promoted clubs arrived. The fill
+# only touches rows the primary source left null, and by August those rows are
+# exactly the players last season's Premier League cannot describe: on the real
+# 10 August data, 120 of the 186 gaps were Coventry, Hull and Ipswich, who
+# spent that season in the Championship. The join reaching none of them is
+# arithmetic. It took every desk down for a day over a column that was already
+# 72% populated.
+
+
+def _a_top_up_that_reaches_nobody_ships_when_the_column_is_healthy():
+    # 8 of 10 carry a number already; the 2 gaps are at a club the source has
+    # never heard of, exactly like a promoted side.
+    rows = [row("ARS", f"Player {i}", 1.0) for i in range(8)]
+    rows += [row("HUL", "Promoted One"), row("HUL", "Promoted Two")]
+    src = [af("Arsenal", "Someone Arsenal", 1.2)]
+    assert with_source(rows, src) == 0
+    assert all(r["fw"] is None for r in rows[8:]), "the gaps must keep their dash"
+    assert all(r["fw"] == 1.0 for r in rows[:8]), "existing values must not move"
+
+
+t("a top-up that reaches nobody ships when the column is healthy",
+  _a_top_up_that_reaches_nobody_ships_when_the_column_is_healthy)
+
+
+def _a_column_of_dashes_still_stops_the_build():
+    # The case the guard exists for: almost nothing carries a number, and the
+    # fill closed none of it. Shipping this reads as "the source has none".
+    rows = [row("ARS", f"Player {i}") for i in range(10)]
+    src = [af("Nowhere United", "Someone Else", 1.4)]
+    try:
+        with_source(rows, src)
+    except SystemExit as e:
+        assert "column of" in str(e) and "dashes" in str(e), str(e)
+        return
+    assert False, "a league of dashes was allowed through"
+
+
+t("a column of dashes still stops the build",
+  _a_column_of_dashes_still_stops_the_build)
+
+
+def _the_floor_is_where_it_says_it_is():
+    # Straddle FW_MIN_COVERAGE from both sides so the constant is load-bearing
+    # rather than decorative, and so raising it cannot silently stop mattering.
+    n = 20
+    need = int(B.FW_MIN_COVERAGE * n)
+    src = [af("Nowhere United", "Someone Else", 1.4)]
+
+    just_over = ([row("ARS", f"Has {i}", 1.0) for i in range(need)]
+                 + [row("HUL", f"Wants {i}") for i in range(n - need)])
+    assert with_source(just_over, src) == 0, "at the floor it must ship"
+
+    just_under = ([row("ARS", f"Has {i}", 1.0) for i in range(need - 1)]
+                  + [row("HUL", f"Wants {i}") for i in range(n - need + 1)])
+    try:
+        with_source(just_under, src)
+    except SystemExit:
+        return
+    assert False, "one player under the floor was allowed through"
+
+
+t("the coverage floor is where it says it is", _the_floor_is_where_it_says_it_is)
+
+
+def _the_diagnostic_counts_the_unreachable():
+    # The number that would have ended the 10 August investigation in one line:
+    # how many of the gaps play for a club the source does not cover at all.
+    rows = [row("ARS", f"Player {i}", 1.0) for i in range(8)]
+    rows += [row("HUL", "Promoted One"), row("HUL", "Promoted Two")]
+    src = [af("Arsenal", "Someone Arsenal", 1.2)]
+    import io, contextlib
+    buf = io.StringIO()
+    with contextlib.redirect_stdout(buf):
+        with_source(rows, src)
+    out = buf.getvalue()
+    assert "2 of those 2 play for a club the source does not cover" in out, (
+        f"the unreachable count is missing or wrong: {out}")
+
+
+t("the diagnostic counts the gaps the source cannot reach",
+  _the_diagnostic_counts_the_unreachable)
 
 
 print(f"\n{passed} tests passed")
