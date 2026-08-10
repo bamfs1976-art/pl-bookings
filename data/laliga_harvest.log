@@ -1,4 +1,4 @@
-La Liga harvest — run 88
+La Liga harvest — run 91
 == discover ==
 La Liga: API-Football league 140, season 2026
 
@@ -102,49 +102,49 @@ season cautions (2026-27): none yet — the season has not been harvested
 referees: 27
 RESULT: WRITTEN laliga_data.js
 == referee-join ==
-  merged 13 abbreviated referee names into their full spelling:
+  merged 20 abbreviated referee names into their full spelling:
     A. Cordero -> Adrian Cordero Vega
     A. Hernandez -> Alejandro Hernandez
     A. Quintero -> Alejandro Quintero Gonzalez
+    A. Ruiz -> Alejandro Muñiz Ruiz
     C. Soto Grado -> César Soto Grado
+    F. Maeso -> Francisco Hernandez Maeso
     G. Cuadra -> Guillermo Cuadra Fernandez
     I. Diaz -> Isidro Diaz de Mera Escuderos
     I. Galech -> Iosu Galech Apezteguia
     J. Alberola -> Javier Alberola Rojas
+    J. Guzman -> Jose Luis Guzman Mansilla
+    J. Manzano -> Jesus Gil Manzano
     J. Martinez -> Juan Martinez Munuera
+    J. Sanchez -> José María Sánchez Martínez
     M. Busquets -> Mateo Busquets Ferrer
+    M. Ortiz -> Miguel Angel Ortiz Arias
     M. Sesma -> Miguel Sesma Espinosa
     R. De Burgos -> Ricardo De Burgos Bengoetxea
     V. Garcia -> Victor Garcia Verdura
+    J. Munuera -> José Luis Munuera Montero (the other 1 were already refereeing on dates he worked)
 Referee join: 380 of 380 matches got an official from 380 fixtures
-La Liga refs: 27 from 380 matches via mirror
+La Liga refs: 20 from 380 matches via mirror
   (dropped 1 under 3 matches, skipped 0 rows without card data)
-     6.5  0.75 red    -  pen  23.75 fouls  0.274 c/f   8m  J. Guzman
-     6.0  0.25 red    -  pen  26.12 fouls  0.230 c/f   8m  Alejandro Muñiz Ruiz
     5.63  0.32 red    -  pen  24.16 fouls  0.233 c/f  19m  Mateo Busquets Ferrer
+    5.41  0.41 red    -  pen  25.41 fouls  0.213 c/f  17m  Jose Luis Guzman Mansilla
     5.35  0.55 red    -  pen  26.55 fouls  0.202 c/f  20m  Alejandro Quintero Gonzalez
     5.05  0.45 red    -  pen  24.80 fouls  0.204 c/f  20m  Isidro Diaz de Mera Escuderos
-     5.0  0.11 red    -  pen  27.33 fouls  0.183 c/f   9m  J. Manzano
     4.91  0.23 red    -  pen  23.77 fouls  0.206 c/f  22m  Alejandro Hernandez
-    4.86  0.43 red    -  pen  28.00 fouls  0.173 c/f   7m  José María Sánchez Martínez
     4.84  0.37 red    -  pen  28.68 fouls  0.169 c/f  19m  Iosu Galech Apezteguia
-    4.56  0.56 red    -  pen  29.44 fouls  0.155 c/f   9m  José Luis Munuera Montero
+    4.83  0.33 red    -  pen  24.61 fouls  0.196 c/f  18m  Alejandro Muñiz Ruiz
     4.53  0.37 red    -  pen  22.68 fouls  0.200 c/f  19m  César Soto Grado
-    4.44  0.11 red    -  pen  26.89 fouls  0.165 c/f   9m  Jose Luis Guzman Mansilla
+    4.47  0.24 red    -  pen  27.41 fouls  0.163 c/f  17m  José María Sánchez Martínez
     4.44  0.11 red    -  pen  28.44 fouls  0.156 c/f  18m  Juan Martinez Munuera
-    4.27  0.18 red    -  pen  23.73 fouls  0.180 c/f  11m  Miguel Angel Ortiz Arias
+    4.42  0.21 red    -  pen  24.84 fouls  0.178 c/f  19m  Jesus Gil Manzano
     4.24  0.29 red    -  pen  24.12 fouls  0.176 c/f  17m  Guillermo Cuadra Fernandez
-     4.2   0.1 red    -  pen  27.00 fouls  0.156 c/f  10m  J. Sanchez
     4.05   0.3 red    -  pen  26.35 fouls  0.154 c/f  20m  Javier Alberola Rojas
-     3.9   0.3 red    -  pen  22.60 fouls  0.173 c/f  10m  Jesus Gil Manzano
-     3.9   0.4 red    -  pen  23.40 fouls  0.167 c/f  10m  A. Ruiz
+    4.05   0.4 red    -  pen  26.65 fouls  0.152 c/f  20m  José Luis Munuera Montero
+    4.05   0.2 red    -  pen  22.75 fouls  0.178 c/f  20m  Miguel Angel Ortiz Arias
     3.85  0.05 red    -  pen  23.25 fouls  0.166 c/f  20m  Adrian Cordero Vega
     3.79  0.11 red    -  pen  22.58 fouls  0.168 c/f  19m  Ricardo De Burgos Bengoetxea
-    3.78  0.22 red    -  pen  21.56 fouls  0.175 c/f   9m  M. Ortiz
-    3.64  0.27 red    -  pen  24.36 fouls  0.149 c/f  11m  J. Munuera
      3.6   0.0 red    -  pen  27.10 fouls  0.133 c/f  20m  Miguel Sesma Espinosa
-    3.44  0.11 red    -  pen  27.44 fouls  0.126 c/f   9m  F. Maeso
     3.37  0.21 red    -  pen  24.05 fouls  0.140 c/f  19m  Victor Garcia Verdura
-    2.86  0.29 red    -  pen  22.29 fouls  0.128 c/f   7m  Francisco Hernandez Maeso
+    3.19  0.19 red    -  pen  25.19 fouls  0.127 c/f  16m  Francisco Hernandez Maeso
 
 patched the REFS block of laliga_data.js
