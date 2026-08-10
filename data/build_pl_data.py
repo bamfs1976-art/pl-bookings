@@ -469,6 +469,32 @@ def fill_fouls_won(rows):
         print(f"Fouls won: every row already carries one; {AF_FILL} not needed.")
         return 0
 
+    # AN EMPTY FEED AND A BROKEN JOIN ARE NOT THE SAME FAILURE, and the refusal
+    # below used to treat them as one.
+    #
+    # The comment above says they are indistinguishable in the shipped file, and
+    # that is true — but they are perfectly distinguishable HERE, in the source:
+    # count the rows that actually carry a fouls-won number. None at all is an
+    # upstream that returned squads without statistics, which is what happens
+    # when API-Football rolls a season over. Rows that carry numbers plus a join
+    # that matches nothing is a broken key, which is the thing worth stopping
+    # for.
+    #
+    # Conflating them cost a whole day of refreshes. The 10 August run died
+    # here, so referees, fixtures, injuries and every other desk stayed frozen
+    # on 6 August data four days before the Championship opened — over one
+    # supplementary column. Worse, the error names three source rows whatever
+    # the cause, so the message read as "the names do not match" and sent the
+    # next reader into name_keys() when nothing was wrong with it.
+    carrying = sum(1 for r in src if num(r.get("fd90")) is not None)
+    if not carrying:
+        print(f"::warning::Fouls won: {AF_FILL} holds {len(src)} rows and not "
+              "one of them carries a fouls-won number — the feed returned "
+              "squads without statistics, which is what a season rollover "
+              f"looks like. {_n_players(len(gaps))} keep the value from the "
+              "previous build rather than the refresh stopping here.")
+        return 0
+
     exact, initial, clashes = fouls_won_index(src)
     by_exact = by_initial = 0
     for r in gaps:
@@ -485,12 +511,14 @@ def fill_fouls_won(rows):
     filled = by_exact + by_initial
     if not filled:
         sys.exit(
-            f"ERROR: {AF_FILL} holds {len(src)} rows and {len(gaps)} players "
-            "want a fouls-won number, but the join matched none of them.\n"
-            "That is a broken join, not an empty feed — the two are "
-            "indistinguishable in the shipped file, which is why this stops "
-            "here.\n  a source row names: "
-            + ", ".join(str(r.get("n")) for r in src[:3])
+            f"ERROR: {AF_FILL} holds {len(src)} rows, {carrying} of them "
+            f"carrying a fouls-won number, and {len(gaps)} players want one — "
+            "but the join matched none of them.\n"
+            "That is a broken join and not an empty feed: the numbers are "
+            "there and the keys are not reaching them.\n"
+            "  a source row WITH a number: "
+            + ", ".join([str(r.get("n")) for r in src
+                         if num(r.get("fd90")) is not None][:3])
             + "\n  a player wanting one: "
             + ", ".join(r["n"] for r in gaps[:3])
             + "\n\nIf the clubs are right and the names are not, the two-stage "

@@ -310,4 +310,74 @@ def _absent_source_is_not_a_failure():
 t("an unharvested source leaves the dashes alone", _absent_source_is_not_a_failure)
 
 
+
+# --- an empty feed is not a broken join -----------------------------------
+#
+# THE DAY THIS COST. The 10 August refresh died here: API-Football returned 696
+# Premier League squad rows with no statistics on any of them, the join matched
+# nothing, and the build refused. Referees, fixtures, injuries and all three
+# desks then stayed frozen on 6 August data four days before the Championship
+# opened — over one supplementary column.
+#
+# The refusal is right when the source HAS numbers and the keys cannot reach
+# them: that is a join silently shipping a league of dashes that reads as "the
+# source has no fouls". It is wrong when the source carries no numbers at all,
+# which is an upstream that rolled its season over. The original comment said
+# the two were indistinguishable; they are not, in the source.
+
+
+def _a_source_with_no_numbers_does_not_stop_the_build():
+    rows = [row("ARS", "Mikel Merino"), row("CHE", "Moisés Caicedo")]
+    src = [af("Arsenal", "M. Merino", None), af("Chelsea", "M. Caicedo", None)]
+    # returns rather than exits, and leaves the dashes for the next refresh
+    assert with_source(rows, src) == 0
+    assert all(r["fw"] is None for r in rows), rows
+
+
+t("a source carrying no fouls-won numbers does not stop the build",
+  _a_source_with_no_numbers_does_not_stop_the_build)
+
+
+def _a_source_with_numbers_and_no_matches_still_stops_the_build():
+    # The guard's real purpose, which must survive the fix above: numbers are
+    # present, the keys do not reach them, and shipping that would be
+    # indistinguishable from a feed that had nothing.
+    rows = [row("ARS", "Mikel Merino")]
+    src = [af("Nowhere United", "Someone Else", 1.4)]
+    try:
+        with_source(rows, src)
+    except SystemExit as e:
+        assert "broken join" in str(e), str(e)
+        # and it must name a row that HAS a number, not merely the first row in
+        # the file — sampling blind is what sent the last reader into
+        # name_keys() when the names were never the problem
+        assert "Someone Else" in str(e), str(e)
+        return
+    assert False, "a broken join was allowed through"
+
+
+t("a source with numbers and no matches still stops the build",
+  _a_source_with_numbers_and_no_matches_still_stops_the_build)
+
+
+def _one_usable_number_is_enough_to_arm_the_guard():
+    # The two paths are separated by whether ANY source row carries a number,
+    # so the boundary is exactly one. A file of nulls plus a single number is a
+    # feed with data, and a join that reaches none of it is broken.
+    rows = [row("ARS", "Mikel Merino")]
+    src = [af("Nowhere United", "Someone Else", None)] * 50
+    src.append(af("Nowhere United", "The One", 0.8))
+    try:
+        with_source(rows, src)
+    except SystemExit as e:
+        assert "The One" in str(e), (
+            "the sample must come from the rows that carry numbers: " + str(e))
+        return
+    assert False, "one usable number did not arm the guard"
+
+
+t("one usable number is enough to arm the guard",
+  _one_usable_number_is_enough_to_arm_the_guard)
+
+
 print(f"\n{passed} tests passed")
