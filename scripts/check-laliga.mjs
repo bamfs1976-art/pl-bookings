@@ -115,33 +115,54 @@ if (REFS.length) {
     (s, r) => s + (Number(r.ypg) || 0) * (Number(r.matches) || 0), 0) / refMatches;
 
   /* HOW MANY OFFICIALS, not just how many matches. The feed names the same
-     referee two ways — "Mateo Busquets Ferrer" and "M. Busquets" — and before
-     build_refs merged them this table carried 40 officials for a 380-match
-     season at nine matches each, instead of 27 at fourteen. Every rate was
-     computed on half a career and the strictest-to-most-lenient spread was
-     inflated by the small samples. The total match count was RIGHT throughout,
-     which is why the existing check passed it. */
-  assert.ok(REFS.length <= 32,
+     referee two ways — "Mateo Busquets Ferrer" and "M. Busquets" — and every
+     rate is then computed on half a career while the total match count stays
+     RIGHT, which is why a match-count check passes it.
+
+     The ceiling was 32, set when the table had 40 rows and merged down to 27.
+     But 27 was not the answer either: seven officials were still split, and a
+     ceiling that admits the broken table it was written against is decoration.
+     Spain used 20 in 2025-26 above the 3-match floor. 26 leaves room for a
+     season that spreads its appointments wider and still fails the 27 that
+     shipped. */
+  assert.ok(REFS.length <= 26,
     `${REFS.length} officials for a ${SEASON_MATCHES}-match season — a top ` +
-    'division uses roughly 20-28. This is what a feed naming the same referee ' +
-    'in two spellings looks like: see build_refs.canonical_referees');
+    'division above a 3-match floor uses roughly 20-24. This is what a feed ' +
+    'naming the same referee in two spellings looks like: see ' +
+    'build_refs.canonical_referees');
   const perRef = refMatches / REFS.length;
-  assert.ok(perRef >= 10,
+  assert.ok(perRef >= 14,
     `officials average ${perRef.toFixed(1)} matches each — too few for a ` +
     `${SEASON_MATCHES}-match season, so the referee identities are split`);
 
-  /* And no two rows may be the same person under two spellings. */
-  const seenRef = new Map();
-  for (const r of REFS) {
-    const flat = String(r.n || '').normalize('NFKD').replace(/[\u0300-\u036f]/g, '')
-      .toLowerCase().replace(/\./g, ' ').split(/\s+/).filter(Boolean);
-    if (flat.length < 2) continue;
-    const k = flat[0][0] + '|' + flat.slice(1).join(' ');
-    if (seenRef.has(k)) {
-      assert.fail(`two referee rows look like one official: ` +
-        `"${seenRef.get(k)}" and "${r.n}"`);
+  /* AND NO TWO ROWS MAY BE ONE OFFICIAL.
+   *
+   * This keyed on the initial plus EVERY remaining token joined, which is the
+   * same positional assumption that caused the bug it was meant to catch:
+   * "J. Manzano" hashes to "j|manzano" and "Jesus Gil Manzano" to "j|gil
+   * manzano", so the detector never fired on either of the seven split
+   * officials it was sitting right next to.
+   *
+   * It now asks what build_refs asks — same initial, and one row's surnames a
+   * contiguous run of the other's — so the guard and the merge cannot disagree
+   * about what one person looks like. Contiguous and ordered, because
+   * "Busquets Ferrer" and "Ferrer Busquets" are two families. */
+  const parts = (n) => String(n || '').normalize('NFKD').replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase().replace(/\./g, ' ').split(/\s+/).filter(Boolean);
+  const runIn = (a, b) => a.length && a.length <= b.length
+    && b.some((_, i) => b.slice(i, i + a.length).join(' ') === a.join(' '));
+  for (let i = 0; i < REFS.length; i++) {
+    for (let j = i + 1; j < REFS.length; j++) {
+      const x = parts(REFS[i].n), y = parts(REFS[j].n);
+      if (x.length < 2 || y.length < 2 || x[0][0] !== y[0][0]) continue;
+      const xs = x.slice(1), ys = y.slice(1);
+      if (runIn(xs, ys) || runIn(ys, xs)) {
+        assert.fail('two referee rows look like one official: ' +
+          `"${REFS[i].n}" and "${REFS[j].n}". One of them is an abbreviated ` +
+          'spelling build_refs.canonical_referees failed to merge, and both ' +
+          'carry half his season.');
+      }
     }
-    seenRef.set(k, r.n);
   }
   /* Spain is the most card-heavy of the big five: 4.71 yellows a game over the
      six seasons to 2025-26. A figure down at the Premier League's 3.6 means
