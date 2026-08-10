@@ -698,7 +698,7 @@ const REFS = [
   {n:"Chris Kavanagh",region:"",matches:30,ypg:3.97,red:0.1,pen:null,fpg:22.47,cpf:0.1766},
   {n:"Anthony Taylor",region:"",matches:31,ypg:3.94,red:0.06,pen:null,fpg:20.48,cpf:0.1921},
   {n:"Peter Bankes",region:"",matches:22,ypg:3.82,red:0.18,pen:null,fpg:22.45,cpf:0.17},
-  {n:"Adam Kitchen",region:"",matches:4,ypg:3.75,red:0.0,pen:null,fpg:23.25,cpf:0.1613},
+  {n:"Andrew Kitchen",region:"",matches:4,ypg:3.75,red:0.0,pen:null,fpg:23.25,cpf:0.1613},
   {n:"Samuel Barrott",region:"",matches:24,ypg:3.71,red:0.04,pen:null,fpg:19.33,cpf:0.1918},
   {n:"John Brooks",region:"",matches:12,ypg:3.67,red:0.25,pen:null,fpg:20.92,cpf:0.1753},
   {n:"Jarred Gillett",region:"",matches:22,ypg:3.59,red:0.05,pen:null,fpg:19.77,cpf:0.1816},

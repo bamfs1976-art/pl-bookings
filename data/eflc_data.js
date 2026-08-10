@@ -1036,7 +1036,7 @@ const REFS = [
   {n:"Michael Salisbury",region:"",matches:5,ypg:3.2,red:0.2,pen:null,fpg:22.0,cpf:0.1455},
   {n:"G Ward",region:"",matches:23,ypg:2.96,red:0.13,pen:null,fpg:20.39,cpf:0.145},
   {n:"Paul Tierney",region:"",matches:6,ypg:2.83,red:0.0,pen:null,fpg:21.67,cpf:0.1308},
-  {n:"Adam Kitchen",region:"",matches:25,ypg:2.8,red:0.12,pen:null,fpg:20.4,cpf:0.1373},
+  {n:"Andrew Kitchen",region:"",matches:25,ypg:2.8,red:0.12,pen:null,fpg:20.4,cpf:0.1373},
   {n:"D Webb",region:"",matches:25,ypg:2.72,red:0.04,pen:null,fpg:19.92,cpf:0.1365},
   {n:"B Speedie",region:"",matches:7,ypg:2.0,red:0.14,pen:null,fpg:19.29,cpf:0.1037},
 ];

@@ -674,7 +674,7 @@ REFEREE_NAMES = {
     "P Tierney": "Paul Tierney", "J Brooks": "John Brooks",
     "T Harrington": "Tony Harrington", "T Robinson": "Tim Robinson",
     "T Kirk": "Thomas Kirk", "F Hallam": "Farai Hallam",
-    "A Kitchen": "Adam Kitchen", "M Donohue": "Matthew Donohue",
+    "A Kitchen": "Andrew Kitchen", "M Donohue": "Matthew Donohue",
     "L Smith": "Lewis Smith", "D Coote": "David Coote",
     "G Scott": "Graham Scott", "D Bond": "Darren Bond",
     "J Smith": "Josh Smith", "S Allison": "Sam Allison",
