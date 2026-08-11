@@ -489,7 +489,12 @@ jobs:
         run: |
           python3 data/harvest_history.py
           node scripts/build-model.mjs --fit data/match_history.json
-          node scripts/backtest.mjs || true
+          # WRITTEN HERE BECAUSE THIS IS WHERE THE DATA IS. The FPL history is
+          # harvested a few lines up and is not in the repository, so
+          # backtest_report.md cannot be produced on a developer machine that
+          # cannot reach the feed — it would have to be hand-written, and a
+          # hand-written report is a claim about a run nobody can check.
+          node scripts/backtest.mjs --report backtest_report.md || true
 
       - name: Guard the dataset
         run: |
@@ -526,7 +531,8 @@ jobs:
                    data/eflc_refs.json data/eflc_data.js data/eflc_status.txt data/eflc_fixtures.js \
                    data/laliga_clubs.json data/laliga_refs.json data/laliga_data.js \
                    data/laliga_status.txt data/laliga_fixtures.js data/laliga_ref_fixtures.js \
-                   data/player_matches_status.txt data/fit_report.txt; do
+                   data/player_matches_status.txt data/fit_report.txt \
+                   backtest_report.md; do
             [ -f "$f" ] && git add "$f"
           done
           if git diff --cached --quiet; then

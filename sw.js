@@ -38,6 +38,7 @@ const SHELL = [
   '/assets/refpicker.js',
   '/assets/a11y.js',
   '/assets/lineup.js',
+  '/assets/price.js',
   '/assets/palette.js',
   '/assets/shell.js',
   '/assets/tour.js',

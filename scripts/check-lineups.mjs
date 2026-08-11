@@ -206,3 +206,78 @@ for (const page of ['index.html', 'eflc.html', 'laliga.html']) {
 }
 
 console.log('check-lineups: sortable tables announce aria-sort on all three desks');
+
+/* ---- 11. price check: the edge must not flatter ------------------------ *
+ * assets/core.js has carried the odds maths since the beginning with nowhere
+ * to type a price into. Now there is one, and the failure that matters is not
+ * a crash — it is a cheerful green number on a bet that does not pay.
+ *
+ * The distinction the desk has to keep: a model reading HIGHER than the fair
+ * (de-vigged) probability but LOWER than the priced one beats the bookmaker's
+ * opinion and still loses to his margin. Calling that value would be the most
+ * expensive lie the page could tell.
+ */
+{
+  const core = await import(join(root, 'assets', 'core.js')).then((m) => m.default || m);
+  const ctx = { window: null, PLDCore: core, CSS: null };
+  ctx.window = ctx;
+  vm.createContext(ctx);
+  vm.runInContext(readFileSync(join(root, 'assets', 'price.js'), 'utf8'), ctx);
+  const P = ctx.PLDPrice.create({ core });
+
+  /* Odds parsing refuses what is not a price. */
+  assert.equal(P.parseOdds('3.5'), 3.5, 'decimal odds do not parse');
+  assert.equal(P.parseOdds('5/2'), 3.5, 'fractional odds do not parse');
+  assert.equal(P.parseOdds('3,5'), 3.5, 'a comma decimal does not parse');
+  for (const junk of ['', '  ', 'evens', '1', '0.5', '-2', '900', 'NaN']) {
+    assert.equal(P.parseOdds(junk), null, `"${junk}" was accepted as a price`);
+  }
+
+  /* A clear value bet reads as value, and the edge is the textbook number. */
+  const model = 0.40, odds = 3.5;                    /* fair would be 2.5 */
+  const out = P.readout(model, odds);
+  assert.ok(/^Value \+/.test(out), `a 40% chance at 3.5 did not read as value: ${out}`);
+  const expectedEdge = (odds * model - 1) * 100;     /* 40% */
+  assert.ok(out.includes(expectedEdge.toFixed(1)),
+    `the edge shown is not (odds × prob − 1): ${out}`);
+  assert.equal(P.cls(model, odds), 'px-good');
+
+  /* THE CASE THAT MUST NOT FLATTER. Priced at 2.00 → 50% as offered; the
+     card-market margin makes the bookmaker's real opinion 47%. A model on 48%
+     beats his opinion and loses to his price. */
+  const mid = P.readout(0.48, 2.0);
+  assert.ok(/Inside the margin/.test(mid),
+    `a model inside the margin was not labelled as such: ${mid}`);
+  assert.equal(P.cls(0.48, 2.0), 'px-mid',
+    'a bet that loses to the margin is coloured as though it wins');
+
+  /* And a plain bad price says so with a negative number, not silence. */
+  const bad = P.readout(0.20, 2.0);
+  assert.ok(/^No value -/.test(bad), `a losing price did not say so: ${bad}`);
+  assert.equal(P.cls(0.20, 2.0), 'px-bad');
+
+  /* No price, no claim. */
+  assert.equal(P.readout(0.4, ''), '', 'an empty field produced a verdict');
+  assert.equal(P.readout(null, '3.5'), '', 'a player with no model number produced a verdict');
+
+  /* Nothing is persisted: a price is true for minutes, and a stale edge
+     against a moved price is worse than none. */
+  assert.ok(!/localStorage/.test(readFileSync(join(root, 'assets', 'price.js'), 'utf8')),
+    'price.js touches localStorage — a stored price goes stale and lies later');
+
+  /* XSS through the label and the key, both of which reach markup. */
+  const nasty = P.row('1"><img src=x>', '<script>alert(1)</script>', 0.3);
+  assert.ok(!/<img|<script>/.test(nasty), 'the price row interpolates unescaped input');
+
+  /* The three desks render it and wire it. A block nobody wired is a set of
+     inputs that compute nothing. */
+  for (const page of ['index.html', 'eflc.html', 'laliga.html']) {
+    const src = readFileSync(join(root, page), 'utf8');
+    assert.ok(/<script src="assets\/price\.js">/.test(src), `${page} does not load assets/price.js`);
+    assert.ok(/PRICES\s*\?\s*PRICES\.block\(|PRICES\.block\(/.test(src), `${page} never renders the price check`);
+    assert.ok(/PRICES\.wire\(/.test(src), `${page} never wires the price inputs`);
+  }
+}
+
+console.log('check-lineups: price check parses odds, and a model inside the ' +
+  'margin is never reported as value');

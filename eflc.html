@@ -425,6 +425,7 @@
 <script src="assets/suspension.js"></script>
 <script src="assets/a11y.js"></script>
 <script src="assets/lineup.js"></script>
+<script src="assets/price.js"></script>
 <script src="assets/profile.js"></script>
 <script>
 (function () {
@@ -1050,6 +1051,10 @@
     ? PLDLineup.create({ key: 'eflc_desk_lineups_v1' })
     : null;
 
+  /* Paste a bookmaker price, see the edge. The maths has been in core.js
+     since the beginning with nowhere to type a number into. */
+  var PRICES = (typeof PLDPrice !== 'undefined' && PLDPrice) ? PLDPrice.create({}) : null;
+
   var REF_KEY = 'eflc_desk_refs_v1';
   var myRefs = {};
   try { myRefs = JSON.parse(localStorage.getItem(REF_KEY) || '{}') || {}; } catch (e) { myRefs = {}; }
@@ -1215,6 +1220,17 @@
      rendered as "José Ángel Car...". Nothing is lost by merging: the per-side
      totals are already in the markets strip as Home and Away, and the club is
      on every row. */
+  /* The same five the card ranks, so the price check answers a question
+     about what is on screen rather than a private shortlist. */
+  function priceBlock(x) {
+    if (!PRICES) return '';
+    var all = (x.home.top || []).concat(x.away.top || [])
+      .sort(function (a, b) { return b.prob - a.prob; }).slice(0, 5);
+    return PRICES.block(all.map(function (t, i) {
+      return { key: x.fx.id + '-' + i, label: t.p.n, prob: t.prob };
+    }));
+  }
+
   function candidateList(x, ch, ca) {
     var all = [];
     (x.home.top || []).forEach(function (t) { all.push(t); });
@@ -1308,6 +1324,7 @@
         + '</div>'
         + '<div class="fx-ref">' + refCell + '</div>'
         + '<div class="fx-cands">' + candidateList(x, ch, ca) + '</div>'
+        + priceBlock(x)
         + '<div class="mkts">'
         + (LINEUPS ? LINEUPS.control(f.id) : '')
         + '<button class="mkt fx-share" type="button" data-share="' + f.id + '">\u2b07 Share match</button>'
@@ -1715,6 +1732,7 @@
      need it wired — the lesson the share buttons taught. Each re-renders only
      its own grid, because redrawing the other would scroll the reader's place
      out from under them on a tab they are not looking at. */
+  if (PRICES) { PRICES.wire($('#fxList')); PRICES.wire($('#mdList')); }
   if (LINEUPS) {
     LINEUPS.wire($('#fxList'), renderFixtures);
     LINEUPS.wire($('#mdList'), renderMatchday);

@@ -1222,6 +1222,7 @@
 <script src="assets/metric.js"></script>
 <script src="assets/a11y.js"></script>
 <script src="assets/lineup.js"></script>
+<script src="assets/price.js"></script>
 <script src="assets/refpicker.js"></script>
 <script>
 const STORE_KEY="pl_desk_v1", THEME_KEY="pl_desk_theme";
@@ -3815,7 +3816,10 @@ function fixtureCardHtml(f,opts){
        to say how far this goes or where it ends. */
     body='<ul class="cand-list" aria-label="Booking candidates, highest chance first">'
       +shown.map((c,i)=>'<li>'+candRowHtml(c,ref,opts.expanded&&i>=DEF_SHOW)+'</li>').join("")
-      +'</ul>';
+      +'</ul>'
+      /* The price check covers the candidates ON SCREEN, so it answers a
+         question about what is shown rather than a private shortlist. */
+      +(PRICES?PRICES.block(shown.slice(0,5).map((c,i)=>({key:f.id+"-"+i,label:c.p.n,prob:c.prob}))):"");
     /* HOW MANY ARE WORTH IT. "Show 35 more candidates" says nothing about
        whether any of the 35 clears the Watch band, so the honest answer to
        "is this worth expanding" was to expand it and find out. */
@@ -4207,6 +4211,11 @@ function gwReport(fx){
 }
 // Shared wiring for both fixture grids (This Gameweek + All fixtures):
 // expand/collapse lower-risk candidates, open a profile, assign a referee.
+/* Paste a bookmaker price, see the edge. impliedProb, marketProbDeVig and
+   valuePoint have been in core.js since the beginning with nowhere on any
+   page to type a number into. Session-only: a price is true for minutes. */
+const PRICES=(typeof PLDPrice!=="undefined"&&PLDPrice)?PLDPrice.create({}):null;
+
 /* The standing rule — no pick before confirmed lineups — made visible.
    Default unconfirmed: the honest default for a thing nobody has checked is
    that nobody has checked it. See assets/lineup.js. */
@@ -4254,6 +4263,7 @@ wireFixtureGrid("fixtureList",renderFixtures);
 /* Both grids draw the same card, so both carry the lineup control and both
    need it wired — the same reason wireFixtureGrid is called twice above. */
 if(LINEUPS){LINEUPS.wire($("gwFixtures"),renderGameweek);LINEUPS.wire($("fixtureList"),renderFixtures);}
+if(PRICES){PRICES.wire($("gwFixtures"));PRICES.wire($("fixtureList"));}
 $("gwWatch").addEventListener("click",e=>{ const row=e.target.closest(".wl-row[data-pk]"); if(row) openPlayerProfile(row.dataset.pk); });
 $("gwSusp").addEventListener("click",e=>{ const c=e.target.closest(".gwsusp-card[data-pk]"); if(c) openPlayerProfile(c.dataset.pk); });
 // Position filter chips (ALL / DEF / MID / FWD) for the gameweek feed.

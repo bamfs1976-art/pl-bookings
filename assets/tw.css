@@ -552,6 +552,41 @@ button.mkt:hover{background:var(--surface-3);color:var(--accent)}
 .lineup-btn:focus-visible{outline:2px solid var(--ring);outline-offset:2px}
 .pill.lineup-pill{background:color-mix(in srgb,var(--warn) 16%,transparent);
   border-color:transparent;color:var(--warn-ink)}
+
+/* ── Price check (assets/price.js) ─────────────────────────────────────
+   Collapsed by default: it is a tool for the minutes before a bet, not
+   something every reader of a fixture card needs open. The verdict colours
+   are reinforced by words — "Value", "Inside the margin", "No value" — so
+   the reading never depends on hue alone. */
+.px-block{margin-top:8px;border-top:1px solid var(--border);padding-top:6px}
+.px-block summary{font-size:11.5px;font-weight:700;color:var(--text-2);cursor:pointer;
+  padding:3px 0;min-height:24px}
+.px-block summary:focus-visible{outline:2px solid var(--ring);outline-offset:2px}
+.px-head,.px-row{display:grid;grid-template-columns:minmax(0,1.4fr) 52px 74px minmax(0,1.6fr);
+  gap:6px;align-items:center}
+.px-head{font-size:10px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;
+  color:var(--text-3);padding:4px 0 2px}
+.px-row{padding:3px 0}
+.px-name{font-size:12px;font-weight:600;color:var(--text);overflow:hidden;
+  text-overflow:ellipsis;white-space:nowrap}
+.px-model{font-size:12px;font-weight:700;color:var(--text-2);text-align:right}
+.px-in{font:inherit;font-size:12px;width:100%;min-height:32px;padding:3px 6px;
+  border:1px solid var(--border-2);border-radius:6px;background:var(--surface);color:var(--text)}
+.px-in:focus-visible{outline:2px solid var(--ring);outline-offset:1px}
+.px-out{font-size:11px;font-weight:600;color:var(--text-3);overflow:hidden;
+  text-overflow:ellipsis;white-space:nowrap}
+.px-good{color:var(--good-ink)}
+.px-mid{color:var(--warn-ink)}
+.px-bad{color:var(--text-3)}
+.px-note{font-size:10.5px;color:var(--text-3);margin:6px 0 0;line-height:1.35}
+/* At 360px the four columns cannot hold. The verdict drops to its own line
+   rather than truncating to "Value +1..." which is the half of the sentence
+   that cannot be acted on. */
+@media (max-width:430px){
+  .px-head{display:none}
+  .px-row{grid-template-columns:minmax(0,1fr) 46px 68px;row-gap:2px}
+  .px-out{grid-column:1 / -1}
+}
 /* Division tags, off the league tokens. Each desk defined only its own — and
    La Liga's was a copy of the Championship's rule, --efl and all, so the LL
    pill came out purple on an orange desk. */
