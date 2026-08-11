@@ -628,6 +628,110 @@ assert.ok(/^\s*id\b/.test(shareAcca[1]),
 assert.ok(/\[id\]/.test(shareAcca[2]),
   'shareAcca does not look its acca up by the id it was given');
 
+/* ---- the buttons are actually wired ------------------------------------- *
+ *
+ * Everything above tests the DRAWING. None of it touches the click, which is
+ * how two dead buttons shipped on two desks:
+ *
+ *   1. fixtureCard() renders "Share match" into BOTH fixture grids — #fxList
+ *      on Fixtures and #mdList on This Matchday — and the delegation was
+ *      bound to #fxList alone. The button on the tab people land on did
+ *      nothing.
+ *   2. #fxShareBtn called shareRound(btn) instead of shareRound(round, btn),
+ *      so the fixture filter matched nothing and `if (!list.length) return`
+ *      swallowed it.
+ *
+ * Neither throws. Neither logs. A dead button and a working one look exactly
+ * alike until somebody clicks, which is why this RUNS the page's own wiring
+ * against a stub DOM and dispatches real clicks rather than reading the
+ * source for a pattern.
+ */
+function stubEl(tag) {
+  const node = {
+    tagName: tag, dataset: {}, _l: {}, _parent: null, _children: [],
+    textContent: '', hidden: false, disabled: false, _html: '',
+    classList: { add() {}, remove() {}, contains: () => false },
+    set innerHTML(v) { this._html = v; }, get innerHTML() { return this._html; },
+    addEventListener(type, fn) { (this._l[type] || (this._l[type] = [])).push(fn); },
+    append(child) { child._parent = this; this._children.push(child); return child; },
+    closest(sel) {
+      let n = this;
+      while (n) {
+        if (sel === '[data-share]' && n.dataset && n.dataset.share != null) return n;
+        n = n._parent;
+      }
+      return null;
+    },
+    click() {                       /* bubble, like a real listener chain */
+      let n = this;
+      while (n) {
+        for (const fn of (n._l.click || [])) fn({ target: this });
+        n = n._parent;
+      }
+    }
+  };
+  return node;
+}
+
+for (const page of ['eflc.html', 'laliga.html']) {
+  const src = readFileSync(join(root, page), 'utf8');
+  const from = src.indexOf('  function shareBusy(btn, on) {');
+  const to = src.indexOf('/* ---- provenance', from);
+  assert.ok(from > 0 && to > from, `${page}: the share-wiring block has moved or been renamed`);
+  const wiring = src.slice(from, to);
+
+  const nodes = {
+    '#fxList': stubEl('div'), '#mdList': stubEl('div'),
+    '#fxShareBtn': stubEl('button'), '#fxRound': stubEl('select')
+  };
+  nodes['#fxRound'].value = '7';
+  nodes['#fxShareBtn'].textContent = '⬇ Share matchday';
+
+  const calls = { match: [], round: [] };
+  const shareStub = {
+    deskMatchSpec: (priced) => ({ filename: 'm.png', _id: priced.fx.id }),
+    deskRoundSpec: (list, ctx) => ({ filename: 'r.png', _round: ctx.round }),
+    matchCard: (spec) => { calls.match.push(spec._id); return Promise.resolve({}); },
+    roundCard: (spec) => { calls.round.push(spec._round); return Promise.resolve({}); },
+    download() {}
+  };
+
+  const sandbox = {
+    $: (sel) => nodes[sel] || null,
+    document: { documentElement: { classList: { add() {} } } },
+    console: { error() {} },
+    S: shareStub,
+    SHARE_CTX: { league: 'X' },
+    FIXTURES: [{ id: 101, r: 7 }, { id: 102, r: 7 }, { id: 103, r: 8 }],
+    priceFixture: (fx) => ({ fx, m: { expected: 4 } })
+  };
+  sandbox.globalThis = sandbox;
+  vm.createContext(sandbox);
+  vm.runInContext(wiring, sandbox);
+
+  /* A share button in each grid, exactly as fixtureCard() renders it. */
+  for (const [host, id] of [['#fxList', '101'], ['#mdList', '102']]) {
+    const btn = stubEl('button');
+    btn.dataset.share = id;
+    btn.textContent = '⬇ Share match';
+    nodes[host].append(btn);
+    btn.click();
+    assert.ok(calls.match.includes(Number(id)) || calls.match.includes(id),
+      `${page}: the "Share match" button in ${host} does nothing when clicked — ` +
+      'the grid is not wired, so the button is inert on that tab');
+  }
+
+  /* And the matchday button must share the SELECTED round, not whatever it
+     was handed. Asserting on the round proves the argument order, which a
+     truthiness check would not: a button passed as `round` is truthy. */
+  nodes['#fxShareBtn'].click();
+  assert.deepEqual(calls.round, [7],
+    `${page}: "Share matchday" did not export the selected round (got ` +
+    `${JSON.stringify(calls.round)}) — check the arguments to shareRound(round, btn)`);
+}
+
+console.log('check-share: both fixture grids and the matchday button are wired on eflc.html and laliga.html');
+
 console.log(
   `check-share OK: ${['PL', 'EFLC', 'LL', 'ALL'].length} themes, match + round + ` +
   'combined cards render, adapters agree with the desks, every card carries 18+, ' +

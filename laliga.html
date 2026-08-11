@@ -1439,19 +1439,41 @@
       .then(function () { shareBusy(btn, false); });
   }
 
+  /* TWO GRIDS DRAW THE SAME CARD, SO BOTH NEED THE SAME WIRING. fixtureCard()
+     renders a "Share match" button, and it is drawn into #fxList (Fixtures)
+     AND #mdList (This Matchday). The delegation used to be bound to #fxList
+     alone, so the button on This Matchday — the tab people land on — was
+     inert: it looked identical, and clicking it did nothing at all.
+
+     Delegated on the host rather than on each button, because both grids are
+     redrawn by innerHTML on every referee change and per-button listeners
+     would be lost on the redraw. */
+  function wireShareGrid(id) {
+    var host = $(id);
+    if (!host || host._shareWired) return;
+    host._shareWired = true;
+    host.addEventListener('click', function (e) {
+      var b = e.target.closest && e.target.closest('[data-share]');
+      if (b) { b.dataset.label = b.dataset.label || b.textContent; shareMatch(b.dataset.share, b); }
+    });
+  }
+
   /* No module, no buttons. A share control that throws on click is worse
      than one that was never drawn — the page still works without cards. */
   if (!S) {
     $('#fxShareBtn').hidden = true;
     document.documentElement.classList.add('no-share');
   } else {
-    $('#fxList').addEventListener('click', function (e) {
-      var b = e.target.closest('[data-share]');
-      if (b) { b.dataset.label = b.dataset.label || b.textContent; shareMatch(b.dataset.share, b); }
-    });
+    wireShareGrid('#fxList');
+    wireShareGrid('#mdList');
     var rb = $('#fxShareBtn');
     rb.dataset.label = rb.textContent;
-    rb.addEventListener('click', function () { shareRound(rb); });
+    /* shareRound takes (round, btn). Passing the button as the round left
+       the filter above matching no fixture, and `if (!list.length) return`
+       swallowed it — a button that reported nothing and did nothing. The
+       round is the one SELECTED here, read at click time because
+       #mdShareBtn shares a different one. */
+    rb.addEventListener('click', function () { shareRound(Number($('#fxRound').value), rb); });
   }
 
   /* ---- provenance ------------------------------------------------------- */
