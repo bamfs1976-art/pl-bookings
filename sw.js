@@ -39,6 +39,8 @@ const SHELL = [
   '/assets/a11y.js',
   '/assets/lineup.js',
   '/assets/price.js',
+  '/icons/icon-16.png',
+  '/icons/icon-32.png',
   '/assets/palette.js',
   '/assets/shell.js',
   '/assets/tour.js',

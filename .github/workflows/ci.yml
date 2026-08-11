@@ -184,6 +184,13 @@ jobs:
       - name: The referee path, end to end
         run: node scripts/check-referees.mjs
 
+      # The pipeline front door against the pipeline. build_data.py is a
+      # RUNNER over the same scripts data-refresh.yml calls; two lists of the
+      # same steps drift, and a front door that has quietly lost one produces
+      # a dataset that looks complete and is missing a column.
+      - name: The build front door matches the real pipeline
+        run: node scripts/check-build-data.mjs
+
       # The standing rule — no pick before confirmed lineups — and the sort
       # state screen readers were never told about. Both fail silently: an
       # unwired toggle looks exactly like a wired one, and a table that
