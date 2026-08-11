@@ -37,6 +37,15 @@ jobs:
       - name: API-Football harvest route (mapping and pagination)
         run: python3 data/test_apifootball.py
 
+      # The published-appointments overlay. Its parsing is mundane; its NAME
+      # RESOLUTION is not. The desk joins referees by exact string and the card
+      # table spells them two ways, so a published full name often does not
+      # match — silently, at refFactor = 1. Most of this file guards the line
+      # that must not be crossed to fix that: matching on surname alone, which
+      # would price a fixture off a colleague's card rate and look correct.
+      - name: Published referee appointments (parsing and name resolution)
+        run: python3 data/test_appointments.py
+
       # The per-fixture training table. Both failures it guards are silent: a
       # missing foul count read as zero fits the model as though the player
       # never fouled, and form leaking backwards makes the fit look far better
@@ -174,6 +183,16 @@ jobs:
       # refFactor = 1 for as long as the desk has existed.
       - name: The referee path, end to end
         run: node scripts/check-referees.mjs
+
+      # And the half of that path the harvested feed cannot supply. The EFL
+      # publishes its officials a week out as prose; API-Football carries them
+      # very late or not at all, so they are ingested into data/appointments.json
+      # and re-applied every time the fixture list is written. Both ways that
+      # can break are silent — the overlay stops being applied, or the card
+      # table's spelling changes and the name no longer joins — and both leave
+      # a fixture reading "appointed" while pricing at a neutral referee.
+      - name: Published appointments reach the desk
+        run: node scripts/check-appointments.mjs
 
       # The suspension watch. Two silent failures: the Premier League strip
       # counted last season's cautions during the rollover — showing players

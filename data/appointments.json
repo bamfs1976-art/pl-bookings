@@ -1,0 +1,140 @@
+{
+ "note": "Referee appointments as published by the competition, laid over the harvested fixture list by data/appointments.py. The harvest wins where it has a value; this fills the nulls.",
+ "sources": [
+  "https://www.efl.com/news/2026/august/11/referee-appointments--14-20-august/"
+ ],
+ "appointments": [
+  {
+   "league": "EFLC",
+   "date": "2026-08-14",
+   "h": "WOL",
+   "a": "BLB",
+   "ko": "20:00",
+   "ref": "Farai Hallam",
+   "refResolved": "Farai Hallam",
+   "resolvedBy": "exact",
+   "source": "https://www.efl.com/news/2026/august/11/referee-appointments--14-20-august/"
+  },
+  {
+   "league": "EFLC",
+   "date": "2026-08-15",
+   "h": "BOL",
+   "a": "PRE",
+   "ko": "12:30",
+   "ref": "Adam Herczeg",
+   "refResolved": "A Herczeg",
+   "resolvedBy": "initial",
+   "source": "https://www.efl.com/news/2026/august/11/referee-appointments--14-20-august/"
+  },
+  {
+   "league": "EFLC",
+   "date": "2026-08-15",
+   "h": "BRC",
+   "a": "MIL",
+   "ko": "15:00",
+   "ref": "Lewis Smith",
+   "refResolved": "Lewis Smith",
+   "resolvedBy": "exact",
+   "source": "https://www.efl.com/news/2026/august/11/referee-appointments--14-20-august/"
+  },
+  {
+   "league": "EFLC",
+   "date": "2026-08-15",
+   "h": "CHA",
+   "a": "DER",
+   "ko": "15:00",
+   "ref": "Ben Speedie",
+   "refResolved": "B Speedie",
+   "resolvedBy": "initial",
+   "source": "https://www.efl.com/news/2026/august/11/referee-appointments--14-20-august/"
+  },
+  {
+   "league": "EFLC",
+   "date": "2026-08-15",
+   "h": "MID",
+   "a": "LIN",
+   "ko": "15:00",
+   "ref": "Bobby Madley",
+   "refResolved": "R Madley",
+   "resolvedBy": "alias",
+   "source": "https://www.efl.com/news/2026/august/11/referee-appointments--14-20-august/"
+  },
+  {
+   "league": "EFLC",
+   "date": "2026-08-15",
+   "h": "NOR",
+   "a": "WBA",
+   "ko": "15:00",
+   "ref": "Tim Robinson",
+   "refResolved": "Tim Robinson",
+   "resolvedBy": "exact",
+   "source": "https://www.efl.com/news/2026/august/11/referee-appointments--14-20-august/"
+  },
+  {
+   "league": "EFLC",
+   "date": "2026-08-15",
+   "h": "POR",
+   "a": "QPR",
+   "ko": "15:00",
+   "ref": "Will Finnie",
+   "refResolved": "W Finnie",
+   "resolvedBy": "initial",
+   "source": "https://www.efl.com/news/2026/august/11/referee-appointments--14-20-august/"
+  },
+  {
+   "league": "EFLC",
+   "date": "2026-08-15",
+   "h": "SHU",
+   "a": "BIR",
+   "ko": "17:30",
+   "ref": "Gavin Ward",
+   "refResolved": "G Ward",
+   "resolvedBy": "initial",
+   "source": "https://www.efl.com/news/2026/august/11/referee-appointments--14-20-august/"
+  },
+  {
+   "league": "EFLC",
+   "date": "2026-08-15",
+   "h": "STK",
+   "a": "SWA",
+   "ko": "15:00",
+   "ref": "Oliver Langford",
+   "refResolved": "O Langford",
+   "resolvedBy": "initial",
+   "source": "https://www.efl.com/news/2026/august/11/referee-appointments--14-20-august/"
+  },
+  {
+   "league": "EFLC",
+   "date": "2026-08-16",
+   "h": "BUR",
+   "a": "WHU",
+   "ko": "16:00",
+   "ref": "Josh Smith",
+   "refResolved": "Josh Smith",
+   "resolvedBy": "exact",
+   "source": "https://www.efl.com/news/2026/august/11/referee-appointments--14-20-august/"
+  },
+  {
+   "league": "EFLC",
+   "date": "2026-08-16",
+   "h": "WAT",
+   "a": "SOU",
+   "ko": "13:30",
+   "ref": "Matt Donohue",
+   "refResolved": "Matthew Donohue",
+   "resolvedBy": "forename",
+   "source": "https://www.efl.com/news/2026/august/11/referee-appointments--14-20-august/"
+  },
+  {
+   "league": "EFLC",
+   "date": "2026-08-17",
+   "h": "CAR",
+   "a": "WRE",
+   "ko": "20:00",
+   "ref": "Andrew Kitchen",
+   "refResolved": "Andrew Kitchen",
+   "resolvedBy": "exact",
+   "source": "https://www.efl.com/news/2026/august/11/referee-appointments--14-20-august/"
+  }
+ ]
+}

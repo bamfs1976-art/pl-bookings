@@ -52,6 +52,7 @@ from pathlib import Path
 
 DATA = Path(__file__).resolve().parent
 sys.path.insert(0, str(DATA))
+import appointments  # noqa: E402
 import build_pl_data  # noqa: E402
 import leagues  # noqa: E402
 
@@ -787,6 +788,16 @@ def emit_fixtures(rows, league, season):
         sys.exit(f"ERROR: {league.name} has no fixture file configured. Add it "
                  "to FIXTURE_FILES, or its fixtures would overwrite another "
                  "desk's list.")
+    # THE APPOINTMENTS THE FEED DOES NOT CARRY. The EFL publishes its
+    # officials a week out as prose; API-Football has them very late or not at
+    # all, so the file this writes read "0 with a referee appointed" for a
+    # round three days away. data/appointments.json is the overlay, ingested
+    # by data/ingest_appointments.py, and it is re-applied HERE — three runs a
+    # day rewrite this file, so anything not re-applied on every write is
+    # erased within hours. It fills nulls only; a harvested name always wins,
+    # because this job is the fresher source and a changed official matters.
+    appointments.apply_to(rows, league.code)
+
     withref = sum(1 for r in rows if r["ref"])
     rounds = sorted({r["r"] for r in rows if r["r"]})
     lines = [

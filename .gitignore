@@ -24,6 +24,14 @@ data/*.json
 !data/eflc_fixtures.js
 # ...and La Liga's referee set, for the same reason as the Championship's.
 !data/laliga_refs.json
+# ...and the published-appointments overlay, which is a HAND-ENTERED SOURCE,
+# not a harvest at all — the officials the competition publishes as prose and
+# no feed carries in time. It is the only copy: data/eflc_fixtures.js is
+# rewritten from API-Football three times a day and re-reads this file every
+# time, so an uncommitted overlay is not a missing convenience, it is a
+# division that silently reverts to pricing every fixture at a neutral referee
+# on the next scheduled run.
+!data/appointments.json
 # ...and La Liga's CLUB REGISTRY, which is not an intermediate at all: it is
 # how that division is defined. Spain's twenty are discovered from the feed
 # rather than declared in leagues.py, so this file is the only record of which

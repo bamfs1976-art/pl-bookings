@@ -84,6 +84,10 @@ jobs:
           node scripts/check-data.mjs
           node scripts/check-eflc.mjs
           node scripts/check-laliga.mjs
+          # This job REWRITES the fixture files, so it is the one that can drop
+          # the published-appointments overlay. Checked here, before the commit
+          # step, rather than only in CI afterwards.
+          node scripts/check-appointments.mjs
 
       - name: Commit if anything changed
         run: |
@@ -92,6 +96,10 @@ jobs:
           for f in data/pl_fixtures.js data/eflc_fixtures.js data/laliga_fixtures.js; do
             [ -f "$f" ] && git add "$f"
           done
+          # appointments.json is hand-ingested, not written here — but staging
+          # it costs nothing and means a manual ingest committed by mistake
+          # without it cannot leave the overlay behind.
+          [ -f data/appointments.json ] && git add data/appointments.json
           # --quiet exits non-zero when there IS something staged, so this is
           # the check, not an error. Three runs a day over a season is ~1,000
           # commits if it pushes unconditionally.
