@@ -610,8 +610,19 @@
     return {
       league: ctx.league,
       title: (ch.name || f.h) + ' v ' + (ca.name || f.a),
+      /* THE CAVEAT TRAVELS WITH THE CARD. A card is read by people who cannot
+         see the desk it came from, so a probability posted without the
+         condition it was computed under is a stronger claim than the model can
+         support: these prices assume expected minutes, and until a team sheet
+         is out that is a guess about who plays. Stated in the subtitle rather
+         than as a new element, because the layout is fixed and a caption that
+         overlaps the heat pill would be worse than no caption.
+         `undefined` means the desk does not track lineups and says nothing;
+         only an explicit false marks the card. */
       subtitle: [ctx.seasonLabel, f.r ? (ctx.roundWord || 'Matchday') + ' ' + f.r : null,
-                 ctx.whenText ? ctx.whenText(f.d) : null].filter(Boolean).join(' · '),
+                 ctx.whenText ? ctx.whenText(f.d) : null,
+                 ctx.lineupsConfirmed === false ? 'lineups unconfirmed' : null]
+                .filter(Boolean).join(' · '),
       refLine: refLineOf(priced, n2),
       heat: m.expected, heatLabel: 'cards',
       heatMid: ctx.heatMid, heatHot: ctx.heatHot,

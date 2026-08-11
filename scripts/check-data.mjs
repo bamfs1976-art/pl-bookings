@@ -26,6 +26,52 @@ assert.ok(Array.isArray(PL_PLAYERS) && PL_PLAYERS.length >= 450,
 assert.equal(CLUBS.length, 20, `expected 20 clubs, got ${CLUBS.length}`);
 assert.ok(Array.isArray(REFS) && REFS.length >= 10,
   `expected >=10 referees, got ${REFS && REFS.length}`);
+
+/* EVERY REFEREE HAS A NAME. The referee is the largest multiplier the desk
+   applies and it is joined by exact name — a blank or whitespace name matches
+   no fixture, so the official silently prices at neutral and the row still
+   counts towards REFS.length above. A referee table can be the right size and
+   useless. */
+const nameless = REFS.filter((r) => !r || typeof r.n !== 'string' || !r.n.trim());
+assert.equal(nameless.length, 0,
+  `${nameless.length} referee row(s) have no name — they can never join to a ` +
+  'fixture, so those matches price at a neutral official');
+
+/* THE RATE IS DERIVABLE FROM THE COUNTS IT CAME FROM.
+   The brief asked for "no player over a 100% card rate". Taken literally that
+   would be `y < 1`, and it is the wrong test: Dário Essugo reads 6.92 yellows
+   per 90 because he was booked twice in 26 minutes. That is arithmetic, not a
+   fault — it is precisely what the low-sample flag and the shrinkage exist to
+   handle, and rejecting it would throw away real rows.
+   What IS a fault is a rate that does not follow from the counts beside it:
+   minutes read as zero, a season total read as a rate, a column misaligned.
+   That is what this catches, and it catches it however large or small the
+   number happens to look. */
+const inconsistent = PL_PLAYERS.filter((p) => {
+  if (p.y == null || !(Number(p.min) > 0)) return false;
+  return Math.abs(p.yc / (p.min / 90) - p.y) > 0.02;      /* published to 3dp */
+});
+assert.equal(inconsistent.length, 0,
+  `${inconsistent.length} player(s) have a card rate that does not follow from ` +
+  `their own yellow count and minutes ` +
+  `(${inconsistent.slice(0, 3).map((p) => `${p.n}: ${p.y} vs ${p.yc}/${p.min}`).join(', ')})`);
+
+/* An impossible rate is only impossible with the minutes to back it. A player
+   over one card per 90 with a full season behind him would be a parsing
+   fault; the same rate over 26 minutes is a footballer having a bad half hour.
+   So the threshold is applied where the sample can carry it — and every such
+   row must be flagged low-sample, because that flag is what stops it topping
+   a ranking it has not earned. */
+const unflagged = PL_PLAYERS.filter((p) => p.y != null && Number(p.y) >= 1 && !p.ls);
+assert.equal(unflagged.length, 0,
+  `${unflagged.length} player(s) card more than once per 90 without a ` +
+  'low-sample flag — either the rate is wrong or the flag is');
+
+/* And the same shape of fault in minutes: a rate computed from zero minutes is
+   not a rate. */
+const ratedNoMinutes = PL_PLAYERS.filter((p) => p.y != null && !(Number(p.min) > 0));
+assert.equal(ratedNoMinutes.length, 0,
+  `${ratedNoMinutes.length} player(s) have a card rate but no minutes`);
 // Promoted-club coverage is counted by CLUB, not by basis. The old assert here
 // wanted 40 EFL rows, which could only ever be met by a Championship harvest
 // that returns full squads — and it doesn't; it returns whoever cleared its

@@ -184,6 +184,13 @@ jobs:
       - name: The referee path, end to end
         run: node scripts/check-referees.mjs
 
+      # The standing rule — no pick before confirmed lineups — and the sort
+      # state screen readers were never told about. Both fail silently: an
+      # unwired toggle looks exactly like a wired one, and a table that
+      # reorders without announcing it looks fine to anyone who can see it.
+      - name: Lineup confirmation and sortable-table state
+        run: node scripts/check-lineups.mjs
+
       # The match-level record: what the desk forecast for a fixture, and what
       # the fixture produced. It is written once before kick-off and never
       # revised, so every way it can drift from the page is silent and

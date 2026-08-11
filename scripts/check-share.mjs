@@ -697,6 +697,11 @@ for (const page of ['eflc.html', 'laliga.html']) {
   };
 
   const sandbox = {
+    /* The desks build their share context from the lineup state, so the slice
+       needs that global. Stubbed as "not confirmed" — the state the caveat is
+       supposed to mark — rather than omitted, which would only prove the
+       slice runs when nobody has marked anything. */
+    LINEUPS: { isConfirmed: () => false },
     $: (sel) => nodes[sel] || null,
     document: { documentElement: { classList: { add() {} } } },
     console: { error() {} },

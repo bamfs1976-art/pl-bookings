@@ -450,6 +450,8 @@
 <script src="assets/save.js"></script>
 <script src="assets/share.js"></script>
 <script src="assets/suspension.js"></script>
+<script src="assets/a11y.js"></script>
+<script src="assets/lineup.js"></script>
 <script src="assets/profile.js"></script>
 <script>
 (function () {
@@ -919,6 +921,7 @@
         var s = o.querySelector('.arr'); if (s) s.remove();
       });
       th.insertAdjacentHTML('beforeend', ' <span class="arr">' + (sortDir > 0 ? '▲' : '▼') + '</span>');
+      if (typeof PLDA11y !== 'undefined') PLDA11y.markSorted(th, sortDir);
       renderPlayers();
     });
   });
@@ -1002,6 +1005,7 @@
       var k = th.getAttribute('data-sort');
       if (clubSort.k === k) clubSort.d = -clubSort.d;
       else { clubSort.k = k; clubSort.d = (k === 'name' || k === 'basis') ? 1 : -1; }
+      if (typeof PLDA11y !== 'undefined') PLDA11y.syncSorted('#tblClubs', clubSort.k, clubSort.d);
       renderClubs();
     });
   });
@@ -1047,6 +1051,7 @@
       var k = th.getAttribute('data-sort');
       if (refSort.k === k) refSort.d = -refSort.d;
       else { refSort.k = k; refSort.d = k === 'n' ? 1 : -1; }
+      if (typeof PLDA11y !== 'undefined') PLDA11y.syncSorted('#tblRefs', refSort.k, refSort.d);
       renderRefs();
     });
   });
@@ -1065,6 +1070,12 @@
     try { localStorage.setItem(NOTE_KEY, JSON.stringify(notes)); } catch (e) {}
     renderPlayers();
   }
+
+  /* The standing rule — no pick before confirmed lineups — made visible.
+     Keyed per desk so a La Liga mark cannot claim a Championship fixture. */
+  var LINEUPS = (typeof PLDLineup !== 'undefined' && PLDLineup)
+    ? PLDLineup.create({ key: 'laliga_desk_lineups_v1' })
+    : null;
 
   var REF_KEY = 'laliga_desk_refs_v1';
   var myRefs = {};
@@ -1311,7 +1322,7 @@
         + PLDProfile.crest(ch) + '<b>' + esc(f.h) + '</b>'
         + '<span class="faint">v</span>'
         + PLDProfile.crest(ca) + '<b>' + esc(f.a) + '</b>'
-        + derbyTag(x) + thinTag(x)
+        + derbyTag(x) + thinTag(x) + (LINEUPS ? LINEUPS.tag(f.id) : '')
         + '</div>'
         + '<div class="fx-when">' + esc(whenText(f.d)) + '</div>'
         + '</div>'
@@ -1325,6 +1336,7 @@
         + '<div class="fx-ref">' + refCell + '</div>'
         + '<div class="fx-cands">' + candidateList(x, ch, ca) + '</div>'
         + '<div class="mkts">'
+        + (LINEUPS ? LINEUPS.control(f.id) : '')
         + '<button class="mkt fx-share" type="button" data-share="' + f.id + '">\u2b07 Share match</button>'
         + '<span class="mkt">Home <b>' + n1(x.m.expectedHome) + '</b></span>'
         + '<span class="mkt">Away <b>' + n1(x.m.expectedAway) + '</b></span>'
@@ -1414,7 +1426,11 @@
   function shareMatch(id, btn) {
     var fx = FIXTURES.filter(function (f) { return String(f.id) === String(id); })[0];
     if (!fx) return;
-    var spec = S.deskMatchSpec(priceFixture(fx), SHARE_CTX);
+    /* The lineup state is per fixture, so the context is built per share
+       rather than taken from the static SHARE_CTX. */
+    var ctx = Object.assign({}, SHARE_CTX,
+      LINEUPS ? { lineupsConfirmed: LINEUPS.isConfirmed(fx.id) } : {});
+    var spec = S.deskMatchSpec(priceFixture(fx), ctx);
     shareBusy(btn, true);
     S.matchCard(spec)
       .then(function (b) { S.download(b, spec.filename); })
@@ -1743,12 +1759,29 @@
     + ', average risk ' + n2(CAL.avgRisk) + '.' + calibrationNote();
 
   $('#csvBtn').addEventListener('click', exportCsv);
+
+  /* Both grids draw the same card, so both carry the lineup control and both
+     need it wired — the lesson the share buttons taught. */
+  if (LINEUPS) {
+    LINEUPS.wire($('#fxList'), renderFixtures);
+    LINEUPS.wire($('#mdList'), renderMatchday);
+  }
+
   renderMatchday();
   renderSuspension();
   renderPlayers();
   renderFixtures();
   renderClubs();
   renderRefs();
+
+  /* The tables arrive already sorted, so the initial state has to be
+     announced too — otherwise the first thing a screen reader meets is a
+     sorted table insisting nothing is sorted. */
+  if (typeof PLDA11y !== 'undefined') {
+    PLDA11y.syncSorted('#tblPlayers', sortKey, sortDir);
+    PLDA11y.syncSorted('#tblClubs', clubSort.k, clubSort.d);
+    PLDA11y.syncSorted('#tblRefs', refSort.k, refSort.d);
+  }
 
   /* ---- app shell -------------------------------------------------------- */
   /* Sidebar, breadcrumb and mobile bottom bar, matching the Premier League
