@@ -1,4 +1,4 @@
-La Liga harvest — run 91
+La Liga harvest — run 92
 == discover ==
 La Liga: API-Football league 140, season 2026
 
@@ -99,7 +99,7 @@ players: 783  by basis: LL=673, SEG=110
 clubs with players: 20 of 20
 club rates from match records: 17 of 20
 season cautions (2026-27): none yet — the season has not been harvested
-referees: 27
+referees: 20
 RESULT: WRITTEN laliga_data.js
 == referee-join ==
   merged 20 abbreviated referee names into their full spelling:
