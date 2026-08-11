@@ -68,3 +68,19 @@ jobs:
 
       - name: Grade the ones that have been played
         run: node scripts/accas.mjs grade
+
+      # THE MATCH-LEVEL RECORD. The step above grades the desk on PLAYERS. The
+      # numbers a fixture card leads with are match numbers — booking heat, the
+      # over lines, both teams carded, booking points — and until now not one of
+      # them was written down anywhere, so no claim about a fixture could be
+      # checked against the fixture. Same discipline as the player pool:
+      # write-once before kick-off, settled from the real card counts after.
+      #
+      # Cheap: ~32 rows a matchday against the player pool's ~500, and the
+      # grading is one API-Football call per fixture, the same call the player
+      # grader already makes.
+      - name: Log the round's match forecasts
+        run: node scripts/accas.mjs match-predict
+
+      - name: Grade the matches that have finished
+        run: node scripts/accas.mjs match-grade

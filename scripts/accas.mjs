@@ -30,9 +30,20 @@
  * legs and compares them to what the desk would show.
  *
  * Usage:
- *   node scripts/accas.mjs build     # write the next matchday's accas
- *   node scripts/accas.mjs settle    # fill in results, close finished accas
- *   node scripts/accas.mjs verify    # print the legs without writing anything
+ *   node scripts/accas.mjs build          # write the next matchday's accas
+ *   node scripts/accas.mjs settle         # fill in results, close finished accas
+ *   node scripts/accas.mjs verify         # print the legs without writing anything
+ *   node scripts/accas.mjs predict        # log every player forecast for the round
+ *   node scripts/accas.mjs grade          # settle those against real team sheets
+ *   node scripts/accas.mjs match-predict  # log every MATCH forecast for the round
+ *   node scripts/accas.mjs match-grade    # settle those against real card counts
+ *   node scripts/accas.mjs matches        # print the match record without writing
+ *
+ * THREE UNITS OF RECORD, ONE PRICING PATH. An acca is a recommendation, a
+ * player forecast is a probability, and a match forecast is the board a
+ * fixture card leads with — different rows, different tables, but every one of
+ * them priced by the same functions in this file so they cannot disagree with
+ * each other or with the desk.
  *
  * Env: SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, API_FOOTBALL_KEY.
  * Without them `verify` still works; build and settle no-op with a message
@@ -218,9 +229,163 @@ function candidatesFor(league) {
   return { round, cands, pool };
 }
 
+/* ---- the MATCH-level record -------------------------------------------
+ *
+ * plb_card_predictions grades the desk on players. The numbers a fixture card
+ * LEADS with are not player numbers — booking heat, the over lines, both teams
+ * carded, booking points — and none of them was written down anywhere, so none
+ * could be checked against a real match. These build that record.
+ *
+ * PRICED THE WAY THE PAGE PRICES, or the record grades something nobody saw:
+ *   - the referee factor, from the appointed official's own card rate;
+ *   - the derby boost, which the pages apply per player and keep OUT of the
+ *     displayed referee ×figure;
+ *   - the FULL squad probability vector, not the eight the card lists —
+ *     teamCardMarkets is a Poisson-binomial over everyone who might play.
+ *
+ * THE DERBY LIST IS READ OUT OF THE PAGE. Each desk declares its own DERBIES
+ * inline (eflc.html, laliga.html; the Premier League's live in
+ * assets/plmodel.js), and a second copy here would be a second copy: the pages
+ * are the published source, so this extracts theirs rather than restating it.
+ * A page whose block cannot be found is a loud failure, not a quiet zero.
+ */
+const DERBY_PAGE = { EFLC: 'eflc.html', LL: 'laliga.html', PL: 'assets/plmodel.js' };
+const DERBY_BOOST = { EFLC: 1.08, LL: 1.08, PL: 1.15 };   /* as each page applies */
+
+function derbySet(code) {
+  const rel = DERBY_PAGE[code];
+  if (!rel) return new Set();
+  const src = readFileSync(join(root, rel), 'utf8');
+  const i = src.indexOf('DERBIES = [');
+  if (i < 0) throw new Error(`${rel}: no DERBIES block — the derby boost cannot be reproduced`);
+  const end = src.indexOf('];', i);
+  if (end < 0) throw new Error(`${rel}: DERBIES block is unterminated`);
+  const body = src.slice(src.indexOf('[', i), end + 1);
+  let pairs;
+  try { pairs = new Function(`return ${body};`)(); }
+  catch (e) { throw new Error(`${rel}: DERBIES did not parse (${e.message})`); }
+  return new Set(pairs.map((d) => d.slice().sort().join('|')));
+}
+
+/* One forecast row per fixture in the next round, in the shape the table
+   stores. Pure: no network, no writes — `matches` prints exactly this. */
+function matchesFor(league) {
+  const d = loadConsts(league.data, [league.players, 'REFS']);
+  const f = loadConsts(league.fixtures, [league.fx]);
+  const players = d[league.players] || [];
+  const fixtures = f[league.fx] || [];
+  if (!players.length || !fixtures.length) return { round: null, rows: [] };
+  const pr = priors(players);
+  for (const p of players) p._y90 = shrunk(p, pr);
+
+  const round = nextRound(fixtures);
+  if (round == null) return { round: null, rows: [] };
+
+  const refs = d.REFS || [];
+  const avgs = leagueAverages(refs);
+  const leagueRed = C.leagueRedRate(refs);
+  const derbies = derbySet(league.code);
+  const boost = DERBY_BOOST[league.code] || 1;
+
+  const rows = [];
+  for (const fx of fixtures.filter((x) => x.r === round)) {
+    const ref = fx.ref ? refs.find((r) => r.n === fx.ref) : null;
+    /* An official appointed but absent from the card table prices at 1 — the
+       same as no official. `ref_carded` is what tells the two apart later,
+       and they are different findings for a refit. */
+    const rf = ref ? C.refCardFactor(ref, avgs, {}) : 1;
+    const derby = derbies.has([fx.h, fx.a].sort().join('|'));
+    const factor = rf * (derby ? boost : 1);
+    const home = sideTop(players, fx.h, factor).map((c) => c.prob);
+    const away = sideTop(players, fx.a, factor).map((c) => c.prob);
+    if (!home.length && !away.length) continue;          // no rated squad either side
+
+    /* The desk's own two calls, with the desk's own lines (eflc.html:1096-1103).
+       Not re-derived from the underlying distribution functions: going through
+       the same entry points is what stops the record and the page drifting. */
+    const m = C.teamCardMarkets(home, away, [3.5, 4.5, 5.5]);
+    /* Reds come from the appointed official's own rate where there is one and
+       the match-weighted league rate where there is not — the rule both pages
+       follow, so the yellow and red halves of a points line agree. */
+    const lamRed = (ref && ref.red != null) ? Number(ref.red) : leagueRed;
+    const bp = C.bookingPointsMarkets(home, away, lamRed, [35.5, 45.5, 55.5]);
+    rows.push({
+      season: SEASON, league: league.code, fixture_id: fx.id, matchday: round,
+      kickoff: fx.d || null, home: fx.h, away: fx.a,
+      exp_cards: m.expected, exp_cards_home: m.expectedHome, exp_cards_away: m.expectedAway,
+      p_over_3_5: r4(m.over[3.5]), p_over_4_5: r4(m.over[4.5]), p_over_5_5: r4(m.over[5.5]),
+      p_both_carded: r4(m.bothCarded), p_both_two: r4(m.bothTwo),
+      exp_points: bp.expected,
+      p_points_over_35_5: r4(bp.over[35.5]),
+      p_points_over_45_5: r4(bp.over[45.5]),
+      p_points_over_55_5: r4(bp.over[55.5]),
+      referee: fx.ref || null, ref_factor: r4(rf), ref_carded: !!ref, derby,
+      rated_home: home.length, rated_away: away.length,
+      model_version: MODEL_VERSION
+    });
+  }
+  return { round, rows };
+}
+
+/* Card counts per side for one finished fixture, or null while it is still
+ * being played. Deliberately NOT afEvents(): that returns the set of booked
+ * NAMES, which answers "was this player booked" and cannot answer "how many
+ * cards did the home side get" — the question every match-level line asks.
+ *
+ * A second yellow is counted on its own. API-Football spells it "Second
+ * Yellow card"; under the desk's own convention (10 a yellow, 25 a red) the
+ * dismissal scores the red and the first yellow has already scored, so it must
+ * not also count as a fresh yellow. Feeds that emit a plain Yellow followed by
+ * a plain Red for the same dismissal will read as 10 + 25 either way, which is
+ * the same number — the raw counts are stored so any of this can be recomputed
+ * later without going back to the API.
+ */
+async function afCards(fixtureId) {
+  const res = await fetch(`https://v3.football.api-sports.io/fixtures?id=${fixtureId}`, {
+    headers: { 'x-apisports-key': AF_KEY }
+  });
+  if (!res.ok) throw new Error(`API-Football ${res.status}`);
+  const j = await res.json();
+  const errs = j && j.errors;
+  if (errs && (Array.isArray(errs) ? errs.length : Object.keys(errs).length)) {
+    throw new Error(`API-Football refused: ${JSON.stringify(errs)}`);
+  }
+  const fx = (j.response || [])[0];
+  if (!fx) return null;
+  const st = ((fx.fixture || {}).status || {}).short;
+  if (!['FT', 'AET', 'PEN'].includes(st)) return null;
+  const homeId = ((fx.teams || {}).home || {}).id;
+  const out = {
+    yellows_home: 0, yellows_away: 0, reds_home: 0, reds_away: 0,
+    second_yellows_home: 0, second_yellows_away: 0
+  };
+  for (const e of fx.events || []) {
+    if (e.type !== 'Card') continue;
+    const detail = String(e.detail || '');
+    const side = ((e.team || {}).id === homeId) ? 'home' : 'away';
+    if (/second\s*yellow/i.test(detail)) out['second_yellows_' + side]++;
+    else if (/yellow/i.test(detail)) out['yellows_' + side]++;
+    else if (/red/i.test(detail)) out['reds_' + side]++;
+  }
+  return out;
+}
+
+/* The outcome, on the desk's own terms. A dismissal is a red however it was
+   earned, so a second yellow counts towards both the card count and the red
+   points — the first yellow has already been counted as a yellow. */
+function outcomeTotals(c) {
+  const yellows = c.yellows_home + c.yellows_away;
+  const reds = c.reds_home + c.reds_away + c.second_yellows_home + c.second_yellows_away;
+  return {
+    cards_total: yellows + reds,
+    points_total: C.YELLOW_POINTS * yellows + C.RED_POINTS * reds
+  };
+}
+
 const fair = (p) => 1 / p;
 const priced = (p) => fair(p) * (1 - C.TYPICAL_CARD_MARGIN);
 const r2 = (v) => Math.round(v * 100) / 100;
+const r4 = (v) => Math.round(Number(v) * 10000) / 10000;
 
 function buildAcca(id, code, round, cands) {
   const legs = cands.slice(0, LEGS);
@@ -555,10 +720,98 @@ async function cmdGrade() {
     + `${pending ? `, ${pending} fixture(s) not finished` : ''}.`);
 }
 
+/* ---- the match record: write, then settle ------------------------------ */
+
+/* Write-once, exactly like cmdPredict: `ignore-duplicates`, never merge. A row
+   is the record of what was PUBLISHED, and an hourly job that revised its own
+   forecast as team news landed would grade the model on its last guess. */
+async function cmdMatchPredict() {
+  if (!SERVICE_KEY) { console.log('No SUPABASE_SERVICE_ROLE_KEY — nothing written.'); return; }
+  let total = 0;
+  for (const L of LEAGUES) {
+    const { round, rows } = matchesFor(L);
+    if (round == null || !rows.length) { console.log(`${L.code}: no open round.`); continue; }
+    const now = Date.now();
+    const fresh = rows.filter((r) => !r.kickoff || new Date(r.kickoff).getTime() > now);
+    const late = rows.length - fresh.length;
+    if (!fresh.length) { console.log(`${L.code}: round ${round} has all kicked off.`); continue; }
+    const res = await fetch(`${rest('plb_match_predictions')}?on_conflict=season,league,fixture_id`, {
+      method: 'POST',
+      headers: { ...H, Prefer: 'resolution=ignore-duplicates,return=minimal' },
+      body: JSON.stringify(fresh)
+    });
+    if (!res.ok) throw new Error(`plb_match_predictions: ${res.status} ${await res.text()}`);
+    total += fresh.length;
+    console.log(`${L.code}: round ${round} — ${fresh.length} match forecast(s) logged`
+      + (late ? ` (${late} skipped, already kicked off)` : ''));
+  }
+  console.log(`\n${total} match forecast(s) offered.`);
+}
+
+/* Settle from the real match record. Only ever writes the outcome columns, so
+   it cannot touch a forecast. */
+async function cmdMatchGrade() {
+  if (!SERVICE_KEY || !AF_KEY) {
+    console.log('Need SUPABASE_SERVICE_ROLE_KEY and API_FOOTBALL_KEY to grade matches. Nothing done.');
+    return;
+  }
+  const q = `?settled_at=is.null&kickoff=lt.${encodeURIComponent(new Date().toISOString())}`
+    + '&select=season,league,fixture_id,home,away&limit=2000';
+  const open = await (await fetch(`${rest('plb_match_predictions')}${q}`, { headers: H })).json();
+  if (!open.length) { console.log('No match to grade.'); return; }
+  let graded = 0, pending = 0;
+  for (const r of open) {
+    let counts;
+    try { counts = await afCards(r.fixture_id); }
+    catch (e) { console.log(`  fixture ${r.fixture_id}: ${e.message} — left open`); continue; }
+    if (!counts) { pending++; continue; }                    // not finished yet
+    const totals = outcomeTotals(counts);
+    const key = `season=eq.${encodeURIComponent(r.season)}&league=eq.${encodeURIComponent(r.league)}`
+      + `&fixture_id=eq.${r.fixture_id}`;
+    const res = await fetch(`${rest('plb_match_predictions')}?${key}`, {
+      method: 'PATCH', headers: { ...H, Prefer: 'return=minimal' },
+      body: JSON.stringify({ ...counts, ...totals, settled_at: new Date().toISOString() })
+    });
+    if (res.ok) {
+      graded++;
+      console.log(`  ${r.home} v ${r.away}: ${totals.cards_total} cards, ${totals.points_total} points`);
+    }
+  }
+  console.log(`\nGraded ${graded} match(es)${pending ? `, ${pending} not finished` : ''}.`);
+}
+
+/* Print the record that WOULD be written, without writing it — the match-level
+   twin of `verify`, and the thing to run before trusting a first refit. */
+function cmdMatches() {
+  for (const L of LEAGUES) {
+    const { round, rows } = matchesFor(L);
+    if (round == null || !rows.length) { console.log(`${L.code}: no open round.\n`); continue; }
+    console.log(`${L.code} — matchday ${round}, ${rows.length} fixtures`);
+    for (const r of rows) {
+      console.log(`  ${r.home} v ${r.away.padEnd(4)} heat ${String(r.exp_cards).padStart(5)}  `
+        + `o3.5 ${pctStr(r.p_over_3_5)}  o4.5 ${pctStr(r.p_over_4_5)}  BTC ${pctStr(r.p_both_carded)}  `
+        + `pts ${String(r.exp_points).padStart(5)}  `
+        + (r.referee ? `${r.referee} x${r.ref_factor}` : 'no referee')
+        + (r.derby ? '  derby' : ''));
+    }
+    console.log('');
+  }
+}
+const pctStr = (p) => (p * 100).toFixed(0).padStart(3) + '%';
+
 /* Exported so guards can RUN this file rather than pattern-match it. Several
    assertions in scripts/check-referees.mjs have been satisfied by the wrong
    text; executing the real function is the only way that cannot happen. */
-export { candidatesFor, collect, buildAcca, wasBooked, LEAGUES, MODEL_VERSION, SHRINK_MATCHES };
+export {
+  candidatesFor, collect, buildAcca, wasBooked, LEAGUES, MODEL_VERSION, SHRINK_MATCHES,
+  matchesFor, outcomeTotals, derbySet, sideTop, priors, shrunk, leagueAverages, loadConsts
+};
+/* Exported as a lookup rather than the object, so a guard has to ask about a
+   league that exists instead of reading `undefined` off a typo and passing. */
+export function DERBY_BOOST_FOR(code) {
+  if (!(code in DERBY_BOOST)) throw new Error(`no derby boost declared for ${code}`);
+  return DERBY_BOOST[code];
+}
 
 /* Only run a command when invoked as a script. Importing it must not fire the
    CLI — a guard that imported this file would otherwise execute `verify`, or
@@ -571,6 +824,9 @@ if (invokedDirectly) {
   else if (cmd === 'settle') await cmdSettle();
   else if (cmd === 'predict') await cmdPredict();
   else if (cmd === 'grade') await cmdGrade();
+  else if (cmd === 'match-predict') await cmdMatchPredict();
+  else if (cmd === 'match-grade') await cmdMatchGrade();
+  else if (cmd === 'matches') cmdMatches();
   else if (cmd === 'sql') cmdSql();
   else cmdVerify();
 }

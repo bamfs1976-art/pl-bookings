@@ -184,6 +184,13 @@ jobs:
       - name: The referee path, end to end
         run: node scripts/check-referees.mjs
 
+      # The match-level record: what the desk forecast for a fixture, and what
+      # the fixture produced. It is written once before kick-off and never
+      # revised, so every way it can drift from the page is silent and
+      # permanent — a season of rows grading a model nobody was shown.
+      - name: The match record agrees with the desks
+        run: node scripts/check-match-record.mjs
+
       # And the half of that path the harvested feed cannot supply. The EFL
       # publishes its officials a week out as prose; API-Football carries them
       # very late or not at all, so they are ingested into data/appointments.json
