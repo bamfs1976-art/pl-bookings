@@ -1397,4 +1397,75 @@ t('a finished fixture is never polled for, and a scheduleless one cannot be', ()
   assert.equal(lc.anyLive(null, ko), false);
 });
 
+
+
+/* ---- charts (assets/charts.js) ----
+   Pure SVG string builders, so they are testable without a DOM. What is
+   pinned here is not the geometry — it is the refusals. A chart drawn from
+   too little data is worse than no chart, because a chart asserts a shape. */
+const ch = require('../assets/charts.js');
+
+console.log('charts: refusing to draw what is not there');
+t('a sparkline needs two points before it is a trend', () => {
+  assert.equal(ch.sparkline([]), '');
+  assert.equal(ch.sparkline([{ k: 'GW1', v: 1 }]), '');
+  assert.ok(ch.sparkline([{ k: 'GW1', v: 1 }, { k: 'GW2', v: 2 }]).startsWith('<svg'));
+});
+t('a reliability curve needs a populated bucket', () => {
+  assert.equal(ch.reliability([]), '');
+  assert.equal(ch.reliability([{ pMean: 0.3, oFreq: 0.3, n: 0 }]), '');
+  assert.equal(ch.reliability([{ pMean: null, oFreq: 0.3, n: 9 }]), '');
+});
+t('a strip needs a spread — identical officials are not a distribution', () => {
+  const same = [{ n: 'A', ypg: 3.5 }, { n: 'B', ypg: 3.5 }, { n: 'C', ypg: 3.5 }];
+  assert.equal(ch.strip(same), '');
+  assert.ok(ch.strip([{ n: 'A', ypg: 2 }, { n: 'B', ypg: 3.5 }, { n: 'C', ypg: 5 }]).startsWith('<svg'));
+});
+t('a trend needs three seasons', () => {
+  assert.equal(ch.trend([{ k: '1', v: 1 }, { k: '2', v: 2 }]), '');
+});
+
+console.log('charts: every chart carries its own words');
+t('the reliability curve says which way it is wrong, not just how much', () => {
+  // Model says 20%, reality 40% — under-confident, twice over.
+  const svg = ch.reliability([{ pMean: 0.2, oFreq: 0.4, n: 100 }, { pMean: 0.6, oFreq: 0.62, n: 50 }]);
+  assert.match(svg, /role="img"/);
+  assert.match(svg, /under-confident/);
+  assert.match(svg, /150 graded forecasts/);
+});
+t('an over-confident model is described as over-confident', () => {
+  const svg = ch.reliability([{ pMean: 0.6, oFreq: 0.2, n: 80 }]);
+  assert.match(svg, /over-confident/);
+});
+t('the strip names the appointed officials in its summary', () => {
+  const svg = ch.strip([{ n: 'C Kavanagh', ypg: 3.51, on: true },
+    { n: 'M Oliver', ypg: 3.19 }, { n: 'J Brooks', ypg: 4.32 }]);
+  assert.match(svg, /Appointed this round: C Kavanagh at 3\.51/);
+  assert.match(svg, /class="chart-pt on"/);
+});
+t('the season trend names its peak', () => {
+  const svg = ch.trend([{ k: '92/93', v: 1.63 }, { k: '23/24', v: 4.17 }, { k: '25/26', v: 3.75 }]);
+  assert.match(svg, /highest 4\.17 in 23\/24/);
+});
+t('escapes anything that came from data', () => {
+  const svg = ch.strip([{ n: '<script>x</script>', ypg: 2, on: true },
+    { n: 'B', ypg: 3 }, { n: 'C', ypg: 4 }]);
+  assert.ok(!svg.includes('<script>'));
+  assert.match(svg, /&lt;script&gt;/);
+});
+
+console.log('charts: the step line');
+t('cumulative cautions step, they do not interpolate', () => {
+  // A player on 1 card who picks up a second must not be drawn passing
+  // through 1.5 — the diagonal would say he was booked gradually.
+  const svg = ch.sparkline([{ k: 'GW1', v: 1 }, { k: 'GW2', v: 2 }]);
+  assert.match(svg, /H[\d.]+V[\d.]+/);          // horizontal then vertical
+  assert.ok(!/L\d/.test(svg), 'no straight diagonal segment');
+});
+t('a flat series still draws and reports no change', () => {
+  const svg = ch.sparkline([{ k: 'GW1', v: 0 }, { k: 'GW2', v: 0 }]);
+  assert.ok(svg.startsWith('<svg'));
+  assert.match(svg, /0 cautions/);
+});
+
 console.log(`\n${passed} tests passed`);

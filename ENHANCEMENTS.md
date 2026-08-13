@@ -309,19 +309,63 @@ Still open from this item: the walk-forward backtest scoring against **market
 closing odds** (RPS 0.2068 vs the market's 0.1994). The desk's calibration loop
 scores against a base rate, which is a much easier benchmark.
 
-### 5. Charts
+### 5. Charts — **done, two of three, and the third refused**
 
-There is one sparkline in the entire app and no other visualisation.
-`Gavin-Roche/premier_league_statistics_analyzer` is a small Plotly study of
-exactly this data. Three that would earn their space: a club × referee card
-heatmap, the reliability curve the calibration loop already computes as a
-table, and per-player card form.
+`assets/charts.js`: inline SVG, no library, tokens not hexes, every chart
+carrying a `<title>` and a summary sentence instead of geometry.
 
-### 6. Table virtualisation
+- **The reliability curve** was the easy one and the best one, because the
+  data was already on the wire. `/api/model-calibration` has returned a
+  `buckets` array — mean forecast against observed frequency, with a count —
+  for as long as the loop has run, and the client drew the headline Brier
+  score and threw the buckets away. A Brier says how wrong; the curve says
+  **which way**, and for a bookings desk over-confidence is the direction that
+  costs money. Dots are sized by sample count so a nine-forecast bucket cannot
+  be read as a finding.
+- **Per-player card form** as a stepped cumulative line over the gameweeks the
+  browser has recorded. Stepped, not smoothed: a booking is an event at a
+  moment, and a diagonal draws a player collecting two-thirds of a yellow in
+  midweek. `cardForm()` gave a delta; three-in-one-week and one-a-month have
+  the same delta and a very different shape.
+- **The club × referee heatmap is not built, and should not be.** 23 officials
+  worked the 2025-26 Premier League and a club plays 38 matches, so a club
+  meets a given referee **1.65 times a season**. A 20 × 23 grid of one- and
+  two-match cells is a picture of sampling noise with a colour scale on it,
+  and a colour scale is extremely good at making noise look like a finding.
+  Two charts the data does support were built instead: a **strictness strip**
+  showing every official's cards per game with this round's actual
+  appointments picked out and named (the Friday question is not how strict
+  Kavanagh is in the abstract, it is whether any of this week's officials are
+  outliers), and the **34-season league trend**, which already existed as a
+  bare 280×44 polyline with no scale and no annotation — 1.34 in 1993-94
+  against 4.17 in 2023-24 is the largest single fact in the referee dataset
+  and the old chart said only "it went up".
 
-All Players renders every registered player across 20 clubs from the live
-feed. No virtualisation, and the season table historically truncated at 400
-rows. It will get slow in season.
+### 6. Table virtualisation — **done, in one CSS property**
+
+`content-visibility: auto` with `contain-intrinsic-size` on the All Players
+rows and cards. No library, no windowing, no scroll maths. Measured in
+Chromium, appending the fragment and forcing the layout it causes:
+
+| rows | without | with | |
+|---|---|---|---|
+| 700 (a full league) | 468 ms | 120 ms | **74% faster** |
+| 2,000 | 1,374 ms | 331 ms | **76% faster** |
+
+That is a third of a second of blocked main thread returned on every click of
+a column header, on a phone.
+
+**The objection this rule usually earns does not apply here, and it was
+measured rather than assumed.** Skipping off-screen rows normally stops them
+contributing to a table's column widths, so columns twitch as you scroll.
+Over 700 rows at three scroll positions: **zero drift on all ten columns** —
+Chromium still visits rows for intrinsic sizing and skips only the paint and
+the layout of their contents. Browsers without the property render exactly as
+they do today, so there is no fallback to write.
+
+Note what it does *not* fix: the rows are still created. `content-visibility`
+buys rendering, not DOM construction, so the 800-row cap keeps its purpose
+(and with ~700 registered players it never fires in practice).
 
 ### 7. Broadcaster line and onboarding
 

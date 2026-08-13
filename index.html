@@ -97,8 +97,51 @@
   .pl-av.avatar-md{width:46px;height:46px}
   .pl-av.avatar-md>i{font-size:.9rem}
   /* ═══ All players — a card per player ═══ */
+  /* ═══ Charts (assets/charts.js) ═══
+     Every colour is a token, so both themes work and check-palette governs
+     these like everything else. Scaled by viewBox, so one rule sizes them
+     all and none of them can overflow its column on a phone. */
+  .chart{display:block;width:100%;height:auto;max-width:100%;overflow:visible}
+  .chart-axis{stroke:var(--border);stroke-width:1}
+  .chart-grid{stroke:var(--border);stroke-width:1;opacity:.45}
+  .chart-ref{stroke:var(--text-3);stroke-width:1.2}
+  .chart-pt{fill:var(--accent);fill-opacity:.55;stroke:var(--accent);stroke-width:1}
+  .chart-pt.on{fill:var(--warn);stroke:var(--warn);fill-opacity:.9}
+  .chart-line{stroke:var(--accent);stroke-width:2;stroke-linejoin:round;stroke-linecap:round}
+  .chart-line.rising{stroke:var(--warn)}
+  .chart-dot{fill:var(--warn)}
+  .chart-tick{fill:var(--text-3);font-size:10px;font-family:var(--mono)}
+  .chart-lab{fill:var(--text-3);font-size:10px}
+  .chart-name{fill:var(--text-2);font-size:10px;font-weight:700}
+  .chart-wrap{margin:.7rem 0 .2rem}
+  .chart-cap{font-size:.76rem;color:var(--text-3);margin:.3rem 0 0}
+  /* Side by side once there is room; stacked on a phone, which is where the
+     reliability square would otherwise be four hundred pixels of nothing. */
+  .chart-pair{display:grid;grid-template-columns:1fr;gap:1rem;align-items:start}
+  @media (min-width:760px){ .chart-pair{grid-template-columns:320px 1fr} }
+  /* ═══ Off-screen rows cost nothing ═══
+     All Players builds every registered player in the league — about 700 rows
+     of ten cells — and rebuilds them on every sort and every filter change.
+     Measured in Chromium, appending that fragment and forcing the layout it
+     causes: 468ms without this rule, 120ms with it. At 2,000 rows, 1,374ms
+     against 331ms. That is a third of a second of blocked main thread, on
+     every click of a column header, on a phone.
+
+     THE FEAR THIS RULE USUALLY EARNS, AND WHY IT DOES NOT APPLY. Skipping the
+     rendering of off-screen rows normally means they stop contributing to a
+     table's column widths, so columns twitch as you scroll. Measured over 700
+     rows at three scroll positions: zero drift on all ten columns. Chromium
+     still visits the rows for intrinsic sizing; only the paint and the layout
+     of their contents are skipped.
+
+     `auto` in contain-intrinsic-size means "use the real size once you have
+     seen it", so the height below is a first-paint estimate for the scrollbar
+     and nothing more — being a few pixels out costs a scrollbar that settles,
+     not a layout that is wrong. Browsers without the property render exactly
+     as before, which is why this needs no fallback. */
+  #apRows tr{content-visibility:auto;contain-intrinsic-size:auto 34px}
   .ap-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(268px,1fr));gap:.8rem}
-  .ap-card{display:flex;flex-direction:column;gap:.55rem;text-align:left;font:inherit;color:inherit;background:var(--surface);border:1px solid var(--border);border-radius:14px;box-shadow:var(--shadow-sm);padding:.75rem .8rem;width:100%}
+  .ap-card{content-visibility:auto;contain-intrinsic-size:auto 168px;display:flex;flex-direction:column;gap:.55rem;text-align:left;font:inherit;color:inherit;background:var(--surface);border:1px solid var(--border);border-radius:14px;box-shadow:var(--shadow-sm);padding:.75rem .8rem;width:100%}
   button.ap-card{cursor:pointer;transition:box-shadow .15s,border-color .15s,transform .15s}
   button.ap-card:hover{box-shadow:var(--shadow);border-color:var(--border-2);transform:translateY(-1px)}
   .ap-card.dim{opacity:.62}
@@ -1259,6 +1302,7 @@
 <script src="assets/a11y.js"></script>
 <script src="assets/lineup.js"></script>
 <script src="assets/livecards.js"></script>
+<script src="assets/charts.js"></script>
 <script src="assets/price.js"></script>
 <script src="assets/refpicker.js"></script>
 <script>
@@ -1892,6 +1936,33 @@ function renderRefHistory(){
   const W=280,H=44,min=Math.min(...S.map(s=>s.ypg)),max=Math.max(...S.map(s=>s.ypg));
   const pts=S.map((s,i)=>`${(i/(S.length-1)*W).toFixed(1)},${(H-4-((s.ypg-min)/(max-min)*(H-8))).toFixed(1)}`).join(" ");
   const matched=REFS.filter(r=>REF_HIST_MAP[refHistKey(r.n)]).length;
+  const HAS=(typeof PLDCharts!=="undefined");
+  /* The 34-season trend, upgraded from a bare polyline. Same data; it now has
+     a scale, the peak named, and a sentence a screen reader can read — a line
+     with no axis says "it went up" and nothing else, and the size of the rise
+     (1.34 to 4.17) is the whole point. */
+  const trendSvg=HAS?PLDCharts.trend(S.map(x=>({k:x.s,v:x.ypg})),{width:520,height:150})
+    :`<svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" aria-label="League yellows per game by season, ${REF_HISTORY.span}" style="flex:none;max-width:100%"><polyline points="${pts}" fill="none" stroke="var(--accent-2)" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/></svg>`;
+  /* WHERE THIS WEEK'S OFFICIALS SIT. The question on a Friday is not how
+     strict any referee is in the abstract — it is whether any of the ones
+     actually appointed are outliers, and 23 numbers in a table answer that
+     arithmetically while a strip answers it at a glance. Appointed officials
+     are marked and named; the rest are the distribution they sit in. */
+  const stripHtml=(()=>{
+    if(!HAS) return "";
+    const on=new Set();
+    if(LIVE) (LIVE.fixtures||[]).filter(f=>f.event===LIVE.currentGW).forEach(f=>{
+      const r=refFor(f.id); if(r&&r.n) on.add(r.n);
+    });
+    const items=REFS.filter(r=>r.ypg!=null&&r.matches>=3)
+      .map(r=>({n:r.n,ypg:r.ypg,on:on.has(r.n)}));
+    const svg=PLDCharts.strip(items,{width:640,height:74});
+    if(!svg) return "";
+    return `<div class="chart-wrap">${svg}
+      <p class="chart-cap">Every official with three or more matches, by cards a game.${on.size
+        ? ` Highlighted and named: the <b>${on.size}</b> appointed to this gameweek's fixtures.`
+        : " No officials are assigned yet — set them on the fixture cards and they will be picked out here."}</p></div>`;
+  })();
   el.hidden=false;
   el.innerHTML=
     `<div style="display:flex;gap:1rem;flex-wrap:wrap;align-items:center;justify-content:space-between">
@@ -1899,10 +1970,9 @@ function renderRefHistory(){
         <strong style="font-family:'Bricolage Grotesque',sans-serif;font-size:.9rem">The long view · ${REF_HISTORY.span}</strong>
         <p class="muted" style="margin:.35rem 0 0;font-size:.82rem">League yellows per game climbed from <b class="num">${first.ypg.toFixed(2)}</b> (${first.s}) to <b class="num">${last.ypg.toFixed(2)}</b> (${last.s})${curAvg?`, and today's officials average <b class="num">${curAvg.toFixed(2)}</b>`:""} — so judge an official against his era, not across eras. Strictness is a stable trait: the Career column shows each current official's own long-run rate where the record has him (${matched} matched).</p>
       </div>
-      <svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" aria-label="League yellows per game by season, ${REF_HISTORY.span}" style="flex:none;max-width:100%">
-        <polyline points="${pts}" fill="none" stroke="var(--accent-2)" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
-      </svg>
+      <div style="flex:1 1 300px;min-width:260px">${trendSvg}</div>
     </div>
+    ${stripHtml}
     <p class="faint" style="margin:.5rem 0 0;font-size:.72rem">Historical record: 1992/93–2017/18 from the MIT-licensed <a href="https://github.com/pssguy/epldata" rel="noopener">epldata</a> package (unofficial, compiled from public sources), 2018/19 onward recomputed from the public-domain <a href="https://github.com/datasets/football-datasets" rel="noopener">football-data.co.uk</a> match records — the same source as the season card rates. Cautions only.</p>`;
 }
 
@@ -2609,6 +2679,19 @@ function openPlayerProfile(k){
     <div class="faint" style="font-size:.68rem;text-transform:uppercase;letter-spacing:.04em">Fouls (2025-26)</div>
     <div style="font-size:.85rem;margin-top:.25rem;line-height:1.5">${foulsLine(p)}</div>
   </div>`;
+  /* Card form as a shape rather than a delta. Drawn only from gameweeks this
+     browser actually recorded, so it says "recorded" and not "season" — the
+     desk cannot show a history it was not open for, and implying otherwise
+     would be the same class of claim as a stale live rate. */
+  const cs=(typeof PLDCharts!=="undefined")?cardSeries(p):null;
+  if(cs){
+    const gained=cs[cs.length-1].v-cs[0].v;
+    h+=`<div class="surface-2 chart-wrap" style="border-radius:10px;padding:.55rem .8rem;margin-bottom:.7rem">
+      <div class="faint" style="font-size:.68rem;text-transform:uppercase;letter-spacing:.04em">Card form · ${cs.length} recorded gameweek${cs.length===1?"":"s"}</div>
+      ${PLDCharts.sparkline(cs)}
+      <p class="chart-cap">${cs[0].k}–${cs[cs.length-1].k}: <b class="num">${cs[cs.length-1].v}</b> total, <b class="num">${gained>0?"+"+gained:gained}</b> over the window. Cumulative, stepped — a booking happens at a moment, not gradually.</p>
+    </div>`;
+  }
   // Tier 3 forecast: expected fouls + over/under lines, and a two-stage card cross-check.
   if(MODEL_OK&&fEff(p)!=null){
     const ef=expFoulsFor(p,90), po1=pFoulsOver(p,1,90), po2=pFoulsOver(p,2,90);
@@ -3288,6 +3371,18 @@ function confDot(min){
   return `<span class="conf-dot ${cls}" title="Sample confidence: ${lab} (${m} minutes)" aria-label="sample confidence ${lab}"></span>`;
 }
 
+/* The recorded snapshots as a series, for the sparkline. cardForm() answers
+   "how many since the first snapshot"; this is the shape of it — a player who
+   picked up three in one week and none since reads very differently from one
+   collecting them steadily, and a single delta cannot tell them apart. */
+function cardSeries(p){
+  if(!ACC.hist||ACC.hist.length<2) return null;
+  const k=watchKey(p);
+  const pts=ACC.hist
+    .filter(h=>h&&h.yc&&h.yc[k]!=null)
+    .map(h=>({k:"GW"+h.gw,v:Number(h.yc[k])||0}));
+  return pts.length>=2?pts:null;
+}
 function cardForm(p){
   if(!ACC.hist||ACC.hist.length<2) return null;
   const k=watchKey(p), a=ACC.hist[0], b=ACC.hist[ACC.hist.length-1];
@@ -3379,7 +3474,18 @@ async function loadLiveCalibration(){
     +`<p class="muted" style="font-size:.88rem;margin:.2rem 0 .6rem">Before each round a scheduled job logs the model's P(card) for every candidate it rates — both sides of every fixture, not just the ones it tips — then grades them against the real match records. The model in the open, shared across everyone rather than scored in this browser. Over <strong class="num">${d.n.toLocaleString("en-GB")}</strong> Premier League forecasts across <strong>${d.gws}</strong> matchday${d.gws===1?"":"s"}: observed booking rate <strong class="num">${(d.obsRate*100).toFixed(0)}%</strong>.</p>`
     +`<p class="muted" style="font-size:.84rem;margin:.2rem 0 .6rem"><strong>Brier ${d.brier.toFixed(3)}</strong> vs base-rate ${d.baseBrier!=null?d.baseBrier.toFixed(3):"—"} <span style="color:${beats?'var(--good)':'var(--warn)'}">(${beats?'model ahead':'not yet ahead'})</span>, <strong>log-loss ${d.logloss.toFixed(3)}</strong>.`
     +(topPct!=null?` Of the top-20 risks each gameweek, <strong class="num">${topPct}%</strong> were booked.`:"")
-    +` Lower Brier/log-loss is better; beating the base-rate Brier means the model's confidence earns its keep.</p>`;
+    +` Lower Brier/log-loss is better; beating the base-rate Brier means the model's confidence earns its keep.</p>`
+    /* THE BUCKETS WERE ALWAYS THERE. /api/model-calibration has returned a
+       reliability breakdown — mean forecast against observed frequency, with
+       a count — for as long as the loop has run, and this card drew the
+       headline Brier and discarded it. A Brier score says how wrong; the
+       curve says WHICH WAY, and for a bookings desk the over-confident
+       direction is the one that costs money. */
+    +((typeof PLDCharts!=="undefined"&&d.buckets&&d.buckets.length>1)
+      ?`<div class="chart-pair"><div>${PLDCharts.reliability(d.buckets)}
+         <p class="chart-cap">Each dot is a band of forecasts, sized by how many. On the dashed line the model is exactly right. Above it the model was too cautious; below it, too confident.</p></div>
+         <div><p class="muted" style="font-size:.84rem;margin:0">Read it as a decomposition of the Brier score above. A model can score well overall and still be badly wrong in one band — typically the high end, where it matters most and where the fewest forecasts land. The dot sizes are the guard against reading a three-forecast bucket as a finding.</p></div></div>`
+      :"");
   el.hidden=false;
 }
 

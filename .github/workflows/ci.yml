@@ -21,6 +21,7 @@ jobs:
           node --check sw.js
           node --check assets/core.js
           node --check assets/livecards.js
+          node --check assets/charts.js
           node --check data/pl_data.js
           node --check data/model.js
           node --check data/sim_model.js
