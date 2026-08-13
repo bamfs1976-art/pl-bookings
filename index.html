@@ -4308,7 +4308,7 @@ function renderPushCard(){
     const perm=PUSH.permission();
     if(perm==="denied"){
       el.hidden=false;
-      el.innerHTML='<div class="pushcard"><div><b>Referee alerts are blocked</b>'
+      el.innerHTML='<div class="pushcard"><div><b>Watchlist alerts are blocked</b>'
         +'<p class="muted" style="margin:.2rem 0 0;font-size:.8rem">This browser has notifications turned off for the desk. It can only be changed in the browser\'s own site settings — a page is not allowed to ask again.</p></div></div>';
       return;
     }
@@ -4316,11 +4316,11 @@ function renderPushCard(){
       el.hidden=false;
       const on=!!sub;
       el.innerHTML='<div class="pushcard"><div style="flex:1;min-width:0">'
-        +'<b>'+(on?'Referee alerts are on':'Get told when a referee is appointed')+'</b>'
+        +'<b>'+(on?'Watchlist alerts are on':'Get told about your watchlist')+'</b>'
         +'<p class="muted" style="margin:.2rem 0 0;font-size:.8rem">'
         +(on
-          ?'You\'ll get one notification per fixture involving your '+state.watch.length+' watchlisted player'+(state.watch.length===1?'':'s')+', as soon as the official is published — usually about a week out. The list updates itself when you star or unstar someone.'
-          :'Officials are published about a week before a round, and the appointment moves every booking probability in that fixture. One notification per fixture involving your '+state.watch.length+' watchlisted player'+(state.watch.length===1?'':'s')+' — nothing else.')
+          ?'Two alerts for your '+state.watch.length+' starred player'+(state.watch.length===1?'':'s')+': a referee appointed to one of their fixtures, and a player coming one booking from a ban. The list updates itself when you star or unstar someone.'
+          :'Two things worth knowing on the day they change: a <b>referee appointed</b> to one of your players\' fixtures — published about a week out, and it moves every booking probability in that match — and a <b>player one booking from a ban</b>. Nothing else.')
         +'</p></div>'
         +'<button class="btn '+(on?'btn-ghost':'btn-primary')+'" id="gwPushBtn" type="button" style="flex:none">'+(on?'Turn off':'Turn on')+'</button></div>';
       const btn=$("gwPushBtn");
@@ -4333,7 +4333,7 @@ function renderPushCard(){
               :r.why==="unconfigured"?"Alerts are not switched on for this deploy yet."
               :"Could not set that up just now. Try again in a moment.";
             toast(msg);
-          }else if(r.ok&&!on){ toast("Referee alerts on. You'll hear when an official is named."); }
+          }else if(r.ok&&!on){ toast("Watchlist alerts on. You'll hear when an official is named or a player nears a ban."); }
           renderPushCard();
         });
       });
@@ -4605,6 +4605,14 @@ const LINEUPS=(typeof PLDLineup!=="undefined"&&PLDLineup)
    with the subscription and is re-sent on every change through saveState. */
 const PUSH=(typeof PLDPush!=="undefined"&&PLDPush)?PLDPush.create({
   watchKeys:()=>state.watch.slice(),
+  /* The same players as FPL element ids. The ban alert targets a PLAYER, and
+     the element id is the only identity this desk and the FPL feed share —
+     resolving a watch key to one means the club-and-name matching attachLive
+     already does, and doing it again on the server would be the same subtle
+     logic in two places. attachLive owns that answer, so the client sends it.
+     Empty before the live feed has ever loaded, which costs a new starrer his
+     ban alerts until the next visit and nothing else. */
+  watchEls:()=>PL_PLAYERS.filter(p=>p.el!=null&&state.watch.includes(watchKey(p))).map(p=>p.el),
   userId:()=>{ try{ return (window.PLDSave&&PLDSave.userId&&PLDSave.userId())||null; }catch(e){ return null; } },
   onChange:()=>{ try{ renderPushCard(); }catch(e){} }
 }):null;

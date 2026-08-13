@@ -17,6 +17,20 @@ const json = (c, o) => ({ statusCode: c, headers: { ...CORS, 'Content-Type': 'ap
 
 const SUPABASE_URL = (process.env.SUPABASE_URL || 'https://knodunjnsxelmpziupwk.supabase.co').replace(/\/+$/, '');
 
+/* FPL element ids for the same players, where the client knows them. Ints
+   only, bounded the same way — this is what the ban alert targets on. */
+function cleanEls(v) {
+  if (!Array.isArray(v)) return [];
+  const out = [];
+  for (const n of v) {
+    const i = Number(n);
+    if (!Number.isInteger(i) || i <= 0 || i > 100000) continue;
+    out.push(i);
+    if (out.length >= 200) break;
+  }
+  return out;
+}
+
 /* A watchlist key is "CLUB|Player Name". Bounded and shape-checked because it
    arrives from the client and is later matched against club codes: a hostile
    or broken value should be dropped here, not stored and puzzled over later.
@@ -58,7 +72,8 @@ exports.handler = async (event) => {
     p256dh: s.keys.p256dh,
     auth: s.keys.auth,
     watch: cleanWatch(b.watch),
-    prefs: (b.prefs && typeof b.prefs === 'object') ? b.prefs : { appointment: true },
+    els: cleanEls(b.els),
+    prefs: (b.prefs && typeof b.prefs === 'object') ? b.prefs : { appointment: true, ban: true },
     user_id: (typeof b.userId === 'string' && b.userId) ? b.userId : null,
     updated_at: new Date().toISOString(),
   };
@@ -74,7 +89,7 @@ exports.handler = async (event) => {
       body: JSON.stringify(row),
     });
     if (!r.ok) return json(502, { error: 'Could not save subscription' });
-    return json(200, { ok: true, watching: row.watch.length });
+    return json(200, { ok: true, watching: row.watch.length, identified: row.els.length });
   } catch (_) {
     return json(502, { error: 'Could not save subscription' });
   }

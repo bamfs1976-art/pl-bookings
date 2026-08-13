@@ -264,13 +264,36 @@ capped at 900 minutes of evidence, expected minutes from real appearance data,
 confirmed lineups near kick-off, and freezing forecasts before kick-off so
 they are scored honestly afterwards.
 
-### 3. Web push — **done for the appointment alert**
+### 3. Web push — **done, both alerts**
 
 Shipped: `push-key`, `push-subscribe`, `push-unsubscribe`, `push-cron`,
 `supabase/plb_push.sql`, the service worker handlers and the offer card under
-My watchlist. **One card from a ban is still open** — the suspension ladder is
-already in `assets/suspension.js`, so it is a second alert type on the same
-plumbing rather than new infrastructure.
+My watchlist. Both alerts this item named are live — *referee appointed to a
+watchlisted player's fixture* and *one caution from a ban*.
+
+**The ban alert does not reimplement the ladder.** It requires
+`PLDCore.nextSuspension` — the same function the page prices with — because
+the part that is easy to get wrong is not the arithmetic, it is that an
+English rung **expires**. Five cautions is a ban only if reached by the club's
+19th match, so a player on four after that match is not one from a ban at all;
+a `cards === 4` check would notify about a suspension that cannot happen.
+That case is pinned in `tests/test-webpush.mjs`.
+
+Two more things it gets from using the real rule: it counts each club's
+**completed matches** rather than gameweeks (they diverge the moment a game is
+postponed, which is exactly when a gate matters), and it reports the rung's
+cost and how many matches are left before the cut-off — "one away with nine
+matches to avoid it" and "one away with one" are the same fact and a different
+decision.
+
+The alert state is keyed on the **rung**, not a boolean: a player who is one
+from five, gets booked, serves the ban and later comes one from ten is news
+twice, and a flag would fire once a season.
+
+**No minutes floor**, unlike the on-page watch strip. That strip ranks the
+whole league and has to keep fringe players out of a readable list; this fires
+only for a player somebody explicitly starred, and "he barely plays" is a
+judgement the subscriber already made.
 
 **Not ported from `gameweek-edge`, rebuilt.** That repo uses the `web-push`
 package, which it can because it already has a package.json for Capacitor.
@@ -295,6 +318,14 @@ subscription and re-sends on every change through `saveState()`, which is the
 one choke point all three star controls funnel through. The alternative was to
 require sign-in for alerts, which trades the feature's whole audience for a
 tidier schema.
+
+It sends the keys **and the FPL element ids**. The appointment alert targets a
+fixture, so a club code out of the key is enough; the ban alert targets a
+player, and the element id is the only identity the desk and the FPL feed
+share. Resolving one to the other is the club-and-name matching `attachLive`
+already does, and repeating that server-side would be the same subtle logic in
+two places. A player starred before the live feed has ever loaded has no id
+yet — he keeps appointment alerts and gains ban alerts on the next visit.
 
 **The state table is load-bearing.** "A referee has been appointed" is not a
 property of the fixture list — every appointed fixture looks identical whether

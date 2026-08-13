@@ -1,6 +1,13 @@
 /* Bookings Desk — referee appointment alerts (Netlify Scheduled Function).
  *
- * THE ONE ALERT THAT JUSTIFIES PUSH ON THIS DESK. PGMOL publish appointments
+ * TWO ALERTS, ONE JOB. Both are things the desk already knew and could only
+ * tell you if you happened to open the page:
+ *
+ *   1. A referee has been appointed to a fixture involving a watchlisted
+ *      player.
+ *   2. A watchlisted player is ONE CAUTION from a ban.
+ *
+ * THE FIRST ALERT. PGMOL publish appointments
  * about a week before a round. The moment an official is named, every booking
  * probability in that fixture moves — the referee factor is the largest
  * multiplier the desk applies, running from roughly ×0.8 to ×1.3 — and the
@@ -35,6 +42,15 @@
 
 const vm = require('node:vm');
 const webpush = require('../lib/webpush.js');
+/* The suspension ladder is NOT reimplemented here. PLDCore.nextSuspension is
+   the rule the page itself prices with, it is already unit-tested, and the
+   part that is easy to get wrong is not the arithmetic — it is that an
+   English rung EXPIRES. Five cautions is a ban only if reached by the club's
+   19th match, so a player on four after that match is not one from a ban at
+   all, and a `cards === 4` check would notify about a suspension that cannot
+   happen. Requiring the real function is the only way to be sure the alert
+   and the page agree. */
+const PLDCore = require('../../assets/core.js');
 
 exports.config = { schedule: '@hourly' };
 
@@ -82,6 +98,85 @@ function watchedIn(watch, fixture) {
     if (club === fixture.h || club === fixture.a) hit.push(k.slice(bar + 1));
   }
   return hit;
+}
+
+/* ── pure: one caution from a ban ──────────────────────────────────────
+   `played` maps club short code -> league matches that club has completed,
+   which is what the English gates count. Returns one entry per player who is
+   exactly one caution away from a rung that is still reachable.
+
+   NO MINUTES FLOOR, deliberately, and unlike the on-page watch strip. That
+   strip ranks the whole league and has to keep fringe players out of a list
+   nobody can read. This fires only for a player somebody explicitly starred,
+   and "he barely plays" is the subscriber's judgement to have already made.
+
+   Players the feed reports as gone (status 'u') are skipped: a ban is not
+   news for someone who has left. */
+function banWatch(elements, teamShort, played, scheme) {
+  const out = [];
+  for (const e of elements || []) {
+    if (!e || e.id == null) continue;
+    if (e.status === 'u') continue;
+    const club = teamShort[e.team];
+    if (!club) continue;
+    const next = PLDCore.nextSuspension(Number(e.yellow_cards) || 0, played[club] || 0, scheme);
+    if (!next || next.dead || next.need !== 1) continue;
+    out.push({
+      el: e.id,
+      name: e.web_name,
+      club,
+      cards: Number(e.yellow_cards) || 0,
+      at: next.at,
+      ban: next.ban,
+      by: next.by,
+      /* Matches left before the gate closes. null = no gate on this rung.
+         It is the difference between "one away, and he has 9 matches to
+         avoid it" and "one away, with 1 match left" — the same fact and a
+         completely different decision. */
+      left: next.by != null ? Math.max(0, next.by - (played[club] || 0)) : null,
+    });
+  }
+  return out;
+}
+
+/* Which of these are worth telling anyone about. Keyed on the RUNG, not on a
+   boolean: a player who is one from the 5-rung, gets booked, serves the ban
+   and later comes one from the 10-rung is news twice, and a flag would only
+   ever fire once. */
+function banNews(prev, watch) {
+  const out = [];
+  for (const w of watch || []) {
+    if (prev && prev[w.el] === w.at) continue;
+    out.push(w);
+  }
+  return out;
+}
+
+/* Club short code -> completed league matches, from the FPL fixture feed.
+   The gates count the CLUB's match number rather than the gameweek, which
+   differ the moment a game is postponed — and a postponement is exactly when
+   a gate is about to matter. */
+function playedByClub(fixtures, teamShort) {
+  const n = {};
+  for (const f of fixtures || []) {
+    if (!f || !f.finished) continue;
+    const h = teamShort[f.team_h], a = teamShort[f.team_a];
+    if (h) n[h] = (n[h] || 0) + 1;
+    if (a) n[a] = (n[a] || 0) + 1;
+  }
+  return n;
+}
+
+function banText(w) {
+  const gate = w.left == null
+    ? 'no cut-off on this one'
+    : w.left === 1 ? 'his club\'s last match before the cut-off'
+      : w.left + ' matches left before the cut-off';
+  return {
+    title: w.name + ' is one booking from a ban',
+    body: w.cards + ' of ' + w.at + ' (' + w.club + ') — the next one costs '
+      + w.ban + ' match' + (w.ban === 1 ? '' : 'es') + '. ' + gate + '.',
+  };
 }
 
 /* ── pure: the words ───────────────────────────────────────────────────
@@ -162,46 +257,96 @@ exports.handler = async () => {
   const rated = Object.values(rate);
   const leagueYpg = rated.length ? rated.reduce((a, b) => a + b, 0) / rated.length : null;
 
-  const prev = await getState(srv, 'appointments');
-  const state = {};
-  (fixtures || []).forEach((f) => { if (f && f.id != null && f.ref) state[f.id] = f.ref; });
+  /* ── ALERT 1: appointments ─────────────────────────────────────────── */
+  const prevAppt = await getState(srv, 'appointments');
+  const apptState = {};
+  (fixtures || []).forEach((f) => { if (f && f.id != null && f.ref) apptState[f.id] = f.ref; });
+
+  /* ── ALERT 2: one caution from a ban ───────────────────────────────────
+     Needs this season's cautions and each club's completed match count, both
+     from the official FPL feed. Best-effort: if that feed is down the
+     appointment alert still runs, because one source failing should not
+     silence the other. */
+  let banNow = [], scheme = null;
+  try { scheme = await loadDataFile(origin, '/data/pl_data.js', 'SUSPENSION'); } catch (_) { /* no ladder, no watch */ }
+  if (scheme) {
+    try {
+      const boot = await (await fetch('https://fantasy.premierleague.com/api/bootstrap-static/',
+        { headers: { 'User-Agent': UA, Accept: 'application/json' } })).json();
+      const fx = await (await fetch('https://fantasy.premierleague.com/api/fixtures/',
+        { headers: { 'User-Agent': UA, Accept: 'application/json' } })).json();
+      const teamShort = {};
+      (boot.teams || []).forEach((t) => { teamShort[t.id] = t.short_name; });
+      banNow = banWatch(boot.elements, teamShort, playedByClub(fx, teamShort), scheme);
+    } catch (_) { banNow = []; }
+  }
+  const prevBan = await getState(srv, 'banwatch');
+  const banState = {};
+  banNow.forEach((w) => { banState[w.el] = w.at; });
 
   /* FIRST RUN SENDS NOTHING. With no previous state every appointed fixture
-     in the season looks new, and the first thing this feature would ever do
-     is send every subscriber a notification for all of them. */
-  if (!prev) {
-    await setState(srv, 'appointments', state);
-    return { statusCode: 200, body: 'seeded ' + Object.keys(state).length + ' appointments, sent nothing' };
+     and every player already on the edge looks new, and the first thing this
+     feature would ever do is notify every subscriber about all of them.
+     Seeded per alert, so switching the second one on later does not replay
+     the first. */
+  if (!prevAppt || (scheme && !prevBan)) {
+    const seeded = [];
+    if (!prevAppt) { await setState(srv, 'appointments', apptState); seeded.push(Object.keys(apptState).length + ' appointments'); }
+    if (scheme && !prevBan) { await setState(srv, 'banwatch', banState); seeded.push(banNow.length + ' on the ban edge'); }
+    return { statusCode: 200, body: 'seeded ' + seeded.join(' and ') + ', sent nothing' };
   }
 
-  const news = appointmentNews(prev, fixtures);
-  if (!news.length) {
-    await setState(srv, 'appointments', state);
-    return { statusCode: 200, body: 'no new appointments' };
+  const apptNews = appointmentNews(prevAppt, fixtures);
+  const banNewsList = scheme ? banNews(prevBan, banNow) : [];
+
+  const advance = async () => {
+    await setState(srv, 'appointments', apptState);
+    if (scheme) await setState(srv, 'banwatch', banState);
+  };
+
+  if (!apptNews.length && !banNewsList.length) {
+    await advance();
+    return { statusCode: 200, body: 'nothing new' };
   }
 
-  const sr = await fetch(SUPABASE_URL + '/rest/v1/plb_push_subs?select=endpoint,p256dh,auth,watch,prefs',
+  const sr = await fetch(SUPABASE_URL + '/rest/v1/plb_push_subs?select=endpoint,p256dh,auth,watch,els,prefs',
     { headers: srvHeaders(srv) });
   const subs = sr.ok ? await sr.json() : [];
 
   let sent = 0, gone = 0;
   const dead = [];
-  for (const n of news) {
+  const deliver = async (s, payload) => {
+    try {
+      const res = await webpush.send(
+        { endpoint: s.endpoint, keys: { p256dh: s.p256dh, auth: s.auth } },
+        JSON.stringify(payload),
+        { publicKey: pub, privateKey: priv, subject },
+        { ttl: 6 * 60 * 60, urgency: 'normal' }
+      );
+      if (res.ok) sent++;
+      else if (res.gone) { gone++; dead.push(s.endpoint); }
+    } catch (_) { /* one bad endpoint must not stop the round */ }
+  };
+
+  for (const n of apptNews) {
     const targets = (subs || []).filter((s) => !s.prefs || s.prefs.appointment !== false);
     await Promise.allSettled(targets.map(async (s) => {
       const names = watchedIn(s.watch, n);
       if (!names.length) return;                     /* not their fixture */
       const { title, body } = alertText(n, names, rate[n.ref], leagueYpg);
-      try {
-        const res = await webpush.send(
-          { endpoint: s.endpoint, keys: { p256dh: s.p256dh, auth: s.auth } },
-          JSON.stringify({ title, body, url: '/#p=gameweek', tag: 'appointment-' + n.id }),
-          { publicKey: pub, privateKey: priv, subject },
-          { ttl: 6 * 60 * 60, urgency: 'normal' }
-        );
-        if (res.ok) sent++;
-        else if (res.gone) { gone++; dead.push(s.endpoint); }
-      } catch (_) { /* one bad endpoint must not stop the round */ }
+      await deliver(s, { title, body, url: '/#p=gameweek', tag: 'appointment-' + n.id });
+    }));
+  }
+
+  for (const w of banNewsList) {
+    const targets = (subs || []).filter((s) => !s.prefs || s.prefs.ban !== false);
+    await Promise.allSettled(targets.map(async (s) => {
+      /* Element ids, not names: this targets a PLAYER, and the id is the only
+         identity shared with the FPL feed. A subscriber whose client has
+         never seen the live feed has no ids yet and simply does not match. */
+      if (!Array.isArray(s.els) || s.els.indexOf(w.el) < 0) return;
+      const { title, body } = banText(w);
+      await deliver(s, { title, body, url: '/#p=gameweek', tag: 'ban-' + w.el });
     }));
   }
 
@@ -217,11 +362,16 @@ exports.handler = async () => {
      the state is unchanged and the next run re-sends — a duplicate
      notification is a far smaller cost than a missed appointment, which is
      the entire product. */
-  await setState(srv, 'appointments', state);
+  await advance();
   return { statusCode: 200,
-    body: 'sent ' + sent + ' for ' + news.length + ' appointment change(s), pruned ' + gone };
+    body: 'sent ' + sent + ' for ' + apptNews.length + ' appointment change(s) and '
+      + banNewsList.length + ' ban-edge change(s), pruned ' + gone };
 };
 
 module.exports.appointmentNews = appointmentNews;
 module.exports.watchedIn = watchedIn;
 module.exports.alertText = alertText;
+module.exports.banWatch = banWatch;
+module.exports.banNews = banNews;
+module.exports.playedByClub = playedByClub;
+module.exports.banText = banText;

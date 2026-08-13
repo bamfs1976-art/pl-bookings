@@ -1,9 +1,14 @@
-/* Referee appointment alerts — the client half.
+/* Watchlist alerts — the client half.
  *
- * WHAT IT IS FOR. PGMOL name the officials about a week before a round, and
- * the moment they do, every booking probability in that fixture moves through
- * the referee factor — the largest multiplier the desk applies. Until now the
- * only way to find out was to open the page on the right day.
+ * TWO THINGS THE DESK KNEW AND COULD NOT TELL YOU. Both were already on the
+ * page and both are only useful on the day they change:
+ *
+ *   1. A referee has been appointed. PGMOL name officials about a week out,
+ *      and the moment they do, every booking probability in that fixture
+ *      moves through the referee factor — the largest multiplier the desk
+ *      applies.
+ *   2. A player you follow is ONE CAUTION from a ban. The suspension strip
+ *      has always shown this; it could only show it to someone looking.
  *
  * WHY THE WATCHLIST TRAVELS WITH THE SUBSCRIPTION. The desk's watchlist is
  * local-first: localStorage, works signed out, deliberately. That leaves the
@@ -33,6 +38,7 @@
   function create(opts) {
     var o = opts || {};
     var watchKeys = o.watchKeys || function () { return []; };
+    var watchEls = o.watchEls || function () { return []; };
     var onChange = o.onChange || function () {};
     var api = o.api || '/api';
     var vapid = null, ready = null, syncTimer = null;
@@ -68,7 +74,12 @@
     }
 
     function payload(sub) {
-      return { subscription: sub.toJSON ? sub.toJSON() : sub, watch: watchKeys(), userId: o.userId ? o.userId() : null };
+      return {
+        subscription: sub.toJSON ? sub.toJSON() : sub,
+        watch: watchKeys(),
+        els: watchEls(),
+        userId: o.userId ? o.userId() : null,
+      };
     }
 
     /* Called on every watchlist change through saveState, so it is debounced:

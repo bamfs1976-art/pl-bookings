@@ -36,9 +36,22 @@ create table if not exists public.plb_push_subs (
   -- subscription that will never fire rather than one that fires for
   -- everything — the safe direction for an alert nobody asked for.
   watch       jsonb  not null default '[]'::jsonb,
+  -- The same players as FPL element ids, where the client knows them.
+  --
+  -- WHY BOTH. The appointment alert targets a FIXTURE, so a club code out of
+  -- the watch key is all it needs. The ban alert targets a PLAYER, and the
+  -- only stable player identity shared with the FPL feed is the element id.
+  -- Resolving one to the other means the club+name matching attachLive does,
+  -- and doing that again on the server would be the same subtle logic in two
+  -- places, drifting. The client already holds the answer, so it sends it.
+  --
+  -- May be shorter than `watch`: a player starred before the live feed has
+  -- ever loaded has no element id yet. He keeps his appointment alerts (club
+  -- is in the key) and gains ban alerts on the next visit with a feed.
+  els         jsonb  not null default '[]'::jsonb,
   -- Which alerts this browser wants. Absent key = on, so adding a new alert
   -- type later does not silently opt every existing subscriber out of it.
-  prefs       jsonb  not null default '{"appointment":true}'::jsonb,
+  prefs       jsonb  not null default '{"appointment":true,"ban":true}'::jsonb,
   user_id     uuid references auth.users (id) on delete set null,
   created_at  timestamptz not null default now(),
   updated_at  timestamptz not null default now()
@@ -49,8 +62,9 @@ create index if not exists plb_push_subs_updated on public.plb_push_subs (update
 alter table public.plb_push_subs enable row level security;
 revoke all on public.plb_push_subs from anon, authenticated;
 
--- The sender's memory. One row, key = 'appointments', value = the referee
--- assigned to each fixture as of the last run.
+-- The sender's memory. One row per alert type:
+--   'appointments'  the referee assigned to each fixture as of the last run
+--   'banwatch'      the rung each player was last reported one caution from
 --
 -- WITHOUT THIS THE JOB CANNOT WORK AT ALL. "A referee has been appointed" is
 -- not a fact about the current fixture list — every appointed fixture looks

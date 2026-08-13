@@ -194,4 +194,112 @@ t('an unrated official still produces a sentence rather than "undefined"', () =>
   assert.match(m.body, /A and 2 others/);
 });
 
+/* ── one caution from a ban ────────────────────────────────────────────
+   The rule is PLDCore.nextSuspension, not a reimplementation, because the
+   part that is easy to get wrong is not the arithmetic — it is that an
+   English rung EXPIRES. These pin the behaviour the alert depends on. */
+const SCHEME = { kind: 'ladder', cumulative: true, review: 20,
+  rungs: [{ at: 5, ban: 1, by: 19 }, { at: 10, ban: 2, by: 32 }, { at: 15, ban: 3, by: null }] };
+const TEAMS = { 1: 'ARS', 2: 'CHE' };
+const el = (id, yc, team, extra) => Object.assign({ id, yellow_cards: yc, team: team || 1, web_name: 'P' + id, status: 'a' }, extra || {});
+
+console.log('ban watch: who is actually one away');
+t('four cautions before the gate is one from a one-match ban', () => {
+  const out = cron.banWatch([el(1, 4)], TEAMS, { ARS: 10 }, SCHEME);
+  assert.equal(out.length, 1);
+  assert.equal(out[0].at, 5);
+  assert.equal(out[0].ban, 1);
+  assert.equal(out[0].left, 9);          // 19 - 10 matches to avoid it
+});
+t('THE CASE A `cards === 4` CHECK GETS WRONG: past the gate he is not close', () => {
+  // The 5-rung dies at the club's 19th match. After it, four cautions is six
+  // away from the 10-rung, not one away from anything — and a naive check
+  // would notify about a ban that cannot happen.
+  assert.deepEqual(cron.banWatch([el(1, 4)], TEAMS, { ARS: 19 }, SCHEME), []);
+  assert.deepEqual(cron.banWatch([el(1, 4)], TEAMS, { ARS: 30 }, SCHEME), []);
+});
+t('nine before the second gate is one from a TWO-match ban', () => {
+  const out = cron.banWatch([el(1, 9)], TEAMS, { ARS: 25 }, SCHEME);
+  assert.equal(out[0].at, 10);
+  assert.equal(out[0].ban, 2);
+  assert.equal(out[0].left, 7);
+});
+t('fourteen is one from three matches, and that rung has no cut-off', () => {
+  const out = cron.banWatch([el(1, 14)], TEAMS, { ARS: 35 }, SCHEME);
+  assert.equal(out[0].ban, 3);
+  assert.equal(out[0].left, null);
+});
+t('a player who can no longer be banned by accumulation is off the watch', () => {
+  assert.deepEqual(cron.banWatch([el(1, 15)], TEAMS, { ARS: 35 }, SCHEME), []);
+});
+t('two or more away is not an alert', () => {
+  assert.deepEqual(cron.banWatch([el(1, 3), el(2, 0), el(3, 8)], TEAMS, { ARS: 10 }, SCHEME), []);
+});
+t('a player who has left the club is skipped', () => {
+  assert.deepEqual(cron.banWatch([el(1, 4, 1, { status: 'u' })], TEAMS, { ARS: 10 }, SCHEME), []);
+});
+t('an unknown club is skipped rather than counted against match zero', () => {
+  assert.deepEqual(cron.banWatch([el(1, 4, 99)], TEAMS, { ARS: 10 }, SCHEME), []);
+});
+t('no minutes floor — a fringe player somebody starred still counts', () => {
+  // Unlike the on-page strip, which must keep a whole-league ranking readable.
+  // Here the subscriber has already made that judgement by starring him.
+  const out = cron.banWatch([el(1, 4, 1, { minutes: 12 })], TEAMS, { ARS: 10 }, SCHEME);
+  assert.equal(out.length, 1);
+});
+
+console.log('ban watch: what counts as news');
+t('the same rung twice is not news', () => {
+  const now = cron.banWatch([el(1, 4)], TEAMS, { ARS: 10 }, SCHEME);
+  assert.deepEqual(cron.banNews({ 1: 5 }, now), []);
+});
+t('a NEW rung is news again — the state is keyed on the rung, not a flag', () => {
+  // He was one from 5, got booked, served the ban, and is now one from 10.
+  // A boolean "already told them" would fire once a season and never again.
+  const now = cron.banWatch([el(1, 9)], TEAMS, { ARS: 25 }, SCHEME);
+  assert.equal(cron.banNews({ 1: 5 }, now).length, 1);
+  assert.equal(cron.banNews({ 1: 5 }, now)[0].at, 10);
+});
+t('nobody seen before is all news', () => {
+  const now = cron.banWatch([el(1, 4)], TEAMS, { ARS: 10 }, SCHEME);
+  assert.equal(cron.banNews({}, now).length, 1);
+});
+
+console.log('ban watch: club match counts');
+t('counts finished league matches per club, not gameweeks', () => {
+  // They diverge the moment a match is postponed, which is exactly when a
+  // gate is about to matter.
+  const fx = [
+    { finished: true, team_h: 1, team_a: 2 },
+    { finished: true, team_h: 2, team_a: 1 },
+    { finished: false, team_h: 1, team_a: 2 },
+  ];
+  assert.deepEqual(cron.playedByClub(fx, TEAMS), { ARS: 2, CHE: 2 });
+});
+t('an empty or unplayed season is zeros, not undefined', () => {
+  assert.deepEqual(cron.playedByClub([], TEAMS), {});
+  assert.deepEqual(cron.playedByClub(null, TEAMS), {});
+});
+
+console.log('ban watch: the words');
+t('says the count, the rung, the cost and how long he has to avoid it', () => {
+  const w = cron.banWatch([el(1, 4)], TEAMS, { ARS: 10 }, SCHEME)[0];
+  const m = cron.banText(w);
+  assert.match(m.title, /is one booking from a ban/);
+  assert.match(m.body, /4 of 5 \(ARS\)/);
+  assert.match(m.body, /costs 1 match\./);
+  assert.match(m.body, /9 matches left before the cut-off/);
+});
+t('a two-match ban is plural, and the last match before a gate is singular', () => {
+  const two = cron.banText(cron.banWatch([el(1, 9)], TEAMS, { ARS: 31 }, SCHEME)[0]);
+  assert.match(two.body, /costs 2 matches\./);
+  assert.match(two.body, /last match before the cut-off/);
+});
+t('an uncapped rung says so rather than printing null', () => {
+  const m = cron.banText(cron.banWatch([el(1, 14)], TEAMS, { ARS: 35 }, SCHEME)[0]);
+  assert.ok(!/null|undefined|NaN/.test(m.body), m.body);
+  assert.match(m.body, /no cut-off on this one/);
+});
+
+
 console.log(`\n${passed} tests passed`);

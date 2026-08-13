@@ -13,6 +13,13 @@
 
 [functions]
   directory = "netlify/functions"
+  # push-cron requires ../lib/webpush.js and ../../assets/core.js — the second
+  # reaches OUTSIDE netlify/, for the suspension ladder the page itself prices
+  # with rather than a second copy of the rule that could drift from it.
+  # The bundler traces relative requires, but a traced dependency that silently
+  # fails to bundle is a function that throws on its first scheduled run and
+  # nowhere else, so both are named here explicitly.
+  included_files = ["netlify/lib/**", "assets/core.js"]
 
 # The scheduled prediction logger USED to live here, hourly, writing
 # plb_predictions. It has been retired in favour of scripts/accas.mjs
