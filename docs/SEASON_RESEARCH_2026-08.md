@@ -29,6 +29,29 @@ is fully verified.
 
 ---
 
+## 0. What was built from this file
+
+Shipped on this branch, and one thing the research got wrong.
+
+- **§1 and §2 are done.** `scripts/build-core-insights.mjs` vendors this
+  season's fouls into `data/core_insights.js`; `PLDCore.liveRate` switches both
+  halves of the risk score on one 450-minute rule; the FPL proxy now allows
+  `event/<gw>/live` and `element-summary/<id>`.
+- **A correction to §1's framing.** Gameweek Edge does not read "one column" of
+  Core Insights — `netlify/functions/core-insights.js` has aggregated the
+  per-match stats there for two seasons. What it *was* doing wrong is more
+  interesting, and it nearly happened here too: it read `By Gameweek/`, which
+  carries every competition. Harvesting the same way for this desk gave 521
+  matches for a 38-round season and a league foul rate 11% low, because 141 of
+  them were European and cup ties. Both repos now read
+  `By Tournament/Premier League/` and check every match id for the league
+  marker. **The number that looks healthy is the one to check.**
+- **The fouls column was validated, not trusted**: across 306 players the median
+  absolute difference between ScoutingStats' baked 2025-26 rate and Core
+  Insights' 2025-26 rate is **0.01 per 90**.
+
+---
+
 ## 1. The fouls gap has a free answer, and it is already in the portfolio
 
 `ENHANCEMENTS.md` item 8 states the structural weakness precisely:
@@ -265,8 +288,8 @@ everything else here.
 
 | # | Action | Why now |
 |---|---|---|
-| 1 | Add `/^event\/\d+\/live$/` and `/^element-summary\/\d+$/` to the proxy allowlist, with the sibling's live/cacheable split | One line each; unlocks live cards and card-form history |
-| 2 | Build a shape-guarded Core Insights reader for `fouls_committed` and per-GW cards | Unfreezes half the risk formula and fills the promoted clubs from GW1 |
+| 1 | ~~Proxy allowlist~~ **Done.** Both endpoints allowed, live paths held uncacheable | A live feed cached five minutes shows a booked player as uncarded |
+| 2 | ~~Core Insights fouls reader~~ **Done.** Harvester, runtime join check, CI guard, tests | Unfreezes half the risk formula and fills the promoted clubs from GW1 |
 | 3 | Re-run `scripts/backtest.mjs` on per-match data once GW3–4 exist | Item 2's hazard-form switch has been waiting on exactly this |
 | 4 | Probe ClubElo and the Pulse API from CI | One answers the promoted-club prior, the other could retire `appointments.json` |
 | 5 | Referee appointment push | Most time-critical fact in the product; the infrastructure exists next door |
