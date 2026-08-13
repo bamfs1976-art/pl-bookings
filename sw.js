@@ -3,7 +3,7 @@
    cache-first. Live FPL data (/api/fpl/*) and Supabase calls are never
    touched here — the app's own data layer decides what is fresh vs cached. */
 
-const VERSION = 'plb-v14';
+const VERSION = 'plb-v15';
 /* Every desk, not just the Premier League one. The shell decides what opens
    with no connection: installed on a phone, a page missing from here is a
    blank screen on the Underground even though it works perfectly on wifi.
@@ -41,6 +41,7 @@ const SHELL = [
   '/assets/lineup.js',
   '/assets/livecards.js',
   '/assets/charts.js',
+  '/assets/push.js',
   '/assets/price.js',
   '/icons/icon-16.png',
   '/icons/icon-32.png',
@@ -118,5 +119,50 @@ self.addEventListener('fetch', (e) => {
         return res;
       })
     )
+  );
+});
+
+/* ── Web Push ──────────────────────────────────────────────────────────
+   Referee appointments for watchlisted players. The payload is JSON from
+   netlify/functions/push-cron.js: {title, body, url, tag}.
+
+   EVERY BRANCH SHOWS SOMETHING. A push event that resolves without calling
+   showNotification is a visible failure on Android and iOS — the browser
+   posts its own "This site has been updated in the background" notice
+   instead, which looks like a bug to the reader and cannot be styled or
+   suppressed. So a malformed or empty payload still shows the generic
+   fallback rather than returning early. */
+self.addEventListener('push', (e) => {
+  let d = {};
+  try { d = e.data ? e.data.json() : {}; } catch (_) { d = {}; }
+  const title = d.title || 'Bookings Desk';
+  e.waitUntil(self.registration.showNotification(title, {
+    body: d.body || 'A referee appointment has been published.',
+    icon: '/icons/icon-192.png',
+    badge: '/icons/icon-192.png',
+    /* Tagged per fixture so a re-appointment REPLACES the earlier notice for
+       that match rather than stacking a second, contradictory one. */
+    tag: d.tag || 'plb',
+    renotify: true,
+    data: { url: d.url || '/' },
+  }));
+});
+
+self.addEventListener('notificationclick', (e) => {
+  e.notification.close();
+  const target = (e.notification.data && e.notification.data.url) || '/';
+  /* Focus an open tab rather than opening a second one. A notification that
+     opens a duplicate desk every time is how people end up with nine tabs and
+     no alerts. */
+  e.waitUntil(
+    self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((list) => {
+      for (const c of list) {
+        if (c.url.indexOf(self.registration.scope) === 0 && 'focus' in c) {
+          if ('navigate' in c) { try { c.navigate(target); } catch (_) {} }
+          return c.focus();
+        }
+      }
+      return self.clients.openWindow(target);
+    })
   );
 });

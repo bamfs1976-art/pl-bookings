@@ -1,6 +1,9 @@
 /api/fpl/*    /.netlify/functions/fpl        200
 /api/insights /.netlify/functions/insights   200
 /api/model-calibration /.netlify/functions/model-calibration 200
+/api/push-key /.netlify/functions/push-key 200
+/api/push-subscribe /.netlify/functions/push-subscribe 200
+/api/push-unsubscribe /.netlify/functions/push-unsubscribe 200
 # The Championship desk. Must come BEFORE the catch-all, which would
 # otherwise serve the Premier League app for every path.
 /eflc         /eflc.html    200

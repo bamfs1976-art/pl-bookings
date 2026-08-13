@@ -97,6 +97,13 @@
   .pl-av.avatar-md{width:46px;height:46px}
   .pl-av.avatar-md>i{font-size:.9rem}
   /* ═══ All players — a card per player ═══ */
+  /* The alerts offer, under the watchlist. Same surface language as the rest
+     of the card stack; the button never wraps under the text on a phone
+     because a control that jumps below the fold is a control nobody presses. */
+  .pushcard{display:flex;gap:.8rem;align-items:center;flex-wrap:wrap;background:var(--surface);
+    border:1px solid var(--border);border-radius:14px;padding:.7rem .85rem;margin-top:.6rem;box-shadow:var(--shadow-sm)}
+  .pushcard b{font-family:'Bricolage Grotesque',sans-serif;font-size:.92rem}
+  @media (max-width:420px){ .pushcard>button{width:100%} }
   /* ═══ Charts (assets/charts.js) ═══
      Every colour is a token, so both themes work and check-palette governs
      these like everything else. Scaled by viewBox, so one rule sizes them
@@ -778,6 +785,10 @@
         <button class="btn btn-ghost" id="gwWatchManage" style="padding:.25rem .6rem;font-size:.74rem" type="button">Season table ›</button>
       </div>
       <div id="gwWatch" class="surface" style="border-radius:14px;overflow:hidden"></div>
+      <!-- Alerts sit UNDER the watchlist because that is what they are about:
+           the offer only makes sense once there is something on the list, and
+           renderPushCard() hides itself until there is. -->
+      <div id="gwPush" hidden></div>
     </div>
     <div id="gwToolbar" hidden>
       <div style="display:flex;align-items:center;justify-content:space-between;gap:.6rem;margin-bottom:.55rem;flex-wrap:wrap">
@@ -1303,6 +1314,7 @@
 <script src="assets/lineup.js"></script>
 <script src="assets/livecards.js"></script>
 <script src="assets/charts.js"></script>
+<script src="assets/push.js"></script>
 <script src="assets/price.js"></script>
 <script src="assets/refpicker.js"></script>
 <script>
@@ -1321,7 +1333,13 @@ const CLUBMAP={}; CLUBS.forEach(c=>CLUBMAP[c.short]=c);
 // ---- state ----
 let state=loadState();
 function loadState(){ try{ const s=JSON.parse(localStorage.getItem(STORE_KEY))||{}; return {picks:s.picks||[],watch:s.watch||[],notes:s.notes||{}}; }catch(e){ return {picks:[],watch:[],notes:{}}; } }
-function saveState(){ try{ localStorage.setItem(STORE_KEY, JSON.stringify(state)); }catch(e){} }
+function saveState(){
+  try{ localStorage.setItem(STORE_KEY, JSON.stringify(state)); }catch(e){}
+  /* Every watchlist change reaches the alert sender from here, because this
+     is the one place all three star controls funnel through. Debounced inside
+     the module, and a no-op when nothing is subscribed. */
+  try{ if(typeof PUSH!=="undefined"&&PUSH) PUSH.sync(); }catch(e){}
+}
 
 // ---- helpers ----
 function esc(s){ const d=document.createElement("div"); d.textContent=s==null?"":s; return d.innerHTML; }
@@ -4271,6 +4289,57 @@ function wlSheetSync(n){
     try{ localStorage.setItem(KEY,shut?"1":"0"); }catch(e){}
     apply(); });
 })();
+/* The alerts offer. Hidden unless every precondition is already true, because
+   each one it fails is a control that cannot work:
+     - the browser has no Push API (every iOS browser before 16.4, and any
+       desktop Safari before the PWA is installed)
+     - the deploy has no VAPID keys, so a subscription could never be sent to
+     - the watchlist is empty, so the alert would have nothing to fire on
+   Permission 'denied' is shown and NOT offered as a button: a page cannot
+   re-prompt after a denial, from any code, so a button there would be a
+   control that silently does nothing. */
+function renderPushCard(){
+  const el=$("gwPush"); if(!el) return;
+  const hide=()=>{ el.hidden=true; el.innerHTML=""; };
+  if(typeof PUSH==="undefined"||!PUSH||!PUSH.supported()) return hide();
+  if(!state.watch.length) return hide();
+  PUSH.configured().then(ok=>{
+    if(!ok) return hide();
+    const perm=PUSH.permission();
+    if(perm==="denied"){
+      el.hidden=false;
+      el.innerHTML='<div class="pushcard"><div><b>Referee alerts are blocked</b>'
+        +'<p class="muted" style="margin:.2rem 0 0;font-size:.8rem">This browser has notifications turned off for the desk. It can only be changed in the browser\'s own site settings — a page is not allowed to ask again.</p></div></div>';
+      return;
+    }
+    PUSH.current().then(sub=>{
+      el.hidden=false;
+      const on=!!sub;
+      el.innerHTML='<div class="pushcard"><div style="flex:1;min-width:0">'
+        +'<b>'+(on?'Referee alerts are on':'Get told when a referee is appointed')+'</b>'
+        +'<p class="muted" style="margin:.2rem 0 0;font-size:.8rem">'
+        +(on
+          ?'You\'ll get one notification per fixture involving your '+state.watch.length+' watchlisted player'+(state.watch.length===1?'':'s')+', as soon as the official is published — usually about a week out. The list updates itself when you star or unstar someone.'
+          :'Officials are published about a week before a round, and the appointment moves every booking probability in that fixture. One notification per fixture involving your '+state.watch.length+' watchlisted player'+(state.watch.length===1?'':'s')+' — nothing else.')
+        +'</p></div>'
+        +'<button class="btn '+(on?'btn-ghost':'btn-primary')+'" id="gwPushBtn" type="button" style="flex:none">'+(on?'Turn off':'Turn on')+'</button></div>';
+      const btn=$("gwPushBtn");
+      if(btn) btn.addEventListener("click",()=>{
+        btn.disabled=true; btn.textContent=on?"Turning off…":"Asking…";
+        (on?PUSH.disable():PUSH.enable()).then(r=>{
+          if(!r.ok&&r.why&&r.why!=="dismissed"){
+            const msg=r.why==="denied"?"Notifications were blocked for this site."
+              :r.why==="empty"?"Star a player first — alerts follow your watchlist."
+              :r.why==="unconfigured"?"Alerts are not switched on for this deploy yet."
+              :"Could not set that up just now. Try again in a moment.";
+            toast(msg);
+          }else if(r.ok&&!on){ toast("Referee alerts on. You'll hear when an official is named."); }
+          renderPushCard();
+        });
+      });
+    });
+  });
+}
 function renderWatchDash(){
   const wrap=$("gwWatchWrap"), el=$("gwWatch");
   const watched=PL_PLAYERS.filter(isWatched);
@@ -4439,6 +4508,7 @@ function renderGameweek(){
   renderGwHero();
   renderGwSusp();
   renderWatchDash();
+  try{ renderPushCard(); }catch(e){}
   const el=$("gwFixtures"); if(!el) return;
   if(!LIVE){
     renderGwStats(null);
@@ -4529,6 +4599,15 @@ const PRICES=(typeof PLDPrice!=="undefined"&&PLDPrice)?PLDPrice.create({}):null;
    that nobody has checked it. See assets/lineup.js. */
 const LINEUPS=(typeof PLDLineup!=="undefined"&&PLDLineup)
   ?PLDLineup.create({key:"pl_desk_lineups_v1"}):null;
+
+/* Referee appointment alerts. The watchlist is local-first and works signed
+   out, so the server cannot know who follows whom — a copy of the keys rides
+   with the subscription and is re-sent on every change through saveState. */
+const PUSH=(typeof PLDPush!=="undefined"&&PLDPush)?PLDPush.create({
+  watchKeys:()=>state.watch.slice(),
+  userId:()=>{ try{ return (window.PLDSave&&PLDSave.userId&&PLDSave.userId())||null; }catch(e){ return null; } },
+  onChange:()=>{ try{ renderPushCard(); }catch(e){} }
+}):null;
 
 /* The live card ticker. See assets/livecards.js for why the desk needed one:
    a forecast that does not know the booking has happened is not unhelpful,

@@ -22,6 +22,12 @@ jobs:
           node --check assets/core.js
           node --check assets/livecards.js
           node --check assets/charts.js
+          node --check assets/push.js
+          node --check netlify/lib/webpush.js
+          node --check netlify/functions/push-key.js
+          node --check netlify/functions/push-subscribe.js
+          node --check netlify/functions/push-unsubscribe.js
+          node --check netlify/functions/push-cron.js
           node --check data/pl_data.js
           node --check data/model.js
           node --check data/sim_model.js
@@ -98,6 +104,13 @@ jobs:
       # those at least said what they were.
       - name: This season's fouls are this season's
         run: node scripts/check-core-insights.mjs
+
+      # Web Push, pinned to RFC 8291's own worked example. An encryption bug
+      # here does not throw — the push service returns 201 and the browser
+      # silently fails to decrypt, so the only symptom is notifications not
+      # arriving and logs that say everything worked.
+      - name: Web Push crypto matches the specification's test vector
+        run: node tests/test-webpush.mjs
 
       # The Championship dataset and the page that reads it. Re-derives the
       # prices the page shows and checks they are in a range a bookings market

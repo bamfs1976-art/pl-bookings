@@ -264,15 +264,53 @@ capped at 900 minutes of evidence, expected minutes from real appearance data,
 confirmed lineups near kick-off, and freezing forecasts before kick-off so
 they are scored honestly afterwards.
 
-### 3. Web push — from `gameweek-edge`
+### 3. Web push — **done for the appointment alert**
 
-Deferred in `IMPLEMENTATION_NOTES.md` as needing server infrastructure. It
-exists: `push-key`, `push-subscribe`, `push-unsubscribe`, `push-cron`, VAPID
-keys, subscriptions in Supabase under service-role RLS, same project and
-account model. The two alerts that justify it are *referee appointment
-published for a watchlisted player* and *one card from a ban*.
+Shipped: `push-key`, `push-subscribe`, `push-unsubscribe`, `push-cron`,
+`supabase/plb_push.sql`, the service worker handlers and the offer card under
+My watchlist. **One card from a ban is still open** — the suspension ladder is
+already in `assets/suspension.js`, so it is a second alert type on the same
+plumbing rather than new infrastructure.
 
-Needs `VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`, `VAPID_SUBJECT`.
+**Not ported from `gameweek-edge`, rebuilt.** That repo uses the `web-push`
+package, which it can because it already has a package.json for Capacitor.
+This desk has none, no build step and no install: every function here reaches
+Supabase over its REST API with plain `fetch`. Adding one dependency would
+mean a lockfile and an install step in the deploy, so RFC 8291 (payload
+encryption), RFC 8188 (aes128gcm framing) and RFC 8292 (VAPID) are implemented
+directly on `node:crypto` in `netlify/lib/webpush.js` — about 150 lines.
+
+**It is pinned to the specification's own worked example.** Hand-rolled crypto
+is exactly what should not be trusted for looking right, and the failure mode
+here is invisible: a wrong ciphertext gets a 201 from the push service and is
+then silently dropped by the browser, so the symptom is "notifications don't
+arrive" with logs saying everything worked. RFC 8291 §5 publishes the keys,
+the salt, the plaintext and the expected ciphertext; `tests/test-webpush.mjs`
+reproduces it byte for byte, and is wired into CI.
+
+**The watchlist rides on the subscription row.** The desk's watchlist is
+local-first and works signed out, deliberately, so the server has no way to
+know who follows whom. The client sends a copy of the keys with the
+subscription and re-sends on every change through `saveState()`, which is the
+one choke point all three star controls funnel through. The alternative was to
+require sign-in for alerts, which trades the feature's whole audience for a
+tidier schema.
+
+**The state table is load-bearing.** "A referee has been appointed" is not a
+property of the fixture list — every appointed fixture looks identical whether
+it was appointed a minute ago or a month ago. It is a difference, so the
+previous assignment per fixture is stored, and the first run seeds it and
+sends nothing. Getting that wrong does not fail quietly: it notifies every
+subscriber about every appointed fixture, every hour, forever.
+
+A re-appointment is treated as its own, more urgent alert — a naive "is the
+ref set?" check misses it entirely, and it is the case where the reader may
+already have acted on the old number.
+
+Setup: `node scripts/gen-vapid.mjs`, set `VAPID_PUBLIC_KEY`,
+`VAPID_PRIVATE_KEY` and `VAPID_SUBJECT` in Netlify, run
+`supabase/plb_push.sql` once. Until both are done `/api/push-key` returns 503
+and the desk simply does not offer alerts — no broken button.
 
 ### 4. Game-state and close-game factors — from `Plsimulator` (mostly done)
 
