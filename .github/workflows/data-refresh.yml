@@ -432,6 +432,22 @@ jobs:
         continue-on-error: true
         run: node scripts/build-sim-model.mjs
 
+      # THE FOULS HALF OF THE RISK SCORE. FPL carries yellow cards but no
+      # fouls, so before this step `p.f` was 2025-26 form for the whole season
+      # while the yellow half moved weekly — one score on two seasons, with
+      # nothing on the page saying which. FPL-Core-Insights publishes
+      # fouls_committed per player per match, free and keyed by the official
+      # FPL player id, and refreshes twice a day; this re-vendors it.
+      #
+      # continue-on-error for the same reason as the simulator above: without
+      # the file the desk falls back to baked fouls, which is where it was
+      # before the feature, and check-core-insights.mjs refuses a file that is
+      # present and about the wrong season. An unreachable GitHub raw endpoint
+      # must not take the whole refresh down.
+      - name: Re-vendor this season's fouls from FPL-Core-Insights
+        continue-on-error: true
+        run: node scripts/build-core-insights.mjs
+
       # Tier 2, THE OTHER TWO DIVISIONS. The FPL leg below covers the Premier
       # League only — FPL has no Championship and no La Liga — so until this
       # step existed `build-model.mjs --fit` could not be fitted for two of the
@@ -499,6 +515,7 @@ jobs:
       - name: Guard the dataset
         run: |
           node scripts/check-data.mjs
+          node scripts/check-core-insights.mjs
           node scripts/check-eflc.mjs
           node scripts/check-laliga.mjs
           node scripts/check-share.mjs

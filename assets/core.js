@@ -15,6 +15,85 @@
     return Math.round((y90 * 2 + f90) * 1000) / 1000;
   }
 
+  /* ---- this season's rates, and when to trust them --------------------
+   *
+   * Both halves of the risk score have a baked 2025-26 rate and, eventually,
+   * a 2026-27 one. Yellow cards arrive from the FPL API; fouls arrive from
+   * data/core_insights.js. They are governed by ONE rule, here, for a reason
+   * that took a season to become visible: if the two halves switched onto
+   * live data at different thresholds, the score would be part this season
+   * and part last, and no label on the page could honestly describe it.
+   *
+   * The rule is a switch, not a blend. 450 minutes — five full matches — is
+   * where a rate stops being noise, and it is the threshold the desk has
+   * always used for yellows. A blend would be defensible too, but it would
+   * mean every displayed rate is a number the player has never had, and this
+   * desk shows its rates.
+   *
+   * Below the threshold the baked rate is returned unchanged, so a player
+   * with two appearances is priced on a full season of last year rather than
+   * on 180 minutes of this one.
+   */
+  const MIN_LIVE_MINUTES = 450;
+
+  function per90(count, minutes) {
+    const c = Number(count), m = Number(minutes);
+    if (!isFinite(c) || !isFinite(m) || m <= 0) return null;
+    return c / (m / 90);
+  }
+
+  /* Returns {rate, live}. `live` is what the page's "live rate" marker means:
+     this number came from this season. A null baked rate with too few live
+     minutes stays null — an unknown rate is not a zero one. */
+  function liveRate(bakedRate, count, minutes, minMinutes) {
+    const floor = minMinutes == null ? MIN_LIVE_MINUTES : Number(minMinutes);
+    const m = Number(minutes);
+    if (isFinite(m) && m >= floor) {
+      const r = per90(count, minutes);
+      if (r != null) return { rate: r, live: true };
+    }
+    return { rate: bakedRate == null ? null : Number(bakedRate), live: false };
+  }
+
+  /* ---- the id join, re-checked on every page load ---------------------
+   *
+   * core_insights.js is keyed by the official FPL player id and so is the
+   * bootstrap, so the join is an integer lookup — which is exactly why it
+   * needs guarding. If the upstream ever renumbers, every foul rate lands on
+   * the wrong player and every number on the page stays plausible. There is
+   * no shape guard for "correct data about the wrong person".
+   *
+   * So the vendored file carries the web name beside the id and the app
+   * checks the pairing against the feed it already has. Comparison is on
+   * normalised names because the two sources punctuate differently
+   * ("Bruno G." against "Bruno Guimarães"); a prefix match either way is
+   * enough to say it is the same person and not enough to accept a different
+   * one.
+   */
+  /* normName strips COMBINING accents, via NFD. It cannot touch letters that
+     are their own character rather than a letter plus a mark — ø, æ, ß, đ, ł
+     decompose to nothing, so "Nørgaard" normalises to "n rgaard" and would
+     never match a feed that writes "Norgaard". Folded here rather than in
+     normName because normName is what the REFEREE join uses, and loosening
+     that would let two officials collide. */
+  function foldLetters(s) {
+    return s.replace(/ø/g, 'o').replace(/æ/g, 'ae').replace(/å/g, 'a')
+      .replace(/ß/g, 'ss').replace(/đ/g, 'd').replace(/ð/g, 'd')
+      .replace(/ł/g, 'l').replace(/þ/g, 'th');
+  }
+
+  function joinLooksRight(vendoredName, feedName) {
+    const a = normName(foldLetters(String(vendoredName || '').toLowerCase()));
+    const b = normName(foldLetters(String(feedName || '').toLowerCase()));
+    if (!a || !b) return false;
+    if (a === b) return true;
+    /* A prefix match either way absorbs "Bruno G." against "Bruno Guimarães".
+       It must stay a PREFIX: a substring match would pair "Rice" with
+       "Maurice", and a renumbering by one is exactly what this guards. */
+    const as = a.replace(/ /g, ''), bs = b.replace(/ /g, '');
+    return as.startsWith(bs) || bs.startsWith(as);
+  }
+
   /* ---- name normalisation ----
      Used to match FPL feed players to the baked squads: strip accents,
      lowercase, collapse every non-letter run to a single space. */
@@ -1105,6 +1184,7 @@
 
   const PLDCore = {
     riskScore, normName, matchRefName, pickPL, summarisePicks, calibrate, impliedProb, fairOdds, edgePct, LOGISTIC_SLOPE,
+    per90, liveRate, joinLooksRight, MIN_LIVE_MINUTES,
     marketProb, marketProbDeVig, valuePoint, TYPICAL_CARD_MARGIN,
     cardCountDist, probOverCards, expectedCards, probBothCarded, probBothAtLeast, teamCardMarkets,
     bookingPointsDist, expectedPoints, probOverPoints, leagueRedRate,

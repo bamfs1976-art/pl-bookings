@@ -1222,6 +1222,13 @@
 <script src="data/h2h.js"></script>
 <script src="data/model.js"></script>
 <script src="data/sim_model.js"></script>
+<!-- This season's fouls committed, per FPL player id, harvested from
+     FPL-Core-Insights by scripts/build-core-insights.mjs. The FPL API carries
+     yellow cards but no fouls, so without this half the risk score sits on
+     2025-26 form until May. Optional by design: if the file is missing, or
+     empty because the season has not produced 450 minutes for anyone yet, the
+     desk runs on baked fouls exactly as it did before and says so. -->
+<script src="data/core_insights.js"></script>
 <script src="assets/core.js"></script>
 <script src="assets/save.js"></script>
 <script src="assets/plmodel.js"></script>
@@ -1366,9 +1373,9 @@ function clubName(c){ return CLUBMAP[c]?CLUBMAP[c].name:c; }
 // ScoutingStats refresh (not in the FPL feed). Raw totals derive from the
 // per-90 rate and minutes.
 function foulsWon90(p){ return (p&&p.fw!=null)?p.fw:null; }
-function foulsTotal(rate,p){ return (rate!=null&&p&&p.min)?Math.round(rate*p.min/90):null; }
+function foulsTotal(rate,p){ const m=effFMin(p); return (rate!=null&&m)?Math.round(rate*m/90):null; }
 function foulsLine(p){
-  const fc=p.f, fw=foulsWon90(p), fct=foulsTotal(fc,p), fwt=foulsTotal(fw,p);
+  const fc=fEff(p), fw=foulsWon90(p), fct=foulsTotal(fc,p), fwt=foulsTotal(fw,p);
   const comm=fc==null?"—":`<b class="num">${fc.toFixed(2)}</b>/90${fct!=null?` · ${fct} total`:""}`;
   const won=fw==null?'<span class="faint">not yet in the dataset — populates on the next data refresh</span>'
     :`<b class="num">${fw.toFixed(2)}</b>/90${fwt!=null?` · ${fwt} total`:""}`;
@@ -1389,9 +1396,14 @@ function mpick(o,k,fb){ return o&&o[k]!=null?o[k]:fb; }
 // Effective (live-aware) yellow count/minutes for the yellow half of the model.
 function effMin(p){ return (p.liveRate&&p.live)?p.live.min:(p.min||0); }
 function effYc(p){ return (p.liveRate&&p.live)?p.live.yc:(p.yc||0); }
+/* The foul half has its OWN exposure. Shrinkage is weighted by sample size,
+   so feeding a live rate against baked minutes would shrink this season's
+   evidence as though it were last season's — the rate and the minutes that
+   produced it always travel together. */
+function effFMin(p){ return (p.liveFouls&&p.fMinLive!=null)?p.fMinLive:(p.min||0); }
 // Shrunk per-90 rates: pull low-exposure rates toward the position mean.
 function shrunkY90(p){ if(!MODEL_OK) return yEff(p); const S=MODEL.shrink; return PLDCore.shrinkRate(effYc(p),effMin(p),mpick(S.ycMean,p.p,S.ycLeague),S.strengthMatches); }
-function shrunkF90(p){ if(p.f==null) return null; if(!MODEL_OK) return p.f; const S=MODEL.shrink; return PLDCore.shrinkRate(p.f*((p.min||0)/90),(p.min||0),mpick(S.foulMean,p.p,S.foulLeague),S.strengthMatches); }
+function shrunkF90(p){ const f=fEff(p); if(f==null) return null; if(!MODEL_OK) return f; const S=MODEL.shrink; const m=effFMin(p); return PLDCore.shrinkRate(f*(m/90),m,mpick(S.foulMean,p.p,S.foulLeague),S.strengthMatches); }
 // Season base booking probability: PLDCore.pCardSeason, the SAME function the
 // Championship and La Liga desks price through. It used to be a logistic over
 // yellows, fouls and position, and that is what made this desk's percentages
@@ -1499,7 +1511,7 @@ function exportCSV(){
   const lines=[head.join(",")].concat(rows.map(p=>{
     const r=rEff(p), pc=pImp(p), yc=(LIVE&&LIVE.seasonStarted&&p.live)?p.live.yc:p.yc;
     return [p.n,p.c,p.p||"",p.min,yc==null?"":yc,p.rc==null?"":p.rc,
-      yEff(p)==null?"":yEff(p).toFixed(3),p.f==null?"":p.f.toFixed(2),p.fw==null?"":p.fw.toFixed(2),
+      yEff(p)==null?"":yEff(p).toFixed(3),fEff(p)==null?"":fEff(p).toFixed(2),p.fw==null?"":p.fw.toFixed(2),
       r==null?"":r.toFixed(3),pc==null?"":pc.toFixed(3),pc?(1/pc).toFixed(2):"",
       p.b||"",p.ls?1:0].map(cell).join(",");
   }));
@@ -1532,7 +1544,7 @@ function renderPlayers(){
       ?`<span title="2026-27 live count">${p.live.yc}</span>`
       :(p.yc==null?'—':p.yc);
     const y=yEff(p), r=rEff(p);
-    const liveDot=p.liveRate?'<span title="Live 2026-27 yellow rate" style="color:var(--good)"> •</span>':'';
+    const liveDot=(p.liveRate||p.liveFouls)?'<span title="'+rateBasis(p)+'" style="color:var(--good)"> •</span>':'';
     const w=isWatched(p);
     tr.innerHTML=
       `<td style="text-align:center;padding:.45rem .2rem"><button class="watch-btn" data-w="${esc(watchKey(p))}" aria-pressed="${w}" title="${w?'Remove from watchlist':'Add to watchlist'}" aria-label="${w?'Remove':'Add'} ${esc(p.n)} ${w?'from':'to'} watchlist">${w?'★':'☆'}</button></td>`+
@@ -1542,7 +1554,7 @@ function renderPlayers(){
       `<td style="text-align:right" class="num muted">${confDot(p.min)}${p.min}</td>`+
       `<td style="text-align:right" class="num muted">${yc}${formBadge(p)}</td>`+
       `<td style="text-align:right" class="num">${y==null?'—':y.toFixed(2)+liveDot}</td>`+
-      `<td style="text-align:right" class="num">${p.f==null?'—':p.f.toFixed(2)}</td>`+
+      `<td style="text-align:right" class="num">${fEff(p)==null?'—':fEff(p).toFixed(2)}</td>`+
       `<td style="text-align:right;padding:.45rem .6rem">${r==null?'<span class="faint">—</span>':`<span class="riskbadge display" style="font-size:1.05rem;color:${riskColour(r)}">${r.toFixed(2)}</span><div class="barwrap" style="width:60px;margin-left:auto"><div class="bar" style="width:${Math.min(100,Math.round(r/3.8*100))}%;background:${riskColour(r)}"></div></div>`}</td>`+
       valueCell(p);
     frag.appendChild(tr);
@@ -1567,7 +1579,7 @@ function renderPlayerCards(rows){
       ${playerAvatar(p,"avatar-sm",null,{crest:true})}
       <div class="pcard-main">
         <div class="pcard-name">${esc(p.n)}${(p.ls&&p.b!=="NEW")?'<span class="chip tier-mid" style="font-size:.58rem">low</span>':''}${basisChip(p,".58rem")}${availChip(p)}</div>
-        <div class="pcard-sub num">${crest(p.c)} ${p.c} · ${esc(p.p||"")} · ${yEff(p)==null?"—":yEff(p).toFixed(2)} yc/90 · ${p.f==null?"—":p.f.toFixed(2)} f/90</div>
+        <div class="pcard-sub num">${crest(p.c)} ${p.c} · ${esc(p.p||"")} · ${yEff(p)==null?"—":yEff(p).toFixed(2)} yc/90 · ${fEff(p)==null?"—":fEff(p).toFixed(2)} f/90</div>
       </div>
       <div class="pcard-risk">
         ${r==null?'<span class="faint">—</span>':`<span class="riskbadge display" style="font-size:1.1rem;color:${riskColour(r)}">${r.toFixed(2)}</span><div class="barwrap"><div class="bar" style="width:${Math.min(100,Math.round(r/3.8*100))}%;background:${riskColour(r)}"></div></div>`}
@@ -1995,7 +2007,7 @@ async function exportPNG(){
     let nm=p.n; while(x.measureText(nm).width>W-P-430) nm=nm.slice(0,-1);
     x.fillText(nm + (nm!==p.n?"…":""),P+108,y+50);
     x.fillStyle="#586275"; x.font=`600 19px ${body}`;
-    x.fillText(`${p.p||""}  ·  ${yEff(p)!=null?yEff(p).toFixed(2):"—"} yc  ·  ${p.f!=null?p.f.toFixed(2):"—"} fouls${p.fw!=null?"  ·  "+p.fw.toFixed(2)+" won":""}`+(p.b==="EFL"?"  · EFL":""),P+108,y+78);
+    x.fillText(`${p.p||""}  ·  ${yEff(p)!=null?yEff(p).toFixed(2):"—"} yc  ·  ${fEff(p)!=null?fEff(p).toFixed(2):"—"} fouls${p.fw!=null?"  ·  "+p.fw.toFixed(2)+" won":""}`+(p.b==="EFL"?"  · EFL":""),P+108,y+78);
     // risk number + bar
     const pr=rEff(p), rc=riskHexAbs(pr);
     x.fillStyle=rc; x.font=`800 44px ${disp}`; x.textAlign="right"; x.fillText(pr.toFixed(2),W-P,y+50); x.textAlign="left";
@@ -2166,7 +2178,7 @@ async function exportFixturePNG(fid){
     let nm=p.n; while(x.measureText(nm).width>W-P-470&&nm.length>3) nm=nm.slice(0,-1);
     x.fillText(nm+(nm!==p.n?"…":""),P+108,mid-2);
     x.fillStyle="#586275"; x.font=`600 18px ${body}`;
-    x.fillText(`${p.p||""} · base ${(pImp(p)*100).toFixed(0)}%${p.f!=null?" · "+p.f.toFixed(1)+" fls/90":""}${p.fw!=null?" · "+p.fw.toFixed(1)+" won":""}${ref&&Math.abs(rf-1)>=0.02?" · ×"+rf.toFixed(2)+" ref":""}`,P+108,mid+24);
+    x.fillText(`${p.p||""} · base ${(pImp(p)*100).toFixed(0)}%${fEff(p)!=null?" · "+fEff(p).toFixed(1)+" fls/90":""}${p.fw!=null?" · "+p.fw.toFixed(1)+" won":""}${ref&&Math.abs(rf-1)>=0.02?" · ×"+rf.toFixed(2)+" ref":""}`,P+108,mid+24);
     const pc=probHex(prob);
     x.fillStyle=pc; x.font=`800 40px ${disp}`; x.textAlign="right"; x.fillText((prob*100).toFixed(0)+"%",W-P,mid-4); x.textAlign="left";
     const bw=190,bx=W-P-bw,by=mid+12;
@@ -2567,6 +2579,7 @@ function openPlayerProfile(k){
     ${statCell("Minutes",p.min,p.ls?"low sample":"2025-26")}
     ${statCell("Yellows",liveYC!=null?liveYC:(p.yc==null?"—":p.yc),liveYC!=null?"live 2026-27":"2025-26")}
     ${statCell("YC / 90",yEff(p)==null?"—":yEff(p).toFixed(2),p.liveRate?"live rate":"2025-26 rate")}
+    ${statCell("Fouls / 90",fEff(p)==null?"—":fEff(p).toFixed(2),p.liveFouls?"live rate":"2025-26 rate")}
     ${statCell("Fouls won / 90",foulsWon90(p)==null?"—":foulsWon90(p).toFixed(2),foulsWon90(p)==null?"awaiting refresh":"2025-26 form")}
   </div>
   <div class="surface-2" style="border-radius:10px;padding:.55rem .8rem;margin-bottom:.7rem">
@@ -2574,7 +2587,7 @@ function openPlayerProfile(k){
     <div style="font-size:.85rem;margin-top:.25rem;line-height:1.5">${foulsLine(p)}</div>
   </div>`;
   // Tier 3 forecast: expected fouls + over/under lines, and a two-stage card cross-check.
-  if(MODEL_OK&&p.f!=null){
+  if(MODEL_OK&&fEff(p)!=null){
     const ef=expFoulsFor(p,90), po1=pFoulsOver(p,1,90), po2=pFoulsOver(p,2,90);
     const two=PLDCore.cardProbFromFouls(ef,MODEL.twoStage.baseHazard);
     h+=`<div class="surface-2" style="border-radius:10px;padding:.55rem .8rem;margin-bottom:.7rem">
@@ -2767,8 +2780,27 @@ let LIVE=null;
    request had been made. */
 let LIVE_STATE="loading";
 
+/* This season's fouls, keyed by FPL player id: [minutes, fouls, webName].
+   Absent until the harvest has run and a player has cleared the minutes
+   floor, which before about GW6 means absent for everybody — so every read
+   is guarded and the desk's behaviour with no file is its old behaviour.
+   CI_FOULS_OK goes false only if the id join fails wholesale at runtime. */
+const CI_FOULS=(typeof CORE_INSIGHTS!=="undefined"&&CORE_INSIGHTS&&CORE_INSIGHTS.players)?CORE_INSIGHTS.players:null;
+let CI_FOULS_OK=!!CI_FOULS;
+
 function yEff(p){ return p.yLive!=null?p.yLive:p.y; }
+function fEff(p){ return p.fLive!=null?p.fLive:p.f; }
 function rEff(p){ return p.rLive!=null?p.rLive:p.r; }
+/* Which season each half of the score is actually on. The two can differ —
+   a player reaches 450 league minutes for cards and fouls at the same time,
+   but the foul feed publishes on its own schedule and can be a day behind —
+   so the page says which rather than implying both moved together. */
+function rateBasis(p){
+  if(p.liveRate&&p.liveFouls) return "live rate";
+  if(p.liveRate) return "live cards, 2025-26 fouls";
+  if(p.liveFouls) return "2025-26 cards, live fouls";
+  return "2025-26 rate";
+}
 function sortVal(p,k){
   if(k==="y"){ const v=yEff(p); return v==null?-Infinity:v; }
   if(k==="r"||k==="ip"){ const v=rEff(p); return v==null?-Infinity:v; } // implied prob is monotonic in risk
@@ -2822,8 +2854,10 @@ function buildTeamMap(teams){
    card counts, minutes and availability. Once a player has 450 live
    minutes, his yellow rate in the risk score switches to the live rate. */
 function attachLive(bootstrap,teamMap){
+  let ciChecked=0,ciMismatch=0;
   const byClub={};
-  PL_PLAYERS.forEach(p=>{ delete p.live; delete p.yLive; delete p.rLive; delete p.photo; p.liveRate=false;
+  PL_PLAYERS.forEach(p=>{ delete p.live; delete p.yLive; delete p.rLive; delete p.fLive; delete p.fMinLive; delete p.photo;
+    p.liveRate=false; p.liveFouls=false;
     (byClub[p.c]=byClub[p.c]||[]).push(p); });
   const index={}; // club -> normalized-name lookup; null marks an ambiguous key
   Object.keys(byClub).forEach(c=>{
@@ -2860,9 +2894,43 @@ function attachLive(bootstrap,teamMap){
     if(!p||p.live) return;
     p.live={yc:el.yellow_cards||0,rc:el.red_cards||0,min:el.minutes||0,st:el.status||"a",news:el.news||""};
     p.photo=el.photo||(el.code!=null?String(el.code):"");   // strict-match cutout ref
-    if(p.live.min>=450&&p.f!=null){ p.yLive=p.live.yc/(p.live.min/90); p.rLive=PLDCore.riskScore(p.yLive,p.f); p.liveRate=true; }
+
+    /* Yellow cards from the live feed; fouls from the vendored harvest. One
+       threshold governs both (PLDCore.liveRate), so the two halves of the
+       score cannot end up on different seasons by accident. */
+    const y=PLDCore.liveRate(p.y,p.live.yc,p.live.min);
+    const ci=CI_FOULS?CI_FOULS[el.id]:null;
+    let f={rate:p.f,live:false};
+    if(ci){
+      /* The id join, re-checked against the feed on every load. See
+         PLDCore.joinLooksRight: correct data about the wrong player is the
+         one failure no shape guard can see. */
+      if(PLDCore.joinLooksRight(ci[2],el.web_name)){ f=PLDCore.liveRate(p.f,ci[1],ci[0]); if(f.live) p.fMinLive=ci[0]; ciChecked++; }
+      else { ciMismatch++; }
+    }
+    if(y.live||f.live){
+      p.yLive=y.live?y.rate:null; if(p.yLive==null) delete p.yLive;
+      p.fLive=f.live?f.rate:null; if(p.fLive==null) delete p.fLive;
+      p.liveRate=y.live; p.liveFouls=f.live;
+      p.rLive=PLDCore.riskScore(y.rate,f.rate);
+    }
     matched++;
   });
+
+  /* A join that is wrong for a handful of players is a transfer the vendored
+     file has not caught up with. A join that is wrong for a fifth of them is
+     a renumbering, and every foul rate on the page belongs to somebody else.
+     There is no safe partial version of that, so the whole overlay is dropped
+     and the desk goes back to 2025-26 fouls — which is where it was before
+     any of this, and which the page already knows how to say. */
+  if(ciMismatch>0&&ciMismatch>(ciChecked+ciMismatch)*0.2){
+    console.warn("core_insights: "+ciMismatch+" of "+(ciChecked+ciMismatch)+
+      " id/name pairs disagreed with the FPL feed — dropping the foul overlay");
+    CI_FOULS_OK=false;
+    PL_PLAYERS.forEach(p=>{ if(p.liveFouls){ delete p.fLive; delete p.fMinLive; p.liveFouls=false;
+      p.rLive=p.liveRate?PLDCore.riskScore(p.yLive,p.f):undefined;
+      if(p.rLive===undefined) delete p.rLive; } });
+  }
   return matched;
 }
 
@@ -2972,7 +3040,7 @@ function apCardHtml(p){
       +`<span class="ap-stat"><span class="v">${p.min}</span><span class="l">Mins</span></span>`
       +`<span class="ap-stat"><span class="v">${p.starts}</span><span class="l">Starts</span></span>`
       +`<span class="ap-stat"><span class="v">${num(p.y90,2)}</span><span class="l">YC/90</span></span>`
-      +`<span class="ap-stat"><span class="v">${num(p.f,2)}</span><span class="l">Fouls/90</span></span>`
+      +`<span class="ap-stat"><span class="v">${num(fEff(p),2)}</span><span class="l">Fouls/90</span></span>`
     +`</div>`
     +(p.pk?`</button>`:`</div>`);
 }
@@ -3030,7 +3098,7 @@ function renderAllPlayers(){
       `<td class="num" style="text-align:right">${p.yc}</td>`+
       `<td class="num" style="text-align:right">${p.rc}</td>`+
       `<td class="num" style="text-align:right">${p.y90==null?'<span class="faint">—</span>':p.y90.toFixed(2)}</td>`+
-      `<td class="num" style="text-align:right">${p.f==null?'<span class="faint">—</span>':p.f.toFixed(2)}</td>`+
+      `<td class="num" style="text-align:right">${fEff(p)==null?'<span class="faint">—</span>':fEff(p).toFixed(2)}</td>`+
       `<td class="num" style="text-align:right">${p.fw==null?'<span class="faint">—</span>':p.fw.toFixed(2)}</td>`;
     frag.appendChild(tr);
   });
@@ -3044,7 +3112,7 @@ function exportAllPlayersCSV(){
   const cell=v=>{ v=v==null?"":String(v); return /[",\n]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v; };
   const lines=[head.join(",")].concat(rows.map(p=>[p.full||p.n,p.c,p.p||"",p.min,p.starts,p.yc,p.rc,
     p.y90==null?"":p.y90.toFixed(3),p.r90==null?"":p.r90.toFixed(3),
-    p.f==null?"":p.f.toFixed(2),p.fw==null?"":p.fw.toFixed(2),p.st].map(cell).join(",")));
+    fEff(p)==null?"":fEff(p).toFixed(2),p.fw==null?"":p.fw.toFixed(2),p.st].map(cell).join(",")));
   const blob=new Blob([lines.join("\n")],{type:"text/csv"});
   saveFile(blob,"pl-all-players.csv","text/csv",
     r=>toast(r==="cancelled"?"Export cancelled":"CSV ready — "+rows.length+" players"));
@@ -3609,7 +3677,7 @@ function teamCardBoard(h,a,ref,derby){
  */
 function teamFoulBoard(h,a){
   if(!MODEL_OK) return null;
-  const rated=PL_PLAYERS.filter(p=>(p.c===h||p.c===a)&&p.f!=null&&!p.ls
+  const rated=PL_PLAYERS.filter(p=>(p.c===h||p.c===a)&&fEff(p)!=null&&!p.ls
     &&!(p.live&&"isu".includes(p.live.st)));
   if(rated.length<12) return null;      // same floor the card board uses
   const mus=[];
@@ -3617,7 +3685,7 @@ function teamFoulBoard(h,a){
     const s=rated.filter(p=>p.c===c);
     if(!s.length) return;
     const w=PLDCore.minuteWeights(s.map(p=>p.min));
-    s.forEach((p,i)=>{ const m=p.f*(w[i]||0); if(m>0) mus.push(m); });
+    s.forEach((p,i)=>{ const m=fEff(p)*(w[i]||0); if(m>0) mus.push(m); });
   });
   const dist=PLDCore.sumNegBin(mus,MODEL.nbFouls.dispersion);
   if(!dist) return null;
@@ -3754,7 +3822,7 @@ function pipMeter(p){
 }
 function candRowHtml(c,ref,isNew){
   const p=c.p, prob=c.prob, sev=severity(prob), conf=confidence(p);
-  const live=(p.liveRate)?' <span title="Live 2026-27 yellow rate" style="color:var(--good)">●</span>':'';
+  const live=(p.liveRate||p.liveFouls)?' <span title="'+rateBasis(p)+'" style="color:var(--good)">●</span>':'';
   return `<button class="cand2${isNew?" cand-in":""}" data-pk="${esc(watchKey(p))}" type="button" aria-label="Open ${esc(p.n)}'s profile">
     ${playerAvatar(p,"avatar-sm",null,{crest:true})}
     <span class="cbadge" title="${esc(conf.label)}">${esc(p.c)}</span>

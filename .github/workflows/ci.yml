@@ -23,6 +23,7 @@ jobs:
           node --check data/pl_data.js
           node --check data/model.js
           node --check data/sim_model.js
+          node --check data/core_insights.js
           node scripts/check-inline.mjs
 
       - name: Model builder is reproducible (season prior regenerates cleanly)
@@ -87,6 +88,14 @@ jobs:
 
       - name: Data guard (pl_data.js counts, no inline dataset in index.html)
         run: node scripts/check-data.mjs
+
+      # The vendored fouls. Offline, against the committed file. The failure it
+      # exists for is not a crash — it is the file being well-formed and about
+      # LAST season, which would put a "live rate" marker next to 2025-26
+      # numbers. That is worse than the frozen rates this replaced, because
+      # those at least said what they were.
+      - name: This season's fouls are this season's
+        run: node scripts/check-core-insights.mjs
 
       # The Championship dataset and the page that reads it. Re-derives the
       # prices the page shows and checks they are in a range a bookings market

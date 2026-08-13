@@ -35,6 +35,82 @@ t('null when either rate is missing or non-finite', () => {
   assert.equal(core.riskScore(NaN, 1), null);
 });
 
+/* ---- this season's rates ----
+   The rule that decides whether a displayed rate is 2026-27 or 2025-26. It
+   governs BOTH halves of the risk score, which is the point: the desk spent a
+   season with live yellows and frozen fouls, and nothing on the page said so. */
+console.log('liveRate');
+t('below the minutes floor the baked rate is returned untouched', () => {
+  assert.deepEqual(core.liveRate(1.92, 3, 300), { rate: 1.92, live: false });
+  assert.deepEqual(core.liveRate(1.92, 0, 0), { rate: 1.92, live: false });
+});
+t('at or past the floor it switches to the rate this season has produced', () => {
+  const r = core.liveRate(1.92, 10, 450);
+  assert.equal(r.live, true);
+  assert.equal(r.rate, 2);                       // 10 fouls in 5 full matches
+  assert.equal(core.liveRate(1.92, 21, 900).rate, 2.1);
+});
+t('the floor is the same 450 the yellow half uses', () => {
+  assert.equal(core.MIN_LIVE_MINUTES, 450);
+  assert.equal(core.liveRate(1, 5, 449).live, false);
+  assert.equal(core.liveRate(1, 5, 450).live, true);
+});
+t('a genuine zero this season is kept, not read as no data', () => {
+  // A goalkeeper with 3330 minutes and no fouls is the shipped case: player
+  // id 1 in the 2025-26 harvest. Falling back to a baked rate here would
+  // invent fouls he did not commit.
+  assert.deepEqual(core.liveRate(0.4, 0, 3330), { rate: 0, live: true });
+});
+t('no baked rate and too few minutes stays null rather than becoming zero', () => {
+  // The promoted-club case: a player the 2025-26 harvest never saw. An unknown
+  // rate must not enter the risk score as a clean one.
+  assert.deepEqual(core.liveRate(null, 2, 120), { rate: null, live: false });
+});
+t('no baked rate but enough minutes IS a rate — this is how promoted clubs fill', () => {
+  assert.deepEqual(core.liveRate(null, 12, 900), { rate: 1.2, live: true });
+});
+
+console.log('per90');
+t('converts a count and minutes to a per-90 rate', () => {
+  assert.equal(core.per90(9, 900), 0.9);
+  assert.equal(core.per90(0, 900), 0);
+});
+t('refuses zero, negative or non-finite exposure instead of dividing by it', () => {
+  assert.equal(core.per90(5, 0), null);
+  assert.equal(core.per90(5, null), null);
+  assert.equal(core.per90(5, -90), null);
+});
+
+/* ---- the id join ----
+   core_insights.js is keyed by FPL player id and so is the bootstrap, so the
+   join is an integer lookup and there is no shape guard that can see "correct
+   data about the wrong person". The vendored web name is the check. */
+console.log('joinLooksRight');
+t('accepts the same player written two ways', () => {
+  assert.equal(core.joinLooksRight('Bruno G.', 'Bruno G.'), true);
+  assert.equal(core.joinLooksRight('Gabriel', 'Gabriel'), true);
+  assert.equal(core.joinLooksRight('Saliba', 'Saliba'), true);
+  // Punctuation and accents differ between the two feeds.
+  assert.equal(core.joinLooksRight('Nørgaard', 'Norgaard'), true);
+  assert.equal(core.joinLooksRight("O'Riley", 'O Riley'), true);
+});
+t('accepts an abbreviation of the same name, either way round', () => {
+  assert.equal(core.joinLooksRight('Bruno G.', 'Bruno Guimarães'), true);
+  assert.equal(core.joinLooksRight('Alexander-Arnold', 'Alexander'), true);
+});
+t('rejects two different players, which is the whole job', () => {
+  assert.equal(core.joinLooksRight('Gabriel', 'Saliba'), false);
+  assert.equal(core.joinLooksRight('Saka', 'Martinelli'), false);
+  // Same club, same position, similar length — a renumbering by one would
+  // look exactly like this and must not pass.
+  assert.equal(core.joinLooksRight('Raya', 'Rice'), false);
+});
+t('a missing name on either side is not a match', () => {
+  assert.equal(core.joinLooksRight('', 'Saka'), false);
+  assert.equal(core.joinLooksRight('Saka', ''), false);
+  assert.equal(core.joinLooksRight(null, undefined), false);
+});
+
 /* ---- name normalisation ---- */
 console.log('normName');
 t('strips accents', () => {
