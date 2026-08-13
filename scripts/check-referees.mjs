@@ -22,6 +22,14 @@ import assert from 'node:assert';
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const index = readFileSync(join(root, 'index.html'), 'utf8');
 
+/* The real PLDCore, for the desk snippets below that call into it. */
+function coreOf() {
+  const c = {};
+  vm.createContext(c);
+  vm.runInContext(readFileSync(join(root, 'assets', 'core.js'), 'utf8'), c);
+  return vm.runInContext('PLDCore', c);
+}
+
 /* ---- the desk loads the harvested fixtures at all ------------------------ */
 assert.ok(/<script src="data\/pl_fixtures\.js"><\/script>/.test(index),
   'index.html does not load data/pl_fixtures.js, so it cannot see any ' +
@@ -189,6 +197,39 @@ ctx.REFS.pop();
 assert.ok(/APPOINTED=null;/.test(index.slice(index.indexOf('LIVE={bootstrap:bs'))),
   'the appointment cache is not reset when LIVE is rebuilt, so it would keep ' +
   'pointing at the previous load\'s fixture ids');
+
+/* ---- and the Premier League desk resolves a name it is spelt differently ---
+   Its JOIN is different — club codes across two id spaces, not a name — but
+   the last step is the same name lookup, and it was the same exact match. This
+   desk has had no appointment published yet, so nothing would have caught it
+   until the season opened. */
+{
+  /* RUN the real refByName, not a stub of it. The context above supplies its
+     own exact-match stub so the join could be tested in isolation, which meant
+     this desk's actual name lookup was never executed by anything — and it was
+     an exact match, the same bug the Championship hit, eight days from its own
+     openers. */
+  const realLookup = slice('function refByName(n){', '\n/* ---- the appointed');
+  const ctx2 = {
+    REFS: [{ n: 'Michael Oliver', ypg: 3.4 }, { n: 'Anthony Taylor', ypg: 4.1 }],
+    PLDCore: coreOf(), console,
+  };
+  vm.createContext(ctx2);
+  vm.runInContext(realLookup, ctx2);
+  assert.ok(ctx2.refByName('Michael Oliver'),
+    'the exact name no longer resolves at all');
+  const abbrev = ctx2.refByName('M. Oliver');
+  assert.ok(abbrev && abbrev.n === 'Michael Oliver' && abbrev.ypg === 3.4,
+    'index.html cannot resolve "M. Oliver" to Michael Oliver. The appointment ' +
+    'overlay abbreviates and the card table does not, so every published ' +
+    'appointment would price at refFactor = 1 — which on the page is ' +
+    'indistinguishable from no official being named.');
+  /* And it must still refuse a guess. */
+  ctx2.REFS.push({ n: 'Matthew Oliver', ypg: 3.9 });
+  assert.equal(ctx2.refByName('M. Oliver'), null,
+    'two Olivers sharing an initial resolved to one of them — pricing a match ' +
+    'off the wrong referee is worse than pricing it off none');
+}
 
 /* ---- the other two desks still read their appointments ------------------ */
 for (const page of ['eflc.html', 'laliga.html']) {
