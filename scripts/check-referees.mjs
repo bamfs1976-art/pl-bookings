@@ -193,8 +193,18 @@ assert.ok(/APPOINTED=null;/.test(index.slice(index.indexOf('LIVE={bootstrap:bs')
 /* ---- the other two desks still read their appointments ------------------ */
 for (const page of ['eflc.html', 'laliga.html']) {
   const s = readFileSync(join(root, page), 'utf8');
-  assert.ok(/fx\.ref && refByName\[fx\.ref\]/.test(s),
-    `${page} no longer resolves the appointed referee from its fixture list`);
+  /* THROUGH THE SHARED RESOLVER, not an exact lookup. The overlay and the
+     card table are different feeds: eleven of the Championship's twelve
+     opening appointments arrived abbreviated ("F. Hallam" against "Farai
+     Hallam") and an exact `refByName[fx.ref]` matched none of them, pricing
+     each fixture at refFactor = 1 — indistinguishable, on the page, from no
+     official being named. */
+  assert.ok(/C\.matchRefName\(fx\.ref, refByName\)/.test(s),
+    `${page} no longer resolves the appointed referee through ` +
+    'PLDCore.matchRefName, so an appointment spelt differently from the card ' +
+    'table prices at a neutral referee and looks like no appointment at all');
+  assert.ok(!/if \(fx\.ref && refByName\[fx\.ref\]\) return/.test(s),
+    `${page} is back to an exact-string appointment lookup`);
 }
 
 /* ---- the coverage reporter exists and is wired to the harvest ----------- */
@@ -263,6 +273,27 @@ const accas = readFileSync(join(root, 'scripts', 'accas.mjs'), 'utf8');
     }
   }
   assert.ok(checked > 100, `only ${checked} forecast rows checked`);
+
+  /* THE FORECAST POOL PRICES OFF THE APPOINTED OFFICIAL, not just the match
+     record beside it. candidatesFor() resolves the referee on its own path,
+     and that path had its own exact-string lookup: with the Championship's
+     twelve openers named, every forecast row was being logged at ref_factor 1
+     — permanently, because forecasts are written once and never revised. A
+     string comparison recorded for ever as a fact about football.
+
+     Asserted on the OPEN ROUND of whichever league has appointments, so it
+     starts working the day they are published rather than needing a season. */
+  for (const L of A.LEAGUES) {
+    const { pool } = A.candidatesFor(L);
+    const appointed = (pool || []).filter((r) => r.referee);
+    if (appointed.length < 4) continue;          // nothing named yet in this league
+    const priced = appointed.filter((r) => Number(r.ref_factor) !== 1).length;
+    assert.ok(priced * 2 >= appointed.length,
+      `${L.code}: ${priced} of ${appointed.length} forecast rows with a named ` +
+      'official carry a referee factor. The rest are logged as if nobody had ' +
+      'been appointed — the overlay and the card table spell officials ' +
+      'differently and this path is not going through PLDCore.matchRefName.');
+  }
 
   /* And the acca legs, which are the record of what was advised. */
   for (const b of A.collect()) {

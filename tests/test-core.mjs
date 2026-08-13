@@ -1153,4 +1153,75 @@ t('an acca refuses to be a single, and reads legs or bare numbers', () => {
     - (1 - Math.pow(1 - core.TYPICAL_CARD_MARGIN, 2))) < 1e-12);
 });
 
+
+/* ---- one official, two feeds ------------------------------------------- */
+/*
+ * The appointment overlay and the card table are different sources. On the
+ * Championship's opening round the overlay named all twelve officials and an
+ * exact lookup matched ONE — "Andrew Kitchen", because that feed happened to
+ * write him in full. The rest arrived abbreviated, and an appointment the desk
+ * cannot resolve is priced at refFactor = 1, which on the page is
+ * indistinguishable from no official being named.
+ */
+t('an appointment resolves to the card table it is spelt differently from', () => {
+  // The real Championship round-one table and the real overlay spellings.
+  const known = ['Farai Hallam', 'A Herczeg', 'Lewis Smith', 'B Speedie', 'R Madley',
+    'Tim Robinson', 'W Finnie', 'O Langford', 'G Ward', 'Matthew Donohue',
+    'Josh Smith', 'Andrew Kitchen'];
+  const want = {
+    'F. Hallam': 'Farai Hallam',      // abbreviation -> full name
+    'A. Herczeg': 'A Herczeg',        // same abbreviation, differing by a stop
+    'L. Smith': 'Lewis Smith',        // and it must not reach Josh
+    'J. Smith': 'Josh Smith',         // nor Lewis
+    'M. Donohue': 'Matthew Donohue',
+    'T. Robinson': 'Tim Robinson',
+    'W. Finnie': 'W Finnie',
+    'Andrew Kitchen': 'Andrew Kitchen',   // already exact, never reinterpreted
+  };
+  for (const [appt, expected] of Object.entries(want)) {
+    assert.equal(core.matchRefName(appt, known), expected,
+      `${appt} resolved to ${core.matchRefName(appt, known)}, not ${expected}`);
+  }
+  // A normalised exact match WINS over an ambiguous run. "A. Herczeg" against
+  // a table holding both "A Herczeg" and "Adam Herczeg" is not ambiguous: one
+  // of them is that string with a full stop. Without this the run rule finds
+  // two candidates and refuses, and the desk prices at a neutral referee.
+  assert.equal(core.matchRefName('A. Herczeg', ['A Herczeg', 'Adam Herczeg']),
+    'A Herczeg');
+  // But two rows that BOTH normalise to it is a genuine tie, and stays refused.
+  assert.equal(core.matchRefName('A. Herczeg', ['A Herczeg', 'A. Herczeg ']), null);
+  // An object keyed by name works too — that is what the desks hold.
+  const byName = {}; known.forEach((n) => { byName[n] = { n }; });
+  assert.equal(core.matchRefName('F. Hallam', byName), 'Farai Hallam');
+});
+
+t('an ambiguous appointment resolves to nothing, never to a guess', () => {
+  // Two Smiths sharing an initial is not a lookup. Pricing a match off the
+  // wrong referee is worse than pricing it off none, because the desk shows
+  // his name beside numbers computed from someone else's record.
+  assert.equal(core.matchRefName('J. Smith', ['Josh Smith', 'Jarred Smith']), null);
+  // Surname ORDER is identity: two families, not one man written two ways.
+  assert.equal(core.matchRefName('M. Ferrer Busquets', ['Mateo Busquets Ferrer']), null);
+  // A different initial is a different person, however well the surname fits.
+  assert.equal(core.matchRefName('A. Madley', ['Robert Madley']), null);
+  // Nothing to go on.
+  assert.equal(core.matchRefName('', ['Josh Smith']), null);
+  assert.equal(core.matchRefName('Smith', ['Josh Smith']), null);
+  assert.equal(core.matchRefName('J. Smith', []), null);
+  assert.equal(core.matchRefName('J. Smith', null), null);
+});
+
+t('the resolver agrees with the merge about what one person looks like', () => {
+  // Same rule as build_refs.canonical_referees, in the other direction, so the
+  // two cannot disagree. These are the Spanish cases that broke the merge: a
+  // second surname cited, and a compound given name.
+  const spain = ['Jesus Gil Manzano', 'Miguel Angel Ortiz Arias',
+    'Alejandro Muñiz Ruiz', 'Juan Martinez Munuera', 'José Luis Munuera Montero'];
+  assert.equal(core.matchRefName('J. Manzano', spain), 'Jesus Gil Manzano');
+  assert.equal(core.matchRefName('M. Ortiz', spain), 'Miguel Angel Ortiz Arias');
+  assert.equal(core.matchRefName('A. Ruiz', spain), 'Alejandro Muñiz Ruiz');
+  // And the one no name rule can settle stays unsettled here too.
+  assert.equal(core.matchRefName('J. Munuera', spain), null);
+});
+
 console.log(`\n${passed} tests passed`);

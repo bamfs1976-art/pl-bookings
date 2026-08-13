@@ -1100,7 +1100,16 @@
      whatever has been chosen here. The feed wins — a published appointment is
      not something to override by accident. */
   function refFor(fx) {
-    if (fx.ref && refByName[fx.ref]) return { ref: refByName[fx.ref], appointed: true };
+    /* NOT an exact lookup. The appointment overlay and the card table are
+       different feeds and spell the same official differently — "F. Hallam"
+       against "Farai Hallam", "A. Herczeg" against "A Herczeg". An unresolved
+       appointment prices at refFactor = 1, which is indistinguishable on the
+       page from no official being named, so eleven of the Championship's
+       twelve opening fixtures were about to be priced off nobody. */
+    if (fx.ref) {
+      var hit = C.matchRefName(fx.ref, refByName);
+      if (hit && refByName[hit]) return { ref: refByName[hit], appointed: true };
+    }
     if (fx.ref) return { ref: null, appointed: true, name: fx.ref };  /* named, but no card record */
     var chosen = myRefs[fx.id];
     return { ref: chosen ? refByName[chosen] : null, appointed: false };

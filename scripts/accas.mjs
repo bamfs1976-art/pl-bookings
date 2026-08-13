@@ -189,7 +189,19 @@ function candidatesFor(league) {
 
   const refs = d.REFS || [];
   const avgs = leagueAverages(refs);
-  const refByName = (n) => refs.find((r) => r.n === n) || null;
+  /* THROUGH THE SHARED RESOLVER. The appointment overlay and the card table
+     are different feeds and spell the same official differently — eleven of
+     the Championship's twelve opening appointments arrived as "F. Hallam"
+     against a table holding "Farai Hallam". An exact lookup prices them all at
+     factor 1, and because these rows are the LOGGED record they would go into
+     the calibration set as "referee named, no card record" for a whole round:
+     a fact about a string comparison, permanently recorded as a fact about
+     football. */
+  const refName = (n) => (n ? C.matchRefName(n, refs.map((r) => r.n)) : null);
+  const refByName = (n) => {
+    const hit = refName(n);
+    return hit ? refs.find((r) => r.n === hit) || null : null;
+  };
 
   const cands = [];
   const pool = [];
@@ -289,7 +301,8 @@ function matchesFor(league) {
 
   const rows = [];
   for (const fx of fixtures.filter((x) => x.r === round)) {
-    const ref = fx.ref ? refs.find((r) => r.n === fx.ref) : null;
+    const hit = fx.ref ? C.matchRefName(fx.ref, refs.map((r) => r.n)) : null;
+    const ref = hit ? refs.find((r) => r.n === hit) || null : null;
     /* An official appointed but absent from the card table prices at 1 — the
        same as no official. `ref_carded` is what tells the two apart later,
        and they are different findings for a refit. */

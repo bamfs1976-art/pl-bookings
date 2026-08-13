@@ -27,6 +27,66 @@
       .trim();
   }
 
+  /* ---- one official, two feeds ------------------------------------------
+   *
+   * The appointment overlay and the card table are different sources and they
+   * spell the same referee differently. On the Championship's opening round
+   * the overlay named all twelve officials and the desk matched ONE of them:
+   * "Andrew Kitchen", because that feed happened to write him in full. The
+   * other eleven arrived as "F. Hallam", "M. Donohue", "A. Herczeg" against a
+   * card table holding "Farai Hallam", "Matthew Donohue" and "A Herczeg" — an
+   * abbreviation, a fuller name, and the same abbreviation with a full stop.
+   *
+   * An exact string lookup misses all three, and misses them SILENTLY: an
+   * appointment the desk cannot resolve is priced at refFactor = 1, which
+   * looks exactly like a fixture with no official appointed. The referee is
+   * the largest single multiplier these desks apply, so eleven of twelve
+   * matches were about to be priced as though nobody had been named.
+   *
+   * This is build_refs.canonical_referees' problem in the other direction —
+   * there, folding two spellings in one feed into one official; here, finding
+   * which official in one feed a spelling from another feed means — and it is
+   * deliberately the same rule, so the two cannot disagree about what one
+   * person looks like:
+   *
+   *   same first initial, and one name's surnames are a CONTIGUOUS RUN of the
+   *   other's, in order.
+   *
+   * Contiguous and ordered because surname order is identity: "Busquets
+   * Ferrer" and "Ferrer Busquets" are two families. Ambiguity resolves to
+   * null rather than to a guess — "J. Smith" against a table holding both
+   * Josh and Jarred Smith is not a lookup, and pricing a match off the wrong
+   * referee is worse than pricing it off none.
+   */
+  function refNameParts(s) {
+    const parts = normName(s).split(' ').filter(Boolean);
+    return parts.length ? { initial: parts[0][0], surnames: parts.slice(1) } : null;
+  }
+
+  function matchRefName(name, known) {
+    const names = Array.isArray(known) ? known : Object.keys(known || {});
+    if (!name) return null;
+    /* Exact first, so a table that already agrees is never reinterpreted. */
+    if (names.indexOf(name) > -1) return name;
+    const want = refNameParts(name);
+    if (!want || !want.surnames.length) return null;
+    /* Then on the normalised form, which is what closes "A. Herczeg" against
+       "A Herczeg" — the same abbreviation differing only by a full stop. */
+    const flat = normName(name);
+    const same = names.filter((n) => normName(n) === flat);
+    if (same.length === 1) return same[0];
+    if (same.length > 1) return null;
+
+    const runIn = (a, b) => a.length <= b.length
+      && b.some((_, i) => b.slice(i, i + a.length).join(' ') === a.join(' '));
+    const hits = names.filter((n) => {
+      const has = refNameParts(n);
+      if (!has || has.initial !== want.initial || !has.surnames.length) return false;
+      return runIn(want.surnames, has.surnames) || runIn(has.surnames, want.surnames);
+    });
+    return hits.length === 1 ? hits[0] : null;
+  }
+
   /* ---- pick tracker money math ---- */
   function pickPL(p) {
     if (!p) return 0;
@@ -1044,7 +1104,7 @@
   }
 
   const PLDCore = {
-    riskScore, normName, pickPL, summarisePicks, calibrate, impliedProb, fairOdds, edgePct, LOGISTIC_SLOPE,
+    riskScore, normName, matchRefName, pickPL, summarisePicks, calibrate, impliedProb, fairOdds, edgePct, LOGISTIC_SLOPE,
     marketProb, marketProbDeVig, valuePoint, TYPICAL_CARD_MARGIN,
     cardCountDist, probOverCards, expectedCards, probBothCarded, probBothAtLeast, teamCardMarkets,
     bookingPointsDist, expectedPoints, probOverPoints, leagueRedRate,

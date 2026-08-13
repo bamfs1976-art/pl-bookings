@@ -78,8 +78,16 @@ for (const [code, appts] of Object.entries(byLeague)) {
   assert.ok(Array.isArray(fixtures) && fixtures.length,
     `${desk.fixtures} defines no ${desk.global}`);
 
-  /* The join the desk itself makes: exact name against the card table. */
-  const known = new Set(refs.map((r) => r.n));
+  /* THE JOIN THE DESK ITSELF MAKES, and it must stay that — the same call,
+     not a re-description of it. This guard exists to catch the desk pricing a
+     named official at refFactor = 1, so a guard that resolved names more
+     generously than refFor() would pass exactly the fixtures the page gets
+     wrong. It used to be an exact string lookup on both sides; both are now
+     PLDCore.matchRefName. */
+  const C = vm.runInContext('PLDCore', ctx);
+  const refNames = refs.map((r) => r.n);
+  const known = new Set(refNames);
+  const resolves = (n) => known.has(n) || C.matchRefName(n, refNames) != null;
   const index = new Map();
   for (const f of fixtures) index.set(`${String(f.d || '').slice(0, 10)}|${f.h}|${f.a}`, f);
 
@@ -102,7 +110,7 @@ for (const [code, appts] of Object.entries(byLeague)) {
          is a changed official, not a bug. Printed so it is seen. */
       changed.push(`${code} ${a.h} v ${a.a}: file has ${fx.ref}, published ${expected}`);
     }
-    if (!known.has(fx.ref)) missingRecord.push(`${code} ${fx.ref} (${a.h} v ${a.a})`);
+    if (!resolves(fx.ref)) missingRecord.push(`${code} ${fx.ref} (${a.h} v ${a.a})`);
   }
 }
 
