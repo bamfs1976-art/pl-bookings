@@ -3,7 +3,7 @@
    cache-first. Live FPL data (/api/fpl/*) and Supabase calls are never
    touched here — the app's own data layer decides what is fresh vs cached. */
 
-const VERSION = 'plb-v12';
+const VERSION = 'plb-v13';
 /* Every desk, not just the Premier League one. The shell decides what opens
    with no connection: installed on a phone, a page missing from here is a
    blank screen on the Underground even though it works perfectly on wifi.
@@ -39,6 +39,7 @@ const SHELL = [
   '/assets/refpicker.js',
   '/assets/a11y.js',
   '/assets/lineup.js',
+  '/assets/livecards.js',
   '/assets/price.js',
   '/icons/icon-16.png',
   '/icons/icon-32.png',

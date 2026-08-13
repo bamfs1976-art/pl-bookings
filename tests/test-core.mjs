@@ -1300,4 +1300,101 @@ t('the resolver agrees with the merge about what one person looks like', () => {
   assert.equal(core.matchRefName('J. Munuera', spain), null);
 });
 
+
+
+/* ---- live card ticker (assets/livecards.js) ----
+   The forecast, once the event is known. Everything here is about one
+   failure: the desk telling a reader that a player booked in the twentieth
+   minute has a 52% chance of being booked. Every number was computed
+   correctly and the sentence was false. */
+const lc = require('../assets/livecards.js');
+
+console.log('livecards: reading the feed');
+t('indexes yellows, reds and minutes by element id', () => {
+  const idx = lc.indexLive({ elements: [
+    { id: 4, stats: { yellow_cards: 1, red_cards: 0, minutes: 67 } },
+    { id: 9, stats: { yellow_cards: 0, red_cards: 1, minutes: 34 } },
+  ] });
+  assert.deepEqual(idx[4], { yc: 1, rc: 0, min: 67 });
+  assert.deepEqual(idx[9], { yc: 0, rc: 1, min: 34 });
+});
+t('an element with no stats is absent, not clean', () => {
+  // Absent and clean are different claims. Reading "not reported on" as
+  // "reported as uncarded" is how a booking goes missing from the page.
+  const idx = lc.indexLive({ elements: [{ id: 4 }, { id: 5, stats: {} }] });
+  assert.equal(idx[4], undefined);
+  assert.deepEqual(idx[5], { yc: 0, rc: 0, min: 0 });
+});
+t('survives a feed that returns nothing at all', () => {
+  assert.deepEqual(lc.indexLive(null), {});
+  assert.deepEqual(lc.indexLive({}), {});
+});
+
+console.log('livecards: the settled state');
+t('a booked player is no longer a probability', () => {
+  const idx = { 7: { yc: 1, rc: 0, min: 30 } };
+  assert.equal(lc.playerState(idx, 7), 'booked');
+});
+t('a red outranks a yellow — a second-yellow sending off is not just a booking', () => {
+  assert.equal(lc.playerState({ 7: { yc: 1, rc: 1, min: 30 } }, 7), 'sent-off');
+  assert.equal(lc.playerState({ 7: { yc: 0, rc: 1, min: 30 } }, 7), 'sent-off');
+});
+t('on the pitch and uncarded is "clean" — the forecast still stands', () => {
+  assert.equal(lc.playerState({ 7: { yc: 0, rc: 0, min: 12 } }, 7), 'clean');
+});
+t('an unused substitute has no state, so his row is untouched', () => {
+  assert.equal(lc.playerState({ 7: { yc: 0, rc: 0, min: 0 } }, 7), null);
+  assert.equal(lc.playerState({}, 7), null);
+  assert.equal(lc.playerState(null, 7), null);
+});
+
+console.log('livecards: the fixture ticker');
+const clubs = { 1: 'ARS', 2: 'ARS', 3: 'CHE', 4: 'CHE', 5: 'TOT' };
+t('totals both sides and keeps them separable', () => {
+  const idx = { 1: { yc: 1, rc: 0, min: 90 }, 2: { yc: 1, rc: 0, min: 90 },
+    3: { yc: 2, rc: 1, min: 90 }, 5: { yc: 3, rc: 0, min: 90 } };
+  const tk = lc.fixtureTicker(idx, clubs, 'ARS', 'CHE', {});
+  assert.equal(tk.home.yc, 2);
+  assert.equal(tk.away.yc, 2);
+  assert.equal(tk.away.rc, 1);
+  assert.equal(tk.yellows, 4);
+  assert.equal(tk.reds, 1);
+  // A third club's cards are not this fixture's, however live the feed is.
+  assert.equal(tk.yellows + tk.reds, 5);
+});
+t('nothing to say before a ball is kicked', () => {
+  assert.equal(lc.fixtureTicker({ 1: { yc: 0, rc: 0, min: 0 } }, clubs, 'ARS', 'CHE', {}), null);
+  assert.equal(lc.fixtureTicker(null, clubs, 'ARS', 'CHE', {}), null);
+});
+t('the minute is the longest anyone has been on', () => {
+  const idx = { 1: { yc: 0, rc: 0, min: 62 }, 2: { yc: 0, rc: 0, min: 71 } };
+  assert.equal(lc.fixtureTicker(idx, clubs, 'ARS', 'CHE', {}).minute, 71);
+});
+t('a double gameweek relabels itself rather than guessing', () => {
+  // stats is a ROUND total. With two fixtures it cannot be split between
+  // them, and a wrong attribution here would be invisible on the page.
+  const idx = { 1: { yc: 1, rc: 0, min: 90 } };
+  const one = lc.fixtureTicker(idx, clubs, 'ARS', 'CHE', { fixturesFor: () => 1 });
+  const two = lc.fixtureTicker(idx, clubs, 'ARS', 'CHE', { fixturesFor: (c) => (c === 'ARS' ? 2 : 1) });
+  assert.equal(one.scope, 'match');
+  assert.equal(two.scope, 'gameweek');
+});
+
+console.log('livecards: when to poll');
+t('polls inside the match window and not outside it', () => {
+  const ko = Date.parse('2026-08-15T14:00:00Z');
+  const fx = [{ kickoff_time: '2026-08-15T14:00:00Z', finished: false }];
+  assert.equal(lc.anyLive(fx, ko - 60000), false);     // a minute before kick-off
+  assert.equal(lc.anyLive(fx, ko), true);
+  assert.equal(lc.anyLive(fx, ko + 60 * 60000), true); // an hour in
+  assert.equal(lc.anyLive(fx, ko + lc.WINDOW_MS + 1), false);
+});
+t('a finished fixture is never polled for, and a scheduleless one cannot be', () => {
+  const ko = Date.parse('2026-08-15T14:00:00Z');
+  assert.equal(lc.anyLive([{ kickoff_time: '2026-08-15T14:00:00Z', finished: true }], ko + 1000), false);
+  assert.equal(lc.anyLive([{ finished: false }], ko), false);
+  assert.equal(lc.anyLive([], ko), false);
+  assert.equal(lc.anyLive(null, ko), false);
+});
+
 console.log(`\n${passed} tests passed`);

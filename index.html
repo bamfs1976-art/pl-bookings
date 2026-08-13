@@ -336,6 +336,28 @@
   .fxh2-teams{font-family:'Bricolage Grotesque',sans-serif;font-weight:800;font-size:1rem;letter-spacing:-.01em;display:flex;align-items:center;gap:.3rem;flex-wrap:wrap}
   .heat-badge{font-family:var(--mono);font-weight:700;font-size:.82rem;padding:.14rem .48rem;border-radius:7px;background:var(--surface-3);color:var(--text-2);display:inline-block}
   .heat-badge.hot{background:color-mix(in srgb,var(--warn) 22%,transparent);color:var(--warn)}
+  /* ═══ Live card ticker ═══
+     Sits at the TOP of the card body, above the referee row, because once a
+     match is under way what has happened outranks every input to the
+     forecast. Wraps rather than scrolls: on a 360px phone the split line
+     drops to its own row instead of pushing the count off screen. */
+  .fx-live{display:flex;align-items:center;gap:.5rem;flex-wrap:wrap;padding:.42rem .85rem;
+    background:color-mix(in srgb,var(--warn) 8%,transparent);border-bottom:1px solid var(--border);font-size:.76rem}
+  .fx-live-dot{width:7px;height:7px;border-radius:50%;background:var(--danger);flex:none;animation:fxpulse 2s ease-in-out infinite}
+  .fx-live-dot.done{background:var(--fade);animation:none}
+  @keyframes fxpulse{0%,100%{opacity:1}50%{opacity:.25}}
+  /* Reduced motion is not a preference to style around: a pulsing dot on a
+     page someone has asked to hold still is the exact thing they turned off. */
+  @media (prefers-reduced-motion:reduce){ .fx-live-dot{animation:none} }
+  .fx-live-clock{font-weight:800;color:var(--text-2);min-width:3.2ch}
+  .fx-live-n{font-weight:700}
+  .fx-live-exp{font-size:.72rem}
+  .fx-live-split{margin-left:auto;font-size:.68rem}
+  @media (max-width:420px){ .fx-live-split{margin-left:0;flex-basis:100%} }
+  /* A settled row is finished business — dimmed so the eye passes over it to
+     the names still in play, which is the only question left on the card. */
+  .cand-settled{opacity:.62}
+  .cand-settled .cand-name{text-decoration:line-through;text-decoration-thickness:1px;text-decoration-color:var(--text-3)}
   .fx-refrow{display:flex;align-items:center;gap:.5rem;padding:.4rem .85rem;border-bottom:1px solid var(--border)}
   /* Team-card market strip: total cards and both-teams-carded per fixture */
   .mk-strip{display:flex;align-items:center;gap:1.15rem;flex-wrap:wrap;padding:.45rem .85rem;
@@ -1236,6 +1258,7 @@
 <script src="assets/metric.js"></script>
 <script src="assets/a11y.js"></script>
 <script src="assets/lineup.js"></script>
+<script src="assets/livecards.js"></script>
 <script src="assets/price.js"></script>
 <script src="assets/refpicker.js"></script>
 <script>
@@ -2856,7 +2879,7 @@ function buildTeamMap(teams){
 function attachLive(bootstrap,teamMap){
   let ciChecked=0,ciMismatch=0;
   const byClub={};
-  PL_PLAYERS.forEach(p=>{ delete p.live; delete p.yLive; delete p.rLive; delete p.fLive; delete p.fMinLive; delete p.photo;
+  PL_PLAYERS.forEach(p=>{ delete p.live; delete p.yLive; delete p.rLive; delete p.fLive; delete p.fMinLive; delete p.photo; delete p.el;
     p.liveRate=false; p.liveFouls=false;
     (byClub[p.c]=byClub[p.c]||[]).push(p); });
   const index={}; // club -> normalized-name lookup; null marks an ambiguous key
@@ -2892,6 +2915,7 @@ function attachLive(bootstrap,teamMap){
     const full=normName(el.first_name+" "+el.second_name), web=normName(el.web_name);
     let p=m[full]||m[web]||m["last:"+(normName(el.second_name).split(" ").pop()||"")]||m["last:"+(web.split(" ").pop()||"")]||null;
     if(!p||p.live) return;
+    p.el=el.id;                                    // FPL element id, for the live card feed
     p.live={yc:el.yellow_cards||0,rc:el.red_cards||0,min:el.minutes||0,st:el.status||"a",news:el.news||""};
     p.photo=el.photo||(el.code!=null?String(el.code):"");   // strict-match cutout ref
 
@@ -3154,6 +3178,22 @@ async function loadLive(){
     APPOINTED=null;
     try{ LIVE.matchedCount=attachLive(bs,teamMap); }catch(e){ console.warn("[Bookings Desk] attachLive:",e); LIVE.matchedCount=0; }
     try{ LIVE.allPlayers=buildAllPlayers(bs,teamMap); }catch(e){ console.warn("[Bookings Desk] buildAllPlayers:",e); LIVE.allPlayers=[]; }
+    /* How many fixtures each club has this round. One club with two is what
+       makes a card unattributable to a match, and the ticker relabels itself
+       rather than guessing. Counted here because it is a fact about the
+       schedule, not about the live feed. */
+    LIVE.gwFixtureCount=(()=>{
+      const n={};
+      fx.filter(f=>f.event===LIVE.currentGW).forEach(f=>{
+        const h=teamMap[f.team_h],a=teamMap[f.team_a];
+        if(h) n[h]=(n[h]||0)+1;
+        if(a) n[a]=(n[a]||0)+1;
+      });
+      return n;
+    })();
+    try{
+      if(LIVECARDS) LIVECARDS.start(LIVE.currentGW,fx.filter(f=>f.event===LIVE.currentGW),liveClubMap(bs,teamMap));
+    }catch(e){ console.warn("[Bookings Desk] livecards:",e); }
     // The suspension strip is only real once the feed lands: before it, every
     // player's card count is unknown and the strip forecasts instead.
     try{ renderSuspension(); }catch(e){ console.warn("[Bookings Desk] renderSuspension:",e); }
@@ -3823,7 +3863,36 @@ function pipMeter(p){
 function candRowHtml(c,ref,isNew){
   const p=c.p, prob=c.prob, sev=severity(prob), conf=confidence(p);
   const live=(p.liveRate||p.liveFouls)?' <span title="'+rateBasis(p)+'" style="color:var(--good)">●</span>':'';
-  return `<button class="cand2${isNew?" cand-in":""}" data-pk="${esc(watchKey(p))}" type="button" aria-label="Open ${esc(p.n)}'s profile">
+  /* ONCE IT HAS HAPPENED IT IS NOT A CHANCE ANY MORE. This desk spent every
+     Saturday afternoon telling readers a player who was booked in the
+     twentieth minute had a 52% chance of being booked. The forecast was
+     computed correctly and the sentence was false, which is the worst thing a
+     bookings page can print. So a settled outcome REPLACES the percentage
+     rather than annotating it — an outcome shown beside a probability invites
+     the reader to keep reading the probability. */
+  const st=LIVECARDS?LIVECARDS.state(p.el):null;
+  let right,rowCls="";
+  if(st==="booked"||st==="sent-off"){
+    const done=st==="sent-off"?{t:"SENT OFF",col:"var(--danger)",ic:"🟥"}:{t:"BOOKED",col:"var(--warn)",ic:"🟨"};
+    rowCls=" cand-settled";
+    right=`<span style="text-align:right">
+        <span class="cand2-prob" style="color:${done.col};font-size:.9rem">${done.ic}</span>
+        <div class="sev" style="color:${done.col}">${done.t}</div>
+      </span>`;
+  }else{
+    /* Still open, but the window has shortened. The forecast was for ninety
+       minutes and there are fewer left, so the number stands and the minute
+       played is shown beside it rather than the number being silently
+       rescaled — rescaling would be a different model, not a display choice. */
+    const played=(st==="clean"&&LIVECARDS)?(LIVECARDS.index()||{})[p.el]:null;
+    const mins=played&&played.min>0?`<div class="sev faint mono" title="Minutes played so far. The percentage is a full-match forecast and is not rescaled.">${played.min}' played</div>`:
+      `<div class="sev" style="color:${sev.col}"><span aria-hidden="true">${sev.icon}</span> ${sev.label}</div>`;
+    right=`<span style="text-align:right">
+        <span class="cand2-prob" data-num="p-${esc(watchKey(p))}" style="color:${sev.col}">${(prob*100).toFixed(0)}%</span>
+        ${mins}
+      </span>`;
+  }
+  return `<button class="cand2${isNew?" cand-in":""}${rowCls}" data-pk="${esc(watchKey(p))}" type="button" aria-label="Open ${esc(p.n)}'s profile">
     ${playerAvatar(p,"avatar-sm",null,{crest:true})}
     <span class="cbadge" title="${esc(conf.label)}">${esc(p.c)}</span>
     <span style="flex:1;min-width:0">
@@ -3831,10 +3900,7 @@ function candRowHtml(c,ref,isNew){
       ${pipMeter(p)}
     </span>
     <span style="display:flex;align-items:center;gap:.55rem;flex:none">
-      <span style="text-align:right">
-        <span class="cand2-prob" data-num="p-${esc(watchKey(p))}" style="color:${sev.col}">${(prob*100).toFixed(0)}%</span>
-        <div class="sev" style="color:${sev.col}"><span aria-hidden="true">${sev.icon}</span> ${sev.label}</div>
-      </span>
+      ${right}
       <span class="faint" aria-hidden="true" style="font-size:1.1rem;line-height:1">⌄</span>
     </span>
   </button>`;
@@ -3867,6 +3933,39 @@ function sortFixturesByHeat(fx){
     if(hq!==hp) return hq-hp;
     return String(p.kickoff_time||"").localeCompare(String(q.kickoff_time||""));
   });
+}
+/* The live ticker strip: what has happened against what was forecast.
+   Renders nothing at all before a ball is kicked — an empty "0 cards" on a
+   Thursday is noise, and the desk's ordinary forecast view is the right thing
+   to show when there is nothing to report. */
+function liveTickerHtml(M){
+  if(!LIVECARDS) return "";
+  const t=LIVECARDS.ticker(M.h,M.a,{
+    finished:!!M.f.finished,
+    fixturesFor:c=>(LIVE&&LIVE.gwFixtureCount&&LIVE.gwFixtureCount[c])||1
+  });
+  if(!t) return "";
+  const exp=M.heat;
+  /* Against the forecast, not against a target. The heat is this fixture's
+     expected CARD TOTAL, so "3 of ~4.2" is the honest comparison and the one
+     a reader of this desk is actually holding in their head. */
+  const pace=exp>0?t.cards/exp:0;
+  const tone=pace>=1?"var(--danger)":pace>=0.6?"var(--warn)":"var(--fade)";
+  const clock=t.finished?"FT":(t.minute>0?t.minute+"'":"live");
+  const reds=t.reds?` · <b style="color:var(--danger)">${t.reds} red${t.reds===1?"":"s"}</b>`:"";
+  /* The scope label is load-bearing, not decoration. In a double gameweek the
+     feed gives a round total that cannot be split between two fixtures, so
+     the strip says which question it is answering. */
+  const scope=t.scope==="gameweek"
+    ?` <span class="mono faint" style="font-size:.6rem" title="One of these clubs plays twice this gameweek. The live feed reports a gameweek total per player, which cannot be split between the two fixtures — so this counts the round, not this match.">GW TOTAL</span>`
+    :"";
+  return `<div class="fx-live" role="status">
+    <span class="fx-live-dot${t.finished?" done":""}" aria-hidden="true"></span>
+    <span class="mono fx-live-clock">${clock}</span>
+    <span class="fx-live-n" style="color:${tone}"><b>${t.yellows}</b> yellow${t.yellows===1?"":"s"}${reds}</span>
+    <span class="faint fx-live-exp">of ~${exp.toFixed(1)} forecast</span>${scope}
+    <span class="fx-live-split faint mono">${esc(M.h)} ${t.home.yc}${t.home.rc?"+"+t.home.rc+"R":""} · ${esc(M.a)} ${t.away.yc}${t.away.rc?"+"+t.away.rc+"R":""}</span>
+  </div>`;
 }
 function fixtureCardHtml(f,opts){
   opts=opts||{};
@@ -3952,6 +4051,7 @@ function fixtureCardHtml(f,opts){
     <!-- WRAPPED. The collapse used to target .fx-body, which did not exist —
          the rule matched nothing and a "collapsed" card rendered in full. -->
     <div class="fx-body">
+      ${liveTickerHtml(M)}
       <div class="fx-refrow">${refSelect(f.id)}${refDelta}${LINEUPS?LINEUPS.control(f.id):""}</div>
       ${simStripHtml(M)}
       ${marketStripHtml(teamCardBoard(h,a,ref,derby),h2hFor(h,a),teamFoulBoard(h,a))}
@@ -4104,9 +4204,23 @@ function renderWatchDash(){
     }
     return {p,opp,ha,gw,ref,prob:prob==null?-1:prob};
   }).sort((x,y)=>y.prob-x.prob);
+  /* Settled names sink. A watchlist is a list of things still to happen, and
+     a booked player at the top of it is the one row nobody needs to act on. */
+  if(LIVECARDS) rows.sort((x,y)=>{
+    const sx=LIVECARDS.state(x.p.el),sy=LIVECARDS.state(y.p.el);
+    const dx=(sx==="booked"||sx==="sent-off")?1:0, dy=(sy==="booked"||sy==="sent-off")?1:0;
+    return dx-dy;
+  });
   el.innerHTML='<ul class="cand-list" aria-label="Watchlist, highest booking chance first">'
     +rows.map(({p,opp,ha,gw,ref,prob})=>{
     const col=prob>=0.50?"var(--danger)":prob>=0.30?"var(--warn)":"var(--text-2)";
+    /* Settled here for the same reason as the candidate rows: this is the
+       card a reader opens the app for, and a starred player who was booked
+       half an hour ago must not still be presented as a chance of being
+       booked. The percentage is replaced, not annotated. */
+    const st=LIVECARDS?LIVECARDS.state(p.el):null;
+    const settled=st==="sent-off"?{t:"🟥 SENT OFF",col:"var(--danger)"}
+      :st==="booked"?{t:"🟨 BOOKED",col:"var(--warn)"}:null;
     const sub=opp==="—"?'<span class="faint">next fixture TBC</span>'
       :`vs ${esc(opp)} (${ha})${gw?" · "+gw:""}${ref?" · "+esc(ref.n.split(" ").pop()):""}${suspFlagInline(p)}`;
     return `<li><button class="wl-row" data-pk="${esc(watchKey(p))}" type="button" aria-label="Open ${esc(p.n)}'s profile">
@@ -4116,7 +4230,7 @@ function renderWatchDash(){
         <span style="font-weight:600;font-size:.9rem">${esc(p.n)} <span class="faint num" style="font-size:.7rem;font-weight:600">${p.c}</span></span>
         <span class="cand-sub">${sub}</span>
       </span>
-      <span style="font-family:'Bricolage Grotesque',sans-serif;font-weight:800;font-size:1.05rem;color:${col};flex:none">${prob<0?"—":(prob*100).toFixed(0)+"%"}</span>
+      <span style="font-family:'Bricolage Grotesque',sans-serif;font-weight:800;font-size:${settled?".7rem":"1.05rem"};color:${settled?settled.col:col};flex:none">${settled?settled.t:(prob<0?"—":(prob*100).toFixed(0)+"%")}</span>
     </button></li>`;
   }).join("")+'</ul>';
 }
@@ -4309,6 +4423,56 @@ const PRICES=(typeof PLDPrice!=="undefined"&&PLDPrice)?PLDPrice.create({}):null;
    that nobody has checked it. See assets/lineup.js. */
 const LINEUPS=(typeof PLDLineup!=="undefined"&&PLDLineup)
   ?PLDLineup.create({key:"pl_desk_lineups_v1"}):null;
+
+/* The live card ticker. See assets/livecards.js for why the desk needed one:
+   a forecast that does not know the booking has happened is not unhelpful,
+   it is wrong, and this is the only free feed that can tell it.
+
+   Its fetch deliberately does NOT go through fetchFPL. That helper caches
+   every response in localStorage for thirty minutes, which is correct for a
+   bootstrap and ruinous here — a card count half an hour old is exactly the
+   failure the whole file exists to prevent. Straight to the proxy, which
+   holds this path uncacheable at the edge for the same reason. */
+const LIVECARDS=(typeof LiveCards!=="undefined"&&LiveCards)?LiveCards.create({
+  fetchJson:async path=>{
+    const r=await fetch("/api/fpl/"+path,{headers:{Accept:"application/json"},cache:"no-store"});
+    if(!r.ok) throw new Error("live "+r.status);
+    return r.json();
+  },
+  everyMs:60000,
+  /* Repaint the view that shows fixtures. A whole-view repaint rather than
+     patching individual nodes, because patching is how the ticker and the
+     candidate rows end up disagreeing about the same match.
+
+     Two things a once-a-minute automatic repaint must not do: move the page
+     under someone's thumb, or close a dropdown they have open. So the scroll
+     position is restored, and a repaint is SKIPPED outright while focus is
+     inside the grid — a referee select that closes itself every sixty seconds
+     is unusable, and the ticker being one minute late is a smaller cost than
+     that. */
+  onUpdate:()=>{
+    try{
+      const render=currentPanel==="panel-gameweek"?renderGameweek
+        :currentPanel==="panel-fixtures"?renderFixtures:null;
+      if(!render) return;
+      const ae=document.activeElement;
+      if(ae&&ae!==document.body&&ae.closest&&ae.closest(".fx-card")) return;
+      const y=window.scrollY;
+      render();
+      window.scrollTo({top:y});
+    }catch(e){}
+  }
+}):null;
+
+/* Element id -> club short code, built from the bootstrap rather than from the
+   baked squads. The squads are a subset — a January signing is not in them —
+   so a total summed over them would undercount a fixture's cards and look
+   perfectly normal doing it. */
+function liveClubMap(bs,teamMap){
+  const m={};
+  (bs.elements||[]).forEach(el=>{ const c=teamMap[el.team]; if(c) m[el.id]=c; });
+  return m;
+}
 
 function wireFixtureGrid(id,rerender){
   const el=$(id); if(!el) return;
