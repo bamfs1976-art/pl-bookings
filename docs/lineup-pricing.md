@@ -1,5 +1,10 @@
 # What the sibling desks cannot do without a runtime feed
 
+> Filed as `lineup-pricing.md` because a scheduled follow-up points at that
+> path and the tool to edit it needed an approval that was not available. The
+> file covers BOTH the lineup work and the live card ticker; they turned out
+> to be one job. Rename it if you also fix the reference.
+
 Two features, deferred together on the opening night of the 2026-27 season,
 because they turn out to be one piece of infrastructure and two consumers of
 it: pricing off the confirmed XI, and the live card ticker on the Championship
