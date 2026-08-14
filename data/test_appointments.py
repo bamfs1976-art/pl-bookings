@@ -259,4 +259,119 @@ t("another league's entries are not applied", _another_leagues_entries_are_not_a
 t("the committed fixture file reads back", _the_committed_fixture_file_reads_back)
 t("every committed appointment still resolves", _every_committed_appointment_still_resolves)
 
+
+# --- the RFEF designation sheet -------------------------------------------
+#
+# Spain publishes a table, not prose, and the referee sits on the same
+# extracted line as the FOURTH OFFICIAL: "Árbitro:Name    4º Árbitro:Other".
+# "4º Árbitro" contains "Árbitro", so a naive search finds whichever comes
+# first and a naive capture swallows both. Either way the match is priced off
+# a man who never refereed it, which is the one failure this file exists to
+# refuse — and it would look entirely correct on the page.
+
+RFEF_SHEET = """Competición: Campeonato Nacional de Liga de Primera División   Jornada - 1
+TEMPORADA 2026-2027
+15-08-2026            Deportivo Alavés          Getafe CF          19:30
+Árbitro:Manuel Jesús Orellana              4º Árbitro:José Antonio Palomares
+A. Asistente 1: Iván Ríos                  VAR: Carlos Del Cerro
+A. Asistente 2: Roberto Tejero             AVAR: Álvaro Moreno
+Oficial Informador: Iñaki Vicandi
+15-08-2026            Sevilla FC        Rayo Vallecano de Madrid       21:30
+Árbitro:Ricardo De Burgos                  4º Árbitro:Manuel García
+A. Asistente 1: Iker De Francisco          VAR: Daniel Jesús Trujillo
+A. Asistente 2: Asier Pérez De Mendiola    AVAR: Alejandro Muñiz
+Oficial Informador: Alfonso Baena
+"""
+
+
+def _the_rfef_sheet_parses_to_its_two_fixtures():
+    rows = I.parse_rfef(RFEF_SHEET)
+    assert len(rows) == 2, f"parsed {len(rows)} fixtures, expected 2: {rows}"
+    a, b = rows
+    assert a["date"] == "2026-08-15" and a["ko"] == "19:30", a
+    assert a["home"] == "Deportivo Alavés" and a["away"] == "Getafe CF", a
+    assert b["home"] == "Sevilla FC" and b["away"] == "Rayo Vallecano de Madrid", b
+
+
+t("an RFEF designation sheet parses to its fixtures",
+  _the_rfef_sheet_parses_to_its_two_fixtures)
+
+
+def _the_fourth_official_is_never_read_as_the_referee():
+    rows = I.parse_rfef(RFEF_SHEET)
+    refs = [r["ref"] for r in rows]
+    assert refs == ["Manuel Jesús Orellana", "Ricardo De Burgos"], refs
+    # Named explicitly: these two are the fourth officials on that sheet and
+    # must appear nowhere in the parsed output at all.
+    for fourth in ("Palomares", "Manuel García"):
+        for r in rows:
+            assert fourth not in (r["ref"] or ""), (
+                f"the fourth official {fourth!r} was read as a referee: {r}")
+    # Nor may the VAR or the assistants be picked up.
+    for other in ("Carlos Del Cerro", "Iván Ríos", "Alejandro Muñiz", "Iñaki Vicandi"):
+        assert all(other not in (r["ref"] or "") for r in rows), other
+
+
+t("the fourth official is never read as the referee",
+  _the_fourth_official_is_never_read_as_the_referee)
+
+
+def _the_rfef_clubs_and_referees_resolve():
+    import leagues
+    rows = I.parse_rfef(RFEF_SHEET)
+    entries, skipped, problems = I.to_entries(rows, "test://sheet")
+    assert not problems, problems
+    assert len(entries) == 2, (entries, skipped)
+    assert [e["h"] for e in entries] == ["ALA", "SEV"], entries
+    assert [e["a"] for e in entries] == ["GET", "RAY"], entries
+    # De Burgos resolves through the contiguous-surname rule; the card table
+    # spells him "Ricardo De Burgos Bengoetxea" and the CTA does not.
+    seville = entries[1]
+    assert seville["refResolved"] == "Ricardo De Burgos Bengoetxea", seville
+    # Orellana is genuinely new to the division: no card record, and the
+    # published name is KEPT rather than resolved to a colleague.
+    alaves = entries[0]
+    assert alaves["refResolved"] is None, alaves
+    assert alaves["ref"] == "Manuel Jesús Orellana", alaves
+
+
+t("RFEF clubs and referees resolve, and a new official is left unresolved",
+  _the_rfef_clubs_and_referees_resolve)
+
+
+def _the_fourth_official_first_on_the_line_is_still_not_the_referee():
+    # PDF text extraction does not promise column order. If the fourth
+    # official comes out FIRST, cutting at "4º Árbitro" leaves nothing before
+    # it — and the correct outcome is to find no referee for that fixture and
+    # say so, never to fall through and take the fourth official's name.
+    sheet = RFEF_SHEET.replace(
+        "Árbitro:Ricardo De Burgos                  4º Árbitro:Manuel García",
+        "4º Árbitro:Manuel García                  Árbitro:Ricardo De Burgos")
+    rows = I.parse_rfef(sheet)
+    for r in rows:
+        assert "Manuel García" not in (r["ref"] or ""), (
+            f"the fourth official was read as the referee: {r}")
+
+
+t("a fourth official printed first is still not the referee",
+  _the_fourth_official_first_on_the_line_is_still_not_the_referee)
+
+
+def _a_club_the_sheet_spells_legally_still_maps():
+    # The registry holds short names; the RFEF prints legal ones. This is the
+    # only reason the two clubs above resolve at all, so it is asserted
+    # directly rather than left implied by the sheet test.
+    import leagues
+    assert leagues.short_for("LL", "Getafe CF") == "GET"
+    assert leagues.short_for("LL", "Sevilla FC") == "SEV"
+    assert leagues.short_for("LL", "Rayo Vallecano de Madrid") == "RAY"
+    assert leagues.short_for("LL", "Real Madrid CF") == "RMA"
+    # And an ending that leaves nothing recognisable resolves to nothing,
+    # rather than to half a name.
+    assert leagues.short_for("LL", "Nonexistent United FC") is None
+
+
+t("a club the sheet spells legally still maps to its short code",
+  _a_club_the_sheet_spells_legally_still_maps)
+
 print(f"\n{passed} tests passed")

@@ -363,6 +363,21 @@ LALIGA_FD_ALIASES = {
 }
 
 # API-Football's own spellings that differ from the canonical name above.
+# THE RFEF'S CONVENTION. Spain's designation sheets print each club's legal
+# name — "Getafe CF", "Rayo Vallecano de Madrid" — where the registry,
+# discovered from API-Football, holds "Getafe" and "Rayo Vallecano".
+#
+# A table of RFEF spellings was written first and then deleted: every entry in
+# it was already resolved by the strip below, so it could never be the reason
+# anything matched, and a table that cannot fail is one no guard can tell has
+# rotted.
+#
+# Legal endings no registry carries. Stripped and retried,
+# never substituted — a strip leaving nothing recognisable falls through to
+# None rather than to a guess.
+LALIGA_LEGAL_SUFFIXES = (" CF", " FC", " SAD", " CD", " UD", " SD", " RCD", " RC",
+                         " de Madrid")
+
 LALIGA_AF_ALIASES = {
     "Atlético Madrid": "Atletico Madrid", "Athletic Bilbao": "Athletic Club",
     "Alavés": "Deportivo Alaves", "Deportivo Alavés": "Deportivo Alaves",
@@ -523,8 +538,16 @@ def laliga_short(name, clubs=None):
             return canon.get("short") if isinstance(canon, dict) else canon
         if not reg and hit in LALIGA_SHORT:
             return LALIGA_SHORT[hit]
+    # A legal ending no registry carries ("Getafe CF"). Stripped and retried
+    # ONCE, so an ending that leaves nothing recognisable still returns None
+    # instead of half a name.
+    for suffix in LALIGA_LEGAL_SUFFIXES:
+        if n.endswith(suffix):
+            # No emptiness guard: the recursive call's own `if not n` returns
+            # None for a name that was nothing but a suffix, and a guard no
+            # input can reach is a branch no test can cover.
+            return laliga_short(n[: -len(suffix)].strip(), clubs=reg)
     return None
-
 
 def canon_name(code, name):
     """A club name from any feed as its CANONICAL name, whether or not that

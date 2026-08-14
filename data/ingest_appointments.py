@@ -55,7 +55,78 @@ DATA = Path(__file__).resolve().parent
 # adding a desk is a one-line change here rather than a new parser.
 DIVISIONS = {
     "sky bet championship": "EFLC",
+    "primera división": "LL",
 }
+
+# ---------------------------------------------------------------------------
+# The RFEF's designation sheets (--format rfef)
+# ---------------------------------------------------------------------------
+# Spain publishes a PDF per matchday from the Comité Técnico de Árbitros, laid
+# out as a table rather than prose:
+#
+#   Competición: Campeonato Nacional de Liga de Primera División   Jornada - 1
+#   15-08-2026        Deportivo Alavés        Getafe CF        19:30
+#   Árbitro:Manuel Jesús Orellana        4º Árbitro:José Antonio Palomares
+#   A. Asistente 1: Iván Ríos            VAR: Carlos Del Cerro
+#
+# THE ONE THING THIS MUST NOT DO is read the fourth official as the referee.
+# "Árbitro:" and "4º Árbitro:" sit on the SAME extracted line and the second
+# contains the first as a substring, so a naive search finds whichever comes
+# first in the string and a naive capture swallows both names. Either way the
+# match would be priced off a man who never refereed it, which is precisely
+# the failure this whole file is built to refuse. The line is therefore cut at
+# "4º Árbitro" before the referee is read, and the referee pattern is anchored
+# to the start of what remains.
+#
+# Times are LOCAL (CEST in August). The overlay stores what was published and
+# the fixture join keys on the date and the two clubs, not the clock, so no
+# conversion happens here — inventing one would be a second place for a
+# timezone to be wrong.
+RFEF_DATE_RE = re.compile(r"(\d{2})-(\d{2})-(\d{4})")
+RFEF_KO_RE = re.compile(r"(\d{1,2}:\d{2})\s*$")
+RFEF_REF_RE = re.compile(r"^\s*[ÁA]rbitro\s*:\s*(.+?)\s*$", re.I)
+RFEF_FOURTH = re.compile(r"4\s*[ºo°]?\s*[ÁA]rbitro", re.I)
+
+
+def parse_rfef(text, competition="primera división"):
+    """An RFEF designation sheet as the same rows parse() returns.
+
+    Deliberately tolerant about columns and strict about the referee. A table
+    extracted from a PDF puts an unknowable amount of whitespace between cells,
+    so the two clubs are split on a run of spaces; but a mis-split club is
+    reported by name downstream, whereas a mis-read official is not.
+    """
+    out = []
+    pending = None
+    for raw in text.splitlines():
+        line = raw.rstrip()
+        if not line.strip():
+            continue
+
+        date_m = RFEF_DATE_RE.search(line)
+        ko_m = RFEF_KO_RE.search(line)
+        if date_m and ko_m:
+            middle = line[date_m.end():ko_m.start()].strip(" |\t")
+            clubs = [c.strip() for c in re.split(r"\s{2,}|\s*\|\s*", middle) if c.strip()]
+            if len(clubs) == 2:
+                pending = {
+                    "competition": competition,
+                    "date": f"{date_m.group(3)}-{date_m.group(2)}-{date_m.group(1)}",
+                    "home": clubs[0], "away": clubs[1],
+                    "ko": ko_m.group(1), "ref": None,
+                }
+            continue
+
+        if pending is None:
+            continue
+        # Cut the fourth official off before looking for the referee.
+        head = RFEF_FOURTH.split(line)[0]
+        ref_m = RFEF_REF_RE.match(head)
+        if ref_m and ref_m.group(1).strip():
+            pending["ref"] = ref_m.group(1).strip()
+            out.append(pending)
+            pending = None
+    return out
 KNOWN_HEADINGS = {
     "sky bet championship", "sky bet league one", "sky bet league two",
     "efl trophy", "efl cup", "carabao cup", "papa johns trophy",
@@ -203,16 +274,24 @@ def main():
     ap.add_argument("--source", required=True, help="URL the appointments were published at")
     ap.add_argument("--dry-run", action="store_true",
                     help="report what would change and write nothing")
+    ap.add_argument("--format", choices=["efl", "rfef"], default="efl",
+                    help="efl: the EFL's weekly prose (default). "
+                         "rfef: a Comité Técnico de Árbitros designation sheet.")
     args = ap.parse_args()
 
     text = Path(args.file).read_text(encoding="utf-8") if args.file else sys.stdin.read()
     if not text.strip():
         sys.exit("ERROR: no article text on stdin (or --file was empty).")
 
-    parsed, unknown = parse(text)
+    if args.format == "rfef":
+        parsed, unknown = parse_rfef(text), []
+        expected = ("a 'DD-MM-YYYY  Home  Away  HH:MM' row followed by "
+                    "'Árbitro: Name'")
+    else:
+        parsed, unknown = parse(text)
+        expected = "'Home v Away (15:00)' followed by 'Referee: Name'"
     if not parsed:
-        sys.exit("ERROR: no appointments found. Expected lines of the form "
-                 "'Home v Away (15:00)' followed by 'Referee: Name'.")
+        sys.exit(f"ERROR: no appointments found. Expected {expected}.")
     print(f"read {len(parsed)} appointments from the article")
     for h in dict.fromkeys(unknown):
         print(f"  NOTE: unrecognised competition heading {h!r} — its fixtures were skipped")

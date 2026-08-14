@@ -1,6 +1,7 @@
 {
  "note": "Referee appointments as published by the competition, laid over the harvested fixture list by data/appointments.py. The harvest wins where it has a value; this fills the nulls.",
  "sources": [
+  "https://rfef.es/sites/default/files/designaciones_1a_division_masculina_-_temp_2026-27_-_jornada_1_sabado15.pdf",
   "https://www.efl.com/news/2026/august/11/referee-appointments--14-20-august/"
  ],
  "appointments": [
@@ -135,6 +136,28 @@
    "refResolved": "Andrew Kitchen",
    "resolvedBy": "exact",
    "source": "https://www.efl.com/news/2026/august/11/referee-appointments--14-20-august/"
+  },
+  {
+   "league": "LL",
+   "date": "2026-08-15",
+   "h": "ALA",
+   "a": "GET",
+   "ko": "19:30",
+   "ref": "Manuel Jesús Orellana",
+   "refResolved": null,
+   "resolvedBy": null,
+   "source": "https://rfef.es/sites/default/files/designaciones_1a_division_masculina_-_temp_2026-27_-_jornada_1_sabado15.pdf"
+  },
+  {
+   "league": "LL",
+   "date": "2026-08-15",
+   "h": "SEV",
+   "a": "RAY",
+   "ko": "21:30",
+   "ref": "Ricardo De Burgos",
+   "refResolved": "Ricardo De Burgos Bengoetxea",
+   "resolvedBy": "run",
+   "source": "https://rfef.es/sites/default/files/designaciones_1a_division_masculina_-_temp_2026-27_-_jornada_1_sabado15.pdf"
   }
  ]
 }

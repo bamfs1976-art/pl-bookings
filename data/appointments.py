@@ -151,7 +151,54 @@ def resolve_ref_name(published, known):
         if got:
             return got, "forename"
 
+    # SURNAMES AS A CONTIGUOUS RUN, which is the rule the rest of the
+    # repository already uses — build_refs.canonical_referees to fold two
+    # spellings of one official together, PLDCore.matchRefName for the desks'
+    # own lookup. This is the third implementation of that question and it was
+    # the odd one out, because every rule above reads a name POSITIONALLY:
+    # _parts() takes the first token and the LAST one.
+    #
+    # That works for "Adam Herczeg" and breaks on Spain. The CTA publishes
+    # "Ricardo De Burgos"; the card table holds "Ricardo De Burgos
+    # Bengoetxea", whose last token is his materno surname. First-and-last
+    # gives "ricardo burgos" against "ricardo bengoetxea" and finds nothing,
+    # so a fixture with a perfectly good card record priced at the league rate
+    # — and the desks, running the JS rule, disagreed with this file about the
+    # same man.
+    if first:
+        got = _by_run(first, _fold(published).split()[1:], by_fold)
+        if got:
+            return got, "run"
+
     return None, None
+
+
+def _run_in(a, b):
+    """Is `a` a contiguous run of tokens anywhere within `b`? Ordered, because
+    surname order is identity: "Busquets Ferrer" and "Ferrer Busquets" are two
+    families, not one man written two ways."""
+    if not a or len(a) > len(b):
+        return False
+    return any(b[i:i + len(a)] == a for i in range(len(b) - len(a) + 1))
+
+
+def _by_run(first, surnames, by_fold):
+    """The one table entry whose surnames run with these, or None.
+
+    UNIQUE OR NOTHING, like every rule above it. Two officials sharing an
+    initial and a surname is not a lookup — resolving one to the other prices
+    a fixture off a colleague's card rate and looks entirely correct on the
+    page, which is the single worst outcome this function can produce.
+    """
+    hits = []
+    for folded, names in by_fold.items():
+        bits = folded.split()
+        if len(bits) < 2 or bits[0][0] != first[0]:
+            continue
+        theirs = bits[1:]
+        if _run_in(surnames, theirs) or _run_in(theirs, surnames):
+            hits.extend(names)
+    return hits[0] if len(hits) == 1 else None
 
 
 def _by_initial(first, last, by_fold):
