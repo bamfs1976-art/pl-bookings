@@ -180,6 +180,22 @@
     <p class="note" id="accaNote"></p>
   </section>
 
+  <!-- THE WEEK'S CARD NINE-FOLD, across every division this page holds.
+       Under the day's acca because it is the wider read of the two, and it
+       is the one card here that cannot be built on any other page: three
+       datasets are loaded above and only this page has all three at once.
+       Seven days rather than one — the three win legs need Premier League
+       fixtures and a single date rarely has three. See renderNine. -->
+  <section class="card" id="nineCard" style="margin-top:14px" hidden>
+    <div class="controls" style="margin-bottom:4px">
+      <h2 style="font-size:16px" id="nineHead">The week's card nine-fold</h2>
+    </div>
+    <p class="faint" id="nineSub" style="font-size:12.5px;margin:0"></p>
+    <div class="acca-legs" id="nineLegs"></div>
+    <div class="acca-sum" id="nineSum"></div>
+    <p class="note" id="nineNote"></p>
+  </section>
+
   <section class="card" id="trackCard" style="margin-top:14px" hidden>
   <div class="controls" style="margin-bottom:8px">
     <h2 style="font-size:16px">Recommended accas — how they have actually done</h2>
@@ -827,6 +843,176 @@
       + 'Research, not betting advice.';
   }
 
+  /* ---- the week's card nine-fold, across every division ------------------
+   *
+   * Nine legs: three to win, three both-teams-carded, three over 2.5 cards,
+   * and nine DIFFERENT matches. This page is the only one that can build it,
+   * because it is the only one holding all three datasets at once.
+   *
+   * WHY SEVEN DAYS AND NOT ONE. The day's acca above is a single date, which
+   * is the right frame for it. This cannot be: the three win legs come from
+   * the match model, the match model rates the twenty Premier League clubs
+   * and nothing else, and a single date rarely carries three PL fixtures. Of
+   * the 128 dates in the three fixture lists, only 38 could fill this acca;
+   * of the 128 rolling seven-day windows, 119 can. A card that exists three
+   * times a month is a card nobody finds.
+   *
+   * WHAT IS AND IS NOT CROSS-LEAGUE, precisely. The six CARD legs draw on
+   * every fixture all three desks price. The three WIN legs are Premier
+   * League only, and that is a limit of the data rather than a choice: the
+   * Championship and La Liga datasets carry cards, fouls and minutes and no
+   * goals column at all, so there is nothing to price a result from. Said on
+   * the card, because a reader counting three PL clubs in the win column is
+   * owed the reason.
+   *
+   * TWO MODELS ON ONE SLIP. Win legs from the vendored match model, card legs
+   * from each desk's own player-by-player model. They are fitted on different
+   * data and neither knows about the other, so treating all nine as
+   * independent is doing more work here than it does within one market.
+   */
+  var WEEK_DAYS = 7;
+  var NINE = [
+    { key: 'WIN',  need: 3, label: 'To win' },
+    { key: 'BTC',  need: 3, label: 'Both teams carded' },
+    { key: 'O2.5', need: 3, label: 'Over 2.5 cards' }
+  ];
+
+  /* The 2.5 line, computed ON DEMAND for the fixtures in the window rather
+     than for every fixture in three seasons — index() prices about 1,300 of
+     them and this would double the board work for a market only nine legs
+     use. Through each league's OWN board, so the minute-weighting is the one
+     that league's desk applies. */
+  function over25(p) {
+    try {
+      if (p.L.pl) {
+        var b = p.L.pl.board(p.fx.h, p.fx.a, p.ref.ref, p.derby, undefined, [2.5]);
+        return b && !b.thin ? b.over[2.5] : null;
+      }
+      /* Same entry point the day board goes through, one line instead of
+         three — not probOverCards direct, so the two cannot diverge. */
+      var m = C.teamCardMarkets(p.home.ps, p.away.ps, [2.5]);
+      return m.over[2.5];
+    } catch (e) { return null; }
+  }
+
+  /* Every match in the window reduced to the legs it can offer. */
+  function weekPool(from) {
+    var end = new Date(from + 'T00:00:00Z');
+    end.setUTCDate(end.getUTCDate() + WEEK_DAYS);
+    var to = end.toISOString().slice(0, 10);
+    var pool = {};
+    var add = function (k, o) { (pool[k] = pool[k] || []).push(o); };
+    ALL.forEach(function (p) {
+      var k = dayKey(p.fx.d);
+      if (k < from || k >= to) return;
+      /* A thin board's tails are guesswork, and an over-line leg IS the tail.
+         The day acca has the same reservation through matchLegOptions. */
+      if (p.m.thin) return;
+      var id = p.L.code + '|' + p.fx.id;
+      var label = p.fx.h + ' v ' + p.fx.a;
+      /* BOTH CLUBS, league-qualified, not the fixture id. Seven days can
+         contain a club twice, and two card legs leaning on one side's
+         discipline are not the independent pair the price assumes. This
+         subsumes fixture-distinctness: two legs on one match collide on the
+         home club before they get as far as the id. */
+      var base = { id: id, keys: [p.L.code + '|' + p.fx.h, p.L.code + '|' + p.fx.a],
+                   p: p, fx: label, code: p.L.code, ko: p.fx.d };
+      if (p.m.bothCarded > 0 && p.m.bothCarded < 1) {
+        add('BTC', mix(base, { prob: p.m.bothCarded, label: 'Both teams carded' }));
+      }
+      var o25 = over25(p);
+      if (o25 > 0 && o25 < 1) {
+        add('O2.5', mix(base, { prob: o25, label: 'Over 2.5 cards' }));
+      }
+      /* Win legs: Premier League only, and only where the model rates both
+         clubs. simLegOptions offers ONE side — the stronger — because a home
+         win and an away win are the same grid read two ways. */
+      if (p.L.pl && typeof p.L.pl.simFor === 'function') {
+        var sim = p.L.pl.simFor(p.fx.h, p.fx.a);
+        C.simLegOptions(sim, p.fx.h, p.fx.a).forEach(function (o) {
+          if (o.market === 'WIN') add('WIN', mix(base, { prob: o.prob, label: o.label }));
+        });
+      }
+    });
+    return pool;
+  }
+  function mix(a, b) {
+    var o = {};
+    Object.keys(a).forEach(function (k) { o[k] = a[k]; });
+    Object.keys(b).forEach(function (k) { o[k] = b[k]; });
+    return o;
+  }
+
+  function nineLegHTML(o, n) {
+    var L = o.p.L;
+    var ch = L.clubBy[o.p.fx.h] || { short: o.p.fx.h },
+        ca = L.clubBy[o.p.fx.a] || { short: o.p.fx.a };
+    return '<div class="acca-leg">'
+      + '<span class="acca-n">' + n + '</span>'
+      + '<span class="lg ' + esc(o.code) + '">' + esc(o.code) + '</span>'
+      + PLDProfile.crest(ch) + PLDProfile.crest(ca)
+      + '<span class="acca-fx">' + esc(o.fx) + '</span>'
+      + '<span class="acca-mkt">' + esc(o.label) + '</span>'
+      + '<span class="spacer"></span>'
+      + '<span class="acca-p">' + pct(o.prob) + '</span>'
+      + '<span class="acca-odds" title="Fair odds, before any bookmaker margin">'
+      + (1 / o.prob).toFixed(2) + '</span></div>';
+  }
+
+  function renderNine() {
+    var card = $('#nineCard');
+    if (mode() === 'all') { card.hidden = true; return; }
+    var from = $('#day').value;
+    var pool = weekPool(from);
+    var got = C.accaAllocate(NINE.map(function (b) {
+      return { key: b.key, need: b.need, options: pool[b.key] || [] };
+    }));
+    /* NINE OR NOTHING. A six-fold under a "nine-fold" heading is the page
+       lying about what it is showing, and out of season or in a thin week
+       that is the common case rather than the rare one. */
+    if (!got) { card.hidden = true; return; }
+    var price = C.accaPrice(got.picks, C.TYPICAL_CARD_MARGIN);
+    if (!price) { card.hidden = true; return; }
+    card.hidden = false;
+
+    var end = new Date(from + 'T00:00:00Z');
+    end.setUTCDate(end.getUTCDate() + WEEK_DAYS - 1);
+    $('#nineHead').textContent = 'The week\'s card nine-fold';
+    var codes = {};
+    got.picks.forEach(function (o) { codes[o.code] = 1; });
+    $('#nineSub').textContent = 'Nine legs, nine different matches and no club twice, '
+      + fmtDay(from) + ' to ' + fmtDay(end.toISOString().slice(0, 10))
+      + ' — ' + Object.keys(codes).join(', ') + '.';
+
+    var n = 0;
+    $('#nineLegs').innerHTML = NINE.map(function (b) {
+      var g = got.groups.filter(function (x) { return x.key === b.key; })[0];
+      return '<div class="acca-grp"><h4 class="acca-grp-h">' + esc(b.label) + '</h4>'
+        + g.options.map(function (o) { return nineLegHTML(o, ++n); }).join('') + '</div>';
+    }).join('');
+
+    $('#nineSum').innerHTML =
+      '<div><span class="k">All nine land</span><span class="v">' + pct(price.prob) + '</span></div>'
+      + '<div><span class="k">Fair odds</span><span class="v">' + price.fairOdds.toFixed(2) + '</span></div>'
+      + '<div><span class="k">Priced odds</span><span class="v">' + price.pricedOdds.toFixed(2) + '</span></div>'
+      + '<div><span class="k">Margin takes</span><span class="v drag">'
+      + (price.marginDrag * 100).toFixed(1) + '%</span></div>';
+
+    $('#nineNote').textContent =
+      'The six card legs are drawn from every match all three desks price in the window, '
+      + 'and no club appears in two legs — seven days can contain a side twice, and two legs '
+      + 'leaning on one team\'s discipline are not the independent pair the price assumes. '
+      + 'The three win legs are Premier League only — the match model rates the twenty '
+      + 'PL clubs, and the Championship and La Liga datasets carry no goals at all, so '
+      + 'there is nothing to price a result from. Win legs and card legs come from two '
+      + 'separate models, and all nine are combined as if independent: matches in one '
+      + 'week share a competition\'s temperament and a weekend\'s officiating, and that '
+      + 'residual correlation is positive, so the joint figure slightly overstates the '
+      + 'real chance. Nine legs is a long shot by construction and the margin compounds '
+      + 'nine times — that is the ' + (price.marginDrag * 100).toFixed(1) + '% above. '
+      + 'Research, not betting advice.';
+  }
+
   function mode() {
     var el = document.querySelector('input[name=mode]:checked');
     return el ? el.value : 'one';
@@ -847,6 +1033,7 @@
     } catch (e) { /* hash is a convenience, never a requirement */ }
     if (all) renderAll(); else renderOne();
     renderAcca();
+    renderNine();
   }
 
   /* ---- the combined card ------------------------------------------------ */

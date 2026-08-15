@@ -173,16 +173,20 @@ jobs:
       - name: The first run shows the product, not an overlay
         run: node scripts/check-firstrun.mjs
 
-      # The round's two nine-folds. Three ways these go wrong without throwing
+      # The two nine-folds — goals on the Premier League desk, cards on /today
+      # across all three divisions. Four ways these go wrong without throwing
       # and while flattering the numbers: one fixture filling two markets (the
       # match that tops the over-lines is usually the match that tops both-
       # teams-carded, so taking each market's top three repeats it and prices
-      # one distribution twice); both sides of the match odds on one slip, a
-      # guaranteed loser priced at a third; and a short acca still captioned as
-      # a nine-fold. The allocation is checked against exhaustive search over
-      # 6,000 random boards, and the goals markets against an independent
-      # recount of the fitted score grid.
-      - name: Nine legs, nine different matches, and one side of the match odds
+      # one distribution twice); ONE CLUB in two legs, which distinct fixtures
+      # prevents over a round and not over the seven-day window — the first
+      # build put Osasuna in two of them; both sides of the match odds on one
+      # slip, a guaranteed loser priced at a third; and a short acca still
+      # captioned as a nine-fold. The allocation is checked against exhaustive
+      # search over 6,000 random boards, the goals markets against an
+      # independent recount of the fitted score grid, and the cross-league card
+      # pool is built for real from all three committed datasets.
+      - name: Nine legs, nine matches, eighteen clubs, one side of the match odds
         run: node scripts/check-accas.mjs
 
       # Contrast has a right answer, is invisible to whoever picked the colour,

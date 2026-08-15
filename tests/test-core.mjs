@@ -1311,6 +1311,43 @@ t('an acca across markets never uses one fixture twice', () => {
   assert.ok(got.exact);
 });
 
+t('a club cannot appear in two legs, even in two different matches', () => {
+  /* THE OSASUNA CASE, and it shipped for one render. Over a single round each
+     club plays once, so excluding on the fixture id is the same as excluding
+     on the clubs. Over a seven-day window it is not: OSA v LEV and CEL v OSA
+     are two distinct fixtures, and taking both-teams-carded in each puts one
+     side's discipline behind two legs that are then multiplied as if
+     independent. `keys` is how a caller says what must not repeat. */
+    const got = core.accaAllocate([
+    { key: 'BTC', need: 2, options: [
+      { id: 'F1', keys: ['OSA', 'LEV'], prob: 0.80 },
+      { id: 'F2', keys: ['CEL', 'OSA'], prob: 0.79 },   // shares OSA with F1
+      { id: 'F3', keys: ['BET', 'RSO'], prob: 0.77 },
+    ] },
+  ]);
+  assert.equal(got.picks.length, 2);
+  const clubs = got.picks.flatMap((o) => o.keys);
+  assert.equal(new Set(clubs).size, clubs.length, 'a club is in two legs');
+  /* And it takes the best PAIR, not the best two ranked singly: F1+F3, not
+     the higher-scoring-looking F1+F2 that collides. */
+  assert.deepStrictEqual(got.picks.map((o) => o.id), ['F1', 'F3']);
+
+  /* Two legs on the SAME match collide on the first club, so keys subsume
+     fixture-distinctness rather than sitting alongside it. */
+  assert.equal(core.accaAllocate([
+    { key: 'A', need: 1, options: [{ id: 'F1', keys: ['ARS', 'COV'], prob: 0.7 }] },
+    { key: 'B', need: 1, options: [{ id: 'F1', keys: ['ARS', 'COV'], prob: 0.6 }] },
+  ]), null, 'one match filled two buckets');
+
+  /* No keys means the id is the key, which is what a single-round caller
+     wants and what every earlier caller passed. */
+  const bare = core.accaAllocate([
+    { key: 'A', need: 1, options: [{ id: 'F1', prob: 0.9 }] },
+    { key: 'B', need: 1, options: [{ id: 'F1', prob: 0.8 }, { id: 'F2', prob: 0.5 }] },
+  ]);
+  assert.deepStrictEqual(bare.picks.map((o) => o.id), ['F1', 'F2']);
+});
+
 t('an acca that cannot be filled is null, never short', () => {
   const short = core.accaAllocate([
     { key: 'A', need: 2, options: [{ id: 'F1', prob: 0.9 }, { id: 'F2', prob: 0.8 }] },

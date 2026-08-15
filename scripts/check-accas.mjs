@@ -1,18 +1,31 @@
 #!/usr/bin/env node
-/* The round's two nine-folds: the allocation, the goals markets, the wiring.
+/* The two nine-folds: the allocation, the goals markets, the wiring.
  *
- * WHAT THIS IS PROTECTING. Two accas on the Premier League desk, nine legs
- * each, every leg a different match. Three of the things that could go wrong
- * would not throw, would not look wrong, and would flatter the numbers:
+ * WHAT THIS IS PROTECTING. Two nine-leg accas, on two pages, because they can
+ * draw on different things. The GOALS nine-fold is on the Premier League desk
+ * and cannot move: the match model rates those twenty clubs and nothing else,
+ * and the sibling datasets carry no goals column at all. The CARD nine-fold is
+ * on today.html, over a seven-day window and all three divisions, because six
+ * of its nine legs have no reason to stop at one league — only its three win
+ * legs do, and for the same reason the goals acca is stuck where it is.
+ *
+ * Four things could go wrong here without throwing, without looking wrong,
+ * and while flattering the numbers:
  *
  *   1. A FIXTURE APPEARING TWICE. Filling each market's quota independently is
  *      the natural way to write it, and the fixture that tops the over-lines
  *      is usually the fixture that tops both-teams-carded — so the obvious
  *      implementation repeats a match and prices one distribution as two
  *      independent events. Nothing on the page would look amiss.
- *   2. BOTH SIDES OF THE MATCH ODDS. Home-win and away-win cannot both land.
+ *   2. A CLUB APPEARING TWICE. Distinct fixtures means distinct clubs over one
+ *      round and NOT over seven days, where a side can play twice. The first
+ *      build of the week nine-fold took both-teams-carded in two different
+ *      Osasuna matches — nine distinct fixtures, two legs leaning on one
+ *      team's discipline, priced as independent. Found by rendering the page
+ *      and reading it, not by any check that existed at the time.
+ *   3. BOTH SIDES OF THE MATCH ODDS. Home-win and away-win cannot both land.
  *      An acca carrying both is a guaranteed loser priced as ~35%.
- *   3. A SHORT ACCA LABELLED AS A NINE-FOLD. When the board cannot fill nine
+ *   4. A SHORT ACCA LABELLED AS A NINE-FOLD. When the board cannot fill nine
  *      distinct matches, returning what it managed is worse than returning
  *      nothing, because the caption still says nine.
  *
@@ -49,12 +62,15 @@ const ok = (what) => { console.log('  ok - ' + what); passed++; };
 const group = (t) => console.log(t);
 
 /* ---- 1. the allocator, against brute force ----------------------------- */
-group('accaAllocate: distinct fixtures, and the best set of them');
+group('accaAllocate: distinct fixtures and clubs, and the best set of them');
 
 /* The optimum by exhaustive enumeration. Deliberately a DIFFERENT algorithm
    from the one under test — a slow, obviously-correct one — because a guard
    that re-implements the same branch-and-bound would agree with it about a
    shared mistake. */
+const tokensOf = (o) => (Array.isArray(o.keys) && o.keys.length
+  ? o.keys.map(String) : [String(o.id)]);
+
 function brute(buckets) {
   const bs = buckets.map((b) => ({ ...b, options: b.options.slice() }));
   let bestS = -Infinity, best = null;
@@ -67,11 +83,11 @@ function brute(buckets) {
     (function combo(from, s2) {
       if (pick[i].length === bs[i].need) { bucket(i + 1, s2); return; }
       for (let j = from; j < bs[i].options.length; j++) {
-        const o = bs[i].options[j];
-        if (used.has(o.id)) continue;
-        used.add(o.id); pick[i].push(o);
+        const o = bs[i].options[j], tk = tokensOf(o);
+        if (tk.some((k) => used.has(k))) continue;
+        tk.forEach((k) => used.add(k)); pick[i].push(o);
         combo(j + 1, s2 + Math.log(o.prob));
-        pick[i].pop(); used.delete(o.id);
+        pick[i].pop(); tk.forEach((k) => used.delete(k));
       }
     })(0, s);
   })(0, 0);
@@ -97,13 +113,27 @@ function mulberry32(a) {
   for (let t = 0; t < 6000; t++) {
     const nf = 2 + Math.floor(rnd() * 10);
     const nb = 1 + Math.floor(rnd() * 4);
+    /* Fixtures pair two clubs out of a small pool, so a club recurs across
+       fixtures — the seven-day case, where distinct fixtures stopped implying
+       distinct clubs and the first build of the week nine-fold put Osasuna in
+       two legs. Half the sweep runs on bare ids (the single-round case) so
+       both key shapes are exercised. */
+    const teams = 3 + Math.floor(rnd() * 8);
+    const paired = rnd() < 0.5;
+    const fx = [];
+    for (let f = 0; f < nf; f++) {
+      const h = Math.floor(rnd() * teams);
+      let a = Math.floor(rnd() * teams);
+      if (a === h) a = (a + 1) % teams;
+      fx.push(paired ? { id: 'F' + f, keys: ['T' + h, 'T' + a] } : { id: 'F' + f });
+    }
     const buckets = [];
     for (let b = 0; b < nb; b++) {
       const need = 1 + Math.floor(rnd() * 3);
       const options = [];
-      for (let f = 0; f < nf; f++) {
+      for (const f of fx) {
         if (rnd() < 0.35) continue;                 // this market cannot price that fixture
-        options.push({ id: 'F' + f, prob: 0.02 + rnd() * 0.95 });
+        options.push({ ...f, prob: 0.02 + rnd() * 0.95 });
       }
       buckets.push({ key: 'B' + b, need, options });
     }
@@ -115,14 +145,14 @@ function mulberry32(a) {
     if (!got) { if (feasible) wrongNull++; continue; }
     if (!feasible) { missedNull++; continue; }
     if (!got.exact) inexact++;
-    const ids = got.picks.map((o) => o.id);
+    const ids = got.picks.flatMap(tokensOf);
     if (new Set(ids).size !== ids.length) dup++;
-    if (ids.length !== need) short++;
+    if (got.picks.length !== need) short++;
     const s = got.picks.reduce((a, o) => a + Math.log(o.prob), 0);
     if (Math.abs(s - exp.score) > 1e-9) subopt++;
   }
-  assert.equal(dup, 0, `${dup}/${ran} allocations used one fixture twice`);
-  ok(`no fixture used twice, over ${ran} random boards`);
+  assert.equal(dup, 0, `${dup}/${ran} allocations reused an exclusivity key`);
+  ok(`no fixture and no club used twice, over ${ran} random boards`);
   assert.equal(short, 0, `${short}/${ran} allocations came back short of the quota`);
   ok('every returned allocation fills every quota exactly');
   assert.equal(subopt, 0, `${subopt}/${ran} allocations were beaten by exhaustive search`);
@@ -371,80 +401,274 @@ const fn = (name) => {
 
 {
   const body = fn('roundLegPool');
-  assert.ok(/board\s*&&\s*!board\.thin/.test(body),
-    'card legs are no longer gated on a non-thin board — an over-line leg IS the tail, ' +
-    'and a thin board\'s tail is guesswork');
   assert.ok(/PLDCore\.simLegOptions\(/.test(body),
     'the goals legs no longer come from simLegOptions — a hand-rolled win leg is how ' +
     'both sides of the match odds end up on one slip');
-  ok('thin card boards contribute no leg, and goal legs go through simLegOptions');
+  ok('the round\'s goal legs go through simLegOptions');
 }
 
 {
-  /* The 2.5 card line exists only for this acca, and teamCardBoard has to be
-     the thing that produces it — a second board builder would be a second
-     minute-weighting, which is the drift this repo keeps paying for. */
-  assert.ok(/function teamCardBoard\(h,a,ref,derby,lines\)/.test(page),
-    'teamCardBoard no longer takes a lines parameter');
-  assert.ok(/lines\|\|\[3\.5,4\.5,5\.5\]/.test(page),
-    'teamCardBoard no longer defaults to the three lines the fixture strip prints — ' +
-    'every existing caller must get the board it got before');
-  assert.ok(/ACCA_CARD_LINES=\[2\.5,3\.5,4\.5,5\.5\]/.test(page),
-    'the acca card lines no longer include 2.5');
-  ok('the 2.5 line comes from teamCardBoard itself, and the strip\'s lines are unchanged');
+  /* EXACTLY ONE CARD NINE-FOLD IN THE APP. It was briefly on this page, built
+     from ten Premier League fixtures, before moving to /today where its six
+     card legs can draw on all three divisions. Two of them under one name,
+     from different pools, would not read as a bug — just as two pages
+     disagreeing — so the Premier League desk must not grow one back. */
+  assert.ok(!/key:\s*"BTC"/.test(page) && !/key:\s*"O2\.5"/.test(page),
+    'index.html is building card acca legs again — the card nine-fold lives on ' +
+    'today.html, over every division, and two of them would disagree in public');
+  assert.ok(/ROUND_ACCAS=\[[\s\S]{0,3000}?\n\];/.test(page), 'ROUND_ACCAS is gone');
+  const specs = page.match(/ROUND_ACCAS=\[[\s\S]*?\n\];/)[0];
+  assert.equal((specs.match(/\bid:"/g) || []).length, 1,
+    'the Premier League desk carries more than one round acca again');
+  assert.ok(/id:"goals"/.test(specs), 'the goals nine-fold is no longer the one that stays here');
+  ok('the Premier League desk carries the goals nine-fold and no card acca');
+}
+
+/* ---- 4b. the cross-league card pool, actually built -------------------- */
+group('the card nine-fold: built across three divisions, from real data');
+
+{
+  /* today.html reaches its three datasets through same-origin iframes, which
+     needs a browser, so its exact wiring is covered by source assertions
+     below. THIS builds the equivalent pool from the same core functions and
+     the same committed data through scripts/accas.mjs — whose primitives are
+     exported for precisely this ("so guards can RUN this file rather than
+     pattern-match it"). What it proves is the half a source check cannot:
+     that a cross-league pool allocates to nine legs with no club repeated. */
+  const A = await import('./accas.mjs');
+  const pool = { WIN: [], BTC: [], 'O2.5': [] };
+  const seenLeagues = new Set();
+
+  for (const L of A.LEAGUES) {
+    const d = A.loadConsts(L.data, [L.players, 'REFS']);
+    const f = A.loadConsts(L.fixtures, [L.fx]);
+    const players = d[L.players] || [], refs = d.REFS || [], fixtures = f[L.fx] || [];
+    if (!players.length || !fixtures.length) continue;
+    const pr = A.priors(players);
+    for (const p of players) p._y90 = A.shrunk(p, pr);
+    const avgs = A.leagueAverages(refs);
+    const derbies = A.derbySet(L.code);
+    const boost = A.DERBY_BOOST_FOR(L.code);
+    const { round } = A.matchesFor(L);
+    if (round == null) continue;
+
+    for (const fx of fixtures.filter((x) => x.r === round)) {
+      const hit = fx.ref ? C.matchRefName(fx.ref, refs.map((r) => r.n)) : null;
+      const ref = hit ? refs.find((r) => r.n === hit) || null : null;
+      const factor = (ref ? C.refCardFactor(ref, avgs, {}) : 1)
+        * (derbies.has([fx.h, fx.a].sort().join('|')) ? boost : 1);
+      const home = A.sideTop(players, fx.h, factor).map((c) => c.prob);
+      const away = A.sideTop(players, fx.a, factor).map((c) => c.prob);
+      if (home.length + away.length < 12) continue;          // thin, same gate the page uses
+      /* The 2.5 line the desks do not print. Through teamCardMarkets, the
+         same entry point every board goes through. */
+      const m = C.teamCardMarkets(home, away, [2.5]);
+      const base = {
+        id: L.code + '|' + fx.id,
+        keys: [L.code + '|' + fx.h, L.code + '|' + fx.a],
+        code: L.code, fx: fx.h + ' v ' + fx.a,
+      };
+      const btc = C.teamCardMarkets(home, away, [3.5]).bothCarded;
+      if (btc > 0 && btc < 1) pool.BTC.push({ ...base, prob: btc });
+      if (m.over[2.5] > 0 && m.over[2.5] < 1) pool['O2.5'].push({ ...base, prob: m.over[2.5] });
+      if (L.code === 'PL') {
+        const sim = C.simFixture(fx.h, fx.a, SIM);
+        for (const o of C.simLegOptions(sim, fx.h, fx.a)) {
+          if (o.market === 'WIN') pool.WIN.push({ ...base, prob: o.prob, label: o.label });
+        }
+      }
+      seenLeagues.add(L.code);
+    }
+  }
+
+  assert.ok(seenLeagues.size >= 2,
+    `only ${seenLeagues.size} division(s) produced card legs — the pool is not cross-league`);
+  const got = C.accaAllocate([
+    { key: 'WIN', need: 3, options: pool.WIN },
+    { key: 'BTC', need: 3, options: pool.BTC },
+    { key: 'O2.5', need: 3, options: pool['O2.5'] },
+  ]);
+  assert.ok(got, 'the card nine-fold could not be built across three divisions');
+  assert.equal(got.picks.length, 9);
+  /* THE OSASUNA CHECK, on real data. Nine distinct fixtures is not the claim;
+     eighteen distinct clubs is. */
+  const clubs = got.picks.flatMap((o) => o.keys);
+  assert.equal(new Set(clubs).size, 18,
+    `${18 - new Set(clubs).size} club(s) appear in two legs: ` +
+    got.picks.map((o) => o.fx).join(', '));
+  assert.equal(new Set(got.picks.map((o) => o.id)).size, 9, 'a fixture is used twice');
+  /* Win legs must be Premier League only — not a preference, a limit: nothing
+     else is rated by the match model. */
+  const winCodes = new Set(got.groups.find((g) => g.key === 'WIN').options.map((o) => o.code));
+  assert.deepStrictEqual([...winCodes], ['PL'],
+    `win legs came from ${[...winCodes]} — only the Premier League is rated for a result`);
+  /* And the card legs must NOT be Premier League only, or the move to
+     today.html bought nothing. */
+  const cardCodes = new Set(got.groups.filter((g) => g.key !== 'WIN')
+    .flatMap((g) => g.options).map((o) => o.code));
+  assert.ok(cardCodes.size >= 2,
+    `every card leg came from ${[...cardCodes]} — the acca is not drawing across divisions`);
+  ok(`nine legs, eighteen different clubs, card legs from ${[...cardCodes].sort().join(' + ')}`);
+  assert.ok(C.accaPrice(got.picks, C.TYPICAL_CARD_MARGIN).legs === 9);
+  ok('the cross-league nine-fold prices as nine legs at the card margin');
+}
+
+/* ---- 5. the cross-league card nine-fold on today.html ------------------ */
+group('today.html: the week\'s card nine-fold, across every division');
+
+const today = readFileSync(join(root, 'today.html'), 'utf8');
+const tfn = (name) => {
+  const i = today.indexOf('function ' + name + '(');
+  assert.ok(i > -1, `today.html no longer defines ${name}`);
+  const j = today.indexOf('\n  function ', i + 1);
+  return today.slice(i, j > -1 ? j : i + 4000);
+};
+
+{
+  const body = tfn('renderNine');
+  assert.ok(/C\.accaAllocate\(/.test(body),
+    'renderNine no longer allocates through core — picking each market\'s top three ' +
+    'itself is how one match ends up on the slip twice');
+  assert.ok(/if\s*\(!got\)\s*\{\s*card\.hidden\s*=\s*true;\s*return;\s*\}/.test(body),
+    'renderNine no longer hides the card when nine distinct matches cannot be found — ' +
+    'a six-fold under a "nine-fold" heading is the page lying about what it shows');
+  ok('nine or nothing: an unfillable week hides the card');
+}
+
+{
+  const body = tfn('weekPool');
+  /* The whole point of the move: the card legs are drawn from ALL, which is
+     every fixture of all three leagues, not from one league's slice. */
+  assert.ok(/ALL\.forEach/.test(body),
+    'weekPool no longer walks ALL — the card legs would stop being cross-league, ' +
+    'which is the entire reason this acca is on this page');
+  assert.ok(/p\.m\.thin/.test(body),
+    'thin boards are no longer skipped — an over-line leg IS the tail, and a thin ' +
+    'board\'s tail is guesswork');
+  /* Win legs are PL-only by necessity, and the gate has to be the model's own
+     presence rather than a hardcoded league code — if the Championship ever
+     gets a fitted match model, this should start offering its fixtures. */
+  assert.ok(/p\.L\.pl\s*&&\s*typeof\s*p\.L\.pl\.simFor/.test(body),
+    'the win-leg gate is no longer "this league has a fitted match model"');
+  assert.ok(/C\.simLegOptions\(/.test(body), 'win legs no longer go through simLegOptions');
+  assert.ok(/if \(o\.market === 'WIN'\) add\('WIN'/.test(body),
+    'weekPool takes more than the win leg out of simLegOptions — BTTS and the goal ' +
+    'lines would enter a card acca and could not be filled outside the Premier League');
+  /* THE CLUB KEYS, without which nine distinct fixtures over seven days can
+     still put one club in two legs. This is the Osasuna case and it shipped
+     for one render; the runnable check below is what actually proves the
+     allocator honours them, and this is what proves the page passes them. */
+  assert.ok(/keys: \[p\.L\.code \+ '\|' \+ p\.fx\.h, p\.L\.code \+ '\|' \+ p\.fx\.a\]/.test(body),
+    'weekPool no longer passes both clubs as exclusivity keys — over seven days a ' +
+    'club can play twice, and two card legs on one side\'s discipline are not the ' +
+    'independent pair the price assumes');
+  ok('card legs from every division, win legs gated on having a match model at all');
+  ok('both clubs travel as exclusivity keys, not just the fixture id');
+}
+
+{
+  const body = fn('roundLegPool');
+  assert.ok(/keys:\[m\.h,m\.a\]/.test(body),
+    'the round acca no longer passes both clubs as keys — equivalent to fixture-distinct ' +
+    'within one round, but it is the rule the caption states and the proxy stops ' +
+    'coinciding the moment a window spans more than a round');
+  ok('the round acca declares club-distinctness rather than relying on a proxy');
+}
+
+{
+  const body = tfn('over25');
+  assert.ok(/p\.L\.pl\.board\([\s\S]{0,90}\[2\.5\]\)/.test(body),
+    'the Premier League 2.5 line no longer comes from that desk\'s own board');
+  assert.ok(/C\.teamCardMarkets\(p\.home\.ps,\s*p\.away\.ps,\s*\[2\.5\]\)/.test(body),
+    'the sibling desks\' 2.5 line no longer goes through teamCardMarkets — computing ' +
+    'it any other way is a second minute-weighting');
+  ok('the 2.5 line comes from each league\'s own board, never re-derived');
+}
+
+{
+  /* The day acca must be untouched by all of this. It reads every line on the
+     board through matchLegOptions, so adding 2.5 to the shared board would
+     have silently changed which market it picks for some fixtures. */
+  assert.ok(/C\.teamCardMarkets\(home\.ps, away\.ps, \[3\.5, 4\.5, 5\.5\]\)/.test(today),
+    'today.html\'s shared board no longer prices exactly the three lines it did — ' +
+    'the day acca picks its leg from every line on that board, so this would move it');
+  const pm = readFileSync(join(root, 'assets', 'plmodel.js'), 'utf8');
+  assert.ok(/function board\(h, a, ref, derby, sim, lines\)/.test(pm),
+    'plmodel board no longer takes a lines parameter');
+  assert.ok(/lines \|\| \[3\.5, 4\.5, 5\.5\]/.test(pm),
+    'plmodel board no longer defaults to the three lines every desk prints — every ' +
+    'existing caller must get the board it got before');
+  ok('the day acca\'s board is unchanged, and the 2.5 line is opt-in per call');
 }
 
 console.log(`\n${passed} checks passed`);
 
 /* ---- MUTATIONS -----------------------------------------------------------
- * Each of these was applied to a clean tree, this file was run, and the check
- * named on the right is the one that failed. Quoted text is what it printed.
+ * Each was applied to a clean tree, the suite was run, and the check named on
+ * the right is the one that failed. Quoted text is what it printed.
+ *
+ * A NOTE ON HOW TO APPLY THEM. Anchor on the enclosing function before
+ * replacing. `ALL.forEach(function (p) {` appears verbatim in both index() and
+ * weekPool(); a first-match replace mutates the wrong one, the guard passes,
+ * and it reads as an escape. That happened while writing this, and the "escape"
+ * was a bad mutation rather than a hole.
  *
  *  core.js accaAllocate
- *    return greedy, skip the branch-and-bound  -> "631/6000 allocations were beaten
- *                                                  by exhaustive search"
- *    drop the `used.has(o.id)` test            -> "1552/6000 allocations used one
- *                                                  fixture twice"
- *    null out when greedy comes up short       -> "407/6000 solvable boards came
- *                                                  back null"
- *    return the partial allocation, not null   -> the stranding case throws on a
- *                                                 short `picks`
+ *    greedy only, skip branch-and-bound      -> "631/6000 allocations were beaten
+ *                                                by exhaustive search"
+ *    drop the used-token test                -> "1552/6000 allocations reused an
+ *                                                exclusivity key"
+ *    ignore `keys`, exclude on id alone      -> "218/6000 allocations reused an
+ *                                                exclusivity key"
+ *    null out when greedy comes up short     -> "407/6000 solvable boards came
+ *                                                back null"
+ *    return the partial allocation, not null -> the stranding case throws
  *
  *  core.js simOutcomes
- *    `h >= 1 || a >= 1` for btts               -> "ARS v COV: BTTS 0.944... !=
- *                                                  recount 0.501..."
- *    `tot >= l` instead of `tot > l`           -> "over 2 (0.813...) and over 2.5
- *                                                  (0.584...) differ"
- *      NOTE this one ESCAPED the first time round, and the integer-line check
- *      above exists because of it: every line the app prices is a half-line, so
- *      `>` and `>=` agree on all of them and the mutation changed no shipped
- *      number. Only a line an integer total can sit on can tell them apart.
- *    omit `over` from simFixture's return      -> TypeError, not an assertion:
- *                                                 the monotonicity check reads
- *                                                 `s.over[0.5]` of undefined
+ *    `h >= 1 || a >= 1` for btts             -> "BTTS 0.944... != recount 0.501..."
+ *    `tot >= l` instead of `tot > l`         -> "over 2 and over 2.5 differ"
+ *      ESCAPED THE FIRST TIME. Every shipped line is a half-line, so `>` and
+ *      `>=` agree on all of them and the mutation changed no published number.
+ *      The integer-line check exists because of it.
+ *    drop `over` from simFixture's return    -> TypeError in the monotonicity check
+ *    remove 1.5 from SIM_GOAL_LINES          -> "over 1.5 disagrees with the grid"
  *
  *  core.js simLegOptions
- *    push both sides of the match odds         -> "ARS v COV offered 2 win legs"
- *    push the weaker side                      -> "ARS v COV offered the weaker
- *                                                  side to win"
- *    drop the sort                             -> "not sorted by probability"
+ *    push both sides of the match odds       -> "offered 2 win legs"
+ *    push the weaker side                    -> "offered the weaker side to win"
+ *    drop the sort                           -> "not sorted by probability"
  *
  *  core.js constants
- *    TYPICAL_GOAL_MARGIN = TYPICAL_CARD_MARGIN -> "Expected actual to be strictly
- *                                                  unequal to: 0.06"
+ *    goal margin = card margin               -> "strictly unequal to: 0.06"
  *
- *  index.html
- *    renderRoundAccas(fx.slice(0,5))           -> "not called with the same
- *                                                  unfiltered round"
- *    take each market's top three inline       -> "no longer goes through
- *                                                  PLDCore.accaAllocate"
- *    hide only when NOTHING built              -> "no longer hides the card"
- *    drop the !board.thin gate                 -> "no longer gated on a non-thin
- *                                                  board"
- *    bake 2.5 in, drop the lines parameter     -> "no longer takes a lines
- *                                                  parameter"
- *    hand-roll the goal legs, both win sides   -> "no longer come from
- *                                                  simLegOptions"
- *    one margin for both accas                 -> "no longer chooses between the
- *                                                  goal and card margins"
+ *  plmodel.js
+ *    bake 2.5 into every board               -> "no longer defaults to the three
+ *                                                lines every desk prints"
+ *
+ *  index.html (the round's goals nine-fold)
+ *    renderRoundAccas(fx.slice(0,5))         -> "not called with the same
+ *                                                unfiltered round"
+ *    take each market's top three inline     -> "no longer goes through
+ *                                                PLDCore.accaAllocate"
+ *    hide only when NOTHING built            -> "no longer hides the card"
+ *    hand-roll the goal legs                 -> "no longer come from simLegOptions"
+ *    one margin for both accas               -> "no longer chooses between the goal
+ *                                                and card margins"
+ *    drop the club keys                      -> "no longer passes both clubs as keys"
+ *    add a card acca back to this page       -> "index.html is building card acca
+ *                                                legs again"
+ *
+ *  today.html (the week's card nine-fold)
+ *    weekPool walks one league, not ALL      -> "no longer walks ALL"
+ *    drop the club keys                      -> "no longer passes both clubs as
+ *                                                exclusivity keys"  [the Osasuna bug]
+ *    drop the thin-board gate                -> "thin boards are no longer skipped"
+ *    admit BTTS and goal legs                -> "takes more than the win leg out of
+ *                                                simLegOptions"
+ *    over25 returns the 3.5 line             -> "no longer comes from that desk's
+ *                                                own board"
+ *    renderNine ships a short acca           -> "no longer hides the card when nine
+ *                                                distinct matches cannot be found"
+ *    give the day board a 2.5 line           -> "no longer prices exactly the three
+ *                                                lines it did"
  */

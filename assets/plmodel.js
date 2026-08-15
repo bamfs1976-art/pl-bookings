@@ -171,8 +171,15 @@
 
     /* The team-card board. Each candidate's probability assumes a full 90, so
        it is scaled by the share of his side's minutes he actually takes —
-       otherwise a 25-man squad prices a match with 50 players on the pitch. */
-    function board(h, a, ref, derby, sim) {
+       otherwise a 25-man squad prices a match with 50 players on the pitch.
+
+       `lines` is optional and defaults to the three every desk prints, so no
+       existing caller's board changes by a digit. today.html passes [2.5] for
+       the week's card nine-fold — a market no desk shows and the acca needs.
+       A PARAMETER, not a second board builder: the minute-weighting above is
+       the thing that must not exist twice, and it is the reason this function
+       is shared by the desk and the cross-league page at all. */
+    function board(h, a, ref, derby, sim, lines) {
       var cands = candidates(h, a, ref, derby, sim);
       if (!cands.length) return null;
       var side = function (c) {
@@ -180,7 +187,7 @@
         return C.matchLambdas(s.map(function (x) { return x.prob; }),
                               s.map(function (x) { return x.p.min; }));
       };
-      var b = C.teamCardMarkets(side(h), side(a), [3.5, 4.5, 5.5]);
+      var b = C.teamCardMarkets(side(h), side(a), lines || [3.5, 4.5, 5.5]);
       b.thin = cands.length < 12;
       return b;
     }

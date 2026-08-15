@@ -1262,16 +1262,34 @@
    * around 0.6 is ~1e-2, and the comparisons that drive the pruning are
    * better behaved as a sum than as a float that small.
    *
-   * `buckets` is [{ key, need, options: [{ id, prob, ... }] }] where `id`
-   * identifies the FIXTURE — that is what must not repeat. Options may be
-   * any shape beyond those two fields; they come back untouched.
+   * `buckets` is [{ key, need, options: [{ id, prob, keys?, ... }] }].
+   *
+   * WHAT MUST NOT REPEAT IS THE CALLER'S TO DECLARE, via `keys` — a list of
+   * exclusivity tokens, defaulting to [id]. Two options sharing any token
+   * cannot both be picked. Options may carry any other fields; they come
+   * back untouched.
+   *
+   * THE DEFAULT IS NOT ALWAYS ENOUGH, and finding that out cost a rendered
+   * page. Excluding on the fixture id alone is exactly right for an acca over
+   * ONE ROUND, where each club plays once and distinct fixtures therefore
+   * means distinct clubs. Over a SEVEN-DAY WINDOW it is not: a club can play
+   * twice, and the first build of the cross-league nine-fold duly took
+   * "both teams carded" in two different Osasuna matches. Distinct fixtures,
+   * both legs leaning on one side's discipline, priced as independent.
+   *
+   * So a caller whose window can contain a club twice passes both clubs as
+   * keys, which subsumes fixture-distinctness — two legs on one match share
+   * both clubs and collide on the first.
    */
   function accaAllocate(buckets, opts) {
+    const tokens = (o) => (Array.isArray(o.keys) && o.keys.length
+      ? o.keys.filter((k) => k != null).map(String)
+      : [String(o.id)]);
     const bs = (Array.isArray(buckets) ? buckets : []).map((b) => ({
       key: b && b.key,
       need: Math.max(0, Math.floor(Number(b && b.need) || 0)),
       options: (b && Array.isArray(b.options) ? b.options : [])
-        .filter((o) => o && o.id != null
+        .filter((o) => o && (o.id != null || (Array.isArray(o.keys) && o.keys.length))
           && isFinite(Number(o.prob)) && Number(o.prob) > 0 && Number(o.prob) < 1)
         /* Sorted descending so the optimistic bound below is sound: the first
            `need` entries are the most any bucket could contribute. */
@@ -1299,13 +1317,13 @@
       for (let i = 0; i < bs.length; i++) {
         if (gPick[i].length >= bs[i].need) continue;
         for (const o of bs[i].options) {
-          if (gUsed.has(o.id)) continue;
+          if (tokens(o).some((k) => gUsed.has(k))) continue;
           if (!bo || Number(o.prob) > Number(bo.prob)) { bi = i; bo = o; }
           break;   // options are sorted, so the first free one is this bucket's best
         }
       }
       if (bi < 0) break;
-      gPick[bi].push(bo); gUsed.add(bo.id);
+      gPick[bi].push(bo); tokens(bo).forEach((k) => gUsed.add(k));
     }
 
     /* GREEDY CAN STRAND ITSELF, and an incomplete greedy is not evidence the
@@ -1356,10 +1374,11 @@
       const last = b.options.length - (b.need - pick[bi].length);
       for (let i = from; i <= last; i++) {
         const o = b.options[i];
-        if (used.has(o.id)) continue;
-        used.add(o.id); pick[bi].push(o);
+        const tk = tokens(o);
+        if (tk.some((k) => used.has(k))) continue;
+        tk.forEach((k) => used.add(k)); pick[bi].push(o);
         combo(bi, i + 1, score + lg(o));
-        pick[bi].pop(); used.delete(o.id);
+        pick[bi].pop(); tk.forEach((k) => used.delete(k));
         if (capped) return;
       }
     }

@@ -853,18 +853,28 @@
       </div>
     </div>
     <div id="gwFixtures"></div>
-    <!-- THE ROUND'S TWO NINE-FOLDS, under the fixtures rather than above them.
-         The fixture cards are what this page is for; these are a read across
-         the whole round and only mean anything once the round has been seen.
-         Hidden entirely until both can be built from distinct matches — see
-         renderRoundAccas. -->
+    <!-- THE ROUND'S GOALS NINE-FOLD, under the fixtures rather than above
+         them. The fixture cards are what this page is for; this is a read
+         across the whole round and only means anything once the round has
+         been seen. Hidden entirely until it can be built from nine distinct
+         matches — see renderRoundAccas.
+
+         GOALS ONLY, on this page. The card nine-fold used to sit beside it
+         and now lives on /today, where it draws on all three divisions
+         instead of these ten fixtures. This one cannot move: the match model
+         rates the twenty Premier League clubs and nothing else, so no other
+         desk can price a win, a BTTS or a goal line at all. -->
     <section class="card" id="accaRound" style="margin-top:14px" hidden>
       <div style="display:flex;flex-wrap:wrap;align-items:baseline;gap:8px 12px">
-        <h2 style="font-size:16px;margin:0">The round&rsquo;s nine-folds</h2>
-        <span class="faint" style="font-size:12.5px">One leg per match, nine different matches in each</span>
+        <h2 style="font-size:16px;margin:0">The round&rsquo;s goals nine-fold</h2>
+        <span class="faint" style="font-size:12.5px">One leg per match, nine different matches</span>
       </div>
       <div class="acca-two" id="accaRoundBody"></div>
       <p class="note" id="accaRoundNote"></p>
+      <p class="faint" style="font-size:.78rem;margin:.5rem 0 0">The card nine-fold is on
+        <a href="/today">today&rsquo;s card</a> — three to win, three both teams carded, three
+        over 2.5 cards, drawn from every Premier League, Championship and La Liga match in a
+        seven-day window.</p>
     </section>
     <!-- The 108-word version of this paragraph stood here. Every clause in it
          is now carried by something the reader can actually reach at the
@@ -3823,12 +3833,7 @@ function gwCandidates(h,a,ref,derby,sim){
    markets are team-level (total cards over/under, both teams carded), so
    fold the per-player chances into a Poisson-binomial — see PLDCore. Uses
    every rated available player on each side, not just the shown top few. */
-/* `lines` is optional and defaults to the three the fixture strip prints, so
-   every existing caller gets the identical board it got before. The round
-   acca passes a longer list because it prices a 2.5 line the strip has no
-   room for — a PARAMETER rather than a second board builder, because the
-   minute-weighting below is the thing that must not exist twice. */
-function teamCardBoard(h,a,ref,derby,lines){
+function teamCardBoard(h,a,ref,derby){
   const cands=gwCandidates(h,a,ref,derby);
   if(!cands.length) return null;
   /* Each candidate's probability assumes he plays 90, so scale it by the
@@ -3838,7 +3843,7 @@ function teamCardBoard(h,a,ref,derby,lines){
     const s=cands.filter(x=>x.p.c===c);
     return PLDCore.matchLambdas(s.map(x=>x.prob),s.map(x=>x.p.min));
   };
-  const board=PLDCore.teamCardMarkets(side(h),side(a),lines||[3.5,4.5,5.5]);
+  const board=PLDCore.teamCardMarkets(side(h),side(a),[3.5,4.5,5.5]);
   board.thin=cands.length<12;   // too few rated players to trust the tails
   return board;
 }
@@ -3997,7 +4002,6 @@ function marketStripHtml(board,h2h,fouls){
  * repeat a match — which prices one distribution twice and is the single most
  * flattering mistake an acca can make. See the note on the allocator.
  * ═══════════════════════════════════════════════════════════ */
-const ACCA_CARD_LINES=[2.5,3.5,4.5,5.5];
 const ROUND_ACCAS=[
   {id:"goals", title:"Goals nine-fold", margin:"goal",
    note:"Priced from the match model's fitted score grid — win, both teams to score and the goal line all come off one distribution per fixture.",
@@ -4006,13 +4010,18 @@ const ROUND_ACCAS=[
      {key:"BTTS",  need:3, label:"Both teams to score"},
      {key:"OG1.5", need:3, label:"Over 1.5 goals"},
    ]},
-  {id:"cards", title:"Cards nine-fold", margin:"card",
-   note:"Three win legs from the match model, six card legs from the desk's own player-by-player model. Two separate fits on one slip — the legs are priced as independent, and across two models that assumption is doing more work than usual.",
-   buckets:[
-     {key:"WIN",  need:3, label:"To win"},
-     {key:"BTC",  need:3, label:"Both teams carded"},
-     {key:"O2.5", need:3, label:"Over 2.5 cards"},
-   ]},
+  /* THE CARD NINE-FOLD IS NOT HERE, and deliberately not. It was, for one
+     commit, built from this round's ten Premier League fixtures. Its six card
+     legs have no reason to stop at this division — every desk prices both
+     teams carded and the card over-lines — so it lives on /today, which is
+     the page holding all three datasets at once, and it draws on every match
+     in a seven-day window. Only its three WIN legs are still Premier League,
+     because only these clubs are rated by the match model.
+
+     ONE OF IT, not one here and a wider one there. Two cards nine-folds under
+     one name, built from different pools and printing different legs, is the
+     drift this repository keeps paying for — and it would not read as a bug,
+     just as two pages disagreeing. */
 ];
 /* Every leg this round could offer, keyed by market, with the fixture it came
    from carried alongside. Built once per render from the SAME primitives the
@@ -4029,18 +4038,18 @@ function roundLegPool(fx){
        odds — the stronger — because home-win and away-win are the same grid
        read two ways and could never both land. */
     if(m.sim) opts.push(...PLDCore.simLegOptions(m.sim,m.h,m.a));
-    /* Cards, from the desk. Only when the fixture has enough rated players to
-       trust: `thin` already marks the boards whose tails are guesswork, and a
-       guessed tail is exactly what an over-line leg is made of. */
-    const board=teamCardBoard(m.h,m.a,m.ref,m.derby,ACCA_CARD_LINES);
-    if(board&&!board.thin){
-      opts.push({market:"BTC",  label:"Both teams carded", prob:board.bothCarded});
-      opts.push({market:"O2.5", label:"Over 2.5 cards",    prob:board.over[2.5]});
-    }
+    /* NO CARD LEGS HERE. They are on /today, over every division and a
+       seven-day window — see the note on ROUND_ACCAS. */
     for(const o of opts){
       const p=Number(o.prob);
       if(!isFinite(p)||!(p>0)||!(p<1)) continue;
-      add(o.market,{id:String(f.id), prob:p, label:o.label, fx:fxLabel, ko:f.kickoff_time||"", ref:m.ref});
+      /* Both clubs as exclusivity keys, not just the fixture id. Within one
+         round each club plays once, so this is equivalent to fixture-distinct
+         — but it states the rule the reader actually wants ("nine different
+         teams") rather than a proxy that happens to coincide here and stops
+         coinciding the moment a window spans more than a round. */
+      add(o.market,{id:String(f.id), keys:[m.h,m.a], prob:p, label:o.label,
+                    fx:fxLabel, ko:f.kickoff_time||"", ref:m.ref});
     }
   }
   return pool;
@@ -4077,7 +4086,8 @@ function roundAccaHtml(a){
   }).join("");
   return '<article class="acca-block">'
     +'<h3 class="acca-h">'+esc(a.spec.title)+'</h3>'
-    +'<p class="faint acca-sub">'+a.price.legs+' legs, '+a.price.legs+' different matches. '+esc(a.spec.note)+'</p>'
+    +'<p class="faint acca-sub">'+a.price.legs+' legs, '+a.price.legs+' different matches, '
+      +'no club twice. '+esc(a.spec.note)+'</p>'
     +rows
     +'<div class="acca-sum">'
     +'<div><span class="k">All nine land</span><span class="v">'+(a.price.prob*100).toFixed(1)+'%</span></div>'
