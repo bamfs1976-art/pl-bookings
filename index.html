@@ -853,6 +853,19 @@
       </div>
     </div>
     <div id="gwFixtures"></div>
+    <!-- THE ROUND'S TWO NINE-FOLDS, under the fixtures rather than above them.
+         The fixture cards are what this page is for; these are a read across
+         the whole round and only mean anything once the round has been seen.
+         Hidden entirely until both can be built from distinct matches — see
+         renderRoundAccas. -->
+    <section class="card" id="accaRound" style="margin-top:14px" hidden>
+      <div style="display:flex;flex-wrap:wrap;align-items:baseline;gap:8px 12px">
+        <h2 style="font-size:16px;margin:0">The round&rsquo;s nine-folds</h2>
+        <span class="faint" style="font-size:12.5px">One leg per match, nine different matches in each</span>
+      </div>
+      <div class="acca-two" id="accaRoundBody"></div>
+      <p class="note" id="accaRoundNote"></p>
+    </section>
     <!-- The 108-word version of this paragraph stood here. Every clause in it
          is now carried by something the reader can actually reach at the
          moment they need it: the bands and the confidence dot by the Legend
@@ -3810,7 +3823,12 @@ function gwCandidates(h,a,ref,derby,sim){
    markets are team-level (total cards over/under, both teams carded), so
    fold the per-player chances into a Poisson-binomial — see PLDCore. Uses
    every rated available player on each side, not just the shown top few. */
-function teamCardBoard(h,a,ref,derby){
+/* `lines` is optional and defaults to the three the fixture strip prints, so
+   every existing caller gets the identical board it got before. The round
+   acca passes a longer list because it prices a 2.5 line the strip has no
+   room for — a PARAMETER rather than a second board builder, because the
+   minute-weighting below is the thing that must not exist twice. */
+function teamCardBoard(h,a,ref,derby,lines){
   const cands=gwCandidates(h,a,ref,derby);
   if(!cands.length) return null;
   /* Each candidate's probability assumes he plays 90, so scale it by the
@@ -3820,7 +3838,7 @@ function teamCardBoard(h,a,ref,derby){
     const s=cands.filter(x=>x.p.c===c);
     return PLDCore.matchLambdas(s.map(x=>x.prob),s.map(x=>x.p.min));
   };
-  const board=PLDCore.teamCardMarkets(side(h),side(a),[3.5,4.5,5.5]);
+  const board=PLDCore.teamCardMarkets(side(h),side(a),lines||[3.5,4.5,5.5]);
   board.thin=cands.length<12;   // too few rated players to trust the tails
   return board;
 }
@@ -3946,6 +3964,148 @@ function marketStripHtml(board,h2h,fouls){
     ${foulCells}
     ${board.thin?'<span class="mk-note">thin sample</span>':''}
   </div>`;
+}
+/* ═══════════════════════════════════════════════════════════
+ * THE ROUND'S TWO NINE-FOLDS
+ *
+ * Two accas over the round, each nine legs, each leg a different match.
+ *
+ * ONE OF THEM IS NOT A BOOKINGS BET, and that is the point worth stating
+ * plainly. The goals acca is priced entirely from the vendored match model
+ * (data/sim_model.js) — the same fitted Dixon-Coles grid that already drives
+ * the game-state factor on every player row. Nothing about it comes from the
+ * card model, and it exists here rather than on the sibling desks because the
+ * match model rates the twenty Premier League clubs and nothing else. The
+ * Championship and La Liga desks have no goals data at all.
+ *
+ * THE CARDS ACCA IS A HYBRID, and the hybrid is the honest bit: its three win
+ * legs come from the match model and its six card legs from the desk's own
+ * Poisson-binomial. Two models, one slip. They are fitted on different data
+ * and neither knows about the other, so the independence assumption ACROSS
+ * those six legs is doing more work than it does within a single market. Said
+ * on the card, not buried here.
+ *
+ * WHY NINE LEGS IS A BAD BET AND THE PAGE SAYS SO. Nine legs at ~60% is about
+ * one in a hundred, and the margin compounds nine times — the drag figure is
+ * printed at the same size as the price for exactly that reason. This is a
+ * research view of what the model thinks is most likely, not a recommendation
+ * to stake nine legs.
+ *
+ * DISTINCTNESS IS ENFORCED BY PLDCore.accaAllocate, not by picking each
+ * market's top three. The fixture that tops the over-lines is usually the
+ * fixture that tops both-teams-carded, so three independent top-threes would
+ * repeat a match — which prices one distribution twice and is the single most
+ * flattering mistake an acca can make. See the note on the allocator.
+ * ═══════════════════════════════════════════════════════════ */
+const ACCA_CARD_LINES=[2.5,3.5,4.5,5.5];
+const ROUND_ACCAS=[
+  {id:"goals", title:"Goals nine-fold", margin:"goal",
+   note:"Priced from the match model's fitted score grid — win, both teams to score and the goal line all come off one distribution per fixture.",
+   buckets:[
+     {key:"WIN",   need:3, label:"To win"},
+     {key:"BTTS",  need:3, label:"Both teams to score"},
+     {key:"OG1.5", need:3, label:"Over 1.5 goals"},
+   ]},
+  {id:"cards", title:"Cards nine-fold", margin:"card",
+   note:"Three win legs from the match model, six card legs from the desk's own player-by-player model. Two separate fits on one slip — the legs are priced as independent, and across two models that assumption is doing more work than usual.",
+   buckets:[
+     {key:"WIN",  need:3, label:"To win"},
+     {key:"BTC",  need:3, label:"Both teams carded"},
+     {key:"O2.5", need:3, label:"Over 2.5 cards"},
+   ]},
+];
+/* Every leg this round could offer, keyed by market, with the fixture it came
+   from carried alongside. Built once per render from the SAME primitives the
+   fixture cards use — simFor() and teamCardBoard() — so a leg on the acca and
+   the same market on the card above it cannot print different numbers. */
+function roundLegPool(fx){
+  const pool=new Map();      // market -> [{id, prob, label, meta}]
+  const add=(market,o)=>{ if(!pool.has(market)) pool.set(market,[]); pool.get(market).push(o); };
+  for(const f of fx){
+    const m=fixtureMeta(f); if(!m) continue;
+    const fxLabel=m.h+" v "+m.a;
+    const opts=[];
+    /* Goals, from the match model. simLegOptions offers ONE side of the match
+       odds — the stronger — because home-win and away-win are the same grid
+       read two ways and could never both land. */
+    if(m.sim) opts.push(...PLDCore.simLegOptions(m.sim,m.h,m.a));
+    /* Cards, from the desk. Only when the fixture has enough rated players to
+       trust: `thin` already marks the boards whose tails are guesswork, and a
+       guessed tail is exactly what an over-line leg is made of. */
+    const board=teamCardBoard(m.h,m.a,m.ref,m.derby,ACCA_CARD_LINES);
+    if(board&&!board.thin){
+      opts.push({market:"BTC",  label:"Both teams carded", prob:board.bothCarded});
+      opts.push({market:"O2.5", label:"Over 2.5 cards",    prob:board.over[2.5]});
+    }
+    for(const o of opts){
+      const p=Number(o.prob);
+      if(!isFinite(p)||!(p>0)||!(p<1)) continue;
+      add(o.market,{id:String(f.id), prob:p, label:o.label, fx:fxLabel, ko:f.kickoff_time||"", ref:m.ref});
+    }
+  }
+  return pool;
+}
+function buildRoundAcca(spec,pool){
+  const buckets=spec.buckets.map(b=>({key:b.key, need:b.need, options:(pool.get(b.key)||[]).slice()}));
+  const got=PLDCore.accaAllocate(buckets);
+  if(!got) return null;
+  const margin=spec.margin==="goal"?PLDCore.TYPICAL_GOAL_MARGIN:PLDCore.TYPICAL_CARD_MARGIN;
+  const price=PLDCore.accaPrice(got.picks,margin);
+  if(!price) return null;
+  return {spec,groups:got.groups,picks:got.picks,price,margin,exact:got.exact};
+}
+function roundAccaHtml(a){
+  const pc=v=>(v*100).toFixed(0)+"%";
+  const od=v=>v>=100?Math.round(v).toLocaleString("en-GB"):v.toFixed(2);
+  const byKey=new Map(a.groups.map(g=>[g.key,g.options]));
+  let n=0;
+  const rows=a.spec.buckets.map(b=>{
+    const legs=(byKey.get(b.key)||[]).map(o=>
+      '<div class="acca-leg">'
+      +'<span class="acca-n">'+(++n)+'</span>'
+      +'<span class="acca-fx">'+esc(o.fx)+'</span>'
+      /* The market only when the leg says more than the heading above it
+         already does. "Both teams to score" under a "Both teams to score"
+         heading is a word count, not information; "Arsenal to win" under
+         "To win" is the whole leg. */
+      +(o.label===b.label?"":'<span class="acca-mkt">'+esc(o.label)+'</span>')
+      +'<span class="spacer"></span>'
+      +'<span class="acca-p">'+pc(o.prob)+'</span>'
+      +'<span class="acca-odds" title="Fair odds, before any bookmaker margin">'
+      +od(1/o.prob)+'</span></div>').join("");
+    return '<div class="acca-grp"><h4 class="acca-grp-h">'+esc(b.label)+'</h4>'+legs+'</div>';
+  }).join("");
+  return '<article class="acca-block">'
+    +'<h3 class="acca-h">'+esc(a.spec.title)+'</h3>'
+    +'<p class="faint acca-sub">'+a.price.legs+' legs, '+a.price.legs+' different matches. '+esc(a.spec.note)+'</p>'
+    +rows
+    +'<div class="acca-sum">'
+    +'<div><span class="k">All nine land</span><span class="v">'+(a.price.prob*100).toFixed(1)+'%</span></div>'
+    +'<div><span class="k">Fair odds</span><span class="v">'+od(a.price.fairOdds)+'</span></div>'
+    +'<div><span class="k">Priced at '+Math.round(a.margin*100)+'% margin</span><span class="v">'+od(a.price.pricedOdds)+'</span></div>'
+    +'<div><span class="k">Margin drag</span><span class="v drag">'+(a.price.marginDrag*100).toFixed(0)+'%</span></div>'
+    +'</div></article>';
+}
+/* Rendered from the FULL round, never the filtered fixture list: "the round's
+   best nine" is a fact about the round and must not change because somebody
+   typed a club name into the search box. */
+function renderRoundAccas(fx){
+  const card=$("accaRound"); if(!card) return;
+  const pool=(fx&&fx.length)?roundLegPool(fx):new Map();
+  const built=ROUND_ACCAS.map(s=>buildRoundAcca(s,pool)).filter(Boolean);
+  /* A PARTIAL ANSWER IS NOT THE ANSWER. Before the referees are appointed, or
+     on a round with too few fixtures to fill nine distinct matches, the
+     allocator returns null and the card stays hidden rather than showing a
+     five-fold labelled as a nine-fold. */
+  if(built.length!==ROUND_ACCAS.length){ card.hidden=true; return; }
+  card.hidden=false;
+  $("accaRoundBody").innerHTML=built.map(roundAccaHtml).join("");
+  $("accaRoundNote").textContent=
+    "Nine legs at these prices is a long shot by construction — the joint chance is printed "
+    +"above and the margin drag is what nine legs of bookmaker cut costs against the fair price. "
+    +"Legs are treated as independent; two matches in one round share a competition's temperament "
+    +"and a weekend's officiating, and that residual correlation is positive, so the joint figure "
+    +"is if anything a slight overstatement. Research, not a tip.";
 }
 // Severity band from the fixture-aware probability (prototype language).
 /* COLOUR IS NOT THE ENCODING. The four bands were a red/amber/grey/grey ramp,
@@ -4512,6 +4672,7 @@ function renderGameweek(){
   const el=$("gwFixtures"); if(!el) return;
   if(!LIVE){
     renderGwStats(null);
+    renderRoundAccas(null);
     /* LOADING IS NOT AN ERROR. renderGameweek() paints the landing view before
        loadLive() is even called, so this branch used to greet every cold load
        with "the live FPL feed is unreachable right now" for the second or two
@@ -4544,6 +4705,9 @@ function renderGameweek(){
      the fixture list below, but "12 matches, 42.3 cards expected" is a fact
      about the gameweek and does not change because you typed a club name. */
   renderGwStats(fx);
+  /* THE FULL ROUND HERE TOO, and for the same reason: the nine-folds are a
+     read across the gameweek, not across whatever survived the search box. */
+  renderRoundAccas(fx);
   /* AN EMPTY WEEK IS A WAIT, NOT A FAULT. "Check back once the schedule firms
      up" gave a reader nothing to act on and no idea whether that meant hours
      or a fortnight; between rounds the feed knows the next deadline exactly. */

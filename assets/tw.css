@@ -488,6 +488,27 @@ html[data-density="expert"] .combined-note{display:none}
 .acca-sum .k{font-size:11px;color:var(--text-2);letter-spacing:.03em;text-transform:uppercase}
 .acca-sum .v{font-family:var(--mono);font-size:17px;font-weight:800}
 .acca-sum .v.drag{color:var(--warn-ink)}
+/* ---- the round's nine-folds ---------------------------------------------
+   Two accas side by side where there is room, stacked where there is not.
+   `auto-fit` with a 320px floor rather than a media query: the breakpoint is
+   then a property of how narrow a nine-leg column can get before the fixture
+   and the market stop fitting on one line, which is what actually decides it.
+   Everything inside reuses .acca-leg / .acca-sum above — the legs are the same
+   object as the day's acca and must not drift into a second look. */
+.acca-two{display:grid;gap:16px;margin-top:12px;
+  grid-template-columns:repeat(auto-fit,minmax(320px,1fr))}
+.acca-block{min-width:0;border:1px solid var(--border);border-radius:14px;
+  padding:12px 13px;background:var(--surface-2)}
+.acca-h{margin:0;font-size:14.5px}
+.acca-sub{font-size:12px;margin:.35rem 0 0}
+/* The market a run of legs belongs to, said once above the run instead of
+   repeated on every row — three legs that all read "Over 1.5 goals" spend the
+   width that the fixture name needs. */
+.acca-grp{margin-top:11px}
+.acca-grp-h{margin:0 0 6px;font-size:11px;font-weight:800;color:var(--text-2);
+  letter-spacing:.05em;text-transform:uppercase}
+.acca-grp .acca-leg{margin-top:6px}
+.acca-grp .acca-leg:first-of-type{margin-top:0}
 /* Share buttons wear .mkt for their look and .fx-share so a page that could
    not load share.js can hide them all at once. Shared, because three pages
    drew this button and two of them had defined the hiding rule themselves. */

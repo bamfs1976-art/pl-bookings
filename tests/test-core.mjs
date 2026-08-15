@@ -1229,6 +1229,126 @@ t('an acca refuses to be a single, and reads legs or bare numbers', () => {
     - (1 - Math.pow(1 - core.TYPICAL_CARD_MARGIN, 2))) < 1e-12);
 });
 
+t('the goals markets come off the same grid as the result', () => {
+  /* A toy fixture, so the expected numbers can be recounted by hand rather
+     than copied from what the code happened to print. */
+  const grid = core.simScoreGrid(1.6, 1.2, -0.0855, core.SIM_MAX_GOALS);
+  const o = core.simOutcomes(grid, core.SIM_MAX_GOALS);
+  const G = core.SIM_MAX_GOALS + 1;
+  let btts = 0, o15 = 0;
+  for (let h = 0; h < G; h++) {
+    for (let a = 0; a < G; a++) {
+      const p = grid[h * G + a];
+      if (h >= 1 && a >= 1) btts += p;
+      if (h + a > 1.5) o15 += p;
+    }
+  }
+  assert.ok(Math.abs(o.btts - btts) < 1e-12, `btts ${o.btts} != ${btts}`);
+  assert.ok(Math.abs(o.over[1.5] - o15) < 1e-12);
+  /* Both teams scoring IS at least two goals, so BTTS can never be the more
+     likely of the two. Catches a sign error in either. */
+  assert.ok(o.btts < o.over[1.5]);
+  /* The default lines are the constant, not a literal repeated per call site.
+     On its own this is circular — moving the constant moves both sides — so
+     the lines the app actually depends on are named below rather than left to
+     it. */
+  assert.deepStrictEqual(Object.keys(o.over).map(Number), core.SIM_GOAL_LINES);
+  /* 1.5 is what the Premier League desk's goals nine-fold is built on and 2.5
+     is the standard total; dropping either from the constant would leave
+     simLegOptions unable to offer the leg and the acca unbuildable, which the
+     page answers by hiding itself — a silent disappearance, not an error. */
+  assert.ok(core.SIM_GOAL_LINES.includes(1.5), 'the goals acca prices an over 1.5 leg');
+  assert.ok(core.SIM_GOAL_LINES.includes(2.5));
+  /* An integer line settles strictly over: three goals win "over 2", two do
+     not. Every shipped line is a half-line, where `>` and `>=` agree, so this
+     is the only place the distinction is observable at all. */
+  const int = core.simOutcomes(grid, core.SIM_MAX_GOALS, [2, 2.5]);
+  assert.ok(Math.abs(int.over[2] - int.over[2.5]) < 1e-12,
+    'a 2-goal game is being paid out as "over 2"');
+});
+
+t('a fixture offers one side of the match odds, never both', () => {
+  const model = {
+    constants: { BASE_H: 1.5, BASE_A: 1.2, DC_RHO: -0.08 },
+    teams: {
+      BIG: { attack: 1.4, defence: 0.8 },
+      SMALL: { attack: 0.8, defence: 1.3 },
+    },
+  };
+  const sim = core.simFixture('BIG', 'SMALL', model);
+  const legs = core.simLegOptions(sim, 'BIG', 'SMALL');
+  const wins = legs.filter((l) => l.market === 'WIN');
+  assert.equal(wins.length, 1, 'home-win and away-win cannot both land');
+  assert.equal(wins[0].prob, Math.max(sim.home, sim.away), 'the weaker side was offered');
+  assert.ok(wins[0].label.includes('BIG'));
+  /* The underdog's win is not merely unlisted — it must be unreachable, or a
+     caller filtering on market alone can still find it. */
+  assert.ok(!legs.some((l) => Math.abs(l.prob - Math.min(sim.home, sim.away)) < 1e-12));
+  assert.ok(!legs.some((l) => l.market === 'DRAW'));
+  assert.ok(legs.some((l) => l.market === 'BTTS' && l.prob === sim.btts));
+  assert.ok(legs.some((l) => l.market === 'OG1.5' && l.prob === sim.over[1.5]));
+  for (let i = 1; i < legs.length; i++) assert.ok(legs[i - 1].prob >= legs[i].prob);
+  // the away side, when it is the stronger one
+  const flip = core.simLegOptions(core.simFixture('SMALL', 'BIG', model), 'SMALL', 'BIG');
+  assert.ok(flip.find((l) => l.market === 'WIN').label.includes('BIG'));
+  assert.deepStrictEqual(core.simLegOptions(null, 'A', 'B'), []);
+});
+
+t('an acca across markets never uses one fixture twice', () => {
+  /* F1 is the best option in BOTH buckets. Taking each bucket's top pick
+     independently puts it on the slip twice — one distribution priced as two
+     independent events, which is the mistake this function exists to stop. */
+  const got = core.accaAllocate([
+    { key: 'A', need: 1, options: [{ id: 'F1', prob: 0.9 }, { id: 'F2', prob: 0.5 }] },
+    { key: 'B', need: 1, options: [{ id: 'F1', prob: 0.8 }, { id: 'F2', prob: 0.7 }] },
+  ]);
+  assert.equal(got.picks.length, 2);
+  assert.equal(new Set(got.picks.map((o) => o.id)).size, 2);
+  /* And it resolves the clash the way that costs least overall: F1 goes to
+     bucket A (0.9 x 0.7 = 0.63), not to B (0.8 x 0.5 = 0.40). */
+  assert.equal(got.groups.find((g) => g.key === 'A').options[0].id, 'F1');
+  assert.equal(got.groups.find((g) => g.key === 'B').options[0].id, 'F2');
+  assert.ok(got.exact);
+});
+
+t('an acca that cannot be filled is null, never short', () => {
+  const short = core.accaAllocate([
+    { key: 'A', need: 2, options: [{ id: 'F1', prob: 0.9 }, { id: 'F2', prob: 0.8 }] },
+    { key: 'B', need: 1, options: [{ id: 'F1', prob: 0.7 }, { id: 'F2', prob: 0.6 }] },
+  ]);
+  assert.equal(short, null, 'three legs were asked for and two fixtures exist');
+  assert.equal(core.accaAllocate([]), null);
+  assert.equal(core.accaAllocate(null), null);
+  /* A bucket needing more than it can price is unfillable even if the board
+     is large — the shortage is in the market, not the round. */
+  assert.equal(core.accaAllocate([
+    { key: 'A', need: 3, options: [{ id: 'F1', prob: 0.9 }, { id: 'F2', prob: 0.8 }] },
+  ]), null);
+  /* Legs at 0 and 1 are dropped before the count, so a bucket padded with
+     certainties is still short rather than quietly filled with them. */
+  assert.equal(core.accaAllocate([
+    { key: 'A', need: 2, options: [{ id: 'F1', prob: 0.9 }, { id: 'F2', prob: 1 }] },
+  ]), null);
+});
+
+t('greedy stranding itself is not the same as unfillable', () => {
+  /* Both buckets can price F1 and F2; only A can price F3. Greedy hands F1
+     and F2 to A and leaves B empty — but swapping fills both, so the answer
+     exists and must be found. An early version returned null here. */
+  const got = core.accaAllocate([
+    { key: 'A', need: 2, options: [{ id: 'F1', prob: 0.9 }, { id: 'F2', prob: 0.8 }, { id: 'F3', prob: 0.5 }] },
+    { key: 'B', need: 1, options: [{ id: 'F1', prob: 0.7 }, { id: 'F2', prob: 0.6 }] },
+  ]);
+  assert.ok(got, 'a solvable board was reported unfillable');
+  assert.equal(new Set(got.picks.map((o) => o.id)).size, 3);
+  /* The options come back untouched, so a caller's own fields survive. */
+  const tagged = core.accaAllocate([
+    { key: 'A', need: 1, options: [{ id: 'F1', prob: 0.9, fx: 'ARS v COV', ko: '2026-08-21' }] },
+  ]);
+  assert.equal(tagged.picks[0].fx, 'ARS v COV');
+  assert.equal(tagged.picks[0].ko, '2026-08-21');
+});
+
 
 /* ---- one official, two feeds ------------------------------------------- */
 /*

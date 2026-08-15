@@ -256,6 +256,14 @@
      overround as a fraction (0.06 = 6%). Explicitly an assumption: it is a
      band on the chart, never a number quoted at a player. */
   const TYPICAL_CARD_MARGIN = 0.06;
+  /* The same assumption for the GOALS markets, which are cut finer than the
+     card markets: match odds, both-teams-to-score and the goal over-lines are
+     the most competitive books on a football match, card markets among the
+     least. A separate constant rather than one number reused, because pricing
+     a 1X2 leg at the card margin would overstate the drag and quietly flatter
+     nothing — it is simply a different market. Assumption, not a quote: it is
+     stated wherever a priced number derived from it is printed. */
+  const TYPICAL_GOAL_MARGIN = 0.05;
   function marketProbDeVig(bookOdds, margin) {
     const raw = marketProb(bookOdds);
     if (raw == null) return null;
@@ -586,25 +594,48 @@
     return grid;
   }
 
+  /* The goal lines folded out of the grid alongside the result. Not a
+     parameter with a default scattered at each call site, because two callers
+     with two default lists is how the desk ends up publishing two different
+     "over 2.5" numbers for one fixture. */
+  const SIM_GOAL_LINES = [0.5, 1.5, 2.5, 3.5];
+
   /* Fold a grid into the numbers the desk uses. `close` is P(margin <= 1)
      — a draw or a one-goal win either way. That is the fitted "tight
      match" signal: cards follow games that stay live, which is not the
-     same set as the historic rivalries in the derby list. */
-  function simOutcomes(grid, maxGoals) {
+     same set as the historic rivalries in the derby list.
+   *
+   * BTTS AND THE OVER-LINES COME OUT OF THE SAME WALK, deliberately. They are
+   * sums over the identical grid the result probabilities are read from, so
+   * computing them anywhere else would be a second implementation of one
+   * distribution — and the two would drift the first time the goal cap or the
+   * Dixon-Coles correction moved. The extra cost is four comparisons a cell.
+   *
+   * `over` is keyed by line and strictly OVER: a 2-2 draw does not settle
+   * over 3.5. The half-lines mean no scoreline sits on the line, but the
+   * comparison is written `>` rather than `>=` so an integer line passed by a
+   * caller settles the way a book would settle it. */
+  function simOutcomes(grid, maxGoals, lines) {
     if (!Array.isArray(grid) || !grid.length) return null;
     const n = (maxGoals == null || !(maxGoals >= 1)) ? SIM_MAX_GOALS : Math.floor(maxGoals);
     const G = n + 1;
     if (grid.length !== G * G) return null;
-    let home = 0, draw = 0, away = 0, close = 0, expH = 0, expA = 0;
+    const ls = (Array.isArray(lines) && lines.length) ? lines : SIM_GOAL_LINES;
+    let home = 0, draw = 0, away = 0, close = 0, expH = 0, expA = 0, btts = 0;
+    const over = {};
+    for (const l of ls) over[l] = 0;
     for (let h = 0; h < G; h++) {
       for (let a = 0; a < G; a++) {
         const p = grid[h * G + a];
         if (h > a) home += p; else if (h === a) draw += p; else away += p;
         if (Math.abs(h - a) <= 1) close += p;
         expH += h * p; expA += a * p;
+        if (h >= 1 && a >= 1) btts += p;
+        const tot = h + a;
+        for (const l of ls) if (tot > l) over[l] += p;
       }
     }
-    return { home, draw, away, close, expH, expA };
+    return { home, draw, away, close, expH, expA, btts, over };
   }
 
   /* A side's expected RESULT SHARE: P(win) + P(draw)/2.
@@ -642,12 +673,13 @@
     const rho = (model.constants || {}).DC_RHO;
     const grid = simScoreGrid(lam.lh, lam.la, rho, n);
     if (grid == null) return null;
-    const o = simOutcomes(grid, n);
+    const o = simOutcomes(grid, n, opts && opts.goalLines);
     if (o == null) return null;
     return {
       lh: lam.lh, la: lam.la,
       home: o.home, draw: o.draw, away: o.away,
       close: o.close, expH: o.expH, expA: o.expA,
+      btts: o.btts, over: o.over,
     };
   }
 
@@ -1159,6 +1191,185 @@
     return out.sort((a, b) => b.prob - a.prob);
   }
 
+  /* The same shape as matchLegOptions, over the GOALS markets the match model
+     prices. Fed a simFixture() result, so the numbers are the fitted grid's
+     own and not a second opinion about the same fixture.
+   *
+   * ONE SIDE OF THE MATCH ODDS, never both. Home-win and away-win are
+   * mutually exclusive readings of one distribution — the most extreme
+   * correlation on the board, and an acca that took both would be pricing a
+   * guaranteed loser as a product of two live chances. The stronger side is
+   * offered and the other is not on the list at all, so no caller can reach
+   * it by accident. The draw is left out for the same reason.
+   *
+   * Note what this does NOT include: the two sides' individual over-lines and
+   * correct score. They are on the same grid and would break the one-leg-per-
+   * match rule from the inside if a caller took two of them. */
+  function simLegOptions(sim, home, away) {
+    if (!sim) return [];
+    const out = [];
+    const push = (market, label, prob) => {
+      const p = Number(prob);
+      if (isFinite(p) && p > 0 && p < 1) out.push({ market, label, prob: p });
+    };
+    const hp = Number(sim.home), ap = Number(sim.away);
+    if (isFinite(hp) && isFinite(ap)) {
+      const homeBest = hp >= ap;
+      push('WIN', (homeBest ? (home || 'Home') : (away || 'Away')) + ' to win',
+        homeBest ? hp : ap);
+    }
+    push('BTTS', 'Both teams to score', sim.btts);
+    Object.keys(sim.over || {}).forEach((line) => {
+      push('OG' + line, 'Over ' + line + ' goals', sim.over[line]);
+    });
+    return out.sort((a, b) => b.prob - a.prob);
+  }
+
+  /* ---- building a multi-market acca with no fixture used twice -----------
+   *
+   * The one-leg-per-match rule above says a board contributes at most one
+   * leg. That is easy to honour for a single-market acca — take the top N
+   * boards — and easy to get wrong the moment an acca spans markets, because
+   * the fixture that tops the over-lines is very often the fixture that tops
+   * both-teams-carded. Picking each market's best three independently is the
+   * natural thing to write and it silently double-counts a fixture.
+   *
+   * So the allocation is the whole job here: fill every bucket's quota from
+   * the boards available, using no fixture more than once, at the highest
+   * joint probability the board allows.
+   *
+   * WHY NOT JUST TAKE EACH BUCKET'S BEST IN TURN. Filling buckets in order
+   * spends the strongest fixtures on whichever market happens to be listed
+   * first: a fixture can be the best available in two buckets at once, and
+   * which bucket gets it should be decided by what the OTHER bucket loses,
+   * not by the order the markets were written down in.
+   *
+   * BE HONEST ABOUT THE SIZE OF THAT. Measured on the 2026-27 opening round,
+   * optimal allocation beat bucket-order by 0.59% of the joint probability —
+   * real, and nearly a rounding difference. The optimisation is not why this
+   * function exists. It exists because filling buckets independently REPEATS
+   * A FIXTURE, and that is a correctness bug rather than a small loss; having
+   * to solve the conflict anyway, solving it well costs little.
+   *
+   * SO IT IS SOLVED, NOT APPROXIMATED. Greedy runs first — it is a good
+   * answer and it seeds the bound — then a branch-and-bound over the
+   * remaining assignments improves it to the optimum. The search is bounded
+   * by `maxNodes`; a board big enough to hit that cap keeps the greedy
+   * answer and reports `exact: false`, so a slow page is never the failure
+   * mode and a wrong claim about optimality never ships.
+   *
+   * Scored in LOG probability, not probability: the product of nine legs
+   * around 0.6 is ~1e-2, and the comparisons that drive the pruning are
+   * better behaved as a sum than as a float that small.
+   *
+   * `buckets` is [{ key, need, options: [{ id, prob, ... }] }] where `id`
+   * identifies the FIXTURE — that is what must not repeat. Options may be
+   * any shape beyond those two fields; they come back untouched.
+   */
+  function accaAllocate(buckets, opts) {
+    const bs = (Array.isArray(buckets) ? buckets : []).map((b) => ({
+      key: b && b.key,
+      need: Math.max(0, Math.floor(Number(b && b.need) || 0)),
+      options: (b && Array.isArray(b.options) ? b.options : [])
+        .filter((o) => o && o.id != null
+          && isFinite(Number(o.prob)) && Number(o.prob) > 0 && Number(o.prob) < 1)
+        /* Sorted descending so the optimistic bound below is sound: the first
+           `need` entries are the most any bucket could contribute. */
+        .sort((x, y) => Number(y.prob) - Number(x.prob)),
+    })).filter((b) => b.need > 0);
+    if (!bs.length) return null;
+    /* A bucket with fewer options than its quota cannot be filled, and a
+       partly-filled acca is not the acca that was asked for. Null, not a
+       short one — a five-leg answer to a nine-fold question is the kind of
+       silent substitution the caller cannot see. */
+    if (bs.some((b) => b.options.length < b.need)) return null;
+
+    const lg = (o) => Math.log(Number(o.prob));
+
+    /* GREEDY: repeatedly take the single best (bucket, fixture) still going.
+       Note this cannot be improved by swapping a chosen option for an unused
+       fixture within the same bucket — when that slot was filled, every
+       still-unused fixture was already available and lost the comparison. So
+       the only move that can improve it is a swap BETWEEN buckets, which is
+       exactly what the search below explores. */
+    const gPick = bs.map(() => []);
+    const gUsed = new Set();
+    for (;;) {
+      let bi = -1, bo = null;
+      for (let i = 0; i < bs.length; i++) {
+        if (gPick[i].length >= bs[i].need) continue;
+        for (const o of bs[i].options) {
+          if (gUsed.has(o.id)) continue;
+          if (!bo || Number(o.prob) > Number(bo.prob)) { bi = i; bo = o; }
+          break;   // options are sorted, so the first free one is this bucket's best
+        }
+      }
+      if (bi < 0) break;
+      gPick[bi].push(bo); gUsed.add(bo.id);
+    }
+
+    /* GREEDY CAN STRAND ITSELF, and an incomplete greedy is not evidence the
+       board is unfillable. Two buckets can both be able to price the same
+       three fixtures while only one of them can price a fourth; greedy hands
+       the shared fixture to whichever bucket wanted it most and leaves the
+       narrow bucket a slot short, even though swapping would have filled
+       both. So a short greedy seeds nothing and the search below decides
+       feasibility — it is exhaustive, so a null from here means no assignment
+       exists, not that the first heuristic gave up. */
+    const gFull = gPick.every((p, i) => p.length === bs[i].need);
+    let best = gFull ? gPick.map((a) => a.slice()) : null;
+    let bestScore = gFull
+      ? best.reduce((s, a) => s + a.reduce((t, o) => t + lg(o), 0), 0)
+      : -Infinity;
+
+    /* The most each bucket could score in isolation, and the suffix sums of
+       that — an upper bound on everything still to be assigned. */
+    const head = bs.map((b) => {
+      let s = 0;
+      for (let i = 0; i < b.need; i++) s += lg(b.options[i]);
+      return s;
+    });
+    const tail = new Array(bs.length + 1).fill(0);
+    for (let i = bs.length - 1; i >= 0; i--) tail[i] = tail[i + 1] + head[i];
+
+    const cap = (opts && opts.maxNodes) || 400000;
+    let nodes = 0, capped = false;
+    const used = new Set();
+    const pick = bs.map(() => []);
+
+    function bucket(bi, score) {
+      if (capped) return;
+      if (bi === bs.length) {
+        if (score > bestScore) { bestScore = score; best = pick.map((a) => a.slice()); }
+        return;
+      }
+      if (score + tail[bi] <= bestScore) return;    // cannot catch up, whatever it picks
+      combo(bi, 0, score);
+    }
+    /* Options are chosen in increasing index order within a bucket, so the
+       three ways to write one set of three do not get searched three times. */
+    function combo(bi, from, score) {
+      if (capped) return;
+      const b = bs[bi];
+      if (pick[bi].length === b.need) { bucket(bi + 1, score); return; }
+      if (++nodes > cap) { capped = true; return; }
+      const last = b.options.length - (b.need - pick[bi].length);
+      for (let i = from; i <= last; i++) {
+        const o = b.options[i];
+        if (used.has(o.id)) continue;
+        used.add(o.id); pick[bi].push(o);
+        combo(bi, i + 1, score + lg(o));
+        pick[bi].pop(); used.delete(o.id);
+        if (capped) return;
+      }
+    }
+    bucket(0, 0);
+    if (!best) return null;      // no assignment fills every quota without repeating
+
+    const groups = bs.map((b, i) => ({ key: b.key, options: best[i].slice() }));
+    return { exact: !capped, groups, picks: groups.reduce((a, g) => a.concat(g.options), []) };
+  }
+
   /* Price a set of legs. `margin` defaults to the card-market margin the app
      already models; the priced odds are what a book would actually offer, and
      the drag is how much of the fair price the margin takes once it has
@@ -1185,20 +1396,21 @@
   const PLDCore = {
     riskScore, normName, matchRefName, pickPL, summarisePicks, calibrate, impliedProb, fairOdds, edgePct, LOGISTIC_SLOPE,
     per90, liveRate, joinLooksRight, MIN_LIVE_MINUTES,
-    marketProb, marketProbDeVig, valuePoint, TYPICAL_CARD_MARGIN,
+    marketProb, marketProbDeVig, valuePoint, TYPICAL_CARD_MARGIN, TYPICAL_GOAL_MARGIN,
     cardCountDist, probOverCards, expectedCards, probBothCarded, probBothAtLeast, teamCardMarkets,
     bookingPointsDist, expectedPoints, probOverPoints, leagueRedRate,
     bookingPointsMarkets, YELLOW_POINTS, RED_POINTS,
     minuteWeights, matchLambdas,
     venueFactor, chaseFactor, cardLambda, pCardFromLambda, pCardSeason,
     HOME_FACTOR, AWAY_FACTOR,
-    simLambdas, simPoissonPmf, simScoreGrid, simOutcomes, simFixture, simResultShare, SIM_MAX_GOALS,
+    simLambdas, simPoissonPmf, simScoreGrid, simOutcomes, simFixture, simResultShare,
+    SIM_MAX_GOALS, SIM_GOAL_LINES,
     shrinkRate, logit, invLogit, scaleOdds, contextProb,
     pCardsAtLeast, suspensionCycle, nextSuspension,
     brier, logLoss, reliability, glmProb,
     gammaln, expectedFouls, nbTailProb, cardProbFromFouls, recencyWeight, refCardFactor,
     leagueRate90, twoStageHazard, sumNegBin,
-    matchLegOptions, accaPrice,
+    matchLegOptions, simLegOptions, accaAllocate, accaPrice,
   };
 
   if (typeof module !== 'undefined' && module.exports) module.exports = PLDCore;
