@@ -513,6 +513,78 @@ group('the card nine-fold: built across three divisions, from real data');
   ok('the cross-league nine-fold prices as nine legs at the card margin');
 }
 
+/* ---- 4c. the accas have their own route, and say when they are for ----- */
+group('the accas as a destination: routed, and dated');
+
+{
+  /* A TAB THAT ROUTES NOWHERE. The panel, the nav entry and the route metadata
+     are three separate declarations and a desk has shipped with two of the
+     three before — the Championship and La Liga desks were live, guarded and
+     unreachable. All three or none. */
+  assert.ok(/<section id="panel-accas"/.test(page), 'the accas panel is gone');
+  assert.ok(/\{id:"accas",label:"Accas",icon:"accas",panels:\[\{id:"panel-accas"/.test(page),
+    'the accas panel has no nav entry, so the only way to it is a hand-typed hash');
+  assert.ok(/"panel-accas":\{t:/.test(page),
+    'the accas route has no title or description — seven routes share one document ' +
+    'and the title is the only signal to a screen reader that the view changed');
+  assert.ok(/accas:'<svg/.test(page), 'the accas area has no icon of its own');
+  /* And it must not still be sitting in the gameweek panel as well. */
+  const gwStart = page.indexOf('<section id="panel-gameweek"');
+  const gwEnd = page.indexOf('<section id="panel-accas"');
+  assert.ok(gwStart > -1 && gwEnd > gwStart);
+  assert.ok(!/id="accaRound"/.test(page.slice(gwStart, gwEnd)),
+    'the nine-fold is in the gameweek panel AND on its own tab — two copies of ' +
+    'one card is two places for it to disagree with itself');
+  ok('the accas panel exists, is in the nav, and carries its own route metadata');
+}
+
+{
+  /* WHEN THE ACCA IS FOR. A round runs Friday to Monday and a window seven
+     days, so a slip with no dates on it cannot be checked against a fixture
+     list or told apart from last week's. Both the range and the per-leg
+     kick-off are read off the PICKED legs, never off the round or the window,
+     so neither can name a day the slip does not play on. */
+  const body = fn('roundAccaHtml');
+  assert.ok(/koRange\(a\.picks\)/.test(body),
+    'the round acca no longer dates itself from its own legs');
+  assert.ok(/acca-when/.test(body), 'the date range is not rendered');
+  assert.ok(/o\.ko\?'<span class="acca-ko">'\+esc\(koShort\(o\.ko\)\)/.test(body),
+    'the legs no longer carry their kick-off — on a four-day round the range ' +
+    'alone cannot say which leg is tonight');
+  const kr = fn('koRange');
+  assert.ok(/picks\|\|\[\]\)\.map\(o=>o\.ko\)/.test(kr),
+    'koRange no longer reads the kick-offs off the picks it was given');
+  /* And the share card must carry them too — it outlives the page it came
+     from, so "Gameweek 1" alone leaves a reader unable to tell which round. */
+  const sh = page.slice(page.indexOf('function shareRoundAcca('));
+  assert.ok(/koRange\(a\.picks\)[\s\S]{0,600}rng&&rng\.text/.test(sh),
+    'the share card subtitle no longer carries the dates the acca is for');
+  ok('the round acca dates itself, per leg and as a range, on the page and the card');
+}
+
+{
+  const t = readFileSync(join(root, 'today.html'), 'utf8');
+  assert.ok(/value="accas"/.test(t),
+    'today.html has no accas view — the two accas are back under the fixture list');
+  assert.ok(/h === 'accas'/.test(t), '#accas does not deep-link to the accas view');
+  /* The empty state must be OUTSIDE the card it explains. Nested inside, it is
+     hidden exactly when it is needed — its text was still readable to a script,
+     so only clicking the button it offers revealed that nothing could reach it. */
+  const nineEmptyAt = t.indexOf('id="nineEmpty"');
+  const nineCardEnd = t.indexOf('</section>', t.indexOf('id="nineCard"'));
+  assert.ok(nineEmptyAt > nineCardEnd,
+    'the nine-fold empty state is inside the card it explains, so it is hidden ' +
+    'on exactly the renders that need it');
+  /* The open paren matters: /function explainNine/ also matches
+     `function explainNineX`, so renaming the function away escaped this. */
+  assert.ok(/function explainNine\(/.test(t) && /function nextNineDay\(/.test(t),
+    'an unfillable window no longer says why, or where the nearest one that works is');
+  assert.ok(/explainNine\(from\);/.test(t),
+    'explainNine is defined but never called on the paths that hide the card');
+  assert.ok(/acca-ko/.test(t), 'today.html legs carry no kick-off');
+  ok('today.html has an accas view, a reachable empty state, and dated legs');
+}
+
 /* ---- 5. the cross-league card nine-fold on today.html ------------------ */
 group('today.html: the week\'s card nine-fold, across every division');
 
@@ -534,7 +606,10 @@ const tfn = (name) => {
     'a six-fold under a "nine-fold" heading is the page lying about what it shows');
   /* And the held acca must be dropped on the same path, or the share button
      goes on offering last week's nine legs behind a hidden card. */
-  assert.ok(/if \(!got\) \{ card\.hidden = true; NINE_BUILT = null; return; \}/.test(body),
+  /* Matched loosely enough to survive the explainer being added to the same
+     path, tightly enough that removing the clearing fails: hide and clear must
+     both happen before the return, in that statement. */
+  assert.ok(/if \(!got\) \{ card\.hidden = true; NINE_BUILT = null;[^}]*return; \}/.test(body),
     'the hidden card leaves NINE_BUILT behind — the share button would draw a ' +
     'nine-fold the page is no longer showing');
   ok('nine or nothing: an unfillable week hides the card and drops the held acca');

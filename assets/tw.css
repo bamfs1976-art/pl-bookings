@@ -513,6 +513,13 @@ html[data-density="expert"] .combined-note{display:none}
   letter-spacing:.05em;text-transform:uppercase}
 .acca-grp .acca-leg{margin-top:6px}
 .acca-grp .acca-leg:first-of-type{margin-top:0}
+/* WHEN the leg plays. On the row rather than only in the header, because a
+   nine-fold spans a whole round — this one runs Friday to Monday — and "which
+   of these is tonight" is not answerable from a date range alone. Tabular
+   figures so the column does not jitter between rows. */
+.acca-ko{font-family:var(--mono);font-size:11.5px;color:var(--text-3);
+  font-variant-numeric:tabular-nums;white-space:nowrap}
+.acca-when{color:var(--text-2);font-weight:800}
 /* Share buttons wear .mkt for their look and .fx-share so a page that could
    not load share.js can hide them all at once. Shared, because three pages
    drew this button and two of them had defined the hiding rule themselves. */

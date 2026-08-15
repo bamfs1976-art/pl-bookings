@@ -129,9 +129,10 @@
     <h1>Every league, one day</h1>
     <p class="muted" style="margin:8px 0 0;max-width:70ch">
       Matches from every desk that plays on the same date, ranked by booking heat, with one
-      combined share card across the lot. Below the list, <b>the day's acca</b> takes the
-      likeliest market in each match — one leg a match, so unlike a same-match combo the legs
-      are close to genuinely independent — and prices it with the bookmaker's margin left in.
+      combined share card across the lot. <b>Accas</b> is the third view: the day's acca —
+      the likeliest market in each match, one leg a match, so unlike a same-match combo the
+      legs are close to genuinely independent — and the week's nine-fold across all three
+      divisions. Both price with the bookmaker's margin left in.
       Take one date at a time, or switch to
       <b>Every date</b> for the whole season consolidated into a single calendar — each date
       still ranked by heat and still exporting its own card.
@@ -144,6 +145,11 @@
       <div class="seg" role="group" aria-label="View">
         <label><input type="radio" name="mode" value="one" checked><span>One date</span></label>
         <label><input type="radio" name="mode" value="all"><span>Every date</span></label>
+        <!-- A THIRD VIEW, not a card under the fixture list. The two accas
+             answer a different question from "what is on today" and were
+             below every match on the date; on a phone that is several screens
+             past the thing the page opens with. -->
+        <label><input type="radio" name="mode" value="accas"><span>Accas</span></label>
       </div>
       <select id="day" aria-label="Date"></select>
       <button class="btn primary" id="shareBtn" type="button">⬇ Share the day</button>
@@ -197,6 +203,15 @@
     <div class="acca-sum" id="nineSum"></div>
     <p class="note" id="nineNote"></p>
   </section>
+  <!-- WHY IT IS NOT HERE, and where it is. On its own tab an absent card reads
+       as a page that failed to load; the reason is specific and actionable, so
+       it is said rather than left to be inferred.
+
+       OUTSIDE #nineCard, which is the whole point: the explainer appears when
+       that section is hidden, and nested inside it, it was hidden too. Its
+       text was still readable to a script, so only clicking the button it
+       offers showed that nothing could reach it. -->
+  <section class="card empty" id="nineEmpty" style="margin-top:14px" hidden></section>
 
   <section class="card" id="trackCard" style="margin-top:14px" hidden>
   <div class="controls" style="margin-bottom:8px">
@@ -781,6 +796,10 @@
       + PLDProfile.crest(ch) + PLDProfile.crest(ca)
       + '<span class="acca-fx">' + esc(p.fx.h) + ' v ' + esc(p.fx.a) + '</span>'
       + '<span class="acca-mkt">' + esc(r.leg.label) + '</span>'
+      /* The TIME only: the heading above already names the date and every leg
+         here is on it, but a Saturday carries kick-offs from 11:30 to 19:00
+         and "has this one started" is a fair thing to ask of a slip. */
+      + (p.fx.d ? '<span class="acca-ko">' + esc(fmtTime(p.fx.d)) + '</span>' : '')
       + '<span class="spacer"></span>'
       + '<span class="acca-p">' + pct(r.leg.prob) + '</span>'
       + '<span class="acca-odds" title="Fair odds, before any bookmaker margin">'
@@ -955,10 +974,24 @@
       + PLDProfile.crest(ch) + PLDProfile.crest(ca)
       + '<span class="acca-fx">' + esc(o.fx) + '</span>'
       + '<span class="acca-mkt">' + esc(o.label) + '</span>'
+      /* WHEN IT PLAYS, on the row. The window is seven days wide and the
+         header can only give its ends — "which of these is tonight" is not
+         answerable from a range. */
+      + (o.ko ? '<span class="acca-ko">' + esc(koShort(o.ko)) + '</span>' : '')
       + '<span class="spacer"></span>'
       + '<span class="acca-p">' + pct(o.prob) + '</span>'
       + '<span class="acca-odds" title="Fair odds, before any bookmaker margin">'
       + (1 / o.prob).toFixed(2) + '</span></div>';
+  }
+
+  /* One leg's kick-off: weekday, date and time. The nine-fold spans a week and
+     the day acca a single date, so the weekday alone would be ambiguous on the
+     first and redundant on the second — the date settles both. */
+  function koShort(iso) {
+    var d = new Date(iso);
+    if (isNaN(d)) return '';
+    return d.toLocaleDateString(undefined, { weekday: 'short', day: 'numeric', month: 'short' })
+      + ' ' + d.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' });
   }
 
   /* The nine-fold currently on screen, held for the share button. The card
@@ -967,8 +1000,39 @@
      looking at the image could tell. */
   var NINE_BUILT = null;
 
+  /* Can a window starting here fill the acca AT ALL? A cheap count, not a
+     build: the binding constraint is always the three win legs, which need
+     three Premier League fixtures because nothing else is rated for a result.
+     Nine matches in total is the other floor. Counting beats building because
+     the search below runs it over every remaining date and a build prices a
+     board per fixture. */
+  function windowCounts(from) {
+    var end = new Date(from + 'T00:00:00Z');
+    end.setUTCDate(end.getUTCDate() + WEEK_DAYS);
+    var to = end.toISOString().slice(0, 10);
+    var pl = 0, total = 0;
+    ALL.forEach(function (p) {
+      var k = dayKey(p.fx.d);
+      if (k < from || k >= to || p.m.thin) return;
+      total++;
+      if (p.L.pl) pl++;
+    });
+    return { pl: pl, total: total, ok: pl >= 3 && total >= 9 };
+  }
+  /* The nearest later date whose window could carry it. Offered rather than
+     jumped to: the reader chose this date and silently moving them somewhere
+     else is a worse answer than saying why and letting them decide. */
+  function nextNineDay(from) {
+    for (var i = 0; i < DAYKEYS.length; i++) {
+      if (DAYKEYS[i] <= from) continue;
+      if (windowCounts(DAYKEYS[i]).ok) return DAYKEYS[i];
+    }
+    return null;
+  }
+
   function renderNine() {
-    var card = $('#nineCard');
+    var card = $('#nineCard'), blank = $('#nineEmpty');
+    if (blank) blank.hidden = true;
     if (mode() === 'all') { card.hidden = true; NINE_BUILT = null; return; }
     var from = $('#day').value;
     var pool = weekPool(from);
@@ -978,9 +1042,9 @@
     /* NINE OR NOTHING. A six-fold under a "nine-fold" heading is the page
        lying about what it is showing, and out of season or in a thin week
        that is the common case rather than the rare one. */
-    if (!got) { card.hidden = true; NINE_BUILT = null; return; }
+    if (!got) { card.hidden = true; NINE_BUILT = null; explainNine(from); return; }
     var price = C.accaPrice(got.picks, C.TYPICAL_CARD_MARGIN);
-    if (!price) { card.hidden = true; NINE_BUILT = null; return; }
+    if (!price) { card.hidden = true; NINE_BUILT = null; explainNine(from); return; }
     card.hidden = false;
 
     var end = new Date(from + 'T00:00:00Z');
@@ -1026,6 +1090,33 @@
     $('#nineShare').hidden = !(S && typeof S.nineFoldSpec === 'function');
   }
 
+  /* Only shown in the accas view: in the single-date view the nine-fold is one
+     card among several and its absence is unremarkable, but on its own tab it
+     is most of the page. */
+  function explainNine(from) {
+    var blank = $('#nineEmpty');
+    if (!blank || mode() !== 'accas') return;
+    var c = windowCounts(from);
+    var end = new Date(from + 'T00:00:00Z');
+    end.setUTCDate(end.getUTCDate() + WEEK_DAYS - 1);
+    var why = c.pl < 3
+      ? 'The three win legs can only come from the Premier League — it is the one '
+        + 'division the match model rates, and the Championship and La Liga data '
+        + 'carries no goals at all. This window has ' + c.pl
+        + ' Premier League match' + (c.pl === 1 ? '' : 'es') + ', and it needs three.'
+      : 'This window has ' + c.total + ' priced match' + (c.total === 1 ? '' : 'es')
+        + ', and nine legs need nine different ones.';
+    var nxt = nextNineDay(from);
+    blank.hidden = false;
+    blank.innerHTML = '<h3 style="margin:0 0 .4rem;font-size:15px">No nine-fold for '
+      + esc(fmtDay(from)) + ' \u2013 ' + esc(fmtDay(end.toISOString().slice(0, 10))) + '</h3>'
+      + '<p style="margin:0;font-size:13px">' + esc(why) + '</p>'
+      + (nxt ? '<p style="margin:.5rem 0 0;font-size:13px">The next window that can carry it '
+          + 'starts <button type="button" class="linkish" data-nine-day="' + esc(nxt) + '">'
+          + esc(fmtDay(nxt)) + '</button>.</p>' : '')
+      + '<p style="margin:.5rem 0 0;font-size:13px">The day\'s acca above is unaffected.</p>';
+  }
+
   function shareNine(btn) {
     if (!NINE_BUILT || !S || typeof S.nineFoldSpec !== 'function') return;
     var end = new Date(NINE_BUILT.from + 'T00:00:00Z');
@@ -1058,18 +1149,31 @@
   }
 
   function render() {
-    var all = mode() === 'all';
+    var m = mode(), all = m === 'all', accas = m === 'accas';
+    /* The date picker stays in the accas view: both accas are anchored to it —
+       the day's acca IS that date and the nine-fold is the seven days from it —
+       so hiding it would leave the reader unable to move either. */
     $('#day').hidden = all;
     /* Hidden in the calendar because each date carries its own button — but
        `= all` alone would UN-hide it in single-date mode on a browser with no
        canvas, where boot had deliberately hidden it. */
-    $('#shareBtn').hidden = all || !S;
+    $('#shareBtn').hidden = all || accas || !S;
     $('#calBtn').hidden = !all || !S || !S.calendarCard;
     $('#multiOnly').hidden = !all;
     if (!all) { $('#reveal').hidden = true; $('#reveal').innerHTML = ''; }
+    /* The fixture LIST, not the card that holds it — the view switcher and the
+       date picker live in the same card and hiding all of it takes away the
+       control that got you here. The list is the other two views' whole
+       content and is noise under the accas, whose legs name their own
+       matches. */
+    $('#list').hidden = accas;
+    $('#empty').hidden = accas || $('#empty').hidden;
+    $('#cover').hidden = accas;
+    $('#count').hidden = accas;
     try {
-      location.hash = all ? 'all' : 'd=' + $('#day').value;
+      location.hash = accas ? 'accas' : all ? 'all' : 'd=' + $('#day').value;
     } catch (e) { /* hash is a convenience, never a requirement */ }
+    if (accas) { renderAcca(); renderNine(); return; }
     if (all) renderAll(); else renderOne();
     renderAcca();
     renderNine();
@@ -1424,6 +1528,13 @@
     $('#shareBtn').addEventListener('click', function () { shareDay($('#day').value); });
     $('#calBtn').addEventListener('click', shareCalendar);
     $('#nineShare').addEventListener('click', function () { shareNine(this); });
+    /* Delegated: the button is rebuilt by every render that fails to fill. */
+    $('#nineEmpty').addEventListener('click', function (ev) {
+      var b = ev.target.closest ? ev.target.closest('[data-nine-day]') : null;
+      if (!b) return;
+      $('#day').value = b.getAttribute('data-nine-day');
+      render();
+    });
     $('#multiChk').addEventListener('change', render);
     Array.prototype.forEach.call(document.querySelectorAll('input[name=mode]'),
       function (r) { r.addEventListener('change', render); });
@@ -1442,12 +1553,14 @@
       if (ev.target && ev.target.id === 'pastBtn') { showPast = !showPast; render(); }
     });
 
-    /* Deep links: #all opens the calendar, #d=YYYY-MM-DD opens a date. An
-       unknown date falls through to the default rather than rendering an empty
-       page for a link that has gone stale. */
+    /* Deep links: #all opens the calendar, #accas the two accas, and
+       #d=YYYY-MM-DD a date. An unknown date falls through to the default
+       rather than rendering an empty page for a link that has gone stale. */
     var h = String(location.hash || '').replace(/^#/, '');
     if (h === 'all') {
       document.querySelector('input[name=mode][value=all]').checked = true;
+    } else if (h === 'accas') {
+      document.querySelector('input[name=mode][value=accas]').checked = true;
     } else if (/^d=\d{4}-\d{2}-\d{2}$/.test(h) && DAYS[h.slice(2)]) {
       $('#day').value = h.slice(2);
     }

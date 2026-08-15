@@ -731,6 +731,7 @@
            fact; this card is kept for the links and the tour, which are the two
            things nothing else offers. -->
       <span><button type="button" class="linkish" data-open-tour>How to read this page</button> &middot;
+        <a href="#p=accas">Nine-fold</a> &middot;
         <a href="/today">Today&rsquo;s card</a> &middot; <a href="/today#all">Season calendar</a></span>
       <button class="gw-intro-x" type="button" data-hint-dismiss aria-label="Dismiss this hint">&times;</button>
     </p>
@@ -853,6 +854,39 @@
       </div>
     </div>
     <div id="gwFixtures"></div>
+    <!-- THE NINE-FOLD IS NOT HERE ANY MORE — it has its own area. The signpost
+         is in the link row at the TOP of this panel rather than a paragraph
+         here: prose under the fixture list is 0.78rem print below ten cards,
+         which check-firstrun measures for exactly this reason, and it caught
+         the paragraph that first stood here. -->
+    <!-- The 108-word version of this paragraph stood here. Every clause in it
+         is now carried by something the reader can actually reach at the
+         moment they need it: the bands and the confidence dot by the Legend
+         key above, each metric by its own dotted label and popover, the
+         referee by the picker on the card, and the method by the Guide. What
+         is left is the one instruction the page cannot demonstrate. -->
+    <p class="faint" style="font-size:.78rem;margin-top:.8rem">Fixtures run <strong>hottest to coolest</strong>. Referee appointments aren&rsquo;t in the live feed — assign the official on each card once PGMOL publishes them and every number rescales to his whistle. Full method in the <a href="#p=guide">Guide</a>.</p>
+  </section>
+
+  <!-- ACCAS — the round's nine-fold, on its own route.
+       One card, so no area tabs; the panel exists because the thing it holds
+       is a destination rather than a footnote to the fixture list. The card
+       hides itself when nine distinct matches cannot be filled, which is why
+       the panel also carries an empty state — an area that can render to
+       nothing is an area that looks broken. -->
+  <section id="panel-accas" class="page">
+    <div class="page-head">
+      <h1>The round&rsquo;s nine-fold</h1>
+      <p>Nine legs, nine different matches, no club twice — priced from the match model.</p>
+    </div>
+    <p class="deskline">
+      <span class="rg-18" aria-hidden="true">18+</span>
+      <span><b>A research screen, not a tip.</b> Nine legs is a long shot by construction
+        and the margin compounds nine times. Modelled estimates — not predictions, not
+        prices, not betting advice. Over 18s only.
+        <a href="#p=guide">How the model works</a> &middot;
+        <a href="https://www.begambleaware.org/" target="_blank" rel="noopener noreferrer">BeGambleAware</a></span>
+    </p>
     <!-- THE ROUND'S GOALS NINE-FOLD, under the fixtures rather than above
          them. The fixture cards are what this page is for; this is a read
          across the whole round and only means anything once the round has
@@ -864,7 +898,7 @@
          instead of these ten fixtures. This one cannot move: the match model
          rates the twenty Premier League clubs and nothing else, so no other
          desk can price a win, a BTTS or a goal line at all. -->
-    <section class="card" id="accaRound" style="margin-top:14px" hidden>
+    <section class="card" id="accaRound" hidden>
       <div style="display:flex;flex-wrap:wrap;align-items:baseline;gap:8px 12px">
         <h2 style="font-size:16px;margin:0">The round&rsquo;s goals nine-fold</h2>
         <span class="faint" style="font-size:12.5px">One leg per match, nine different matches</span>
@@ -876,13 +910,15 @@
         over 2.5 cards, drawn from every Premier League, Championship and La Liga match in a
         seven-day window.</p>
     </section>
-    <!-- The 108-word version of this paragraph stood here. Every clause in it
-         is now carried by something the reader can actually reach at the
-         moment they need it: the bands and the confidence dot by the Legend
-         key above, each metric by its own dotted label and popover, the
-         referee by the picker on the card, and the method by the Guide. What
-         is left is the one instruction the page cannot demonstrate. -->
-    <p class="faint" style="font-size:.78rem;margin-top:.8rem">Fixtures run <strong>hottest to coolest</strong>. Referee appointments aren&rsquo;t in the live feed — assign the official on each card once PGMOL publishes them and every number rescales to his whistle. Full method in the <a href="#p=guide">Guide</a>.</p>
+    <p class="fx-state" id="accaRoundEmpty" hidden>
+      <b>No nine-fold for this round yet.</b> It needs nine different matches the model
+      can price, which is every full Premier League round — this one is short of that,
+      or the fixture feed has not landed.
+    </p>
+    <p class="faint" style="font-size:.78rem;margin-top:.8rem">The card nine-fold —
+      three to win, three both teams carded, three over 2.5 cards, drawn from every
+      Premier League, Championship and La Liga match in a seven-day window — is on
+      <a href="/today#accas">today&rsquo;s card</a>.</p>
   </section>
 
   <!-- PLAYERS — one panel, two lenses.
@@ -2423,11 +2459,21 @@ const NICON={
   desk:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>',
   fixtures:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>',
   tracker:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8.5"/><circle cx="12" cy="12" r="3.5"/></svg>',
-  guide:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5a2 2 0 0 1 2-2h14v18H6a2 2 0 0 0-2 2z"/><path d="M4 19a2 2 0 0 1 2-2h14"/></svg>'
+  guide:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5a2 2 0 0 1 2-2h14v18H6a2 2 0 0 0-2 2z"/><path d="M4 19a2 2 0 0 1 2-2h14"/></svg>',
+  /* A betting slip: stacked rows on a page. Drawn rather than borrowed from
+     `tracker` (a target) or `fixtures` (a calendar) — the sidebar is read by
+     icon at a glance and two areas sharing one glyph is two areas nobody can
+     tell apart. */
+  accas:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 8h8M8 12h8M8 16h5"/></svg>'
 
 };
 const NAV=[
   {id:"gameweek",label:"Gameweek",icon:"gameweek",panels:[{id:"panel-gameweek",label:"This Gameweek"}]},
+  /* ITS OWN AREA, not a card at the foot of the gameweek. The nine-fold was
+     below ten fixture cards, which on a phone is about four screens of
+     scrolling past the thing the reader came for to reach a thing they had no
+     way of knowing was there. */
+  {id:"accas",label:"Accas",icon:"accas",panels:[{id:"panel-accas",label:"Nine-folds"}]},
   {id:"desk",label:"Desk",icon:"desk",panels:[
     // "All players" used to sit here as its own destination. It listed the
     // same players as the season table with an overlapping half of the
@@ -2458,6 +2504,8 @@ let currentPanel="panel-gameweek";
 const ROUTE_META={
   "panel-gameweek":{t:"This Gameweek — Premier League booking risk by fixture",
     d:"Every fixture in the current Premier League gameweek ranked by booking heat, with each match's highest-risk players and the appointed referee's card rate folded into the price."},
+  "panel-accas":{t:"Accas — the round's goals nine-fold",
+    d:"Nine legs across nine different Premier League matches — three to win, three both teams to score, three over 1.5 goals — priced from the fitted match model, with the joint chance and what the bookmaker's margin costs across nine legs."},
   "panel-players":{t:"Players — Premier League booking risk table",
     d:"Every Premier League squad player ranked by season booking risk: yellow cards and fouls per 90, sample confidence from minutes played, and the bookmaker prices you have checked."},
   "panel-clubs":{t:"Clubs — Premier League club discipline",
@@ -4063,10 +4111,35 @@ function buildRoundAcca(spec,pool){
   if(!price) return null;
   return {spec,groups:got.groups,picks:got.picks,price,margin,exact:got.exact};
 }
+/* WHEN THE ACCA IS FOR. A round is not a day — this one runs Friday to Monday
+   — so "gameweek 1" tells a reader nothing about when their money is settled.
+   Read off the LEGS that were actually picked rather than off the round, so
+   the range is the range of the nine matches on the slip and cannot describe
+   a fixture the allocator left out. */
+function koRange(picks){
+  const ts=(picks||[]).map(o=>o.ko).filter(Boolean).sort();
+  if(!ts.length) return null;
+  const d=iso=>new Date(iso);
+  const day=iso=>{ const x=d(iso); return isNaN(x)?null:x; };
+  const a=day(ts[0]), b=day(ts[ts.length-1]);
+  if(!a||!b) return null;
+  const fmt=x=>x.toLocaleDateString(undefined,{weekday:"short",day:"numeric",month:"short"});
+  return {from:a,to:b,sameDay:a.toDateString()===b.toDateString(),
+          text:a.toDateString()===b.toDateString()?fmt(a):fmt(a)+" \u2013 "+fmt(b)};
+}
+/* One leg's kick-off, short. Day and time, because on a four-day round both
+   halves matter and the year is already in the range above. */
+function koShort(iso){
+  const d=new Date(iso);
+  if(isNaN(d)) return "";
+  return d.toLocaleDateString(undefined,{weekday:"short"})+" "
+    +d.toLocaleTimeString(undefined,{hour:"2-digit",minute:"2-digit"});
+}
 function roundAccaHtml(a){
   const pc=v=>(v*100).toFixed(0)+"%";
   const od=v=>v>=100?Math.round(v).toLocaleString("en-GB"):v.toFixed(2);
   const byKey=new Map(a.groups.map(g=>[g.key,g.options]));
+  const rng=koRange(a.picks);
   let n=0;
   const rows=a.spec.buckets.map(b=>{
     const legs=(byKey.get(b.key)||[]).map(o=>
@@ -4078,6 +4151,7 @@ function roundAccaHtml(a){
          heading is a word count, not information; "Arsenal to win" under
          "To win" is the whole leg. */
       +(o.label===b.label?"":'<span class="acca-mkt">'+esc(o.label)+'</span>')
+      +(o.ko?'<span class="acca-ko">'+esc(koShort(o.ko))+'</span>':"")
       +'<span class="spacer"></span>'
       +'<span class="acca-p">'+pc(o.prob)+'</span>'
       +'<span class="acca-odds" title="Fair odds, before any bookmaker margin">'
@@ -4089,8 +4163,10 @@ function roundAccaHtml(a){
     +(SHARE_OK?'<button class="mkt fx-share" type="button" data-share-acca="'+esc(a.spec.id)+'">'
       +'\u2b07 Share</button>':'')
     +'</div>'
-    +'<p class="faint acca-sub">'+a.price.legs+' legs, '+a.price.legs+' different matches, '
-      +'no club twice. '+esc(a.spec.note)+'</p>'
+    +'<p class="faint acca-sub">'
+      +(rng?'<b class="acca-when">'+esc(rng.text)+'</b> \u00b7 ':'')
+      +a.price.legs+' legs, '+a.price.legs+' different matches, no club twice. '
+      +esc(a.spec.note)+'</p>'
     +rows
     +'<div class="acca-sum">'
     +'<div><span class="k">All nine land</span><span class="v">'+(a.price.prob*100).toFixed(1)+'%</span></div>'
@@ -4110,8 +4186,11 @@ function renderRoundAccas(fx){
      on a round with too few fixtures to fill nine distinct matches, the
      allocator returns null and the card stays hidden rather than showing a
      five-fold labelled as a nine-fold. */
-  if(built.length!==ROUND_ACCAS.length){ card.hidden=true; ROUND_BUILT={}; return; }
-  card.hidden=false;
+  const empty=$("accaRoundEmpty");
+  if(built.length!==ROUND_ACCAS.length){
+    card.hidden=true; if(empty) empty.hidden=false; ROUND_BUILT={}; return;
+  }
+  card.hidden=false; if(empty) empty.hidden=true;
   /* Held for the share button, which must draw the acca that is ON SCREEN
      rather than rebuild one — a card that re-derived its own legs could
      disagree with the page it was shared from, and nobody looking at the PNG
@@ -4135,10 +4214,17 @@ function shareRoundAcca(id,btn){
   const a=ROUND_BUILT[id]; if(!a||!SHARE_OK) return;
   const S=window.PLDShare;
   const ev=LIVE&&LIVE.bootstrap?(LIVE.bootstrap.events.find(e=>e.id===LIVE.currentGW)||null):null;
+  /* THE DATES GO ON THE CARD. A share card outlives the page it came from —
+     it gets posted, saved and looked at later — so "Gameweek 1" alone leaves
+     a reader no way to tell which round, or whether it has already settled.
+     The range is the picked legs' own, so it cannot name days the slip does
+     not play on. */
+  const rng=koRange(a.picks);
   const spec=S.nineFoldSpec({
     league:"PL",
     title:a.spec.title,
-    subtitle:[SEASON, ev&&ev.name?ev.name:("GW"+(LIVE?LIVE.currentGW:""))].filter(Boolean).join(" \u00b7 "),
+    subtitle:[ev&&ev.name?ev.name:("GW"+(LIVE?LIVE.currentGW:"")), rng&&rng.text, SEASON]
+      .filter(Boolean).join(" \u00b7 "),
     legs:a.picks.map(o=>({fx:o.fx, market:o.label, prob:o.prob, code:"PL"})),
     price:a.price,
     note:"Fair odds per leg; total margined "+Math.round(a.margin*100)+"%."
