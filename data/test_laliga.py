@@ -604,4 +604,47 @@ t("an abbreviation may cover an official who never appears in full",
   _an_abbreviation_may_cover_someone_who_never_appears_in_full)
 
 
+def _rfef_legal_names_map_to_the_registry():
+    """The designation sheet's spellings, which the suffix strip cannot reach.
+
+    Jornada 1's SATURDAY sheet needed no table: "Getafe CF" and "Sevilla FC"
+    are the suffix strip's whole job. The SUNDAY sheet needed one — a legal
+    name is not only a suffix. "RCD Espanyol de Barcelona" carries a prefix AND
+    a city; "Real Racing Club de Santander" is formal at both ends. Both were
+    refused as "club not recognised" and the sheet would not ingest.
+    """
+    for published, short in (
+        ("Real Racing Club de Santander", "RAC"),
+        ("RCD Espanyol de Barcelona", "ESP"),
+    ):
+        got = L.laliga_short(published)
+        assert got == short, f"{published!r} -> {got!r}, expected {short!r}"
+
+    # Every alias must be one the strip genuinely cannot reach. An entry the
+    # strip already handles could never be the reason anything matched, which
+    # is precisely why this table was deleted once and had to come back.
+    for published in L.LALIGA_RFEF_ALIASES:
+        without = dict(L.LALIGA_RFEF_ALIASES)
+        del without[published]
+        saved = L.LALIGA_RFEF_ALIASES
+        try:
+            L.LALIGA_RFEF_ALIASES = without
+            assert L.laliga_short(published) is None, (
+                f"{published!r} resolves without its alias — the entry is dead "
+                "weight and the table is drifting back to one that cannot fail")
+        finally:
+            L.LALIGA_RFEF_ALIASES = saved
+
+    # And the clubs whose names START with a legal word must be untouched: a
+    # general prefix strip would have to keep "Real" in four names and drop it
+    # from two, which is why there is a table instead.
+    for name, short in (("Real Madrid", "RMA"), ("Real Betis", "BET"),
+                        ("Real Sociedad", "RSO"), ("Deportivo La Coruña", "DEP")):
+        assert L.laliga_short(name) == short, f"{name} stopped resolving"
+
+
+t("RFEF legal club names map, and only where the strip cannot",
+  _rfef_legal_names_map_to_the_registry)
+
+
 print(f"\n{passed} tests passed")

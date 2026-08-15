@@ -374,4 +374,66 @@ def _a_club_the_sheet_spells_legally_still_maps():
 t("a club the sheet spells legally still maps to its short code",
   _a_club_the_sheet_spells_legally_still_maps)
 
+def _two_muniz_officials_on_one_sheet():
+    """Carlos Muñiz refereed ESP v LEV; Alejandro Muñiz was its AVAR.
+
+    The nearest miss this join has had on real data. One designation sheet, one
+    fixture, two officials sharing a surname — and only Alejandro is in the
+    card table. A surname-only join would have priced that match off HIS 4.83
+    yellows a game, well above the division's, and nothing on the page would
+    have looked wrong: a named referee and a plausible number.
+
+    The first initial is what refuses it, so that is what this pins.
+    """
+    names = ["Alejandro Muñiz Ruiz"]
+    assert A.resolve_ref_name("Carlos Muñiz", names) == (None, None), (
+        "Carlos Muñiz resolved to a colleague who shares his surname")
+    # The same rule must still resolve the man who IS on the table, or the
+    # refusal above is just a join that has stopped working.
+    got, how = A.resolve_ref_name("Alejandro Muñiz", names)
+    assert got == "Alejandro Muñiz Ruiz" and how, "the real Muñiz stopped resolving"
+    # A bare surname carries no initial and must never resolve.
+    assert A.resolve_ref_name("Muñiz", names) == (None, None)
+    # With both on the table, each finds its own and neither the other's.
+    both = ["Alejandro Muñiz Ruiz", "Carlos Muñiz Fernández"]
+    assert A.resolve_ref_name("Carlos Muñiz", both)[0] == "Carlos Muñiz Fernández"
+    assert A.resolve_ref_name("Alejandro Muñiz", both)[0] == "Alejandro Muñiz Ruiz"
+
+
+t("two Muñiz officials on one sheet are not merged",
+  _two_muniz_officials_on_one_sheet)
+
+
+def _the_sunday_sheet_parses_as_published():
+    """The real jornada-1 Sunday sheet, byte for byte off the PDF.
+
+    Two things here have bitten this parser: the referee and the FOURTH
+    official share a line, and there is no space after "Árbitro:". Both are in
+    the fixture below exactly as the sheet prints them.
+    """
+    text = (
+        "Competición: Campeonato Nacional de Liga de Primera División\n"
+        "16-08-2026 | Real Racing Club de Santander | Villarreal CF | 17:00\n"
+        "Árbitro:Miguel Sesma                        4º Árbitro:Fernando Román\n"
+        "A. Asistente 1: Ion Rodríguez               VAR: Luis Mario Milla\n"
+        "16-08-2026 | RCD Espanyol de Barcelona | Levante UD | 19:00\n"
+        "Árbitro:Carlos Muñiz                        4º Árbitro:Antonio Sánchez\n"
+        "A. Asistente 2: Álvaro Granel               AVAR: Alejandro Muñiz\n"
+    )
+    rows = I.parse_rfef(text)
+    assert len(rows) == 2, f"expected two fixtures, got {len(rows)}"
+    assert rows[0]["home"] == "Real Racing Club de Santander"
+    assert rows[0]["away"] == "Villarreal CF"
+    assert rows[0]["ref"] == "Miguel Sesma", (
+        f"read {rows[0]['ref']!r} — the fourth official is on the same line")
+    assert rows[1]["ref"] == "Carlos Muñiz", (
+        f"read {rows[1]['ref']!r} — the AVAR is the OTHER Muñiz")
+    # The fourth officials must not have been read as referees anywhere.
+    assert "Fernando Román" not in [r["ref"] for r in rows]
+    assert "Antonio Sánchez" not in [r["ref"] for r in rows]
+
+
+t("the published Sunday sheet parses, fourth officials and all",
+  _the_sunday_sheet_parses_as_published)
+
 print(f"\n{passed} tests passed")

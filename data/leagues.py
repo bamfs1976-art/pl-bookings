@@ -367,11 +367,40 @@ LALIGA_FD_ALIASES = {
 # name — "Getafe CF", "Rayo Vallecano de Madrid" — where the registry,
 # discovered from API-Football, holds "Getafe" and "Rayo Vallecano".
 #
-# A table of RFEF spellings was written first and then deleted: every entry in
-# it was already resolved by the strip below, so it could never be the reason
-# anything matched, and a table that cannot fail is one no guard can tell has
-# rotted.
+# A table of RFEF spellings was written for jornada 1's SATURDAY sheet and then
+# deleted, because every entry in it was already resolved by the suffix strip
+# below and a table that cannot fail is one no guard can tell has rotted.
 #
+# THE SUNDAY SHEET DISPROVED THAT, and the deletion with it. A legal name is not
+# only a suffix: "RCD Espanyol de Barcelona" carries a prefix AND a city, and
+# "Real Racing Club de Santander" is a formal name with neither end strippable
+# to anything the registry holds. Both were reported "club not recognised" and
+# the whole sheet refused — which is the designed behaviour and exactly why the
+# gap was visible rather than silent.
+#
+# SO THE TABLE IS BACK, and it carries ONLY the spellings observed to fail.
+# Adding "Villarreal CF" or "Levante UD" — which the strip already handles —
+# would rebuild the table that could not fail. Entries here are load-bearing by
+# construction: remove one and its sheet stops ingesting.
+#
+# CONSULTED ON THE ACCENT-INSENSITIVE PASS ONLY, unlike the two tables above.
+# Every key here is already ASCII, so the accent index resolves each of them and
+# an exact-match pass would be a branch no input reaches — removing it from the
+# exact pass changed nothing and no test noticed, which is the definition of the
+# dead wiring this file already refuses elsewhere. Add an accented key and the
+# accent index still finds it; add one that must beat a same-folded key in
+# another table and this needs revisiting, loudly.
+#
+# NOT A GENERAL PREFIX STRIP, deliberately. Stripping leading legal words would
+# have to leave "Real Madrid", "Real Betis", "Real Sociedad" and "Deportivo La
+# Coruña" alone while removing "Real Racing Club" and "RCD" — the same word,
+# kept in four names and dropped in two. A rule that cannot be stated is a rule
+# that will one day resolve a club to the wrong one, silently.
+LALIGA_RFEF_ALIASES = {
+    "Real Racing Club de Santander": "Racing Santander",
+    "RCD Espanyol de Barcelona": "Espanyol",
+}
+
 # Legal endings no registry carries. Stripped and retried,
 # never substituted — a strip leaving nothing recognisable falls through to
 # None rather than to a guess.
@@ -527,7 +556,7 @@ def laliga_short(name, clubs=None):
                 return LALIGA_SHORT[canon]
     flat = strip_accents(n).lower()
     for table in (_accent_index(reg), _accent_index(LALIGA_FD_ALIASES),
-                  _accent_index(LALIGA_AF_ALIASES)):
+                  _accent_index(LALIGA_AF_ALIASES), _accent_index(LALIGA_RFEF_ALIASES)):
         hit = table.get(flat)
         if hit is None:
             continue

@@ -1,6 +1,7 @@
 {
  "note": "Referee appointments as published by the competition, laid over the harvested fixture list by data/appointments.py. The harvest wins where it has a value; this fills the nulls.",
  "sources": [
+  "https://rfef.es/sites/default/files/designaciones_1a_division_masculina_-_temp_2026-27_-_jornada_1_domingo16.pdf",
   "https://rfef.es/sites/default/files/designaciones_1a_division_masculina_-_temp_2026-27_-_jornada_1_sabado15.pdf",
   "https://www.efl.com/news/2026/august/11/referee-appointments--14-20-august/"
  ],
@@ -158,6 +159,28 @@
    "refResolved": "Ricardo De Burgos Bengoetxea",
    "resolvedBy": "run",
    "source": "https://rfef.es/sites/default/files/designaciones_1a_division_masculina_-_temp_2026-27_-_jornada_1_sabado15.pdf"
+  },
+  {
+   "league": "LL",
+   "date": "2026-08-16",
+   "h": "ESP",
+   "a": "LEV",
+   "ko": "19:00",
+   "ref": "Carlos Muñiz",
+   "refResolved": null,
+   "resolvedBy": null,
+   "source": "https://rfef.es/sites/default/files/designaciones_1a_division_masculina_-_temp_2026-27_-_jornada_1_domingo16.pdf"
+  },
+  {
+   "league": "LL",
+   "date": "2026-08-16",
+   "h": "RAC",
+   "a": "VIL",
+   "ko": "17:00",
+   "ref": "Miguel Sesma",
+   "refResolved": "Miguel Sesma Espinosa",
+   "resolvedBy": "run",
+   "source": "https://rfef.es/sites/default/files/designaciones_1a_division_masculina_-_temp_2026-27_-_jornada_1_domingo16.pdf"
   }
  ]
 }
