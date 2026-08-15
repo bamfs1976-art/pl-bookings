@@ -289,18 +289,34 @@ assert.ok(!/glmProb/.test(deskBase[1]),
       `${L.name} is STILL priced off ${ten.form}-form once round 10 has ` +
       `started. The deadline is round 10 and this is ${ten.progress} rounds in.`);
 
-    /* THE CALENDAR ALONE MUST CARRY IT. Every shipped fixture is "NS" — the
-       statuses only fill in as the season runs — so if the flip depended on
-       the status field it would never happen from this data at all. That is
-       exactly the stale-feed failure the two signals exist to survive, and
-       the assertion above would pass on a status-only implementation the day
-       the feed was healthy. */
-    assert.equal(ten.played, 0,
-      `${L.name}'s shipped fixtures already carry finished statuses, so this ` +
-      'no longer proves the calendar signal works on its own');
-    assert.ok(ten.elapsed >= 10,
-      `${L.name}: the calendar signal counted only ${ten.elapsed} rounds an ` +
-      'hour into round 10');
+    /* THE CALENDAR ALONE MUST CARRY IT — proved by REMOVING the statuses,
+       not by asserting the shipped file has none.
+     *
+     * The first version of this asserted `ten.played === 0`, on the grounds
+     * that every shipped fixture was "NS" and so a status-dependent flip
+     * could never have fired. That was true the day it was written and false
+     * the following evening, when the Championship played its opening match
+     * and the file came back carrying an FT. The guard failed on correct
+     * data, took the whole data refresh down with it, and did so on the
+     * morning La Liga opened.
+     *
+     * A guard that encodes "the season has not started yet" as a permanent
+     * invariant is a time bomb with a known fuse. The PROPERTY is what
+     * matters: strip the status field and the calendar must still reach the
+     * flip, because that is the stale-feed failure the two signals exist to
+     * survive. */
+    const statusless = fixtures.map((f) => ({ ...f, st: 'NS' }));
+    const blind = F.progressOf(statusless, atTen);
+    assert.equal(blind.played, 0, 'the test fixtures were not actually stripped');
+    assert.ok(blind.elapsed >= 10,
+      `${L.name}: with the status field removed the calendar counted only ` +
+      `${blind.elapsed} rounds an hour into round 10, so the flip depends on ` +
+      'a feed that can go stale');
+    /* And the real data must agree with the blind version, so a status field
+       that IS present can only ever confirm the answer, never change it. */
+    assert.ok(ten.progress >= blind.elapsed,
+      `${L.name}: the shipped statuses moved the answer backwards ` +
+      `(${ten.progress} against ${blind.elapsed} from the calendar alone)`);
   }
 }
 
