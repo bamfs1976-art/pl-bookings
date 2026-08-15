@@ -701,12 +701,14 @@
       var th = theme(spec.league), k = canvas(), x = k.x;
       brandBand(x, th, spec.title, spec.subtitle);
 
-      /* Seven is what fits above the money block without colliding with the
-         footer. Accas are built at three legs, so this is unreachable today —
-         but if it is ever reached the card must SAY it was cut, because the
-         price below it is the price of the whole acca and a card showing five
-         legs at a seven-leg price is a straightforwardly false claim. */
-      var all = spec.legs || [], legs = all.slice(0, 7);
+      /* Ten is what fits above the money block without colliding with the
+         footer, once the rows go single-line (see `compact` below). It was
+         seven while every acca here was a treble; the nine-folds made eight
+         and nine reachable, and truncating a nine-fold to seven under a price
+         for all nine would have been the exact false claim this cap exists to
+         prevent. Above ten the card must still SAY it was cut, because the
+         price below it is the price of the whole acca. */
+      var all = spec.legs || [], legs = all.slice(0, 10);
       var cut = all.length - legs.length;
       var settled = spec.status === 'won' || spec.status === 'lost';
 
@@ -754,25 +756,81 @@
          down, and marked once settled so a reader can see WHICH leg failed —
          "it lost" tells you nothing about the model. */
       var avail = EV_TOP - 22 - LEGS_TOP;
-      var rowH = Math.max(76, Math.min(170, Math.floor(avail / Math.max(1, legs.length))));
+      /* TWO ROW SHAPES, chosen by what actually fits rather than by leg count.
+         The stacked row draws a name and a second line 30px below it, which
+         needs about 76px of slot; at eight legs and up there is not that much
+         to give, and the second line lands outside its own stripe. So below
+         the stacked minimum the row goes single-line: the two texts sit side
+         by side and the price moves up beside the percentage.
+
+         A THRESHOLD, not a leg count, so this cannot drift out of step with
+         the geometry above it. At three legs `ideal` is 191 and the card is
+         drawn exactly as it was before any of this. */
+      var STACKED_MIN = 76;
+      var ideal = Math.floor(avail / Math.max(1, legs.length));
+      var compact = ideal < STACKED_MIN;
+      var rowH = Math.max(compact ? 56 : STACKED_MIN, Math.min(170, ideal));
       legs.forEach(function (l, i) {
         var top = LEGS_TOP + i * rowH, mid = top + rowH / 2;
         /* The stripe is capped rather than filling the row slot. Rows stretch
            to fill the card, and a stripe that stretched with them drew a 158px
            panel around two lines of text — which reads as a box that failed to
            load its contents, not as banding. */
-        var bh = Math.min(rowH - 12, 104);
+        var bh = Math.min(rowH - (compact ? 8 : 12), 104);
         x.fillStyle = i % 2 ? '#f7f9fc' : '#ffffff';
         roundRect(x, P - 12, mid - bh / 2, W - 2 * P + 24, bh, 14); x.fill();
 
         x.fillStyle = '#c3cad6'; x.font = '800 30px ' + DISP;
-        x.fillText(String(i + 1), P, mid + 8);
+        x.fillText(String(i + 1), P, mid + (compact ? 10 : 8));
 
-        x.fillStyle = '#0c1322'; x.font = '800 34px ' + DISP;
-        x.fillText(fit(x, l.player, W - 2 * P - 290), P + 44, mid - 2);
+        /* `line1`/`line2` when the leg is a MATCH market — the fixture and the
+           market it is a leg on. `player`/`club` when it is a player, which is
+           what every acca here was until the nine-folds. Read in that order so
+           neither caller has to pretend to be the other: a fixture is not a
+           player and calling it one is how the next reader of this file
+           mis-labels a card. */
+        var line1 = l.line1 != null ? l.line1 : l.player;
+        var line2 = l.line2 != null ? l.line2 : l.club;
+        var tagged = l.legLeague && l.legLeague !== spec.league;
 
-        x.fillStyle = '#586275'; x.font = '600 20px ' + BODY;
-        x.fillText(String(l.club || ''), P + 44, mid + 28);
+        /* THE TAG IS MEASURED BEFORE ANYTHING IS PLACED. In a compact row it
+           sits in front of the fixture, so the fixture's x depends on it —
+           drawing the tag afterwards at the same x painted the chip straight
+           over the first two characters of every tagged row ("ARS v COV" read
+           as "PL⟩S v COV"). Caught by rendering a card and looking at it. */
+        var tagW = 0, tag = tagged ? String(l.legLeague) : '';
+        if (tagged && compact) {
+          x.font = '800 15px ' + DISP;
+          tagW = x.measureText(tag).width + 18 + 12;   // chip padding, then a gap
+        }
+        var textX = P + 44 + tagW;
+
+        if (tagged && compact) {
+          x.fillStyle = '#e6eaf1';
+          roundRect(x, P + 44, mid - 12, tagW - 12, 24, 8); x.fill();
+          x.fillStyle = '#586275'; x.font = '800 15px ' + DISP; x.textAlign = 'center';
+          x.fillText(tag, P + 44 + (tagW - 12) / 2, mid + 5); x.textAlign = 'left';
+        }
+
+        x.fillStyle = '#0c1322'; x.font = '800 ' + (compact ? 28 : 34) + 'px ' + DISP;
+        /* The right-hand reserve is the percentage, the price and the gap
+           between them — bigger in a compact row because they sit side by side
+           there rather than stacked. */
+        var nameMax = W - P - textX - (compact ? 210 : 200);
+        var name = fit(x, line1, nameMax);
+        x.fillText(name, textX, mid + (compact ? 10 : -2));
+
+        if (compact) {
+          /* The market beside the fixture, not under it. Measured off the DRAWN
+             name so the gap holds whether or not the fixture was truncated. */
+          var nw = x.measureText(name).width;
+          x.fillStyle = '#586275'; x.font = '600 19px ' + BODY;
+          x.fillText(fit(x, String(line2 || ''), W - P - textX - nw - 224),
+                     textX + nw + 14, mid + 10);
+        } else {
+          x.fillStyle = '#586275'; x.font = '600 20px ' + BODY;
+          x.fillText(String(line2 || ''), P + 44, mid + 28);
+        }
 
         /* The league tag, when the leg is not from the card's own division.
            On the cross-league acca no leg matches, so every row is tagged —
@@ -780,25 +838,38 @@
            reader guessing which competition each came from, the same defect
            the combined round card is already guarded against. Omitted when
            the row never recorded a league, rather than guessed at. */
-        if (l.legLeague && l.legLeague !== spec.league) {
-          var tw = x.measureText(String(l.club || '')).width;
+        /* Stacked rows tag AFTER the club, on the second line, where there is
+           room — the compact branch above has already drawn its own. */
+        if (tagged && !compact) {
+          x.font = '600 20px ' + BODY;
+          var tw = x.measureText(String(line2 || '')).width;
           x.font = '800 15px ' + DISP;
-          var tg = String(l.legLeague), tgw = x.measureText(tg).width + 18;
+          var tgw = x.measureText(tag).width + 18;
           x.fillStyle = '#e6eaf1';
           roundRect(x, P + 56 + tw, mid + 12, tgw, 24, 8); x.fill();
           x.fillStyle = '#586275'; x.textAlign = 'center';
-          x.fillText(tg, P + 56 + tw + tgw / 2, mid + 29); x.textAlign = 'left';
+          x.fillText(tag, P + 56 + tw + tgw / 2, mid + 29); x.textAlign = 'left';
         }
 
         /* Probability and price on the right, price under it: the percentage
            is the model's claim and the price is what it is worth, and putting
            them apart invites reading one without the other. */
         x.textAlign = 'right';
-        x.fillStyle = probHex(l.prob);
-        x.font = '800 34px ' + DISP;
-        x.fillText(Math.round(l.prob * 100) + '%', W - P - (settled ? 62 : 0), mid - 2);
-        x.fillStyle = '#586275'; x.font = '700 22px ' + BODY;
-        x.fillText(Number(l.odds).toFixed(2), W - P - (settled ? 62 : 0), mid + 28);
+        var rx = W - P - (settled ? 62 : 0);
+        if (compact) {
+          /* Side by side rather than stacked, for the same reason the texts
+             are: there is no second baseline in a 63px row. */
+          x.fillStyle = '#586275'; x.font = '700 21px ' + BODY;
+          x.fillText(Number(l.odds).toFixed(2), rx, mid + 10);
+          x.fillStyle = probHex(l.prob); x.font = '800 30px ' + DISP;
+          x.fillText(Math.round(l.prob * 100) + '%', rx - 84, mid + 10);
+        } else {
+          x.fillStyle = probHex(l.prob);
+          x.font = '800 34px ' + DISP;
+          x.fillText(Math.round(l.prob * 100) + '%', rx, mid - 2);
+          x.fillStyle = '#586275'; x.font = '700 22px ' + BODY;
+          x.fillText(Number(l.odds).toFixed(2), rx, mid + 28);
+        }
         x.textAlign = 'left';
 
         if (settled && l.carded != null) {
@@ -934,11 +1005,65 @@
     };
   }
 
+  /* A NINE-FOLD as a card spec. The legs are MATCH markets, not players, so
+   * they fill line1/line2 (the fixture, then the market) rather than
+   * player/club — see the row drawing above.
+   *
+   * HERE RATHER THAN IN THE PAGES, for the reason accaRowSpec is: two pages
+   * build a nine-fold now, the goals one on the Premier League desk and the
+   * card one on /today, and a mapping kept beside one reader has been copied
+   * by the next one every time this project has tried it.
+   *
+   * NO STAKE FIELD. accaCard defaults it to the 50p the logged accas use, and
+   * these are not logged, staked or settled — they are a view of what the
+   * model currently likes. The card's status stays open and its legs carry no
+   * `carded`, so nothing draws a tick or a cross.
+   *
+   * spec in: { league, title, subtitle, legs:[{fx, market, code, prob}],
+   *            price (an accaPrice result), note }
+   */
+  function nineFoldSpec(spec) {
+    var th = theme(spec.league);
+    var price = spec.price || {};
+    return {
+      league: spec.league,
+      title: spec.title,
+      subtitle: spec.subtitle,
+      legs: (spec.legs || []).map(function (l) {
+        return {
+          line1: l.fx, line2: l.market,
+          /* Tagged with its division only when it differs from the card's own
+             — the drawing applies that rule, and passing the code always is
+             what lets it. On the cross-league card every row is tagged; on the
+             Premier League goals card none is, because the band already says
+             it once. */
+          legLeague: l.code || null,
+          prob: Number(l.prob),
+          /* FAIR odds per leg, which is what both pages print beside each leg.
+             The whole-acca price below is the MARGINED one, so the two columns
+             are not the same kind of number and the footer says which is
+             which — a card whose legs and total disagreed about that would
+             read as an arithmetic error. */
+          odds: 1 / Number(l.prob),
+          carded: null
+        };
+      }),
+      odds: Number(price.pricedOdds) || 0,
+      /* The whole acca's own fair odds, so MODEL CHANCE is the number the page
+         printed rather than one the card recomputes from rounded legs and then
+         quietly disagrees with. */
+      fairOdds: Number(price.fairOdds) || null,
+      status: 'open',
+      note: spec.note || 'Fair odds per leg; margined total.',
+      filename: th.slug + '-' + slug(spec.title || 'ninefold') + '.png'
+    };
+  }
+
   root.PLDShare = {
     W: W, H: H, PAD: P,
     THEMES: THEMES, theme: theme,
     matchCard: matchCard, roundCard: roundCard, calendarCard: calendarCard,
-    accaCard: accaCard, accaRowSpec: accaRowSpec,
+    accaCard: accaCard, accaRowSpec: accaRowSpec, nineFoldSpec: nineFoldSpec,
     deskMatchSpec: deskMatchSpec, deskRoundSpec: deskRoundSpec,
     download: download, slug: slug,
     heatHex: heatHex, probHex: probHex, textOn: textOn,

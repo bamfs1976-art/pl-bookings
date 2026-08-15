@@ -189,6 +189,8 @@
   <section class="card" id="nineCard" style="margin-top:14px" hidden>
     <div class="controls" style="margin-bottom:4px">
       <h2 style="font-size:16px" id="nineHead">The week's card nine-fold</h2>
+      <span class="spacer"></span>
+      <button class="btn" id="nineShare" type="button" hidden>&#11015; Share</button>
     </div>
     <p class="faint" id="nineSub" style="font-size:12.5px;margin:0"></p>
     <div class="acca-legs" id="nineLegs"></div>
@@ -959,9 +961,15 @@
       + (1 / o.prob).toFixed(2) + '</span></div>';
   }
 
+  /* The nine-fold currently on screen, held for the share button. The card
+     must draw THIS acca rather than rebuild one — a PNG that re-derived its
+     own legs could disagree with the page it was shared from, and nobody
+     looking at the image could tell. */
+  var NINE_BUILT = null;
+
   function renderNine() {
     var card = $('#nineCard');
-    if (mode() === 'all') { card.hidden = true; return; }
+    if (mode() === 'all') { card.hidden = true; NINE_BUILT = null; return; }
     var from = $('#day').value;
     var pool = weekPool(from);
     var got = C.accaAllocate(NINE.map(function (b) {
@@ -970,9 +978,9 @@
     /* NINE OR NOTHING. A six-fold under a "nine-fold" heading is the page
        lying about what it is showing, and out of season or in a thin week
        that is the common case rather than the rare one. */
-    if (!got) { card.hidden = true; return; }
+    if (!got) { card.hidden = true; NINE_BUILT = null; return; }
     var price = C.accaPrice(got.picks, C.TYPICAL_CARD_MARGIN);
-    if (!price) { card.hidden = true; return; }
+    if (!price) { card.hidden = true; NINE_BUILT = null; return; }
     card.hidden = false;
 
     var end = new Date(from + 'T00:00:00Z');
@@ -1011,6 +1019,37 @@
       + 'real chance. Nine legs is a long shot by construction and the margin compounds '
       + 'nine times — that is the ' + (price.marginDrag * 100).toFixed(1) + '% above. '
       + 'Research, not betting advice.';
+
+    NINE_BUILT = { picks: got.picks, price: price, from: from };
+    /* Shown only when share.js loaded AND knows this spec shape — an older
+       cached copy of the module would draw a card with nine blank rows. */
+    $('#nineShare').hidden = !(S && typeof S.nineFoldSpec === 'function');
+  }
+
+  function shareNine(btn) {
+    if (!NINE_BUILT || !S || typeof S.nineFoldSpec !== 'function') return;
+    var end = new Date(NINE_BUILT.from + 'T00:00:00Z');
+    end.setUTCDate(end.getUTCDate() + WEEK_DAYS - 1);
+    var spec = S.nineFoldSpec({
+      /* ALL, so every leg gets tagged with its own division: three of the
+         nine come from a different competition than the other six and a card
+         that did not say so would be six club pairs and a reader guessing. */
+      league: 'ALL',
+      title: 'Card nine-fold',
+      subtitle: fmtDay(NINE_BUILT.from) + ' \u2013 ' + fmtDay(end.toISOString().slice(0, 10)),
+      legs: NINE_BUILT.picks.map(function (o) {
+        return { fx: o.fx, market: o.label, prob: o.prob, code: o.code };
+      }),
+      price: NINE_BUILT.price,
+      note: 'Fair odds per leg; total margined '
+        + Math.round(C.TYPICAL_CARD_MARGIN * 100) + '%.'
+    });
+    btn.dataset.label = btn.dataset.label || btn.textContent;
+    btn.disabled = true; btn.textContent = 'Building\u2026';
+    S.accaCard(spec)
+      .then(function (b) { S.download(b, spec.filename); })
+      .catch(function (e) { console.error(e); })
+      .then(function () { btn.disabled = false; btn.textContent = btn.dataset.label; });
   }
 
   function mode() {
@@ -1384,6 +1423,7 @@
     $('#day').addEventListener('change', render);
     $('#shareBtn').addEventListener('click', function () { shareDay($('#day').value); });
     $('#calBtn').addEventListener('click', shareCalendar);
+    $('#nineShare').addEventListener('click', function () { shareNine(this); });
     $('#multiChk').addEventListener('change', render);
     Array.prototype.forEach.call(document.querySelectorAll('input[name=mode]'),
       function (r) { r.addEventListener('change', render); });

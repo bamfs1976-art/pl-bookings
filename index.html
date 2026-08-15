@@ -4085,7 +4085,10 @@ function roundAccaHtml(a){
     return '<div class="acca-grp"><h4 class="acca-grp-h">'+esc(b.label)+'</h4>'+legs+'</div>';
   }).join("");
   return '<article class="acca-block">'
-    +'<h3 class="acca-h">'+esc(a.spec.title)+'</h3>'
+    +'<div class="acca-head"><h3 class="acca-h">'+esc(a.spec.title)+'</h3>'
+    +(SHARE_OK?'<button class="mkt fx-share" type="button" data-share-acca="'+esc(a.spec.id)+'">'
+      +'\u2b07 Share</button>':'')
+    +'</div>'
     +'<p class="faint acca-sub">'+a.price.legs+' legs, '+a.price.legs+' different matches, '
       +'no club twice. '+esc(a.spec.note)+'</p>'
     +rows
@@ -4107,8 +4110,13 @@ function renderRoundAccas(fx){
      on a round with too few fixtures to fill nine distinct matches, the
      allocator returns null and the card stays hidden rather than showing a
      five-fold labelled as a nine-fold. */
-  if(built.length!==ROUND_ACCAS.length){ card.hidden=true; return; }
+  if(built.length!==ROUND_ACCAS.length){ card.hidden=true; ROUND_BUILT={}; return; }
   card.hidden=false;
+  /* Held for the share button, which must draw the acca that is ON SCREEN
+     rather than rebuild one — a card that re-derived its own legs could
+     disagree with the page it was shared from, and nobody looking at the PNG
+     could tell. */
+  ROUND_BUILT={}; built.forEach(b=>{ ROUND_BUILT[b.spec.id]=b; });
   $("accaRoundBody").innerHTML=built.map(roundAccaHtml).join("");
   $("accaRoundNote").textContent=
     "Nine legs at these prices is a long shot by construction — the joint chance is printed "
@@ -4116,6 +4124,31 @@ function renderRoundAccas(fx){
     +"Legs are treated as independent; two matches in one round share a competition's temperament "
     +"and a weekend's officiating, and that residual correlation is positive, so the joint figure "
     +"is if anything a slight overstatement. Research, not a tip.";
+}
+/* THE SHARE CARD for a nine-fold. Draws the acca currently rendered, not a
+   fresh one: PLDShare.nineFoldSpec takes the built object, so the PNG and the
+   page cannot print different legs. */
+let ROUND_BUILT={};
+const SHARE_OK=typeof window!=="undefined"&&!!window.PLDShare
+  &&typeof window.PLDShare.nineFoldSpec==="function";
+function shareRoundAcca(id,btn){
+  const a=ROUND_BUILT[id]; if(!a||!SHARE_OK) return;
+  const S=window.PLDShare;
+  const ev=LIVE&&LIVE.bootstrap?(LIVE.bootstrap.events.find(e=>e.id===LIVE.currentGW)||null):null;
+  const spec=S.nineFoldSpec({
+    league:"PL",
+    title:a.spec.title,
+    subtitle:[SEASON, ev&&ev.name?ev.name:("GW"+(LIVE?LIVE.currentGW:""))].filter(Boolean).join(" \u00b7 "),
+    legs:a.picks.map(o=>({fx:o.fx, market:o.label, prob:o.prob, code:"PL"})),
+    price:a.price,
+    note:"Fair odds per leg; total margined "+Math.round(a.margin*100)+"%."
+  });
+  btn.dataset.label=btn.dataset.label||btn.textContent;
+  btn.disabled=true; btn.textContent="Building\u2026";
+  S.accaCard(spec)
+    .then(b=>S.download(b,spec.filename))
+    .catch(e=>console.error(e))
+    .then(()=>{ btn.disabled=false; btn.textContent=btn.dataset.label; });
 }
 // Severity band from the fixture-aware probability (prototype language).
 /* COLOUR IS NOT THE ENCODING. The four bands were a red/amber/grey/grey ramp,
@@ -4878,6 +4911,15 @@ function wireFixtureGrid(id,rerender){
   });
 }
 wireFixtureGrid("gwFixtures",renderGameweek);
+/* Delegated on the card, because renderRoundAccas rebuilds its innards on
+   every gameweek render and per-button listeners would leak one set a redraw. */
+(function(){
+  const card=$("accaRound"); if(!card) return;
+  card.addEventListener("click",e=>{
+    const b=e.target.closest("[data-share-acca]");
+    if(b) shareRoundAcca(b.dataset.shareAcca,b);
+  });
+})();
 wireFixtureGrid("fixtureList",renderFixtures);
 /* Both grids draw the same card, so both carry the lineup control and both
    need it wired — the same reason wireFixtureGrid is called twice above. */

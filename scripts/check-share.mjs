@@ -20,29 +20,41 @@ const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 /* A 2d context that measures plausibly and remembers what it was told to
    draw. measureText has to return something monotonic in length or the
    fit()/truncation paths never exercise. */
-function stubCtx(drawn) {
+function stubCtx(drawn, placed) {
   const noop = () => {};
   return {
     canvas: null,
     set fillStyle(v) {}, get fillStyle() { return '#000'; },
     set strokeStyle(v) {}, set lineWidth(v) {},
     set font(v) { this._font = v; }, get font() { return this._font || ''; },
-    set textAlign(v) {}, get textAlign() { return 'left'; },
+    /* textAlign is TRACKED, not swallowed. The card sets it to 'right' for
+       every price and back to 'left' after, and a stub that always answers
+       'left' makes every right-aligned label look like it starts where it
+       actually ends — which turns the overlap check below into noise. */
+    set textAlign(v) { this._align = v; }, get textAlign() { return this._align || 'left'; },
     set textBaseline(v) {}, get textBaseline() { return 'alphabetic'; },
     fillRect: noop, beginPath: noop, moveTo: noop, arcTo: noop, closePath: noop,
     fill: noop, stroke: noop, save: noop, restore: noop, translate: noop, rotate: noop,
     createLinearGradient: () => ({ addColorStop: noop }),
     measureText: (t) => ({ width: String(t).length * 11 }),
-    fillText: (t) => { drawn.push(String(t)); }
+    fillText(t, x, y) {
+      drawn.push(String(t));
+      if (placed) {
+        const w = String(t).length * 11;
+        const a = this._align || 'left';
+        const x0 = a === 'right' ? x - w : a === 'center' ? x - w / 2 : x;
+        placed.push({ t: String(t), y, x0, x1: x0 + w });
+      }
+    }
   };
 }
 
-function makeSandbox(drawn) {
+function makeSandbox(drawn, placed) {
   const ctx = {
     document: {
       createElement: () => ({
         width: 0, height: 0,
-        getContext: () => stubCtx(drawn),
+        getContext: () => stubCtx(drawn, placed),
         toBlob: (cb) => cb({ __blob: true, size: 1024 })
       }),
       fonts: { ready: Promise.resolve() }
@@ -57,7 +69,8 @@ function makeSandbox(drawn) {
 }
 
 const drawn = [];
-const sb = makeSandbox(drawn);
+const placed = [];
+const sb = makeSandbox(drawn, placed);
 const S = sb.PLDShare;
 assert.ok(S, 'assets/share.js did not export PLDShare');
 
@@ -344,19 +357,172 @@ await S.accaCard(S.accaRowSpec(accaRow,
 assert.equal(drawn.filter((t) => t === 'PL').length, 0,
   'a single-division card tags every leg with the league already in its header');
 
-/* Truncation must disclose itself. Unreachable at three legs, which is exactly
-   why it would ship broken: the price drawn underneath is the whole acca's. */
+/* NINE LEGS MUST FIT. The nine-folds made eight and nine reachable, and the
+   cap was seven — so this card would have drawn seven rows under a price for
+   all nine, which is the false claim the truncation notice exists to prevent.
+   Every leg has to be on the card. */
 drawn.length = 0;
 const many = Array.from({ length: 9 }, (_, i) => ({
   leg: i + 1, player: 'Player ' + (i + 1), club: 'ABC', prob: 0.2,
   priced_odds: 5, carded: null
 }));
 await S.accaCard(S.accaRowSpec({ ...accaRow, legs: 9 }, many));
+const aNine = drawn.join('\n');
+assert.ok(aNine.includes('OPEN · 9 LEGS'), 'the nine-leg card miscounts itself');
+for (let i = 1; i <= 9; i++) {
+  assert.ok(aNine.includes('Player ' + i),
+    `leg ${i} of nine was never drawn — the card is short of the price it prints`);
+}
+assert.ok(!/not shown/.test(aNine),
+  'a nine-leg card claims it was truncated when every leg fits');
+
+/* Truncation must still disclose itself ABOVE the new cap. Unreachable today,
+   which is exactly why it would ship broken. */
+drawn.length = 0;
+const tooMany = Array.from({ length: 13 }, (_, i) => ({
+  leg: i + 1, player: 'Player ' + (i + 1), club: 'ABC', prob: 0.2,
+  priced_odds: 5, carded: null
+}));
+await S.accaCard(S.accaRowSpec({ ...accaRow, legs: 13 }, tooMany));
 const aCut = drawn.join('\n');
-assert.ok(aCut.includes('OPEN · 9 LEGS'),
+assert.ok(aCut.includes('OPEN · 13 LEGS'),
   'a truncated card counts only the legs it drew, describing itself as complete');
-assert.ok(/not shown/.test(aCut) && /all 9/.test(aCut),
+assert.ok(/not shown/.test(aCut) && /all 13/.test(aCut),
   'the card dropped legs without saying so, while pricing all of them');
+
+/* ---- the nine-folds ------------------------------------------------------
+ * Their legs are MATCH markets, not players, and they reach the card through
+ * nineFoldSpec. Two things could go wrong quietly: the market could be lost,
+ * leaving nine fixture names with no indication of what was bet on them; and
+ * a cross-league card could drop its per-leg division tags, which on this one
+ * matters more than anywhere else because six of the nine legs come from a
+ * different competition than the other three.
+ */
+drawn.length = 0;
+placed.length = 0;
+const nineSpec = S.nineFoldSpec({
+  league: 'ALL',
+  title: 'Card nine-fold',
+  subtitle: 'Fri, 21 Aug 2026 – Thu, 27 Aug 2026',
+  legs: [
+    { fx: 'ARS v COV', market: 'ARS to win', prob: 0.689, code: 'PL' },
+    { fx: 'HUL v MUN', market: 'MUN to win', prob: 0.612, code: 'PL' },
+    { fx: 'MCI v BOU', market: 'MCI to win', prob: 0.542, code: 'PL' },
+    { fx: 'MAL v DEP', market: 'Both teams carded', prob: 0.800, code: 'LL' },
+    { fx: 'OSA v LEV', market: 'Both teams carded', prob: 0.798, code: 'LL' },
+    { fx: 'BET v RSO', market: 'Both teams carded', prob: 0.765, code: 'LL' },
+    { fx: 'GET v RAC', market: 'Over 2.5 cards', prob: 0.868, code: 'LL' },
+    { fx: 'BUR v WHU', market: 'Over 2.5 cards', prob: 0.824, code: 'EFLC' },
+    { fx: 'FUL v CHE', market: 'Over 2.5 cards', prob: 0.799, code: 'PL' }
+  ],
+  price: { legs: 9, prob: 0.0637, fairOdds: 15.69, pricedOdds: 8.99, marginDrag: 0.427 }
+});
+const nineBlob = await S.accaCard(nineSpec);
+assert.ok(nineBlob && nineBlob.__blob, 'the nine-fold card produced no blob');
+const aNF = drawn.join('\n');
+for (let i = 1; i <= 9; i++) void i;
+for (const need of ['ARS v COV', 'BET v RSO', 'FUL v CHE', 'OPEN · 9 LEGS', '8.99']) {
+  assert.ok(aNF.includes(need), `the nine-fold card never drew ${JSON.stringify(need)}`);
+}
+/* THE MARKET, on every leg. Nine fixtures with no market is a card that says
+   nothing about what was actually bet — and each of the three markets has to
+   survive, not just whichever one happened to be first. */
+for (const mkt of ['ARS to win', 'Both teams carded', 'Over 2.5 cards']) {
+  assert.ok(aNF.includes(mkt), `the nine-fold card lost the market "${mkt}"`);
+}
+/* Per-leg division tags: 4 PL, 4 LL, 1 EFLC. Counted, not merely present —
+   the band says "ALL LEAGUES" and an earlier version of the sibling check
+   passed on the strap alone with every per-leg tag deleted. */
+const nfTags = drawn.filter((t) => t === 'PL' || t === 'LL' || t === 'EFLC');
+assert.equal(nfTags.filter((t) => t === 'PL').length, 4,
+  `the nine-fold card tagged ${nfTags.filter((t) => t === 'PL').length} legs PL, not 4`);
+assert.equal(nfTags.filter((t) => t === 'LL').length, 4);
+assert.equal(nfTags.filter((t) => t === 'EFLC').length, 1);
+/* MODEL CHANCE comes from the acca's own fair odds, not from remultiplying
+   rounded leg probabilities — 1/15.69 is 6.37%, and the product of the nine
+   rounded percentages is not. */
+assert.ok(aNF.includes('6.37%'),
+  'the nine-fold card recomputed its own model chance instead of using the ' +
+  'fair odds the page printed');
+/* The legs are FAIR odds and the total is MARGINED, which are not the same
+   kind of number — the footer has to say so or the card reads as an
+   arithmetic error. */
+assert.ok(/fair odds/i.test(aNF) && /margin/i.test(aNF),
+  'the nine-fold card does not say its legs and its total are priced differently');
+/* NOTHING ON A ROW MAY SIT ON TOP OF ANYTHING ELSE. The compact row draws the
+   division chip, the fixture, the market and two numbers on ONE baseline, and
+   the first version placed the chip and the fixture at the same x — so every
+   tagged row rendered as "PL⟩S v COV", the chip painted over the first two
+   characters of the fixture. Nothing threw, every text was drawn, and every
+   assertion above passed: they check WHAT was drawn, and this is a question
+   about WHERE.
+
+   Found by rendering a card and looking at it. This is the check that would
+   have found it instead: same-baseline texts, sorted by x, must not overlap. */
+{
+  /* A VERTICAL TOLERANCE, not an exact baseline match. The chip's baseline is
+     five pixels above the fixture's — different `y`, same visual line, and
+     glyphs 28px tall. Grouping on exact y was the first version of this check
+     and it passed on the very bug it was written for. 18px is under the
+     smallest row (56) and over the largest within-row baseline offset (5). */
+  const SAME_LINE = 18;
+  const overlaps = [];
+  for (let i = 0; i < placed.length; i++) {
+    for (let j = i + 1; j < placed.length; j++) {
+      const a = placed[i], b = placed[j];
+      if (Math.abs(a.y - b.y) >= SAME_LINE) continue;
+      if (a.x0 < b.x1 - 0.5 && b.x0 < a.x1 - 0.5) {
+        overlaps.push(`"${a.t}" (${Math.round(a.x0)}–${Math.round(a.x1)}) and ` +
+                      `"${b.t}" (${Math.round(b.x0)}–${Math.round(b.x1)}) near y=${a.y}`);
+      }
+    }
+  }
+  assert.equal(overlaps.length, 0,
+    'the nine-fold card draws text over text: ' + overlaps.slice(0, 3).join('; '));
+  /* And the check has to have had something to look at — an empty `placed`
+     would pass silently and pin nothing at all. */
+  assert.ok(placed.length > 20,
+    `only ${placed.length} placed texts recorded — the geometry check is not running`);
+}
+
+/* AND THE NOTE HAS TO SURVIVE THE WIDEST WORDMARK. footer() gives the note
+   whatever room the 18+ line and the mark leave and truncates the remainder,
+   so a note written against "BOOKINGS DESK · ALL LEAGUES" was cut mid-word on
+   the Premier League card ("Research, not …"). Checked on the card with the
+   longest mark, not on a convenient one. */
+{
+  const note = S.nineFoldSpec({ league: 'PL', title: 'T', subtitle: 'S',
+                                legs: [], price: {} }).note;
+  for (const league of Object.keys(S.THEMES)) {
+    drawn.length = 0;
+    await S.accaCard(S.nineFoldSpec({
+      league, title: 'Nine-fold', subtitle: 'x',
+      legs: [{ fx: 'A v B', market: 'm', prob: 0.5, code: league }],
+      price: { fairOdds: 2, pricedOdds: 1.9 }
+    }));
+    assert.ok(drawn.includes(note),
+      `the footer note is truncated on the ${league} card — it drew ` +
+      `${JSON.stringify(drawn.filter((t) => /margined|fair odds/i.test(t)))} ` +
+      `rather than ${JSON.stringify(note)}`);
+  }
+}
+
+/* A SINGLE-DIVISION nine-fold must not tag every row with the league its own
+   band already names. This is the goals acca on the Premier League desk. */
+drawn.length = 0;
+await S.accaCard(S.nineFoldSpec({
+  league: 'PL', title: 'Goals nine-fold', subtitle: '2026-27 · Gameweek 1',
+  legs: [
+    { fx: 'ARS v COV', market: 'ARS to win', prob: 0.689, code: 'PL' },
+    { fx: 'NEW v LIV', market: 'Both teams to score', prob: 0.667, code: 'PL' },
+    { fx: 'BHA v AVL', market: 'Over 1.5 goals', prob: 0.784, code: 'PL' }
+  ],
+  price: { legs: 3, prob: 0.36, fairOdds: 2.78, pricedOdds: 2.36, marginDrag: 0.15 }
+}));
+const aGoals = drawn.join('\n');
+assert.ok(aGoals.includes('Goals nine-fold') && aGoals.includes('ARS v COV'));
+assert.equal(drawn.filter((t) => t === 'PL').length, 0,
+  'the Premier League goals card tags every leg with the league in its own header');
 
 /* roundRect must bound its own radius. arcTo does not: a pill drawn with
    r=999 swept arcs across the entire card the first time this was tried, and
@@ -565,12 +731,120 @@ assert.ok(/if\s*\(usedClub\[/.test(cardFn),
 assert.ok(/max 3 a league/.test(cardFn),
   'the card does not disclose that its ranking was diversified');
 
+/* ---- the Premier League desk's goals nine-fold ---------------------------
+ * Same two risks as its cross-league sibling, plus one of its own: this card
+ * is the only place a reader can check the desk's own nine-fold against the
+ * page, so it must draw the acca that was rendered rather than a fresh one.
+ */
+assert.ok(/S\.nineFoldSpec\(/.test(deskSrc) || /nineFoldSpec\(\{/.test(deskSrc),
+  'index.html no longer builds its nine-fold card through the shared mapping');
+{
+  const i = deskSrc.indexOf('function shareRoundAcca(');
+  assert.ok(i > -1, 'index.html no longer defines shareRoundAcca');
+  const body = deskSrc.slice(i, deskSrc.indexOf('\nfunction ', i + 1));
+  assert.equal((body.match(/S\.accaCard\(/g) || []).length, 1,
+    'the desk nine-fold must build its card in exactly one place');
+  assert.ok(/ROUND_BUILT\[id\]/.test(body) && !/accaAllocate/.test(body),
+    'shareRoundAcca re-derives the acca instead of sharing the one rendered — ' +
+    'the card and the page could then disagree');
+  assert.ok(/league:"PL"/.test(body),
+    'the desk nine-fold no longer declares its own league, so every leg would ' +
+    'be tagged with a division the header already names');
+}
+assert.ok(/ROUND_BUILT=\{\};/.test(deskSrc),
+  'the held nine-fold is never cleared, so hiding the card leaves a stale acca ' +
+  'behind the share button');
+assert.ok(/data-share-acca/.test(deskSrc),
+  'the desk nine-fold has no share button');
+/* Emitted only when share.js is present AND knows this spec shape — but it
+   must be emitted, so the flag has to be computed rather than pinned off. */
+assert.ok(/SHARE_OK\?'<button[^']*data-share-acca/.test(deskSrc),
+  'the desk nine-fold share button is not gated on share.js being loadable');
+/* EVALUATED, NOT READ. `SHARE_OK = false && <the right expression>` satisfies
+   any regex that looks for the right expression, and pins the button off for
+   everyone. So the statement is lifted out and RUN against two stub windows:
+   it has to come out true when share.js is loaded and knows the spec, and
+   false when it does not. No always-false prefix survives that. */
+{
+  const m = deskSrc.match(/const SHARE_OK=[^;]+;/);
+  assert.ok(m, 'index.html no longer declares SHARE_OK');
+  const evalWith = (win) => {
+    const c = { window: win };
+    vm.createContext(c);
+    vm.runInContext(m[0].replace(/^const /, 'var ') + ' SHARE_OK;', c);
+    return vm.runInContext('SHARE_OK', c);
+  };
+  assert.equal(evalWith({ PLDShare: { nineFoldSpec: () => {} } }), true,
+    'SHARE_OK is false even with a share.js that knows nineFoldSpec — the desk ' +
+    'nine-fold has no share button for anyone');
+  assert.equal(evalWith({ PLDShare: {} }), false,
+    'SHARE_OK ignores whether the loaded share.js knows nineFoldSpec — a cached ' +
+    'older copy would draw a card with nine blank rows');
+  assert.equal(evalWith({}), false, 'SHARE_OK is true with no share.js at all');
+}
+/* Delegated, because renderRoundAccas replaces the card body on every
+   gameweek render and per-button listeners would leak one set a redraw. */
+assert.ok(/accaRound"\)[\s\S]{0,200}addEventListener\("click"/.test(deskSrc),
+  'the nine-fold share button is not delegated off the card');
+
+/* Scope an assertion to one function body rather than to a 1,400-line file,
+   which is how a check ends up satisfied by code three screens away. */
+function fnBody(src, name) {
+  const i = src.indexOf('function ' + name + '(');
+  assert.ok(i > -1, `today.html no longer defines ${name}`);
+  const j = src.indexOf('\n  function ', i + 1);
+  return src.slice(i, j > -1 ? j : i + 3000);
+}
+
 /* ---- the tracker offers a card for every acca, not just the good ones ---- */
-assert.equal((todayCode.match(/S\.accaCard\(/g) || []).length, 1,
-  'today.html must build the acca card in exactly one place');
-assert.ok(/S\.accaRowSpec\(/.test(todayCode),
+/* TWO CALL SITES NOW, and they are different products: the tracker draws a
+   LOGGED acca from the database, the nine-fold draws the one currently on
+   screen. Counted per function rather than per file — the thing worth
+   preventing is one feature building its card two ways, not the page having
+   two features. */
+const shareAccaFn = fnBody(todayCode, 'shareAcca');
+const shareNineFn = fnBody(todayCode, 'shareNine');
+assert.equal((shareAccaFn.match(/S\.accaCard\(/g) || []).length, 1,
+  'the tracker must build its acca card in exactly one place');
+assert.equal((shareNineFn.match(/S\.accaCard\(/g) || []).length, 1,
+  'the nine-fold must build its card in exactly one place');
+assert.ok(/S\.accaRowSpec\(/.test(shareAccaFn),
   'today.html builds its own acca spec instead of using the shared mapping, ' +
   'so the card and the database row can drift apart');
+assert.ok(/var spec = S\.nineFoldSpec\(\{/.test(shareNineFn),
+  'the nine-fold builds its own card spec instead of the shared mapping — two ' +
+  'pages share a nine-fold now, and a mapping beside one reader gets copied');
+/* ALL, not a league code. Six of the nine legs come from a different
+   competition than the other three, so this is the one card here where the
+   per-leg tags matter most — and nineFoldSpec only emits them for legs whose
+   division differs from the card's own. Declaring 'LL' here would silently
+   drop the tag from every La Liga row. */
+assert.ok(/league: 'ALL',/.test(shareNineFn),
+  'the cross-league nine-fold declares a single division, so every leg from ' +
+  'that division loses its tag and the card stops naming its competitions');
+/* THE CARD DRAWS WHAT IS ON SCREEN. Rebuilding the acca inside the share
+   handler would let the PNG and the page print different legs, and nobody
+   looking at the image could tell which was right. */
+assert.ok(/NINE_BUILT/.test(shareNineFn) && !/accaAllocate/.test(shareNineFn),
+  'shareNine re-derives the acca instead of sharing the one rendered — the ' +
+  'card and the page could then disagree');
+/* EVERY path that hides the card must drop the held acca — there are three
+   (the calendar view, an unfillable window, an unpriceable one) and a stale
+   one behind a hidden button is a card sharing a nine-fold the page is not
+   showing. Counted, because guarding one path leaves the other two. */
+assert.equal((fnBody(todayCode, 'renderNine').match(/NINE_BUILT = null/g) || []).length, 3,
+  'not every hide path in renderNine clears the held nine-fold — the share ' +
+  'button would draw an acca the page has stopped showing');
+assert.ok(/nineShare'\)\.addEventListener\(\s*'click'/.test(todayCode),
+  'the nine-fold share button is not wired');
+/* AND IT HAS TO BE REVEALED. It ships `hidden` so an older cached share.js
+   cannot offer a card it would draw blank, which means a render that never
+   un-hides it is a feature that silently does not exist — this repo has
+   shipped two whole desks that way. */
+assert.ok(/\$\('#nineShare'\)\.hidden = !\(S && typeof S\.nineFoldSpec === 'function'\)/
+  .test(fnBody(todayCode, 'renderNine')),
+  'renderNine never reveals the nine-fold share button, so the card can only ' +
+  'be shared by someone who knows the handler exists');
 /* Delegated, because renderTrack replaces the whole list on every load and
    listeners bound to the buttons would be discarded with them. */
 assert.ok(/#trackList'\)\.addEventListener\(\s*'click'/.test(todayCode),

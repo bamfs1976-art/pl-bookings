@@ -499,6 +499,10 @@ html[data-density="expert"] .combined-note{display:none}
   grid-template-columns:repeat(auto-fit,minmax(320px,1fr))}
 .acca-block{min-width:0;border:1px solid var(--border);border-radius:14px;
   padding:12px 13px;background:var(--surface-2)}
+/* The title and its share button on one line, so a nine-fold's heading does
+   not spend a whole row on a 60px button. */
+.acca-head{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap}
+.acca-head .acca-h{flex:1 1 auto;min-width:0}
 .acca-h{margin:0;font-size:14.5px}
 .acca-sub{font-size:12px;margin:.35rem 0 0}
 /* The market a run of legs belongs to, said once above the run instead of

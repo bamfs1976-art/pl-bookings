@@ -529,10 +529,15 @@ const tfn = (name) => {
   assert.ok(/C\.accaAllocate\(/.test(body),
     'renderNine no longer allocates through core — picking each market\'s top three ' +
     'itself is how one match ends up on the slip twice');
-  assert.ok(/if\s*\(!got\)\s*\{\s*card\.hidden\s*=\s*true;\s*return;\s*\}/.test(body),
+  assert.ok(/if \(!got\) \{ card\.hidden = true;[^}]*return; \}/.test(body),
     'renderNine no longer hides the card when nine distinct matches cannot be found — ' +
     'a six-fold under a "nine-fold" heading is the page lying about what it shows');
-  ok('nine or nothing: an unfillable week hides the card');
+  /* And the held acca must be dropped on the same path, or the share button
+     goes on offering last week's nine legs behind a hidden card. */
+  assert.ok(/if \(!got\) \{ card\.hidden = true; NINE_BUILT = null; return; \}/.test(body),
+    'the hidden card leaves NINE_BUILT behind — the share button would draw a ' +
+    'nine-fold the page is no longer showing');
+  ok('nine or nothing: an unfillable week hides the card and drops the held acca');
 }
 
 {
