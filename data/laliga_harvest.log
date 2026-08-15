@@ -1,4 +1,4 @@
-La Liga harvest — run 95
+La Liga harvest — run 97
 == discover ==
 La Liga: API-Football league 140, season 2026
 
@@ -86,8 +86,11 @@ La Liga: API-Football league 140, season 2025
 laliga_ref_fixtures.js written (380 matches over 20 clubs, 380 with an official named)
 == fixtures ==
 La Liga: API-Football league 140, season 2026
+  CHANGED: ALA v GET: harvested 'M. Orellana', published 'Manuel Jesús Orellana' — the harvested name stands
+  CHANGED: SEV v RAY: harvested 'R. De Burgos', published 'Ricardo De Burgos Bengoetxea' — the harvested name stands
+  NOTE: no card record for Manuel Jesús Orellana (ALA v GET) — priced at the league rate
 
-laliga_fixtures.js written (380 fixtures over 38 matchdays, 0 with a referee appointed)
+laliga_fixtures.js written (380 fixtures over 38 matchdays, 2 with a referee appointed)
 == build ==
 Division: 17 clubs were in it last season, 3 came up
   promoted: Deportivo La Coruna, Malaga, Racing Santander
