@@ -6,6 +6,21 @@
 
 **No run yet.**
 
+> **There is a second backtest, and it does run.** The **Methodology** view in
+> the app walks the model forward over the 2025/26 match record
+> (`data/pl_backtest_2526.js`, DataHub mirror of football-data.co.uk, PDDL) on
+> every page load and reports Brier, log loss and calibration by decile against
+> a season-average baseline. It tests the *adjustment stack* — venue, referee,
+> opponent fouls drawn — at **team-match** level, because per-player match
+> outcomes for a completed season are not licensable here. Its answer today:
+> **the model does not beat the baseline** (+0.0014 Brier at the headline
+> threshold, 95% interval −0.0096 to +0.0124, and no win at any of the three
+> thresholds). See the Backtest section of README.md.
+>
+> That does not replace this file. This one scores the **per-player** GLM,
+> which is the model the desk actually prices with, and that leg remains
+> untested.
+
 This file is written by the walk-forward backtest, and the backtest needs
 `data/match_history.json` — per-player, per-match booking history harvested
 from the FPL `element-summary` endpoint by `data/harvest_history.py`.
