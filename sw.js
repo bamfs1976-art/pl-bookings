@@ -3,7 +3,7 @@
    cache-first. Live FPL data (/api/fpl/*) and Supabase calls are never
    touched here — the app's own data layer decides what is fresh vs cached. */
 
-const VERSION = 'plb-v15';
+const VERSION = 'plb-v16';
 /* Every desk, not just the Premier League one. The shell decides what opens
    with no connection: installed on a phone, a page missing from here is a
    blank screen on the Underground even though it works perfectly on wifi.
@@ -29,6 +29,9 @@ const SHELL = [
   '/data/laliga_data.js',
   '/data/laliga_fixtures.js',
   '/data/pl_fixtures.js',
+  /* The 2025/26 match record the Methodology view scores the model against.
+     Offline it is the difference between a backtest and an apology. */
+  '/data/pl_backtest_2526.js',
   '/assets/core.js',
   '/assets/save.js',
   '/assets/profile.js',
@@ -43,6 +46,12 @@ const SHELL = [
   '/assets/charts.js',
   '/assets/push.js',
   '/assets/price.js',
+  /* The library-backed modules. index.html calls all four directly, so a 404
+     here is not a missing feature, it is a throw during boot. */
+  '/assets/cardmodel.js',
+  '/assets/screener.js',
+  '/assets/backtest.js',
+  '/assets/adminimport.js',
   '/icons/icon-16.png',
   '/icons/icon-32.png',
   '/assets/palette.js',

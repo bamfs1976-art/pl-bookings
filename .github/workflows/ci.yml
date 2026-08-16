@@ -32,6 +32,11 @@ jobs:
           node --check data/model.js
           node --check data/sim_model.js
           node --check data/core_insights.js
+          node --check data/pl_backtest_2526.js
+          node --check assets/cardmodel.js
+          node --check assets/screener.js
+          node --check assets/backtest.js
+          node --check assets/adminimport.js
           node scripts/check-inline.mjs
 
       - name: Model builder is reproducible (season prior regenerates cleanly)
@@ -93,6 +98,22 @@ jobs:
       # complete. Both are silent, so both are pinned here.
       - name: La Liga club names and the referee join
         run: python3 data/test_laliga.py
+
+      # Half a megabyte of minified JavaScript inlined into index.html is
+      # unreviewable by eye: nobody can tell a genuine Tabulator from one with
+      # a line changed in the middle of it. Every vendored block's SHA-256 is
+      # recorded, and this fails if a byte has moved. Offline — it checks the
+      # committed bytes against the record, it does not re-download.
+      - name: Vendored libraries are the published releases, byte for byte
+        run: node scripts/vendor-libs.mjs --check
+
+      # The four library-backed modules: the card model's referee pivot and
+      # its refusal to invent a rate it does not have, the backtest's
+      # leak-freedom (re-run with LATER matches tampered with, every earlier
+      # forecast must be unchanged), and the importer's refusal to read a blank
+      # fouls cell as nought. Every one of those failures is silent.
+      - name: Card model, backtest and CSV import
+        run: node tests/test-libs.mjs
 
       - name: Data guard (pl_data.js counts, no inline dataset in index.html)
         run: node scripts/check-data.mjs

@@ -24,6 +24,81 @@ Two modelling best-practices ported from Gameweek Edge:
    - The `@hourly` schedule and `included_files` are declared in `netlify.toml`;
      Netlify picks the schedule up on the next deploy.
 
+## Four library-backed upgrades (2026-08-15)
+
+Tabulator, jStat, simple-statistics and PapaParse, all MIT, **vendored inline**
+into `index.html` so the page makes no third-party request to render.
+
+1. **Vendoring is generated, not pasted** (`scripts/vendor-libs.mjs`). Half a
+   megabyte of minified JavaScript in an HTML file is unreviewable by eye. Each
+   block sits between `VENDOR:<id>` markers, carries a licence header naming the
+   package, version, copyright and licence, and has its SHA-256 recorded in
+   `scripts/vendor-libs.sha256.json`. `--check` runs offline in CI and fails if a
+   byte has moved. Source-map comments are stripped: they point at files this
+   page does not ship, on a page whose whole claim is that it fetches nothing.
+
+2. **Screener** (`assets/screener.js`, Tabulator). A fourth view of the Players
+   panel. Virtual rendering keeps ~40 rows in the DOM at 667 players. Two
+   decisions worth recording. The 450-minute floor is **not** a filter — rows
+   below it are greyed and badged, and the minutes slider prints the number it
+   hides. And low-sample rows **sort below** every qualified row whichever column
+   is clicked: one minute and one foul is a fouls-per-90 of 90.0, arithmetically
+   true and otherwise top of every sort in the division. The "why" panel is
+   `position:sticky; left:0` at the table holder's own width, published as a
+   custom property from JS — it lives inside a row element as wide as eleven
+   columns, so left alone the working rendered three screens off the side of a
+   phone.
+
+3. **Card model** (`assets/cardmodel.js`, jStat). λ = shrunk rate × minutes share
+   × venue × referee × opponent, P(card) = 1 − Poisson(0 | λ). The referee leg
+   prices officials with 10+ matches off their own rate and everyone else off the
+   3.71 pivot, which is exactly neutral by construction. The opponent leg reads
+   fouls **drawn** out of the 2025/26 match record; the three promoted clubs were
+   not in that division, so they get `source: "none"` and a neutral factor rather
+   than the league mean wearing a club's name, and the Import view accepts the
+   figure by hand. `working` is one object, returned by the model and rendered
+   verbatim by the expander, so the explanation cannot drift from the arithmetic.
+
+4. **Backtest** (`assets/backtest.js`, simple-statistics + jStat), rendered under
+   a new **Methodology** panel and **computed in the page** rather than quoted.
+   **It reports that the model does not beat the baseline** — +0.0014 Brier at
+   the headline threshold with a 95% interval spanning zero, and no win at any of
+   the three thresholds run. The finding underneath: the model discriminates (top
+   decile 35.9 points above bottom, against the baseline's −14.1) but is biased
+   low, because team yellow counts are *under*-dispersed relative to a Poisson.
+   `tests/test-libs.mjs` pins the verdict so a change that flips it fails loudly.
+
+5. **Import** (`assets/adminimport.js`, PapaParse) behind `?admin=1`. Emits a
+   `PL_PLAYERS` block byte-compatible with `data/build_pl_data.py`. A blank fouls
+   cell is `null`, never `0` — read as nought it fits the player as the most
+   disciplined in the division and nothing on screen says why. The flag is
+   tidiness, not security, and the view says so: static page, no server, nothing
+   to protect.
+
+6. **Sources & licences** panel: epldata (MIT), the DataHub PL mirror (PDDL),
+   openfootball (CC0), the FPL API, the four libraries — and an explicit "not
+   used, and will not be" entry for FBref, WhoScored, FootyStats, Understat and
+   bookmaker feeds.
+
+### Known gaps, deliberately left open
+
+- **The per-player backtest leg.** Scoring P(this player is booked in this
+  fixture) needs per-player, per-match outcomes for a completed season. FPL
+  carries the current season only (pre-season: nothing) and every archive that
+  has it is off limits. The test runs at team-match level on what is licensable
+  and says so on screen; it is not evidence about the per-player rates.
+- **Promoted-club fouls drawn.** Not in the 2025/26 Premier League record because
+  they were not in the division. Manual entry, labelled as such, per the licence
+  rules.
+- **Page weight.** `index.html` is now ~990 KB, of which 574 KB is vendored
+  library code (Tabulator alone is 432 KB) — roughly 130 KB gzipped. It buys a
+  page with no third-party requests; splitting the libraries into `assets/` would
+  let them cache separately across deploys, and is the obvious next move if the
+  shell fetch ever becomes the problem.
+- **Two external requests remain, and predate this work**: the Supabase client
+  from jsDelivr (optional sign-in) and Google Fonts. Neither is a vendored
+  library; both would need their own decision.
+
 ## Implemented
 
 1. **Data divergence fixed + hand-copy step eliminated.** The stale inline
