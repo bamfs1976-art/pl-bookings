@@ -2,6 +2,7 @@
  "note": "Referee appointments as published by the competition, laid over the harvested fixture list by data/appointments.py. The harvest wins where it has a value; this fills the nulls.",
  "sources": [
   "https://rfef.es/sites/default/files/designaciones_1a_division_masculina_-_temp_2026-27_-_jornada_1_domingo16.pdf",
+  "https://rfef.es/sites/default/files/designaciones_1a_division_masculina_-_temp_2026-27_-_jornada_1_lunes17.pdf",
   "https://rfef.es/sites/default/files/designaciones_1a_division_masculina_-_temp_2026-27_-_jornada_1_sabado15.pdf",
   "https://www.efl.com/news/2026/august/11/referee-appointments--14-20-august/"
  ],
@@ -181,6 +182,17 @@
    "refResolved": "Miguel Sesma Espinosa",
    "resolvedBy": "run",
    "source": "https://rfef.es/sites/default/files/designaciones_1a_division_masculina_-_temp_2026-27_-_jornada_1_domingo16.pdf"
+  },
+  {
+   "league": "LL",
+   "date": "2026-08-17",
+   "h": "DEP",
+   "a": "ELC",
+   "ko": "21:00",
+   "ref": "Francisco José Hernández",
+   "refResolved": "Francisco Hernandez Maeso",
+   "resolvedBy": "given2",
+   "source": "https://rfef.es/sites/default/files/designaciones_1a_division_masculina_-_temp_2026-27_-_jornada_1_lunes17.pdf"
   }
  ]
 }

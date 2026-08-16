@@ -436,4 +436,85 @@ def _the_sunday_sheet_parses_as_published():
 t("the published Sunday sheet parses, fourth officials and all",
   _the_sunday_sheet_parses_as_published)
 
+def _a_compound_given_name_is_not_a_surname():
+    """"Francisco José Hernández" is Francisco Hernandez Maeso.
+
+    The CTA prints both given names; the card table carries one. Read
+    positionally the published surnames are ["jose", "hernandez"] and the
+    table's are ["hernandez", "maeso"] — neither is a contiguous run of the
+    other, so every rule up to and including `run` finds nothing and a fixture
+    with a perfectly good card record prices at the league rate.
+    """
+    table = ["Francisco Hernandez Maeso", "Alejandro Hernandez"]
+    got, how = A.resolve_ref_name("Francisco José Hernández", table)
+    assert got == "Francisco Hernandez Maeso", f"resolved to {got!r}"
+    assert how == "given2", (
+        f"resolved by {how!r} — the tier must be visible in the ingest log, "
+        "not pass as a plain run")
+
+    # THE OTHER HERNÁNDEZ IS THE POINT. Alejandro shares the surname and is
+    # more than a card a game stricter; the first initial is all that separates
+    # them, and dropping a token must not drop that too.
+    assert A.resolve_ref_name("Alejandro José Hernández", table)[0] == "Alejandro Hernandez"
+    assert A.resolve_ref_name("José Hernández", table) == (None, None), (
+        "a José who is neither of them took one of their records")
+
+    # AMBIGUITY STILL REFUSES. Two officials who would both match once the
+    # second token is dropped is not a lookup.
+    two = ["Francisco Hernandez Maeso", "Francisco Hernandez Pastor"]
+    assert A.resolve_ref_name("Francisco José Hernández", two) == (None, None)
+
+    # AND IT MUST NOT FIRE WHERE A REAL SURNAME WOULD BE DROPPED. Every one of
+    # these resolves by an earlier rule; if any starts coming back "given2",
+    # the tier has stopped being a last resort.
+    ll = A.ref_names("LL")
+    for published in ("Juan Martinez Munuera", "Jose Luis Munuera Montero",
+                      "Jose Maria Sanchez Martinez", "Miguel Angel Ortiz Arias",
+                      "Mateo Busquets Ferrer"):
+        got, how = A.resolve_ref_name(published, ll)
+        assert got and how != "given2", f"{published!r} resolved by {how!r}"
+
+    # A SWEEP, not a handful: no official on any desk may resolve to a
+    # different one once a second given name is assumed.
+    for code in ("PL", "EFLC", "LL"):
+        names = A.ref_names(code)
+        for n in names:
+            assert A.resolve_ref_name(n, names)[0] == n, f"{code}: {n!r} stopped resolving"
+            toks = n.split()
+            if len(toks) < 3:
+                continue
+            probe = f"{toks[0]} {toks[1]} {toks[-1]}"
+            hit, tier = A.resolve_ref_name(probe, names)
+            assert not (tier == "given2" and hit != n), (
+                f"{code}: {probe!r} -> {hit!r} via given2, but it is {n!r}")
+
+
+t("a compound given name is not a surname", _a_compound_given_name_is_not_a_surname)
+
+
+def _the_monday_sheet_parses_with_two_franciscos():
+    """One line, two officials called Francisco — the referee and the fourth.
+
+    The fourth official is cut off BEFORE the referee is read, so the only way
+    to get this wrong is to stop doing that. "Francisco García" has no card
+    record, so reading him as the referee would price the fixture at the league
+    rate instead of the most lenient whistle in the division — a quiet 30%
+    error in every card line on that match.
+    """
+    text = (
+        "17-08-2026 | RC Deportivo | Elche CF | 21:00\n"
+        "Árbitro:Francisco José Hernández            4º Árbitro:Francisco García\n"
+        "A. Asistente 2: Abraham Pérez               AVAR: Guillermo Cuadra\n"
+    )
+    rows = I.parse_rfef(text)
+    assert len(rows) == 1
+    assert rows[0]["ref"] == "Francisco José Hernández", (
+        f"read {rows[0]['ref']!r} — the fourth official shares the line AND the "
+        "given name")
+    assert rows[0]["home"] == "RC Deportivo" and rows[0]["away"] == "Elche CF"
+
+
+t("the Monday sheet parses with two officials called Francisco",
+  _the_monday_sheet_parses_with_two_franciscos)
+
 print(f"\n{passed} tests passed")

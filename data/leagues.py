@@ -399,6 +399,11 @@ LALIGA_FD_ALIASES = {
 LALIGA_RFEF_ALIASES = {
     "Real Racing Club de Santander": "Racing Santander",
     "RCD Espanyol de Barcelona": "Espanyol",
+    # Not "Deportivo La Coruña" shortened but the club's OWN initials plus a
+    # bare "Deportivo": nothing to strip at either end and nothing the accent
+    # index reaches, since the registry's key carries the city and this does
+    # not.
+    "RC Deportivo": "Deportivo La Coruna",
 }
 
 # Legal endings no registry carries. Stripped and retried,

@@ -613,9 +613,14 @@ def _rfef_legal_names_map_to_the_registry():
     a city; "Real Racing Club de Santander" is formal at both ends. Both were
     refused as "club not recognised" and the sheet would not ingest.
     """
+    # NAMED EXPLICITLY, not just swept. The loop below deletes each entry in
+    # turn and checks it was load-bearing — but an entry deleted from the
+    # SOURCE is simply not iterated, so the sweep alone cannot notice one going
+    # missing. Removing "RC Deportivo" escaped exactly that way.
     for published, short in (
         ("Real Racing Club de Santander", "RAC"),
         ("RCD Espanyol de Barcelona", "ESP"),
+        ("RC Deportivo", "DEP"),
     ):
         got = L.laliga_short(published)
         assert got == short, f"{published!r} -> {got!r}, expected {short!r}"

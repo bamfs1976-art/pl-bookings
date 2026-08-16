@@ -170,6 +170,37 @@ def resolve_ref_name(published, known):
         if got:
             return got, "run"
 
+    # A COMPOUND GIVEN NAME, on the published side only. The CTA prints
+    # "Francisco José Hernández"; the card table holds "Francisco Hernandez
+    # Maeso". Read positionally the published surnames are ["jose",
+    # "hernandez"] and the table's are ["hernandez", "maeso"] — neither is a
+    # contiguous run of the other, so every rule above finds nothing and a
+    # fixture with a perfectly good card record prices at the league rate.
+    #
+    # "José" is not a surname. Compound given names are ordinary among these
+    # officials — José Luis, José María, Miguel Ángel, Francisco José — and
+    # NOTHING IN A NAME says whether its second token is a second given name or
+    # a first surname. That is why this cannot be a general reading rule: apply
+    # it eagerly and "Juan Martínez Munuera" loses a real surname.
+    #
+    # SO IT IS TRIED LAST AND ONLY WHEN EVERYTHING ELSE HAS FAILED, drops the
+    # second token, and accepts a UNIQUE hit or nothing — the same bar as every
+    # rule above. Reported as its own tier, so a name resolved this way is
+    # visible as such in the ingest log rather than passing as a plain run.
+    #
+    # DELIBERATELY NOT PORTED TO PLDCore.matchRefName, and this is the note for
+    # whoever next tries to align the two. The desks never see a published name:
+    # the ingest writes the RESOLVED spelling into the fixture file, so what
+    # reaches the JS is either the card table's own name (exact) or a harvested
+    # abbreviation like "R. De Burgos" (the run rule). A tier the JS cannot
+    # reach is dead code there, which is what this repository refuses
+    # everywhere else — the two rules differ here because their inputs do.
+    bits = _fold(published).split()
+    if first and len(bits) >= 3:
+        got = _by_run(first, bits[2:], by_fold)
+        if got:
+            return got, "given2"
+
     return None, None
 
 
