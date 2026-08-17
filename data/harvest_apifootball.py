@@ -41,6 +41,7 @@ deliberately loud for that reason: on the first real run, a field that has
 moved will stop the harvest and name itself rather than write a plausible file.
 """
 import argparse
+import datetime as dt
 import json
 import re
 import os
@@ -722,6 +723,141 @@ def map_ref_fixture(entry, code):
     return {"d": str(date)[:10], "hn": home, "an": away, "ref": ref}
 
 
+def fixtures_within(league, hours):
+    """Ids of this league's fixtures kicking off within `hours`, from the
+    COMMITTED fixture list rather than another API call.
+
+    The fixture file is refreshed three times a day and carries kick-off times;
+    re-fetching them to decide what to fetch would spend calls on a question
+    already answered on disk.
+    """
+    const, filename = FIXTURE_FILES[league.code]
+    path = DATA / filename
+    if not path.exists():
+        return []
+    now = dt.datetime.now(dt.timezone.utc)
+    horizon = now + dt.timedelta(hours=float(hours))
+    ids = []
+    for line in path.read_text(encoding="utf-8").splitlines():
+        m = re.search(r"\bid:(\d+)", line)
+        d = re.search(r'\bd:"([^"]+)"', line)
+        st = re.search(r'\bst:"([^"]*)"', line)
+        if not (m and d):
+            continue
+        if st and st.group(1) in FINISHED:
+            continue
+        try:
+            when = dt.datetime.fromisoformat(d.group(1))
+        except ValueError:
+            continue
+        if when.tzinfo is None:
+            when = when.replace(tzinfo=dt.timezone.utc)
+        if now - dt.timedelta(hours=2) <= when <= horizon:
+            ids.append(int(m.group(1)))
+    return ids
+
+
+def harvest_lineups(host, key, league, fixture_ids):
+    """Team sheets for the given fixtures, one call each.
+
+    ONE CALL PER FIXTURE is what the endpoint offers — there is no "every
+    lineup today" form — so this takes a SHORT list of fixtures near kick-off,
+    never a whole round. Twelve fixtures is twelve calls against a 7,500/day
+    allowance; a season is not.
+
+    Names come back as the FEED spells them ("C. Nørgaard", "Bruno G.") and are
+    kept that way. Resolving them against a squad here would bake one moment's
+    squad into a file that outlives it, and would be a fourth copy of a join
+    this repository has already been bitten by; the desks do it at read time
+    through PLDCore.matchSquadName.
+
+    A fixture whose sheet is not published yet returns empty and is simply
+    absent from the result. That is the normal state until about an hour before
+    kick-off, not an error.
+    """
+    out = {}
+    for fid in fixture_ids:
+        payload = _get(host, key, "fixtures/lineups", {"fixture": fid})
+        err = api_errors(payload)
+        if err:
+            print(f"    fixture {fid}: refused ({err}) — skipped")
+            continue
+        got = parse_lineups(payload, league)
+        # BOTH SIDES OR NEITHER. Pricing one team off its real XI and the other
+        # off last season's minutes would make the two halves of one match
+        # answer different questions, and the match total is their sum.
+        if len(got) == 2:
+            out[str(fid)] = got
+        elif got:
+            print(f"    fixture {fid}: only one side published — held back")
+    return out
+
+
+def parse_lineups(payload, league):
+    """The clubs and sheets in one /fixtures/lineups payload.
+
+    Split out from the fetching so it can be tested against a recorded payload
+    without a key or a network.
+    """
+    got = {}
+    for side in (payload.get("response") or []):
+        tm = side.get("team") or {}
+        short = short_in(league.code, canonical_for(league.code, tm.get("name")))
+        if not short:
+            print(f"    club not recognised: {tm.get('name')!r}")
+            continue
+        def names(key):
+            return [n for n in
+                    (((p.get("player") or {}).get("name") or "").strip()
+                     for p in (side.get(key) or []))
+                    if n]
+        start, bench = names("startXI"), names("substitutes")
+        # An XI that is not eleven is a sheet mid-publication or a payload shape
+        # that has moved. Either way it is not something to price off, and half
+        # a team sheet is worse than none.
+        if len(start) != 11:
+            print(f"    {short}: {len(start)} in the XI, not 11 — skipped")
+            continue
+        got[short] = {"start": start, "sub": bench}
+    return got
+
+
+def emit_lineups(by_fixture, fetched_at):
+    """data/lineups.js — the baked team sheets the desks read.
+
+    A COMMITTED FILE, like every other input here. The desks fetch nothing at
+    runtime and that is deliberate; this keeps it that way. What it does NOT
+    solve is cadence — a sheet published an hour before kick-off is only in this
+    file if something ran in that hour — and that is a workflow schedule
+    question rather than an architectural one.
+    """
+    lines = [
+        "// Auto-generated by harvest_apifootball.py --lineups. DO NOT EDIT BY HAND.",
+        "// Confirmed team sheets, keyed by API-Football fixture id.",
+        "//",
+        "// Names are the FEED's spelling and are joined to a squad on the desks,",
+        "// through PLDCore.matchSquadName. A fixture absent from here prices off",
+        "// squad minute-weights exactly as it always has — that is the normal",
+        "// state until about an hour before kick-off, not a failure.",
+        f"// Fetched {fetched_at}.",
+        "const LINEUPS = {",
+    ]
+    for fid in sorted(by_fixture, key=lambda x: int(x)):
+        sides = by_fixture[fid]
+        inner = ",".join(
+            json.dumps(club) + ":{start:"
+            + json.dumps(sides[club]["start"], ensure_ascii=False)
+            + ",sub:" + json.dumps(sides[club]["sub"], ensure_ascii=False) + "}"
+            for club in sorted(sides))
+        lines.append(f'  "{fid}":{{{inner}}},')
+    lines.append("};")
+    lines.append('if (typeof module !== "undefined" && module.exports) module.exports = LINEUPS;')
+    lines.append('if (typeof window !== "undefined") window.LINEUPS = LINEUPS;')
+    (DATA / "lineups.js").write_text("\n".join(lines) + "\n", encoding="utf-8")
+    print(f"lineups.js written ({len(by_fixture)} fixture(s) with both sheets)")
+    return len(by_fixture)
+
+
 def harvest_ref_fixtures(host, key, league, season):
     """Every completed fixture and its official, for one league-season."""
     af = str(league.af_league)
@@ -892,6 +1028,14 @@ def main():
     ap.add_argument("--limit", type=int,
                     help="cap the number of fixtures fetched (one call each), "
                          "for a first run that should not spend the day's quota")
+    ap.add_argument("--lineups", action="store_true",
+                    help="confirmed team sheets for fixtures kicking off soon, "
+                         "into data/lineups.js. One call per fixture, so it is "
+                         "scoped by --within-hours rather than by round.")
+    ap.add_argument("--within-hours", type=float, default=3.0,
+                    help="with --lineups, how far ahead to look (default 3). "
+                         "Sheets publish about an hour before kick-off, so a "
+                         "wider window mostly buys empty responses.")
     ap.add_argument("--ref-fixtures", action="store_true",
                     help="harvest the COMPLETED season's officials, for the "
                          "referee join (leagues whose free records name no "
@@ -933,6 +1077,22 @@ def main():
     if args.ref_fixtures:
         emit_ref_fixtures(harvest_ref_fixtures(host, key, league, season),
                           league, season)
+        return
+    if args.lineups:
+        # Scoped by the CLOCK, not by round. One call per fixture is the whole
+        # cost model here, and a round is 10-12 fixtures whose sheets are not
+        # published until about an hour before each kicks off — so asking for
+        # all of them, three times a day, buys mostly empty responses at full
+        # price. The window is what keeps this a handful of calls.
+        soon = fixtures_within(league, args.within_hours)
+        if not soon:
+            print(f"  no {league.name} fixture kicks off within "
+                  f"{args.within_hours}h — nothing to fetch")
+            return
+        print(f"  {len(soon)} fixture(s) within {args.within_hours}h")
+        got = harvest_lineups(host, key, league, soon)
+        emit_lineups(got, dt.datetime.now(dt.timezone.utc)
+                     .strftime("%Y-%m-%dT%H:%MZ"))
         return
     if args.player_matches:
         emit_player_matches(

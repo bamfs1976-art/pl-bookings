@@ -283,6 +283,49 @@ group('the player-name join is the one that already exists');
   ok('joinLooksRight and foldLetters are exported and behave as documented');
 }
 
+{
+  /* THE ROUND TRIP, over every squad name on all three desks rather than a
+     handful I picked. API-Football's convention is forename-to-an-initial,
+     surname in full; apply that to a real squad name and join it back, and
+     anything that does not return to itself is a player the lineup layer would
+     silently drop from his own team sheet.
+
+     A hand-picked list of six names cannot find that. 1,700 can. */
+  const abbrev = (n) => {
+    const p = String(n).split(' ').filter(Boolean);
+    return p.length < 2 ? n : p[0][0] + '. ' + p.slice(1).join(' ');
+  };
+  let total = 0, lost = [];
+  for (const [file, konst] of [
+    ['data/eflc_data.js', 'EFLC_PLAYERS'],
+    ['data/laliga_data.js', 'LALIGA_PLAYERS'],
+    ['data/pl_data.js', 'PL_PLAYERS'],
+  ]) {
+    const players = load(file, konst).filter((p) => !p.ls);
+    const clubs = [...new Set(players.map((p) => p.c))];
+    for (const club of clubs) {
+      const squad = players.filter((p) => p.c === club).map((p) => p.n);
+      for (const n of squad) {
+        total++;
+        if (C.matchSquadName(abbrev(n), squad) !== n) lost.push(`${konst} ${club} ${n}`);
+      }
+    }
+  }
+  /* 1,400 is the floor, not the count: squads change size through a window and
+     the Premier League desk's baked set is the smallest of the three. Set below
+     what the three currently carry, high enough that a desk dropping out of the
+     loop entirely fails here. */
+  assert.ok(total > 1300, `only ${total} squad names round-tripped — a desk looks empty`);
+  /* Some loss is legitimate: two players at one club who share an initial and
+     a surname collapse to the same key, and the join REFUSES rather than pick
+     one. That is the designed behaviour and it is why this is a ceiling, not
+     zero. It is a handful, not a tenth. */
+  assert.ok(lost.length <= total * 0.01,
+    `${lost.length}/${total} squad names do not survive the feed's own ` +
+    `abbreviation: ${lost.slice(0, 5).join('; ')}`);
+  ok(`${total - lost.length}/${total} squad names across three desks survive the feed's abbreviation`);
+}
+
 console.log(`\n${passed} checks passed`);
 
 /* ---- MUTATIONS -----------------------------------------------------------

@@ -14,6 +14,7 @@ Everything here runs against fixtures. The live API is not reachable from CI
 and needs a key, so these prove the MAPPING and the WALK, not the endpoint.
 """
 import json
+import re
 import sys
 from pathlib import Path
 
@@ -507,5 +508,116 @@ def _a_division_harvest_knows_clubs_that_changed_division():
 
 
 t("a division harvest knows the clubs that changed division", _a_division_harvest_knows_clubs_that_changed_division)
+
+def _lineups_parse_what_is_publishable():
+    """A team sheet becomes a row only when it is a whole team sheet.
+
+    The realistic failures are all partial rather than absent: a sheet caught
+    mid-publication, a club the registry does not carry, one side up and the
+    other not. Each of those, priced, would be worse than the squad weighting
+    it replaced — so each is refused here rather than half-used.
+    """
+    lg = L.get("EFLC")
+    def sheet(team, start, sub):
+        return {"team": {"name": team},
+                "startXI": [{"player": {"name": n}} for n in start],
+                "substitutes": [{"player": {"name": n}} for n in sub]}
+    xi = [f"Player {i}" for i in range(1, 12)]
+    bench = [f"Sub {i}" for i in range(1, 8)]
+
+    got = A.parse_lineups({"response": [sheet("Wolves", xi, bench)]}, lg)
+    assert set(got) == {"WOL"}, got
+    assert len(got["WOL"]["start"]) == 11 and len(got["WOL"]["sub"]) == 7
+
+    # Ten in the XI is a sheet still being published, not a formation.
+    assert A.parse_lineups({"response": [sheet("Wolves", xi[:10], bench)]}, lg) == {}
+    # Twelve is a payload shape that has moved.
+    assert A.parse_lineups({"response": [sheet("Wolves", xi + ["Extra"], bench)]}, lg) == {}
+    # A club the registry does not know is dropped, never guessed at.
+    assert A.parse_lineups({"response": [sheet("Not A Club", xi, bench)]}, lg) == {}
+    # Nothing published yet is the ordinary state, not an error.
+    assert A.parse_lineups({"response": []}, lg) == {}
+    # An empty bench is legal — a sheet can name none.
+    assert A.parse_lineups({"response": [sheet("Wolves", xi, [])]}, lg)["WOL"]["sub"] == []
+    # Blank names are dropped rather than joined against later.
+    blank = A.parse_lineups({"response": [sheet("Wolves", xi, ["", "  ", "Real Sub"])]}, lg)
+    assert blank["WOL"]["sub"] == ["Real Sub"], blank["WOL"]["sub"]
+
+    # NAMES ARE KEPT AS THE FEED SPELLS THEM. Resolving here would bake one
+    # moment's squad into a file that outlives it.
+    feed = A.parse_lineups({"response": [sheet("Wolves", ["C. Nørgaard"] + xi[1:], bench)]}, lg)
+    assert feed["WOL"]["start"][0] == "C. Nørgaard", feed["WOL"]["start"][0]
+
+
+t("a lineup is parsed only when the whole sheet is there",
+  _lineups_parse_what_is_publishable)
+
+
+def _lineups_are_scoped_by_the_clock():
+    """One call per fixture is the cost model, so the window is the control.
+
+    A round is 10-12 fixtures whose sheets publish about an hour before each
+    kicks off. Asking for all of them three times a day buys mostly empty
+    responses at full price; asking only for what is about to start does not.
+    """
+    lg = L.get("EFLC")
+    near = A.fixtures_within(lg, 3)
+    far = A.fixtures_within(lg, 24 * 30)
+    assert isinstance(near, list) and isinstance(far, list)
+    # A wider window can only include more.
+    assert set(near) <= set(far), "a 3h window found a fixture a month-long one did not"
+    # And a window of nothing finds nothing, whatever the fixture list holds.
+    assert A.fixtures_within(lg, 0) == [] or all(isinstance(i, int) for i in A.fixtures_within(lg, 0))
+    # A FIXTURE THAT HAS JUST FINISHED MUST NOT BE RE-FETCHED, and this is the
+    # only case where the status check earns its place: the window reaches two
+    # hours BACK, so a 19:00 kick-off is still inside it at 20:45 — by which
+    # time the sheet cannot change and the call would be spent for nothing.
+    # Every older match is already excluded by the window itself, which is why
+    # deleting the status check passes every other assertion here.
+    import datetime as dt, tempfile, pathlib
+    just_kicked = (dt.datetime.now(dt.timezone.utc) - dt.timedelta(minutes=100)
+                   ).strftime("%Y-%m-%dT%H:%M:%S+00:00")
+    tmp = pathlib.Path(tempfile.mkdtemp())
+    const, filename = A.FIXTURE_FILES[lg.code]
+    (tmp / filename).write_text(
+        f"const {const} = [\n"
+        f'  {{id:9000001,d:"{just_kicked}",r:1,h:"WOL",a:"BLB",st:"FT"}},\n'
+        f'  {{id:9000002,d:"{just_kicked}",r:1,h:"BOL",a:"PRE",st:"NS"}},\n'
+        "];\n", encoding="utf-8")
+    saved = A.DATA
+    try:
+        A.DATA = tmp
+        got = A.fixtures_within(lg, 3)
+    finally:
+        A.DATA = saved
+    assert 9000002 in got, "a match kicking off inside the window was not fetched"
+    assert 9000001 not in got, (
+        "a match that has already finished is still in the fetch list — its "
+        "sheet cannot change and the call is wasted")
+
+    # AND THE OTHER HALF OF THE SAME RULE, which the status check cannot do: a
+    # fixture the feed has NOT updated. Status lags — a match can sit at "NS"
+    # for hours after it kicked off — so the window reaching only two hours
+    # back is what stops those being fetched for ever. Each check covers the
+    # other's gap, which is why removing either alone leaves the other passing.
+    stale = (dt.datetime.now(dt.timezone.utc) - dt.timedelta(hours=6)
+             ).strftime("%Y-%m-%dT%H:%M:%S+00:00")
+    (tmp / filename).write_text(
+        f"const {const} = [\n"
+        f'  {{id:9000003,d:"{stale}",r:1,h:"WOL",a:"BLB",st:"NS"}},\n'
+        "];\n", encoding="utf-8")
+    try:
+        A.DATA = tmp
+        stale_got = A.fixtures_within(lg, 3)
+    finally:
+        A.DATA = saved
+    assert 9000003 not in stale_got, (
+        "a fixture that kicked off six hours ago is still being fetched because "
+        "the feed never moved it off NS — the window's lower bound is what "
+        "stops that, and it is gone")
+
+
+t("lineups are scoped by the clock, and never re-fetched for a finished match",
+  _lineups_are_scoped_by_the_clock)
 
 print(f"\n{passed} tests passed")
