@@ -102,7 +102,51 @@ The replacement is not complicated in itself: when an XI is known, a starter's
 expected minutes are ~90 and a substitute's are ~20, rather than a share of
 eleven derived from history.
 
-### The open questions
+### The two open questions are now SETTLED
+
+Both were put to the user on 17 August and answered; the reasoning is recorded
+here so the next session does not reopen them by accident.
+
+**SUBSTITUTES — conserve the eleven.** A team plays 990 player-minutes and
+`minuteWeights(mins, 11)` already spreads exactly that (measured across the 24
+shipped Championship squads: 10.95 to 11.00 per club). So the XI weighting must
+land on the same total, or fixtures with a lineup would run systematically
+hotter or cooler than fixtures without one — an artefact of HAVING the team
+sheet rather than of anything on it.
+
+The bench collectively gets `SUBS_USED x SUB_MINUTES` = 100 minutes; the
+starters get the remaining 890. Divided by the actual squad shape that is 80.9
+minutes a starter and, for a bench of nine, 11.1 a substitute — and for a
+Championship bench of seven, 14.3, because it is the same pool over a smaller
+denominator. The bench size comes from the lineup payload; hardcoding either
+league's would misprice the other.
+
+The numbers this note originally suggested are wrong and it is worth saying
+why. "90 for a starter, 20 for a sub" totals 13.0 elevens — eighteen per cent
+more football than gets played, inflating every over-line on exactly the
+fixtures the desk knows most about. "90 and 0" conserves the total but prices a
+named substitute as unbookable. Both are pinned as wrong in
+`scripts/check-lineup-pricing.mjs`.
+
+`PLDCore.lineupMinutes` / `PLDCore.xiWeights`.
+
+**THE ACCA — it keeps its logged price.** The XI weighting lives in `PLDCore`,
+so the desk and the acca run ONE implementation; the acca simply records what
+that implementation returned at logging time, with no XI, and never revises.
+
+The note below called that "two numbers for one fixture, the drift this repo
+keeps being bitten by". That framing was wrong, and the distinction matters:
+DRIFT is two code paths disagreeing about one question. One code path evaluated
+at two times, with different information, is not drift — it is a record and an
+estimate, and they are allowed to differ as long as each says which it is. So
+the acca card carries its pricing time.
+
+The alternative — moving the logging to about an hour before kick-off — was
+rejected because it would cut the recommendation's availability from roughly a
+week to roughly an hour. `cmdBuild` logs as soon as a round has any unplayed
+fixture, which is usually right after the previous round ends.
+
+### The remaining open question
 
 **Where the XI comes from.** API-Football has `/fixtures/lineups`, and
 `data/harvest_apifootball.py` already calls `/fixtures` for the same ids, so
@@ -114,22 +158,21 @@ desk fetches at render time (which no desk currently does — all three are
 static files by design, and breaking that is a bigger decision than this
 feature).
 
-**Substitutes.** A named substitute is not a non-entity: he has a real chance
-of 20 minutes and a real chance of a card in them. Weighting him at zero would
-underprice every fixture, and the over-lines are the markets most sensitive to
-the tail. The naive fix — 90 for starters, 0 for the bench — is worse than
-what ships today.
+**CONSERVING MINUTES DOES NOT CONSERVE EXPECTED CARDS**, and this is the thing
+to decide next. Measured across the Championship's opening round, pricing off a
+plausible XI comes out 0.13 cards COOLER than pricing off squad weights
+(median; max 0.18) — every fixture, same direction.
 
-**The acca interaction, which is the awkward one.** `scripts/accas.mjs` logs
-write-once, pre-kick-off, and deliberately never revises: that is what makes
-the record gradeable at all. But the XI lands ~1 hour before kick-off and the
-acca is logged well before that. So either the acca keeps pricing off squad
-weights while the desk prices off the XI — two numbers for one fixture, which
-is the drift this repo keeps being bitten by — or the acca's logging moves
-later, which shortens the window the recommendation is actually available in.
-Neither is obviously right. Decide this BEFORE writing code, because it
-determines whether the XI weighting lives in `PLDCore` (shared by both) or
-only on the pages.
+That is not a bug and it is not a rounding error. Expected cards is a sum of
+`1 - exp(-lambda)`, which is concave, so concentrating the same total minutes
+into fewer players produces fewer expected bookings. The squad weighting
+spreads minutes over twenty-odd men and slightly OVERSTATES the total; the XI
+weighting is the more correct number.
+
+But it does mean the desk will read about three per cent cooler on the fixtures
+where a lineup is known, and that difference is visible between two fixtures on
+one page. Either the page says so, or the weighting is calibrated on cards
+rather than minutes. Not settled.
 
 ### What must not change
 
@@ -145,10 +188,27 @@ copies of the referee join that disagreed with each other); the fouls-won fill
 in `data/build_pl_data.py` has a two-stage key for exactly this problem.
 Reuse, do not re-derive.
 
+### Is it worth the cadence problem? Measured: yes, but not by much
+
+The test this note set was "if it moves a fixture by less than a tenth of a
+card, the cadence problem is not worth solving". Measured over the
+Championship's whole opening round, substituting a most-used XI for the squad
+weighting moves expected cards by a median of **0.13** and a maximum of 0.18 —
+over the bar, but not far over.
+
+TWO CAVEATS ON THAT NUMBER, both pushing the same way. It is a LOWER bound: the
+XI used is the eleven with the most minutes, which is the lineup closest to the
+squad weighting by construction, so a rotated side moves further. And it is a
+weighting sensitivity, not a forecast — it says what the change is worth, not
+what any fixture will produce.
+
+WOL v BLB specifically: 4.88 on squad weights against 4.73 on a most-used XI,
+a change of 0.15. (The 4.07 quoted below was from the desk's live path with the
+appointed referee folded in; the figures here come from the guard's own
+reduced path at the league-average whistle, so they are comparable with each
+other and not with that number.)
+
 ### Where the numbers stood when this was deferred
 
 WOL v BLB, 14 August, referee Farai Hallam (factor 1.049): 4.07 expected
-cards, O3.5 60%, both-carded 79%. Priced off squad minute-weights. Worth
-re-deriving off the actual XI once this is built, as a sanity check on how
-much the change is worth — if it moves that fixture by less than a tenth of a
-card, the cadence problem above is not worth solving.
+cards, O3.5 60%, both-carded 79%. Priced off squad minute-weights.

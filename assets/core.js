@@ -82,6 +82,130 @@
       .replace(/ł/g, 'l').replace(/þ/g, 'th');
   }
 
+  /* ---- pricing off a confirmed XI ---------------------------------------
+   *
+   * When a lineup is known, a player's expected minutes stop being a share of
+   * last season's and become a fact about tonight. The replacement has one
+   * hard constraint and it is arithmetic, not taste.
+   *
+   * CONSERVE THE ELEVEN. A team plays 990 player-minutes in a match — eleven
+   * shirts for ninety minutes — and `minuteWeights(mins, 11)` already spreads
+   * exactly that much across a squad (measured on the shipped Championship
+   * data: 10.95 to 11.00 per club). Any XI weighting must land on the same
+   * total, or fixtures with a known lineup would run systematically hotter or
+   * cooler than fixtures without one, and that difference would be an artefact
+   * of HAVING the team sheet rather than of anything on it.
+   *
+   * This is where the obvious numbers fail. "90 for a starter, 20 for a
+   * substitute" is the intuitive rule and it totals 11 + 9x0.22 = 13.0 — about
+   * eighteen per cent more football than gets played, inflating every over-line
+   * on every fixture the desk knows most about. "90 and 0" conserves the total
+   * but prices a named substitute as though he could not be booked, which is
+   * false and worst in the tails where the over-lines live.
+   *
+   * So the minutes are shared out rather than assigned: the bench collectively
+   * gets SUBS_USED x SUB_MINUTES, the starters get what remains, and each side
+   * of that split is divided by however many players are actually on it. The
+   * bench size comes from the lineup itself — a Championship seven and a
+   * Premier League nine are different denominators for the same pool of
+   * substitute minutes, and hardcoding either would misprice the other.
+   */
+  const MATCH_MINUTES = 90;
+  const XI_SIZE = 11;
+  /* Five substitutions, which is the rule in all three divisions the desks
+     cover. Not a modelling choice — a competition rule, and the day it changes
+     this is where it changes. */
+  const SUBS_USED = 5;
+  /* The mean a substitute plays GIVEN he comes on. Substitutions cluster
+     between the 60th and 80th minute, so a shade over twenty is the honest
+     middle; it is the one free parameter here and it moves the split rather
+     than the total, which is why the total is the thing guarded. */
+  const SUB_MINUTES = 20;
+
+  /* Expected minutes for one starter and one named substitute, given the
+     shape of a lineup. Returned as MINUTES, not weights, so a caller can see
+     what it is being told: 81 and 11 reads as a claim about football, 0.9 and
+     0.12 reads as a number that fell out of something. */
+  function lineupMinutes(starters, bench) {
+    const ns = Math.max(0, Math.floor(Number(starters) || 0));
+    const nb = Math.max(0, Math.floor(Number(bench) || 0));
+    if (!ns) return null;
+    const pool = XI_SIZE * MATCH_MINUTES;              // 990 player-minutes
+    /* A bench shorter than the permitted substitutions cannot supply more
+       than it has; a longer one shares the same pool more thinly. */
+    const benchPool = Math.min(SUBS_USED, nb) * SUB_MINUTES;
+    return {
+      starter: (pool - benchPool) / ns,
+      sub: nb ? benchPool / nb : 0,
+      total: pool,
+    };
+  }
+
+  /* The weights themselves, aligned to whatever order the caller passed.
+     `roles` is one entry per squad member: 'start', 'sub', or anything else
+     (including null) for a player not in the squad list at all, who gets zero
+     because he is not at the ground. */
+  function xiWeights(roles) {
+    const list = Array.isArray(roles) ? roles : [];
+    const ns = list.filter((r) => r === 'start').length;
+    const nb = list.filter((r) => r === 'sub').length;
+    const m = lineupMinutes(ns, nb);
+    if (!m) return list.map(() => 0);
+    return list.map((r) => (r === 'start' ? m.starter / MATCH_MINUTES
+      : r === 'sub' ? m.sub / MATCH_MINUTES : 0));
+  }
+
+  /* ---- one player, two feeds --------------------------------------------
+   *
+   * THE JS TWIN OF data/build_pl_data.py's `name_keys`, and deliberately the
+   * same rule rather than a new one: full name first, initial-plus-surname
+   * second. Ported because the lineup layer runs on the desks and that rule
+   * only existed in Python, and because the alternative — reaching for
+   * `joinLooksRight` — is wrong here in a way that is easy to miss.
+   *
+   * THE TWO JOINS ARE COMPLEMENTARY, NOT INTERCHANGEABLE. Measured on real
+   * pairs:
+   *
+   *                                  joinLooksRight   playerKeys
+   *   "Bruno G."  <- Bruno Guimarães       yes            no
+   *   "Toti"      <- Toti Gomes            yes            no
+   *   "C. Nørgaard" <- Christian Nørgaard   no            yes
+   *   "J. Strand Larsen" <- Jørgen ...      no            yes
+   *
+   * joinLooksRight absorbs a TRAILING abbreviation, which is what a vendored
+   * bundle does to a long surname. API-Football abbreviates the FORENAME,
+   * which is the opposite end of the string. A previous attempt at this
+   * feature used one rule and lost Toti Gomes and A. Guðjohnsen — a
+   * single-token name and a letter NFD cannot decompose — so both tiers run,
+   * in this order, and neither is dropped as redundant.
+   */
+  function playerKeys(name) {
+    const flat = normName(foldLetters(String(name || '').toLowerCase()));
+    const parts = flat.split(' ').filter(Boolean);
+    if (!parts.length) return null;
+    return { full: parts.join(' '), initial: parts[0][0] + ' ' + parts[parts.length - 1] };
+  }
+
+  /* One squad name for a published one, or null. UNIQUE OR NOTHING, the rule
+     every join in this repository already follows: two players at a club who
+     share an initial and a surname collapse to one key, and picking either
+     would attach one man's minutes to the other silently. `squad` is a list of
+     names; the return is the matching entry or null. */
+  function matchSquadName(published, squad) {
+    const names = Array.isArray(squad) ? squad : [];
+    const want = playerKeys(published);
+    if (!want) return null;
+    const keyed = names.map((n) => ({ n, k: playerKeys(n) })).filter((x) => x.k);
+    const uniq = (hits) => (hits.length === 1 ? hits[0].n : null);
+    let hit = uniq(keyed.filter((x) => x.k.full === want.full));
+    if (hit) return hit;
+    hit = uniq(keyed.filter((x) => x.k.initial === want.initial));
+    if (hit) return hit;
+    /* The trailing-abbreviation tier, which is the one playerKeys cannot see.
+       Last, so it can never override an exact or initial match. */
+    return uniq(keyed.filter((x) => joinLooksRight(x.n, published)));
+  }
+
   function joinLooksRight(vendoredName, feedName) {
     const a = normName(foldLetters(String(vendoredName || '').toLowerCase()));
     const b = normName(foldLetters(String(feedName || '').toLowerCase()));
@@ -1414,7 +1538,9 @@
 
   const PLDCore = {
     riskScore, normName, matchRefName, pickPL, summarisePicks, calibrate, impliedProb, fairOdds, edgePct, LOGISTIC_SLOPE,
-    per90, liveRate, joinLooksRight, MIN_LIVE_MINUTES,
+    per90, liveRate, joinLooksRight, foldLetters, MIN_LIVE_MINUTES,
+    lineupMinutes, xiWeights, SUBS_USED, SUB_MINUTES,
+    playerKeys, matchSquadName,
     marketProb, marketProbDeVig, valuePoint, TYPICAL_CARD_MARGIN, TYPICAL_GOAL_MARGIN,
     cardCountDist, probOverCards, expectedCards, probBothCarded, probBothAtLeast, teamCardMarkets,
     bookingPointsDist, expectedPoints, probOverPoints, leagueRedRate,

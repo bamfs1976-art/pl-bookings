@@ -210,6 +210,17 @@ jobs:
       - name: Nine legs, nine matches, eighteen clubs, one side of the match odds
         run: node scripts/check-accas.mjs
 
+      # Pricing off a confirmed XI. The assertion that matters most is the
+      # NEGATIVE one: most of a round has no published lineup at any moment, so
+      # the common case must price byte-identically to today, and a feature that
+      # silently re-prices fixtures it knows nothing new about is a regression
+      # wearing the feature's name. Also pins the arithmetic — a team plays 990
+      # player-minutes and the squad weighting already spreads exactly that, so
+      # an XI weighting that lands anywhere else makes the fixtures the desk
+      # knows MOST about drift from the ones it knows least about.
+      - name: A fixture with no lineup prices exactly as it did
+        run: node scripts/check-lineup-pricing.mjs
+
       # Contrast has a right answer, is invisible to whoever picked the colour,
       # and degrades for the people least able to report it. --good-ink sat at
       # 4.43:1 on --bg for as long as the token had existed; --text-3 at 2.70:1;
