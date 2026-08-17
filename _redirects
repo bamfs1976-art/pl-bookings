@@ -11,7 +11,39 @@
 # The La Liga desk. Same rule — before the catch-all.
 /laliga       /laliga.html  200
 /la-liga      /laliga.html  200
-# The combined same-day view across every desk.
+# THE HOMEPAGE IS TODAY'S MATCHES. `/` used to be the Premier League desk;
+# it now serves the same-day card across every division, riskiest first. The
+# desk moved to /pl and keeps a spelled-out alias.
+#
+# Both of these serve today.html, and that is deliberate rather than lazy: the
+# two routes are two views of one dataset, and the pricing, the player-name
+# join and the card builders behind them must not exist twice. The page reads
+# its own path to decide which view it opened on. See the ROUTE comment there.
+/             /today.html   200
+# The whole season, every date, plus the week's nine-fold.
 /today        /today.html   200
+/season       /today.html   200
+
+# The Premier League desk, moved off `/`. Its own internal routing is entirely
+# hash-based (#panel-...), so nothing inside it cares which path it is served
+# from — only the league bar's self-link had to change.
+/pl             /index.html   200
+/premier-league /index.html   200
+
+# OPTIONAL DATA FILES MUST 404, NOT FALL THROUGH.
+#
+# Three script tags carry `onerror="void 0"` for files that legitimately may
+# not exist yet — data/lineups.js above all, which only appears once a harvest
+# has landed a team sheet. That guard is worthless without this rule. Netlify
+# serves static files ahead of redirects, so a file that EXISTS is unaffected;
+# a file that does not existed used to fall through to the catch-all below and
+# come back as index.html with HTTP 200. The browser never fires `error` on a
+# 200 — it fires `SyntaxError: Unexpected token '<'` while parsing HTML as
+# JavaScript, on every page load of all four desks.
+#
+# Found by serving the tree through these rules and reading the console.
+# `python3 -m http.server` returns a real 404 for a missing file, so every
+# earlier local run had the guard working and the bug invisible.
+/data/*   /data-not-found.txt   404
 
 /*    /index.html   200

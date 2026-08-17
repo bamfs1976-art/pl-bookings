@@ -1,7 +1,7 @@
 {
-  "name": "Bookings Desk \u00b7 Premier League",
+  "name": "Bookings Desk",
   "short_name": "Bookings Desk",
-  "description": "Stats-based Premier League player-bookings analysis: player card risk, club discipline, referees and fixtures.",
+  "description": "Booking risk across the Premier League, Championship and La Liga. Opens on today's matches ranked by expected cards, with a desk per division behind it.",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",

@@ -137,6 +137,20 @@ html[data-theme="dark"].lg-all {--accent:#22d3ee;--ring:var(--accent)}
 .lb-eflc .lb-dot{background:var(--eflc)}
 .lb-ll .lb-dot{background:var(--ll)}
 .lb-today .lb-dot{background:linear-gradient(135deg,var(--pl) 0%,var(--eflc) 50%,var(--ll) 100%)}
+/* The season calendar is the same three divisions as Today, so it carries the
+   same three-league gradient — reversed, so the two are distinguishable at a
+   glance in the bar without inventing a fourth colour for a view that has no
+   league of its own. */
+.lb-season .lb-dot{background:linear-gradient(315deg,var(--pl) 0%,var(--eflc) 50%,var(--ll) 100%)}
+/* ONE FILE, TWO ROUTES. today.html serves both `/` (today's matches) and
+   /today (the season calendar); an early script in its head stamps
+   <html data-route>. Anything marked data-for shows only on its own route.
+   Both blocks are in the markup so the page has real headings before any
+   script has run — the selection is presentational, not a rebuild.
+   The default hides nothing, so a document with no data-route (a saved copy,
+   a crawler that ignores the head script) shows both rather than neither. */
+[data-route="home"] [data-for="season"],
+[data-route="season"] [data-for="home"]{display:none}
 
 /* All four have to FIT. At full length the row needs 625px and the widest
    iPhone is 430, so "La Liga" and "Today" sat off the right edge on every

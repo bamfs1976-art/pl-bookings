@@ -564,9 +564,30 @@ group('the accas as a destination: routed, and dated');
 
 {
   const t = readFileSync(join(root, 'today.html'), 'utf8');
-  assert.ok(/value="accas"/.test(t),
-    'today.html has no accas view — the two accas are back under the fixture list');
-  assert.ok(/h === 'accas'/.test(t), '#accas does not deep-link to the accas view');
+  /* THE ACCAS VIEW IS GONE, and that is the current design rather than a
+     regression. today.html now serves two ROUTES: `/` is today's matches and
+     carries the day's acca; /today is the season calendar and carries the
+     week's nine-fold. Each acca sits with the timeframe it covers, which is
+     what the old third view existed to avoid — the two accas being buried
+     several phone screens under a fixture list.
+     So what is asserted is the split itself: each acca renders on exactly one
+     route, and refuses on the other. */
+  assert.ok(/var ROUTE = document\.documentElement\.getAttribute\('data-route'\)/.test(t),
+    'today.html no longer derives its view from the route, so `/` and /today ' +
+    'cannot be two pages');
+  const accaFn = t.slice(t.indexOf('function renderAcca('));
+  assert.ok(/ROUTE !== 'home'[\s\S]{0,80}card\.hidden = true/.test(accaFn.slice(0, 600)),
+    "the day's acca no longer refuses to render off the home page — on the " +
+    'season calendar there is no selected date for it to be the acca of');
+  const nineFn = t.slice(t.indexOf('function renderNine('));
+  assert.ok(/ROUTE !== 'season'[\s\S]{0,120}card\.hidden = true/.test(nineFn.slice(0, 700)),
+    'the nine-fold no longer refuses to render off the season page — it spans ' +
+    'seven days and under today\'s card it made the home page several screens long');
+  /* Old links must still land somewhere right. #all and #accas were the two
+     views that moved to /today, and links to them exist in shared cards. */
+  assert.ok(/h === 'all' \|\| h === 'accas'[\s\S]{0,160}location\.replace\('\/today'\)/.test(t),
+    '#all and #accas no longer redirect to /today — links in the wild that ' +
+    'used to open the calendar or the accas would silently show today instead');
   /* The empty state must be OUTSIDE the card it explains. Nested inside, it is
      hidden exactly when it is needed — its text was still readable to a script,
      so only clicking the button it offers revealed that nothing could reach it. */

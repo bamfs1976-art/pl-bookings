@@ -5,6 +5,28 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data: https://cdn.sportmonks.com https://media.api-sports.io; connect-src 'self' https://knodunjnsxelmpziupwk.supabase.co">
 <title>Today's Card — Bookings Desk</title>
+<!-- WHICH OF THE TWO PAGES THIS IS, decided before anything paints.
+     `/` is the home page: today's matches across every division, riskiest
+     first. `/today` (and `/season`) is the whole season, every date.
+     ONE FILE SERVES BOTH deliberately. The pricing, the confirmed-XI join and
+     the share-card builders behind these two views are the same code, and this
+     repository has been bitten repeatedly by one rule existing twice — the
+     referee join reached seven copies, the player join three, and the matchday
+     rollover four. A second HTML file would have forked all of it. What
+     differs between the routes is chrome and which view opens, which is what
+     this attribute selects.
+     Set in the head, not on DOMContentLoaded, so the heading and the title are
+     right on first paint rather than after a visible swap. -->
+<script>
+  (function () {
+    var p = location.pathname.replace(/\/+$/, '') || '/';
+    var season = p === '/today' || p === '/season' || p === '/today.html';
+    document.documentElement.setAttribute('data-route', season ? 'season' : 'home');
+    document.title = season
+      ? 'Every date, all season — Bookings Desk'
+      : "Today's matches — Bookings Desk";
+  })();
+</script>
 <meta name="description" content="Every match across the Premier League, Championship and La Liga on one day — or a consolidated calendar of every date — ranked by booking heat, with a combined share card per date.">
 <link rel="icon" href="favicon.svg" type="image/svg+xml">
 <!-- PNG fallbacks. The SVG is the better icon where it is honoured, but
@@ -116,41 +138,51 @@
      exists: the other two divisions were live but effectively unreachable. -->
 <nav class="leaguebar" aria-label="Leagues">
   <div class="leaguebar-in">
-    <a class="lb-item lb-pl" href="/"><span class="lb-dot"></span><span class="lb-full">Premier League</span><span class="lb-abbr">PL</span></a>
+    <a class="lb-item lb-today" href="/"><span class="lb-dot"></span><span class="lb-full">Today's matches</span><span class="lb-abbr">Today</span></a>
+    <a class="lb-item lb-pl" href="/pl"><span class="lb-dot"></span><span class="lb-full">Premier League</span><span class="lb-abbr">PL</span></a>
     <a class="lb-item lb-eflc" href="/eflc"><span class="lb-dot"></span><span class="lb-full">Championship</span><span class="lb-abbr">Championship</span></a>
     <a class="lb-item lb-ll" href="/laliga"><span class="lb-dot"></span><span class="lb-full">La Liga</span><span class="lb-abbr">La Liga</span></a>
-    <a class="lb-item lb-today" href="/today" aria-current="page"><span class="lb-dot"></span><span class="lb-full">Today · all leagues</span><span class="lb-abbr">Today</span></a>
+    <a class="lb-item lb-season" href="/today"><span class="lb-dot"></span><span class="lb-full">Season calendar</span><span class="lb-abbr">Season</span></a>
   </div>
 </nav>
 
 
 <main class="wrap" id="main">
-  <section class="hero">
-    <h1>Every league, one day</h1>
+  <!-- TWO HEROES, one shown per route by CSS on <html data-route>. Both are in
+       the markup rather than written by JS so the page has real headings for a
+       reader, a crawler and a screen reader before any script has run. -->
+  <section class="hero" data-for="home">
+    <h1>Today&rsquo;s matches, riskiest first</h1>
     <p class="muted" style="margin:8px 0 0;max-width:70ch">
-      Matches from every desk that plays on the same date, ranked by booking heat, with one
-      combined share card across the lot. <b>Accas</b> is the third view: the day's acca —
+      Every match on today&rsquo;s card across the Premier League, Championship and La Liga,
+      ranked by booking heat — the expected number of cards in the match — hottest at the
+      top. One combined share card across the lot. Below the list, <b>the day&rsquo;s acca</b>:
       the likeliest market in each match, one leg a match, so unlike a same-match combo the
-      legs are close to genuinely independent — and the week's nine-fold across all three
-      divisions. Both price with the bookmaker's margin left in.
-      Take one date at a time, or switch to
-      <b>Every date</b> for the whole season consolidated into a single calendar — each date
-      still ranked by heat and still exporting its own card.
+      legs are close to genuinely independent. Priced with the bookmaker&rsquo;s margin left in.
+      For every other date, see the <a href="/today">season calendar</a>.
     </p>
     <div class="stats" id="stats"></div>
   </section>
 
+  <section class="hero" data-for="season">
+    <h1>Every date, all season</h1>
+    <p class="muted" style="margin:8px 0 0;max-width:70ch">
+      The whole season consolidated into one calendar — every date any of the three
+      divisions plays, each still ranked by booking heat and each still exporting its own
+      share card. Below it, <b>the week&rsquo;s nine-fold</b>: three to win, three both teams
+      carded and three over 2.5 cards, all nine from different matches across the seven days
+      ahead. Priced with the bookmaker&rsquo;s margin left in.
+      For what is on right now, see <a href="/">today&rsquo;s matches</a>.
+    </p>
+    <div class="stats" id="statsSeason"></div>
+  </section>
+
   <div class="card">
     <div class="controls">
-      <div class="seg" role="group" aria-label="View">
-        <label><input type="radio" name="mode" value="one" checked><span>One date</span></label>
-        <label><input type="radio" name="mode" value="all"><span>Every date</span></label>
-        <!-- A THIRD VIEW, not a card under the fixture list. The two accas
-             answer a different question from "what is on today" and were
-             below every match on the date; on a phone that is several screens
-             past the thing the page opens with. -->
-        <label><input type="radio" name="mode" value="accas"><span>Accas</span></label>
-      </div>
+      <!-- THE VIEW SWITCHER IS GONE, and its three views are now two pages.
+           "One date" and the day's acca are the home page; "Every date" and
+           the week's nine-fold are the season calendar. A switcher that moved
+           between two URLs would duplicate the league bar's job. -->
       <select id="day" aria-label="Date"></select>
       <button class="btn primary" id="shareBtn" type="button">⬇ Share the day</button>
       <button class="btn primary" id="calBtn" type="button" hidden>⬇ Share the calendar</button>
@@ -257,6 +289,7 @@
 
 <script src="assets/core.js"></script>
 <script src="assets/save.js"></script>
+<script src="assets/leaguebar.js"></script>
 <script src="assets/share.js"></script>
 <script src="assets/plmodel.js"></script>
 <!-- Confirmed team sheets. Absent until a harvest lands one, which is the
@@ -514,19 +547,40 @@
     DAYKEYS = Object.keys(DAYS).sort();
   }
 
-  /* Days with more than one league on them are the point of this page, so
-     they are what it opens on — the next such date, or the next date at all
-     if no two leagues ever coincide. */
+  /* The page used to open on the next date with MORE THAN ONE league on it,
+     because "every league, one day" was the premise and a one-league Tuesday
+     did not show it off. That is no longer the premise: the home page is
+     TODAY'S matches, and a home page that opens on Saturday because Saturday
+     is busier is answering a question nobody asked.
+     So: today if anything is on today, otherwise the next date that has
+     anything at all. The multi-league preference is gone rather than demoted —
+     it would only ever have pulled the page off the date it is named for. */
   function leaguesOn(k) {
     var s = {};
     DAYS[k].forEach(function (p) { s[p.L.code] = 1; });
     return Object.keys(s);
   }
+  /* Named separately so the hero stats can ask for the date the page will open
+     on BEFORE the picker exists to be read. defaultDay() is the same answer. */
+  function defaultDayKey() { return defaultDay(); }
+  function leaguesOn0(k) { return DAYS[k] ? leaguesOn(k) : []; }
+
   function defaultDay() {
     var today = new Date().toISOString().slice(0, 10);
-    var future = DAYKEYS.filter(function (k) { return k >= today; });
-    var multi = future.filter(function (k) { return leaguesOn(k).length > 1; });
-    return multi[0] || future[0] || DAYKEYS[DAYKEYS.length - 1];
+    if (DAYS[today]) return today;
+    /* Nothing on today is ORDINARY — an international break, a Tuesday in
+       midwinter — not an error, so the page shows the next date that has
+       matches and says so rather than rendering an empty card. isFallbackDay()
+       below is what the copy reads to know it is doing that. */
+    var future = DAYKEYS.filter(function (k) { return k > today; });
+    return future[0] || DAYKEYS[DAYKEYS.length - 1];
+  }
+
+  /* True when the home page is showing a date that is not today, which only
+     happens when today has no matches. */
+  function isFallbackDay() {
+    return ROUTE === 'home'
+      && $('#day').value !== new Date().toISOString().slice(0, 10);
   }
 
   function fmtDay(k) {
@@ -655,14 +709,25 @@
     $('#count').textContent = rows.length + ' match' + (rows.length === 1 ? '' : 'es');
     if (!rows.length) {
       host.innerHTML = ''; empty.hidden = false;
-      empty.textContent = 'No matches on that date.';
+      empty.textContent = ROUTE === 'home' && !isFallbackDay()
+        ? 'No matches today.' : 'No matches on that date.';
       $('#cover').textContent = '';
       $('#shareBtn').disabled = true;
       return;
     }
     empty.hidden = true;
     $('#shareBtn').disabled = false;
-    host.innerHTML = '<div class="fx-grid">' + rows.map(rowHTML).join('') + '</div>';
+    /* SAY SO WHEN THIS IS NOT TODAY. The home page is named for today, and
+       showing the next matchday under that heading without a word is the kind
+       of quiet substitution a reader only catches by checking the date on
+       every row. */
+    var lead = '';
+    if (isFallbackDay()) {
+      lead = '<p class="note" style="margin:0 0 10px">Nothing on today. '
+           + 'Showing the next date with matches — <b>' + esc(fmtDay($('#day').value))
+           + '</b>.</p>';
+    }
+    host.innerHTML = lead + '<div class="fx-grid">' + rows.map(rowHTML).join('') + '</div>';
 
     var codes = leaguesOn($('#day').value);
     var names = codes.map(function (c) {
@@ -846,8 +911,10 @@
 
   function renderAcca() {
     var card = $('#accaCard');
-    /* The calendar has no selected date, and 128 accas is not one acca. */
-    if (mode() === 'all') { card.hidden = true; return; }
+    /* HOME ONLY. The day's acca is about the matches on one date, so it lives
+       with them; the calendar has no selected date, and 128 accas is not one
+       acca. */
+    if (ROUTE !== 'home') { card.hidden = true; return; }
 
     var key = $('#day').value, all = dayLegs(key);
     /* The control cannot offer more legs than the date has matches — one leg
@@ -1074,7 +1141,10 @@
   function renderNine() {
     var card = $('#nineCard'), blank = $('#nineEmpty');
     if (blank) blank.hidden = true;
-    if (mode() === 'all') { card.hidden = true; NINE_BUILT = null; return; }
+    /* SEASON ONLY. The nine-fold spans seven days, so it belongs with the view
+       that shows more than one — and putting it under today's card made the
+       home page several phone screens long for a slip about next weekend. */
+    if (ROUTE !== 'season') { card.hidden = true; NINE_BUILT = null; return; }
     var from = $('#day').value;
     var pool = weekPool(from);
     var got = C.accaAllocate(NINE.map(function (b) {
@@ -1184,16 +1254,21 @@
       .then(function () { btn.disabled = false; btn.textContent = btn.dataset.label; });
   }
 
-  function mode() {
-    var el = document.querySelector('input[name=mode]:checked');
-    return el ? el.value : 'one';
-  }
+  /* WHICH VIEW THIS PAGE IS, from the route rather than from a control. The
+     three-way switcher became two URLs: `/` is the day, /today is the season.
+     Kept as a function returning the old vocabulary so every call site below
+     reads exactly as it did — the question "am I in the calendar?" has not
+     changed, only who answers it. */
+  var ROUTE = document.documentElement.getAttribute('data-route') === 'season'
+    ? 'season' : 'home';
+  function mode() { return ROUTE === 'season' ? 'all' : 'one'; }
 
   function render() {
-    var m = mode(), all = m === 'all', accas = m === 'accas';
-    /* The date picker stays in the accas view: both accas are anchored to it —
-       the day's acca IS that date and the nine-fold is the seven days from it —
-       so hiding it would leave the reader unable to move either. */
+    var all = mode() === 'all', accas = false;
+    /* The date picker is the home page's control. On the season calendar every
+       date is on screen at once, so there is nothing for it to select; the
+       nine-fold still reads its value as the start of its seven days, which is
+       why it keeps a value rather than being removed. */
     $('#day').hidden = all;
     /* Hidden in the calendar because each date carries its own button — but
        `= all` alone would UN-hide it in single-date mode on a browser with no
@@ -1211,10 +1286,12 @@
     $('#empty').hidden = accas || $('#empty').hidden;
     $('#cover').hidden = accas;
     $('#count').hidden = accas;
+    /* The date is worth carrying in the URL on the home page. On the season
+       calendar there is no selected date to carry, and writing #all would only
+       restate the path. */
     try {
-      location.hash = accas ? 'accas' : all ? 'all' : 'd=' + $('#day').value;
+      if (!all) location.hash = 'd=' + $('#day').value;
     } catch (e) { /* hash is a convenience, never a requirement */ }
-    if (accas) { renderAcca(); renderNine(); return; }
     if (all) renderAll(); else renderOne();
     renderAcca();
     renderNine();
@@ -1550,13 +1627,35 @@
     $('#shareBtn').disabled = true;
     $('#day').disabled = true;
   } else {
-    var multi = DAYKEYS.filter(function (k) { return leaguesOn(k).length > 1; }).length;
-    $('#stats').innerHTML = [
-      ['<b>' + LEAGUES.length + '</b><span>leagues</span>'],
-      ['<b>' + ALL.length + '</b><span>fixtures priced</span>'],
-      ['<b>' + DAYKEYS.length + '</b><span>match dates</span>'],
-      ['<b>' + multi + '</b><span>dates with more than one league</span>']
-    ].map(function (h) { return '<div class="stat">' + h + '</div>'; }).join('');
+    /* EACH PAGE'S OWN NUMBERS. The season counts — 128 match dates, 52 of them
+       with more than one league — are the calendar's summary and read as a
+       non-sequitur under a heading about today. The home page answers "what is
+       on now" instead. Only the visible block is filled; the other is display:
+       none by route, and writing both would put the season's totals in the
+       page source of a page that never shows them. */
+    var stat = function (n, label) {
+      return '<div class="stat"><b>' + n + '</b><span>' + label + '</span></div>';
+    };
+    if (ROUTE === 'season') {
+      var multi = DAYKEYS.filter(function (k) { return leaguesOn(k).length > 1; }).length;
+      $('#statsSeason').innerHTML =
+        stat(LEAGUES.length, 'leagues')
+        + stat(ALL.length, 'fixtures priced')
+        + stat(DAYKEYS.length, 'match dates')
+        + stat(multi, 'dates with more than one league');
+    } else {
+      /* Computed off the date the page will actually open on, which on a blank
+         Tuesday is the next one with matches rather than today — the same date
+         the list and the copy below it describe. */
+      var d0 = defaultDayKey(), on = DAYS[d0] || [];
+      var hottest = on.reduce(function (m, p) {
+        return !m || p.m.expected > m.m.expected ? p : m; }, null);
+      $('#stats').innerHTML =
+        stat(on.length, on.length === 1 ? 'match' : 'matches')
+        + stat(leaguesOn0(d0).length, 'leagues playing')
+        + (hottest ? stat(hottest.m.expected.toFixed(1), 'cards, hottest match') : '')
+        + stat(LEAGUES.length, 'desks priced');
+    }
 
     $('#day').innerHTML = DAYKEYS.map(function (k) {
       var codes = leaguesOn(k);
@@ -1577,8 +1676,15 @@
       render();
     });
     $('#multiChk').addEventListener('change', render);
-    Array.prototype.forEach.call(document.querySelectorAll('input[name=mode]'),
-      function (r) { r.addEventListener('change', render); });
+    /* The view radios are gone — the route decides. The league bar's own item
+       is marked here rather than in the markup, because one file is two pages
+       and only one of them is current at a time. */
+    var cur = document.querySelector(ROUTE === 'season' ? '.lb-season' : '.lb-today');
+    if (cur) cur.setAttribute('aria-current', 'page');
+    /* And scroll it into view NOW. The shared module already ran its own pass
+       on DOMContentLoaded and found nothing current to centre, because on this
+       file the marker is set here rather than in the markup. */
+    if (window.PLDLeagueBar) window.PLDLeagueBar.center();
     /* Only the acca redraws — the fixture list below is unchanged by how many
        of its matches you are combining. */
     Array.prototype.forEach.call(document.querySelectorAll('input[name=legs]'),
@@ -1594,15 +1700,20 @@
       if (ev.target && ev.target.id === 'pastBtn') { showPast = !showPast; render(); }
     });
 
-    /* Deep links: #all opens the calendar, #accas the two accas, and
-       #d=YYYY-MM-DD a date. An unknown date falls through to the default
-       rather than rendering an empty page for a link that has gone stale. */
+    /* Deep links. #d=YYYY-MM-DD still selects a date on the home page; an
+       unknown date falls through to the default rather than rendering an empty
+       page for a link that has gone stale.
+       #all and #accas ARE STILL HONOURED, as redirects rather than as modes:
+       they were the calendar and the accas, both of which now live at /today,
+       and links to them exist in the wild — in shared cards and in the other
+       desks' copy. Sending them to the right page is the difference between an
+       old link working and an old link quietly showing the wrong thing. */
     var h = String(location.hash || '').replace(/^#/, '');
-    if (h === 'all') {
-      document.querySelector('input[name=mode][value=all]').checked = true;
-    } else if (h === 'accas') {
-      document.querySelector('input[name=mode][value=accas]').checked = true;
-    } else if (/^d=\d{4}-\d{2}-\d{2}$/.test(h) && DAYS[h.slice(2)]) {
+    if ((h === 'all' || h === 'accas') && ROUTE !== 'season') {
+      location.replace('/today');
+      return;
+    }
+    if (/^d=\d{4}-\d{2}-\d{2}$/.test(h) && DAYS[h.slice(2)]) {
       $('#day').value = h.slice(2);
     }
 

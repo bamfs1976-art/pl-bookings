@@ -122,9 +122,23 @@ const sw = read('sw.js');
 const shell = (/const SHELL = \[([\s\S]*?)\];/.exec(sw) || [])[1] || '';
 const paths = [...shell.matchAll(/'([^']+)'/g)].map((m) => m[1]);
 assert.ok(paths.length > 10, 'the service worker shell looks truncated');
-const missing = paths.filter((p) => p !== '/' && !existsSync(join(root, p)));
+/* PRETTY ROUTES ARE NOT FILES. The shell precaches `/pl` and `/today` as well
+   as the .html behind them, because caches.match() matches on URL and a
+   rewrite never fetched at install time is a miss offline. So a path counts as
+   real if it is a file OR a rewrite in _redirects — and resolving it through
+   _redirects rather than allow-listing it means a precached route whose rule
+   is deleted still fails here. */
+const rules = read('_redirects').split('\n')
+  .map((l) => l.trim()).filter((l) => l && !l.startsWith('#'))
+  .map((l) => l.split(/\s+/));
+const rewritten = (p) => {
+  const hit = rules.find((r) => r[0] === p && /^2\d\d$/.test(r[2] || '200'));
+  return hit ? existsSync(join(root, hit[1])) : false;
+};
+const missing = paths.filter((p) => p !== '/'
+  && !existsSync(join(root, p)) && !rewritten(p));
 assert.equal(missing.length, 0,
-  `the service worker precaches files that do not exist: ${missing.join(', ')}`);
+  `the service worker precaches paths that are neither files nor rewrites: ${missing.join(', ')}`);
 for (const p of PAGES) {
   assert.ok(paths.includes('/' + p),
     `${p} is not in the offline shell — installed on a phone it is a blank ` +

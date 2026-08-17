@@ -109,10 +109,11 @@
      exists: the other two divisions were live but effectively unreachable. -->
 <nav class="leaguebar" aria-label="Leagues">
   <div class="leaguebar-in">
-    <a class="lb-item lb-pl" href="/"><span class="lb-dot"></span><span class="lb-full">Premier League</span><span class="lb-abbr">PL</span></a>
+    <a class="lb-item lb-today" href="/"><span class="lb-dot"></span><span class="lb-full">Today's matches</span><span class="lb-abbr">Today</span></a>
+    <a class="lb-item lb-pl" href="/pl"><span class="lb-dot"></span><span class="lb-full">Premier League</span><span class="lb-abbr">PL</span></a>
     <a class="lb-item lb-eflc" href="/eflc"><span class="lb-dot"></span><span class="lb-full">Championship</span><span class="lb-abbr">Championship</span></a>
     <a class="lb-item lb-ll" href="/laliga" aria-current="page"><span class="lb-dot"></span><span class="lb-full">La Liga</span><span class="lb-abbr">La Liga</span></a>
-    <a class="lb-item lb-today" href="/today"><span class="lb-dot"></span><span class="lb-full">Today · all leagues</span><span class="lb-abbr">Today</span></a>
+    <a class="lb-item lb-season" href="/today"><span class="lb-dot"></span><span class="lb-full">Season calendar</span><span class="lb-abbr">Season</span></a>
   </div>
 </nav>
 
@@ -126,9 +127,9 @@
     </p>
     <p class="combined-note">
       <span class="cn-dots" aria-hidden="true"><i></i><i></i><i></i></span>
-      <span>Playing the same day as the other divisions? <a href="/today">Today&rsquo;s combined card</a>
+      <span>Playing the same day as the other divisions? <a href="/">Today&rsquo;s combined card</a>
       ranks every league&rsquo;s matches on one date, with one share card across the lot &mdash; or open the
-      <a href="/today#all">whole-season calendar</a>. <button type="button" class="linkish" data-open-tour>How to read this page</button></span>
+      <a href="/today">whole-season calendar</a>. <button type="button" class="linkish" data-open-tour>How to read this page</button></span>
     </p>
     <div class="stats" id="stats"></div>
   </section>
@@ -417,7 +418,7 @@
         <h2 class="ft-h" id="ftAbout">About &amp; method</h2>
         <p>A statistical filter for La Liga player-bookings markets, built on 2025-26 form. A sibling of the <a href="/">Premier League Bookings Desk</a> — same risk formula, same tested core, different competition. It does not pick players or price markets.</p>
         <ul class="ft-list">
-          <li><a href="/">Premier League desk</a> &middot; <a href="/eflc">Championship desk</a> &middot; <a href="/today">Today&rsquo;s Card</a></li>
+          <li><a href="/pl">Premier League desk</a> &middot; <a href="/eflc">Championship desk</a> &middot; <a href="/">Today&rsquo;s matches</a></li>
         </ul>
       </section>
       <section class="ft-col" aria-labelledby="ftData">
@@ -462,6 +463,7 @@
 <script src="assets/tour.js"></script>
 <script src="assets/palette.js"></script>
 <script src="assets/save.js"></script>
+<script src="assets/leaguebar.js"></script>
 <script src="assets/share.js"></script>
 <script src="assets/suspension.js"></script>
 <script src="assets/a11y.js"></script>

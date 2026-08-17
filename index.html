@@ -840,10 +840,11 @@
      exists: the other two divisions were live but effectively unreachable. -->
 <nav class="leaguebar" aria-label="Leagues">
   <div class="leaguebar-in">
-    <a class="lb-item lb-pl" href="/" aria-current="page"><span class="lb-dot"></span><span class="lb-full">Premier League</span><span class="lb-abbr">PL</span></a>
+    <a class="lb-item lb-today" href="/"><span class="lb-dot"></span><span class="lb-full">Today's matches</span><span class="lb-abbr">Today</span></a>
+    <a class="lb-item lb-pl" href="/pl" aria-current="page"><span class="lb-dot"></span><span class="lb-full">Premier League</span><span class="lb-abbr">PL</span></a>
     <a class="lb-item lb-eflc" href="/eflc"><span class="lb-dot"></span><span class="lb-full">Championship</span><span class="lb-abbr">Championship</span></a>
     <a class="lb-item lb-ll" href="/laliga"><span class="lb-dot"></span><span class="lb-full">La Liga</span><span class="lb-abbr">La Liga</span></a>
-    <a class="lb-item lb-today" href="/today"><span class="lb-dot"></span><span class="lb-full">Today · all leagues</span><span class="lb-abbr">Today</span></a>
+    <a class="lb-item lb-season" href="/today"><span class="lb-dot"></span><span class="lb-full">Season calendar</span><span class="lb-abbr">Season</span></a>
   </div>
 </nav>
 
@@ -896,7 +897,7 @@
            things nothing else offers. -->
       <span><button type="button" class="linkish" data-open-tour>How to read this page</button> &middot;
         <a href="#p=accas">Nine-fold</a> &middot;
-        <a href="/today">Today&rsquo;s card</a> &middot; <a href="/today#all">Season calendar</a></span>
+        <a href="/">Today&rsquo;s matches</a> &middot; <a href="/today">Season calendar</a></span>
       <button class="gw-intro-x" type="button" data-hint-dismiss aria-label="Dismiss this hint">&times;</button>
     </p>
     <!-- ONE ROW OF CONTROLS, not two bordered cards stacked.
@@ -1070,7 +1071,7 @@
       <div class="acca-two" id="accaRoundBody"></div>
       <p class="note" id="accaRoundNote"></p>
       <p class="faint" style="font-size:.78rem;margin:.5rem 0 0">The card nine-fold is on
-        <a href="/today">today&rsquo;s card</a> — three to win, three both teams carded, three
+        <a href="/">today&rsquo;s matches</a> — three to win, three both teams carded, three
         over 2.5 cards, drawn from every Premier League, Championship and La Liga match in a
         seven-day window.</p>
     </section>
@@ -1082,7 +1083,7 @@
     <p class="faint" style="font-size:.78rem;margin-top:.8rem">The card nine-fold —
       three to win, three both teams carded, three over 2.5 cards, drawn from every
       Premier League, Championship and La Liga match in a seven-day window — is on
-      <a href="/today#accas">today&rsquo;s card</a>.</p>
+      <a href="/today">the season calendar</a>.</p>
   </section>
 
   <!-- PLAYERS — one panel, two lenses.
@@ -1377,7 +1378,7 @@
       <p>The desk pulls the official FPL feed through its own proxy: the 2026-27 schedule for the Fixtures tab, each player's live yellow and red card count, and availability flags (injured, suspended, doubtful). Once a player has 450 minutes of 2026-27 football, his yellow rate in the risk score switches from last season's form to this season's live rate — rows carry a green dot when live rates are in use. If the feed is unreachable the desk falls back to the baked 2025-26 form and says so in the top bar. Player photos are the official cutouts from the same FPL feed; a player without one (pre-season, or unmatched) simply shows his club crest.</p>
       <h3>Team card markets — total cards and both teams carded</h3>
       <p>Each fixture card carries a market strip: <strong>EXP CARDS</strong> (the expected total in the match), <strong>O3.5</strong> and <strong>O4.5</strong> (the chance of 4+ and 5+ cards) and <strong>BTC</strong> (both teams carded — each side picks up at least one). These are the liquid card markets, and they fall out of the per-player numbers the desk already computes: every rated available player is one coin-flip with his own probability, so the match total follows a <em>Poisson-binomial</em> distribution, which has an exact answer — no simulation involved.</p>
-      <p>One correction matters. A player's percentage is his chance of a card <em>if he plays the full 90</em>, so simply adding up a 25-man squad would price a match with 50 players on the pitch — it returns about 9 expected cards instead of 4. Each player is therefore weighted by the share of his side's minutes he actually takes, scaled to an eleven. Across all 380 possible pairings in the shipped data the model averages <strong>3.5 cards a match</strong>, against the 3.76 the free match records show the division actually produced (3.64 yellows plus 0.12 reds) — so it runs about 8% conservative, the same direction and size as the Championship and La Liga desks, which is what makes the three comparable on <a href="/today">Today's Card</a>. It prices away sides above home sides, which is the right direction.</p>
+      <p>One correction matters. A player's percentage is his chance of a card <em>if he plays the full 90</em>, so simply adding up a 25-man squad would price a match with 50 players on the pitch — it returns about 9 expected cards instead of 4. Each player is therefore weighted by the share of his side's minutes he actually takes, scaled to an eleven. Across all 380 possible pairings in the shipped data the model averages <strong>3.5 cards a match</strong>, against the 3.76 the free match records show the division actually produced (3.64 yellows plus 0.12 reds) — so it runs about 8% conservative, the same direction and size as the Championship and La Liga desks, which is what makes the three comparable on <a href="/">today’s matches</a>. It prices away sides above home sides, which is the right direction.</p>
       <p>The honest limit: the maths assumes players are booked independently, and they are not — a flashpoint books two at once, and a referee losing control books five. That makes the extreme tails slightly thin, so treat O5.5 and above as a floor rather than a price. Fixtures with fewer than twelve rated players are marked <em>thin sample</em>.</p>
       <h3>Home and away</h3>
       <p>Away sides collect more cards than home sides, in every season on record. Booking heat has reflected that for a while through each club's home/away cards-against split; now the <em>per-player</em> number does too — a player is priced at <span class="num">×0.95</span> at home and <span class="num">×1.08</span> away, the factors carried over from the forecast pipeline. Across the league that opens a gap of about 0.2 cards a match between the two sides, which is the size the match record shows.</p>
@@ -1552,7 +1553,7 @@
           <p>A statistical filter for Premier League player-bookings markets. It ranks players by how often they are carded and give away fouls and rescales that for the appointed referee. It does not pick players or price markets.</p>
           <ul class="ft-list">
             <li><a href="#p=guide">How the model works</a></li>
-            <li><a href="/eflc">Championship desk</a> &middot; <a href="/laliga">La Liga desk</a> &middot; <a href="/today">Today&rsquo;s Card</a></li>
+            <li><a href="/eflc">Championship desk</a> &middot; <a href="/laliga">La Liga desk</a> &middot; <a href="/">Today&rsquo;s matches</a> &middot; <a href="/today">Season calendar</a></li>
           </ul>
         </section>
         <section class="ft-col" aria-labelledby="ftData">
@@ -1747,6 +1748,7 @@ License: MIT
 <script src="data/pl_backtest_2526.js"></script>
 <script src="assets/core.js"></script>
 <script src="assets/save.js"></script>
+<script src="assets/leaguebar.js"></script>
 <script src="assets/plmodel.js"></script>
 <script src="assets/suspension.js"></script>
 <script src="assets/metric.js"></script>

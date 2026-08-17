@@ -1,0 +1,6 @@
+Not found.
+
+This file is the 404 target for /data/* in _redirects. A data file that does
+not exist must come back as 404 so a script tag with onerror can react to it,
+rather than falling through to the catch-all and returning index.html with a
+200 — which the browser parses as JavaScript and reports as a syntax error.

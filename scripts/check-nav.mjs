@@ -28,12 +28,22 @@ const codeOnly = (src) => src
 /* file -> the public URL it is served at, and the label that must be current
    on it. The redirects are what make the pretty URLs work, so they are checked
    too: a bar full of links to /eflc is worth nothing if /eflc 404s. */
-const DESKS = [
-  { file: 'index.html', url: '/', label: 'Premier League' },
+/* FIVE ENTRIES ACROSS FOUR FILES. today.html serves two of them: `/` is
+   today's matches and /today is the season calendar. They are one file on
+   purpose — a second copy would have forked the pricing, the confirmed-XI join
+   and both card builders — so the bar has more entries than there are pages,
+   and one page's current item depends on which route it was opened at.
+   `runtime: true` marks those: their aria-current cannot be in the markup,
+   because the markup is shared between both routes. */
+const LINKS = [
+  { file: 'today.html', url: '/', label: 'Today', runtime: true },
+  { file: 'index.html', url: '/pl', label: 'Premier League' },
   { file: 'eflc.html', url: '/eflc', label: 'Championship' },
   { file: 'laliga.html', url: '/laliga', label: 'La Liga' },
-  { file: 'today.html', url: '/today', label: 'Today' }
+  { file: 'today.html', url: '/today', label: 'Season calendar', runtime: true }
 ];
+/* The distinct files, for the per-page checks. */
+const DESKS = LINKS.filter((d, i) => LINKS.findIndex((x) => x.file === d.file) === i);
 
 /* ---- 1. every desk links to every desk ---------------------------------- */
 for (const from of DESKS) {
@@ -41,17 +51,35 @@ for (const from of DESKS) {
   const bar = /<nav class="leaguebar"[\s\S]*?<\/nav>/.exec(src);
   assert.ok(bar, `${from.file} has no league switcher — the other desks are ` +
     'unreachable from it');
-  for (const to of DESKS) {
-    assert.ok(new RegExp(`href="${to.url === '/' ? '/' : to.url}"`).test(bar[0]),
+  for (const to of LINKS) {
+    assert.ok(new RegExp(`href="${to.url}"`).test(bar[0]),
       `${from.file} does not link to ${to.url} (${to.label})`);
   }
-  /* Exactly one current item, and it must be this page. Marking none loses the
-     "you are here"; marking two is worse, because both look authoritative. */
   const current = [...bar[0].matchAll(/aria-current="page"[\s\S]{0,220}?<\/a>/g)];
-  assert.equal(current.length, 1,
-    `${from.file}'s switcher marks ${current.length} items as current, expected 1`);
-  assert.ok(current[0][0].includes(from.label),
-    `${from.file} marks the wrong desk as current — expected ${from.label}`);
+  if (from.runtime) {
+    /* One file, two routes: marking either in the markup would mark it on BOTH
+       routes, which is the "two look authoritative" failure by another name.
+       It is set at boot from the route instead, and that is what is checked —
+       both arms, so a page cannot lose its "you are here" on one route only. */
+    assert.equal(current.length, 0,
+      `${from.file} hardcodes a current item, but it serves two routes — it ` +
+      'would claim to be the current page on both of them');
+    const code = codeOnly(read(from.file));
+    assert.ok(/\.lb-season['"]?\s*:\s*['"]\.lb-today/.test(code)
+      || /lb-season[\s\S]{0,60}lb-today/.test(code),
+      `${from.file} does not choose a current league-bar item from its route`);
+    assert.ok(/setAttribute\('aria-current', 'page'\)/.test(code),
+      `${from.file} never marks any league-bar item as current, so neither of ` +
+      'its two routes says "you are here"');
+  } else {
+    /* Exactly one current item, and it must be this page. Marking none loses
+       the "you are here"; marking two is worse, because both look
+       authoritative. */
+    assert.equal(current.length, 1,
+      `${from.file}'s switcher marks ${current.length} items as current, expected 1`);
+    assert.ok(current[0][0].includes(from.label),
+      `${from.file} marks the wrong desk as current — expected ${from.label}`);
+  }
 }
 
 /* ---- 2. the pretty URLs actually resolve --------------------------------- */
@@ -64,8 +92,12 @@ const rd = read('_redirects');
 const lines = rd.split('\n').map((l) => l.trim()).filter((l) => l && !l.startsWith('#'));
 const catchAll = lines.findIndex((l) => l.startsWith('/*'));
 assert.ok(catchAll > -1, '_redirects has no catch-all');
-for (const d of DESKS) {
-  if (d.url === '/') continue;
+/* `/` IS A RULE NOW, and is checked like the rest. It used to fall through to
+   the catch-all and serve the Premier League desk; it serves today's matches,
+   and if that rule ever goes missing the catch-all silently restores the old
+   home page — the exact failure this block was written for, at the one URL
+   that used to be exempt from it. */
+for (const d of LINKS) {
   const i = lines.findIndex((l) => l.split(/\s+/)[0] === d.url);
   assert.ok(i > -1, `_redirects has no rule for ${d.url} — the catch-all would ` +
     `serve the Premier League page at the ${d.label} URL`);
@@ -73,6 +105,38 @@ for (const d of DESKS) {
     `${d.url} is routed AFTER the catch-all in _redirects, so it never matches`);
   assert.ok(lines[i].includes(d.file),
     `${d.url} does not route to ${d.file}`);
+}
+
+/* ---- 2b. a missing optional data file must 404, not become HTML ---------- */
+/* Three script tags carry onerror="void 0" for files that may legitimately not
+   exist — data/lineups.js above all, which appears only once a harvest has
+   landed a team sheet. THE GUARD IS WORTHLESS WITHOUT A 404. Netlify serves
+   static files ahead of redirects, so a file that exists is unaffected; one
+   that does not used to fall through to the catch-all and come back as
+   index.html with HTTP 200, and a browser does not fire `error` on a 200 — it
+   throws `SyntaxError: Unexpected token '<'` parsing HTML as JavaScript, on
+   every page load of all four desks.
+   Invisible to `python3 -m http.server`, which returns a real 404, which is
+   why every local run looked clean while production threw. */
+{
+  const optional = [...read('today.html').matchAll(/src="(data\/[^"]+)"[^>]*onerror/g)]
+    .concat([...read('index.html').matchAll(/src="(data\/[^"]+)"[^>]*onerror/g)])
+    .concat([...read('eflc.html').matchAll(/src="(data\/[^"]+)"[^>]*onerror/g)])
+    .concat([...read('laliga.html').matchAll(/src="(data\/[^"]+)"[^>]*onerror/g)])
+    .map((m) => m[1]);
+  assert.ok(optional.length > 0,
+    'no data file is loaded with an onerror guard any more — if that is ' +
+    'deliberate this check and the /data/* rule can go, but not silently');
+  const i = lines.findIndex((l) => l.split(/\s+/)[0] === '/data/*');
+  assert.ok(i > -1,
+    `_redirects has no /data/* rule, so a missing optional file (${optional[0]}) ` +
+    'comes back as index.html with a 200 and every desk throws a SyntaxError');
+  assert.ok(i < catchAll,
+    '/data/* is routed AFTER the catch-all, so it never matches and missing ' +
+    'data files still return HTML');
+  assert.ok(/\s404\s*$/.test(lines[i]),
+    `the /data/* rule does not return 404 (${lines[i]}) — any 2xx leaves the ` +
+    'onerror guards dead');
 }
 
 /* ---- 3. the switcher's styles ship --------------------------------------- */
@@ -98,13 +162,46 @@ for (const d of DESKS) {
     `${d.file}'s switcher has no abbreviated labels`);
 }
 
+/* ---- 3b. the current item must be reachable on a phone ------------------- */
+/* The bar shows FULL labels and scrolls: 723px of content in a 390px viewport.
+   tw.css says outright that "the active item is scrolled into view on load so
+   you can always see where you are" — and for as long as that sentence has
+   existed, nothing did it. The season calendar's entry is last and measured at
+   559..717px with scrollLeft still 0: the one page the bar would not show you
+   was the page you were on.
+   A COMMENT IS NOT AN IMPLEMENTATION. This checks for the code. */
+{
+  assert.ok(existsSync(join(root, 'assets', 'leaguebar.js')),
+    'assets/leaguebar.js is gone — nothing scrolls the current league-bar item ' +
+    'into view, and on a phone it is off screen behind a swipe nobody discovers');
+  const lb = read('assets/leaguebar.js');
+  assert.ok(/\[aria-current="page"\]/.test(lb),
+    'leaguebar.js no longer looks for the current item');
+  assert.ok(/scrollWidth <= .*clientWidth/.test(lb),
+    'leaguebar.js no longer leaves a bar that already fits alone — scrolling ' +
+    'one shifts a row the reader can see all of');
+  for (const d of DESKS) {
+    assert.ok(/src="assets\/leaguebar\.js"/.test(read(d.file)),
+      `${d.file} does not load leaguebar.js, so its current item stays off ` +
+      'screen on a phone');
+  }
+  /* today.html marks its current item at boot, after the module's own
+     DOMContentLoaded pass has already run and found nothing to centre. */
+  assert.ok(/PLDLeagueBar\.center\(\)/.test(codeOnly(read('today.html'))),
+    'today.html sets its current item at boot but never asks the league bar to ' +
+    're-centre, so the module has already run and found nothing');
+}
+
 /* ---- 4. the combined views are advertised, not merely linked ------------- */
 /* A link to /today is not the same as knowing what is on it. The two things
    that make it worth opening — the cross-league card for one date, and the
    whole-season calendar behind the "Every date" toggle — are a level down from
    the page itself, so each league desk says so explicitly. */
 for (const d of DESKS) {
-  if (d.url === '/today') continue;
+  /* Skipped by FILE, not by url: today.html's entry in the deduped list now
+     carries `/`, so a url test silently stopped skipping it and demanded the
+     combined-views note on the page that IS the combined view. */
+  if (d.file === 'today.html') continue;
   const src = read(d.file);
   /* Either container. The Premier League desk used to carry a `.combined-note`
      block stacked under a separate "New here?" paragraph; the pair pushed the
@@ -114,11 +211,11 @@ for (const d of DESKS) {
      does it, which is what this used to pin. */
   const note = /<p class="(?:combined-note|gw-intro)"[^>]*>[\s\S]*?<\/p>/.exec(src);
   assert.ok(note, `${d.file} never points at the combined views`);
+  assert.ok(/href="\/"/.test(note[0]),
+    `${d.file}'s combined-view note does not link today's matches at /`);
   assert.ok(/href="\/today"/.test(note[0]),
-    `${d.file}'s combined-view note does not link the single-date view`);
-  assert.ok(/href="\/today#all"/.test(note[0]),
-    `${d.file} does not link the whole-season calendar — it is behind a toggle ` +
-    'inside /today and is otherwise advertised nowhere');
+    `${d.file} does not link the whole-season calendar — it is a page of its own ` +
+    'at /today and is otherwise advertised nowhere');
 }
 assert.ok(/\.combined-note\{/.test(css),
   'the combined-view note has no styles in tw.css');
@@ -433,8 +530,9 @@ for (const d of CLUB_ROWS) {
 }
 
 console.log(
-  `check-nav OK: ${DESKS.length} desks, each linking to all ${DESKS.length} and ` +
-  'marking itself current, all routed before the catch-all; combined views ' +
+  `check-nav OK: ${LINKS.length} entries across ${DESKS.length} pages, each ` +
+  `linking to all ${LINKS.length} and marking itself current, all routed ` +
+  'before the catch-all; combined views ' +
   'advertised from every desk and named in the tour; a club row opens its ' +
   'players on all three league desks, by pointer and by keyboard'
 );

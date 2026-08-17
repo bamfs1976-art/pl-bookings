@@ -649,15 +649,26 @@ for (const code of ['PL', 'EFLC', 'LL']) {
     `today.html no longer lists ${code} as a source`);
 }
 
-/* ---- /today's two views must stay one implementation --------------------- */
-/* The page shows one date at a time, or every date consolidated into a
-   calendar. They are two renderings of the same priced rows, and the whole
-   value of that is that a fixture reads identically either way — so the things
-   worth pinning are the ones that would let them drift apart silently. */
-for (const v of ['one', 'all']) {
-  assert.ok(new RegExp(`name="mode"[^>]*value="${v}"`).test(todaySrc),
-    `today.html has lost its "${v}" view`);
+/* ---- the two views must stay one implementation -------------------------- */
+/* One date at a time, or every date consolidated into a calendar. These are
+   now two ROUTES off one file — `/` and /today — rather than two radio
+   buttons, but nothing below changes because of that: they are still two
+   renderings of the same priced rows, and the whole value of that is that a
+   fixture reads identically either way. The things worth pinning are the ones
+   that would let them drift apart silently.
+   ONE FILE IS THE POINT. Splitting today.html in two would have forked the
+   pricing, the confirmed-XI join and both card builders — so the first thing
+   asserted is that the split is a route, not a copy. */
+assert.ok(/data-route/.test(todaySrc),
+  'today.html no longer reads a route, so `/` and /today are not two views of ' +
+  'one file — check that the second page is not a forked copy of this one');
+for (const v of ['renderOne', 'renderAll']) {
+  assert.ok(new RegExp(`function ${v}\\(`).test(todayCode),
+    `today.html has lost its ${v}() view`);
 }
+assert.ok(/if \(all\) renderAll\(\); else renderOne\(\);/.test(todayCode),
+  'render() no longer chooses between the two views, so one route can no ' +
+  'longer reach its own content');
 
 /* ONE row renderer. Two would let the calendar and the single date show
    different columns, or sort differently, for the same match. */

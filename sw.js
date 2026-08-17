@@ -3,7 +3,7 @@
    cache-first. Live FPL data (/api/fpl/*) and Supabase calls are never
    touched here — the app's own data layer decides what is fresh vs cached. */
 
-const VERSION = 'plb-v16';
+const VERSION = 'plb-v17';
 /* Every desk, not just the Premier League one. The shell decides what opens
    with no connection: installed on a phone, a page missing from here is a
    blank screen on the Underground even though it works perfectly on wifi.
@@ -11,6 +11,13 @@ const VERSION = 'plb-v16';
    were built, so the app was installable but only one quarter offline. */
 const SHELL = [
   '/',
+  /* THE PRETTY ROUTES, not just the files behind them. `caches.match(req)`
+     matches on URL, so a rewrite that was never fetched at install time is a
+     cache miss offline and falls through to the fallback below — which meant
+     tapping "Season calendar" on the Underground silently produced the
+     Premier League desk. */
+  '/pl',
+  '/today',
   '/index.html',
   '/today.html',
   '/eflc.html',
@@ -34,6 +41,7 @@ const SHELL = [
   '/data/pl_backtest_2526.js',
   '/assets/core.js',
   '/assets/save.js',
+  '/assets/leaguebar.js',
   '/assets/profile.js',
   '/assets/share.js',
   '/assets/plmodel.js',
@@ -114,7 +122,11 @@ self.addEventListener('fetch', (e) => {
         const copy = res.clone();
         caches.open(VERSION).then((c) => c.put(req, copy)).catch(() => {});
         return res;
-      }).catch(() => caches.match(req).then((hit) => hit || caches.match('/index.html')))
+      /* Last resort is `/` — the home page. It used to be '/index.html', which
+         WAS the home page until today's matches took that URL; leaving it
+         would have made the offline fallback the Premier League desk, a page
+         the reader did not ask for and cannot tell is a fallback. */
+      }).catch(() => caches.match(req).then((hit) => hit || caches.match('/')))
     );
     return;
   }

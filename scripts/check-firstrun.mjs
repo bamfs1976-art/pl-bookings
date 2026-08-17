@@ -859,9 +859,15 @@ for (const page of DESKS_WITH_A_TOUR) {
     'the leg-count control is no longer capped by the number of matches on ' +
     'the date, so a two-match Tuesday can be asked for a five-leg acca and ' +
     'would have to take two legs off one fixture to fill it');
-  assert.ok(/mode\(\) === 'all'[\s\S]{0,80}?hidden = true/.test(acca),
-    "the acca no longer hides itself in the calendar view, where there is no " +
-    'selected date for it to be the acca of');
+  /* The day's acca belongs to the home page. today.html serves two routes off
+     one file — `/` is today's matches, /today is the season calendar — and on
+     the calendar there is no selected date for this to be the acca OF, so it
+     refuses rather than picking one. Was `mode() === 'all'` when the two views
+     were radio buttons on one page; the question is the same, the answer now
+     comes from the route. */
+  assert.ok(/ROUTE !== 'home'[\s\S]{0,80}?hidden = true/.test(acca),
+    "the day's acca no longer hides itself off the home page, where there is " +
+    'no selected date for it to be the acca of');
 
   /* PRICED THROUGH THE SHARED FUNCTION, and the margin shown rather than
      stripped and forgotten. Fair odds are 1/p, which no bookmaker offers. */
