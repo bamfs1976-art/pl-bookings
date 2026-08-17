@@ -5,7 +5,7 @@
 // through PLDCore.matchSquadName. A fixture absent from here prices off
 // squad minute-weights exactly as it always has — that is the normal
 // state until about an hour before kick-off, not a failure.
-// Fetched 2026-08-17T19:32Z.
+// Fetched 2026-08-17T20:32Z.
 //
 // THE GLOBAL IS NOT CALLED `LINEUPS`, and that is deliberate. index.html
 // already declares a top-level `const LINEUPS` for assets/lineup.js (the
@@ -15,7 +15,7 @@
 // renders blank. Read `window.LINEUP_SHEETS`.
 var __LINEUP_SHEETS = {
   "1563094":{"CAR":{start:["Nathan Trott", "Perry Ng", "Gabriel Osho", "Joel Bagan", "Calum Scanlon", "Alex Robertson", "Ollie Tanner", "Jack Moylan", "Cian Ashford", "Chris Willock", "Yousef Salech"],sub:["Harry Tyrer", "Noah Anyadike", "Ronan Kpakio", "Rob Tankiewicz", "Joel Colwill", "David Turnbull", "Rubin Colwill", "Callum Robinson", "Isaak Davies"]},"WRE":{start:["Anthony Patterson", "Zak Vyner", "Dominic Hyam", "Callum Doyle", "Daniel Imray", "Oliver Rathbone", "Matty James", "Lewis O'Brien", "George Thomason", "Kieffer Moore", "Nathan Broadhead"],sub:["Danny Ward", "Dan Scarr", "Max Cleworth", "Ryan Longman", "Ben Whiteman", "George Dobson", "Bailey Cadamarteri", "Sam Smith", "Davis Keillor-Dunn"]}},
-  "1570337":{"DEP":{start:["Leo Román", "Ximo Navarro", "Lucas Noubi", "Bright Ede", "Giacomo Quagliata", "Adrià Altimira", "Mario Soriano", "Lorenzo Amatucci", "Jonathan Asp Jensen", "Pierre-Emerick Aubameyang", "Bil Nsongo"],sub:["Álvaro Ferllo", "Germán Parreño", "Arnau Comas", "Miguel Loureiro", "Riki Rodríguez", "David Mella", "Teun Gijselhart", "Kevin Sánchez", "Luismi Cruz", "Angeliño", "Diego Villares", "Zakaria Eddahchouri"]},"ELC":{start:["Matías Dituro", "Buba Sangaré", "David Affengruber", "Federico Redondo", "Víctor Chust", "Germán Valera", "Gonzalo Villar", "Martim Neto", "Marc Aguado", "Ali Houary", "Fernando Niño"],sub:["Alejandro Iturbe", "Pedro Bigas", "Matia Barzić", "Facundo Buonanotte", "Josan", "Nordin Al Lal", "Javi Morcillo", "Lucas Cepeda", "Tete Morente", "Ezequiel Ponce", "Umaru Konare Tounkara", "Álvaro Padilla"]}},
+  "1570337":{"DEP":{start:["Leo Román", "Ximo Navarro", "Lucas Noubi", "Bright Ede", "Giacomo Quagliata", "Lorenzo Amatucci", "Mario Soriano", "Adrià Altimira", "Bil Nsongo", "Jonathan Asp Jensen", "Pierre-Emerick Aubameyang"],sub:["Álvaro Ferllo", "Germán Parreño", "Arnau Comas", "Miguel Loureiro", "Riki Rodríguez", "David Mella", "Teun Gijselhart", "Kevin Sánchez", "Luismi Cruz", "Angeliño", "Diego Villares", "Zakaria Eddahchouri"]},"ELC":{start:["Matías Dituro", "Buba Sangaré", "David Affengruber", "Federico Redondo", "Víctor Chust", "Germán Valera", "Gonzalo Villar", "Martim Neto", "Marc Aguado", "Ali Houary", "Fernando Niño"],sub:["Alejandro Iturbe", "Pedro Bigas", "Matia Barzić", "Facundo Buonanotte", "Josan", "Nordin Al Lal", "Javi Morcillo", "Lucas Cepeda", "Tete Morente", "Ezequiel Ponce", "Umaru Konare Tounkara", "Álvaro Padilla"]}},
 };
 if (typeof module !== "undefined" && module.exports) module.exports = __LINEUP_SHEETS;
 if (typeof window !== "undefined") window.LINEUP_SHEETS = __LINEUP_SHEETS;
