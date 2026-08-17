@@ -529,6 +529,51 @@ for (const d of CLUB_ROWS) {
     'that does not exist and throw on the first tap');
 }
 
+/* ---- 6. today's matches must be clickable too ---------------------------- */
+/* `/` lists every match on the card with its likeliest bookings. Until this
+   was added it listed them and did NOTHING when tapped — the rows even carried
+   a hover tint and a focus ring in tw.css, styled for an interaction that did
+   not exist. It went unnoticed while the page was a level down; it is the home
+   page now and a player row is the obvious thing to tap.
+   Asserted the same way as the desks above: the definition, both activations,
+   and the affordance. */
+{
+  const src = read('today.html');
+  const code = codeOnly(src);
+  assert.ok(/function openCand\s*\(/.test(code),
+    'today.html has no openCand() — a candidate row is a button that calls a ' +
+    'function that does not exist, and throws on the first tap');
+  assert.ok(/class="cand cand-open"[\s\S]{0,120}role="button"/.test(code),
+    'candidate rows are no longer buttons, so nothing on the home page can be ' +
+    'tapped to open a player');
+  assert.ok(/tabindex="0"/.test(code),
+    'candidate rows are not focusable, so the keyboard cannot reach them');
+  assert.ok(/addEventListener\('click'[\s\S]{0,400}cand-open/.test(code),
+    'no click handler reaches .cand-open');
+  /* BOTH ACTIVATIONS. A row reachable by Tab that Enter does not open is worse
+     than one that was never focusable. */
+  assert.ok(/addEventListener\('keydown'[\s\S]{0,300}cand-open/.test(code),
+    'no keydown handler reaches .cand-open — the rows take focus but Enter ' +
+    'does nothing');
+  /* Both keys, whichever way the test is spelled — the handler early-returns
+     with !== and an assertion pinned to === passed only by accident of style.
+     Scoped to the keydown handler so a stray 'Enter' elsewhere cannot satisfy
+     it. */
+  const kd = /addEventListener\('keydown'[\s\S]{0,400}?\n    \}\);/.exec(code);
+  assert.ok(kd, 'today.html has no keydown handler to inspect');
+  assert.ok(/'Enter'/.test(kd[0]) && /' '|'Spacebar'/.test(kd[0]),
+    'the keyboard handler no longer accepts both Enter and Space');
+  assert.ok(/PLDProfile\.open\(/.test(code),
+    'openCand no longer opens a profile card');
+  /* And the fixture heading links to the division's own desk. */
+  assert.ok(/<a class="fx-teams" href="/.test(code),
+    'the fixture heading is not a link, so there is no way from a match on the ' +
+    "home page to the desk that prices it");
+  assert.ok(/\.cand-open\{cursor:pointer\}/.test(read('assets/tw.css')),
+    'clickable candidate rows have no pointer cursor, so nothing suggests they ' +
+    'can be tapped');
+}
+
 console.log(
   `check-nav OK: ${LINKS.length} entries across ${DESKS.length} pages, each ` +
   `linking to all ${LINKS.length} and marking itself current, all routed ` +

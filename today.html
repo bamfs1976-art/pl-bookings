@@ -646,6 +646,42 @@
      names, the single hottest player, a heat number — which is what the desks
      also showed before they moved onto cards, and it left the combined view
      looking like a different application from the three it combines. */
+  /* Open the player card for a candidate row.
+     Looked up in the LEAGUE'S OWN players array by club and name rather than
+     from a map built at render time: the calendar renders ~6,500 candidate
+     rows and a map of those would be rebuilt on every redraw, and could go
+     stale against a re-render. The three datasets share their field names
+     (c, n, p, min, yc, rc, y, f, fw, r), checked across all three, so one
+     record shape serves every league — `ph` is the exception and is absent on
+     the Premier League set, which is why the photo falls back to null and the
+     card draws a monogram. */
+  function openCand(el) {
+    if (typeof PLDProfile === 'undefined' || !PLDProfile.open) return;
+    var fx = el.closest('.fx');
+    if (!fx) return;
+    var L = null, code = fx.getAttribute('data-lg');
+    for (var i = 0; i < LEAGUES.length; i++) if (LEAGUES[i].code === code) { L = LEAGUES[i]; break; }
+    if (!L) return;
+    var pk = el.getAttribute('data-pk') || '', bar = pk.indexOf('|');
+    if (bar < 0) return;
+    var club = pk.slice(0, bar), name = pk.slice(bar + 1), pl = null;
+    for (var j = 0; j < L.players.length; j++) {
+      if (L.players[j].c === club && L.players[j].n === name) { pl = L.players[j]; break; }
+    }
+    if (!pl) return;
+    var prob = Number(el.getAttribute('data-prob')) || null;
+    var b = band(prob || 0);
+    PLDProfile.open({
+      name: pl.n, pos: pl.p, club: L.clubBy[pl.c] || { short: pl.c },
+      photo: pl.ph || null,
+      minutes: pl.min, yellows: pl.yc, reds: pl.rc,
+      yc90: pl.y, fouls90: pl.f, foulsWon90: pl.fw, risk: pl.r,
+      prob: prob, odds: prob ? C.fairOdds(prob) : null,
+      band: { label: b[1] || 'Low', colour: b[0] === 'hi' ? 'var(--danger-ink)'
+              : b[0] === 'mid' ? 'var(--warn-ink)' : '' }
+    });
+  }
+
   function rowHTML(p) {
     var ch = p.L.clubBy[p.fx.h] || { short: p.fx.h }, ca = p.L.clubBy[p.fx.a] || { short: p.fx.a };
     var all = [];
@@ -657,7 +693,17 @@
     var cands = all.length
       ? all.slice(0, 5).map(function (t) {
           var b = band(t.prob), club = p.L.clubBy[t.p.c] || { short: t.p.c };
-          return '<div class="cand">'
+          /* A BUTTON, not a div. Every other page in this app opens a player
+             card when you tap a player; this one listed them and did nothing,
+             which only became obvious once it was the home page. role and
+             tabindex rather than a real <button> because the row carries a
+             crest, a meter and a percentage, and a button element would flatten
+             all of it into one label for a screen reader. */
+          return '<div class="cand cand-open" role="button" tabindex="0"'
+            + ' data-pk="' + esc(t.p.c) + '|' + esc(t.p.n) + '"'
+            + ' data-prob="' + (t.prob || 0) + '"'
+            + ' aria-label="' + esc(t.p.n) + ', ' + pct(t.prob) + ' to be booked'
+            + ' — open player card">'
             + PLDProfile.crest({ short: t.p.c, name: club.name, img: t.p.ph || null })
             + '<span class="cbadge">' + esc(t.p.c) + '</span>'
             + '<span class="nm">' + esc(t.p.n)
@@ -674,12 +720,16 @@
       + '" data-a="' + p.fx.a + '">'
       + '<div class="fx-top">'
       + '<div class="fx-topl">'
-      + '<div class="fx-teams">'
+      /* The teams link through to the division's own desk, which is where the
+         squad, the referee picker and the rest of the match live. This page
+         summarises three desks; it should be possible to get to one. */
+      + '<a class="fx-teams" href="' + esc(p.L.href || '/') + '"'
+      + ' title="Open the ' + esc(p.L.name || p.L.code) + ' desk">'
       + '<span class="lg ' + p.L.code + '">' + esc(p.L.code) + '</span>'
       + PLDProfile.crest(ch) + '<b>' + esc(p.fx.h) + '</b>'
       + '<span class="faint">v</span>'
       + PLDProfile.crest(ca) + '<b>' + esc(p.fx.a) + '</b>'
-      + '</div>'
+      + '</a>'
       + '<div class="fx-when">' + esc(fmtTime(p.fx.d)) + '</div>'
       + '</div>'
       + '<div class="fx-topr">'
@@ -1693,8 +1743,21 @@
     /* Delegated, because the calendar's buttons are rebuilt by every render
        and per-node listeners would leak one set per redraw. */
     $('#list').addEventListener('click', function (ev) {
-      var b = ev.target.closest ? ev.target.closest('[data-share]') : null;
-      if (b) shareDay(b.getAttribute('data-share'), b);
+      if (!ev.target.closest) return;
+      var b = ev.target.closest('[data-share]');
+      if (b) { shareDay(b.getAttribute('data-share'), b); return; }
+      var c = ev.target.closest('.cand-open');
+      if (c) openCand(c);
+    });
+    /* KEYBOARD TOO. The three desks open a player by pointer and by Enter or
+       Space, and a row that is reachable by Tab but cannot be activated is
+       worse than one that was never focusable. */
+    $('#list').addEventListener('keydown', function (ev) {
+      if (ev.key !== 'Enter' && ev.key !== ' ' && ev.key !== 'Spacebar') return;
+      var c = ev.target.closest ? ev.target.closest('.cand-open') : null;
+      if (!c) return;
+      ev.preventDefault();          // Space would otherwise scroll the page
+      openCand(c);
     });
     $('#reveal').addEventListener('click', function (ev) {
       if (ev.target && ev.target.id === 'pastBtn') { showPast = !showPast; render(); }

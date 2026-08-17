@@ -1049,8 +1049,12 @@ def main():
                          "official). A different season from --fixtures.")
     ap.add_argument("--check", action="store_true",
                     help="ask /status what this key is and stop")
-    ap.add_argument("--league", default="EFLC", choices=sorted(leagues.LEAGUES),
-                    help="which division to harvest")
+    ap.add_argument("--league", default="EFLC",
+                    help="which division to harvest. With --lineups this may "
+                         "be a comma-separated list (PL,EFLC,LL) and MUST be "
+                         "when more than one is wanted: the sheet file is "
+                         "written whole from one run, so separate runs would "
+                         "overwrite each other rather than accumulate.")
     ap.add_argument("--season", help="season START year, e.g. 2025 for 2025-26")
     ap.add_argument("--out", help="write to this filename instead of the "
                                   "league's default (keeps a harvest from "
@@ -1067,7 +1071,20 @@ def main():
         check_key(host, key)
         return
 
-    league = leagues.get(args.league)
+    # VALIDATED HERE rather than by argparse `choices`, which cannot express
+    # "one code, or a comma-separated list for --lineups". Dropping choices
+    # without replacing it would have turned a typo into a KeyError traceback
+    # deep in a scheduled run.
+    codes = [c.strip().upper() for c in args.league.split(",") if c.strip()]
+    unknown = [c for c in codes if c not in leagues.LEAGUES]
+    if not codes or unknown:
+        sys.exit(f"--league: unknown division(s) {', '.join(unknown) or '(empty)'}. "
+                 f"Choose from {', '.join(sorted(leagues.LEAGUES))}.")
+    if len(codes) > 1 and not args.lineups:
+        sys.exit("--league takes a comma-separated list only with --lineups; "
+                 "every other harvest writes one league's own file.")
+
+    league = leagues.get(codes[0])
     MUST_COVER["L1"] = leagues.EFLC_FROM_L1
     wanted = MUST_COVER.get(league.code) or set()
     season = (args.season or env_or("API_FOOTBALL_SEASON", DEFAULT_SEASON)).strip()
@@ -1091,14 +1108,37 @@ def main():
         # published until about an hour before each kicks off — so asking for
         # all of them, three times a day, buys mostly empty responses at full
         # price. The window is what keeps this a handful of calls.
-        soon = fixtures_within(league, args.within_hours)
-        if not soon:
-            print(f"  no {league.name} fixture kicks off within "
-                  f"{args.within_hours}h — nothing to fetch")
+        #
+        # ALL REQUESTED LEAGUES IN ONE INVOCATION, and one write at the end.
+        # emit_lineups writes the WHOLE file from the dict it is given, so the
+        # obvious shell loop —
+        #
+        #     for L in PL EFLC LL; do ... --lineups --league $L; done
+        #
+        # — which is exactly how --fixtures is driven one line above in
+        # fixtures.yml, would have each league erase the previous one's sheets
+        # and leave only the last. The file is keyed by fixture id across every
+        # division, so it has to be assembled before it is written.
+        merged, seen_any = {}, False
+        for code in codes:
+            lg = leagues.get(code)
+            soon = fixtures_within(lg, args.within_hours)
+            if not soon:
+                print(f"  no {lg.name} fixture kicks off within "
+                      f"{args.within_hours}h — nothing to fetch")
+                continue
+            seen_any = True
+            print(f"  {len(soon)} {lg.name} fixture(s) within {args.within_hours}h")
+            merged.update(harvest_lineups(host, key, lg, soon))
+        if not seen_any:
+            # NOTHING NEAR KICK-OFF IS THE ORDINARY STATE — most runs of this,
+            # most days. Returning without writing leaves the committed file
+            # exactly as it was, which matters: writing an empty one here would
+            # drop the sheets for a match currently being played every time the
+            # schedule fired an hour after the last kick-off.
+            print("  nothing within the window on any league — file untouched")
             return
-        print(f"  {len(soon)} fixture(s) within {args.within_hours}h")
-        got = harvest_lineups(host, key, league, soon)
-        emit_lineups(got, dt.datetime.now(dt.timezone.utc)
+        emit_lineups(merged, dt.datetime.now(dt.timezone.utc)
                      .strftime("%Y-%m-%dT%H:%MZ"))
         return
     if args.player_matches:

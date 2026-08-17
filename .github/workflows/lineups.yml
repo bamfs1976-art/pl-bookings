@@ -1,0 +1,145 @@
+name: Confirmed team sheets
+
+# The near-kick-off harvest, and the cadence half of the lineup work.
+#
+# WHY THIS CANNOT LIVE IN fixtures.yml. Team sheets publish about an HOUR
+# before kick-off. That file runs three times a day, at 07:20, 15:20 and 19:20
+# UTC, which is right for referee appointments — published the day before in
+# Spain, days ahead in England — and useless for a sheet whose whole life
+# begins sixty minutes before the whistle. A three-a-day schedule would catch
+# a lineup only by coincidence.
+#
+# WHAT IT COSTS. `/fixtures/lineups` is ONE CALL PER FIXTURE; there is no
+# "every lineup today" form. So the run is scoped by the clock, not by round:
+# harvest_apifootball.py reads the COMMITTED fixture files — already on disk,
+# no call — and asks the API only about fixtures inside the window. Most runs
+# of this, most days, make zero API calls and exit having touched nothing.
+#
+# A busy Saturday is the worst case: roughly fifteen fixtures across the three
+# divisions, each falling inside the window on two or three consecutive runs,
+# so 40-60 calls against a 7,500/day allowance. The re-fetching is deliberate
+# rather than tolerated — a sheet can be published late, corrected, or changed
+# after a warm-up injury, and the last run before kick-off is the one that
+# matters.
+#
+# THE STATIC-FILE DESIGN SURVIVES. This bakes a file and commits it, exactly
+# like every other data refresh; no desk gained a runtime fetch. That was the
+# open decision in docs/lineup-pricing.md and this is the answer to it.
+
+on:
+  schedule:
+    # Hourly at :05 through the football day. Kick-offs across the three
+    # divisions run from about 11:00 to 21:00 UTC, and a sheet lands an hour
+    # before its own, so the useful window starts at 10:00.
+    #
+    # NOT every hour of the day: outside this range there is nothing within
+    # reach of any kick-off, so the runs would be pure noise in the actions
+    # log. Scheduled runs are also frequently delayed by GitHub — the
+    # three-hour window the harvester actually uses (now-2h to now+1h) is wide
+    # enough that a fifteen-minute slip costs nothing.
+    - cron: '5 10-21 * * *'
+  workflow_dispatch:
+    inputs:
+      within_hours:
+        description: "How far ahead to look, in hours. The window also reaches 2h BACK, to catch a match already under way."
+        required: false
+        default: "1"
+
+permissions:
+  contents: write
+
+concurrency:
+  # Its own group, NOT fixtures'. Sharing one would have the hourly sheet run
+  # cancel the three-times-a-day appointment run, which is the more important
+  # of the two and the harder to reschedule.
+  group: lineups
+  cancel-in-progress: true
+
+jobs:
+  lineups:
+    runs-on: ubuntu-latest
+    env:
+      API_FOOTBALL_KEY: ${{ secrets.API_FOOTBALL_KEY }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      # Named rather than silent, as in fixtures.yml: a green tick on a run
+      # that fetched nothing is how a whole layer stays off without anyone
+      # noticing.
+      - name: Refuse to run blind
+        if: ${{ env.API_FOOTBALL_KEY == '' }}
+        run: |
+          echo "::error::API_FOOTBALL_KEY is not set — no team sheet can be fetched."
+          exit 1
+
+      # ONE INVOCATION FOR ALL THREE LEAGUES, not a shell loop over them.
+      # data/lineups.js is keyed by fixture id across every division and is
+      # written WHOLE from a single run, so three separate runs would each
+      # overwrite the last and leave only La Liga's sheets. The comma list is
+      # the supported form and the harvester rejects a multi-league --league
+      # on any other subcommand.
+      - name: Harvest team sheets near kick-off
+        run: |
+          python3 data/harvest_apifootball.py --lineups \
+            --league PL,EFLC,LL \
+            --within-hours "${{ inputs.within_hours || '1' }}" \
+            || echo "::warning::lineup harvest failed this run — keeping the committed file"
+
+      # The file is generated, so its shape is worth checking before it is
+      # committed rather than after it has been deployed. parse_lineups already
+      # refuses a sheet whose XI is not eleven; this catches an EMITTER
+      # regression, which that check cannot see.
+      - name: Guard the sheet file
+        run: |
+          if [ -f data/lineups.js ]; then
+            node --check data/lineups.js
+            node -e '
+              const vm = require("node:vm"), fs = require("node:fs");
+              const c = { window: {} };
+              vm.createContext(c);
+              vm.runInContext(fs.readFileSync("data/lineups.js", "utf8"), c);
+              const S = c.window.LINEUP_SHEETS;
+              if (!S) { console.error("lineups.js did not publish window.LINEUP_SHEETS"); process.exit(1); }
+              let n = 0;
+              for (const [fid, sides] of Object.entries(S)) {
+                for (const [club, sheet] of Object.entries(sides)) {
+                  if (!Array.isArray(sheet.start) || sheet.start.length !== 11) {
+                    console.error(`fixture ${fid} ${club}: ${(sheet.start||[]).length} starters, not 11`);
+                    process.exit(1);
+                  }
+                  n++;
+                }
+              }
+              console.log(`lineups.js OK: ${Object.keys(S).length} fixture(s), ${n} sheet(s)`);
+            '
+          else
+            echo "No sheet file yet — nothing was within the window."
+          fi
+          # The pricing guard reads the EMITTER and the pages, not the file, so
+          # it is meaningful on a run that harvested nothing.
+          node scripts/check-lineup-pricing.mjs
+
+      - name: Commit if anything changed
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          [ -f data/lineups.js ] && git add data/lineups.js
+          if git diff --cached --quiet; then
+            echo "No team sheet changed."
+            exit 0
+          fi
+          git commit -m "Confirmed team sheets"
+          # RETRY ON A RACE. This runs twelve times a day and fixtures.yml
+          # three, both pushing to main, so a rejected push is expected rather
+          # than exceptional. Rebase and retry instead of failing the run and
+          # losing a sheet that is only useful for the next hour.
+          for i in 1 2 3; do
+            git push && exit 0
+            echo "push rejected (attempt $i) — rebasing on origin/main"
+            git pull --rebase origin main || exit 1
+          done
+          echo "::error::could not push the team sheets after three attempts"
+          exit 1
