@@ -221,6 +221,17 @@ jobs:
       - name: A fixture with no lineup prices exactly as it did
         run: node scripts/check-lineup-pricing.mjs
 
+      # The sibling desks each had TWO answers to "which matchday is it": the
+      # This Matchday tab rolled over at midnight after the last fixture's date,
+      # the Fixtures dropdown rolled over at the last KICK-OFF. So for several
+      # hours of every matchday the two tabs disagreed, and the dropdown moved
+      # on while the final match was still being played. One implementation now
+      # (PLDCore.currentRound), day granularity, and the property is asserted
+      # over the whole season rather than at one boundary — which is how the
+      # season-end fallback to Matchday 1 was found.
+      - name: The matchday rolls over once, on the day, on both tabs
+        run: node scripts/check-matchday.mjs
+
       # Contrast has a right answer, is invisible to whoever picked the colour,
       # and degrades for the people least able to report it. --good-ink sat at
       # 4.43:1 on --bg for as long as the token had existed; --text-3 at 2.70:1;

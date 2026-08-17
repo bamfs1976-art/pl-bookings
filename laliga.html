@@ -1215,14 +1215,14 @@
     FIXTURES.forEach(function (f) { if (f.r && rs.indexOf(f.r) < 0) rs.push(f.r); });
     rs.sort(function (a, b) { return a - b; });
     /* Land on the next matchday that has not been played, which is the one
-       anyone opening this page wants. */
-    var now = Date.now(), next = rs[0];
-    for (var i = 0; i < rs.length; i++) {
-      var any = FIXTURES.some(function (f) {
-        return f.r === rs[i] && f.d && new Date(f.d).getTime() > now;
-      });
-      if (any) { next = rs[i]; break; }
-    }
+       anyone opening this page wants — and "not been played" is a question
+       about the day, not the kick-off time. */
+    /* THE SAME CALL the This Matchday tab makes. This used to test each
+       round for a fixture whose KICK-OFF was still ahead, which advanced the
+       dropdown the moment the last game of the round kicked off — while it
+       was being played, and hours before the other tab moved. */
+    var next = C.currentRound(FIXTURES);
+    if (next == null) next = rs[0];
     $('#fxRound').innerHTML = rs.map(function (r) {
       return '<option value="' + r + '"' + (r === next ? ' selected' : '') + '>Matchday ' + r + '</option>';
     }).join('');
@@ -1748,12 +1748,11 @@
    * skin. Same pricing path as the Fixtures tab (priceFixture), so a match
    * cannot read differently depending on which view you arrived through.
    */
+  /* PLDCore.currentRound, not a local rule. The Fixtures dropdown below uses
+     the identical call, which is the whole point — these were two rules that
+     disagreed for several hours of every matchday. */
   function nextRound() {
-    if (!FIXTURES.length) return null;
-    var today = new Date().toISOString().slice(0, 10);
-    var future = FIXTURES.filter(function (f) { return f.d && f.d.slice(0, 10) >= today; });
-    var pool = future.length ? future : FIXTURES;
-    return pool.reduce(function (m, f) { return m == null ? f.r : Math.min(m, f.r); }, null);
+    return FIXTURES.length ? C.currentRound(FIXTURES) : null;
   }
 
   /* Fewer than twelve rated players between two squads is not a confident

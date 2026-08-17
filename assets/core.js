@@ -221,6 +221,58 @@
    * substitutes divide the same pool — whereas an unresolved STARTER would
    * silently promote his ten team-mates.
    */
+  /* THE MATCHDAY A DESK OPENS ON. One implementation, because it was four:
+   * eflc.html and laliga.html each had a `nextRound()` for the This Matchday
+   * tab and a separate rule inside `initRounds()` for the Fixtures dropdown,
+   * and the two answered differently for several hours of every matchday.
+   *
+   * The dropdown advanced at the LAST KICK-OFF of the round; the tab advanced
+   * at midnight after the last fixture's DATE. So on 17 August 2026, with
+   * Cardiff v Wrexham kicking off at 19:00 as the last game of Matchday 1, the
+   * Fixtures tab offered Matchday 2 from 19:00 while This Matchday still
+   * showed Matchday 1 — and it did so from the moment the game kicked off,
+   * with the match still being played.
+   *
+   * DAY GRANULARITY WINS, and the reason is the same one the live-ticker
+   * docstring gives: a desk that drops a match while people are watching it is
+   * the worst thing this product can do. A fixture in progress has not been
+   * played, and neither has one that kicked off an hour ago.
+   *
+   * Dates are compared as UTC calendar days (`YYYY-MM-DD`), which is how the
+   * fixture files store them, so this does not depend on the reader's clock
+   * beyond which day it is for them.
+   *
+   * `now` is injectable so the guard can walk an hour at a time across a real
+   * boundary rather than trusting a description of what it does.
+   */
+  function currentRound(fixtures, now) {
+    const list = Array.isArray(fixtures) ? fixtures : [];
+    const today = new Date(now == null ? Date.now() : now).toISOString().slice(0, 10);
+    let upcoming = null, latest = null;
+    for (const f of list) {
+      if (!f || f.r == null) continue;
+      if (latest == null || f.r > latest) latest = f.r;
+      /* Today counts as upcoming all day, whatever the kick-off time. That IS
+         the fix — anything finer re-introduces the mid-match rollover. */
+      if (f.d && String(f.d).slice(0, 10) >= today) {
+        if (upcoming == null || f.r < upcoming) upcoming = f.r;
+      }
+    }
+    /* Nothing ahead means the list is spent, and the answer is the LAST round,
+       not the first. Both of the old rules fell back to the lowest round, so
+       on the day after the season ended each desk would have swung from
+       Matchday 46 to Matchday 1 — a fixture list from nine months ago
+       presented as the next thing to happen. Caught by the never-goes-
+       backwards property in check-matchday.mjs, which is the sort of thing a
+       guard written as a property finds and one written as an example does
+       not. Also the right answer for a stale fixture file, which is the same
+       state arrived at by a different route.
+       ROUNDS ARE NOT A PARTITION OF THE CALENDAR — La Liga's jornada 1 carries
+       postponed fixtures after the whole of jornada 2 — so this is max of the
+       round numbers, not the round of the latest date. */
+    return upcoming != null ? upcoming : latest;
+  }
+
   function lineupRoles(sheet, squadNames) {
     if (!sheet || !Array.isArray(sheet.start)) return null;
     const squad = Array.isArray(squadNames) ? squadNames : [];
@@ -1584,7 +1636,7 @@
     riskScore, normName, matchRefName, pickPL, summarisePicks, calibrate, impliedProb, fairOdds, edgePct, LOGISTIC_SLOPE,
     per90, liveRate, joinLooksRight, foldLetters, MIN_LIVE_MINUTES,
     lineupMinutes, xiWeights, SUBS_USED, SUB_MINUTES,
-    playerKeys, matchSquadName, lineupRoles,
+    playerKeys, matchSquadName, lineupRoles, currentRound,
     marketProb, marketProbDeVig, valuePoint, TYPICAL_CARD_MARGIN, TYPICAL_GOAL_MARGIN,
     cardCountDist, probOverCards, expectedCards, probBothCarded, probBothAtLeast, teamCardMarkets,
     bookingPointsDist, expectedPoints, probOverPoints, leagueRedRate,
