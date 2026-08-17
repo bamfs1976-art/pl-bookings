@@ -107,6 +107,38 @@ for (const d of LINKS) {
     `${d.url} does not route to ${d.file}`);
 }
 
+/* ---- 2a. a rewrite shadowed by a real file must be FORCED ---------------- */
+/* NETLIFY SERVES A MATCHING STATIC FILE BEFORE IT CONSULTS REDIRECTS. So a
+   200 rewrite whose source path already resolves to a file is silently
+   ignored — no error, no warning, the rule simply never fires.
+   That shipped. `/ -> /today.html 200` was shadowed by index.html serving as
+   the directory index, so `/` kept returning the Premier League desk and
+   tapping "Today's matches" moved you from the PL desk to the PL desk. It
+   looked like a dead link and was a routing rule that could not fire.
+   The bang (`200!`) forces the rewrite ahead of the file. This checks every
+   2xx rule for the collision, so the next one cannot ship the same way — and
+   no local server reproduces it, because the precedence belongs to Netlify. */
+{
+  const staticFor = (src) => {
+    if (src.includes('*') || src.includes(':')) return null;   // wildcards never shadow
+    if (src === '/') return existsSync(join(root, 'index.html')) ? '/index.html' : null;
+    if (existsSync(join(root, src))) return src;
+    if (existsSync(join(root, src + '.html'))) return src + '.html';
+    if (existsSync(join(root, src, 'index.html'))) return src + '/index.html';
+    return null;
+  };
+  for (const line of lines) {
+    const [src, target, code] = line.split(/\s+/);
+    if (!code || !/^2\d\d!?$/.test(code)) continue;
+    const shadow = staticFor(src);
+    if (!shadow || shadow === target) continue;   // nothing serves it, or the same thing
+    assert.ok(code.endsWith('!'),
+      `_redirects: "${src} -> ${target} ${code}" is shadowed by the static file ` +
+      `${shadow}, which Netlify serves first. The rule never fires and ${src} ` +
+      `silently returns ${shadow}. Add the force flag: ${code}!`);
+  }
+}
+
 /* ---- 2b. a missing optional data file must 404, not become HTML ---------- */
 /* Three script tags carry onerror="void 0" for files that may legitimately not
    exist — data/lineups.js above all, which appears only once a harvest has

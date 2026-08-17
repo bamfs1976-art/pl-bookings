@@ -19,7 +19,16 @@
 # two routes are two views of one dataset, and the pricing, the player-name
 # join and the card builders behind them must not exist twice. The page reads
 # its own path to decide which view it opened on. See the ROUTE comment there.
-/             /today.html   200
+#
+# `200!`, AND THE BANG IS WHAT MAKES IT WORK. Netlify serves a matching static
+# file BEFORE it consults redirects, and `index.html` exists at the publish
+# root, so `/` resolves to it as the directory index and an unforced rule here
+# is silently ignored. That shipped: `/` kept serving the Premier League desk,
+# so tapping "Today's matches" moved you from the PL desk to the PL desk and
+# looked like a dead link.
+# Invisible to any local server that applies these rules directly — the
+# precedence is Netlify's, not the file's.
+/             /today.html   200!
 # The whole season, every date, plus the week's nine-fold.
 /today        /today.html   200
 /season       /today.html   200
