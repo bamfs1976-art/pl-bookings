@@ -424,6 +424,10 @@
 <script src="data/eflc_fixtures.js"></script>
 <script src="assets/core.js"></script>
 <script src="data/eflc_h2h.js" onerror="void 0"></script>
+<!-- OPTIONAL, like the h2h above: a fixture absent from it prices off squad
+     minute-weights exactly as it always has, which is the state of most of a
+     round most of the time. -->
+<script src="data/lineups.js" onerror="void 0"></script>
 <script src="assets/shell.js"></script>
 <script src="assets/tour.js"></script>
 <script src="assets/palette.js"></script>
@@ -1093,10 +1097,33 @@
      chance would inflate every total. minuteWeights spreads an XI across
      the squad by last season's minutes; the weight becomes expected minutes,
      which is what the hazard model takes. */
-  function sideProbs(short, factor) {
+  /* The confirmed team sheets, when a harvest has landed one. Absent is the
+     ordinary state — sheets publish about an hour before kick-off — and an
+     absent file must leave every number exactly where it was. */
+  var XI_SHEETS = (typeof window !== 'undefined' && window.LINEUP_SHEETS) || null;
+
+  /* One club's roles for a fixture, or null to price it the way it always was.
+     Null covers three cases and they are not distinguished here because the
+     answer to all three is the same: no file, no sheet for this fixture, or a
+     sheet whose XI does not fully resolve against the squad. */
+  function rolesFor(fx, short) {
+    if (!XI_SHEETS || !fx || fx.id == null) return null;
+    var sheet = XI_SHEETS[String(fx.id)];
+    if (!sheet || !sheet[short]) return null;
+    var squad = PLAYERS.filter(function (p) { return p.c === short; })
+                       .map(function (p) { return p.n; });
+    return C.lineupRoles(sheet[short], squad);
+  }
+
+  function sideProbs(short, factor, roles) {
     var squad = PLAYERS.filter(function (p) { return p.c === short && p._y90 != null; });
     if (!squad.length) return { ps: [], top: [] };
-    var w = C.minuteWeights(squad.map(function (p) { return p.min; }), 11);
+    /* THE ONLY BRANCH. With no roles this is the weighting that has always
+       run, reached by the same call with the same arguments — a fixture with
+       no team sheet must price to the digit it printed yesterday. */
+    var w = roles
+      ? C.xiWeights(squad.map(function (p) { return roles[p.n] || null; }))
+      : C.minuteWeights(squad.map(function (p) { return p.min; }), 11);
     var rows = squad.map(function (p, i) {
       var expMin = Math.max(0, w[i]) * 90;
       var lam = C.cardLambda(p._y90, expMin, { ref: factor });
@@ -1124,7 +1151,13 @@
     var factor = r.ref ? refFactor(r.ref) : 1;
     var derby = isDerby(fx.h, fx.a);
     var priced = factor * (derby ? DERBY_BOOST : 1);
-    var home = sideProbs(fx.h, priced), away = sideProbs(fx.a, priced);
+    /* BOTH SIDES OR NEITHER, the same rule the harvest applies: pricing one
+       team off its real XI and the other off last season's minutes would make
+       the two halves of one match answer different questions, and the match
+       total is their sum. */
+    var rh = rolesFor(fx, fx.h), ra = rolesFor(fx, fx.a);
+    if (!rh || !ra) { rh = null; ra = null; }
+    var home = sideProbs(fx.h, priced, rh), away = sideProbs(fx.a, priced, ra);
     var m = C.teamCardMarkets(home.ps, away.ps, [3.5, 4.5, 5.5]);
     /* Booking points: the market a bookmaker actually posts for cards, 10 a
        yellow and 25 a red. Reds come from the APPOINTED referee's own rate

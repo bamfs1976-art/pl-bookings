@@ -150,6 +150,12 @@ function leagueAverages(refs) {
  * neutral official the desk beside it does not — and the referee is the
  * largest single multiplier either of them applies.
  */
+/* DELIBERATELY NOT WIRED to the confirmed-XI sheets, unlike the four desks.
+   The acca is a RECORD: cmdBuild logs a round as soon as it has an unplayed
+   fixture, usually a week out and always long before a team sheet exists, and
+   the logged price is what was offered at that moment. Re-pricing it later off
+   an XI would not make the record more accurate, it would make it a different
+   claim. See docs/lineup-pricing.md — settled 17 August, not an oversight. */
 function sideTop(players, short, refFactor) {
   const squad = players.filter((p) => p.c === short && p._y90 != null);
   if (!squad.length) return [];

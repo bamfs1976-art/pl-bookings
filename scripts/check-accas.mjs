@@ -657,12 +657,21 @@ const tfn = (name) => {
 
 {
   const body = tfn('over25');
-  assert.ok(/p\.L\.pl\.board\([\s\S]{0,90}\[2\.5\]\)/.test(body),
-    'the Premier League 2.5 line no longer comes from that desk\'s own board');
+  assert.ok(/p\.L\.pl\.board\([\s\S]{0,200}\[2\.5\],[\s\S]{0,40}p\.roles\)/.test(body),
+    'the Premier League 2.5 line no longer comes from that desk\'s own board with ' +
+    'the fixture\'s own roles — dropping p.roles re-prices the leg off squad minutes ' +
+    'while the day board beside it prices off the team sheet, so the page would ' +
+    'contradict itself on one fixture');
   assert.ok(/C\.teamCardMarkets\(p\.home\.ps,\s*p\.away\.ps,\s*\[2\.5\]\)/.test(body),
     'the sibling desks\' 2.5 line no longer goes through teamCardMarkets — computing ' +
     'it any other way is a second minute-weighting');
-  ok('the 2.5 line comes from each league\'s own board, never re-derived');
+  /* The sibling arm needs no roles argument BECAUSE p.home.ps was already
+     built from them in price(); this pins the reason so the asymmetry above
+     does not read as an oversight. */
+  assert.ok(/sideProbs\(L,\s*fx\.h,\s*factor,\s*rh\)/.test(tfn('price')),
+    'price() no longer feeds the resolved roles into sideProbs, so p.home.ps is ' +
+    'squad-weighted and the sibling 2.5 leg silently stops tracking the board');
+  ok('the 2.5 line comes from each league\'s own board, on the same weights');
 }
 
 {
@@ -673,8 +682,10 @@ const tfn = (name) => {
     'today.html\'s shared board no longer prices exactly the three lines it did — ' +
     'the day acca picks its leg from every line on that board, so this would move it');
   const pm = readFileSync(join(root, 'assets', 'plmodel.js'), 'utf8');
-  assert.ok(/function board\(h, a, ref, derby, sim, lines\)/.test(pm),
-    'plmodel board no longer takes a lines parameter');
+  assert.ok(/function board\(h, a, ref, derby, sim, lines, roles\)/.test(pm),
+    'plmodel board no longer takes lines and roles as its trailing parameters — ' +
+    'both are optional by design and both must stay positionally where they are, ' +
+    'since today.html passes `undefined` for sim to reach them');
   assert.ok(/lines \|\| \[3\.5, 4\.5, 5\.5\]/.test(pm),
     'plmodel board no longer defaults to the three lines every desk prints — every ' +
     'existing caller must get the board it got before');
@@ -751,4 +762,13 @@ console.log(`\n${passed} checks passed`);
  *                                                distinct matches cannot be found"
  *    give the day board a 2.5 line           -> "no longer prices exactly the three
  *                                                lines it did"
+ *    over25 drops p.roles                    -> "no longer comes from that desk's own
+ *                                                board with the fixture's own roles"
+ *    price() stops passing rh/ra to sideProbs
+ *                                            -> "price() no longer feeds the resolved
+ *                                                roles into sideProbs"
+ *
+ *  assets/plmodel.js
+ *    board() drops the roles parameter       -> "no longer takes lines and roles as
+ *                                                its trailing parameters"
  */

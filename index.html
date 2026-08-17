@@ -1730,6 +1730,9 @@ License: MIT
 <script src="data/h2h.js"></script>
 <script src="data/model.js"></script>
 <script src="data/sim_model.js"></script>
+<!-- OPTIONAL, like the h2h files on the sibling desks: a fixture absent from
+     it prices off squad minute-weights exactly as it always has. -->
+<script src="data/lineups.js" onerror="void 0"></script>
 <!-- This season's fouls committed, per FPL player id, harvested from
      FPL-Core-Insights by scripts/build-core-insights.mjs. The FPL API carries
      yellow cards but no fouls, so without this half the risk score sits on
@@ -4306,18 +4309,46 @@ function gwCandidates(h,a,ref,derby,sim){
    markets are team-level (total cards over/under, both teams carded), so
    fold the per-player chances into a Poisson-binomial — see PLDCore. Uses
    every rated available player on each side, not just the shown top few. */
-function teamCardBoard(h,a,ref,derby){
+/* The confirmed team sheets, when a harvest has landed one. Absent is the
+   ordinary state — sheets publish about an hour before kick-off — and an
+   absent file must leave every number exactly where it was. */
+const XI_SHEETS=(typeof window!=="undefined"&&window.LINEUP_SHEETS)||null;
+/* One club's roles for a fixture, or null to price it the way it always was.
+   Null covers no file, no sheet for this fixture, and a sheet whose XI does
+   not fully resolve against the squad — the answer to all three is the same. */
+function rolesFor(fid,club){
+  if(!XI_SHEETS||fid==null||typeof PLDCore.lineupRoles!=="function") return null;
+  const sheet=XI_SHEETS[String(fid)];
+  if(!sheet||!sheet[club]) return null;
+  return PLDCore.lineupRoles(sheet[club],PL_PLAYERS.filter(p=>p.c===club).map(p=>p.n));
+}
+function teamCardBoard(h,a,ref,derby,fid){
   const cands=gwCandidates(h,a,ref,derby);
   if(!cands.length) return null;
+  /* BOTH SIDES OR NEITHER — the match total is the sum of the two halves, and
+     pricing one off its real XI and the other off last season's minutes would
+     make them answer different questions. */
+  let rh=rolesFor(fid,h), ra=rolesFor(fid,a);
+  if(!rh||!ra){ rh=null; ra=null; }
   /* Each candidate's probability assumes he plays 90, so scale it by the
      share of his side's minutes he actually takes — otherwise a 25-man
      squad prices a match with 50 players on the pitch. */
-  const side=c=>{
+  const side=(c,roles)=>{
     const s=cands.filter(x=>x.p.c===c);
-    return PLDCore.matchLambdas(s.map(x=>x.prob),s.map(x=>x.p.min));
+    /* THE ONLY BRANCH. Without roles this is the identical call it always was;
+       with them the same clamp runs over XI weights instead. Both go through
+       lambdasFromWeights, so the two paths cannot drift apart. */
+    return roles
+      ? PLDCore.lambdasFromWeights(s.map(x=>x.prob),
+          PLDCore.xiWeights(s.map(x=>roles[x.p.n]||null)))
+      : PLDCore.matchLambdas(s.map(x=>x.prob),s.map(x=>x.p.min));
   };
-  const board=PLDCore.teamCardMarkets(side(h),side(a),[3.5,4.5,5.5]);
+  const board=PLDCore.teamCardMarkets(side(h,rh),side(a,ra),[3.5,4.5,5.5]);
   board.thin=cands.length<12;   // too few rated players to trust the tails
+  /* Shown on the card: a number priced off a team sheet and one priced off
+     last season's minutes are different claims, and the reader cannot tell
+     them apart from the figure alone. */
+  board.xi=!!(rh&&ra);
   return board;
 }
 /* MATCH FOULS, the same shape as the card board beside it.
@@ -4892,7 +4923,7 @@ function fixtureCardHtml(f,opts){
       ${liveTickerHtml(M)}
       <div class="fx-refrow">${refSelect(f.id)}${refDelta}${LINEUPS?LINEUPS.control(f.id):""}</div>
       ${simStripHtml(M)}
-      ${marketStripHtml(teamCardBoard(h,a,ref,derby),h2hFor(h,a),teamFoulBoard(h,a))}
+      ${marketStripHtml(teamCardBoard(h,a,ref,derby,f.id),h2hFor(h,a),teamFoulBoard(h,a))}
       ${body}
     </div>
   </section>`;

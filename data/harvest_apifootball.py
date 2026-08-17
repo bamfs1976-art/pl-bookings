@@ -840,7 +840,14 @@ def emit_lineups(by_fixture, fetched_at):
         "// squad minute-weights exactly as it always has — that is the normal",
         "// state until about an hour before kick-off, not a failure.",
         f"// Fetched {fetched_at}.",
-        "const LINEUPS = {",
+        "//",
+        "// THE GLOBAL IS NOT CALLED `LINEUPS`, and that is deliberate. index.html",
+        "// already declares a top-level `const LINEUPS` for assets/lineup.js (the",
+        "// reader's own I-have-seen-the-team-sheet flag, which is a different",
+        "// thing entirely). Two top-level `const`s of one name in one document is",
+        "// a parse error, not a shadow: the whole inline script fails and the desk",
+        "// renders blank. Read `window.LINEUP_SHEETS`.",
+        "var __LINEUP_SHEETS = {",
     ]
     for fid in sorted(by_fixture, key=lambda x: int(x)):
         sides = by_fixture[fid]
@@ -851,8 +858,8 @@ def emit_lineups(by_fixture, fetched_at):
             for club in sorted(sides))
         lines.append(f'  "{fid}":{{{inner}}},')
     lines.append("};")
-    lines.append('if (typeof module !== "undefined" && module.exports) module.exports = LINEUPS;')
-    lines.append('if (typeof window !== "undefined") window.LINEUPS = LINEUPS;')
+    lines.append('if (typeof module !== "undefined" && module.exports) module.exports = __LINEUP_SHEETS;')
+    lines.append('if (typeof window !== "undefined") window.LINEUP_SHEETS = __LINEUP_SHEETS;')
     (DATA / "lineups.js").write_text("\n".join(lines) + "\n", encoding="utf-8")
     print(f"lineups.js written ({len(by_fixture)} fixture(s) with both sheets)")
     return len(by_fixture)

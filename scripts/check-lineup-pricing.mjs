@@ -326,6 +326,65 @@ group('the player-name join is the one that already exists');
   ok(`${total - lost.length}/${total} squad names across three desks survive the feed's abbreviation`);
 }
 
+/* ---- 4. the harvested file cannot collide with a desk's own globals ------
+ * This is the bug that actually shipped, and it is worth being blunt about the
+ * failure mode: `data/lineups.js` emitted `const LINEUPS`, index.html already
+ * had a top-level `const LINEUPS` for assets/lineup.js (the reader's own
+ * "I have seen the team sheet" flag — a different thing with the same obvious
+ * name), and two top-level `const`s of one name in one document is a PARSE
+ * ERROR, not a shadow. The whole inline script fails and the desk renders
+ * blank. Nothing in the pricing logic is wrong; the page never runs.
+ *
+ * Asserted against the EMITTER rather than the generated file, because the
+ * generated file is usually absent — a check that reads data/lineups.js would
+ * pass vacuously on almost every run, which is exactly the kind of guard this
+ * repository keeps writing by accident. */
+group('the harvested sheet file cannot collide with a page global');
+{
+  const emitter = readFileSync(join(root, 'data', 'harvest_apifootball.py'), 'utf8');
+  /* `(\w+)` and not `(__?\w+)`. The first draft of this check required the
+     name to begin with an underscore, so every colliding name failed the
+     SHAPE assertion below instead of the collision assertion — a guard that
+     fired on the right mutations with the wrong reason, and would have gone on
+     firing after the collision check itself was deleted. */
+  const decl = emitter.match(/"(?:var|const|let) (\w+) = \{",/);
+  assert.ok(decl, 'emit_lineups no longer opens with a top-level declaration — ' +
+    'if the shape changed, this check must change with it');
+  const global = decl[1];
+
+  /* Named explicitly as well as caught by the sweep, because this is the
+     collision that actually shipped and the general message would bury it. */
+  assert.notEqual(global, 'LINEUPS',
+    'the harvested global is named LINEUPS again; index.html uses that name ' +
+    'for assets/lineup.js\'s confirmation flag, and the collision blanks the desk');
+
+  /* Every page that loads the file, against every top-level binding each one
+     already declares. A collision with ANY of them is fatal to that page. */
+  const pages = ['index.html', 'today.html', 'eflc.html', 'laliga.html'];
+  for (const page of pages) {
+    const src = readFileSync(join(root, page), 'utf8');
+    assert.ok(src.includes('data/lineups.js'),
+      `${page} no longer loads data/lineups.js`);
+    /* Top-level only: `var LINEUPS` inside eflc/laliga's IIFE is function
+       scoped and cannot collide, which is why those two never broke. */
+    const tops = [...src.matchAll(/^(?:var|const|let) (\w+)\s*=/gm)].map((m) => m[1]);
+    assert.ok(!tops.includes(global),
+      `${page} declares a top-level \`${global}\`, the same name the harvested ` +
+      `sheet file declares — the page will fail to parse and render blank`);
+  }
+  ok(`the harvested global \`${global}\` collides with no top-level name on ${pages.length} pages`);
+
+  /* And the property the pages actually read has to be the one it writes. */
+  const prop = emitter.match(/window\.(\w+) = __?\w+;/);
+  assert.ok(prop, 'the emitter no longer assigns a window property');
+  for (const page of pages) {
+    assert.ok(readFileSync(join(root, page), 'utf8').includes('window.' + prop[1]),
+      `${page} does not read window.${prop[1]}, the property the emitter writes ` +
+      `— the sheets would be harvested and silently never used`);
+  }
+  ok(`all ${pages.length} pages read window.${prop[1]}, the property the emitter writes`);
+}
+
 console.log(`\n${passed} checks passed`);
 
 /* ---- MUTATIONS -----------------------------------------------------------
@@ -358,4 +417,26 @@ console.log(`\n${passed} checks passed`);
  *                                        would pass on a function that does
  *                                        nothing, which is the failure mode a
  *                                        negative guard is most prone to
+ *
+ *  data/harvest_apifootball.py (the global-name collision)
+ *    emitted global back to `const LINEUPS`
+ *                                    -> "the harvested global is named LINEUPS
+ *                                        again" (the collision that shipped)
+ *    emitted global renamed ROUTE_META, another name index.html already holds
+ *                                    -> "index.html declares a top-level
+ *                                        `ROUTE_META`"
+ *    window property renamed on one page only
+ *                                    -> "today.html does not read
+ *                                        window.LINEUP_SHEETS"
+ *    a page drops the <script src="data/lineups.js">
+ *                                    -> "laliga.html no longer loads
+ *                                        data/lineups.js"
+ *
+ *    NOTE ON THE FIRST DRAFT of that block, because it is the recurring bug in
+ *    this repository rather than a one-off: the declaration was matched with
+ *    `(__?\w+)`, which only accepts a name beginning with an underscore. Both
+ *    collision mutations above did fail it — but on the SHAPE assertion
+ *    ("emit_lineups no longer opens with a top-level declaration"), not on the
+ *    collision assertion, so the guard looked mutation-tested while the
+ *    assertion under test was never reached. Widened to `(\w+)`.
  */

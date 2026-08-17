@@ -174,6 +174,29 @@ where a lineup is known, and that difference is visible between two fixtures on
 one page. Either the page says so, or the weighting is calibrated on cards
 rather than minutes. Not settled.
 
+### The name of the harvested global, and why it is ugly
+
+`data/lineups.js` exposes `window.LINEUP_SHEETS` from a file-level
+`var __LINEUP_SHEETS`. The obvious name was `LINEUPS` and it was tried first;
+it took index.html down.
+
+index.html already has a top-level `const LINEUPS` — the wrapper around
+`assets/lineup.js`, which is the READER'S confirmation flag, a different thing
+with a name that sounds identical. Two top-level `const`s of one name in one
+document is a parse error, not a shadow: the whole inline script fails to
+compile and the desk renders blank. eflc.html and laliga.html survived it only
+because their copies sit inside an IIFE and are function-scoped.
+
+Nothing in the pricing was wrong; the page simply never ran. It is worth
+remembering as a class of bug — a data file is not inert just because it only
+declares data, and a page that renders blank looks like a fetch failure rather
+than a naming one.
+
+`scripts/check-lineup-pricing.mjs` reads the declaration out of the EMITTER and
+sweeps every page's top-level bindings for it. Asserted against the emitter and
+not against `data/lineups.js`, because that file is usually absent — a check
+that read it would pass vacuously on nearly every run.
+
 ### What must not change
 
 When no XI is known, every published number must be **byte-identical** to

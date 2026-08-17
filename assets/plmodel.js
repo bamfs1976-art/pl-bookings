@@ -178,17 +178,33 @@
        the week's card nine-fold — a market no desk shows and the acca needs.
        A PARAMETER, not a second board builder: the minute-weighting above is
        the thing that must not exist twice, and it is the reason this function
-       is shared by the desk and the cross-league page at all. */
-    function board(h, a, ref, derby, sim, lines) {
+       is shared by the desk and the cross-league page at all.
+
+       `roles` is optional and is `{home: map, away: map}` from
+       PLDCore.lineupRoles — a confirmed team sheet, when one has been
+       harvested. Omitted or null, every number below is the one this function
+       has always returned; that is the ordinary state, since sheets publish
+       about an hour before kick-off. BOTH SIDES OR NEITHER: the match total is
+       the sum of two halves, and pricing one off a real XI and the other off
+       last season's minutes would make them answer different questions. */
+    function board(h, a, ref, derby, sim, lines, roles) {
       var cands = candidates(h, a, ref, derby, sim);
       if (!cands.length) return null;
-      var side = function (c) {
+      var rh = roles && roles.home, ra = roles && roles.away;
+      if (!rh || !ra) { rh = null; ra = null; }
+      var side = function (c, r) {
         var s = cands.filter(function (x) { return x.p.c === c; });
-        return C.matchLambdas(s.map(function (x) { return x.prob; }),
-                              s.map(function (x) { return x.p.min; }));
+        /* THE ONLY BRANCH, and both arms end in the same clamp — without roles
+           this is the identical call it always was. */
+        return r
+          ? C.lambdasFromWeights(s.map(function (x) { return x.prob; }),
+              C.xiWeights(s.map(function (x) { return r[x.p.n] || null; })))
+          : C.matchLambdas(s.map(function (x) { return x.prob; }),
+                           s.map(function (x) { return x.p.min; }));
       };
-      var b = C.teamCardMarkets(side(h), side(a), lines || [3.5, 4.5, 5.5]);
+      var b = C.teamCardMarkets(side(h, rh), side(a, ra), lines || [3.5, 4.5, 5.5]);
       b.thin = cands.length < 12;
+      b.xi = !!(rh && ra);
       return b;
     }
 

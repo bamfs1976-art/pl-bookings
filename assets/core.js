@@ -206,6 +206,42 @@
     return uniq(keyed.filter((x) => joinLooksRight(x.n, published)));
   }
 
+  /* One club's sheet as a squad-name -> role map, or NULL.
+   *
+   * ALL ELEVEN OR NONE, and this is the rule that stops the conservation above
+   * turning into a weapon. xiWeights divides the starters' share by however
+   * many starters it is GIVEN: hand it nine because two names did not resolve
+   * against the squad and it hands each of them 99 minutes, which is not a
+   * football match. A partial join is exactly what this repository keeps being
+   * bitten by, so a sheet that does not fully resolve is not used at all and
+   * the fixture keeps the squad weighting it always had.
+   *
+   * The bench is allowed to resolve partially. A substitute who cannot be
+   * found is simply not on the list — he takes no share and the other named
+   * substitutes divide the same pool — whereas an unresolved STARTER would
+   * silently promote his ten team-mates.
+   */
+  function lineupRoles(sheet, squadNames) {
+    if (!sheet || !Array.isArray(sheet.start)) return null;
+    const squad = Array.isArray(squadNames) ? squadNames : [];
+    if (!squad.length) return null;
+    const roles = {};
+    for (const n of sheet.start) {
+      const hit = matchSquadName(n, squad);
+      if (!hit) return null;                 // an unresolved starter voids the sheet
+      roles[hit] = 'start';
+    }
+    /* Eleven DISTINCT squad members. Two feed names collapsing onto one squad
+       entry would leave the side ten strong and the check above would not see
+       it, because eleven names each resolved to something. */
+    if (Object.keys(roles).length !== 11) return null;
+    for (const n of (sheet.sub || [])) {
+      const hit = matchSquadName(n, squad);
+      if (hit && !roles[hit]) roles[hit] = 'sub';
+    }
+    return roles;
+  }
+
   function joinLooksRight(vendoredName, feedName) {
     const a = normName(foldLetters(String(vendoredName || '').toLowerCase()));
     const b = normName(foldLetters(String(feedName || '').toLowerCase()));
@@ -1097,12 +1133,20 @@
   }
 
   /* Per-player card chances for a side, scaled to expected minutes. */
-  function matchLambdas(probs, mins, xi) {
-    const w = minuteWeights(mins, xi);
+  /* Per-player lambdas from probabilities and a WEIGHTING, whatever produced
+     it. Split out of matchLambdas so the XI path and the squad path share one
+     clamp instead of two copies of it — the byte-identity the lineup work
+     promises is then true by construction rather than by inspection. */
+  function lambdasFromWeights(probs, weights) {
+    const w = Array.isArray(weights) ? weights : [];
     return (Array.isArray(probs) ? probs : []).map((p, i) => {
       const v = Number(p);
       return isFinite(v) && v > 0 ? Math.min(0.999, v) * (w[i] || 0) : 0;
     });
+  }
+
+  function matchLambdas(probs, mins, xi) {
+    return lambdasFromWeights(probs, minuteWeights(mins, xi));
   }
 
   function cardCountDist(ps) {
@@ -1540,12 +1584,12 @@
     riskScore, normName, matchRefName, pickPL, summarisePicks, calibrate, impliedProb, fairOdds, edgePct, LOGISTIC_SLOPE,
     per90, liveRate, joinLooksRight, foldLetters, MIN_LIVE_MINUTES,
     lineupMinutes, xiWeights, SUBS_USED, SUB_MINUTES,
-    playerKeys, matchSquadName,
+    playerKeys, matchSquadName, lineupRoles,
     marketProb, marketProbDeVig, valuePoint, TYPICAL_CARD_MARGIN, TYPICAL_GOAL_MARGIN,
     cardCountDist, probOverCards, expectedCards, probBothCarded, probBothAtLeast, teamCardMarkets,
     bookingPointsDist, expectedPoints, probOverPoints, leagueRedRate,
     bookingPointsMarkets, YELLOW_POINTS, RED_POINTS,
-    minuteWeights, matchLambdas,
+    minuteWeights, matchLambdas, lambdasFromWeights,
     venueFactor, chaseFactor, cardLambda, pCardFromLambda, pCardSeason,
     HOME_FACTOR, AWAY_FACTOR,
     simLambdas, simPoissonPmf, simScoreGrid, simOutcomes, simFixture, simResultShare,
