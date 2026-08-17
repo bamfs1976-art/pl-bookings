@@ -344,7 +344,7 @@
    * desk's own model, and this page calls it.
    */
   var SOURCES = [
-    { code: 'PL', name: 'Premier League', href: '/', frame: 'f-pl' },
+    { code: 'PL', name: 'Premier League', href: '/pl', frame: 'f-pl' },
     { code: 'EFLC', name: 'EFL Championship', href: '/eflc', frame: 'f-eflc' },
     { code: 'LL', name: 'La Liga', href: '/laliga', frame: 'f-laliga' }
   ];
@@ -521,10 +521,14 @@
     var factor = refFactor(L, ref);
     var home = sideProbs(L, fx.h, factor, rh), away = sideProbs(L, fx.a, factor, ra);
     if (!home || !away) return null;
+    var m = C.teamCardMarkets(home.ps, away.ps, [3.5, 4.5, 5.5]);
+    /* Whether a harvested team sheet was actually used, so a shared card can
+       say which basis it was priced on. The Premier League path gets this from
+       plmodel.board; this is the sibling half of the same fact. */
+    m.xi = !!(rh && ra);
     return {
       L: L, fx: fx, ref: { ref: ref, name: fx.ref || null, appointed: !!fx.ref },
-      factor: factor, home: home, away: away,
-      m: C.teamCardMarkets(home.ps, away.ps, [3.5, 4.5, 5.5])
+      factor: factor, home: home, away: away, m: m
     };
   }
 
@@ -734,6 +738,15 @@
       + '</div>'
       + '<div class="fx-topr">'
       + '<div class="fx-refline">' + refLine + '</div>'
+      /* THE MATCH CARD, per fixture, exactly as the three desks export it —
+         same S.deskMatchSpec, same S.matchCard. This page could already share
+         a whole DAY, which is the wrong grain for posting one fixture. */
+      + (S ? '<button class="fx-shareico" type="button"'
+           + ' data-share-fx="' + esc(String(p.fx.id)) + '"'
+           + ' data-lg="' + esc(p.L.code) + '"'
+           + ' title="Download a shareable card of this match"'
+           + ' aria-label="Share ' + esc(p.fx.h) + ' versus ' + esc(p.fx.a) + '">'
+           + '\u2b07</button>' : '')
       + '<span class="fx-heat' + (p.m.expected >= 4.2 ? ' hot' : '') + '" '
       + 'title="Booking heat: expected cards, both sides added together">'
       + n1(p.m.expected) + '</span>'
@@ -1348,6 +1361,58 @@
   }
 
   /* ---- the combined card ------------------------------------------------ */
+  /* ONE FIXTURE'S CARD, through the desks' own adapter.
+     S.deskMatchSpec is what eflc.html and laliga.html call, so a match shared
+     from here and the same match shared from its own desk are the same card
+     rather than two builders that agree until one of them changes.
+     The season label and round word come from the league the fixture belongs
+     to — a La Liga match must not be captioned "EFL Championship" because the
+     page it was shared from lists three divisions. */
+  var SHARE_META = {
+    PL:   { seasonLabel: 'Premier League 2026-27', roundWord: 'Gameweek' },
+    EFLC: { seasonLabel: 'EFL Championship 2026-27', roundWord: 'Matchday' },
+    LL:   { seasonLabel: 'La Liga 2026-27', roundWord: 'Matchday' }
+  };
+
+  function shareFixture(fid, code, btn) {
+    if (!S) return;
+    var p = null;
+    for (var i = 0; i < ALL.length; i++) {
+      if (String(ALL[i].fx.id) === String(fid) && ALL[i].L.code === code) { p = ALL[i]; break; }
+    }
+    if (!p) return;
+    var meta = SHARE_META[code] || {};
+    var spec = S.deskMatchSpec(p, {
+      league: code,
+      seasonLabel: meta.seasonLabel || p.L.name,
+      roundWord: meta.roundWord || 'Matchday',
+      clubBy: p.L.clubBy,
+      whenText: fmtWhen,
+      /* The basis the price was computed on, from the pricing rather than from
+         a reader's mark — see the note in share.js. */
+      pricedOffXI: !!(p.m && p.m.xi)
+    });
+    var label = btn ? btn.getAttribute('aria-label') : null;
+    if (btn) { btn.disabled = true; }
+    S.matchCard(spec)
+      .then(function (b) { S.download(b, spec.filename); })
+      .catch(function (e) { if (window.console) console.error(e); })
+      .then(function () { if (btn) { btn.disabled = false; if (label) btn.setAttribute('aria-label', label); } });
+  }
+
+  /* The long form of a kick-off, for a card that outlives the page. fmtTime
+     prints the clock alone, which on a card carrying a whole season's fixtures
+     does not say which day. */
+  function fmtWhen(iso) {
+    if (!iso) return '';
+    var d = new Date(iso);
+    if (isNaN(d)) return '';
+    return d.toLocaleString(undefined, {
+      weekday: 'short', day: 'numeric', month: 'short',
+      hour: '2-digit', minute: '2-digit'
+    });
+  }
+
   /* Takes the date rather than reading the dropdown, because in the calendar
      there is no selected date — every group has its own button and they must
      all produce exactly the card the single-date view would. One function, one
@@ -1746,6 +1811,11 @@
       if (!ev.target.closest) return;
       var b = ev.target.closest('[data-share]');
       if (b) { shareDay(b.getAttribute('data-share'), b); return; }
+      var fxb = ev.target.closest('[data-share-fx]');
+      if (fxb) {
+        shareFixture(fxb.getAttribute('data-share-fx'), fxb.getAttribute('data-lg'), fxb);
+        return;
+      }
       var c = ev.target.closest('.cand-open');
       if (c) openCand(c);
     });

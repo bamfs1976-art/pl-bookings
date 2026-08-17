@@ -613,15 +613,25 @@
       /* THE CAVEAT TRAVELS WITH THE CARD. A card is read by people who cannot
          see the desk it came from, so a probability posted without the
          condition it was computed under is a stronger claim than the model can
-         support: these prices assume expected minutes, and until a team sheet
-         is out that is a guess about who plays. Stated in the subtitle rather
-         than as a new element, because the layout is fixed and a caption that
-         overlaps the heat pill would be worse than no caption.
-         `undefined` means the desk does not track lineups and says nothing;
-         only an explicit false marks the card. */
+         support: unless a team sheet is out, these prices assume expected
+         minutes, which is a guess about who plays. Stated in the subtitle
+         rather than as a new element, because the layout is fixed and a
+         caption that overlaps the heat pill would be worse than no caption.
+
+         `pricedOffXI` REPLACED `lineupsConfirmed`, and the difference is who
+         is answering. The old flag was the READER'S mark — a button on each
+         fixture reading "Lineups unconfirmed" that they clicked once they had
+         seen the team sheet — so the card asserted something nobody had
+         checked unless somebody remembered to check it. The desks now harvest
+         the XI, so the pricing itself knows which basis it used and the card
+         states that instead of asking.
+         `undefined` means the desk does not report a basis and the card says
+         nothing, which is why this is an explicit true/false test. */
       subtitle: [ctx.seasonLabel, f.r ? (ctx.roundWord || 'Matchday') + ' ' + f.r : null,
                  ctx.whenText ? ctx.whenText(f.d) : null,
-                 ctx.lineupsConfirmed === false ? 'lineups unconfirmed' : null]
+                 ctx.pricedOffXI === true ? 'priced off the confirmed XI'
+                   : ctx.pricedOffXI === false ? 'lineups not out — expected minutes'
+                   : null]
                 .filter(Boolean).join(' · '),
       refLine: refLineOf(priced, n2),
       heat: m.expected, heatLabel: 'cards',

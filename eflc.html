@@ -437,7 +437,6 @@
 <script src="assets/share.js"></script>
 <script src="assets/suspension.js"></script>
 <script src="assets/a11y.js"></script>
-<script src="assets/lineup.js"></script>
 <script src="assets/price.js"></script>
 <script src="assets/profile.js"></script>
 <script>
@@ -1060,9 +1059,6 @@
 
   /* The standing rule — no pick before confirmed lineups — made visible.
      Keyed per desk so a Championship mark cannot claim a La Liga fixture. */
-  var LINEUPS = (typeof PLDLineup !== 'undefined' && PLDLineup)
-    ? PLDLineup.create({ key: 'eflc_desk_lineups_v1' })
-    : null;
 
   /* Paste a bookmaker price, see the edge. The maths has been in core.js
      since the beginning with nowhere to type a number into. */
@@ -1168,6 +1164,10 @@
        number are not built on different conventions. */
     var lamRed = (r.ref && r.ref.red != null) ? Number(r.ref.red) : LEAGUE_RED;
     var bp = C.bookingPointsMarkets(home.ps, away.ps, lamRed, BP_LINES);
+    /* Whether this price came off a harvested team sheet or off last season's
+       minutes. Set here so the share card can say which — the fact the removed
+       confirmed/unconfirmed button used to ask the reader for. */
+    m.xi = !!(rh && ra);
     return { fx: fx, ref: r, factor: factor, derby: derby, home: home, away: away,
              m: m, bp: bp };
   }
@@ -1362,7 +1362,7 @@
         + PLDProfile.crest(ch) + '<b>' + esc(f.h) + '</b>'
         + '<span class="faint">v</span>'
         + PLDProfile.crest(ca) + '<b>' + esc(f.a) + '</b>'
-        + derbyTag(x) + thinTag(x) + (LINEUPS ? LINEUPS.tag(f.id) : '')
+        + derbyTag(x) + thinTag(x)
         + '</div>'
         + '<div class="fx-when">' + esc(whenText(f.d)) + '</div>'
         + '</div>'
@@ -1377,7 +1377,6 @@
         + '<div class="fx-cands">' + candidateList(x, ch, ca) + '</div>'
         + priceBlock(x)
         + '<div class="mkts">'
-        + (LINEUPS ? LINEUPS.control(f.id) : '')
         + '<button class="mkt fx-share" type="button" data-share="' + f.id + '">\u2b07 Share match</button>'
         + '<span class="mkt">Home <b>' + n1(x.m.expectedHome) + '</b></span>'
         + '<span class="mkt">Away <b>' + n1(x.m.expectedAway) + '</b></span>'
@@ -1474,9 +1473,13 @@
     if (!fx) return;
     /* The lineup state is per fixture, so the context is built per share
        rather than taken from the static SHARE_CTX. */
-    var ctx = Object.assign({}, SHARE_CTX,
-      LINEUPS ? { lineupsConfirmed: LINEUPS.isConfirmed(fx.id) } : {});
-    var spec = S.deskMatchSpec(priceFixture(fx), ctx);
+    /* WHAT THE PRICE IS BASED ON, from the pricing itself rather than from a
+       reader's self-report. The confirmed/unconfirmed button was the reader
+       marking "I have seen the team sheet"; the desk now knows, because
+       priceFixture records whether a harvested XI was actually used. */
+    var priced = priceFixture(fx);
+    var ctx = Object.assign({}, SHARE_CTX, { pricedOffXI: !!(priced.m && priced.m.xi) });
+    var spec = S.deskMatchSpec(priced, ctx);
     shareBusy(btn, true);
     S.matchCard(spec)
       .then(function (b) { S.download(b, spec.filename); })
@@ -1783,10 +1786,6 @@
      its own grid, because redrawing the other would scroll the reader's place
      out from under them on a tab they are not looking at. */
   if (PRICES) { PRICES.wire($('#fxList')); PRICES.wire($('#mdList')); }
-  if (LINEUPS) {
-    LINEUPS.wire($('#fxList'), renderFixtures);
-    LINEUPS.wire($('#mdList'), renderMatchday);
-  }
 
   renderMatchday();
   renderSuspension();

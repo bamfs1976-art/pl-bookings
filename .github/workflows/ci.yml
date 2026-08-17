@@ -274,12 +274,19 @@ jobs:
       - name: The build front door matches the real pipeline
         run: node scripts/check-build-data.mjs
 
-      # The standing rule — no pick before confirmed lineups — and the sort
-      # state screen readers were never told about. Both fail silently: an
-      # unwired toggle looks exactly like a wired one, and a table that
-      # reorders without announcing it looks fine to anyone who can see it.
-      - name: Lineup confirmation and sortable-table state
-        run: node scripts/check-lineups.mjs
+      # Two desk widgets whose failures are silent: a table that reorders
+      # without announcing it looks fine to anyone who can see it, and the
+      # price check's worst outcome is not a crash but a cheerful green number
+      # on a bet that does not pay.
+      # Was "Lineup confirmation and sortable-table state" over
+      # scripts/check-lineups.mjs. The confirmed/unconfirmed mark has been
+      # removed from the product — the desks harvest the real XI now, so asking
+      # the reader whether they had seen the team sheet asked for something the
+      # app already knew — and the file was renamed because it no longer
+      # checked lineups and sat one letter from check-lineup-pricing.mjs, which
+      # does.
+      - name: Sortable-table state and the price check
+        run: node scripts/check-desk-widgets.mjs
 
       # The match-level record: what the desk forecast for a fixture, and what
       # the fixture produced. It is written once before kick-off and never

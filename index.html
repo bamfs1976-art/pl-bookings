@@ -1753,7 +1753,6 @@ License: MIT
 <script src="assets/suspension.js"></script>
 <script src="assets/metric.js"></script>
 <script src="assets/a11y.js"></script>
-<script src="assets/lineup.js"></script>
 <script src="assets/livecards.js"></script>
 <script src="assets/charts.js"></script>
 <script src="assets/push.js"></script>
@@ -4916,14 +4915,14 @@ function fixtureCardHtml(f,opts){
         <button class="fx-shareico" data-share-fid="${f.id}" type="button" title="Download a shareable card of this match" aria-label="Share ${esc(h)} versus ${esc(a)}">⬇</button>
         <span class="fx-fold" aria-hidden="true">⌄</span>
       </div>
-      <div class="fxh2-ko">${f.kickoff_time?fmtKOShort(f.kickoff_time):"TBC"}${LINEUPS?LINEUPS.tag(f.id):""}</div>
+      <div class="fxh2-ko">${f.kickoff_time?fmtKOShort(f.kickoff_time):"TBC"}</div>
       <div class="fxh2-heat">${heatBadge}</div>
     </div>
     <!-- WRAPPED. The collapse used to target .fx-body, which did not exist —
          the rule matched nothing and a "collapsed" card rendered in full. -->
     <div class="fx-body">
       ${liveTickerHtml(M)}
-      <div class="fx-refrow">${refSelect(f.id)}${refDelta}${LINEUPS?LINEUPS.control(f.id):""}</div>
+      <div class="fx-refrow">${refSelect(f.id)}${refDelta}</div>
       ${simStripHtml(M)}
       ${marketStripHtml(teamCardBoard(h,a,ref,derby,f.id),h2hFor(h,a),teamFoulBoard(h,a))}
       ${body}
@@ -5345,12 +5344,6 @@ function gwReport(fx){
    page to type a number into. Session-only: a price is true for minutes. */
 const PRICES=(typeof PLDPrice!=="undefined"&&PLDPrice)?PLDPrice.create({}):null;
 
-/* The standing rule — no pick before confirmed lineups — made visible.
-   Default unconfirmed: the honest default for a thing nobody has checked is
-   that nobody has checked it. See assets/lineup.js. */
-const LINEUPS=(typeof PLDLineup!=="undefined"&&PLDLineup)
-  ?PLDLineup.create({key:"pl_desk_lineups_v1"}):null;
-
 /* Referee appointment alerts. The watchlist is local-first and works signed
    out, so the server cannot know who follows whom — a copy of the keys rides
    with the subscription and is re-sent on every change through saveState. */
@@ -5465,9 +5458,6 @@ wireFixtureGrid("gwFixtures",renderGameweek);
   });
 })();
 wireFixtureGrid("fixtureList",renderFixtures);
-/* Both grids draw the same card, so both carry the lineup control and both
-   need it wired — the same reason wireFixtureGrid is called twice above. */
-if(LINEUPS){LINEUPS.wire($("gwFixtures"),renderGameweek);LINEUPS.wire($("fixtureList"),renderFixtures);}
 if(PRICES){PRICES.wire($("gwFixtures"));PRICES.wire($("fixtureList"));}
 $("gwWatch").addEventListener("click",e=>{ const row=e.target.closest(".wl-row[data-pk]"); if(row) openPlayerProfile(row.dataset.pk); });
 $("gwSusp").addEventListener("click",e=>{ const c=e.target.closest(".gwsusp-card[data-pk]"); if(c) openPlayerProfile(c.dataset.pk); });

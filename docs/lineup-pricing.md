@@ -72,17 +72,31 @@ feed is unreachable, which for a paid API is a different failure from FPL's.
 
 ## Pricing off the confirmed XI
 
-### The thing that already exists, and is not this
+### The thing that used to exist, and has been removed
 
-`assets/lineup.js` is a **confirmation flag**, not an XI. It records the
-reader's own "I have seen the team sheet for this fixture", defaults to
-unconfirmed, and travels onto the share card so a probability posted without
-that caveat cannot overstate itself. It does not touch a single number.
+`assets/lineup.js` WAS a **confirmation flag**, not an XI: the reader's own
+"I have seen the team sheet for this fixture", defaulting to unconfirmed, a
+button on every fixture, travelling onto the share card so a probability
+posted without that caveat could not overstate itself. It never touched a
+number.
 
-Do not conflate the two. The flag answers "has anyone checked?"; this work
-answers "who is actually playing?". Both are worth having and they are
-independent — a desk could price off a real XI and still want the flag, since
-knowing the XI for one fixture says nothing about the other nine.
+**It is gone**, removed on 17 August at the user's request, and the reasoning
+this section used to give for keeping it did not survive the work below. It
+argued the two were independent — "the flag answers *has anyone checked?*,
+this work answers *who is actually playing?*" — and that a desk could sensibly
+want both. That was true only while the desk could not answer the second
+question. Now that it harvests the XI, a button asking the reader to confirm
+what the app already knows is asking a person to do the app's job, and to do
+it once per fixture.
+
+WHAT THE FLAG WAS FOR SURVIVES, in better form. The caveat on the share card
+was the part that mattered — a card is read by people who cannot see the desk,
+so a price posted without its condition claims more than the model supports.
+That caveat is now `pricedOffXI` in `deskMatchSpec`, derived from whether the
+pricing actually used a harvested sheet, and it says which of the two it was
+rather than only flagging the bad case. Guarded in `scripts/check-share.mjs`,
+including the third state: a desk that reports no basis must have the card say
+nothing rather than invent a caveat.
 
 ### What the pricing does today
 
@@ -180,9 +194,11 @@ rather than minutes. Not settled.
 `var __LINEUP_SHEETS`. The obvious name was `LINEUPS` and it was tried first;
 it took index.html down.
 
-index.html already has a top-level `const LINEUPS` — the wrapper around
-`assets/lineup.js`, which is the READER'S confirmation flag, a different thing
-with a name that sounds identical. Two top-level `const`s of one name in one
+index.html already had a top-level `const LINEUPS` — the wrapper around
+`assets/lineup.js`, the reader's confirmation flag, a different thing with a
+name that sounded identical. (That module has since been removed, so the
+collision no longer exists; the naming rule stands anyway, and the guard is
+written against the emitter rather than against any one page's globals.) Two top-level `const`s of one name in one
 document is a parse error, not a shadow: the whole inline script fails to
 compile and the desk renders blank. eflc.html and laliga.html survived it only
 because their copies sit inside an IIFE and are function-scoped.

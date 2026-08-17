@@ -125,6 +125,31 @@ assert.equal(mk['Over 3.5'], '59%');
 assert.equal(mk['Both teams carded'], '78%');
 assert.ok(/\.png$/.test(spec.filename) && spec.filename.startsWith('eflc-bookings-'), spec.filename);
 
+/* ---- the basis the price was computed on travels with the card ---------- */
+/* A card is read by people who cannot see the desk it came from, so a
+   probability posted without its condition is a stronger claim than the model
+   supports. This USED to be `lineupsConfirmed`, a button the reader clicked
+   once they had seen the team sheet — so the card asserted something nobody
+   had checked unless somebody remembered to. The desks harvest the XI now, so
+   the pricing itself knows, and `pricedOffXI` states it.
+   Guarded here because the check that covered the old flag lived in the file
+   that was removed with it. Three states, because silence is one of them. */
+{
+  const off = S.deskMatchSpec(priced, { ...ctx, pricedOffXI: false });
+  assert.ok(/lineups not out/i.test(off.subtitle),
+    `a card priced off expected minutes does not say so: ${off.subtitle}`);
+  const on = S.deskMatchSpec(priced, { ...ctx, pricedOffXI: true });
+  assert.ok(/confirmed XI/i.test(on.subtitle),
+    `a card priced off a real team sheet does not say so: ${on.subtitle}`);
+  assert.ok(!/lineups not out/i.test(on.subtitle),
+    'a card priced off the XI still carries the expected-minutes caveat');
+  /* Silence when the desk reports no basis: saying "lineups not out" for a
+     caller that never answered would be inventing the caveat. */
+  const quiet = S.deskMatchSpec(priced, ctx);
+  assert.ok(!/lineups|confirmed XI/i.test(quiet.subtitle),
+    `a card whose desk reports no basis still claims one: ${quiet.subtitle}`);
+}
+
 /* A fixture with no referee must say so rather than implying one. */
 const noRef = S.deskMatchSpec(
   { ...priced, ref: { ref: null, name: null, appointed: false } }, ctx);
@@ -982,18 +1007,13 @@ for (const page of ['eflc.html', 'laliga.html']) {
   };
 
   const sandbox = {
-    /* The desks build their share context from the lineup state, so the slice
-       needs that global. Stubbed as "not confirmed" — the state the caveat is
-       supposed to mark — rather than omitted, which would only prove the
-       slice runs when nobody has marked anything. */
-    LINEUPS: { isConfirmed: () => false },
     $: (sel) => nodes[sel] || null,
     document: { documentElement: { classList: { add() {} } } },
     console: { error() {} },
     S: shareStub,
     SHARE_CTX: { league: 'X' },
     FIXTURES: [{ id: 101, r: 7 }, { id: 102, r: 7 }, { id: 103, r: 8 }],
-    priceFixture: (fx) => ({ fx, m: { expected: 4 } })
+    priceFixture: (fx) => ({ fx, m: { expected: 4, xi: false } })
   };
   sandbox.globalThis = sandbox;
   vm.createContext(sandbox);
