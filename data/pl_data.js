@@ -21,7 +21,7 @@ const CLUBS = [
   {short:"LIV",name:"Liverpool",img:"https://cdn.sportmonks.com/images/soccer/teams/8/8.png",basis:"PL",ca:1.5,caH:1.19,caA:1.81,fm:10.2,squad:24},
   {short:"ARS",name:"Arsenal",img:"https://cdn.sportmonks.com/images/soccer/teams/19/19.png",basis:"PL",ca:1.32,caH:0.88,caA:1.76,fm:10.3,squad:25},
   {short:"COV",name:"Coventry City",img:"https://media.api-sports.io/football/teams/1346.png",basis:"EFL",ca:null,caH:null,caA:null,fm:null,squad:64},
-  {short:"HUL",name:"Hull City",img:"https://media.api-sports.io/football/teams/64.png",basis:"EFL",ca:null,caH:null,caA:null,fm:null,squad:78},
+  {short:"HUL",name:"Hull City",img:"https://media.api-sports.io/football/teams/64.png",basis:"EFL",ca:null,caH:null,caA:null,fm:null,squad:80},
   {short:"IPS",name:"Ipswich Town",img:"https://media.api-sports.io/football/teams/57.png",basis:"EFL",ca:null,caH:null,caA:null,fm:null,squad:69},
 ];
 const PL_PLAYERS = [
@@ -383,11 +383,13 @@ const PL_PLAYERS = [
   {c:"HUL",n:"J. Furlong",p:"DF",min:0,yc:0,rc:0,y:null,f:null,fw:null,r:null,ls:true,b:"EFL",ph:"https://media.api-sports.io/football/players/69257.png"},
   {c:"HUL",n:"Jack Butland",p:"GK",min:0,yc:null,rc:null,y:null,f:null,fw:null,r:null,ls:true,b:"NEW"},
   {c:"HUL",n:"Jens Hjertø-Dahl",p:"MF",min:0,yc:null,rc:null,y:null,f:null,fw:null,r:null,ls:true,b:"NEW"},
+  {c:"HUL",n:"Joe Gelhardt",p:"MF",min:0,yc:null,rc:null,y:null,f:null,fw:null,r:null,ls:true,b:"NEW"},
   {c:"HUL",n:"John Egan",p:"DF",min:0,yc:null,rc:null,y:null,f:null,fw:null,r:null,ls:true,b:"NEW"},
   {c:"HUL",n:"Kieran Dowell",p:"MF",min:0,yc:null,rc:null,y:null,f:null,fw:null,r:null,ls:true,b:"NEW"},
   {c:"HUL",n:"Konstantinos Tzolakis",p:"GK",min:0,yc:null,rc:null,y:null,f:null,fw:null,r:null,ls:true,b:"NEW"},
   {c:"HUL",n:"Lewie Coyle",p:"DF",min:0,yc:null,rc:null,y:null,f:null,fw:null,r:null,ls:true,b:"NEW"},
   {c:"HUL",n:"Liam Millar",p:"MF",min:0,yc:null,rc:null,y:null,f:null,fw:null,r:null,ls:true,b:"NEW"},
+  {c:"HUL",n:"Lucas Gourna-Douath",p:"MF",min:0,yc:null,rc:null,y:null,f:null,fw:null,r:null,ls:true,b:"NEW"},
   {c:"HUL",n:"Lucas Herrington",p:"DF",min:0,yc:null,rc:null,y:null,f:null,fw:null,r:null,ls:true,b:"NEW"},
   {c:"HUL",n:"Mason Burstow",p:"FW",min:0,yc:null,rc:null,y:null,f:null,fw:null,r:null,ls:true,b:"NEW"},
   {c:"HUL",n:"Matt Crooks",p:"MF",min:0,yc:null,rc:null,y:null,f:null,fw:null,r:null,ls:true,b:"NEW"},

@@ -1,4 +1,4 @@
-La Liga harvest — run 99
+La Liga harvest — run 100
 == discover ==
 La Liga: API-Football league 140, season 2026
 
@@ -56,21 +56,21 @@ La Liga: API-Football league 140, season 2026
     Deportivo Alaves            23 players
     Deportivo La Coruna          0 players
     Elche                        0 players
-    Espanyol                     0 players
+    Espanyol                    23 players
     Getafe                      21 players
-    Levante                      0 players
+    Levante                     20 players
     Malaga                       0 players
     Osasuna                      0 players
-    Racing Santander             0 players
+    Racing Santander            23 players
     Rayo Vallecano              22 players
     Real Betis                   0 players
     Real Madrid                  0 players
     Real Sociedad                0 players
     Sevilla                     23 players
     Valencia                     0 players
-    Villarreal                   0 players
+    Villarreal                  23 players
 
-laliga_season_cards.json written (89 players from 20 clubs, API-Football, LL season 2026)
+laliga_season_cards.json written (178 players from 20 clubs, API-Football, LL season 2026)
 == segunda ==
 Segunda División: API-Football league 141, season 2025
   not in this desk's club list (19): AD Ceuta FC, Albacete, Almeria, Burgos, Cadiz, Castellón, Cordoba, Cultural Leonesa, Eibar, FC Andorra, Granada CF, Huesca, Las Palmas, Leganes, Mirandes, Real Sociedad II, Sporting Gijon, Valladolid, Zaragoza
@@ -86,7 +86,7 @@ La Liga: API-Football league 140, season 2025
 laliga_ref_fixtures.js written (380 matches over 20 clubs, 380 with an official named)
 == fixtures ==
 La Liga: API-Football league 140, season 2026
-  LL appointments overlay: 1 applied, 2 already harvested
+  LL appointments overlay: 0 applied, 3 already harvested
   CHANGED: ALA v GET: harvested 'Manuel Jesus Orellana Cid', published 'Manuel Jesús Orellana' — the harvested name stands
   CHANGED: ESP v LEV: harvested 'Carlos Muniz Munoz', published 'Carlos Muñiz' — the harvested name stands
   NOTE: no card record for Manuel Jesús Orellana (ALA v GET) — priced at the league rate
@@ -103,7 +103,7 @@ club rates from mirror (380 matches)
 players: 783  by basis: LL=673, SEG=110
 clubs with players: 20 of 20
 club rates from match records: 17 of 20
-season cautions (2026-27): 68 players
+season cautions (2026-27): 137 players
 referees: 20
 RESULT: WRITTEN laliga_data.js
 == referee-join ==
