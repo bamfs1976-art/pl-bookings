@@ -620,4 +620,22 @@ def _lineups_are_scoped_by_the_clock():
 t("lineups are scoped by the clock, and never re-fetched for a finished match",
   _lineups_are_scoped_by_the_clock)
 
+
+# A COMPLETED SEASON CONTAINS CLUBS THE CURRENT MAP HAS FORGOTTEN, and the
+# lineup backfill drops a fixture unless BOTH sides resolve — so three
+# relegated clubs silently removed 108 of 380 fixtures, 28% of a season, and
+# the output still looked like a clean file of 544 team sheets. Twice before
+# today the same trap cost the other-fixtures harvest its cup dates.
+def _relegated_clubs_still_resolve():
+    for name, want in [("Arsenal", "ARS"), ("West Ham United", "WHU"),
+                       ("Burnley", "BUR"), ("Wolverhampton Wanderers", "WOL")]:
+        got = A.short_in("PL", name)
+        assert got == want, f"short_in(PL, {name!r}) = {got!r}, wanted {want!r}"
+    # And it still refuses somebody who is in neither English division.
+    assert A.short_in("PL", "Real Madrid") is None
+
+
+t("a Premier League season names clubs that have since been relegated",
+  _relegated_clubs_still_resolve)
+
 print(f"\n{passed} tests passed")

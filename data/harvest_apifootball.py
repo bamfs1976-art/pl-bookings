@@ -426,9 +426,22 @@ def short_in(code, name):
     The Premier League's map lives in build_pl_data rather than leagues.py, so
     the dispatch is here — leagues.short_for would send a PL club to the
     Championship's map and answer None for all twenty of them.
+
+    AND IT FALLS BACK TO THE OTHER ENGLISH MAP, for the same reason
+    known_names() unions them: build_pl_data.SHORT is the CURRENT twenty, so a
+    harvest of a COMPLETED season meets clubs that have since gone down and
+    answers None for every one of them. That is not a near miss. The season
+    lineup backfill drops a fixture unless BOTH sides resolve, so three
+    relegated clubs took 108 of 380 fixtures with them — 28% of the season,
+    lost non-randomly, and the file still looked like a clean 544 sheets.
+
+    A Premier League response cannot contain a club that is only ever in the
+    Championship, so the fallback cannot mislabel anyone; it can only recognise
+    somebody the current map has forgotten.
     """
     if code.upper() == "PL":
-        return build_pl_data.SHORT.get((name or "").strip())
+        raw = (name or "").strip()
+        return build_pl_data.SHORT.get(raw) or leagues.EFLC_CLUBS.get(raw)
     return leagues.short_for(code, name)
 
 
