@@ -62,15 +62,30 @@ COMP_OUT = {"EFLC": "LCUP"}
 
 
 def english_short(name):
-    """A club name as the Premier League desk's short code, or None.
+    """An English club name as a short code, or None for everyone else.
 
-    Deliberately NOT the union of every desk's map: a Champions League response
-    is full of clubs this project has no opinion about, and a Championship side
-    in the FA Cup is not a Premier League club whose rest days matter here.
+    THE UNION OF BOTH ENGLISH MAPS, not the Premier League's alone. The first
+    version used only build_pl_data.SHORT, which is the 2026-27 twenty — so
+    harvesting the 2025-26 season silently dropped West Ham, Burnley and
+    Wolves, who were in the division that year and have since gone down. Their
+    cup dates simply did not exist, which reads in the backtest as three clubs
+    that never played midweek. It is the same trap known_names() in
+    harvest_apifootball exists for: neither list is complete alone.
+
+    A Champions League response is still full of clubs this project has no
+    opinion about, and they resolve to None as before.
     """
-    return build_pl_data.SHORT.get((name or "").strip()) or \
-        build_pl_data.SHORT.get(build_pl_data.leagues.canonical_club(
-            name, set(build_pl_data.SHORT)) or "")
+    maps = (build_pl_data.SHORT, build_pl_data.leagues.EFLC_CLUBS)
+    raw = (name or "").strip()
+    for m in maps:
+        if raw in m:
+            return m[raw]
+    known = set(build_pl_data.SHORT) | set(build_pl_data.leagues.EFLC_CLUBS)
+    canon = build_pl_data.leagues.canonical_club(name, known)
+    for m in maps:
+        if canon in m:
+            return m[canon]
+    return None
 
 
 def rows_for(host, key, comp_id, comp_code, season):
@@ -108,6 +123,19 @@ def rows_for(host, key, comp_id, comp_code, season):
     return rows, f"{comp_code}: {len(rows)} ties, {len(seen_clubs)} PL club(s)"
 
 
+def const_name(out):
+    """The global this file declares, derived from its own filename.
+
+    Both seasons are emitted by the same code, and the first version gave both
+    the same name — so loading the live file and the backtest file in one page
+    would have been "Identifier 'PL_OTHER_FIXTURES' has already been declared",
+    which is a blank page rather than a wrong number. This project has shipped
+    that exact collision once already.
+    """
+    stem = out.rsplit(".", 1)[0]
+    return stem.upper().replace("-", "_")
+
+
 def emit(rows, season, out):
     rows = sorted(rows, key=lambda r: (r["d"], r["c"]))
     by_comp = {}
@@ -128,7 +156,7 @@ def emit(rows, season, out):
         "//   v     H or A — the away leg is what the 72-hour European flag needs",
         "//",
         "// " + ", ".join(f"{k} {v}" for k, v in sorted(by_comp.items())),
-        "const PL_OTHER_FIXTURES = [",
+        "const %s = [" % const_name(out),
     ]
     body = [
         '  {c:"%s",d:"%s",comp:"%s",v:"%s"},' % (r["c"], r["d"], r["comp"], r["v"])

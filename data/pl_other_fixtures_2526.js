@@ -12,7 +12,7 @@
 //   v     H or A — the away leg is what the 72-hour European flag needs
 //
 // FAC 52, LCUP 52, UCL 69, UECL 17, UEL 31
-const PL_OTHER_FIXTURES = [
+const PL_OTHER_FIXTURES_2526 = [
   {c:"COV",d:"2025-08-12T18:45:00+00:00",comp:"LCUP",v:"H"},
   {c:"HUL",d:"2025-08-12T18:45:00+00:00",comp:"LCUP",v:"A"},
   {c:"IPS",d:"2025-08-12T19:00:00+00:00",comp:"LCUP",v:"A"},
