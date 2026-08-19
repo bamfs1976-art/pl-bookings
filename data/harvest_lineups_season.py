@@ -25,7 +25,11 @@ Everything downstream is computed from that, where it can be seen.
   python3 data/harvest_lineups_season.py --season 2025
 
 Writes data/pl_lineups_2526.js. Needs API_FOOTBALL_KEY. Roughly 381 calls and
-a few minutes at the harvester's own pacing.
+a few minutes at the harvester's own pacing — 0.25s between requests, and a
+refusal is backed off rather than retried into.
+
+Re-running is safe: the season is over, so the same calls return the same
+sheets and the commit step writes nothing when nothing changed.
 """
 import argparse
 import json

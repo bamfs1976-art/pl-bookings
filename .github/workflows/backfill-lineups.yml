@@ -14,7 +14,15 @@ name: Backfill a season's team sheets
 # Run it from the Actions tab. It commits data/pl_lineups_2526.js if anything
 # changed, and runs every guard first like every other committing workflow.
 
+# ALSO ON A CHANGE TO ITS OWN HARVESTER, which is the only thing that can make
+# the output differ for a season that finished in May — a different parse, a
+# different rule about which fixtures count. It doubles as the way to run this
+# from a branch at all: workflow_dispatch needs the file to exist on the
+# default branch, so before it is merged there is no other route.
 on:
+  push:
+    paths:
+      - 'data/harvest_lineups_season.py'
   workflow_dispatch:
     inputs:
       season:
