@@ -38,6 +38,11 @@
   var PIVOT_YPM = 3.71;
   var MIN_REF_MATCHES = 10;
 
+  /* The bar a new factor has to clear before it may touch a published price:
+     0.2 yellows per team per match, measured after the controls. Below it the
+     factor is computed and shown and NOT scored — see fatigue() below. */
+  var FATIGUE_GATE = 0.2;
+
   /* Clamps. A single official may not swamp the model (the desk's own
      ±0.75-1.30) and a context signal built from a couple of dozen matches gets
      a tighter one still. */
@@ -373,7 +378,165 @@
     };
   }
 
+  /* ---- the fatigue factor, on trial ------------------------------------
+   *
+   * A REST-DAYS FACTOR IS A CLAIM: a side playing its third match in eight
+   * days commits tired fouls and collects more cards than a side that has had
+   * the week off. This measures the claim rather than assuming it, and the
+   * measurement decides whether the factor is allowed near a published price.
+   *
+   * WHAT REST MEANS HERE. Days since the club's last COMPETITIVE match in any
+   * competition, which is why data/pl_other_fixtures_2526.js is harvested.
+   * On league dates alone 74.2% of the 2025-26 team-fixtures bucket as fresh
+   * and 11.8% as congested; with the cups and Europe present it is 48.0% and
+   * 34.7%. Two thirds of the congestion was invisible, and it was invisible
+   * for exactly the clubs playing midweek in Europe. A factor tested on the
+   * first set of buckets would be tested on a season that did not happen.
+   *
+   * WHY THE REFEREE CONTROL. Yellows per match is as much a fact about the
+   * official as about the sides, and midweek European ties are not refereed by
+   * a random draw from the list. Where an official has MIN_REF_MATCHES or more
+   * on the record, each team-match is scored as its RESIDUAL against that
+   * official's own mean; below that he is not evidence and the row is left
+   * raw. Both numbers are reported, because a control that changes the answer
+   * is worth seeing.
+   *
+   * WHY DERBIES ARE EXCLUDED FIRST. A derby is a card-heavy fixture that has
+   * nothing to do with rest, and derbies are not spread evenly across the
+   * buckets. Reported both ways.
+   */
+  function fatigueRest(entries, kickoff) {
+    /* Deliberately delegates to PLDCore rather than re-deriving: the buckets
+       the reader is shown and the buckets the factor is judged on have to be
+       the same buckets. */
+    var C = root.PLDCore;
+    return { days: C.restDays(entries, kickoff), bucket: C.restBucket(C.restDays(entries, kickoff)) };
+  }
+
+  function mean(xs) { return xs.length ? xs.reduce(function (a, b) { return a + b; }, 0) / xs.length : null; }
+
+  function fatigue(opts) {
+    var o = opts || {};
+    var C = o.core || root.PLDCore;
+    var data = o.data || root.PL_BACKTEST_2526;
+    var other = o.other || root.PL_OTHER_FIXTURES_2526 || [];
+    var shortOf = o.shortOf || root.PL_OTHER_FIXTURES_2526_CLUBS || {};
+    var minRef = o.minRefMatches == null ? MIN_REF_MATCHES : o.minRefMatches;
+    if (!C || !data || !Array.isArray(data.matches)) return null;
+
+    var matches = data.matches.slice().sort(function (x, y) {
+      return x.d < y.d ? -1 : x.d > y.d ? 1 : 0;
+    });
+
+    /* Every competitive date per club: the league record itself, plus the cup
+       and European ties. A club the bridge cannot name is COUNTED, never
+       dropped quietly — an unmapped club looks exactly like a club that never
+       played midweek, which is the failure this whole file exists to avoid. */
+    var byClub = {}, unmapped = {};
+    function push(short, entry) { (byClub[short] = byClub[short] || []).push(entry); }
+    matches.forEach(function (m) {
+      [['h', 'H'], ['a', 'A']].forEach(function (p) {
+        var short = shortOf[m[p[0]]];
+        if (!short) { unmapped[m[p[0]]] = true; return; }
+        push(short, { d: m.d + 'T15:00:00+00:00', comp: 'PL', v: p[1] });
+      });
+    });
+    other.forEach(function (e) { push(e.c, e); });
+
+    /* The referee's own mean, for the normalisation. Computed over every
+       team-match he took, which is the quantity a residual is against. */
+    var refYellows = {};
+    matches.forEach(function (m) {
+      var r = m.ref || '';
+      var d = refYellows[r] = refYellows[r] || { n: 0, y: 0 };
+      d.n += 2; d.y += (m.hy || 0) + (m.ay || 0);
+    });
+
+    var rows = [];
+    matches.forEach(function (m) {
+      var derby = C.isDerby(shortOf[m.h], shortOf[m.a]);
+      [['h', true, m.hy], ['a', false, m.ay]].forEach(function (p) {
+        var short = shortOf[m[p[0]]];
+        if (!short) return;
+        var kick = m.d + 'T15:00:00+00:00';
+        var list = (byClub[short] || []).filter(function (e) { return e.d !== kick || e.comp !== 'PL'; });
+        var days = C.restDays(list, kick);
+        var oppShort = shortOf[m[p[0] === 'h' ? 'a' : 'h']];
+        var oppDays = oppShort ? C.restDays((byClub[oppShort] || []).filter(function (e) {
+          return e.d !== kick || e.comp !== 'PL';
+        }), kick) : null;
+        var rd = refYellows[m.ref || ''];
+        var refMean = rd && rd.n >= minRef * 2 ? rd.y / rd.n : null;
+        rows.push({
+          club: short, isHome: p[1], y: p[2] || 0, days: days,
+          bucket: C.restBucket(days), oppBucket: C.restBucket(oppDays),
+          derby: derby, refMean: refMean,
+          resid: refMean == null ? null : (p[2] || 0) - refMean,
+          euroAway72h: C.euroAway72h(list, kick)
+        });
+      });
+    });
+
+    function summarise(sel, valueOf) {
+      var out = {};
+      ['fresh', 'normal', 'congested'].forEach(function (b) {
+        var xs = rows.filter(sel).filter(function (r) { return r.bucket === b; })
+          .map(valueOf).filter(function (v) { return v != null; });
+        out[b] = { n: xs.length, mean: mean(xs) };
+      });
+      out.spread = (out.congested.mean == null || out.fresh.mean == null) ? null
+        : out.congested.mean - out.fresh.mean;
+      return out;
+    }
+
+    var notDerby = function (r) { return !r.derby; };
+    var all = function () { return true; };
+    var raw = function (r) { return r.y; };
+    var resid = function (r) { return r.resid; };
+
+    var result = {
+      teamFixtures: rows.length,
+      unmapped: Object.keys(unmapped),
+      withRest: rows.filter(function (r) { return r.bucket; }).length,
+      derbies: rows.filter(function (r) { return r.derby; }).length,
+      euroAway72h: rows.filter(function (r) { return r.euroAway72h; }).length,
+      /* (b) buckets, and home and away separately */
+      primary: summarise(notDerby, raw),
+      home: summarise(function (r) { return !r.derby && r.isHome; }, raw),
+      away: summarise(function (r) { return !r.derby && !r.isHome; }, raw),
+      /* (d) the two controls */
+      withDerbies: summarise(all, raw),
+      refNormalised: summarise(notDerby, resid),
+      /* (c) the differential */
+      differential: {
+        congestedVsFresh: mean(rows.filter(function (r) {
+          return !r.derby && r.bucket === 'congested' && r.oppBucket === 'fresh';
+        }).map(raw)),
+        freshVsCongested: mean(rows.filter(function (r) {
+          return !r.derby && r.bucket === 'fresh' && r.oppBucket === 'congested';
+        }).map(raw))
+      },
+      minRefMatches: minRef,
+      threshold: o.gate == null ? FATIGUE_GATE : o.gate
+    };
+    result.differential.spread = (result.differential.congestedVsFresh == null
+      || result.differential.freshVsCongested == null) ? null
+      : result.differential.congestedVsFresh - result.differential.freshVsCongested;
+
+    /* (e) THE GATE. The factor enters scoring only on a bucket difference of
+       at least FATIGUE_GATE yellows per team per match AFTER the controls —
+       and "after the controls" means the referee-normalised, derby-excluded
+       run, not whichever of the six numbers is largest. A gate you get to
+       pick the input to is not a gate. */
+    var measured = result.refNormalised.spread;
+    result.measured = measured;
+    result.passes = measured != null && measured >= result.threshold;
+    return result;
+  }
+
   var PLBacktest = {
+    fatigue: fatigue,
+    FATIGUE_GATE: FATIGUE_GATE,
     run: run,
     modelLambda: modelLambda,
     baselineLambda: baselineLambda,

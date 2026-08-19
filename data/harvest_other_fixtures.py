@@ -88,6 +88,14 @@ def english_short(name):
     return None
 
 
+def canonical_name_for(short):
+    """A short code as the name every English builder keys on."""
+    rev = {v: k for k, v in build_pl_data.SHORT.items()}
+    rev.update({v: k for k, v in build_pl_data.leagues.EFLC_CLUBS.items()
+                if v not in rev})
+    return rev.get(short, short)
+
+
 def rows_for(host, key, comp_id, comp_code, season):
     """Every fixture in one competition-season that involves a PL club."""
     payload = af._get(host, key, "fixtures", {"league": str(comp_id), "season": season})
@@ -99,7 +107,7 @@ def rows_for(host, key, comp_id, comp_code, season):
         # swallowed.
         return None, f"{comp_code}: {err}"
     rows, page, pages = [], 1, af.pages_needed(payload)
-    seen_clubs = set()
+    seen_clubs, names = set(), {}
     while True:
         for entry in (payload.get("response") or []):
             fx = (entry or {}).get("fixture") or {}
@@ -108,10 +116,17 @@ def rows_for(host, key, comp_id, comp_code, season):
             if not when:
                 continue
             for side, venue in (("home", "H"), ("away", "A")):
-                short = english_short(((teams.get(side) or {}).get("name")))
+                raw = ((teams.get(side) or {}).get("name"))
+                short = english_short(raw)
                 if not short:
                     continue
                 seen_clubs.add(short)
+                # THE CANONICAL NAME, not the feed's. API-Football says "Man
+                # City"; the match record the backtest walks says "Manchester
+                # City", and a bridge built from the feed's spelling would
+                # join nothing. canonical_name_for reverses the same maps
+                # english_short resolved through.
+                names[short] = names.get(short) or canonical_name_for(short)
                 rows.append({"c": short, "d": when,
                              "comp": COMP_OUT.get(comp_code, comp_code), "v": venue})
         if page >= pages:
@@ -120,7 +135,7 @@ def rows_for(host, key, comp_id, comp_code, season):
         payload = af._get(host, key, "fixtures",
                           {"league": str(comp_id), "season": season, "page": page})
         pages = max(pages, af.pages_needed(payload))
-    return rows, f"{comp_code}: {len(rows)} ties, {len(seen_clubs)} PL club(s)"
+    return (rows, names), f"{comp_code}: {len(rows)} ties, {len(seen_clubs)} English club(s)"
 
 
 def const_name(out):
@@ -136,7 +151,7 @@ def const_name(out):
     return stem.upper().replace("-", "_")
 
 
-def emit(rows, season, out):
+def emit(rows, season, out, club_names=None):
     rows = sorted(rows, key=lambda r: (r["d"], r["c"]))
     by_comp = {}
     for r in rows:
@@ -162,7 +177,18 @@ def emit(rows, season, out):
         '  {c:"%s",d:"%s",comp:"%s",v:"%s"},' % (r["c"], r["d"], r["comp"], r["v"])
         for r in rows
     ]
-    (DATA / out).write_text("\n".join(head + body + ["];", ""]), encoding="utf-8")
+    # THE NAME-TO-CODE MAP THIS HARVEST ACTUALLY USED. Emitted rather than
+    # kept a second time downstream: the backtest walks a record that names
+    # clubs in full, this file keys on short codes, and a hand-written bridge
+    # between them is one more list to fall out of date the next time a club
+    # is relegated.
+    tail = ["];", "",
+            "const %s_CLUBS = %s;" % (const_name(out),
+                                      json.dumps({v: k for k, v in
+                                                  sorted((club_names or {}).items())},
+                                                 ensure_ascii=False)),
+            ""]
+    (DATA / out).write_text("\n".join(head + body + tail), encoding="utf-8")
     return by_comp
 
 
@@ -177,14 +203,15 @@ def main():
     if not key:
         sys.exit("ERROR: API_FOOTBALL_KEY is not set. Nothing written.")
 
-    rows, refused, notes = [], [], []
+    rows, refused, notes, club_names = [], [], [], {}
     for comp_id, comp_code in COMPETITIONS:
         got, note = rows_for(host, key, comp_id, comp_code, args.season)
         notes.append(note)
         if got is None:
             refused.append(note)
         else:
-            rows.extend(got)
+            rows.extend(got[0])
+            club_names.update(got[1])
 
     for n in notes:
         print("  " + n)
@@ -202,7 +229,7 @@ def main():
                  "played midweek', which is a stronger claim than 'we could "
                  "not ask'.")
 
-    by_comp = emit(rows, args.season, args.out)
+    by_comp = emit(rows, args.season, args.out, club_names)
     clubs = len({r["c"] for r in rows})
     print(f"{args.out} written: {len(rows)} club-ties across {clubs} clubs — "
           + ", ".join(f"{k} {v}" for k, v in sorted(by_comp.items())))
