@@ -1,0 +1,45 @@
+name: Live check
+
+# Loads the DEPLOYED site in a real browser and reports what a visitor sees.
+#
+# Every other guard in this repo reads the committed files. That is the right
+# place for almost everything, but it cannot answer "is it showing right on the
+# live site" — between the commit and the reader there is a build, a redirect
+# table, a CDN and a service worker, and this repo has already been bitten by
+# two of those (a rewrite Netlify silently ignored, and a precache that served
+# a stale shell).
+#
+# Reports; does not assert. Read the log.
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [claude/la-liga-booking-research-x5h55f]
+
+jobs:
+  look:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Is the live page the file we committed?
+        run: |
+          for f in laliga.html eflc.html today.html assets/core.js; do
+            curl -sS "https://bookingsdesk.netlify.app/$f" -o /tmp/live.$$ || exit 1
+            if diff -q "$f" /tmp/live.$$ >/dev/null; then
+              echo "same as committed: $f"
+            else
+              echo "DIFFERS from committed: $f"
+              diff <(head -c 4000 "$f") <(head -c 4000 /tmp/live.$$) | head -20
+            fi
+          done
+
+      - run: |
+          npm install --no-save playwright@1.49.1
+          npx playwright install --with-deps chromium
+
+      - name: What does a visitor see?
+        run: node .github/live-check.mjs
