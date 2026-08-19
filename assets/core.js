@@ -1696,7 +1696,105 @@
     };
   }
 
+  /* ---- fatigue: rest days, and what counts as rest ----------------------
+   *
+   * REST IS DAYS SINCE THE LAST COMPETITIVE MATCH IN ANY COMPETITION, which is
+   * why data/pl_other_fixtures.js exists. Computed from league dates alone,
+   * 74.2% of the 2025-26 team-fixtures land in the "fresh" bucket — three
+   * quarters of a season with no midweek football in it. The clubs that rule
+   * mislabels are precisely the European ones, so a fatigue factor measured
+   * that way is biased toward finding nothing.
+   *
+   * ONE IMPLEMENTATION, used by the shipped fixture build and by the backtest,
+   * so the buckets a reader sees are the buckets the factor was judged on.
+   */
+  const REST_FRESH = 6;      // days or more
+  const REST_CONGESTED = 3;  // days or fewer
+  const EURO_COMPS = new Set(['UCL', 'UEL', 'UECL']);
+  const EURO_AWAY_HOURS = 72;
+
+  function dayGap(fromISO, toISO) {
+    const a = Date.parse(fromISO), b = Date.parse(toISO);
+    if (!isFinite(a) || !isFinite(b) || b < a) return null;
+    return Math.floor((b - a) / 86400000);
+  }
+
+  /* The club's previous competitive match before `kickoff`, from a list of
+     {d, comp, v} entries. Strictly before: a fixture is never its own
+     predecessor, and two ties on one day (which the cup feeds do produce for
+     replays) resolve to the later one. */
+  function previousMatch(entries, kickoff) {
+    const t = Date.parse(kickoff);
+    if (!isFinite(t)) return null;
+    let best = null;
+    for (const e of entries || []) {
+      const u = Date.parse(e && e.d);
+      if (!isFinite(u) || u >= t) continue;
+      if (!best || u > Date.parse(best.d)) best = e;
+    }
+    return best;
+  }
+
+  /* Days of rest, or null when there is no previous match — the first fixture
+     of a season is not a well-rested side, it is a side with no evidence, and
+     scoring it as fresh would put every club in the bucket once a year. */
+  function restDays(entries, kickoff) {
+    const prev = previousMatch(entries, kickoff);
+    return prev ? dayGap(prev.d, kickoff) : null;
+  }
+
+  function restBucket(days) {
+    if (days == null || !isFinite(days)) return null;
+    if (days >= REST_FRESH) return 'fresh';
+    if (days <= REST_CONGESTED) return 'congested';
+    return 'normal';
+  }
+
+  /* Away in Europe inside three days. Derived rather than hand-flagged: a
+     manual boolean for something the dates already state is a field that rots
+     the first time nobody remembers to set it. */
+  function euroAway72h(entries, kickoff) {
+    const prev = previousMatch(entries, kickoff);
+    if (!prev || !EURO_COMPS.has(prev.comp) || prev.v !== 'A') return false;
+    const hours = (Date.parse(kickoff) - Date.parse(prev.d)) / 3600000;
+    return isFinite(hours) && hours <= EURO_AWAY_HOURS;
+  }
+
+  /* ---- derbies -----------------------------------------------------------
+   * A MANUAL LIST, and it has to be: no feed carries "these two dislike each
+   * other". Kept here so the backtest's control and any future display read
+   * the same pairs.
+   *
+   * The four clusters named in the brief, plus fixtures with documented
+   * rivalry history that happen to fall inside the 2026-27 division. Clubs
+   * come and go — Wolves, West Ham and Burnley went down, so the West Midlands
+   * cluster is Villa and Coventry this season and will be a different set next
+   * — which is why this is a pair list rather than a cluster list.
+   */
+  const DERBIES = [
+    ['LIV', 'EVE'],   // Merseyside
+    ['ARS', 'TOT'],   // North London
+    ['MCI', 'MUN'],   // Manchester
+    ['AVL', 'COV'],   // West Midlands
+    ['LIV', 'MUN'],   // North West
+    ['NEW', 'SUN'],   // Tyne-Wear
+    ['LEE', 'MUN'],   // Roses
+    ['LEE', 'HUL'],   // Yorkshire
+    ['CRY', 'BHA'],   // M23
+    ['CHE', 'TOT'],   // London
+    ['ARS', 'CHE'],   // London
+    ['CHE', 'FUL'],   // West London
+    ['BRE', 'FUL'],   // West London
+  ];
+  const DERBY_KEYS = new Set(DERBIES.map((p) => p.slice().sort().join('|')));
+
+  function isDerby(home, away) {
+    return DERBY_KEYS.has([String(home || ''), String(away || '')].sort().join('|'));
+  }
+
   const PLDCore = {
+    restDays, restBucket, previousMatch, euroAway72h, isDerby, DERBIES,
+    REST_FRESH, REST_CONGESTED, EURO_AWAY_HOURS,
     riskScore, normName, matchRefName, refShort, pickPL, summarisePicks, calibrate, impliedProb, fairOdds, edgePct, LOGISTIC_SLOPE,
     per90, liveRate, joinLooksRight, foldLetters, MIN_LIVE_MINUTES,
     lineupMinutes, xiWeights, SUBS_USED, SUB_MINUTES,
