@@ -105,9 +105,20 @@ for (const [code, appts] of Object.entries(byLeague)) {
       continue;
     }
     const expected = a.refResolved || a.ref;
-    if (fx.ref !== expected) {
-      /* The harvested feed wins over the overlay by design, so a difference
-         is a changed official, not a bug. Printed so it is seen. */
+    /* COMPARED AS THE DESK RESOLVES THEM, not as raw strings. The two sides
+       come from different sources that spell the same official differently:
+       API-Football publishes "A. Cordero", the RFEF sheet "Adrián Cordero",
+       and the shipped table "Adrian Cordero Vega". All three resolve to one
+       record through PLDCore.matchRefName — which is what the desk prices
+       with — so a raw !== reported a CHANGED OFFICIAL for a fixture where
+       nothing had changed but the spelling, on every run, for ever.
+       Comparing raw strings across feeds that disagree about names is the
+       mistake this repository has now made in four places. */
+    const same = (x, y) => x === y ||
+      (C.matchRefName(x, refNames) || x) === (C.matchRefName(y, refNames) || y);
+    if (!same(fx.ref, expected)) {
+      /* The harvested feed wins over the overlay by design, so a real
+         difference is a changed official, not a bug. Printed so it is seen. */
       changed.push(`${code} ${a.h} v ${a.a}: file has ${fx.ref}, published ${expected}`);
     }
     if (!resolves(fx.ref)) missingRecord.push(`${code} ${fx.ref} (${a.h} v ${a.a})`);
