@@ -71,7 +71,7 @@ t('refuses a key that is not a P-256 point rather than encrypting to nothing', (
 /* ── RFC 8292 ──────────────────────────────────────────────────────── */
 console.log('webpush: VAPID');
 const KP = (() => {
-  const { createPublicKey, createPrivateKey, generateKeyPairSync } = require('node:crypto');
+  const { generateKeyPairSync } = require('node:crypto');
   const kp = generateKeyPairSync('ec', { namedCurve: 'prime256v1' });
   const jwk = kp.privateKey.export({ format: 'jwk' });
   return {
@@ -79,6 +79,17 @@ const KP = (() => {
     priv: jwk.d,
   };
 })();
+
+/* The advertised key, as a verifier: the 65-byte uncompressed point the header
+   publishes in k=, turned back into something node can check a signature with.
+   Two tests need it — one to say what encoding the signature is in, one to say
+   it is the right signature at all. */
+function pubKeyOf(b64uPoint) {
+  const { createPublicKey } = require('node:crypto');
+  const raw = Buffer.from(b64uPoint, 'base64url');
+  return createPublicKey({ format: 'jwk', key: { kty: 'EC', crv: 'P-256',
+    x: wp.b64u(raw.subarray(1, 33)), y: wp.b64u(raw.subarray(33)) } });
+}
 
 t('audience is the push service ORIGIN, never the endpoint', () => {
   // The classic silent failure: some services accept a full endpoint in `aud`
@@ -90,20 +101,39 @@ t('audience is the push service ORIGIN, never the endpoint', () => {
   assert.equal(claims.sub, 'mailto:a@b.c');
 });
 t('the signature is raw r||s, not DER — every push service rejects DER', () => {
+  const { verify } = require('node:crypto');
   const h = wp.vapidHeader('https://updates.push.services.mozilla.com/wpush/v2/x', KP.pub, KP.priv, 'mailto:a@b.c');
-  const sig = Buffer.from(h.Authorization.match(/t=([^,]+)/)[1].split('.')[2], 'base64url');
+  const [hdr, claims, s64] = h.Authorization.match(/t=([^,]+)/)[1].split('.');
+  const sig = Buffer.from(s64, 'base64url');
+  const signed = Buffer.from(hdr + '.' + claims);
+
+  /* Raw r||s is two 32-byte integers and nothing else. DER is a TLV and comes
+     out at 70 bytes for P-256. */
   assert.equal(sig.length, 64);
-  assert.notEqual(sig[0], 0x30);          // 0x30 would be a DER SEQUENCE
+
+  /* AND IT IS THE ENCODING, not a byte that looks like one. This assertion
+     used to read `assert.notEqual(sig[0], 0x30)` — 0x30 being the DER SEQUENCE
+     tag. But the first byte of a raw signature is the top byte of r, which is
+     uniform over 0..255, so a CORRECT implementation failed that assertion one
+     run in 256. It duly did, on main, on 19 August, and the same commit passed
+     twice either side of it. A test that fails at random teaches people to
+     re-run CI rather than read it.
+     So ask node's own parser what these bytes are: they verify as ieee-p1363
+     and they do not parse as DER. That is the actual claim, and it does not
+     depend on the value of any single byte. */
+  const key = pubKeyOf(KP.pub);
+  assert.ok(verify('sha256', signed, { key, dsaEncoding: 'ieee-p1363' }, sig),
+    'the signature does not verify as raw r||s, so it is not raw r||s');
+  assert.equal(verify('sha256', signed, { key, dsaEncoding: 'der' }, sig), false,
+    'the signature parses as DER, which every push service rejects');
 });
 t('the signature verifies against the public key it advertises', () => {
-  const { createPublicKey, verify } = require('node:crypto');
+  const { verify } = require('node:crypto');
   const h = wp.vapidHeader('https://example.com/push/1', KP.pub, KP.priv, 'mailto:a@b.c');
   const [hdr, claims, sig] = h.Authorization.match(/t=([^,]+)/)[1].split('.');
   const advertised = h.Authorization.match(/k=(.+)$/)[1];
   assert.equal(advertised, KP.pub);
-  const raw = Buffer.from(advertised, 'base64url');
-  const key = createPublicKey({ key: { kty: 'EC', crv: 'P-256',
-    x: wp.b64u(raw.subarray(1, 33)), y: wp.b64u(raw.subarray(33)) }, format: 'jwk' });
+  const key = pubKeyOf(advertised);
   assert.ok(verify('sha256', Buffer.from(hdr + '.' + claims), { key, dsaEncoding: 'ieee-p1363' },
     Buffer.from(sig, 'base64url')));
 });

@@ -66,6 +66,23 @@ assert.ok(/readdirSync\(here\)/.test(all) && /check-.+\\\.mjs/.test(all),
 assert.ok(/check-all\.mjs'/.test(all),
   'check-all.mjs no longer excludes itself, which would recurse');
 
+/* ---- 2b. and CI itself runs all of them -------------------------------- */
+/* ci.yml names every guard in its own step, each with a comment saying what
+   the guard is for. That is worth keeping — the comments are the only place
+   the failures are described — but a written list is a written list, and this
+   is the check that keeps it from falling behind the directory. The tests are
+   in the same position: nothing but ci.yml runs tests/, so a test file nobody
+   invokes is a test file that does not exist. */
+const ciSrc = read('ci.yml');
+const missing = [
+  ...readdirSync(join(root, 'scripts'))
+    .filter((f) => /^check-.+\.mjs$/.test(f) && f !== 'check-all.mjs'),
+  ...readdirSync(join(root, 'tests')).filter((f) => /^test-.+\.mjs$/.test(f)),
+].filter((f) => !ciSrc.includes(f));
+assert.equal(missing.length, 0,
+  `ci.yml does not run ${missing.join(', ')} — it lists its steps by hand, so ` +
+  'a new guard or test is only run by whoever remembers to add it here');
+
 /* ---- 3. CI is triggered by the workflows that commit -------------------- */
 const ci = read('ci.yml');
 assert.ok(/workflow_run:/.test(ci),
@@ -90,5 +107,6 @@ for (const f of pushers) {
 }
 
 console.log(`check-ci-wiring OK: ${pushers.length} committing workflows all run ` +
-  `check-all.mjs before pushing, and CI watches all ${names.length} of them ` +
-  `(${pushers.map((f) => basename(f)).join(', ')})`);
+  `check-all.mjs before pushing, CI watches all ${names.length} of them ` +
+  `(${pushers.map((f) => basename(f)).join(', ')}), and ci.yml itself runs ` +
+  'every guard in scripts/ and every test in tests/');
