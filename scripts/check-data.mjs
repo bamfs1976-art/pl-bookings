@@ -103,11 +103,31 @@ assert.equal(fakedNew.length, 0,
   `${fakedNew.length} NEW rows carry a rate instead of null (e.g. ${fakedNew.slice(0, 3).map((p) => `${p.c} ${p.n}`).join(', ')}) — ` +
   `a fabricated zero rates a player who has never played as the calmest in the league`);
 
-// And NEW only exists because the promoted clubs have no other source. A NEW
-// row at an established club means a harvest fell through to the wrong feed.
-const strayNew = PL_PLAYERS.filter((p) => p.b === 'NEW' && !PROMOTED.includes(p.c));
-assert.equal(strayNew.length, 0,
-  `NEW-basis rows outside the promoted clubs: ${[...new Set(strayNew.map((p) => p.c))].join(', ')}`);
+// NEW used to exist ONLY because the promoted clubs had no other source, so
+// any NEW row elsewhere meant a harvest had fallen through to the wrong feed
+// and this asserted none. That stopped being true when the squads began being
+// reconciled against the FPL feed: a signing at any of the twenty arrives with
+// no form and is NEW by the same definition — "in this league, no card record
+// yet" — and a transfer window produces plenty of them.
+//
+// The failure the old assertion was written for is still real and still worth
+// catching: a club whose ENTIRE squad fell through to the formless fill, which
+// would price nobody there and say nothing. That is a majority, not a
+// handful — so the shape is now a ceiling per club rather than zero overall.
+const bySquad = new Map();
+for (const p of PL_PLAYERS) {
+  const d = bySquad.get(p.c) || { all: 0, neu: 0 };
+  d.all++;
+  if (p.b === 'NEW') d.neu++;
+  bySquad.set(p.c, d);
+}
+const fellThrough = [...bySquad.entries()]
+  .filter(([c, d]) => !PROMOTED.includes(c) && d.neu > d.all / 2)
+  .map(([c, d]) => `${c} (${d.neu}/${d.all})`);
+assert.equal(fellThrough.length, 0,
+  `established clubs whose squad is mostly formless NEW rows: ${fellThrough.join(', ')} — ` +
+  'a few signings is a transfer window, a majority is a harvest that fell ' +
+  'through to the FPL fill and priced nobody');
 
 // The one that actually bites: a squad can only go missing club by club, and
 // a club with a handful of rows is worse than useless in a risk table — it

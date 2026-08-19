@@ -457,6 +457,28 @@ def reconcile_squads(rows, squads=None):
         if row:
             out.append(row)
 
+    # A MOVE CAN COLLIDE WITH A ROW ALREADY AT THE DESTINATION. Taiwo Awoniyi
+    # was in the dataset twice — a Premier League row at Nottingham Forest and,
+    # because the promoted-club fill reads the same FPL feed, a formless row at
+    # Coventry. They did not collide while they sat at different clubs, so the
+    # de-duplication earlier in build_players let both through; moving the
+    # first one put two Awoniyis in one squad. The row with EVIDENCE wins: a
+    # card rate beats no rate, and more minutes beat fewer, because the whole
+    # point of keeping the old row is the form on it.
+    def evidence(r):
+        return (r.get("y") is not None, r.get("f") is not None, num(r.get("min")) or 0)
+
+    best = {}
+    for r in out:
+        key = (r["c"], name_tokens(r.get("n")))
+        if key not in best or evidence(r) > evidence(best[key]):
+            best[key] = r
+    collapsed = len(out) - len(best)
+    if collapsed:
+        print(f"    {collapsed} duplicate row(s) collapsed after the moves, "
+              "keeping the row with a rate on it")
+    out = [r for r in out if any(r is v for v in best.values())]
+
     print(f"Squads reconciled against the FPL feed: {len(moved)} moved, "
           f"{len(arrivals)} joined, {len(retired)} left the division, "
           f"{len(ambiguous)} left alone as ambiguous "

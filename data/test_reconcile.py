@@ -140,6 +140,23 @@ ok(len(out) == len(CLUBS) * 25,
    "after a reconcile the squad list is exactly the division the feed "
    f"describes; got {len(out)} against {len(CLUBS) * 25}")
 
+print("reconcile: a move that collides with an existing row keeps the evidence")
+# Taiwo Awoniyi was in the dataset twice — a Premier League row at Forest and,
+# because the promoted-club fill reads the same FPL feed, a formless row at
+# Coventry. They did not collide while they sat at different clubs, so the
+# de-duplication earlier in build_players let both through; moving the first
+# put two Awoniyis in one squad, and check-lineup-pricing caught it.
+dupes = [shipped("Taiwo Awoniyi", "NFO"),
+         shipped("Taiwo Awoniyi", "COV", b="NEW", y=None, f=None, yc=None, min=0)]
+out = b.reconcile_squads(dupes, league(extra=[{"c": "COV", "n": "Taiwo Awoniyi",
+                                               "pos": "Attacker"}]))
+awo = [r for r in out if r["n"] == "Taiwo Awoniyi"]
+ok(len(awo) == 1,
+   f"a move onto an existing row must leave ONE player, not two; got {len(awo)}")
+ok(awo[0]["c"] == "COV" and awo[0]["b"] == "PL" and awo[0]["yc"] == 4,
+   "and the survivor is the row with the evidence on it — keeping the formless "
+   f"one throws away the reason for moving him at all; got {awo[0]}")
+
 print("reconcile: a signing does not demote the club he joins")
 # club_basis labels the TEAM aggregate. Before the reconcile, a NEW row could
 # only appear at a promoted club, so "not all PL" and "no Premier League data"
