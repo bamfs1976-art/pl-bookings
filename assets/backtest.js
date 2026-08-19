@@ -477,15 +477,41 @@
       });
     });
 
+    /* Sample variance, for the interval below. n-1 because these are samples
+       of a season's fixtures, not the population of all football. */
+    function variance(xs) {
+      if (xs.length < 2) return null;
+      var m = mean(xs);
+      return xs.reduce(function (a, x) { return a + (x - m) * (x - m); }, 0) / (xs.length - 1);
+    }
+
     function summarise(sel, valueOf) {
-      var out = {};
+      var out = {}, sample = {};
       ['fresh', 'normal', 'congested'].forEach(function (b) {
         var xs = rows.filter(sel).filter(function (r) { return r.bucket === b; })
           .map(valueOf).filter(function (v) { return v != null; });
-        out[b] = { n: xs.length, mean: mean(xs) };
+        sample[b] = xs;
+        out[b] = { n: xs.length, mean: mean(xs), sd: variance(xs) == null ? null : Math.sqrt(variance(xs)) };
       });
       out.spread = (out.congested.mean == null || out.fresh.mean == null) ? null
         : out.congested.mean - out.fresh.mean;
+
+      /* AN INTERVAL, NOT JUST A NUMBER. A bucket difference of -0.09 read on
+         its own invites the opposite error to the one this exercise was
+         guarding against: turning a shrug into a small reverse factor. The
+         two-sample interval says whether there is anything there at all, and
+         on this season it also does something more useful than failing the
+         gate — it puts 0.2 OUTSIDE the interval, so a season of Premier League
+         football can rule an effect that size out rather than merely not find
+         it. */
+      var vc = variance(sample.congested), vf = variance(sample.fresh);
+      if (vc != null && vf != null && sample.congested.length && sample.fresh.length) {
+        out.se = Math.sqrt(vc / sample.congested.length + vf / sample.fresh.length);
+        out.ci95 = [out.spread - 1.96 * out.se, out.spread + 1.96 * out.se];
+        out.zeroInside = out.ci95[0] <= 0 && 0 <= out.ci95[1];
+      } else {
+        out.se = null; out.ci95 = null; out.zeroInside = null;
+      }
       return out;
     }
 
@@ -531,6 +557,16 @@
     var measured = result.refNormalised.spread;
     result.measured = measured;
     result.passes = measured != null && measured >= result.threshold;
+
+    /* Whether the season can EXCLUDE an effect the size of the gate, which is
+       a different and more valuable finding than failing to reach it. If the
+       gate sits outside the interval the question is closed for this data; if
+       it sits inside, the honest answer is "not enough evidence either way"
+       and the factor should be revisited with more seasons rather than
+       written off. */
+    var ci = result.primary.ci95;
+    result.gateExcluded = !!(ci && (result.threshold < ci[0] || result.threshold > ci[1]));
+    result.inconclusive = !!(ci && !result.gateExcluded && !result.passes);
     return result;
   }
 

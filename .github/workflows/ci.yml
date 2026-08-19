@@ -355,5 +355,16 @@ jobs:
       - name: The suspension watch counts and lays out correctly
         run: node scripts/check-suspension.mjs
 
+      # The fatigue factor: computed, shown, and NOT scored. Measured on the
+      # 2025-26 record it comes to -0.092 yellows per team per match after the
+      # controls, against a gate of 0.2 — the wrong sign and a fifth of the
+      # size, and the 95% interval (-0.308 to +0.121) contains zero, so there
+      # is no effect here rather than a reverse one. This asserts the exclusion
+      # holds: a displayed factor is one line away from being multiplied in,
+      # and that line is easy to add in good faith by somebody reading the
+      # bucket table and assuming it feeds something.
+      - name: The fatigue factor stays out of the price until it earns its way in
+        run: node scripts/check-fatigue.mjs
+
       - name: Unit tests (PLDCore)
         run: node tests/test-core.mjs
