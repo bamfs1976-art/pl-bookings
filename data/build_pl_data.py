@@ -809,9 +809,20 @@ def club_basis(bases):
     on the player row.
 
     Derived from the whole squad rather than read off whichever row happened to
-    load first, so the label cannot flip when a harvest changes order."""
+    load first, so the label cannot flip when a harvest changes order.
+
+    A NEW ROW DOES NOT DISQUALIFY AN ESTABLISHED CLUB. Before the squads were
+    reconciled against the FPL feed, NEW appeared only at promoted clubs, so
+    "anything other than all-PL means EFL" and "this club has no Premier League
+    data" were the same statement. They stopped being the same the moment a
+    signing could land at any of the twenty: one arrival with no form flipped
+    Manchester City to EFL, which blanks the team aggregate, the home/away
+    splits and the club-level inputs the model prices with — the whole desk,
+    over one transfer. A club with twenty-seven Premier League-rated players
+    and two newcomers plainly IS on Premier League data. A promoted club, whose
+    rows are all EFL and NEW, plainly is not."""
     bases = set(bases)
-    return "PL" if bases == {"PL"} else "EFL"
+    return "PL" if bases and bases <= {"PL", "NEW"} and "PL" in bases else "EFL"
 
 
 def build_clubs(players):

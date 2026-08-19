@@ -140,6 +140,23 @@ ok(len(out) == len(CLUBS) * 25,
    "after a reconcile the squad list is exactly the division the feed "
    f"describes; got {len(out)} against {len(CLUBS) * 25}")
 
+print("reconcile: a signing does not demote the club he joins")
+# club_basis labels the TEAM aggregate. Before the reconcile, a NEW row could
+# only appear at a promoted club, so "not all PL" and "no Premier League data"
+# meant the same thing. One signing at an established club broke that: the
+# first real run labelled every club EFL, which blanks the team card average,
+# the home/away splits and the club inputs the model prices with — the whole
+# desk, over one transfer.
+ok(b.club_basis(["PL", "PL", "NEW"]) == "PL",
+   "a club with Premier League form and a new signing is still on Premier "
+   "League data")
+ok(b.club_basis(["PL"]) == "PL", "an untouched club is unchanged")
+ok(b.club_basis(["EFL", "NEW"]) == "EFL",
+   "a promoted club has no Premier League aggregate and must not claim one")
+ok(b.club_basis(["NEW"]) == "EFL",
+   "a club of nothing but newcomers has no aggregate either")
+ok(b.club_basis([]) == "EFL", "no rows at all is not a Premier League basis")
+
 print(f"\n{passed} checks passed")
 
 # MUTATIONS these assertions were checked against:
