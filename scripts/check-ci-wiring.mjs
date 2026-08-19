@@ -78,6 +78,9 @@ const missing = [
   ...readdirSync(join(root, 'scripts'))
     .filter((f) => /^check-.+\.mjs$/.test(f) && f !== 'check-all.mjs'),
   ...readdirSync(join(root, 'tests')).filter((f) => /^test-.+\.mjs$/.test(f)),
+  /* And the Python side, which is the larger half of the pipeline's tests and
+     is invoked from nowhere else at all. */
+  ...readdirSync(join(root, 'data')).filter((f) => /^test_.+\.py$/.test(f)),
 ].filter((f) => !ciSrc.includes(f));
 assert.equal(missing.length, 0,
   `ci.yml does not run ${missing.join(', ')} — it lists its steps by hand, so ` +
@@ -109,4 +112,4 @@ for (const f of pushers) {
 console.log(`check-ci-wiring OK: ${pushers.length} committing workflows all run ` +
   `check-all.mjs before pushing, CI watches all ${names.length} of them ` +
   `(${pushers.map((f) => basename(f)).join(', ')}), and ci.yml itself runs ` +
-  'every guard in scripts/ and every test in tests/');
+  'every guard in scripts/ and every test in tests/ and data/');

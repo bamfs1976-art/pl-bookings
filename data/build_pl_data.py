@@ -401,11 +401,80 @@ def name_keys(name):
 
     Returns (full, initial) or (None, None) for a name with no letters in it.
     """
-    flat = fold_letters(leagues.strip_accents(name or "")).lower()
-    parts = "".join(ch if ch.isalpha() else " " for ch in flat).split()
+    parts = name_tokens(name)
     if not parts:
         return None, None
     return " ".join(parts), parts[0][0] + " " + parts[-1]
+
+
+def name_tokens(name):
+    """The name as folded, accent-stripped, alphabetic tokens."""
+    flat = fold_letters(leagues.strip_accents(name or "")).lower()
+    return tuple("".join(ch if ch.isalpha() else " " for ch in flat).split())
+
+
+def _covers(small, big):
+    """Is every token of `small` present in `big`, an initial standing for a
+    token it begins? A multiset, so a repeated token needs a repeat to match."""
+    pool = list(big)
+    for tok in small:
+        hit = next((x for x in pool if x == tok), None)
+        if hit is None and len(tok) == 1:
+            hit = next((x for x in pool if x.startswith(tok)), None)
+        if hit is None:
+            return False
+        pool.remove(hit)
+    return True
+
+
+def same_person(a, b):
+    """One player written two ways.
+
+    name_keys covers the two shapes the fouls-won join meets: a forename
+    abbreviated, and an accent that did or did not survive. It does NOT cover
+    the shape the FPL feed is full of, because FPL prints the whole legal name
+    and the desks print the football one:
+
+        David Raya              David Raya Martín
+        Gabriel Martinelli      Gabriel Martinelli Silva
+        Bruno Guimarães         Bruno Guimarães Rodriguez Moura
+
+    On all three the initial-plus-surname key compares "raya" with "martin"
+    and misses — the extra surname moves the last token. It also misses a feed
+    that writes the family name first (Mitoma Kaoru against Kaoru Mitoma).
+
+    So the middle stage is token coverage: one name's tokens all appear in the
+    other's, order ignored, an initial allowed to stand for the token it
+    begins. That absorbs an appended surname, an inserted middle name, a
+    reversal, and "M. van Ewijk" against "Milan van Ewijk" in one rule.
+
+    IT IS DELIBERATELY NOT A SIMILARITY SCORE. Every stage here is an exact
+    statement about tokens, so two different players never "nearly" match:
+    Eli Kroupi and Junior Kroupi share a surname and are not the same man, and
+    Igor Jesus is not Igor Julio dos Santos de Paulo. Both are correctly
+    refused. What this cannot do is decide between two men who really do match
+    — the caller must treat more than one hit as unknown rather than picking,
+    because attaching one player's record to another is silent and permanent.
+
+    WHAT IT CANNOT DO is reconcile two transliterations of the same name —
+    "Yegor Yarmolyuk" against "Yehor Yarmoliuk" shares no token with the
+    other. That player reads as one departure and one arrival, which is wrong
+    but visibly wrong, and the arrival prices at no rate rather than at
+    somebody else's.
+    """
+    return same_tokens(name_tokens(a), name_tokens(b))
+
+
+def same_tokens(ta, tb):
+    """same_person, on names already tokenised. Callers comparing one name
+    against hundreds tokenise once and use this."""
+    if not ta or not tb:
+        return False
+    if ta == tb:
+        return True
+    if _covers(ta, tb) or _covers(tb, ta):
+        return True
+    return ta[0][:1] == tb[0][:1] and ta[-1] == tb[-1]
 
 
 def fouls_won_index(rows):

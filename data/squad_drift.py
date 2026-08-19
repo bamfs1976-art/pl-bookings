@@ -20,9 +20,9 @@ first version of this report used a prefix match and reported 185 players
 "missing" from a feed that had most of them: "Levi Samuels Colwill" is not a
 prefix of "Levi Colwill", "Đorđe Petrović" folds to "dorde" against
 "djordje", and "M. van Ewijk" starts with the wrong letter run entirely. So
-this imports build_pl_data.name_keys — full name first, initial-plus-surname
-second, the same two-stage key build_refs.py uses for officials — instead of
-inventing a third rule. Ambiguity is reported, never guessed.
+this uses build_pl_data.same_person — exact name, then token coverage, then
+initial-plus-surname — instead of inventing a third rule. Ambiguity is
+reported, never guessed: more than one man answering to a name is unknown.
 
 REPORTS, DOES NOT FIX.
 
@@ -41,8 +41,6 @@ DATA = Path(__file__).resolve().parent
 sys.path.insert(0, str(DATA))
 import build_pl_data  # noqa: E402
 import harvest_fpl_squads  # noqa: E402
-
-name_keys = build_pl_data.name_keys
 
 
 def club_index(teams):
@@ -82,43 +80,52 @@ def main():
         if not short:
             continue
         name = f'{e.get("first_name", "")} {e.get("second_name", "")}'.strip()
-        full, ini = name_keys(name)
-        if not full:
+        toks = build_pl_data.name_tokens(name)
+        if not toks:
             continue
-        feed.append({"name": name, "club": short, "full": full, "ini": ini})
+        feed.append({"name": name, "club": short, "toks": toks})
 
-    # Two indexes over the WHOLE league, because the question is "where is he
-    # now", not "is he still here". A key that two players share is dropped
-    # from the second stage: attaching one man's club to another silently is
-    # the failure this is meant to find, not commit.
-    by_full, by_ini = {}, defaultdict(list)
+    # Bucketed by every token, over the WHOLE league — the question is "where
+    # is he now", not "is he still at this club". Comparing each shipped player
+    # against only the feed rows sharing a token with him is exact rather than
+    # an optimisation: every stage of same_tokens requires a shared token.
+    buckets = defaultdict(list)
     for f in feed:
-        by_full.setdefault(f["full"], []).append(f)
-        by_ini[f["ini"]].append(f)
+        for t in set(f["toks"]):
+            buckets[t].append(f)
 
     rows = build_pl_data.js_array(
         (DATA / "pl_data.js").read_text(encoding="utf-8"), "PL_PLAYERS")
 
     moved, gone, seen, ambiguous = [], [], set(), []
     for p in rows:
-        full, ini = name_keys(p.get("n"))
-        if not full:
+        toks = build_pl_data.name_tokens(p.get("n"))
+        if not toks:
             continue
-        hits = by_full.get(full) or by_ini.get(ini) or []
+        seen_ids, hits = set(), []
+        for t in set(toks):
+            for f in buckets.get(t, ()):
+                if id(f) in seen_ids:
+                    continue
+                seen_ids.add(id(f))
+                if build_pl_data.same_tokens(toks, f["toks"]):
+                    hits.append(f)
         if not hits:
             gone.append(p)
             continue
+        # More than one man answering to the name is UNKNOWN, never a pick.
         if len({h["club"] for h in hits}) > 1:
             ambiguous.append((p, hits))
             continue
         f = hits[0]
-        seen.add((f["club"], f["full"]))
+        for h in hits:
+            seen.add(id(h))
         if f["club"] != p.get("c"):
             moved.append({"name": p.get("n"), "from": p.get("c"),
                           "to": f["club"], "basis": p.get("b"),
                           "feed_name": f["name"]})
 
-    missing = [f for f in feed if (f["club"], f["full"]) not in seen]
+    missing = [f for f in feed if id(f) not in seen]
 
     if as_json:
         print(json.dumps({
@@ -165,6 +172,11 @@ def main():
         for p, hits in ambiguous[:15]:
             where = ", ".join(sorted({h["club"] for h in hits}))
             print(f'  {p.get("n"):<28} shipped {p.get("c")}, feed has {where}')
+
+    # LAST, because a log read from its tail loses whatever came first.
+    print(f"\nSUMMARY  moved {len(moved)} | left the league {len(gone)} | "
+          f"in the feed with no row {len(missing)} | ambiguous {len(ambiguous)}"
+          f"   (shipped {len(rows)}, feed {len(feed)})")
 
 
 if __name__ == "__main__":

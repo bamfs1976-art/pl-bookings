@@ -82,6 +82,15 @@ jobs:
       - name: Per-match training table (mapping and leakage)
         run: python3 data/test_player_matches.py
 
+      # One player written two ways, and two players who look alike. Every join
+      # in this pipeline that has gone wrong went wrong on a name, and always
+      # silently: finding nobody looks like a feed that carries nothing, and
+      # finding the WRONG person looks like success. The negative cases are the
+      # expensive ones — a missed match costs a rate, a false match attaches
+      # one man's disciplinary record to another and nothing ever says so.
+      - name: One player, written two ways
+        run: python3 data/test_names.py
+
       # The multi-league data layer. Holds the Premier League path byte-stable
       # while a second competition moves in beside it, and holds the rule that
       # a league whose records name no official is refused rather than shipped
