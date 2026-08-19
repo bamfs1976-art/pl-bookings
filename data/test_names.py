@@ -58,10 +58,15 @@ same("Pedro Neto", "Pedro Lomba Neto", "an inserted middle name")
 same("M. van Ewijk", "Milan van Ewijk", "an abbreviated forename with a particle")
 same("C. Nørgaard", "Christian Nørgaard", "an abbreviated forename")
 same("L. Koumas", "Lewis Koumas", "an abbreviated forename")
+# The abbreviated side carrying a name the other feed drops, which token
+# coverage cannot absorb in either direction. This is the whole remaining job
+# of the initial-plus-surname stage now that it is restricted to a genuine
+# abbreviation, so it is pinned rather than left to be deleted as dead weight.
+same("R. Borges Rodrigues", "Rodrigo Rodrigues",
+     "an abbreviated forename and a middle surname only one feed carries")
 # Family name first.
 same("Kaoru Mitoma", "Mitoma Kaoru", "the family name written first")
 # Letters that are not a letter-plus-a-mark, so NFKD leaves them whole.
-same("Djordje Petrovic", "Đorđe Petrović", "đ is a distinct letter, not d with a mark")
 same("Hakon Valdimarsson", "Hákon Rafn Valdimarsson", "accents and a middle name")
 
 print("names: different players who look alike")
@@ -75,6 +80,16 @@ different("Gabriel Jesus", "Gabriel Martinelli", "a shared forename")
 different("Joe Gomez", "Joe Willock", "a shared forename")
 different("Ben White", "Ben Chilwell", "a shared forename")
 different("Cole Palmer", "Kyle Walker", "nothing in common at all")
+# THE ONE THAT WAS ACTUALLY WRONG. Both pairs are two real Premier League
+# players, and the initial-plus-surname stage called each pair one man until it
+# was restricted to a genuine abbreviation. A rule that is merely weak costs a
+# rate; this one attached a player's disciplinary record to a different player.
+different("Brennan Johnson", "Ben Johnson", "two players, one surname, one initial")
+different("Jay Dasilva", "Josh Dasilva", "two players, one surname, one initial")
+different("Djordje Petrovic", "Đorđe Petrović",
+          "TWO TRANSLITERATIONS OF ONE MAN, and a miss is the price of refusing "
+          "Brennan/Ben — he reads as a departure and an arrival, visibly, "
+          "rather than being matched to somebody else")
 
 print("names: the keys the fouls-won join still uses")
 ok(b.name_keys("Christian Nørgaard") == ("christian norgaard", "c norgaard"),
@@ -102,8 +117,10 @@ print(f"\n{passed} checks passed")
 # case rather than incidentally:
 #   remove the token-coverage stage -> "David Raya"/"David Raya Martín"
 #   accept any shared token         -> "Eli Kroupi"/"Junior Kroupi"
-#   remove the initial+surname stage-> "Djordje Petrovic"/"Đorđe Petrović"
+#   remove the initial+surname stage-> "R. Borges Rodrigues"/"Rodrigo Rodrigues"
+#   let it apply to two written-out forenames again
+#                                   -> "Brennan Johnson"/"Ben Johnson"
 # One mutation is NOT caught and is recorded rather than tested around: letting
 # a token of up to three letters stand for a longer one in _covers changes no
-# outcome here, because the initial-plus-surname stage already matches every
-# short-forename case ("Ben White" against "Benjamin White") on its own.
+# outcome here, because every short-forename case in the feed is already
+# absorbed by coverage's initial rule.

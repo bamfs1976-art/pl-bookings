@@ -474,6 +474,16 @@ def same_tokens(ta, tb):
         return True
     if _covers(ta, tb) or _covers(tb, ta):
         return True
+    # THE INITIAL-PLUS-SURNAME STAGE ONLY APPLIES TO AN ACTUAL ABBREVIATION.
+    # Applied between two written-out forenames it is not a weak match, it is a
+    # wrong one: "Brennan Johnson" and "Ben Johnson" are two Premier League
+    # players, as are "Jay Dasilva" and "Josh Dasilva", and this rule called
+    # each pair one man. That is the failure that attaches one player's
+    # disciplinary record to another, so the stage is now reachable only when
+    # one side really has been abbreviated to an initial — which is the case it
+    # was written for ("C. Nørgaard", "M. van Ewijk").
+    if len(ta[0]) > 1 and len(tb[0]) > 1:
+        return False
     return ta[0][:1] == tb[0][:1] and ta[-1] == tb[-1]
 
 
