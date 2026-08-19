@@ -1,4 +1,4 @@
-La Liga harvest — run 105
+La Liga harvest — run 106
 == discover ==
 La Liga: API-Football league 140, season 2026
 
@@ -86,10 +86,9 @@ La Liga: API-Football league 140, season 2025
 laliga_ref_fixtures.js written (380 matches over 20 clubs, 380 with an official named)
 == fixtures ==
 La Liga: API-Football league 140, season 2026
-  LL appointments overlay: 0 applied, 3 already harvested
+  LL appointments overlay: 0 applied, 4 already harvested
   CHANGED: ALA v GET: harvested 'Manuel Jesus Orellana Cid', published 'Manuel Jesús Orellana' — the harvested name stands
   CHANGED: ESP v LEV: harvested 'Carlos Muniz Munoz', published 'Carlos Muñiz' — the harvested name stands
-  CHANGED: ATM v MAL: harvested 'A. Cordero', published 'Adrian Cordero Vega' — the harvested name stands
   NOTE: no card record for Manuel Jesús Orellana (ALA v GET) — priced at the league rate
   NOTE: no card record for Carlos Muñiz (ESP v LEV) — priced at the league rate
 
