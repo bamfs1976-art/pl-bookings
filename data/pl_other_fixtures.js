@@ -68,3 +68,5 @@ const PL_OTHER_FIXTURES = [
   {c:"CHE",d:"2026-08-27T18:30:00+00:00",comp:"LCUP",v:"H"},
   {c:"FUL",d:"2026-08-27T19:00:00+00:00",comp:"LCUP",v:"H"},
 ];
+
+const PL_OTHER_FIXTURES_CLUBS = {"Brighton & Hove Albion": "BHA", "Birmingham City": "BIR", "Blackburn Rovers": "BLB", "Bolton Wanderers": "BOL", "Bristol City": "BRC", "Brentford": "BRE", "Burnley": "BUR", "Cardiff City": "CAR", "Charlton Athletic": "CHA", "Chelsea": "CHE", "Coventry City": "COV", "Derby County": "DER", "Everton": "EVE", "Fulham": "FUL", "Hull City": "HUL", "Ipswich Town": "IPS", "Leeds United": "LEE", "Lincoln City": "LIN", "Middlesbrough": "MID", "Millwall": "MIL", "Newcastle United": "NEW", "Nottingham Forest": "NFO", "Norwich City": "NOR", "Portsmouth": "POR", "Preston North End": "PRE", "Queens Park Rangers": "QPR", "Sheffield United": "SHU", "Southampton": "SOU", "Stoke City": "STK", "Swansea City": "SWA", "Tottenham Hotspur": "TOT", "Watford": "WAT", "West Bromwich Albion": "WBA", "West Ham United": "WHU", "Wolverhampton Wanderers": "WOL", "Wrexham": "WRE"};
