@@ -37,14 +37,18 @@ jobs:
             fi
           done
 
-      # The other half of "is it right": the deployed page can render perfectly
-      # and still name a player at the club he left in July.
-      - name: Premier League squads against the FPL feed
-        run: node scripts/squad-drift.mjs
-
+      # Quietly: installing a browser prints ~200 lines of progress bars, and
+      # the API only serves the TAIL of a job log, so anything noisy here
+      # pushes the actual findings out of reach.
       - run: |
-          npm install --no-save playwright@1.49.1
-          npx playwright install --with-deps chromium
+          npm install --no-save playwright@1.49.1 >/dev/null 2>&1
+          npx playwright install --with-deps chromium >/dev/null
 
       - name: What does a visitor see?
         run: node .github/live-check.mjs
+
+      # The other half of "is it right": the deployed page can render perfectly
+      # and still name a player at the club he left in July. LAST, so it is at
+      # the end of the log where it can be read.
+      - name: Premier League squads against the FPL feed
+        run: node scripts/squad-drift.mjs
