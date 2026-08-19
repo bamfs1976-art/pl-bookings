@@ -91,6 +91,15 @@ jobs:
       - name: One player, written two ways
         run: python3 data/test_names.py
 
+      # Transfers. The squads follow the FPL feed and the card rates follow the
+      # player, because a club is a fact about today and a rate is a property
+      # of the man. The dangerous direction is the FIX, not the bug: a
+      # reconcile that is too eager deletes players, and a desk that quietly
+      # loses a third of its squads is worse than one that is three weeks
+      # stale. Every refusal is pinned as hard as the behaviour.
+      - name: Squads follow the feed, rates follow the player
+        run: python3 data/test_reconcile.py
+
       # The multi-league data layer. Holds the Premier League path byte-stable
       # while a second competition moves in beside it, and holds the rule that
       # a league whose records name no official is refused rather than shipped

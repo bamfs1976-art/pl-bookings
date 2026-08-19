@@ -314,12 +314,149 @@ def build_players():
             continue
         seen.add(key)
         deduped.append(r)
+    deduped = reconcile_squads(deduped)
     # After the de-duplication, so a player is filled once and on the row that
     # actually ships, and after the basis labels are set, because a fill must
     # never look like a change of source: a row filled here is still a
     # ScoutingStats row that gained one field.
     fill_fouls_won(deduped)
     return deduped
+
+
+def club_short_by_fpl_id(teams):
+    """FPL team id -> this dataset's club code, and the clubs it could not map.
+
+    FPL's own short_name is already this dataset's vocabulary, so that is tried
+    first and the full name second. An unmapped club must be reported rather
+    than skipped: silently dropping one reads as "that club has no squad",
+    which is indistinguishable from a feed that genuinely omits it.
+    """
+    by_id, unmapped = {}, []
+    names = {leagues.strip_accents(n).lower(): s for n, s in SHORT.items()}
+    for t in teams or []:
+        short = (t.get("short_name") or "").upper()
+        if short in NAME_BY_SHORT:
+            by_id[t.get("id")] = short
+            continue
+        key = leagues.strip_accents(t.get("name") or "").lower()
+        hit = names.get(key) or next(
+            (s for n, s in names.items() if key and n.startswith(key)), None)
+        if hit:
+            by_id[t.get("id")] = hit
+        else:
+            unmapped.append(f'{t.get("name")} ({short})')
+    return by_id, unmapped
+
+
+def reconcile_squads(rows, squads=None):
+    """Move, add and retire players so the squads are THIS season's.
+
+    THE FAILURE THIS EXISTS FOR. The player-to-club mapping for the seventeen
+    established clubs comes from the ScoutingStats harvest, which needs a
+    browser cookie. When that stops working the build falls back to the
+    previous one — correctly, because a partial refresh beats a destroyed
+    dataset — and then every morning it reports success while the squads stand
+    still. Measured against the FPL feed on 19 August 2026, three weeks into a
+    transfer window: 40 players priced at a club they had left, 106 rows for
+    players no longer in the division, 118 players in the league with no row.
+    Nothing throws, and every one of those rows looks complete.
+
+    So the FREE feed decides who is where. FPL's bootstrap is keyless, current,
+    and already what this app trusts for fixtures and live cards, so agreeing
+    with it is internal consistency rather than a new dependency.
+
+    WHAT MOVES AND WHAT DOES NOT. A club is a fact about today and comes from
+    the feed. A CARD RATE IS A PROPERTY OF THE PLAYER — how often he fouls, how
+    often that becomes a booking — so it travels with him to his new club
+    rather than being discarded as though he had just been born. A player the
+    feed has and the dataset does not arrives on basis NEW with null rates, the
+    same treatment the promoted clubs' squads already get: a dash, sorted below
+    anyone with evidence, filling in as minutes accumulate. A player the feed
+    does not have has left the division and his row goes.
+
+    AMBIGUITY IS LEFT ALONE. Where a name answers to more than one player in
+    the feed the shipped row is kept exactly as it is and counted, because
+    moving a player to a club on a guess is the failure this is meant to
+    prevent, not commit.
+
+    Called with no squads, or with a feed too small to be this division, it
+    returns `rows` untouched — the fallback that keeps a broken harvest from
+    emptying the desk is the whole reason the staleness went unseen, and
+    removing it here would trade a silent staleness for a silent deletion.
+    """
+    if squads is None:
+        squads = load_optional("fpl_squads.json")
+    if not squads:
+        print("No fpl_squads.json — squads left exactly as the sources gave "
+              "them. Transfers will NOT be reflected.")
+        return rows
+
+    feed = []
+    for s in squads:
+        short = s.get("c") or SHORT.get(s.get("team"))
+        toks = name_tokens(s.get("n"))
+        if short and toks:
+            feed.append({"c": short, "n": s.get("n"), "pos": s.get("pos"), "toks": toks})
+
+    clubs = {f["c"] for f in feed}
+    if len(clubs) < 18 or len(feed) < 400:
+        print(f"fpl_squads.json holds {len(feed)} players across {len(clubs)} "
+              "clubs, which is too few to be this division — squads left "
+              "untouched rather than emptied.")
+        return rows
+
+    buckets = {}
+    for f in feed:
+        for t in set(f["toks"]):
+            buckets.setdefault(t, []).append(f)
+
+    moved, kept, retired, ambiguous = [], set(), [], []
+    for r in rows:
+        toks = name_tokens(r.get("n"))
+        hits, seen_ids = [], set()
+        for t in set(toks):
+            for f in buckets.get(t, ()):
+                if id(f) in seen_ids:
+                    continue
+                seen_ids.add(id(f))
+                if same_tokens(toks, f["toks"]):
+                    hits.append(f)
+        if not hits:
+            retired.append(r)
+            continue
+        if len({h["c"] for h in hits}) > 1:
+            ambiguous.append(r)
+            kept.update(id(h) for h in hits)
+            continue
+        f = hits[0]
+        kept.update(id(h) for h in hits)
+        if f["c"] != r["c"]:
+            moved.append((r["n"], r["c"], f["c"]))
+            r["c"] = f["c"]
+
+    # By identity, not equality: two rows can compare equal (the same player
+    # arriving from two sources) and dropping both would be a silent deletion.
+    dropped = {id(r) for r in retired}
+    out = [r for r in rows if id(r) not in dropped]
+    arrivals = [f for f in feed if id(f) not in kept]
+    for f in arrivals:
+        row = mk({"team": NAME_BY_SHORT.get(f["c"]), "n": f["n"], "pos": f["pos"],
+                  "min": 0, "yc": None, "rc": None, "fc90": None, "fd90": None,
+                  "tid": None, "img": None}, "NEW")
+        if row:
+            out.append(row)
+
+    print(f"Squads reconciled against the FPL feed: {len(moved)} moved, "
+          f"{len(arrivals)} joined, {len(retired)} left the division, "
+          f"{len(ambiguous)} left alone as ambiguous "
+          f"({len(rows)} rows in, {len(out)} out).")
+    for n, a, b in sorted(moved)[:40]:
+        print(f"    {n} {a} -> {b}")
+    if len(moved) > 40:
+        print(f"    ... and {len(moved) - 40} more")
+    for r in ambiguous:
+        print(f"    AMBIGUOUS, left at {r['c']}: {r['n']}")
+    return out
 
 
 def mk(p, basis, resolve=None):

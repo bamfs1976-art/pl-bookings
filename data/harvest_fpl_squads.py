@@ -129,9 +129,50 @@ def missing_clubs(rows):
     return sorted(set(CLUB_ALIASES.values()) - have)
 
 
+def every_club(boot):
+    """Every Premier League squad, keyed by this dataset's club codes.
+
+    The promoted-club fill above answers "who else is at these three clubs".
+    This answers a different question — "who is at which club, in the whole
+    division, today" — which is what a transfer window makes urgent and what
+    the cookie-fed harvest cannot answer once the cookie dies.
+
+    Carries the club CODE rather than a name, because the caller is matching
+    against shipped rows that are already keyed on codes, and a second name
+    map is a second thing to drift.
+    """
+    by_id, unmapped = build_pl_data.club_short_by_fpl_id(boot.get("teams", []))
+    if unmapped:
+        sys.exit("ERROR: FPL names clubs this dataset does not know: "
+                 + ", ".join(unmapped)
+                 + "\nThat is a rename, not an empty squad, and guessing past "
+                   "it would silently retire everybody at that club.")
+    rows = []
+    for el in boot.get("elements", []) or []:
+        short = by_id.get(el.get("team"))
+        name = (el.get("first_name", "") + " " + el.get("second_name", "")).strip() \
+            or el.get("web_name")
+        if short and name:
+            rows.append({"c": short, "n": name,
+                         "pos": POS_BY_TYPE.get(el.get("element_type"))})
+    return rows
+
+
 def main():
     boot = get("/bootstrap-static/")
     rows = squads_from_bootstrap(boot)
+
+    # The whole division, for build_pl_data.reconcile_squads. Written first so
+    # that a failure here cannot leave a promoted-squad file implying a run
+    # that also refreshed the transfers.
+    full = every_club(boot)
+    clubs = {r["c"] for r in full}
+    if len(clubs) < 20 or len(full) < 400:
+        sys.exit(f"ERROR: FPL returned {len(full)} players across {len(clubs)} "
+                 "clubs, which is not a Premier League. Nothing written — a "
+                 "short feed reconciled against would retire real players.")
+    (DATA / "fpl_squads.json").write_text(json.dumps(full), encoding="utf-8")
+    print(f"fpl_squads.json written: {len(full)} players across {len(clubs)} clubs")
 
     absent = missing_clubs(rows)
     if absent:

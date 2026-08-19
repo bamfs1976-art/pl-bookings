@@ -367,6 +367,14 @@ jobs:
       # cleared its minutes floor. These rows carry NO form (basis NEW, rates
       # null) and are de-duplicated behind any real Championship rate, so they
       # fill the squads out without inventing a number for anyone.
+      #
+      # It now also writes fpl_squads.json — every club, not only the promoted
+      # three — which is what build_pl_data reconciles the squads against. The
+      # club a player belongs to came from the cookie-fed harvest, so when that
+      # cookie stopped working the squads stopped moving while the refresh went
+      # on reporting success: on 19 August 2026, forty players were priced at a
+      # club they had left. This feed is free and keyless and cannot go stale
+      # that way.
       - name: Fill the promoted clubs' squads from the FPL feed (free, no key)
         run: python3 data/harvest_fpl_squads.py
 
