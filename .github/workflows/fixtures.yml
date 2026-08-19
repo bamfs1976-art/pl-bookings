@@ -79,15 +79,13 @@ jobs:
       - name: How many referees are appointed, and how far out
         run: node scripts/ref-coverage.mjs
 
+      # EVERY GUARD, not the four that look related to fixtures — see the note
+      # in data-refresh.yml. This job REWRITES the fixture files, so it is the
+      # one that can drop the published-appointments overlay, and it is also
+      # the one whose output moves the match record, the accas and the matchday
+      # rollover. Checked here, before the commit, rather than only afterwards.
       - name: Guard the fixture files
-        run: |
-          node scripts/check-data.mjs
-          node scripts/check-eflc.mjs
-          node scripts/check-laliga.mjs
-          # This job REWRITES the fixture files, so it is the one that can drop
-          # the published-appointments overlay. Checked here, before the commit
-          # step, rather than only in CI afterwards.
-          node scripts/check-appointments.mjs
+        run: node scripts/check-all.mjs
 
       - name: Commit if anything changed
         run: |

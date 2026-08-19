@@ -118,9 +118,13 @@ jobs:
           else
             echo "No sheet file yet — nothing was within the window."
           fi
-          # The pricing guard reads the EMITTER and the pages, not the file, so
-          # it is meaningful on a run that harvested nothing.
-          node scripts/check-lineup-pricing.mjs
+          # EVERY GUARD, not just the lineup one — see the note in
+          # data-refresh.yml. A harvested team sheet CHANGES PUBLISHED PRICES on
+          # whichever desk the fixture belongs to, so the checks that re-derive
+          # those prices are exactly the ones that must run before it commits.
+          # Meaningful even on a run that harvested nothing: they read the
+          # emitter and the pages, not only the file.
+          node scripts/check-all.mjs
 
       - name: Commit if anything changed
         run: |

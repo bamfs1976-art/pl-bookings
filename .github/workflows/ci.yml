@@ -1,8 +1,23 @@
 name: CI
 
+# WHY THERE IS A workflow_run HERE. A push made with the default GITHUB_TOKEN
+# does not trigger further workflows — GitHub's own guard against recursive
+# runs. Three workflows commit to main under that token (data-refresh,
+# fixtures, lineups), so NONE of their commits ran CI. Between 17 and 19 August
+# five bot commits landed on main and the last CI run was before all of them;
+# main sat red for three days and nothing said so.
+#
+# workflow_run fires after each of those completes, against the default branch,
+# so a commit they made is checked within a minute of being made. It is the
+# BACKSTOP: each of the three now also runs scripts/check-all.mjs before its
+# own commit, which is what actually prevents the bad push. This catches the
+# case where that step is removed, skipped, or the commit lands some other way.
 on:
   push:
   pull_request:
+  workflow_run:
+    workflows: ["Data refresh", "Fixtures and referee appointments", "Confirmed team sheets"]
+    types: [completed]
 
 jobs:
   test:
@@ -273,6 +288,14 @@ jobs:
       # a dataset that looks complete and is missing a column.
       - name: The build front door matches the real pipeline
         run: node scripts/check-build-data.mjs
+
+      # The guards are only worth what runs them. Two holes closed at once: the
+      # three committing workflows each ran a hand-picked subset (so
+      # check-match-record.mjs was run by none of them), and a push made with
+      # the default GITHUB_TOKEN triggers no workflow, so their commits ran no
+      # CI either. This checks the wiring that fixes both.
+      - name: Every committing workflow runs every guard, and CI watches them
+        run: node scripts/check-ci-wiring.mjs
 
       # Two desk widgets whose failures are silent: a table that reorders
       # without announcing it looks fine to anyone who can see it, and the

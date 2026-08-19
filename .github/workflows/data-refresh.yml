@@ -512,14 +512,17 @@ jobs:
           # hand-written report is a claim about a run nobody can check.
           node scripts/backtest.mjs --report backtest_report.md || true
 
+      # EVERY GUARD, not a chosen six. This step used to name the checks that
+      # felt related to the files this workflow writes, which is the wrong
+      # question: the guards re-derive PRICES from the data, so a refresh can
+      # break one that has nothing to do with the file it edited.
+      # check-match-record.mjs was in none of the three refresh workflows'
+      # lists, went red when the Championship rolled to matchday 2, and stayed
+      # red on main for three days. scripts/check-all.mjs globs, so a guard
+      # written next month is included by existing. ~7s for all of them.
       - name: Guard the dataset
         run: |
-          node scripts/check-data.mjs
-          node scripts/check-core-insights.mjs
-          node scripts/check-eflc.mjs
-          node scripts/check-laliga.mjs
-          node scripts/check-share.mjs
-          node scripts/check-models.mjs
+          node scripts/check-all.mjs
           node tests/test-core.mjs
 
       - name: Commit and push if changed
