@@ -24,9 +24,22 @@ import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
 import assert from 'node:assert';
+import vm from 'node:vm';
+import { createRequire } from 'node:module';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const A = await import(join(root, 'scripts', 'accas.mjs'));
+const require_ = createRequire(import.meta.url);
+const C = require_(join(root, 'assets', 'core.js'));
+
+/* The same shipped-file loader every other guard in scripts/ uses. Needed
+   because accas.mjs exposes its fixture source as a FILENAME, not as rows. */
+function load(file, konst) {
+  const c = {};
+  vm.createContext(c);
+  vm.runInContext(readFileSync(join(root, file), 'utf8'), c);
+  return vm.runInContext(konst, c);
+}
 
 /* ---- 1. the record is priced with the page's own constants -------------- */
 /* Asserted against the page source rather than restated here: a constant this
@@ -111,14 +124,35 @@ for (const L of A.LEAGUES) {
   }
 }
 
-/* The Championship's appointments are in, so its record must carry them —
-   this is the end of the chain that starts at data/appointments.json. */
+/* THE END OF THE CHAIN that starts at data/appointments.json: an appointment
+   the fixture file carries must reach the match record.
+ *
+ * ASSERTED AGAINST THE FIXTURE FILE, not against the calendar. This used to
+ * open "The Championship's appointments are in, so its record must carry
+ * them" and require at least one referee outright — which was true the day it
+ * was written, for matchday 1, and false the moment the division rolled to
+ * matchday 2. The EFL publishes a few days out, so EVERY new round begins with
+ * a window where no fixture has an official yet; the guard failed for three
+ * days at a time, on main, for the world being in an ordinary state.
+ * A guard that fails on a legitimate state trains people to ignore it, which
+ * costs more than the check is worth. So: if the fixture file has referees in
+ * the round, the record must carry them. If it has none, there is nothing to
+ * carry and that is reported rather than failed. */
+const eflcFx = load('data/eflc_fixtures.js', 'EFLC_FIXTURES');
 const eflc = A.matchesFor(A.LEAGUES.find((l) => l.code === 'EFLC'));
 if (eflc.rows.length) {
+  const openRound = C.currentRound(eflcFx);
+  const appointedInFile = eflcFx.filter((f) => f.r === openRound && f.ref).length;
   const withRef = eflc.rows.filter((r) => r.referee).length;
-  assert.ok(withRef > 0,
-    'no Championship fixture in the open round carries a referee — the ' +
-    'appointments overlay is not reaching the match record');
+  if (appointedInFile > 0) {
+    assert.ok(withRef > 0,
+      `${appointedInFile} fixture(s) in Championship round ${openRound} carry a ` +
+      'referee in the fixture file, but none reached the match record — the ' +
+      'appointments overlay is not reaching the end of the chain');
+  } else {
+    console.log(`  note: Championship round ${openRound} has no published ` +
+      'appointments yet — nothing for the match record to carry');
+  }
   const priced = eflc.rows.filter((r) => r.referee && r.ref_carded).length;
   assert.ok(priced * 2 >= withRef,
     `${priced} of ${withRef} appointed officials have a card record — the name ` +
