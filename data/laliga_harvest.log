@@ -1,4 +1,4 @@
-La Liga harvest — run 100
+La Liga harvest — run 101
 == discover ==
 La Liga: API-Football league 140, season 2026
 
@@ -54,11 +54,11 @@ La Liga: API-Football league 140, season 2026
     Barcelona                    0 players
     Celta Vigo                   0 players
     Deportivo Alaves            23 players
-    Deportivo La Coruna          0 players
-    Elche                        0 players
+    Deportivo La Coruna         23 players
+    Elche                       23 players
     Espanyol                    23 players
     Getafe                      21 players
-    Levante                     20 players
+    Levante                     21 players
     Malaga                       0 players
     Osasuna                      0 players
     Racing Santander            23 players
@@ -70,7 +70,7 @@ La Liga: API-Football league 140, season 2026
     Valencia                     0 players
     Villarreal                  23 players
 
-laliga_season_cards.json written (178 players from 20 clubs, API-Football, LL season 2026)
+laliga_season_cards.json written (225 players from 20 clubs, API-Football, LL season 2026)
 == segunda ==
 Segunda División: API-Football league 141, season 2025
   not in this desk's club list (19): AD Ceuta FC, Albacete, Almeria, Burgos, Cadiz, Castellón, Cordoba, Cultural Leonesa, Eibar, FC Andorra, Granada CF, Huesca, Las Palmas, Leganes, Mirandes, Real Sociedad II, Sporting Gijon, Valladolid, Zaragoza
@@ -92,7 +92,7 @@ La Liga: API-Football league 140, season 2026
   NOTE: no card record for Manuel Jesús Orellana (ALA v GET) — priced at the league rate
   NOTE: no card record for Carlos Muñiz (ESP v LEV) — priced at the league rate
 
-laliga_fixtures.js written (380 fixtures over 38 matchdays, 5 with a referee appointed)
+laliga_fixtures.js written (380 fixtures over 38 matchdays, 6 with a referee appointed)
 == build ==
 Division: 17 clubs were in it last season, 3 came up
   promoted: Deportivo La Coruna, Malaga, Racing Santander
@@ -100,10 +100,10 @@ Division: 17 clubs were in it last season, 3 came up
   SEG   110 players from the Segunda feed
 
 club rates from mirror (380 matches)
-players: 783  by basis: LL=673, SEG=110
+players: 781  by basis: LL=671, SEG=110
 clubs with players: 20 of 20
 club rates from match records: 17 of 20
-season cautions (2026-27): 137 players
+season cautions (2026-27): 166 players
 referees: 20
 RESULT: WRITTEN laliga_data.js
 == referee-join ==

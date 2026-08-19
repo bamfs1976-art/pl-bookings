@@ -13,19 +13,19 @@ const CARD_MODEL = {
       "GK": 0.0861,
       "DF": 0.1891,
       "MF": 0.2036,
-      "FW": 0.1463
+      "FW": 0.1462
     },
     "foulMean": {
       "GK": 0.0256,
       "DF": 0.8953,
       "MF": 1.1977,
-      "FW": 1.1998
+      "FW": 1.1999
     },
     "ycLeague": 0.1744,
-    "foulLeague": 0.9788
+    "foulLeague": 0.9789
   },
   "glm": {
-    "intercept": -3.0029,
+    "intercept": -3.0028,
     "weights": {
       "yc90": 2.2,
       "foul90": 1.1,
