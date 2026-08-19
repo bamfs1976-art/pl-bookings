@@ -1,0 +1,141 @@
+#!/usr/bin/env python3
+"""
+A completed season's starting elevens — the outcome variable for rotation.
+
+WHY THIS IS SEPARATE, AND WHY IT IS NOT IN THE DAILY REFRESH. The lineups
+endpoint answers one fixture per call; there is no "every team sheet in this
+season" form. A season is 380 calls. That is affordable ONCE against a
+7,500/day allowance and wasteful every morning for data that stopped changing
+in May, so this is a one-off backfill behind its own flag rather than another
+step in data-refresh.yml. harvest_apifootball.py --lineups stays what it is:
+a short list of fixtures near kick-off.
+
+WHAT IT IS FOR. The congestion work established that rest days do NOT move a
+team's card count — the 2025-26 record excludes an effect the size of the 0.2
+gate. What congestion plausibly moves is WHO PLAYS, and that is a different
+question with a different outcome variable. This file is that variable: the
+starting eleven for every club in every match of the season, so rotation can
+be measured as the change from a club's previous league match and tested
+against the rest-days buckets already built.
+
+WHAT IT DELIBERATELY DOES NOT DO. It does not judge whether rotation happened,
+and it does not carry benches, formations or minutes. It records the eleven.
+Everything downstream is computed from that, where it can be seen.
+
+  python3 data/harvest_lineups_season.py --season 2025
+
+Writes data/pl_lineups_2526.js. Needs API_FOOTBALL_KEY. Roughly 381 calls and
+a few minutes at the harvester's own pacing.
+"""
+import argparse
+import json
+import sys
+from pathlib import Path
+
+DATA = Path(__file__).resolve().parent
+sys.path.insert(0, str(DATA))
+import harvest_apifootball as af  # noqa: E402
+import leagues  # noqa: E402
+
+
+def season_fixture_ids(host, key, league, season):
+    """Every fixture id in the season, with its date and both clubs."""
+    payload = af._get(host, key, "fixtures",
+                      {"league": str(league.af_league), "season": season})
+    err = af.api_errors(payload)
+    if err:
+        sys.exit(f"ERROR: the fixture list was refused: {err}")
+    rows, page, pages = [], 1, af.pages_needed(payload)
+    while True:
+        for entry in (payload.get("response") or []):
+            fx = (entry or {}).get("fixture") or {}
+            st = ((fx.get("status") or {}).get("short") or "")
+            # ONLY FINISHED MATCHES. A postponed or abandoned fixture has no
+            # team sheet worth the call, and counting it as a match a club
+            # played would put a phantom gap in the rest-day chain.
+            if st != "FT" or not fx.get("id"):
+                continue
+            rows.append({"id": fx.get("id"), "d": fx.get("date")})
+        if page >= pages:
+            break
+        page += 1
+        payload = af._get(host, key, "fixtures",
+                          {"league": str(league.af_league), "season": season, "page": page})
+        pages = max(pages, af.pages_needed(payload))
+    rows.sort(key=lambda r: r["d"] or "")
+    return rows
+
+
+def main():
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--season", default="2025",
+                    help="season START year — 2025 is 2025-26")
+    ap.add_argument("--out", default="pl_lineups_2526.js")
+    ap.add_argument("--limit", type=int, default=None,
+                    help="stop after N fixtures, to inspect the shape without "
+                         "spending the day's quota")
+    args = ap.parse_args()
+
+    host = af.env_or("API_FOOTBALL_HOST", af.DEFAULT_HOST)
+    key = af.env_or("API_FOOTBALL_KEY", "")
+    if not key:
+        sys.exit("ERROR: API_FOOTBALL_KEY is not set. Nothing written.")
+
+    league = leagues.LEAGUES["PL"]
+    fixtures = season_fixture_ids(host, key, league, args.season)
+    if args.limit:
+        fixtures = fixtures[:args.limit]
+    print(f"{len(fixtures)} finished fixtures to fetch team sheets for")
+
+    rows, missing = [], 0
+    for i, fx in enumerate(fixtures, 1):
+        if i % 50 == 0:
+            print(f"  {i}/{len(fixtures)}")
+        payload = af._get(host, key, "fixtures/lineups", {"fixture": fx["id"]})
+        err = af.api_errors(payload)
+        if err:
+            print(f"    fixture {fx['id']}: refused ({err})")
+            missing += 1
+            continue
+        got = af.parse_lineups(payload, league)
+        if len(got) != 2:
+            # BOTH SIDES OR NEITHER, the same rule the near-kick-off harvest
+            # uses: one XI and one guess is not a comparison.
+            missing += 1
+            continue
+        for short, sheet in got.items():
+            rows.append({"d": fx["d"], "c": short, "xi": sheet["start"]})
+
+    if not rows:
+        sys.exit("ERROR: no team sheets returned. Nothing written — an empty "
+                 "file here reads as a season in which nobody was named.")
+
+    rows.sort(key=lambda r: (r["d"], r["c"]))
+    clubs = sorted({r["c"] for r in rows})
+    head = [
+        "// Auto-generated by harvest_lineups_season.py. Do not hand-edit.",
+        "//",
+        f"// Starting elevens, Premier League {args.season}-{int(args.season) % 100 + 1}.",
+        "// The OUTCOME VARIABLE for rotation: congestion does not move a team's",
+        "// card count (the 2025-26 record excludes an effect the size of the",
+        "// 0.2 gate), so the question is whether it moves who plays instead.",
+        "//",
+        "//   d   kick-off, ISO 8601 with offset",
+        "//   c   club short code",
+        "//   xi  the eleven named to start, in the feed's own spelling",
+        "//",
+        f"// {len(rows)} team sheets across {len(clubs)} clubs"
+        + (f"; {missing} fixture(s) returned no usable pair" if missing else ""),
+        "const PL_LINEUPS_2526 = [",
+    ]
+    body = ['  {d:"%s",c:"%s",xi:%s},' % (r["d"], r["c"], json.dumps(r["xi"], ensure_ascii=False))
+            for r in rows]
+    (DATA / args.out).write_text("\n".join(head + body + ["];", ""]), encoding="utf-8")
+    size = (DATA / args.out).stat().st_size
+    print(f"{args.out} written: {len(rows)} team sheets, {len(clubs)} clubs, "
+          f"{size // 1024} KB"
+          + (f" — {missing} fixture(s) had no usable pair" if missing else ""))
+
+
+if __name__ == "__main__":
+    main()

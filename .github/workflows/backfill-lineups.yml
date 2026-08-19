@@ -1,0 +1,69 @@
+name: Backfill a season's team sheets
+
+# A ONE-OFF, ON PURPOSE. The lineups endpoint answers one fixture per call, so
+# a season is 380 of them. That is affordable once against a 7,500/day
+# allowance and wasteful every morning for data that stopped changing in May —
+# which is why this is its own workflow with no schedule rather than another
+# step in the daily refresh.
+#
+# It exists to give the rotation question an outcome variable. Congestion does
+# not move a team's card count: measured on the 2025-26 record the effect is
+# -0.092 yellows per team per match against a 0.2 gate, and the 95% interval
+# excludes an effect that size. What congestion plausibly moves is who plays.
+#
+# Run it from the Actions tab. It commits data/pl_lineups_2526.js if anything
+# changed, and runs every guard first like every other committing workflow.
+
+on:
+  workflow_dispatch:
+    inputs:
+      season:
+        description: "Season START year — 2025 is 2025-26"
+        required: false
+        default: "2025"
+      limit:
+        description: "Stop after N fixtures (blank = the whole season). Use a small number to inspect the shape without spending the quota."
+        required: false
+        default: ""
+
+permissions:
+  contents: write
+
+concurrency:
+  group: backfill-lineups
+
+jobs:
+  backfill:
+    runs-on: ubuntu-latest
+    env:
+      API_FOOTBALL_KEY: ${{ secrets.API_FOOTBALL_KEY }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Fetch the season's starting elevens
+        run: |
+          python3 data/harvest_lineups_season.py \
+            --season "${{ inputs.season || '2025' }}" \
+            ${{ inputs.limit && format('--limit {0}', inputs.limit) || '' }}
+
+      # Same rule as every other workflow that commits: every guard, before
+      # the push, not a hand-picked subset afterwards.
+      - name: Guard the dataset
+        run: node scripts/check-all.mjs
+
+      - name: Commit and push if changed
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          for f in data/pl_lineups_2526.js; do
+            [ -f "$f" ] && git add "$f"
+          done
+          if git diff --cached --quiet; then
+            echo "No team-sheet changes."
+          else
+            git commit -m "Backfill starting elevens for the rotation test"
+            git push
+          fi

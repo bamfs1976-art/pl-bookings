@@ -16,7 +16,7 @@ on:
   push:
   pull_request:
   workflow_run:
-    workflows: ["Data refresh", "Fixtures and referee appointments", "Confirmed team sheets"]
+    workflows: ["Data refresh", "Fixtures and referee appointments", "Confirmed team sheets", "Backfill a season's team sheets"]
     types: [completed]
 
 jobs:
