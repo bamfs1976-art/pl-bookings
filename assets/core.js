@@ -1792,7 +1792,69 @@
     return DERBY_KEYS.has([String(home || ''), String(away || '')].sort().join('|'));
   }
 
+  /* ---- rotation risk ----------------------------------------------------
+   *
+   * HOW MANY CHANGES A MANAGER IS LIKELY TO MAKE, from the fixture calendar
+   * alone. The point of it is the timing: congestion is knowable days before
+   * team news, which is what makes it usable rather than merely true.
+   *
+   * MEASURED, NOT ASSUMED. On the 2025-26 season a congested side changed
+   * 2.55 of its eleven against a fresh side's 1.94 — and, crucially, +0.346
+   * ABOVE that club's own average (95% CI 0.11 to 0.58, z = 2.90). Club habit
+   * is the big term: Chelsea changed 3.27 a match, Everton 1.57. Without the
+   * club baseline this would rediscover squad depth and call it fatigue.
+   *
+   * NOT A CARD FACTOR, and the distinction is the whole finding. Rest days do
+   * not move a team's yellow count; the same season excludes an effect the
+   * size of the desk's 0.2 gate. What congestion moves is SELECTION.
+   *
+   * Takes the model as an argument rather than reaching for a global, so a
+   * sibling app can pass its own fit — the coefficients are a property of the
+   * season they came from, not of this file.
+   */
+  function rotationRisk(model, club, entries, kickoff) {
+    if (!model || !model.rest) return null;
+    const days = restDays(entries, kickoff);
+    const bucket = restBucket(days);
+    /* No previous match is not "well rested", it is no evidence — the opening
+       weekend, or a club the fixture list does not yet cover. Returning the
+       club's own baseline says "nothing known about rest here" rather than
+       inventing a fresh side. */
+    const base = (model.clubBaseline && model.clubBaseline[club]) != null
+      ? model.clubBaseline[club] : model.leagueMean;
+    if (base == null) return null;
+    const rest = bucket == null ? 0 : (model.rest[bucket] || 0);
+    const euro = bucket === 'congested' && euroAway72h(entries, kickoff)
+      ? (model.euroAwayExtra || 0) : 0;
+    const expected = base + rest + euro;
+    return {
+      club, days, bucket,
+      euroAway72h: euro !== 0,
+      baseline: base,
+      expected: Math.round(expected * 100) / 100,
+      /* Against the club's OWN habit, which is the number a reader wants: a
+         Chelsea line saying "3.4 changes" is unremarkable, "+0.4 on their own
+         average" is the signal. */
+      lift: Math.round((expected - base) * 100) / 100,
+      band: rotationBand(expected - base),
+      /* An honest label for the case with nothing behind it. */
+      known: bucket != null,
+    };
+  }
+
+  /* Bands for display. Cut on the LIFT rather than the absolute, so a club
+     that always rotates is not permanently flagged and a settled side that
+     suddenly faces three games in seven days is. */
+  function rotationBand(lift) {
+    if (lift == null || !isFinite(lift)) return null;
+    if (lift >= 0.30) return 'high';
+    if (lift >= 0.10) return 'raised';
+    if (lift <= -0.10) return 'settled';
+    return 'normal';
+  }
+
   const PLDCore = {
+    rotationRisk, rotationBand,
     restDays, restBucket, previousMatch, euroAway72h, isDerby, DERBIES,
     REST_FRESH, REST_CONGESTED, EURO_AWAY_HOURS,
     riskScore, normName, matchRefName, refShort, pickPL, summarisePicks, calibrate, impliedProb, fairOdds, edgePct, LOGISTIC_SLOPE,

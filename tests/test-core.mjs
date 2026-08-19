@@ -1693,4 +1693,62 @@ t('every derby names two clubs this division actually contains', () => {
   assert.deepEqual(stray, [], `derby pairs name clubs not in the division: ${stray}`);
 });
 
+console.log('rotation risk');
+const ROT = require('../data/rotation_model.js');
+const EURO_AWAY = { d: '2026-09-17T19:00:00+00:00', comp: 'UEL', v: 'A' };
+const LAST_SUN = { d: '2026-09-13T14:00:00+00:00', comp: 'PL', v: 'H' };
+const SAT = '2026-09-20T15:30:00+00:00';
+
+t('a congested side is expected to change more than the same side rested', () => {
+  const tired = core.rotationRisk(ROT, 'CHE', [EURO_AWAY, LAST_SUN], SAT);
+  const rested = core.rotationRisk(ROT, 'CHE', [LAST_SUN], SAT);
+  assert.ok(tired.expected > rested.expected,
+    `congested ${tired.expected} should exceed rested ${rested.expected}`);
+  assert.equal(tired.bucket, 'congested');
+  assert.equal(rested.bucket, 'fresh');
+});
+t('the club baseline carries the level, and it differs by club', () => {
+  // Chelsea changed 3.27 a match in 2025-26 and Everton 1.57. A model without
+  // this term would rediscover squad depth and call it fatigue.
+  const che = core.rotationRisk(ROT, 'CHE', [LAST_SUN], SAT);
+  const eve = core.rotationRisk(ROT, 'EVE', [LAST_SUN], SAT);
+  assert.ok(che.expected > eve.expected + 1,
+    `two clubs at identical rest should still differ by their own habit: ` +
+    `${che.expected} vs ${eve.expected}`);
+});
+t('the BAND is cut on the lift, not the level', () => {
+  // The whole point: a club that always rotates must not be permanently
+  // flagged, and a settled side facing three games in seven days must be.
+  const cheRested = core.rotationRisk(ROT, 'CHE', [LAST_SUN], SAT);
+  assert.equal(cheRested.band, 'settled',
+    'the heaviest rotator in the league, well rested, is not a rotation risk');
+  const eveTired = core.rotationRisk(ROT, 'EVE', [EURO_AWAY, LAST_SUN], SAT);
+  assert.ok(['raised', 'high'].includes(eveTired.band),
+    `the most settled side in the league, congested, is: ${eveTired.band}`);
+});
+t('the European away trip adds on top, and only inside the congested bucket', () => {
+  const withEuro = core.rotationRisk(ROT, 'CHE', [EURO_AWAY, LAST_SUN], SAT);
+  const domestic = core.rotationRisk(ROT, 'CHE',
+    [{ ...EURO_AWAY, comp: 'LCUP' }, LAST_SUN], SAT);
+  assert.ok(withEuro.expected > domestic.expected,
+    'an away leg in Europe is a longer trip than a midweek cup tie at home');
+  assert.equal(withEuro.euroAway72h, true);
+  assert.equal(domestic.euroAway72h, false);
+});
+t('no previous match says so rather than claiming a rested side', () => {
+  // Opening weekend. Scoring it "fresh" would apply the fresh discount to all
+  // twenty clubs once a year on no evidence at all.
+  const r = core.rotationRisk(ROT, 'ARS', [], '2026-08-21T19:00:00+00:00');
+  assert.equal(r.known, false);
+  assert.equal(r.bucket, null);
+  assert.equal(r.lift, 0);
+  // Rounded to two places for display; the point is that it IS the baseline
+  // and nothing has been added or taken away.
+  assert.equal(r.expected, Math.round(ROT.clubBaseline.ARS * 100) / 100);
+});
+t('an unknown club falls back to the league mean rather than returning nothing', () => {
+  const r = core.rotationRisk(ROT, 'ZZZ', [LAST_SUN], SAT);
+  assert.ok(r && r.baseline === ROT.leagueMean);
+});
+
 console.log(`\n${passed} tests passed`);

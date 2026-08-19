@@ -315,6 +315,18 @@ jobs:
       - name: Every committing workflow runs every guard, and CI watches them
         run: node scripts/check-ci-wiring.mjs
 
+      # Rotation. Congestion does not move a team's card count — that was
+      # measured, and the 2025-26 interval excludes an effect the size of the
+      # desk's 0.2 gate — but it does move SELECTION: a congested side changes
+      # 2.55 of its eleven against a fresh side's 1.94, and +0.35 above that
+      # club's own average. Club habit alone spans 1.57 to 3.27 changes a
+      # match, so without the club baseline this model would rediscover squad
+      # depth and call it fatigue. The guard re-derives the fit from the
+      # committed record rather than trusting the generated file, and refuses
+      # a lift whose interval includes zero.
+      - name: The rotation model says what the data says
+        run: node scripts/check-rotation.mjs
+
       # Two desk widgets whose failures are silent: a table that reorders
       # without announcing it looks fine to anyone who can see it, and the
       # price check's worst outcome is not a crash but a cheerful green number
