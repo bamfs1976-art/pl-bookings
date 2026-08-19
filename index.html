@@ -4212,7 +4212,13 @@ function fmtKO(iso){ try{ return new Date(iso).toLocaleString("en-GB",{weekday:"
 // Terse "SAT 16:30" for the prototype fixture header.
 function fmtKOShort(iso){ try{ const d=new Date(iso); return d.toLocaleDateString("en-GB",{weekday:"short"}).toUpperCase()+" "+d.toLocaleTimeString("en-GB",{hour:"2-digit",minute:"2-digit"}); }catch(e){ return "TBC"; } }
 // "Anthony Taylor" -> "A. Taylor"
-function refAbbr(name){ const p=String(name||"").trim().split(/\s+/); return p.length<2?String(name||""):p[0][0]+". "+p.slice(1).join(" "); }
+/* PLDCore.refShort — one implementation across four pages. This one was
+   already different from the other three: initial plus everything after,
+   so "A. Cordero Vega" where they said "Vega". Four copies of one rule,
+   two answers. All 22 Premier League officials are two tokens, so the
+   shared rule returns the surname and this desk reads as it always did
+   apart from losing the leading initial. */
+function refAbbr(name){ return PLDCore.refShort(name); }
 function renderFixtures(){
   const list=$("fixtureList"), gw=Number($("gwSelect").value);
   if(!LIVE||!$("gwSelect").options.length) return;

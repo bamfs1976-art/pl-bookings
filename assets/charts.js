@@ -36,6 +36,18 @@
   };
   var n2 = function (x) { return Math.round(x * 100) / 100; };
 
+  /* Labelling a dot on the referee strip is the same question the fixture
+     cards answer, so it gets the same answer: PLDCore.refShort. The local rule
+     here was `split(' ').pop()`, which on a Spanish name is the maternal
+     surname — the strip would have labelled Adrián Cordero's dot "Vega". */
+  function shortRef(n) {
+    var C = root.PLDCore;
+    if (!C || !C.refShort) {
+      throw new Error('PLDCharts needs assets/core.js loaded first');
+    }
+    return C.refShort(n);
+  }
+
   /* Open an <svg> with a viewBox and no fixed width, so it scales to whatever
      column it lands in. preserveAspectRatio is left at the default: these are
      charts, and stretching one changes what it says. */
@@ -183,7 +195,7 @@
        do not overprint. Everything else has a tooltip and the summary. */
     marked.sort(function (a, b) { return a.ypg - b.ypg; }).forEach(function (d, i) {
       s += '<text x="' + n2(x(d.ypg)) + '" y="' + (TOP + (i % 2 ? 32 : 20)) + '" class="chart-name" text-anchor="middle">'
-        + esc(d.n.split(' ').pop()) + '</text>';
+        + esc(shortRef(d.n)) + '</text>';
     });
     s += '<text x="' + P + '" y="' + (H - 2) + '" class="chart-tick">' + lo.toFixed(1) + '</text>';
     s += '<text x="' + (W - P) + '" y="' + (H - 2) + '" class="chart-tick" text-anchor="end">' + hi.toFixed(1) + '</text>';

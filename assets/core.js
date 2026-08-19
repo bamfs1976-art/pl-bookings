@@ -354,6 +354,70 @@
     return parts.length ? { initial: parts[0][0], surnames: parts.slice(1) } : null;
   }
 
+  /* A referee's name, shortened for a cell that has room for about twenty
+   * characters. ONE implementation, because there were four and they
+   * disagreed: eflc.html, laliga.html and today.html each took the LAST token,
+   * index.html took the initial plus everything after the first.
+   *
+   * THE LAST TOKEN IS WRONG FOR SPANISH NAMES, which carry two surnames —
+   * paternal then maternal — and it is the paternal one people use. Every La
+   * Liga official was displayed by the surname nobody says: "Vega" for Adrián
+   * Cordero Vega, "Escuderos" for Isidro Díaz de Mera Escuderos, "Apezteguia"
+   * for Iosu Galech Apezteguia. The RFEF's own designation sheet says
+   * "Adrián Cordero" while the desk said "Vega".
+   *
+   * WHY NOT THE PATERNAL SURNAME ALONE, which is what the federation prints:
+   * it collides. The shipped twenty contain both Alejandro Hernández and
+   * Francisco Hernández Maeso, and Gil, García and Martínez are as common in
+   * Spain as Smith is in England. Spanish football commentary names referees by
+   * BOTH surnames for exactly that reason — Gil Manzano, Soto Grado, Martínez
+   * Munuera — so that is what this returns.
+   *
+   * THE HARD PART IS WHERE THE GIVEN NAMES END, and token count does not say:
+   *   José Luis Munuera Montero      2 given + 2 surnames
+   *   Ricardo De Burgos Bengoetxea   1 given + 2 surnames, one with a particle
+   * Both are four tokens. The particle is the signal — "de", "del", "la" and
+   * their kin only ever begin a surname — so this takes the last two tokens and
+   * extends left while the token before is one. That resolves
+   * "Isidro Díaz de Mera Escuderos" to "Díaz de Mera Escuderos" correctly, at
+   * five tokens.
+   *
+   * ENGLISH DESKS ARE UNTOUCHED. All 22 Premier League and all 30 Championship
+   * officials are two tokens, and two tokens returns the surname exactly as
+   * before — checked across the three shipped tables, not assumed.
+   */
+  const NAME_PARTICLES = new Set([
+    'de', 'del', 'la', 'las', 'lo', 'los', 'y', 'da', 'das', 'do', 'dos',
+    'van', 'von', 'di', 'du', "d'", 'st', 'mc', 'mac'
+  ]);
+
+  function refShort(name) {
+    const parts = String(name == null ? '' : name).trim().split(/\s+/).filter(Boolean);
+    if (!parts.length) return '';
+    /* The given name survives as an initial. Dropping it entirely reads
+       better, and it made "E Bell" and "J Bell" — both Championship officials —
+       the same cell, along with Lewis and Josh Smith. index.html already kept
+       the initial for that reason; the three copies that did not were the ones
+       with the ambiguity. */
+    const initial = parts[0] ? parts[0][0].toUpperCase() + '. ' : '';
+    /* One or two tokens is "Given Surname" — every English official, and the
+       single-surname Spanish case. */
+    if (parts.length <= 2) return initial + parts[parts.length - 1];
+    let from = parts.length - 2;
+    /* A particle can sit in two places and they need different handling:
+         Ricardo | De Burgos | Bengoetxea      it STARTS the paternal surname
+         Isidro  | Díaz de Mera | Escuderos    it is INSIDE one
+       Taking the particle alone gets the first right and the second wrong —
+       "de Mera Escuderos", which drops Díaz. So absorb the particle, and if it
+       was not the first thing after the given name, absorb the token before it
+       too. Stopping at index 1 is what keeps the given name out. */
+    while (from > 1 && NAME_PARTICLES.has(parts[from - 1].toLowerCase())) {
+      from--;
+      if (from > 1) from--;
+    }
+    return initial + parts.slice(from).join(' ');
+  }
+
   function matchRefName(name, known) {
     const names = Array.isArray(known) ? known : Object.keys(known || {});
     if (!name) return null;
@@ -1633,7 +1697,7 @@
   }
 
   const PLDCore = {
-    riskScore, normName, matchRefName, pickPL, summarisePicks, calibrate, impliedProb, fairOdds, edgePct, LOGISTIC_SLOPE,
+    riskScore, normName, matchRefName, refShort, pickPL, summarisePicks, calibrate, impliedProb, fairOdds, edgePct, LOGISTIC_SLOPE,
     per90, liveRate, joinLooksRight, foldLetters, MIN_LIVE_MINUTES,
     lineupMinutes, xiWeights, SUBS_USED, SUB_MINUTES,
     playerKeys, matchSquadName, lineupRoles, currentRound,

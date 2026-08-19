@@ -34,7 +34,20 @@
       return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
     });
   }
-  function surname(n) { return String(n || '').split(' ').pop(); }
+  /* THE SHORT NAME COMES FROM PLDCore.refShort, deliberately not from a local
+     rule. This module had one — `split(' ').pop()` — and the last token of a
+     Spanish name is the MATERNAL surname, the one nobody uses: the control
+     read "Simulated: Vega" for the official the RFEF's own designation sheet
+     calls Adrián Cordero. It was the fifth copy of that rule. core.js loads
+     before this file on every page that uses it; if it has not, say so rather
+     than quietly shortening names a different way from the card around it. */
+  function surname(n) {
+    var C = root.PLDCore;
+    if (!C || !C.refShort) {
+      throw new Error('PLDRefPicker needs assets/core.js loaded first');
+    }
+    return C.refShort(n);
+  }
 
   /* Signed, and against the average the MODEL divides by — not a round number
      chosen for the label. A control that advertises 4.0 while the maths uses

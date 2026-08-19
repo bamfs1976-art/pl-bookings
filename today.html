@@ -762,10 +762,11 @@
       + '</div>';
   }
 
-  function refAbbr(n) {
-    var parts = String(n || '').trim().split(/\s+/);
-    return parts.length > 1 ? parts[parts.length - 1] : (parts[0] || '');
-  }
+  /* PLDCore.refShort — one implementation across four pages. This was a local
+     copy taking the LAST token, which for a Spanish name is the maternal
+     surname nobody uses: the desk read "Ref Vega" where the RFEF sheet says
+     Adrián Cordero. See the note in core.js. */
+  function refAbbr(n) { return C.refShort(n); }
 
   function renderOne() {
     var rows = selected(), host = $('#list'), empty = $('#empty');

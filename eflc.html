@@ -1260,10 +1260,11 @@
   /* A referee's surname, for the card header where there is room for one word.
      "Ref Attwell", not "Ref Stuart Attwell" — the same shortening the Premier
      League desk uses in the same place. */
-  function refAbbr(n) {
-    var parts = String(n || '').trim().split(/\s+/);
-    return parts.length > 1 ? parts[parts.length - 1] : (parts[0] || '');
-  }
+  /* PLDCore.refShort — one implementation across four pages. This was a local
+     copy taking the LAST token, which for a Spanish name is the maternal
+     surname nobody uses: the desk read "Ref Vega" where the RFEF sheet says
+     Adrián Cordero. See the note in core.js. */
+  function refAbbr(n) { return C.refShort(n); }
 
   /* ONE ranked list across both sides, each row carrying its club — the
      Premier League card's shape. Splitting home and away into two columns

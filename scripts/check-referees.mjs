@@ -76,6 +76,10 @@ vm.createContext(ctx);
    module has to be in the context. Loading it here rather than stubbing it is
    deliberate: a stub would let refSelect() pass this guard while calling a
    primitive that does not do what it is asked. */
+/* core.js first, exactly as index.html loads it: the picker shortens names
+   through PLDCore.refShort rather than carrying its own rule, and refuses to
+   render without it. */
+vm.runInContext(readFileSync(join(root, 'assets', 'core.js'), 'utf8'), ctx);
 vm.runInContext(readFileSync(join(root, 'assets', 'refpicker.js'), 'utf8'), ctx);
 vm.runInContext(src + '\n' + selSrc, ctx);
 
@@ -510,6 +514,107 @@ assert.ok(/plb_card_predictions/.test(calib) && !/rest\/v1\/plb_predictions/.tes
     'appointment count and the time to its first kick-off:\n' + now);
 }
 
+/* ---- the shortened name, and the surname it must not be ---------------- */
+/* A Spanish name carries two surnames, paternal then maternal, and it is the
+   PATERNAL one people use. Four pages each had their own refAbbr and three of
+   them took the LAST token, so every La Liga official was displayed by the
+   surname nobody says: the desk read "Ref Vega" while the RFEF's own
+   designation sheet said Adrián Cordero.
+   Now one implementation, PLDCore.refShort, checked here against the shipped
+   tables rather than against invented names. */
+{
+  const core = coreOf();
+  const shortOf = (n) => core.refShort(n);
+  const load = (file, konst) => {
+    const c = {};
+    vm.createContext(c);
+    vm.runInContext(readFileSync(join(root, file), 'utf8'), c);
+    return vm.runInContext(konst, c);
+  };
+
+  /* THE BUG ITSELF: no official may be shown by their maternal surname alone.
+     Checked over every La Liga name in the file, not a chosen few. */
+  const llRefs = load('data/laliga_data.js', 'REFS').map((r) => r.n);
+  assert.ok(llRefs.length >= 15, `only ${llRefs.length} La Liga referees to check`);
+  for (const n of llRefs) {
+    const parts = n.trim().split(/\s+/);
+    if (parts.length < 3) continue;
+    const maternal = parts[parts.length - 1];
+    assert.notEqual(shortOf(n), maternal,
+      `${n} is shown as "${maternal}", the maternal surname — the paternal one ` +
+      'is the name they are known by');
+    assert.ok(shortOf(n).includes(parts[parts.length - 2]) || shortOf(n).includes(maternal),
+      `${n} is shown as "${shortOf(n)}", which contains neither surname`);
+  }
+
+  /* A PARTICLE BELONGS TO THE SURNAME IT BEGINS. Both shapes appear in the
+     shipped twenty and they need different handling — "De Burgos" starts a
+     surname, the "de" in "Díaz de Mera" sits inside one. Taking the particle
+     alone drops Díaz. */
+  assert.equal(shortOf('Ricardo De Burgos Bengoetxea'), 'R. De Burgos Bengoetxea');
+  assert.equal(shortOf('Isidro Diaz de Mera Escuderos'), 'I. Diaz de Mera Escuderos');
+
+  /* NO TWO OFFICIALS IN ONE COMPETITION MAY SHARE A CELL. This is why the
+     given initial is kept: without it the Championship's E Bell and J Bell,
+     and Lewis and Josh Smith, were the same line. */
+  for (const [file, code] of [['data/pl_data.js', 'PL'], ['data/eflc_data.js', 'EFLC'],
+                              ['data/laliga_data.js', 'LL']]) {
+    const names = load(file, 'REFS').map((r) => r.n);
+    const seen = new Map();
+    for (const n of names) {
+      const s = shortOf(n);
+      assert.ok(!seen.has(s),
+        `${code}: "${n}" and "${seen.get(s)}" both display as "${s}" — two ` +
+        'officials, one cell, and they price differently');
+      seen.set(s, n);
+    }
+  }
+
+  /* ONE IMPLEMENTATION. Six places had their own: four pages, two of which
+     disagreed with the other two, plus the referee control and the referee
+     strip, which both took the last token. Nothing on a card shortens a name
+     any other way. */
+  for (const page of ['index.html', 'eflc.html', 'laliga.html', 'today.html',
+                      'assets/refpicker.js', 'assets/charts.js']) {
+    const src = readFileSync(join(root, page), 'utf8');
+    assert.ok(/refShort\(/.test(src),
+      `${page} does not use PLDCore.refShort — it has grown its own rule again`);
+    assert.ok(!/parts\[parts\.length - 1\]|p\[0\]\[0\] *\+ *"\. "/.test(src),
+      `${page} still carries a local name-shortening rule`);
+  }
+  /* The two modules took the LAST TOKEN of the name, which is the shape this
+     whole block exists to remove. Neither may do it to a referee again. */
+  for (const mod of ['assets/refpicker.js', 'assets/charts.js']) {
+    const src = readFileSync(join(root, mod), 'utf8');
+    for (const m of src.matchAll(/^(?!\s*\*).*?\.split\(' '\)\.pop\(\)/gm)) {
+      assert.fail(`${mod} shortens a name by its last token again: ` +
+        `${m[0].trim()} — on a Spanish name that is the maternal surname`);
+    }
+  }
+
+  /* AND THE CONTROL ACTUALLY RENDERS IT. The regexes above are tripwires on
+     the source; this runs the thing. */
+  {
+    const ctl = {};
+    vm.createContext(ctl);
+    vm.runInContext(readFileSync(join(root, 'assets', 'core.js'), 'utf8'), ctl);
+    vm.runInContext(readFileSync(join(root, 'assets', 'refpicker.js'), 'utf8'), ctl);
+    const picker = vm.runInContext('PLDRefPicker', ctl);
+    const name = 'Ricardo De Burgos Bengoetxea';
+    const out = picker.html({ fid: 1, refs: [{ n: name, ypg: 4.6, matches: 30 }],
+                              current: name, appointed: name, avg: 4.41 });
+    assert.ok(out.includes('R. De Burgos Bengoetxea'),
+      'the referee control does not show the appointed official by the ' +
+      `surname they are known by:\n${out}`);
+    assert.ok(!/>Bengoetxea[ <·(]/.test(out),
+      `the referee control still labels the official by their maternal surname:\n${out}`);
+  }
+  console.log('  ok - referee names shorten through one implementation, never to ' +
+    'the maternal surname, and no two officials share a cell');
+}
+
 console.log('check-referees OK: the appointment joins across two id spaces, a ' +
   'hand pick still wins, the dropdown shows what the model prices with, all ' +
-  'three leagues are harvested on a schedule that can catch them');
+  'three leagues are harvested on a schedule that can catch them, and every ' +
+  'official shortens through one rule to the surname they are known by, ' +
+  'distinct from every colleague in their competition');
