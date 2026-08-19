@@ -52,8 +52,13 @@ def league(extra=(), skip=()):
 
 
 def shipped(name, club, **kw):
+    # _club, _tid and _img carry the OLD club, exactly as a real shipped row
+    # does. Without them the club-identity assertions below would pass on a row
+    # that simply has no club name — a guard satisfied by the wrong absence.
     row = {"c": club, "n": name, "b": "PL", "min": 900, "yc": 4, "rc": 0,
-           "f": 1.2, "fw": 1.0, "p": "M", "r": 0.5}
+           "f": 1.2, "fw": 1.0, "p": "M", "r": 0.5,
+           "_club": b.NAME_BY_SHORT.get(club), "_tid": 99,
+           "_img": "https://example.invalid/old-badge.png", "_fouls": 12.0}
     row.update(kw)
     return row
 
@@ -73,6 +78,19 @@ ok(moved[0]["yc"] == 4 and moved[0]["f"] == 1.2 and moved[0]["b"] == "PL",
    "a card rate is a property of the PLAYER — how often he fouls and how often "
    "that is punished — so it travels with him. Discarding it on transfer would "
    f"blank the most-priced players of every window; got {moved[0]}")
+
+# The club a moved player carries with him, which is the part that went wrong
+# the first time this ran for real: build_clubs names each club from the
+# _club of whichever of its players it meets first and takes the badge from
+# the first _img, so a row that changed `c` and kept those RENAMED the club it
+# joined — "MUN Aston Villa", "LIV Aston Villa" — and the club-splits step
+# refused to write against the wreckage. Every trace of the old club must go.
+ok(moved[0].get("_club") == "Arsenal",
+   "a moved player must carry his NEW club's name, or he renames the club he "
+   f"joins; got {moved[0].get('_club')!r}")
+ok(moved[0].get("_img") is None and moved[0].get("_tid") is None,
+   "a moved player must carry no crest or team id from his old club — the "
+   f"badge comes from somebody already there; got {moved[0]}")
 
 print("reconcile: a player the feed does not have has left")
 out = b.reconcile_squads([shipped("Departed Man", "ARS")], league())
@@ -130,3 +148,8 @@ print(f"\n{passed} checks passed")
 #   arrive with zeroed rates instead of null -> "an arrival's rates are NULL"
 #   drop the too-small-feed refusals       -> "a feed carrying one club"
 #   pick the first hit when ambiguous      -> "ambiguity is left alone"
+#   move `c` and keep _club/_img           -> "a moved player must carry his
+#                                             NEW club's name"
+# That last one is not hypothetical: it is what the first real run did, and
+# the fixture carries the old club's name, id and badge so the assertion fails
+# on the wrong VALUE rather than on a missing key.

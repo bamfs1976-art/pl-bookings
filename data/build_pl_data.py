@@ -433,6 +433,17 @@ def reconcile_squads(rows, squads=None):
         if f["c"] != r["c"]:
             moved.append((r["n"], r["c"], f["c"]))
             r["c"] = f["c"]
+            # AND EVERY OTHER TRACE OF THE OLD CLUB. build_clubs names a club
+            # from the _club of whichever of its players it sees first and
+            # takes the badge from the first _img, so a row that changed `c`
+            # and kept these renamed the club it arrived at: the first run of
+            # this produced "MUN Aston Villa" and "LIV Aston Villa", and
+            # build_club_splits refused to write against the wreckage. The club
+            # identity must come from the code, and the crest from somebody who
+            # was already there.
+            r["_club"] = NAME_BY_SHORT.get(f["c"])
+            r["_tid"] = None
+            r["_img"] = None
 
     # By identity, not equality: two rows can compare equal (the same player
     # arriving from two sources) and dropping both would be a silent deletion.
