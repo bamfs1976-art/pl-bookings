@@ -37,6 +37,11 @@ jobs:
             fi
           done
 
+      # The other half of "is it right": the deployed page can render perfectly
+      # and still name a player at the club he left in July.
+      - name: Premier League squads against the FPL feed
+        run: node scripts/squad-drift.mjs
+
       - run: |
           npm install --no-save playwright@1.49.1
           npx playwright install --with-deps chromium
