@@ -53,6 +53,7 @@ Booking risk = yc_p90*2 + fouls_p90, the same metric as the WC desk.
 import json
 import re
 import sys
+from collections import Counter
 from pathlib import Path
 
 DATA = Path(__file__).resolve().parent
@@ -468,11 +469,31 @@ def reconcile_squads(rows, squads=None):
     def evidence(r):
         return (r.get("y") is not None, r.get("f") is not None, num(r.get("min")) or 0)
 
-    best = {}
+    # AND THE SAME MAN SPELT TWO WAYS IS ALSO ONE PLAYER. The promoted clubs
+    # carry both a Championship row ("F. Onyeka") and an FPL fill row ("Frank
+    # Onyeka") for the same person, because the de-duplication above keys on
+    # the exact name. That is why Coventry, Ipswich and Hull were shipping
+    # squads of 55 to 58 against a real 25 to 30 — the risk table listed half
+    # of each squad twice, at two different rates.
+    #
+    # Collapsed only where ONE SIDE IS AN ABBREVIATION, which is the shape
+    # these duplicates take. Matching on the full join instead would merge
+    # Arsenal's Gabriel with Arsenal's Gabriel Jesus: a one-token name is
+    # covered by any name containing it, and they are two players.
+    def abbreviated(ta, tb):
+        return (len(ta[0]) == 1 or len(tb[0]) == 1) and same_tokens(ta, tb)
+
+    best, canon = {}, {}
     for r in out:
-        key = (r["c"], name_tokens(r.get("n")))
-        if key not in best or evidence(r) > evidence(best[key]):
-            best[key] = r
+        toks = name_tokens(r.get("n"))
+        seen = canon.setdefault(r["c"], [])
+        key = next((k for k in seen if k == toks or abbreviated(toks, k)), None)
+        if key is None:
+            key = toks
+            seen.append(key)
+        cell = (r["c"], key)
+        if cell not in best or evidence(r) > evidence(best[cell]):
+            best[cell] = r
     collapsed = len(out) - len(best)
     if collapsed:
         print(f"    {collapsed} duplicate row(s) collapsed after the moves, "
@@ -842,9 +863,24 @@ def club_basis(bases):
     splits and the club-level inputs the model prices with — the whole desk,
     over one transfer. A club with twenty-seven Premier League-rated players
     and two newcomers plainly IS on Premier League data. A promoted club, whose
-    rows are all EFL and NEW, plainly is not."""
-    bases = set(bases)
-    return "PL" if bases and bases <= {"PL", "NEW"} and "PL" in bases else "EFL"
+    rows are all EFL and NEW, plainly is not.
+
+    AND A SIGNING FROM THE CHAMPIONSHIP DOES NOT DEMOTE ONE EITHER. The first
+    version of the rule above was still a set test, so one EFL row was enough:
+    Crystal Palace signed Romain Esse from Coventry and Liverpool signed Lewis
+    Koumas from Hull, and both clubs lost their team aggregate over a single
+    player. Meanwhile Coventry gained a Premier League row when Awoniyi joined,
+    which a "has any PL row" rule would have let claim an aggregate it has no
+    season behind.
+
+    So the question is proportional, and it is asked only of the rows that
+    carry form at all: is this club's form PREDOMINANTLY Premier League form?
+    A squad of thirty-three with one Championship row is; a promoted club with
+    one Premier League signing among twenty-five Championship rows is not.
+    NEW rows carry no form and cannot answer either way, so they do not vote."""
+    counts = Counter(bases)
+    pl, efl = counts.get("PL", 0), counts.get("EFL", 0)
+    return "PL" if pl and pl >= efl else "EFL"
 
 
 def build_clubs(players):

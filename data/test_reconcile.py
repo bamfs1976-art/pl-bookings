@@ -157,6 +157,33 @@ ok(awo[0]["c"] == "COV" and awo[0]["b"] == "PL" and awo[0]["yc"] == 4,
    "and the survivor is the row with the evidence on it — keeping the formless "
    f"one throws away the reason for moving him at all; got {awo[0]}")
 
+print("reconcile: the same man spelt two ways is one player")
+# The promoted clubs carried both a Championship row ("F. Onyeka") and an FPL
+# fill row ("Frank Onyeka") for the same person, because the de-duplication in
+# build_players keys on the exact name. Coventry, Ipswich and Hull were
+# shipping squads of 55 to 58 against a real 25 to 30 — half of each squad
+# listed twice, at two different rates.
+pair = [shipped("F. Onyeka", "COV", b="EFL"),
+        shipped("Frank Onyeka", "COV", b="NEW", y=None, f=None, yc=None, min=0)]
+out = b.reconcile_squads(pair, league(extra=[{"c": "COV", "n": "Frank Onyeka",
+                                              "pos": "Midfielder"}]))
+onyeka = [r for r in out if "nyeka" in r["n"]]
+ok(len(onyeka) == 1,
+   f"an abbreviated name and its full form are one player; got {onyeka}")
+ok(onyeka[0]["b"] == "EFL" and onyeka[0]["yc"] == 4,
+   f"and the row with the rate survives; got {onyeka[0]}")
+
+# BUT A ONE-TOKEN NAME IS NOT AN ABBREVIATION. Arsenal field both Gabriel and
+# Gabriel Jesus; the join matches them because a single token is covered by any
+# name containing it, so collapsing on the full join rule would merge two
+# players into one row and silently delete a footballer.
+both = [shipped("Gabriel", "ARS"), shipped("Gabriel Jesus", "ARS")]
+out = b.reconcile_squads(both, league(extra=[{"c": "ARS", "n": "Gabriel", "pos": "Defender"},
+                                             {"c": "ARS", "n": "Gabriel Jesus", "pos": "Attacker"}]))
+gabriels = sorted(r["n"] for r in out if r["n"].startswith("Gabriel"))
+ok(gabriels == ["Gabriel", "Gabriel Jesus"],
+   f"two players who share a name must both survive; got {gabriels}")
+
 print("reconcile: a signing does not demote the club he joins")
 # club_basis labels the TEAM aggregate. Before the reconcile, a NEW row could
 # only appear at a promoted club, so "not all PL" and "no Premier League data"
@@ -170,6 +197,14 @@ ok(b.club_basis(["PL", "PL", "NEW"]) == "PL",
 ok(b.club_basis(["PL"]) == "PL", "an untouched club is unchanged")
 ok(b.club_basis(["EFL", "NEW"]) == "EFL",
    "a promoted club has no Premier League aggregate and must not claim one")
+ok(b.club_basis(["PL"] * 30 + ["EFL"]) == "PL",
+   "and a Championship signing does not demote an established club — Palace "
+   "signed Esse from Coventry and Liverpool signed Koumas from Hull, and a set "
+   "test cost both of them their team aggregate over one player")
+ok(b.club_basis(["PL"] + ["EFL"] * 25) == "EFL",
+   "while a promoted club that signs a Premier League player still has no "
+   "Premier League season behind it — Coventry gained a PL row when Awoniyi "
+   "joined, and 'has any PL row' would have let it claim an aggregate")
 ok(b.club_basis(["NEW"]) == "EFL",
    "a club of nothing but newcomers has no aggregate either")
 ok(b.club_basis([]) == "EFL", "no rows at all is not a Premier League basis")
