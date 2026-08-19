@@ -18,6 +18,16 @@ starting eleven for every club in every match of the season, so rotation can
 be measured as the change from a club's previous league match and tested
 against the rest-days buckets already built.
 
+BOTH SIDES OR NEITHER, AND WHY THAT MAKES CLUB RESOLUTION LOAD-BEARING. A
+fixture is kept only when both team sheets resolve, because one XI against a
+guess is not a comparison. That rule turns a club the name map has forgotten
+into a LOST FIXTURE rather than a missing row: the first run of this resolved
+only the current twenty, so West Ham, Burnley and Wolves — who played that
+season and have since gone down — took 108 of 380 fixtures with them. Twenty
+eight per cent of the season, gone non-randomly, reported as a clean 544
+sheets. harvest_apifootball.short_in now falls back to the Championship map
+for exactly this.
+
 WHAT IT DELIBERATELY DOES NOT DO. It does not judge whether rotation happened,
 and it does not carry benches, formations or minutes. It records the eleven.
 Everything downstream is computed from that, where it can be seen.
