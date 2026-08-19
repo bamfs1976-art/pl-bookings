@@ -51,4 +51,4 @@ jobs:
       # and still name a player at the club he left in July. LAST, so it is at
       # the end of the log where it can be read.
       - name: Premier League squads against the FPL feed
-        run: node scripts/squad-drift.mjs
+        run: python3 data/squad_drift.py
