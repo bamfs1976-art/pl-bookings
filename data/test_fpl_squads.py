@@ -209,7 +209,15 @@ def _club_basis():
     assert B.club_basis(["NEW"] * 20) == "EFL"          # no Championship rows at all
     assert B.club_basis(["NEW", "EFL"]) == "EFL"        # order must not decide it
     assert B.club_basis(["EFL", "NEW"]) == "EFL"
-    assert B.club_basis(["PL", "NEW"]) == "EFL"         # any non-PL row disqualifies the aggregate
+    # WAS "EFL", on the rule that any non-PL row disqualifies the aggregate.
+    # That was exact while a NEW row could only appear at a promoted club, so
+    # "not all PL" and "no Premier League data" said the same thing. Once the
+    # squads are reconciled against the FPL feed a signing can land at any of
+    # the twenty, and this rule labelled Manchester City EFL over one of them —
+    # blanking the team card average, the home/away splits and the club inputs
+    # the model prices with. A club with Premier League form and a newcomer has
+    # Premier League form. See data/test_reconcile.py.
+    assert B.club_basis(["PL", "NEW"]) == "PL"
 
 
 t("a promoted club reads EFL whatever order its rows arrive in", _club_basis)
