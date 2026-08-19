@@ -194,7 +194,12 @@ def _load_order_end_to_end():
     fresh = [r for r in rows if r["n"] == "New Defender"]
     assert len(fresh) == 1 and fresh[0]["b"] == "NEW" and fresh[0]["r"] is None, fresh
     # And the Premier League rows are still there, from the previous build.
-    assert len([r for r in rows if r["b"] == "PL"]) >= 400, len(rows)
+    # A FLOOR, NOT A COUNT. This was 400, which was the size of the shipped
+    # squads when it was written; a transfer window retired 106 players and it
+    # became a test of one particular August rather than of the fallback. What
+    # it is for is catching the fallback failing altogether and the rows being
+    # wiped, so it is set well below any real division and well above zero.
+    assert len([r for r in rows if r["b"] == "PL"]) >= 300, len(rows)
 
 
 t("through build_players, the blank row never overwrites the real one", _load_order_end_to_end)
