@@ -5,7 +5,7 @@
 // through PLDCore.matchSquadName. A fixture absent from here prices off
 // squad minute-weights exactly as it always has — that is the normal
 // state until about an hour before kick-off, not a failure.
-// Fetched 2026-08-19T20:33Z.
+// Fetched 2026-08-20T18:47Z.
 //
 // THE GLOBAL IS NOT CALLED `LINEUPS`, and that is deliberate. index.html
 // already declares a top-level `const LINEUPS` for assets/lineup.js (the
@@ -14,7 +14,7 @@
 // a parse error, not a shadow: the whole inline script fails and the desk
 // renders blank. Read `window.LINEUP_SHEETS`.
 var __LINEUP_SHEETS = {
-  "1570334":{"ATM":{start:["Jan Oblak", "Carlos Martín", "Jorge Domínguez", "Robin Le Normand", "Dávid Hancko", "Dani Martinez", "Rodrigo Mendoza", "Koke", "Pablo Barrios", "Arnau Ortiz", "Ademola Lookman"],sub:["Juan Musso", "Marc Pubill", "Marcos Llorente", "José María Giménez", "Alejandro Grimaldo", "Alex Baena", "Kang-in Lee", "Morten Hjulmand", "Giuliano Simeone", "Johnny Cardoso", "Jorge Castillo", "Miguel Cubo"]},"MAL":{start:["Alfonso Herrero", "Carlos Puga", "Ángel Recio", "Einar Galilea", "Rafa Garrido", "David Larrubia", "Izan Merino", "Dani Lorenzo", "Joaquín Muñoz", "Carlos Dotor", "Chupete"],sub:["Carlos Lopez", "Jose Salinas", "Álex Pastor", "Rafa Rodriguez", "Joseph Otunenche", "Ramón Enríquez", "Juan Cruz", "Juan Fernandéz", "Julen Lobete", "Haitam Abaida", "Eneko Jauregi"]}},
+  "1570351":{"ALA":{start:["Antonio Sivera", "Ángel Pérez", "Nahuel Tenaglia", "Ville Koski", "Jonny Otto", "Mikel Rodriguez", "Pablo Ibáñez", "Antonio Blanco", "Abderrahman Rebbach", "Lucas Boyé", "Toni Martínez"],sub:["Adrián Rodríguez", "Youssef Enriquez", "Xanet Olaiz", "Nicolás Valentini", "Hugo Novoa", "Carlos Benavídez", "Denis Suárez", "Carles Aleñá", "Miguel Rodríguez", "Ander Guevara", "Aitor Mañas", "Mariano Díaz"]},"RAY":{start:["Augusto Batalla", "Andrei Rațiu", "Florian Lejeune", "Pelayo Fernández", "Jozhua Vertrouwd", "Isi Palazón", "Pathé Ismaël Ciss", "Unai López", "Jorge de Frutos", "Sergio Camello", "Fran Pérez"],sub:["Dani Cárdenas", "Iván Balliu", "Sergio Lozano", "Marco de las Sias", "Óscar Valentín", "Álvaro García", "Giorgi Tsitaishvili", "Pedro Díaz", "Randy Nteka", "Ivan Alonso Martin", "Alemão"]}},
 };
 if (typeof module !== "undefined" && module.exports) module.exports = __LINEUP_SHEETS;
 if (typeof window !== "undefined") window.LINEUP_SHEETS = __LINEUP_SHEETS;
