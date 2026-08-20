@@ -517,4 +517,54 @@ def _the_monday_sheet_parses_with_two_franciscos():
 t("the Monday sheet parses with two officials called Francisco",
   _the_monday_sheet_parses_with_two_franciscos)
 
+
+def _an_abbreviated_harvest_yields_to_the_sheet_that_named_the_man():
+    """The one case where the overlay overrules the harvest, and its limits.
+
+    API-Football harvested Rayo v Alavés as "J. Munuera"; the RFEF sheet named
+    José Luis Munuera Montero. One man, two spellings, and only one of them
+    reaches a card record — La Liga has TWO Munueras, so matchRefName rightly
+    refuses the abbreviation and the fixture priced at the league rate, which
+    on the page is indistinguishable from no referee at all.
+
+    A hand edit could not fix it: the harvest rewrites that file three times a
+    day. So the rule lives in the overlay, and everything below is its bounds.
+    """
+    LL = ["José Luis Munuera Montero", "Juan Martinez Munuera",
+          "Adrian Cordero Vega", "Jesus Gil Manzano"]
+
+    # FIRES: the abbreviation prices nothing, the sheet's spelling does, and
+    # the two are the same official.
+    assert A.supersedes("J. Munuera", "José Luis Munuera Montero", set(LL))
+
+    # REFUSED — a genuine change of official. This is the whole reason the
+    # harvest wins by default, and it must survive the exception.
+    assert not A.supersedes("Adrian Cordero Vega", "Jesus Gil Manzano", set(LL))
+    # REFUSED — the harvested name already prices. Fresher AND priceable wins.
+    assert not A.supersedes("Juan Martinez Munuera", "José Luis Munuera Montero", set(LL))
+    # REFUSED — an abbreviation of somebody else entirely.
+    assert not A.supersedes("J. Manzano", "José Luis Munuera Montero", set(LL))
+    # REFUSED — neither spelling prices, so swapping them would only hide that
+    # the card table has never heard of the man. "C. Muniz" is the live case.
+    assert not A.supersedes("C. Muniz", "Carlos Muñiz", set(LL))
+
+    # And end to end, on a fixture row: the swap happens, and it is REPORTED
+    # rather than done quietly — this is the one place the harvest is overruled.
+    rows = [{"id": 1, "d": "2026-08-20T19:00:00+00:00", "h": "RAY", "a": "ALA",
+             "ref": "J. Munuera", "st": "NS"}]
+    entries = [{"league": "LL", "date": "2026-08-20", "h": "RAY", "a": "ALA",
+                "ref": "José Luis Munuera", "refResolved": "José Luis Munuera Montero"}]
+    saved = A.ref_names
+    try:
+        A.ref_names = lambda code: LL
+        rep = A.apply_to(rows, "LL", entries=entries, verbose=False)
+    finally:
+        A.ref_names = saved
+    assert rows[0]["ref"] == "José Luis Munuera Montero", rows[0]
+    assert len(rep["clarified"]) == 1 and not rep["disagreed"], rep
+
+
+t("an abbreviated harvest yields to the sheet that named the man",
+  _an_abbreviated_harvest_yields_to_the_sheet_that_named_the_man)
+
 print(f"\n{passed} tests passed")
