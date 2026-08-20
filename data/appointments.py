@@ -324,7 +324,7 @@ def apply_to(rows, code, entries=None, verbose=True):
     entries = [e for e in (entries if entries is not None else load())
                if str(e.get("league", "")).upper() == code]
     report = {"applied": 0, "already": 0, "disagreed": [], "unmatched": [],
-              "shifted": [], "no_record": []}
+              "shifted": [], "no_record": [], "clarified": []}
     if not entries:
         return report
 
@@ -356,11 +356,16 @@ def apply_to(rows, code, entries=None, verbose=True):
 
         for row in found:
             if row.get("ref"):
-                if _fold(row["ref"]) != _fold(name or ""):
+                if _fold(row["ref"]) == _fold(name or ""):
+                    report["already"] += 1
+                elif supersedes(row["ref"], name, known):
+                    report["clarified"].append(
+                        f"{home} v {away}: harvested {row['ref']!r} is the same "
+                        f"official as {name!r}, which the card table carries")
+                    row["ref"] = name
+                else:
                     report["disagreed"].append(
                         f"{home} v {away}: harvested {row['ref']!r}, published {name!r}")
-                else:
-                    report["already"] += 1
                 continue
             row["ref"] = name
             report["applied"] += 1
@@ -368,6 +373,47 @@ def apply_to(rows, code, entries=None, verbose=True):
     if verbose:
         describe(report, code)
     return report
+
+
+def supersedes(harvested, published, known):
+    """Is `published` the SAME official as `harvested`, spelled so the desk can
+    price it, where `harvested` is not?
+
+    THE ONE EXCEPTION to "the harvest wins", and it is narrow on purpose.
+
+    The precedence rule exists because the harvest runs three times a day and
+    this file is a snapshot of one publication, so a difference between them is
+    usually a genuine change of official. That reasoning does not cover a
+    difference of SPELLING. API-Football named Rayo v Alavés "J. Munuera"; the
+    RFEF sheet named José Luis Munuera Montero. They are one man, and only one
+    of those strings reaches a card record.
+
+    Worse, "J. Munuera" is not resolvable in the abstract and must not be:
+    La Liga has two Munueras, and PLDCore.matchRefName rightly refuses an
+    abbreviation two officials could answer to. So the harvested value cannot
+    be repaired downstream — the fixture prices at the league rate, which looks
+    exactly like a fixture with no referee. What settles it is the sheet, which
+    named the man; the abbreviation is merely consistent with what it says.
+
+    THE THREE CONDITIONS, all required:
+
+      1. the published name is in the card table, so replacing gains a rate;
+      2. the harvested name is NOT, so nothing priceable is being thrown away —
+         a harvest that already prices always wins, including when it disagrees;
+      3. the harvested name resolves ONTO the published one, by the same rules
+         used everywhere else, with the published name as the only candidate.
+
+    A genuine change of official fails (3): a different man's name is not an
+    abbreviation of this one. Two full names that both price fail (2). And a
+    pair where neither prices — "C. Muniz" against "Carlos Muñiz" — fails (1)
+    and stays reported, because swapping one unpriceable spelling for another
+    would only hide that the card table has never heard of him.
+    """
+    if not harvested or not published:
+        return False
+    if published not in known or harvested in known:
+        return False
+    return resolve_ref_name(harvested, [published])[0] == published
 
 
 def _shift(date, delta):
@@ -387,6 +433,10 @@ def describe(report, code):
               f"{report['already']} already harvested")
     for line in report["shifted"]:
         print(f"  NOTE: kickoff date differs from the published one — {line}")
+    for line in report["clarified"]:
+        # A spelling replaced, not an official. Printed as loudly as a change,
+        # because this is the one place the harvest is overruled.
+        print(f"  CLARIFIED: {line} — the published spelling stands")
     for line in report["disagreed"]:
         # Not resolved here on purpose: the harvest is the fresher source, so
         # it stands, but a changed official is exactly what a desk must see.

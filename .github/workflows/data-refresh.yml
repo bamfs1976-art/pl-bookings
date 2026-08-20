@@ -350,6 +350,25 @@ jobs:
           API_FOOTBALL_SEASON: ${{ inputs.season_fixtures || '2026' }}
         run: python3 data/harvest_apifootball.py --fixtures --league PL
 
+      # Cups and Europe: DATES AND VENUES ONLY, so that rest days are days
+      # since the last COMPETITIVE match rather than days since the last league
+      # one. On league dates alone, 74.2% of the 2025-26 team-fixtures bucket
+      # as "fresh" — three quarters of a season with no midweek football — and
+      # the clubs that mislabels are precisely the European ones a fatigue
+      # factor is about.
+      #
+      # TWO SEASONS, because they answer different questions. 2026 is the
+      # season being played, which the fixture list needs; 2025 is the season
+      # the backtest walks, and a factor judged on league-only rest days there
+      # would be judged on the wrong buckets.
+      - name: Harvest cup and European dates (fatigue factor)
+        if: ${{ env.API_FOOTBALL_KEY != '' }}
+        continue-on-error: true
+        run: |
+          python3 data/harvest_other_fixtures.py --season 2026
+          python3 data/harvest_other_fixtures.py --season 2025 \
+                  --out pl_other_fixtures_2526.js
+
       # League One, for the three clubs promoted into the Championship. Only
       # the Championship desk needs it, so it never blocks the Premier League.
       - name: Harvest League One from API-Football (the promoted three)
@@ -555,6 +574,7 @@ jobs:
           # which is what happened until this line was added, and it is invisible
           # because the step itself passes.
           for f in data/pl_fixtures.js data/laliga_harvest.log \
+                   data/pl_other_fixtures.js data/pl_other_fixtures_2526.js \
                    data/h2h.js data/eflc_h2h.js data/laliga_h2h.js \
                    data/eflc_refs.json data/eflc_data.js data/eflc_status.txt data/eflc_fixtures.js \
                    data/laliga_clubs.json data/laliga_refs.json data/laliga_data.js \

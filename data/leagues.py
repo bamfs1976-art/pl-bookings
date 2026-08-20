@@ -384,12 +384,12 @@ LALIGA_FD_ALIASES = {
 # construction: remove one and its sheet stops ingesting.
 #
 # CONSULTED ON THE ACCENT-INSENSITIVE PASS ONLY, unlike the two tables above.
-# Every key here is already ASCII, so the accent index resolves each of them and
-# an exact-match pass would be a branch no input reaches — removing it from the
-# exact pass changed nothing and no test noticed, which is the definition of the
-# dead wiring this file already refuses elsewhere. Add an accented key and the
-# accent index still finds it; add one that must beat a same-folded key in
-# another table and this needs revisiting, loudly.
+# The pass folds accents off the INPUT and off every key, so an accented key —
+# "Real Betis Balompié", added from jornada 2's sheet — is found exactly as an
+# ASCII one is. An exact-match pass would therefore be a branch no input
+# reaches: removing it changed nothing and no test noticed, which is the
+# definition of the dead wiring this file refuses elsewhere. Add a key that must
+# beat a same-folded key in another table and this needs revisiting, loudly.
 #
 # NOT A GENERAL PREFIX STRIP, deliberately. Stripping leading legal words would
 # have to leave "Real Madrid", "Real Betis", "Real Sociedad" and "Deportivo La
@@ -404,6 +404,13 @@ LALIGA_RFEF_ALIASES = {
     # index reaches, since the registry's key carries the city and this does
     # not.
     "RC Deportivo": "Deportivo La Coruna",
+    # Jornada 2's sheet, and a third shape again: not a prefix and not a
+    # strippable ending but a SECOND NOUN inside the legal name. "Balompié" is
+    # simply part of what the club is called, and "de Fútbol" is a trailing
+    # phrase the suffix list would have to carry as a special case while
+    # leaving "Real Sociedad" itself alone.
+    "Real Betis Balompié": "Real Betis",
+    "Real Sociedad de Fútbol": "Real Sociedad",
 }
 
 # Legal endings no registry carries. Stripped and retried,

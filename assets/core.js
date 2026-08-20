@@ -1696,7 +1696,74 @@
     };
   }
 
+  /* ---- rest days and rotation: assets/rotation.js -----------------------
+   * DEFINED THERE, NOT HERE. Gameweek Edge vendors that file on its own, and
+   * a rule that exists in two places is the failure this project met three
+   * times in one day — a season's cup dates, 111 team-fixtures of squads and
+   * 28% of a season's team sheets, each lost to a second copy of a club map.
+   *
+   * Re-exported below so PLDCore.restDays and friends keep working for
+   * everything that already calls them. Load order matters in the browser:
+   * assets/rotation.js goes before assets/core.js.
+   */
+  /* BOUND LAZILY, not at load. Ten guards run core.js in a bare vm context
+     that has neither `require` nor a window, and none of them touch rotation —
+     throwing at load time took all ten down to enforce a dependency they do
+     not have. So the error arrives when a rotation function is actually
+     CALLED, and it names the cause. It also means rotation.js may be loaded
+     after core.js without anything breaking. */
+  function fromRotation(name) {
+    return function () {
+      const R = (global && global.PLDRotation)
+        || (typeof require === 'function' ? require('./rotation.js') : null);
+      if (!R || typeof R[name] !== 'function') {
+        throw new Error('PLDCore.' + name + ' needs assets/rotation.js loaded first');
+      }
+      return R[name].apply(null, arguments);
+    };
+  }
+  const restDays = fromRotation('restDays');
+  const restBucket = fromRotation('restBucket');
+  const previousMatch = fromRotation('previousMatch');
+  const euroAway72h = fromRotation('euroAway72h');
+  const rotationRisk = fromRotation('rotationRisk');
+  const rotationBand = fromRotation('rotationBand');
+
+  /* ---- derbies -----------------------------------------------------------
+   * A MANUAL LIST, and it has to be: no feed carries "these two dislike each
+   * other". Kept here so the backtest's control and any future display read
+   * the same pairs.
+   *
+   * The four clusters named in the brief, plus fixtures with documented
+   * rivalry history that happen to fall inside the 2026-27 division. Clubs
+   * come and go — Wolves, West Ham and Burnley went down, so the West Midlands
+   * cluster is Villa and Coventry this season and will be a different set next
+   * — which is why this is a pair list rather than a cluster list.
+   */
+  const DERBIES = [
+    ['LIV', 'EVE'],   // Merseyside
+    ['ARS', 'TOT'],   // North London
+    ['MCI', 'MUN'],   // Manchester
+    ['AVL', 'COV'],   // West Midlands
+    ['LIV', 'MUN'],   // North West
+    ['NEW', 'SUN'],   // Tyne-Wear
+    ['LEE', 'MUN'],   // Roses
+    ['LEE', 'HUL'],   // Yorkshire
+    ['CRY', 'BHA'],   // M23
+    ['CHE', 'TOT'],   // London
+    ['ARS', 'CHE'],   // London
+    ['CHE', 'FUL'],   // West London
+    ['BRE', 'FUL'],   // West London
+  ];
+  const DERBY_KEYS = new Set(DERBIES.map((p) => p.slice().sort().join('|')));
+
+  function isDerby(home, away) {
+    return DERBY_KEYS.has([String(home || ''), String(away || '')].sort().join('|'));
+  }
+
   const PLDCore = {
+    rotationRisk, rotationBand,
+    restDays, restBucket, previousMatch, euroAway72h, isDerby, DERBIES,
     riskScore, normName, matchRefName, refShort, pickPL, summarisePicks, calibrate, impliedProb, fairOdds, edgePct, LOGISTIC_SLOPE,
     per90, liveRate, joinLooksRight, foldLetters, MIN_LIVE_MINUTES,
     lineupMinutes, xiWeights, SUBS_USED, SUB_MINUTES,
