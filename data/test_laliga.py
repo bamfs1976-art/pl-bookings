@@ -621,6 +621,10 @@ def _rfef_legal_names_map_to_the_registry():
         ("Real Racing Club de Santander", "RAC"),
         ("RCD Espanyol de Barcelona", "ESP"),
         ("RC Deportivo", "DEP"),
+        # Jornada 2: a second noun inside the legal name, which is neither a
+        # prefix nor a strippable ending.
+        ("Real Betis Balompié", "BET"),
+        ("Real Sociedad de Fútbol", "RSO"),
     ):
         got = L.laliga_short(published)
         assert got == short, f"{published!r} -> {got!r}, expected {short!r}"
