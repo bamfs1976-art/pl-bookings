@@ -30,7 +30,7 @@ import vm from 'node:vm';
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const ctx = { console };
 vm.createContext(ctx);
-for (const f of ['assets/core.js', 'data/pl_other_fixtures_2526.js',
+for (const f of ['assets/rotation.js', 'assets/core.js', 'data/pl_other_fixtures_2526.js',
                  'data/pl_lineups_2526.js']) {
   vm.runInContext(readFileSync(join(root, 'data', '..', f), 'utf8'), ctx);
 }

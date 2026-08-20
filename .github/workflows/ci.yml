@@ -34,6 +34,7 @@ jobs:
           node --check netlify/functions/insights.js
           node --check netlify/functions/model-calibration.js
           node --check sw.js
+          node --check assets/rotation.js
           node --check assets/core.js
           node --check assets/livecards.js
           node --check assets/charts.js

@@ -40,7 +40,7 @@ const read = (p) => readFileSync(join(root, p), 'utf8');
 
 const ctx = { console };
 vm.createContext(ctx);
-for (const f of ['assets/core.js', 'data/pl_backtest_2526.js',
+for (const f of ['assets/rotation.js', 'assets/core.js', 'data/pl_backtest_2526.js',
                  'data/pl_other_fixtures_2526.js', 'assets/backtest.js']) {
   vm.runInContext(read(f), ctx);
 }
@@ -106,17 +106,33 @@ assert.equal(r.passes, false,
    themselves — a guard that fails on the code it is guarding teaches people to
    weaken it. */
 {
+  /* THE DEFINITIONS MOVED to assets/rotation.js so Gameweek Edge can vendor
+     them without taking a 1,700-line core.js with them. core.js now only
+     BINDS them across — a lazy re-export, so the ten guards that load core in
+     a bare vm and never touch rotation are unaffected.
+
+     The rule this enforces is unchanged: the pricing path must not call a
+     fatigue field. In core.js the identifiers may appear only in that bridge
+     and in the export list; anywhere else is a call site. */
   const src = read('assets/core.js');
-  const from = src.indexOf('/* ---- fatigue: rest days');
+  const from = src.indexOf('  /* BOUND LAZILY');
   const to = src.indexOf('const PLDCore = {');
-  assert.ok(from > 0 && to > from, 'the fatigue block in core.js has moved');
+  assert.ok(from > 0 && to > from, 'the rotation bridge in core.js has moved');
   const exportLine = src.slice(to, src.indexOf('\n', src.indexOf('restDays, restBucket', to)));
-  const elsewhere = (src.slice(0, from) + src.slice(to).replace(exportLine, ''));
-  const hits = [...elsewhere.matchAll(/restBucket|restDays|euroAway72h/g)];
+  const elsewhere = src.slice(0, from) + src.slice(to).replace(exportLine, '');
+  const hits = [...elsewhere.matchAll(/restBucket\(|restDays\(|euroAway72h\(/g)];
   assert.equal(hits.length, 0,
-    `assets/core.js calls a fatigue field ${hits.length} time(s) outside its own ` +
-    'definition while the factor is below its gate — it is measured and shown, ' +
+    `assets/core.js calls a fatigue field ${hits.length} time(s) outside the ` +
+    'bridge while the factor is below its gate — it is measured and shown, ' +
     'not priced');
+}
+{
+  /* And the module that defines them prices nothing: no card rate, no odds. */
+  const src = read('assets/rotation.js');
+  assert.ok(!/riskScore|impliedProb|cardProb|fairOdds/.test(src),
+    'assets/rotation.js has grown a pricing function. Rest days do not move a ' +
+    'card count — that was measured, and the interval excludes an effect the ' +
+    'size of the gate');
 }
 {
   /* cardmodel.js is the per-player pricing library and has no business

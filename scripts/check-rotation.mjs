@@ -35,7 +35,7 @@ const read = (p) => readFileSync(join(root, p), 'utf8');
 
 const ctx = { console };
 vm.createContext(ctx);
-for (const f of ['assets/core.js', 'data/rotation_model.js',
+for (const f of ['assets/rotation.js', 'assets/core.js', 'data/rotation_model.js',
                  'data/pl_other_fixtures_2526.js', 'data/pl_lineups_2526.js']) {
   vm.runInContext(read(f), ctx);
 }
