@@ -5,7 +5,7 @@
 // through PLDCore.matchSquadName. A fixture absent from here prices off
 // squad minute-weights exactly as it always has — that is the normal
 // state until about an hour before kick-off, not a failure.
-// Fetched 2026-08-21T18:42Z.
+// Fetched 2026-08-21T19:29Z.
 //
 // THE GLOBAL IS NOT CALLED `LINEUPS`, and that is deliberate. index.html
 // already declares a top-level `const LINEUPS` for assets/lineup.js (the
@@ -14,6 +14,8 @@
 // a parse error, not a shadow: the whole inline script fails and the desk
 // renders blank. Read `window.LINEUP_SHEETS`.
 var __LINEUP_SHEETS = {
+  "1557367":{"ARS":{start:["David Raya", "Ben White", "Cristhian Mosquera", "Gabriel Magalhães", "Riccardo Calafiori", "Martin Ødegaard", "Declan Rice", "Myles Lewis-Skelly", "Bukayo Saka", "Kai Havertz", "Christos Tzolis"],sub:["Kepa Arrizabalaga", "Piero Hincapié", "Eberechi Eze", "Ethan Nwaneri", "Mikel Merino", "Martín Zubimendi", "Max Dowman", "Viktor Gyökeres", "Noni Madueke"]},"COV":{start:["Carl Rushworth", "Milan van Ewijk", "Bobby Thomas", "Aurèle Amenda", "Jay DaSilva", "Frank Onyeka", "Caleb Yirenkyi", "Matt Grimes", "Brandon Thomas-Asante", "Ellis Simms", "Loum Tchaouna"],sub:["Ben Wilson", "Joel Latibeaudiere", "Liam Kitching", "Tatsuhiro Sakamoto", "Josh Eccles", "Victor Torp", "Jack Rudoni", "Gustavo Hamer", "Taiwo Awoniyi"]}},
+  "1570345":{"BET":{start:["Álvaro Valles", "Héctor Bellerín", "Marc Bartra", "Natan", "Fran García", "Pablo Fornals", "Facundo Bernal", "Marc Roca", "Antony", "Cucho Hernández", "Rodrigo Riquelme"],sub:["Manu González", "Angel Ortiz", "Valentín Gómez", "Junior Firpo", "Diego Llorente", "Isco", "Pablo García", "Nelson Deossa", "Iker Losada", "Álvaro Fidalgo"]},"RSO":{start:["Álex Remiro", "Jon Aramburu", "Jon Martin", "Igor Zubeldia", "Sergio Gómez", "Takefusa Kubo", "Yangel Herrera", "Carlos Soler", "Ander Barrenetxea", "Luka Sučić", "Orri Óskarsson"],sub:["Unai Marrero", "Luken Beitia", "Aihen Muñoz", "Jon Pacheco", "Alex Marchal", "Mikel Goti", "Alex Lebarbier", "Job Ochieng", "Beñat Turrientes", "Arsen Zakharyan", "Gorka Carrera Zarranz", "Mikel Oyarzabal"]}},
 };
 if (typeof module !== "undefined" && module.exports) module.exports = __LINEUP_SHEETS;
 if (typeof window !== "undefined") window.LINEUP_SHEETS = __LINEUP_SHEETS;
