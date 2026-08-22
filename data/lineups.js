@@ -5,7 +5,7 @@
 // through PLDCore.matchSquadName. A fixture absent from here prices off
 // squad minute-weights exactly as it always has — that is the normal
 // state until about an hour before kick-off, not a failure.
-// Fetched 2026-08-22T17:25Z.
+// Fetched 2026-08-22T18:36Z.
 //
 // THE GLOBAL IS NOT CALLED `LINEUPS`, and that is deliberate. index.html
 // already declares a top-level `const LINEUPS` for assets/lineup.js (the
@@ -14,7 +14,7 @@
 // a parse error, not a shadow: the whole inline script fails and the desk
 // renders blank. Read `window.LINEUP_SHEETS`.
 var __LINEUP_SHEETS = {
-  "1557372":{"BRE":{start:["Caoimhin Kelleher", "Michael Kayode", "Kristoffer Ajer", "Nathan Collins", "Keane Lewis-Potter", "Mathias Jensen", "Mamadou Sangare", "Dango Ouattara", "Vitaly Janelt", "Kevin Schade", "Igor Thiago"],sub:["Hákon Rafn Valdimarsson", "Rico Henry", "Aaron Hickey", "Ethan Pinnock", "Jannik Schuster", "Yehor Yarmoliuk", "Jaidon Anthony", "Mikkel Damsgaard", "Callum Wilson"]},"TOT":{start:["Antonín Kinský", "Archie Gray", "Jan Paul van Hecke", "Marcos Senesi", "Andy Robertson", "Lucas Bergvall", "Sandro Tonali", "Conor Gallagher", "Mikey Moore", "Mathys Tel", "Richarlison"],sub:["Martin Dúbravka", "Kevin Danso", "Destiny Udogie", "Ben Davies", "James Maddison", "Mateus Fernandes", "Rodrigo Bentancur", "Dominic Solanke", "Luca Williams-Barnett"]}},
+  "1570352":{"CEL":{start:["Ionuț Radu", "Javi Rodríguez", "Yoel Lago", "Marcos Alonso", "Sergio Carreira", "Miguel Román", "Aleix Febas", "Javi Galán", "Jones El-Abdellaoui", "Ferran Jutglà", "Hugo Álvarez"],sub:["Altay Bayındır", "Carl Starfelt", "Abdoulaye Faye", "Alvaro Núñez", "Javier Rueda", "Hugo Burcio", "Ilaix Moriba", "Hugo González", "Williot Swedberg", "Iago Aspas", "Pablo Durán", "Borja Iglesias"]},"VAL":{start:["Stole Dimitrievski", "Jesús Vázquez", "César Tárrega", "Pepelu", "Justin De Haas", "José Luis Gayà", "Ryunosuke Sato", "Filip Ugrinić", "Guido Rodríguez", "Javier Guerra", "Arnaut Danjuma"],sub:["Cristian Rivero", "Iker Cordoba", "Marcos Navarro", "Mouctar Diakhaby", "Pablo Maffeo", "Jaume Durá", "Aliou Dieng", "André Almeida", "Hugo Duro", "David Otorbi", "Dani Raba", "Umar Sadiq"]}},
 };
 if (typeof module !== "undefined" && module.exports) module.exports = __LINEUP_SHEETS;
 if (typeof window !== "undefined") window.LINEUP_SHEETS = __LINEUP_SHEETS;
