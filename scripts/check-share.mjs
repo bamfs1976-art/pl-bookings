@@ -64,6 +64,11 @@ function makeSandbox(drawn, placed) {
   };
   ctx.globalThis = ctx;
   vm.createContext(ctx);
+  /* accas.js FIRST: share.js's combo strip calls it rather than carrying its
+     own copy of the double/treble rule, and throws by design if it is absent.
+     A stub here would defeat the point — the assertions below about what a
+     combo strip draws have to run against the real rule. */
+  vm.runInContext(readFileSync(join(root, 'assets', 'accas.js'), 'utf8'), ctx);
   vm.runInContext(readFileSync(join(root, 'assets', 'share.js'), 'utf8'), ctx);
   return ctx;
 }
