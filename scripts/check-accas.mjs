@@ -563,7 +563,8 @@ group('the accas as a destination: routed, and dated');
 }
 
 {
-  const t = readFileSync(join(root, 'today.html'), 'utf8');
+  const t = readFileSync(join(root, 'today.html'), 'utf8')
+  + '\n' + readFileSync(join(root, 'assets', 'deskboards.js'), 'utf8');
   /* THE ACCAS VIEW IS GONE, and that is the current design rather than a
      regression. today.html now serves two ROUTES: `/` is today's matches and
      carries the day's acca; /today is the season calendar and carries the
@@ -609,7 +610,12 @@ group('the accas as a destination: routed, and dated');
 /* ---- 5. the cross-league card nine-fold on today.html ------------------ */
 group('today.html: the week\'s card nine-fold, across every division');
 
-const today = readFileSync(join(root, 'today.html'), 'utf8');
+/* THE /today PAGE IS TWO FILES NOW. Its cross-league engine — the frames, the
+   per-fixture pricing, the day index — moved to assets/deskboards.js so the
+   /accas page could price the same fixtures without a second engine. These
+   assertions are about that code, so they read both halves. */
+const today = readFileSync(join(root, 'today.html'), 'utf8')
+  + '\n' + readFileSync(join(root, 'assets', 'deskboards.js'), 'utf8');
 const tfn = (name) => {
   const i = today.indexOf('function ' + name + '(');
   assert.ok(i > -1, `today.html no longer defines ${name}`);

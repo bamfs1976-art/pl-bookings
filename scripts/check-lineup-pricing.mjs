@@ -30,7 +30,7 @@
  *     node scripts/check-lineup-pricing.mjs
  */
 import assert from 'node:assert/strict';
-import { readFileSync } from 'node:fs';
+import { readFileSync, existsSync } from 'node:fs';
 import { createRequire } from 'node:module';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
@@ -377,8 +377,25 @@ group('the harvested sheet file cannot collide with a page global');
   /* And the property the pages actually read has to be the one it writes. */
   const prop = emitter.match(/window\.(\w+) = __?\w+;/);
   assert.ok(prop, 'the emitter no longer assigns a window property');
+  /* A PAGE'S CODE IS THE PAGE PLUS THE MODULES IT LOADS. today.html reads the
+     sheets from assets/deskboards.js now — its cross-league engine moved there
+     so /accas could price the same fixtures without a second engine — so a
+     check that only ever looked at the .html would have called that a page
+     which had stopped reading the harvest. Follow the <script src> tags
+     instead: that is where the page's code actually is.
+     ONLY for this assertion. The collision sweep above stays on the .html
+     alone, because a module's bindings live inside its IIFE and cannot collide
+     with a top-level name. */
+  const pageCode = (page) => {
+    const html = readFileSync(join(root, page), 'utf8');
+    const mods = [...html.matchAll(/<script src="(assets\/[\w.-]+\.js)"/g)]
+      .map((m) => join(root, m[1]))
+      .filter((f) => existsSync(f))
+      .map((f) => readFileSync(f, 'utf8'));
+    return [html, ...mods].join('\n');
+  };
   for (const page of pages) {
-    assert.ok(readFileSync(join(root, page), 'utf8').includes('window.' + prop[1]),
+    assert.ok(pageCode(page).includes('window.' + prop[1]),
       `${page} does not read window.${prop[1]}, the property the emitter writes ` +
       `— the sheets would be harvested and silently never used`);
   }
