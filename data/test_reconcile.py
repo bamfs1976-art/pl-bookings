@@ -26,6 +26,16 @@ import build_pl_data as b  # noqa: E402
 
 passed = 0
 
+# THE SHIPPED OVERLAY IS NOT AN INPUT TO THESE TESTS. apply_transfers reads
+# data/transfers.json when it is given no entries, which quietly made every
+# fixture below depend on a hand-edited file: a real entry naming a player one
+# of these fixtures also uses would break a test that has nothing to do with
+# transfers. It also masked a mutation — inventing a row for an unmatched entry
+# was caught by an unrelated assertion twenty tests earlier, which proves
+# nothing about the assertion written for it. Every transfer test passes its
+# entries explicitly, so the file is never the thing under test here.
+b.load_transfers = lambda: []
+
 
 def ok(cond, msg):
     global passed
@@ -209,9 +219,96 @@ ok(b.club_basis(["NEW"]) == "EFL",
    "a club of nothing but newcomers has no aggregate either")
 ok(b.club_basis([]) == "EFL", "no rows at all is not a Premier League basis")
 
+print("transfers: the overlay the feed has not caught up with")
+# THE ORDERING, WHICH IS THE WHOLE POINT. The feed still lists Romero at
+# Tottenham — that is why the overlay exists — so the feed pass must run FIRST
+# and the overlay LAST. Reversed, the overlay deletes his row and the feed pass
+# immediately re-creates it as an arrival: he comes back, on basis NEW, with
+# his card rate thrown away, and the build reports success.
+ROMERO = "Cristian Romero"
+feed_with_him = league(extra=[{"c": "TOT", "n": ROMERO, "pos": "Defender"}])
+out = b.reconcile_squads([shipped(ROMERO, "TOT")], feed_with_him,
+                         transfers=[{"league": "PL", "player": ROMERO,
+                                     "from": "TOT", "to": None}])
+ok(not [r for r in out if r["n"] == ROMERO],
+   "a player the overlay says has left must be gone even though the FEED still "
+   f"lists him — that is the only case the overlay is for; got {out}")
+
+# ...and he must not come back as a formless arrival either, which is what
+# running the overlay first would produce.
+ok(not [r for r in out if ROMERO in (r.get("n") or "")],
+   "the departed player reappeared as an arrival — the overlay ran before the "
+   "feed pass, so the feed re-created the row it had just deleted")
+
+print("transfers: a move within the division keeps the rate and the identity")
+out = b.reconcile_squads([shipped("Firstnamex Surnamex", "TOT")],
+                         league(extra=[{"c": "TOT", "n": "Firstnamex Surnamex",
+                                        "pos": "Defender"}]),
+                         transfers=[{"league": "PL", "player": "Firstnamex Surnamex",
+                                     "from": "TOT", "to": "ARS"}])
+got = [r for r in out if r["n"] == "Firstnamex Surnamex"]
+ok(len(got) == 1 and got[0]["c"] == "ARS", f"the overlay did not move him; {got}")
+ok(got[0]["yc"] == 4 and got[0]["f"] == 1.2,
+   "the rate is a property of the player and must survive an overlay move too")
+ok(got[0]["_club"] == "Arsenal" and got[0]["_tid"] is None and got[0]["_img"] is None,
+   "an overlay move must clear every trace of the old club, or the player "
+   f"renames the club he joins — the 'MUN Aston Villa' failure; got {got[0]}")
+
+print("transfers: and what it refuses")
+# NEVER INVENTS. An entry naming nobody must not conjure a row: a model that
+# prices a player who does not exist is worse than one that is a week stale.
+out = b.apply_transfers([shipped("Firstnamex Surnamex", "TOT")],
+                        [{"league": "PL", "player": "Nobody Atall",
+                          "from": "TOT", "to": "ARS"}])
+ok(len(out) == 1 and out[0]["n"] == "Firstnamex Surnamex",
+   f"an entry matching nobody must change nothing and invent nothing; got {out}")
+
+# STALE ENTRY. He has since joined Chelsea; an old "left Tottenham" line must
+# not drag him back out of the club the feed has already put him at.
+rows = [shipped("Firstnamex Surnamex", "CHE")]
+out = b.apply_transfers(rows, [{"league": "PL", "player": "Firstnamex Surnamex",
+                                "from": "TOT", "to": None}])
+ok(len(out) == 1 and out[0]["c"] == "CHE",
+   "an entry whose `from` no longer matches the dataset must be refused — it "
+   f"is stale or wrong, and applying it deletes a player who is playing; got {out}")
+
+# AMBIGUITY. Two rows answering to one name is exactly when a guess is
+# unrecoverable, so nothing moves.
+rows = [shipped("Firstnamex Surnamex", "TOT"), shipped("Firstnamex Surnamex", "EVE")]
+out = b.apply_transfers(rows, [{"league": "PL", "player": "Firstnamex Surnamex",
+                                "from": "TOT", "to": "ARS"}])
+ok(len(out) == 2 and {r["c"] for r in out} == {"TOT", "EVE"},
+   f"an ambiguous name must leave both rows exactly where they are; got {out}")
+
+# ANOTHER LEAGUE'S ENTRIES ARE NOT THIS LEAGUE'S.
+out = b.apply_transfers([shipped("Firstnamex Surnamex", "TOT")],
+                        [{"league": "LL", "player": "Firstnamex Surnamex",
+                          "from": "TOT", "to": None}])
+ok(len(out) == 1, "a La Liga entry must not move a Premier League player")
+
+# AND IT STILL RUNS WHEN THE FEED DOES NOT. The feed pass bails out on a feed
+# too small to be a division — correctly — and the overlay is independent
+# evidence that must survive that bail-out, or a bad FPL day silently restores
+# a player who has left.
+out = b.reconcile_squads([shipped(ROMERO, "TOT")], [{"c": "TOT", "n": "X Y"}],
+                         transfers=[{"league": "PL", "player": ROMERO,
+                                     "from": "TOT", "to": None}])
+ok(not [r for r in out if r["n"] == ROMERO],
+   "the overlay must apply even when the FPL feed is too small to reconcile "
+   f"against — it is separate evidence, not a refinement of the feed; got {out}")
+
 print(f"\n{passed} checks passed")
 
 # MUTATIONS these assertions were checked against:
+#   overlay before the feed pass           -> "the departed player reappeared"
+#   overlay skipped on the small-feed path -> "must apply even when the FPL
+#                                             feed is too small"
+#   apply an entry whose `from` disagrees  -> "an entry whose `from` no longer
+#                                             matches"
+#   take the first hit when ambiguous      -> "an ambiguous name must leave
+#                                             both rows"
+#   create a row for an unmatched entry    -> "must change nothing and invent
+#                                             nothing"
 #   move the club but blank the rates      -> "the rate follows the player"
 #   keep rows the feed does not have       -> "a player the feed does not have"
 #   arrive with zeroed rates instead of null -> "an arrival's rates are NULL"

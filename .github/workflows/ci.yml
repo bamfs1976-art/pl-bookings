@@ -152,6 +152,16 @@ jobs:
       - name: Data guard (pl_data.js counts, no inline dataset in index.html)
         run: node scripts/check-data.mjs
 
+      # The transfer overlay, which is the only hand-written input allowed to
+      # OVERRULE a live feed — every other overlay here yields to its harvest.
+      # That makes its failure mode decay rather than mechanics: an entry
+      # nobody deletes becomes a second source of truth quietly fighting the
+      # feed. This checks the file still describes the dataset beside it, and
+      # names entries that have stopped doing anything. The mechanics are
+      # pinned in data/test_reconcile.py, mutation by mutation.
+      - name: The transfer overlay still describes the shipped squads
+        run: node scripts/check-transfers.mjs
+
       # The vendored fouls. Offline, against the committed file. The failure it
       # exists for is not a crash — it is the file being well-formed and about
       # LAST season, which would put a "live rate" marker next to 2025-26
