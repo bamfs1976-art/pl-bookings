@@ -5,7 +5,7 @@
 // through PLDCore.matchSquadName. A fixture absent from here prices off
 // squad minute-weights exactly as it always has — that is the normal
 // state until about an hour before kick-off, not a failure.
-// Fetched 2026-08-22T16:30Z.
+// Fetched 2026-08-22T17:25Z.
 //
 // THE GLOBAL IS NOT CALLED `LINEUPS`, and that is deliberate. index.html
 // already declares a top-level `const LINEUPS` for assets/lineup.js (the
@@ -15,7 +15,6 @@
 // renders blank. Read `window.LINEUP_SHEETS`.
 var __LINEUP_SHEETS = {
   "1557372":{"BRE":{start:["Caoimhin Kelleher", "Michael Kayode", "Kristoffer Ajer", "Nathan Collins", "Keane Lewis-Potter", "Mathias Jensen", "Mamadou Sangare", "Dango Ouattara", "Vitaly Janelt", "Kevin Schade", "Igor Thiago"],sub:["Hákon Rafn Valdimarsson", "Rico Henry", "Aaron Hickey", "Ethan Pinnock", "Jannik Schuster", "Yehor Yarmoliuk", "Jaidon Anthony", "Mikkel Damsgaard", "Callum Wilson"]},"TOT":{start:["Antonín Kinský", "Archie Gray", "Jan Paul van Hecke", "Marcos Senesi", "Andy Robertson", "Lucas Bergvall", "Sandro Tonali", "Conor Gallagher", "Mikey Moore", "Mathys Tel", "Richarlison"],sub:["Martin Dúbravka", "Kevin Danso", "Destiny Udogie", "Ben Davies", "James Maddison", "Mateus Fernandes", "Rodrigo Bentancur", "Dominic Solanke", "Luca Williams-Barnett"]}},
-  "1570343":{"ATH":{start:["Unai Simón", "Jesús Areso", "Yeray Álvarez", "Aitor Paredes", "Yuri Berchiche", "Beñat Gerenabarrena", "Peio Canales", "Iñaki Williams", "Oihan Sancet", "Álex Berenguer", "Gorka Guruzeta"],sub:["Alex Padilla", "Adama Boiro", "Hugo Rincón", "Johaneko Louis Jean", "Aymeric Laporte", "Alejandro Rego Mora", "Nico Williams", "Iñigo Ruiz de Galarreta", "Mikel Jauregizar", "Robert Navarro", "Maroan Sannadi", "Álvaro Djaló"]},"SEV":{start:["Odysseas Vlachodimos", "Juan Iglesias", "Arouna Sangante", "Andres Castrin", "Gabriel Suazo", "Lucien Agoumé", "Jon Guridi", "Miguel Sierra", "Peque Fernández", "Oso", "Robbie Ure"],sub:["Fran González", "Rafa Romero", "Iker Muñoz", "Julio Díaz", "José Ángel Carmona", "Nico Guillén", "Ibra Sow", "Manu Bueno", "Giorgi Kochorashvili", "Isaac Romero", "Chidera Ejuke", "Manuel Ángel Castillo"]}},
 };
 if (typeof module !== "undefined" && module.exports) module.exports = __LINEUP_SHEETS;
 if (typeof window !== "undefined") window.LINEUP_SHEETS = __LINEUP_SHEETS;
