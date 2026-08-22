@@ -20,9 +20,22 @@
 <script>
   (function () {
     var p = location.pathname.replace(/\/+$/, '') || '/';
-    var season = p === '/today' || p === '/season' || p === '/today.html';
-    document.documentElement.setAttribute('data-route', season ? 'season' : 'home');
-    document.title = season
+    /* THREE ROUTES OFF ONE FILE, and the third is the reason the first two are
+       routes rather than pages. Every acca this site builds was already here or
+       on the Premier League desk, scattered: the day's acca under today's
+       fixture list, the week's nine-fold under the calendar, the record under
+       both, and the doubles and trebles nowhere at all except as pixels on an
+       exported share card. Nobody could find them. /accas is where they are.
+       A SEPARATE accas.html WOULD HAVE FORKED the pricing, the confirmed-XI
+       join and both card builders — see the note in scripts/check-share.mjs,
+       which asserts that this split stays a route and never becomes a copy. */
+    var route = p === '/accas' || p === '/accas.html' ? 'accas'
+      : (p === '/today' || p === '/season' || p === '/today.html') ? 'season'
+      : 'home';
+    document.documentElement.setAttribute('data-route', route);
+    document.title = route === 'accas'
+      ? 'Accas — every combination, in one place — Bookings Desk'
+      : route === 'season'
       ? 'Every date, all season — Bookings Desk'
       : "Today's matches — Bookings Desk";
   })();
@@ -139,6 +152,7 @@
 <nav class="leaguebar" aria-label="Leagues">
   <div class="leaguebar-in">
     <a class="lb-item lb-today" href="/"><span class="lb-dot"></span><span class="lb-full">Today's matches</span><span class="lb-abbr">Today</span></a>
+    <a class="lb-item lb-accas" href="/accas"><span class="lb-dot"></span><span class="lb-full">Accas</span><span class="lb-abbr">Accas</span></a>
     <a class="lb-item lb-pl" href="/pl"><span class="lb-dot"></span><span class="lb-full">Premier League</span><span class="lb-abbr">PL</span></a>
     <a class="lb-item lb-eflc" href="/eflc"><span class="lb-dot"></span><span class="lb-full">Championship</span><span class="lb-abbr">Championship</span></a>
     <a class="lb-item lb-ll" href="/laliga"><span class="lb-dot"></span><span class="lb-full">La Liga</span><span class="lb-abbr">La Liga</span></a>
@@ -177,7 +191,26 @@
     <div class="stats" id="statsSeason"></div>
   </section>
 
-  <div class="card">
+  <section class="hero" data-for="accas">
+    <h1>Accas, all in one place</h1>
+    <p class="muted" style="margin:8px 0 0;max-width:70ch">
+      Every combination this desk builds, gathered — because until now they were
+      scattered across two pages and a share card. <b>The day&rsquo;s acca</b>: the
+      likeliest market in each of today&rsquo;s matches, one leg a match.
+      <b>The week&rsquo;s nine-fold</b>: three to win, three both teams carded and three
+      over 2.5 cards, nine different matches across the seven days ahead.
+      <b>Doubles and trebles</b> over the players likeliest to be booked, which until
+      now only ever appeared on an exported image. And <b>the record</b> — every acca
+      logged before kick-off and settled against real cards.
+      Every price has the bookmaker&rsquo;s margin left in, because that is the honest
+      argument against another leg.
+      The Premier League&rsquo;s <a href="/pl#p=accas">goals nine-fold</a> stays on its own
+      desk: the match model rates those twenty clubs and nothing else.
+    </p>
+    <div class="stats" id="statsAccas"></div>
+  </section>
+
+  <div class="card" id="listCard">
     <div class="controls">
       <!-- THE VIEW SWITCHER IS GONE, and its three views are now two pages.
            "One date" and the day's acca are the home page; "Every date" and
@@ -216,6 +249,21 @@
     <div class="acca-legs" id="accaLegs"></div>
     <div class="acca-sum" id="accaSum"></div>
     <p class="note" id="accaNote"></p>
+  </section>
+
+  <!-- DOUBLES AND TREBLES over the players likeliest to be booked.
+       NEW HERE, and that is the point: these have existed for a long time and
+       could only ever be seen by exporting a share card and looking at the
+       picture. The combos themselves come from assets/accas.js, the same
+       module the share cards call, so the image and the page cannot print
+       different legs. /accas only. -->
+  <section class="card" id="comboCard" data-for="accas" style="margin-top:14px" hidden>
+    <div class="controls" style="margin-bottom:4px">
+      <h2 style="font-size:16px">Doubles and trebles &mdash; players to be booked</h2>
+    </div>
+    <p class="faint" id="comboSub" style="font-size:12.5px;margin:0"></p>
+    <div id="comboBody"></div>
+    <p class="note" id="comboNote"></p>
   </section>
 
   <!-- THE WEEK'S CARD NINE-FOLD, across every division this page holds.
@@ -977,10 +1025,11 @@
 
   function renderAcca() {
     var card = $('#accaCard');
-    /* HOME ONLY. The day's acca is about the matches on one date, so it lives
-       with them; the calendar has no selected date, and 128 accas is not one
-       acca. */
-    if (ROUTE !== 'home') { card.hidden = true; return; }
+    /* NOT ON THE CALENDAR. The day's acca is about the matches on one date;
+       the calendar has no selected date, and 128 accas is not one acca. It
+       shows on the home page, beneath the matches it is built from, and on
+       /accas, which is where somebody goes looking for it. */
+    if (ROUTE === 'season') { card.hidden = true; return; }
 
     var key = $('#day').value, all = dayLegs(key);
     /* The control cannot offer more legs than the date has matches — one leg
@@ -1204,13 +1253,141 @@
     return null;
   }
 
+  /* ---- doubles and trebles ----------------------------------------------
+   *
+   * WHY THIS IS HERE AT ALL. These combos have been built for a long time and
+   * were only ever visible by exporting a share card and looking at the image
+   * — three variants of them, drawn onto a canvas, never once in the DOM. A
+   * reader could not select the names, a screen reader could not read them,
+   * and nobody who had not pressed a download button knew they existed.
+   *
+   * TWO KINDS, AND THE DIFFERENCE MATTERS MORE THAN THE ODDS DO.
+   *
+   *   SAME MATCH   three men in one fixture. One flashpoint, one strict
+   *                referee, one scrappy derby books all three, so these legs
+   *                are strongly and positively correlated. Multiplying them
+   *                prices that correlation as independence and the true chance
+   *                is HIGHER than the number shown — which sounds generous
+   *                until you remember it is the same reason they all miss
+   *                together.
+   *   CROSS MATCH  one man per fixture. Different referees, different grounds,
+   *                much closer to independent — but a weekend where officials
+   *                are strict is strict across the card, so the residual
+   *                correlation is positive and the product slightly OVERSTATES
+   *                the chance.
+   *
+   * Both notes are printed, because a combo shown without its correlation is a
+   * number pretending to be a probability.
+   *
+   * THE SELECTION IS NOT DECIDED HERE. PLDAccas.comboRows dedupes and cuts to
+   * three, and assets/share.js calls the same function — so the card and this
+   * page cannot disagree about which legs are in a treble. Pricing is
+   * PLDCore's, margin and all.
+   */
+  function comboLegHTML(l, n) {
+    var club = l.L && l.L.clubBy ? (l.L.clubBy[l.p.c] || { short: l.p.c })
+                                 : { short: l.p.c };
+    return '<div class="acca-leg">'
+      + '<span class="acca-n">' + n + '</span>'
+      + (l.L ? '<span class="lg ' + esc(l.L.code) + '">' + esc(l.L.code) + '</span>' : '')
+      + PLDProfile.crest(club)
+      + '<span class="acca-fx">' + esc(l.p.n) + '</span>'
+      + '<span class="acca-mkt">' + esc(l.fx) + '</span>'
+      + '<span class="spacer"></span>'
+      + '<span class="acca-p">' + pct(l.prob) + '</span>'
+      + '<span class="acca-odds" title="Fair odds, before any bookmaker margin">'
+      + (1 / l.prob).toFixed(2) + '</span></div>';
+  }
+
+  function comboBlock(title, note, legs) {
+    var rows = PLDAccas.comboRows(legs);
+    if (!rows.length) return '';
+    var out = '<div class="acca-grp"><h4 class="acca-grp-h">' + esc(title) + '</h4>'
+      + '<p class="faint" style="font-size:12.5px;margin:0 0 6px">' + esc(note) + '</p>';
+    rows.forEach(function (row) {
+      var price = PLDAccas.priceCombo(row.legs, C.TYPICAL_CARD_MARGIN, C);
+      var n = 0;
+      out += '<div class="acca-combo"><h5 class="acca-combo-h">' + esc(row.tag) + '</h5>'
+        + row.legs.map(function (l) { return comboLegHTML(l, ++n); }).join('');
+      if (price) {
+        out += '<div class="acca-sum">'
+          + '<div><span class="k">All ' + row.legs.length + ' booked</span>'
+          + '<span class="v">' + pct(price.prob) + '</span></div>'
+          + '<div><span class="k">Fair odds</span><span class="v">'
+          + price.fairOdds.toFixed(2) + '</span></div>'
+          + '<div><span class="k">Priced odds</span><span class="v">'
+          + price.pricedOdds.toFixed(2) + '</span></div>'
+          + '<div><span class="k">Margin takes</span><span class="v drag">'
+          + (price.marginDrag * 100).toFixed(1) + '%</span></div></div>';
+      }
+      out += '</div>';
+    });
+    return out + '</div>';
+  }
+
+  function renderCombos() {
+    var card = $('#comboCard');
+    if (!card) return;
+    if (ROUTE !== 'accas') { card.hidden = true; return; }
+    var rows = rowsFor($('#day').value);
+    if (!rows.length) { card.hidden = true; return; }
+
+    /* Every rated player on the date, carrying the fixture and league he came
+       from. Both sides of every match — a list built from home candidates only
+       is half a card and looks complete. */
+    var all = [];
+    rows.forEach(function (p) {
+      var fxLabel = p.fx.h + ' v ' + p.fx.a;
+      (p.home.top || []).concat(p.away.top || []).forEach(function (t) {
+        if (t && t.prob > 0) all.push({ p: t.p, prob: t.prob, fx: fxLabel, L: p.L, row: p });
+      });
+    });
+    if (!all.length) { card.hidden = true; return; }
+    all.sort(function (a, b) { return b.prob - a.prob; });
+
+    /* SAME MATCH: the hottest fixture on the date, and its own men only. */
+    var hot = rows.slice().sort(function (a, b) { return b.m.expected - a.m.expected; })[0];
+    var same = all.filter(function (l) { return l.row === hot; });
+    /* CROSS MATCH: the best leg from each fixture, so no two legs lean on one
+       referee. Taken per row rather than by slicing the sorted list, which
+       would happily return three men from the same match. */
+    var bestOf = {};
+    all.forEach(function (l) {
+      var k = String(l.row.fx.id) + '|' + l.L.code;
+      if (!bestOf[k] || l.prob > bestOf[k].prob) bestOf[k] = l;
+    });
+    var cross = Object.keys(bestOf).map(function (k) { return bestOf[k]; })
+      .sort(function (a, b) { return b.prob - a.prob; });
+
+    var html = comboBlock('Same match \u2014 ' + (hot ? hot.fx.h + ' v ' + hot.fx.a : ''),
+        'One flashpoint books all three, so these legs are strongly correlated: '
+      + 'the real chance is HIGHER than the product shown, and they miss together '
+      + 'for the same reason.', same)
+      + comboBlock('Across matches',
+        'One man per fixture, so different referees and different grounds \u2014 much '
+      + 'closer to independent. A strict weekend is strict across the card though, '
+      + 'so this slightly overstates the chance.', cross);
+
+    if (!html) { card.hidden = true; return; }
+    card.hidden = false;
+    $('#comboSub').textContent = 'Built from ' + rows.length + ' match'
+      + (rows.length === 1 ? '' : 'es') + ' on ' + fmtDay($('#day').value)
+      + '. The same combos the share cards draw.';
+    $('#comboBody').innerHTML = html;
+    $('#comboNote').textContent = 'Fair odds are 1/p with no margin, which no bookmaker '
+      + 'offers. Priced odds shade every leg by the card margin this desk models, and '
+      + 'that drag compounds with each leg \u2014 which is the honest argument against '
+      + 'a third.';
+  }
+
   function renderNine() {
     var card = $('#nineCard'), blank = $('#nineEmpty');
     if (blank) blank.hidden = true;
-    /* SEASON ONLY. The nine-fold spans seven days, so it belongs with the view
-       that shows more than one — and putting it under today's card made the
-       home page several phone screens long for a slip about next weekend. */
-    if (ROUTE !== 'season') { card.hidden = true; NINE_BUILT = null; return; }
+    /* NOT ON THE HOME PAGE. The nine-fold spans seven days, so it belongs with
+       the view that shows more than one — putting it under today's card made
+       the home page several phone screens long for a slip about next weekend.
+       On /accas it is the whole point of the visit, so it shows there too. */
+    if (ROUTE === 'home') { card.hidden = true; NINE_BUILT = null; return; }
     var from = $('#day').value;
     var pool = weekPool(from);
     var got = C.accaAllocate(NINE.map(function (b) {
@@ -1325,8 +1502,12 @@
      Kept as a function returning the old vocabulary so every call site below
      reads exactly as it did — the question "am I in the calendar?" has not
      changed, only who answers it. */
-  var ROUTE = document.documentElement.getAttribute('data-route') === 'season'
-    ? 'season' : 'home';
+  var ROUTE = document.documentElement.getAttribute('data-route');
+  if (ROUTE !== 'season' && ROUTE !== 'accas') ROUTE = 'home';
+  /* The accas route shows no fixture list, so which LIST it would have shown
+     is not a question it asks. It indexes and prices exactly as the other two
+     do — the slips are built off the same rows — and 'one' keeps the date
+     picker meaningful for the day's acca. */
   function mode() { return ROUTE === 'season' ? 'all' : 'one'; }
 
   function render() {
@@ -1361,6 +1542,7 @@
     if (all) renderAll(); else renderOne();
     renderAcca();
     renderNine();
+    renderCombos();
   }
 
   /* ---- the combined card ------------------------------------------------ */
@@ -1797,7 +1979,8 @@
     /* The view radios are gone — the route decides. The league bar's own item
        is marked here rather than in the markup, because one file is two pages
        and only one of them is current at a time. */
-    var cur = document.querySelector(ROUTE === 'season' ? '.lb-season' : '.lb-today');
+    var cur = document.querySelector(
+      ROUTE === 'season' ? '.lb-season' : ROUTE === 'accas' ? '.lb-accas' : '.lb-today');
     if (cur) cur.setAttribute('aria-current', 'page');
     /* And scroll it into view NOW. The shared module already ran its own pass
        on DOMContentLoaded and found nothing current to centre, because on this
@@ -1845,8 +2028,17 @@
        desks' copy. Sending them to the right page is the difference between an
        old link working and an old link quietly showing the wrong thing. */
     var h = String(location.hash || '').replace(/^#/, '');
-    if ((h === 'all' || h === 'accas') && ROUTE !== 'season') {
+    /* OLD LINKS, LANDING WHERE THEY MEANT. #all and #accas were two views of
+       this page before the routes existed, and shared cards in the wild still
+       carry them. #all is the calendar. #accas now has a page of its own —
+       sending it to the calendar was the closest thing available when there
+       was nowhere better, and there is somewhere better now. */
+    if (h === 'all' && ROUTE !== 'season') {
       location.replace('/today');
+      return;
+    }
+    if (h === 'accas' && ROUTE !== 'accas') {
+      location.replace('/accas');
       return;
     }
     if (/^d=\d{4}-\d{2}-\d{2}$/.test(h) && DAYS[h.slice(2)]) {

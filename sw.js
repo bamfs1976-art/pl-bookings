@@ -18,6 +18,7 @@ const SHELL = [
      Premier League desk. */
   '/pl',
   '/today',
+  '/accas',
   '/index.html',
   '/today.html',
   '/eflc.html',

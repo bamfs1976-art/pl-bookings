@@ -865,9 +865,9 @@ for (const page of DESKS_WITH_A_TOUR) {
      refuses rather than picking one. Was `mode() === 'all'` when the two views
      were radio buttons on one page; the question is the same, the answer now
      comes from the route. */
-  assert.ok(/ROUTE !== 'home'[\s\S]{0,80}?hidden = true/.test(acca),
-    "the day's acca no longer hides itself off the home page, where there is " +
-    'no selected date for it to be the acca of');
+  assert.ok(/ROUTE === 'season'[\s\S]{0,80}?hidden = true/.test(acca),
+    "the day's acca no longer hides itself on the season calendar, where there " +
+    'is no selected date for it to be the acca of');
 
   /* PRICED THROUGH THE SHARED FUNCTION, and the margin shown rather than
      stripped and forgotten. Fair odds are 1/p, which no bookmaker offers. */

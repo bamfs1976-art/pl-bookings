@@ -576,18 +576,35 @@ group('the accas as a destination: routed, and dated');
     'today.html no longer derives its view from the route, so `/` and /today ' +
     'cannot be two pages');
   const accaFn = t.slice(t.indexOf('function renderAcca('));
-  assert.ok(/ROUTE !== 'home'[\s\S]{0,80}card\.hidden = true/.test(accaFn.slice(0, 600)),
-    "the day's acca no longer refuses to render off the home page — on the " +
-    'season calendar there is no selected date for it to be the acca of');
+  /* THREE ROUTES NOW: `/`, /today and /accas. The rule this pins is unchanged
+     — the day's acca must not render on the SEASON CALENDAR, where there is no
+     selected date for it to be the acca of — but it is stated as the exclusion
+     it always was rather than as a single permitted route, because /accas
+     shows it too and a `!== 'home'` test would have banned it there. */
+  assert.ok(/ROUTE === 'season'[\s\S]{0,80}card\.hidden = true/.test(accaFn.slice(0, 700)),
+    "the day's acca no longer refuses to render on the season calendar, where " +
+    'there is no selected date for it to be the acca of');
   const nineFn = t.slice(t.indexOf('function renderNine('));
-  assert.ok(/ROUTE !== 'season'[\s\S]{0,120}card\.hidden = true/.test(nineFn.slice(0, 700)),
-    'the nine-fold no longer refuses to render off the season page — it spans ' +
+  /* Same shape of change as the day's acca above: an exclusion, not a single
+     permitted route. The rule is that a seven-day slip must not sit under
+     TODAY'S card, which is what made the home page several screens long — and
+     stating it as `!== 'season'` would have banned it from /accas, which is
+     the one page somebody visits specifically to see it. */
+  assert.ok(/ROUTE === 'home'[\s\S]{0,120}card\.hidden = true/.test(nineFn.slice(0, 800)),
+    'the nine-fold no longer refuses to render on the home page — it spans ' +
     'seven days and under today\'s card it made the home page several screens long');
   /* Old links must still land somewhere right. #all and #accas were the two
      views that moved to /today, and links to them exist in shared cards. */
-  assert.ok(/h === 'all' \|\| h === 'accas'[\s\S]{0,160}location\.replace\('\/today'\)/.test(t),
-    '#all and #accas no longer redirect to /today — links in the wild that ' +
-    'used to open the calendar or the accas would silently show today instead');
+  /* THEY NO LONGER SHARE A DESTINATION, and that is the improvement: #accas
+     went to /today because there was nowhere better, and now there is. Both
+     are still pinned, because a shared card in the wild carrying either one
+     must land where it meant rather than on whatever today happens to be. */
+  assert.ok(/h === 'all'[\s\S]{0,120}location\.replace\('\/today'\)/.test(t),
+    '#all no longer redirects to /today — links in the wild that ' +
+    'used to open the calendar would silently show today instead');
+  assert.ok(/h === 'accas'[\s\S]{0,120}location\.replace\('\/accas'\)/.test(t),
+    '#accas no longer redirects to /accas, the page that now holds every acca ' +
+    'this site builds — an old link would silently show today instead');
   /* The empty state must be OUTSIDE the card it explains. Nested inside, it is
      hidden exactly when it is needed — its text was still readable to a script,
      so only clicking the button it offers revealed that nothing could reach it. */

@@ -33,6 +33,14 @@
 /today        /today.html   200
 /season       /today.html   200
 
+# EVERY ACCA, IN ONE PLACE. A third view of the same file for the same reason
+# the first two are: the day's acca, the week's nine-fold, the doubles and
+# trebles and the settled record are all built from these rows, and a separate
+# accas.html would have forked the pricing and both card builders to show them.
+# They were scattered across two routes and a share card, and nobody could find
+# them.
+/accas        /today.html   200
+
 # The Premier League desk, moved off `/`. Its own internal routing is entirely
 # hash-based (#panel-...), so nothing inside it cares which path it is served
 # from — only the league bar's self-link had to change.

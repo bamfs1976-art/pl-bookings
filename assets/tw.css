@@ -142,6 +142,14 @@ html[data-theme="dark"].lg-all {--accent:#22d3ee;--ring:var(--accent)}
    glance in the bar without inventing a fourth colour for a view that has no
    league of its own. */
 .lb-season .lb-dot{background:linear-gradient(315deg,var(--pl) 0%,var(--eflc) 50%,var(--ll) 100%)}
+/* Accas draw on all three divisions and belong to none, like the two views
+   above — but a third gradient of the same three colours would be a dot nobody
+   could tell from the other two at 9px. A ring instead: same three-league
+   sweep, hollow centre, distinguishable at a glance without inventing a
+   fourth competition colour for a view that is not a competition. */
+.lb-accas .lb-dot{background:conic-gradient(var(--pl),var(--eflc),var(--ll),var(--pl));
+  -webkit-mask:radial-gradient(circle,transparent 32%,#000 34%);
+  mask:radial-gradient(circle,transparent 32%,#000 34%)}
 /* ONE FILE, TWO ROUTES. today.html serves both `/` (today's matches) and
    /today (the season calendar); an early script in its head stamps
    <html data-route>. Anything marked data-for shows only on its own route.
@@ -150,7 +158,15 @@ html[data-theme="dark"].lg-all {--accent:#22d3ee;--ring:var(--accent)}
    The default hides nothing, so a document with no data-route (a saved copy,
    a crawler that ignores the head script) shows both rather than neither. */
 [data-route="home"] [data-for="season"],
-[data-route="season"] [data-for="home"]{display:none}
+[data-route="home"] [data-for="accas"],
+[data-route="season"] [data-for="home"],
+[data-route="season"] [data-for="accas"],
+[data-route="accas"] [data-for="home"],
+[data-route="accas"] [data-for="season"]{display:none}
+/* The fixture list is shared by the two match routes and belongs to neither
+   alone, so it is hidden by route rather than tagged data-for. /accas is about
+   the slips; a reader who wants the matches has two routes that are. */
+[data-route="accas"] #listCard{display:none}
 
 /* All four have to FIT. At full length the row needs 625px and the widest
    iPhone is 430, so "La Liga" and "Today" sat off the right edge on every
@@ -538,6 +554,16 @@ a.fx-teams:focus-visible{outline:2px solid var(--ring);outline-offset:3px;border
   letter-spacing:.05em;text-transform:uppercase}
 .acca-grp .acca-leg{margin-top:6px}
 .acca-grp .acca-leg:first-of-type{margin-top:0}
+/* A DOUBLE or a TREBLE inside a group: its own legs and its own price. Boxed
+   rather than run together, because two combos over an overlapping set of the
+   same three men read as one list of five legs otherwise — and the whole point
+   of showing both is that they are different bets. */
+.acca-combo{margin-top:10px;padding:10px;border:1px solid var(--line);
+  border-radius:11px;background:var(--surface-2)}
+.acca-combo:first-of-type{margin-top:0}
+.acca-combo .acca-leg{margin-top:6px}
+.acca-combo-h{margin:0 0 7px;font-size:11px;font-weight:800;color:var(--text-2);
+  letter-spacing:.06em;text-transform:uppercase}
 /* WHEN the leg plays. On the row rather than only in the header, because a
    nine-fold spans a whole round — this one runs Friday to Monday — and "which
    of these is tonight" is not answerable from a date range alone. Tabular

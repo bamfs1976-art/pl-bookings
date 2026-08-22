@@ -262,7 +262,10 @@ const today = read('today.html');
    found the WRITE in render() first, which sets the hash to 'all' or 'd=…',
    so both strings were present there and deleting the entire deep-link
    handler still passed. Two different sites, same two literals. */
-const hashBlock = /String\(location\.hash[\s\S]{0,500}/.exec(today);
+/* Widened from 500 when #accas got a route of its own: the two deep links are
+   now two branches with a note between them, and the second literal sat past
+   the old window — which reads exactly like the handler having been deleted. */
+const hashBlock = /String\(location\.hash[\s\S]{0,900}/.exec(today);
 assert.ok(hashBlock, 'today.html never reads location.hash, so the deep links ' +
   'the other desks point at do nothing');
 assert.ok(/'all'/.test(hashBlock[0]),
