@@ -2,11 +2,11 @@
 // Premier League 2026-27: 380 fixtures, 10 with a referee appointed.
 const PL_FIXTURES = [
   {id:1557367,d:"2026-08-21T19:00:00+00:00",r:1,h:"ARS",a:"COV",ref:"Thomas Bramall",st:"FT"},
-  {id:1557368,d:"2026-08-22T11:30:00+00:00",r:1,h:"HUL",a:"MUN",ref:"D. England",st:"NS"},
-  {id:1557369,d:"2026-08-22T14:00:00+00:00",r:1,h:"EVE",a:"CRY",ref:"P. Tierney",st:"NS"},
-  {id:1557370,d:"2026-08-22T14:00:00+00:00",r:1,h:"IPS",a:"SUN",ref:"F. Hallam",st:"NS"},
-  {id:1557371,d:"2026-08-22T14:00:00+00:00",r:1,h:"NFO",a:"LEE",ref:"R. Jones",st:"NS"},
-  {id:1557372,d:"2026-08-22T16:30:00+00:00",r:1,h:"BRE",a:"TOT",ref:"M. Oliver",st:"NS"},
+  {id:1557368,d:"2026-08-22T11:30:00+00:00",r:1,h:"HUL",a:"MUN",ref:"Darren England",st:"FT"},
+  {id:1557369,d:"2026-08-22T14:00:00+00:00",r:1,h:"EVE",a:"CRY",ref:"Paul Tierney",st:"FT"},
+  {id:1557370,d:"2026-08-22T14:00:00+00:00",r:1,h:"IPS",a:"SUN",ref:"Farai Hallam",st:"FT"},
+  {id:1557371,d:"2026-08-22T14:00:00+00:00",r:1,h:"NFO",a:"LEE",ref:"Robert Jones",st:"FT"},
+  {id:1557372,d:"2026-08-22T16:30:00+00:00",r:1,h:"BRE",a:"TOT",ref:"Michael Oliver",st:"FT"},
   {id:1557373,d:"2026-08-23T13:00:00+00:00",r:1,h:"BHA",a:"AVL",ref:"P. Bankes",st:"NS"},
   {id:1557374,d:"2026-08-23T13:00:00+00:00",r:1,h:"MCI",a:"BOU",ref:"J. Gillett",st:"NS"},
   {id:1557375,d:"2026-08-23T15:30:00+00:00",r:1,h:"NEW",a:"LIV",ref:"S. Attwell",st:"NS"},
