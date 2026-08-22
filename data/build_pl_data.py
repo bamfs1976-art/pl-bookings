@@ -349,8 +349,22 @@ def club_short_by_fpl_id(teams):
     return by_id, unmapped
 
 
-def reconcile_squads(rows, squads=None):
+def reconcile_squads(rows, squads=None, transfers=None):
     """Move, add and retire players so the squads are THIS season's.
+
+    TWO SOURCES, IN ORDER. The FPL feed decides first, then the committed
+    overlay of moves the feed has not caught up with (data/transfers.json)
+    gets the last word. The order is not a preference, it is a correctness
+    requirement: the overlay names players the feed still lists, so running it
+    FIRST would delete a row that the feed pass then re-created as an arrival —
+    the player would come back, on basis NEW, with his card rate thrown away.
+    """
+    rows = _reconcile_against_feed(rows, squads)
+    return apply_transfers(rows, transfers)
+
+
+def _reconcile_against_feed(rows, squads=None):
+    """The FPL pass: who the free feed says is where.
 
     THE FAILURE THIS EXISTS FOR. The player-to-club mapping for the seventeen
     established clubs comes from the ScoutingStats harvest, which needs a
@@ -511,6 +525,133 @@ def reconcile_squads(rows, squads=None):
     for r in ambiguous:
         print(f"    AMBIGUOUS, left at {r['c']}: {r['n']}")
     return out
+
+
+def apply_transfers(rows, entries=None, league="PL"):
+    """Moves the free feed has not caught up with yet.
+
+    WHY THIS EXISTS, given that reconcile_squads already follows a live feed.
+    FPL's bootstrap is current for most purposes and it is what decides squad
+    membership — but it is not instant. A player can be gone from a club for
+    days while the feed still lists him, and for those days the desk prices him
+    at a club he has left. Cristian Romero was the case that prompted this: the
+    22 August refresh ran cleanly against a 600-player feed, dropped the 43
+    players the feed no longer had, and kept him at Tottenham, because as far
+    as FPL was concerned he was still there.
+
+    AND IT CANNOT BE A HAND EDIT. data/pl_data.js is rewritten by the refresh
+    workflow three times a day, so a row deleted by hand is back within eight
+    hours. That is the same reason data/appointments.json exists for referees,
+    and this file is the same shape of answer: committed evidence, re-applied
+    on every build.
+
+    THE PRECEDENCE IS THE OPPOSITE WAY ROUND from appointments, on purpose.
+    There the harvest runs three times a day and the overlay is a snapshot, so
+    the harvest wins. Here the overlay is a person who has read the news and
+    the feed is the one lagging, so the overlay wins — which makes it far more
+    dangerous, and everything below is the containment:
+
+      - it MOVES OR REMOVES an existing row and can never create one. An entry
+        naming nobody is reported, not invented; a booking model that prices a
+        player who does not exist is worse than one that is a week stale.
+      - it matches on the same whole-name rule as the feed pass, UNIQUE OR
+        NOTHING. Surname alone would price a fixture off a namesake.
+      - it checks `from`. If the dataset already has the player somewhere else,
+        the entry is stale or wrong and is reported rather than applied — this
+        is what stops an old entry dragging a player back out of the club he
+        has since joined.
+      - it says when an entry has become REDUNDANT, so entries get deleted once
+        the feed agrees instead of accumulating into a second, unreviewed
+        source of truth.
+    """
+    if entries is None:
+        entries = load_transfers()
+    entries = [e for e in entries
+               if str(e.get("league") or "PL").upper() == league.upper()]
+    if not entries:
+        return rows
+
+    applied, redundant, disagreed, unmatched, ambiguous = [], [], [], [], []
+    out = list(rows)
+    for e in entries:
+        toks = name_tokens(e.get("player"))
+        if not toks:
+            continue
+        frm, to = e.get("from"), e.get("to")
+        hits = [r for r in out if same_tokens(toks, name_tokens(r.get("n")))]
+
+        if not hits:
+            # Already gone, or never here. Either way there is nothing to do
+            # and the entry has done its job or was never needed.
+            redundant.append(f"{e['player']} — no row in the dataset")
+            continue
+        if len(hits) > 1:
+            ambiguous.append(f"{e['player']} matches {len(hits)} rows "
+                             f"({', '.join(sorted(r['c'] for r in hits))})")
+            continue
+
+        row = hits[0]
+        if to and row["c"] == to:
+            redundant.append(f"{e['player']} — the feed already has him at {to}")
+            continue
+        if frm and row["c"] != frm:
+            disagreed.append(f"{e['player']}: the overlay says he left {frm}, "
+                             f"the dataset has him at {row['c']}")
+            continue
+
+        if not to:
+            out = [r for r in out if r is not row]
+            applied.append(f"{e['player']} {row['c']} -> out of the division")
+            continue
+
+        # A move within the division. Same rule as the feed pass: the club
+        # identity comes from the CODE and every trace of the old club goes,
+        # or build_clubs names the destination after the club he left.
+        clash = [r for r in out
+                 if r is not row and r["c"] == to
+                 and same_tokens(toks, name_tokens(r.get("n")))]
+        if clash:
+            disagreed.append(f"{e['player']}: {to} already has a row for him, "
+                             "so the move would duplicate rather than move")
+            continue
+        applied.append(f"{e['player']} {row['c']} -> {to}")
+        row["c"] = to
+        row["_club"] = NAME_BY_SHORT.get(to)
+        row["_tid"] = None
+        row["_img"] = None
+
+    if applied or disagreed or ambiguous or redundant:
+        print(f"data/transfers.json: {len(applied)} applied, "
+              f"{len(redundant)} redundant, {len(disagreed)} refused, "
+              f"{len(ambiguous)} ambiguous.")
+    for line in applied:
+        print(f"    OVERLAY {line}")
+    for line in redundant:
+        print(f"    REDUNDANT — delete this entry: {line}")
+    for line in disagreed:
+        # Loud: an entry that no longer describes the dataset is the one that
+        # will eventually move somebody to the wrong club.
+        print(f"    REFUSED {line}")
+    for line in ambiguous:
+        print(f"    AMBIGUOUS, left alone: {line}")
+    return out
+
+
+def load_transfers():
+    """The committed transfer overlay, or nothing."""
+    path = DATA / "transfers.json"
+    if not path.exists():
+        return []
+    try:
+        payload = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, ValueError) as exc:
+        # Loud and empty, like the appointments overlay: a corrupt file must
+        # not silently become "no transfers", which is a squad list quietly
+        # reverting to whatever the feed last said.
+        print(f"  WARNING: transfers.json could not be read ({exc}) — "
+              "no overlay applied")
+        return []
+    return payload.get("transfers") or []
 
 
 def mk(p, basis, resolve=None):

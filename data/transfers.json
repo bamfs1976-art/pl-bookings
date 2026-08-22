@@ -1,0 +1,14 @@
+{
+ "note": "Moves the free squad feeds have not caught up with, laid over the harvested squads by build_pl_data.apply_transfers. The overlay WINS here — unlike appointments.json, where the harvest wins — because this is a person who has read the news and the feed is the one lagging. Every entry is deleted once the feed agrees; the build prints REDUNDANT when that has happened.",
+ "transfers": [
+  {
+   "league": "PL",
+   "player": "Cristian Romero",
+   "from": "TOT",
+   "to": null,
+   "date": "2026-08-22",
+   "source": "reported by the desk owner. NOT yet in the FPL bootstrap feed: the 22 August refresh read 600 players across 20 clubs, retired the 43 the feed no longer carried, and kept Romero at Tottenham.",
+   "why_null": "The departure was reported without a destination. `to: null` means only that he is no longer in this division, which is what is actually known — naming a club would be a guess, and a guess here prices another club's fixtures off his card rate. If he has in fact joined a Premier League club, set `to` to that club's code and his rate travels with him."
+  }
+ ]
+}

@@ -32,6 +32,12 @@ data/*.json
 # division that silently reverts to pricing every fixture at a neutral referee
 # on the next scheduled run.
 !data/appointments.json
+# ...and the TRANSFER OVERLAY, for exactly the same reason one step earlier in
+# the pipeline. data/pl_data.js is rebuilt from the harvest three times a day,
+# so a player removed by hand is back within eight hours; this file is the only
+# record of a move the free feed has not published yet. Uncommitted, it is not
+# a lost convenience but a squad list that silently reverts.
+!data/transfers.json
 # ...and La Liga's CLUB REGISTRY, which is not an intermediate at all: it is
 # how that division is defined. Spain's twenty are discovered from the feed
 # rather than declared in leagues.py, so this file is the only record of which
