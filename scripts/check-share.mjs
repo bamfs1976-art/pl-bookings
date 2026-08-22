@@ -593,12 +593,7 @@ function codeOnly(src) {
     .replace(/(^|[^:])\/\/.*$/gm, '$1');
 }
 
-/* THE /today PAGE IS TWO FILES NOW. Its cross-league engine — the frames, the
-   per-fixture pricing, the day index — moved to assets/deskboards.js so the
-   /accas page could price the same fixtures without a second engine. These
-   assertions are about that code, so they read both halves. */
-const todaySrc = readFileSync(join(root, 'today.html'), 'utf8')
-  + '\n' + readFileSync(join(root, 'assets', 'deskboards.js'), 'utf8');
+const todaySrc = readFileSync(join(root, 'today.html'), 'utf8');
 assert.ok(todaySrc.includes('__data'),
   'today.html must read the frame\'s published __data — contentWindow.CLUBS is ' +
   'always undefined for a top-level const');

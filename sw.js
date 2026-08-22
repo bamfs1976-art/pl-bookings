@@ -40,7 +40,6 @@ const SHELL = [
      Offline it is the difference between a backtest and an apology. */
   '/data/pl_backtest_2526.js',
   '/assets/accas.js',
-  '/assets/deskboards.js',
   '/assets/rotation.js',
   '/assets/core.js',
   '/assets/save.js',
