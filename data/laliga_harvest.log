@@ -1,4 +1,4 @@
-La Liga harvest — run 112
+La Liga harvest — run 113
 == discover ==
 La Liga: API-Football league 140, season 2026
 
@@ -63,14 +63,14 @@ La Liga: API-Football league 140, season 2026
     Osasuna                      0 players
     Racing Santander            23 players
     Rayo Vallecano              23 players
-    Real Betis                   0 players
+    Real Betis                  21 players
     Real Madrid                  0 players
-    Real Sociedad                0 players
+    Real Sociedad               23 players
     Sevilla                     23 players
     Valencia                     0 players
     Villarreal                  23 players
 
-laliga_season_cards.json written (273 players from 20 clubs, API-Football, LL season 2026)
+laliga_season_cards.json written (317 players from 20 clubs, API-Football, LL season 2026)
 == segunda ==
 Segunda División: API-Football league 141, season 2025
   not in this desk's club list (19): AD Ceuta FC, Albacete, Almeria, Burgos, Cadiz, Castellón, Cordoba, Cultural Leonesa, Eibar, FC Andorra, Granada CF, Huesca, Las Palmas, Leganes, Mirandes, Real Sociedad II, Sporting Gijon, Valladolid, Zaragoza
@@ -103,7 +103,7 @@ club rates from mirror (380 matches)
 players: 783  by basis: LL=673, SEG=110
 clubs with players: 20 of 20
 club rates from match records: 17 of 20
-season cautions (2026-27): 203 players
+season cautions (2026-27): 245 players
 referees: 20
 RESULT: WRITTEN laliga_data.js
 == referee-join ==

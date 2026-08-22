@@ -3,8 +3,8 @@
 // their players without a Championship rate are flagged NEW, rates null.
 const SUSPENSION = {"kind": "ladder", "cumulative": true, "review": 20, "rungs": [{"at": 5, "ban": 1, "by": 19}, {"at": 10, "ban": 2, "by": 32}, {"at": 15, "ban": 3, "by": null}]};
 const CLUBS = [
-  {short:"TOT",name:"Tottenham Hotspur",img:"https://cdn.sportmonks.com/images/soccer/teams/6/6.png",basis:"PL",ca:2.74,caH:3.0,caA:2.48,fm:12.3,squad:36},
   {short:"CHE",name:"Chelsea",img:"https://cdn.sportmonks.com/images/soccer/teams/18/18.png",basis:"PL",ca:2.68,caH:2.51,caA:2.85,fm:12.5,squad:38},
+  {short:"TOT",name:"Tottenham Hotspur",img:"https://cdn.sportmonks.com/images/soccer/teams/6/6.png",basis:"PL",ca:2.47,caH:2.71,caA:2.23,fm:11.4,squad:35},
   {short:"SUN",name:"Sunderland",img:"https://cdn.sportmonks.com/images/soccer/teams/3/3.png",basis:"PL",ca:1.97,caH:1.8,caA:2.14,fm:9.1,squad:25},
   {short:"MCI",name:"Manchester City",img:"https://cdn.sportmonks.com/images/soccer/teams/9/9.png",basis:"PL",ca:1.87,caH:1.62,caA:2.12,fm:10.8,squad:30},
   {short:"BHA",name:"Brighton & Hove Albion",img:"https://cdn.sportmonks.com/images/soccer/teams/14/78.png",basis:"PL",ca:1.79,caH:1.42,caA:2.16,fm:10.2,squad:31},
@@ -592,7 +592,6 @@ const PL_PLAYERS = [
   {c:"TOT",n:"James Maddison",p:"MF",min:34,yc:0,rc:0,y:0.0,f:2.65,fw:1.452,r:2.65,ls:true,b:"PL"},
   {c:"TOT",n:"Ben Davies",p:"DF",min:138,yc:1,rc:0,y:0.652,f:1.3,fw:null,r:2.604,ls:true,b:"PL"},
   {c:"TOT",n:"Lucas Bergvall",p:"MF",min:974,yc:2,rc:0,y:0.185,f:2.22,fw:0.644,r:2.59,ls:false,b:"PL"},
-  {c:"TOT",n:"Cristian Romero",p:"DF",min:1876,yc:10,rc:1,y:0.48,f:1.54,fw:0.769,r:2.5,ls:false,b:"PL"},
   {c:"TOT",n:"Pape Matar Sarr",p:"MF",min:1388,yc:3,rc:0,y:0.195,f:1.88,fw:0.83,r:2.27,ls:false,b:"PL"},
   {c:"TOT",n:"Kevin Danso",p:"DF",min:1500,yc:8,rc:0,y:0.48,f:1.26,fw:0.77,r:2.22,ls:false,b:"PL"},
   {c:"TOT",n:"Conor Gallagher",p:"MF",min:1191,yc:2,rc:0,y:0.151,f:1.89,fw:1.731,r:2.192,ls:false,b:"PL"},
