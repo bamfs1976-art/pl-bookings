@@ -39,6 +39,7 @@ const SHELL = [
   /* The 2025/26 match record the Methodology view scores the model against.
      Offline it is the difference between a backtest and an apology. */
   '/data/pl_backtest_2526.js',
+  '/assets/accas.js',
   '/assets/rotation.js',
   '/assets/core.js',
   '/assets/save.js',

@@ -1746,6 +1746,7 @@ License: MIT
      referee table, so no new dependency and no new licence. Built by
      scripts/build-backtest-2526.mjs. -->
 <script src="data/pl_backtest_2526.js"></script>
+<script src="assets/accas.js"></script>
 <script src="assets/rotation.js"></script>
 <script src="assets/core.js"></script>
 <script src="assets/save.js"></script>
@@ -2754,9 +2755,9 @@ async function exportFixturePNG(fid){
   x.fillStyle="#8b94a5"; x.font=`700 16px ${body}`;
   x.fillText("ACCA BUILDER · SAME MATCH",P,ay-18);
   x.textAlign="right"; x.fillText("ALL BOOKED",W-P,ay-18); x.textAlign="left";
-  const accaRows=[];
-  if(top3.length>=2) accaRows.push({tag:"DOUBLE",legs:top3.slice(0,2)});
-  if(top3.length>=3) accaRows.push({tag:"TREBLE",legs:top3.slice(0,3)});
+  // The combo rule lives in assets/accas.js — one implementation for the two
+  // builders on this card, the one in assets/share.js and the /accas page.
+  const accaRows=PLDAccas.comboRows(top3);
   if(!accaRows.length){ x.fillStyle="#586275"; x.font=`600 22px ${body}`; x.fillText("Not enough rated players for a combo.",P,ay+34); }
   const arh=120;
   accaRows.forEach((row,i)=>{
@@ -2818,9 +2819,7 @@ async function exportGameweekPNG(gw){
   x.fillStyle="#8b94a5"; x.font=`700 16px ${body}`;
   x.fillText("ACCA BUILDER · CROSS-MATCH",P,ay-18);
   x.textAlign="right"; x.fillText("ALL BOOKED",W-P,ay-18); x.textAlign="left";
-  const accaRows=[];
-  if(legPool.length>=2) accaRows.push({tag:"DOUBLE",legs:legPool.slice(0,2)});
-  if(legPool.length>=3) accaRows.push({tag:"TREBLE",legs:legPool.slice(0,3)});
+  const accaRows=PLDAccas.comboRows(legPool);
   if(!accaRows.length){ x.fillStyle="#586275"; x.font=`600 22px ${body}`; x.fillText("Not enough rated players for a combo.",P,ay+34); }
   const arh=118;
   accaRows.forEach((row,i)=>{

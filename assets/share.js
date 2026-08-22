@@ -214,33 +214,24 @@
      says so. Cross-match legs are much closer to genuinely independent, which
      is why the combined and matchday cards can carry the same strip honestly. */
   function accaStrip(x, th, legs, y, heading, rightLabel) {
-    /* ONE LEG PER PLAYER. Multiplying a player's probability by his own is not
-       a combo, it is the same event counted twice, and it prices a treble at a
-       number no book would ever offer. It cannot arise on a single date — a
-       player appears once — but a card drawn across DATES picks the same name
-       off several of them, and the first calendar card built a treble reading
-       "Lundstram + Cuenca + Lundstram". Deduped here rather than in the
-       callers, because no caller ever wants the alternative.
+    /* ONE LEG PER PLAYER, and the cut to three AFTER that — the rule that
+       stopped a calendar card printing "Lundstram + Cuenca + Lundstram", and
+       the one that stopped it printing "not enough rated players for a combo"
+       over eight rated fixtures.
 
-       Deduping BEFORE the cut to three, never after. Slicing first and
-       deduping the slice is what the calendar card did at first: its four
-       hottest legs were the same player four times, which deduped to one and
-       printed "Not enough rated players for a combo" on a card listing eight
-       rated fixtures. Callers therefore pass the whole list and the cut
-       happens here. */
-    var seen = {};
-    legs = (legs || []).filter(function (l) {
-      var id = (l && l.name) + '|' + (l && l.club);
-      if (!l || seen[id]) return false;
-      seen[id] = 1; return true;
-    }).slice(0, 3);
+       IT LIVES IN assets/accas.js NOW. It was here, and separately inline in
+       index.html twice, and only this copy had the de-duplication — the other
+       two were correct only because their inputs happened to hold one leg per
+       player. The /accas page renders the same combos as HTML, which would
+       have made a fourth copy. */
+    var A = root.PLDAccas
+      || (typeof require === 'function' ? require('./accas.js') : null);
+    if (!A) throw new Error('share.js needs assets/accas.js loaded before it');
+    var rows = A.comboRows(legs);
     x.fillStyle = '#8b94a5'; x.font = '700 16px ' + BODY;
     x.fillText(heading, P, y - 18);
     x.textAlign = 'right'; x.fillText(rightLabel, W - P, y - 18); x.textAlign = 'left';
 
-    var rows = [];
-    if (legs.length >= 2) rows.push({ tag: 'DOUBLE', legs: legs.slice(0, 2) });
-    if (legs.length >= 3) rows.push({ tag: 'TREBLE', legs: legs.slice(0, 3) });
     if (!rows.length) {
       x.fillStyle = '#586275'; x.font = '600 22px ' + BODY;
       x.fillText('Not enough rated players for a combo.', P, y + 34);
