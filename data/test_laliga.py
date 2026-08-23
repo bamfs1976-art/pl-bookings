@@ -625,6 +625,9 @@ def _rfef_legal_names_map_to_the_registry():
         # prefix nor a strippable ending.
         ("Real Betis Balompié", "BET"),
         ("Real Sociedad de Fútbol", "RSO"),
+        # Jornada 2's later sheets: a legal prefix plus a city.
+        ("Club Atlético de Madrid", "ATM"),
+        ("RC Celta de Vigo", "CEL"),
     ):
         got = L.laliga_short(published)
         assert got == short, f"{published!r} -> {got!r}, expected {short!r}"

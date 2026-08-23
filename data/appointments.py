@@ -220,11 +220,43 @@ def _by_run(first, surnames, by_fold):
     initial and a surname is not a lookup — resolving one to the other prices
     a fixture off a colleague's card rate and looks entirely correct on the
     page, which is the single worst outcome this function can produce.
+
+    THE FORENAME IS COMPARED IN FULL WHERE BOTH SIDES HAVE ONE. Matching on the
+    initial alone is what an abbreviated feed needs — "A. Cordero" carries
+    nothing else — but it throws away information when the publisher spelt the
+    name out, and that cost a real appointment: the CTA named JUAN Martínez for
+    Getafe v Racing, and against a table holding both "Juan Martinez Munuera"
+    and "José María Sánchez Martínez" the initial rule found two J-somethings
+    whose surnames run with "martinez", called it ambiguous, and left the
+    fixture at the league rate. Only one of them is Juan.
+
+    So: two full forenames must be EQUAL, and an initial on either side still
+    compares as an initial. That is strictly more specific than before — it can
+    only ever reject a candidate the old rule accepted, never accept one it
+    rejected — so it cannot introduce a wrong match, and the "unique or nothing"
+    bar below is untouched.
     """
+    def forename_ok(theirs):
+        # A FULL published forename cannot be confirmed by a table entry that
+        # only carries an initial. "Jordan Smith" against a table holding
+        # "J Smith", "James Smith" and "Josh Smith" has exactly one entry
+        # spelled "J Smith" and no way to say which of the two men it is —
+        # _by_initial refuses that shape above, with its reasoning written out,
+        # and letting the run rule take it anyway would route around a refusal
+        # this file argues for. It costs nothing real: the positional rule has
+        # already tried and declined this shape by the time we get here.
+        if len(first) > 1 and len(theirs) == 1:
+            return False
+        # An abbreviated PUBLISHED name still matches on the initial — that is
+        # the harvested "J. Munuera" case, which has no more to give.
+        if len(first) == 1 or len(theirs) == 1:
+            return theirs[0] == first[0]
+        return theirs == first
+
     hits = []
     for folded, names in by_fold.items():
         bits = folded.split()
-        if len(bits) < 2 or bits[0][0] != first[0]:
+        if len(bits) < 2 or not forename_ok(bits[0]):
             continue
         theirs = bits[1:]
         if _run_in(surnames, theirs) or _run_in(theirs, surnames):

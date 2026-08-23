@@ -6,7 +6,8 @@
   "https://rfef.es/sites/default/files/designaciones_1a_division_masculina_-_temp_2026-27_-_jornada_1_sabado15.pdf",
   "https://www.efl.com/news/2026/august/11/referee-appointments--14-20-august/",
   "rfef.es — CTA designation sheet, Primera División, 19-08-2026 (supplied as a screenshot; exact PDF URL not captured)",
-  "rfef.es — CTA designation sheet, Primera División, Jornada 2, issued Las Rozas 18-08-2026 (supplied as a screenshot; exact PDF URL not captured)"
+  "rfef.es — CTA designation sheet, Primera División, Jornada 2, issued Las Rozas 18-08-2026 (supplied as a screenshot; exact PDF URL not captured)",
+  "rfef.es — CTA designation sheets, Primera División, Jornada 2, 22 and 23 August, issued Las Rozas 18-08-2026 (supplied as screenshots; exact PDF URLs not captured)"
  ],
  "appointments": [
   {
@@ -228,6 +229,72 @@
    "refResolved": "Isidro Diaz de Mera Escuderos",
    "resolvedBy": "run",
    "source": "rfef.es — CTA designation sheet, Primera División, Jornada 2, issued Las Rozas 18-08-2026 (supplied as a screenshot; exact PDF URL not captured)"
+  },
+  {
+   "league": "LL",
+   "date": "2026-08-22",
+   "h": "ATH",
+   "a": "SEV",
+   "ko": "17:00",
+   "ref": "César Soto",
+   "refResolved": "César Soto Grado",
+   "resolvedBy": "run",
+   "source": "rfef.es — CTA designation sheets, Primera División, Jornada 2, 22 and 23 August, issued Las Rozas 18-08-2026 (supplied as screenshots; exact PDF URLs not captured)"
+  },
+  {
+   "league": "LL",
+   "date": "2026-08-22",
+   "h": "ESP",
+   "a": "RMA",
+   "ko": "21:30",
+   "ref": "José María Sánchez",
+   "refResolved": "José María Sánchez Martínez",
+   "resolvedBy": "run",
+   "source": "rfef.es — CTA designation sheets, Primera División, Jornada 2, 22 and 23 August, issued Las Rozas 18-08-2026 (supplied as screenshots; exact PDF URLs not captured)"
+  },
+  {
+   "league": "LL",
+   "date": "2026-08-22",
+   "h": "VAL",
+   "a": "CEL",
+   "ko": "19:30",
+   "ref": "Jesús Gil",
+   "refResolved": "Jesus Gil Manzano",
+   "resolvedBy": "run",
+   "source": "rfef.es — CTA designation sheets, Primera División, Jornada 2, 22 and 23 August, issued Las Rozas 18-08-2026 (supplied as screenshots; exact PDF URLs not captured)"
+  },
+  {
+   "league": "LL",
+   "date": "2026-08-23",
+   "h": "ATM",
+   "a": "VIL",
+   "ko": "17:00",
+   "ref": "Alejandro José Hernández",
+   "refResolved": "Alejandro Hernandez",
+   "resolvedBy": "run",
+   "source": "rfef.es — CTA designation sheets, Primera División, Jornada 2, 22 and 23 August, issued Las Rozas 18-08-2026 (supplied as screenshots; exact PDF URLs not captured)"
+  },
+  {
+   "league": "LL",
+   "date": "2026-08-23",
+   "h": "ELC",
+   "a": "BAR",
+   "ko": "21:30",
+   "ref": "Alejandro Quintero",
+   "refResolved": "Alejandro Quintero Gonzalez",
+   "resolvedBy": "run",
+   "source": "rfef.es — CTA designation sheets, Primera División, Jornada 2, 22 and 23 August, issued Las Rozas 18-08-2026 (supplied as screenshots; exact PDF URLs not captured)"
+  },
+  {
+   "league": "LL",
+   "date": "2026-08-23",
+   "h": "GET",
+   "a": "RAC",
+   "ko": "19:30",
+   "ref": "Juan Martínez",
+   "refResolved": "Juan Martinez Munuera",
+   "resolvedBy": "run",
+   "source": "rfef.es — CTA designation sheets, Primera División, Jornada 2, 22 and 23 August, issued Las Rozas 18-08-2026 (supplied as screenshots; exact PDF URLs not captured)"
   }
  ]
 }
