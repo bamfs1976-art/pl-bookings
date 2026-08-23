@@ -5,7 +5,7 @@
 // through PLDCore.matchSquadName. A fixture absent from here prices off
 // squad minute-weights exactly as it always has — that is the normal
 // state until about an hour before kick-off, not a failure.
-// Fetched 2026-08-23T18:36Z.
+// Fetched 2026-08-23T19:25Z.
 //
 // THE GLOBAL IS NOT CALLED `LINEUPS`, and that is deliberate. index.html
 // already declares a top-level `const LINEUPS` for assets/lineup.js (the
@@ -14,7 +14,8 @@
 // a parse error, not a shadow: the whole inline script fails and the desk
 // renders blank. Read `window.LINEUP_SHEETS`.
 var __LINEUP_SHEETS = {
-  "1570348":{"GET":{start:["David Soria", "Djené", "Saba Sazonov", "Zaid Romero", "Francho Serrano", "Ramón Terrats", "Orel Mangala", "Andrés García", "Johan Mojica", "Enes Ünal", "Martín Satriano"],sub:["Diego Ferrer", "Jiří Letáček", "Abdel Abqar", "Davinchi", "Jean Ives Valou", "Curro Burgos", "Sebastián Boselli", "Oscar Lopez", "Alberto Risco", "Ebrahima Drammeh Jaiteh", "Borja Mayoral"]},"RAC":{start:["Julen Agirrezabala", "Alvaro Mantilla", "Pablo Ramón", "Manu Hernando", "Jorge Salinas", "Gustavo Puerta", "Sergio Martinez", "Andrés Martín", "Sergio Canales", "Iñigo Vicente", "Asier Villalibre"],sub:["Simon Eriksson", "Facundo González", "Carlos Sánchez", "Íñigo Sáinz-Maza", "Maguette Gueye", "Jorge Castellanos", "Iván Martín", "Diego Díaz", "Andrés Vallecillo", "Juan Carlos Arana", "Yassir Zabiri", "Hugo Pérez"]}},
+  "1570346":{"BAR":{start:["Joan García", "Xavi Espart", "Andreas Christensen", "Eric García", "Gerard Martín", "Gavi", "Marc Bernal", "Lamine Yamal", "Fermín López", "Raphinha", "Karim Adeyemi"],sub:["Eder Aller", "Wojciech Szczęsny", "Jules Koundé", "João Cancelo", "Jordi Pesquer", "Álvaro Cortés", "Pau Cubarsí", "Brian Fariñas", "Pedri", "Dani Olmo", "Hamza Abdelkarim", "Anthony Gordon"]},"ELC":{start:["Matías Dituro", "Buba Sangaré", "Víctor Chust", "Federico Redondo", "David Affengruber", "Germán Valera", "Tete Morente", "Gonzalo Villar", "Marc Aguado", "Ali Houary", "Fernando Niño"],sub:["Alejandro Iturbe", "Pedro Bigas", "Matia Barzić", "Lucas Cepeda", "Martim Neto", "Josan", "Facundo Buonanotte", "Grady Diangana", "Javi Morcillo", "Alvaro Padilla", "Ezequiel Ponce", "Umaru Konare Tounkara"]}},
+  "1570348":{"GET":{start:["David Soria", "Saba Sazonov", "Djené", "Zaid Romero", "Andrés García", "Ramón Terrats", "Orel Mangala", "Francho Serrano", "Johan Mojica", "Enes Ünal", "Martín Satriano"],sub:["Diego Ferrer", "Jiří Letáček", "Abdel Abqar", "Davinchi", "Jean Ives Valou", "Curro Burgos", "Sebastián Boselli", "Oscar Lopez", "Alberto Risco", "Ebrahima Drammeh Jaiteh", "Borja Mayoral"]},"RAC":{start:["Julen Agirrezabala", "Alvaro Mantilla", "Manu Hernando", "Pablo Ramón", "Jorge Salinas", "Sergio Martinez", "Gustavo Puerta", "Andrés Martín", "Sergio Canales", "Iñigo Vicente", "Asier Villalibre"],sub:["Simon Eriksson", "Facundo González", "Carlos Sánchez", "Íñigo Sáinz-Maza", "Maguette Gueye", "Jorge Castellanos", "Iván Martín", "Diego Díaz", "Andrés Vallecillo", "Juan Carlos Arana", "Yassir Zabiri", "Hugo Pérez"]}},
 };
 if (typeof module !== "undefined" && module.exports) module.exports = __LINEUP_SHEETS;
 if (typeof window !== "undefined") window.LINEUP_SHEETS = __LINEUP_SHEETS;
