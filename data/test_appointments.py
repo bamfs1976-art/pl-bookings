@@ -67,7 +67,7 @@ Assistants: Bradley Hall and James Wilson
 
 
 def _the_article_parses_into_fixtures():
-    rows, unknown = I.parse(ARTICLE)
+    rows, unknown, _ = I.parse(ARTICLE)
     assert len(rows) == 3, rows
     assert not unknown, unknown
     first = rows[0]
@@ -82,7 +82,7 @@ def _the_article_parses_into_fixtures():
 
 
 def _officials_who_are_not_the_referee_are_ignored():
-    rows, _ = I.parse(ARTICLE)
+    rows, _, _ = I.parse(ARTICLE)
     named = {r["ref"] for r in rows}
     # Andrew Kitchen is the fourth official at Wolves and a referee elsewhere.
     # A parser that took every name would appoint him to a match he is not
@@ -92,7 +92,7 @@ def _officials_who_are_not_the_referee_are_ignored():
 
 
 def _only_modelled_divisions_are_ingested():
-    rows, _ = I.parse(ARTICLE)
+    rows, _, _ = I.parse(ARTICLE)
     entries, skipped, problems = I.to_entries(rows, "http://example.test")
     assert not problems, problems
     assert len(entries) == 2, entries
@@ -102,7 +102,7 @@ def _only_modelled_divisions_are_ingested():
 
 
 def _an_unknown_heading_is_reported_not_swallowed():
-    rows, unknown = I.parse(
+    rows, unknown, _ = I.parse(
         "Saturday, 15th August 2026\n"
         "Sky Bet League Five\n"
         "Bristol City v Millwall (15:00)\n"
@@ -114,7 +114,7 @@ def _an_unknown_heading_is_reported_not_swallowed():
 
 
 def _a_club_it_cannot_map_is_reported_not_guessed():
-    rows, _ = I.parse("Saturday, 15th August 2026\nSky Bet Championship\n"
+    rows, _, _ = I.parse("Saturday, 15th August 2026\nSky Bet Championship\n"
                       "Real Madrid v Millwall (15:00)\nReferee: Lewis Smith\n")
     entries, _, problems = I.to_entries(rows, "x")
     assert not entries, entries
@@ -189,6 +189,70 @@ def _a_full_forename_beats_a_shared_initial():
 
 t("a full forename beats a shared initial, without routing around the initial "
   "rule", _a_full_forename_beats_a_shared_initial)
+
+
+def _the_efls_other_publication_format_parses():
+    """The EFL publishes these two ways and both have now arrived.
+
+    The format already handled: "Saturday, 15th August 2026" and "(15:00)".
+    The one that turned up for 22-23 August: "Saturday 22 August" — no comma,
+    no ordinal, NO YEAR — with "(12:30pm)" and a bare "(3pm)". Every fixture in
+    the round failed to parse, which reads as an empty article rather than as
+    an unsupported layout.
+    """
+    text = ("Saturday 22 August\n"
+            "Sky Bet Championship\n"
+            "Birmingham City v Bristol City (12:30pm)\n"
+            "Referee: Will Finnie\n"
+            "Blackburn Rovers v Middlesbrough (3pm)\n"
+            "Referee: Tom Reeves\n"
+            "Sunday 23 August\n"
+            "Sky Bet Championship\n"
+            "West Bromwich Albion v Burnley (12pm)\n"
+            "Referee: Anthony Backhouse\n")
+    rows, unknown, undated = I.parse(text, default_year=2026)
+    assert len(rows) == 3, rows
+    assert not unknown and not undated, (unknown, undated)
+    assert [r["date"] for r in rows] == ["2026-08-22", "2026-08-22", "2026-08-23"]
+    # STORED AS 24-HOUR. The overlay is read by a build and a desk, not a
+    # person, and "3:00" for a 15:00 kick-off is a fixture that looks like it
+    # starts in the morning.
+    assert [r["ko"] for r in rows] == ["12:30", "15:00", "12:00"], [r["ko"] for r in rows]
+
+    # THE YEAR IS REFUSED, NOT GUESSED. "This year" is wrong for half of every
+    # season — a January round belongs to the year after the August one — so
+    # without --year the dates are dropped and the heading is reported.
+    rows2, _, undated2 = I.parse(text)
+    assert undated2 == ["Saturday 22 August", "Sunday 23 August"], undated2
+    assert all(r["date"] is None for r in rows2), rows2
+    # ...and to_entries then refuses them rather than writing a dateless entry.
+    entries, _, problems = I.to_entries(rows2, "x")
+    assert not entries and len(problems) == 3, (entries, problems)
+
+    # A heading that DOES carry a year keeps it, whatever --year says.
+    rows3, _, _ = I.parse("Saturday, 15th August 2025\nSky Bet Championship\n"
+                          "Millwall v Norwich City (15:00)\nReferee: Sam Allison\n",
+                          default_year=2026)
+    assert rows3[0]["date"] == "2025-08-15", rows3
+
+
+def _twelve_hour_kickoffs_convert():
+    assert I._ko24("12", "30", "pm") == "12:30"   # midday is not 24:30
+    assert I._ko24("12", None, "am") == "00:00"   # ...nor is midnight 12:00
+    assert I._ko24("3", None, "pm") == "15:00"
+    assert I._ko24("9", None, "am") == "09:00"
+    assert I._ko24("19", "45", None) == "19:45"   # already 24-hour, untouched
+    # A bare hour with no meridiem: football's own convention settles it.
+    # Nobody kicks off at 03:00, and reading it that way would put a Saturday
+    # afternoon fixture on the previous night.
+    assert I._ko24("3", None, None) == "15:00"
+    assert I._ko24("12", None, None) == "12:00"
+
+
+t("the EFL's other publication format parses, and refuses to guess a year",
+  _the_efls_other_publication_format_parses)
+t("twelve-hour kick-offs convert, midday and midnight included",
+  _twelve_hour_kickoffs_convert)
 
 
 def _an_unknown_official_is_left_as_published():
@@ -581,6 +645,21 @@ def _an_abbreviated_harvest_yields_to_the_sheet_that_named_the_man():
     assert not A.supersedes("Adrian Cordero Vega", "Jesus Gil Manzano", set(LL))
     # REFUSED — the harvested name already prices. Fresher AND priceable wins.
     assert not A.supersedes("Juan Martinez Munuera", "José Luis Munuera Montero", set(LL))
+
+    # REFUSED — AND THIS IS THE ONE THAT SHIPPED WRONG. The Championship table
+    # records officials by INITIAL ("W Finnie") and API-Football harvests them
+    # in FULL ("Will Finnie"). No full name is a table key, so a condition
+    # written as `harvested in known` passed and the overlay swapped eight
+    # fixtures' referees for the initial form — gaining no card record, because
+    # the desk already resolved the full name, and losing the man's forename
+    # off the page. "Reaches a rate" is the question, never "is a key".
+    EFLC = {"W Finnie", "T Reeves", "E Duckworth", "S Martin", "A Backhouse"}
+    assert not A.supersedes("Will Finnie", "W Finnie", EFLC), (
+        "the overlay shortened a name the desk could already price")
+    assert not A.supersedes("Edward Duckworth", "E Duckworth", EFLC)
+    # ...and the same in reverse: an abbreviation the desk resolves is not
+    # upgraded either, because nothing is gained by that swap either.
+    assert not A.supersedes("A. Backhouse", "Anthony Backhouse", EFLC)
     # REFUSED — an abbreviation of somebody else entirely.
     assert not A.supersedes("J. Manzano", "José Luis Munuera Montero", set(LL))
     # REFUSED — neither spelling prices, so swapping them would only hide that
