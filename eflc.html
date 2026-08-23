@@ -112,6 +112,7 @@
   <div class="leaguebar-in">
     <a class="lb-item lb-today" href="/"><span class="lb-dot"></span><span class="lb-full">Today's matches</span><span class="lb-abbr">Today</span></a>
     <a class="lb-item lb-accas" href="/accas"><span class="lb-dot"></span><span class="lb-full">Accas</span><span class="lb-abbr">Accas</span></a>
+    <a class="lb-item lb-derbies" href="/derbies"><span class="lb-dot"></span><span class="lb-full">Derbies</span><span class="lb-abbr">Derbies</span></a>
     <a class="lb-item lb-pl" href="/pl"><span class="lb-dot"></span><span class="lb-full">Premier League</span><span class="lb-abbr">PL</span></a>
     <a class="lb-item lb-eflc" href="/eflc" aria-current="page"><span class="lb-dot"></span><span class="lb-full">Championship</span><span class="lb-abbr">Championship</span></a>
     <a class="lb-item lb-ll" href="/laliga"><span class="lb-dot"></span><span class="lb-full">La Liga</span><span class="lb-abbr">La Liga</span></a>
@@ -131,7 +132,9 @@
       <span class="cn-dots" aria-hidden="true"><i></i><i></i><i></i></span>
       <span>Playing the same day as the other divisions? <a href="/">Today&rsquo;s combined card</a>
       ranks every league&rsquo;s matches on one date, with one share card across the lot &mdash; or open the
-      <a href="/today">whole-season calendar</a>. <button type="button" class="linkish" data-open-tour>How to read this page</button></span>
+      <a href="/today">whole-season calendar</a>, or every
+      <a href="/derbies">derby in the three divisions</a> in date order.
+      <button type="button" class="linkish" data-open-tour>How to read this page</button></span>
     </p>
     <div class="stats" id="stats"></div>
   </section>
@@ -1664,38 +1667,30 @@
    * A derby is carded more than the same two clubs would be otherwise, and the
    * Premier League desk has priced that for a while. The list is editorial —
    * there is no feed for "these two dislike each other" — and it is written
-   * down here rather than inferred from distance, because Sevilla v Betis and
-   * two clubs that merely share a city are not the same thing.
-   */
-  var DERBIES = [
-    /* Every pair below is a recognised local rivalry between two clubs that
-       are BOTH in the division this season. Editorial, because there is no
-       feed for "these two dislike each other" — and checked against the
-       shipped club list, because a guessed short code produces a derby that
-       does not exist. The first version of this list flagged Bristol City v
-       Millwall, which is not one. */
-    ['BLB','BUR'],   /* East Lancashire */
-    ['BLB','PRE'],   /* Lancashire */
-    ['BUR','PRE'],   /* Lancashire */
-    ['BOL','BLB'],   /* Lancashire */
-    ['BOL','PRE'],   /* Lancashire */
-    ['BRC','CAR'],   /* Severnside */
-    ['BRC','SWA'],   /* Severnside */
-    ['CAR','SWA'],   /* South Wales */
-    ['CHA','MIL'],   /* South London */
-    ['MIL','WHU'],   /* Dockers */
-    ['POR','SOU'],   /* South Coast */
-    ['BIR','WBA'],   /* West Midlands */
-    ['BIR','WOL'],   /* West Midlands */
-    ['WBA','WOL']    /* Black Country */
-  ];
-  function isDerby(h, a) {
-    var k = [h, a].sort().join('|');
-    return DERBIES.some(function (d) { return d.slice().sort().join('|') === k; });
-  }
+   * down rather than inferred from distance, because Sevilla v Betis and two
+   * clubs that merely share a city are not the same thing.
+   *
+   * THE PAIRS ARE NOT HERE ANY MORE. They lived in this file, and a
+   * near-identical copy lived in laliga.html, and a third in assets/core.js —
+   * three copies of one editorial list, each reachable only from inside its
+   * own page. They are now one list in core.js keyed by league, which is what
+   * made the cross-league /derbies view possible: no page could see another
+   * page's pairs. This desk reads its own division's out of the shared one. */
+  var DERBY_LEAGUE = 'EFLC';
+  function isDerby(h, a) { return C.isDerby(h, a, DERBY_LEAGUE); }
   function derbyTag(x) {
-    return (x.derby != null ? x.derby : isDerby(x.fx.h, x.fx.a))
-      ? ' <span class="pill band-hi" title="Derby — these fixtures carry more cards than the same two clubs otherwise would">derby</span>' : '';
+    var on = x.derby != null ? x.derby : isDerby(x.fx.h, x.fx.a);
+    if (!on) return '';
+    /* THE PILL NAMES THE RIVALRY. It read a bare "derby" for as long as the
+       names were comments — the page knew Blackburn v Burnley was one and had
+       no way to say East Lancashire. */
+    var name = C.derbyName(x.fx.h, x.fx.a, DERBY_LEAGUE);
+    return ' <span class="pill band-hi" title="'
+      + (name ? esc(name) + ' derby — these fixtures carry more cards than the '
+                + 'same two clubs otherwise would'
+              : 'Derby — these fixtures carry more cards than the same two '
+                + 'clubs otherwise would')
+      + '">' + (name ? esc(name) : 'derby') + '</span>';
   }
 
   /* ---- This Matchday ----------------------------------------------------

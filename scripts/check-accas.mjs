@@ -576,23 +576,32 @@ group('the accas as a destination: routed, and dated');
     'today.html no longer derives its view from the route, so `/` and /today ' +
     'cannot be two pages');
   const accaFn = t.slice(t.indexOf('function renderAcca('));
-  /* THREE ROUTES NOW: `/`, /today and /accas. The rule this pins is unchanged
-     — the day's acca must not render on the SEASON CALENDAR, where there is no
-     selected date for it to be the acca of — but it is stated as the exclusion
-     it always was rather than as a single permitted route, because /accas
-     shows it too and a `!== 'home'` test would have banned it there. */
-  assert.ok(/ROUTE === 'season'[\s\S]{0,80}card\.hidden = true/.test(accaFn.slice(0, 700)),
-    "the day's acca no longer refuses to render on the season calendar, where " +
-    'there is no selected date for it to be the acca of');
+  /* FOUR ROUTES NOW: `/`, /today, /accas and /derbies. The rules these pin are
+     unchanged — the day's acca must not render on the SEASON CALENDAR, where
+     there is no selected date for it to be the acca of, and the nine-fold must
+     not render under TODAY'S card, which is what made the home page several
+     phone screens long.
+     WHAT CHANGED IS HOW THEY ARE STATED. Both were written as exclusions
+     (`ROUTE === 'season'`, `ROUTE === 'home'`) with a note here arguing that
+     an exclusion was the right form because /accas shows both and a single
+     permitted route would have banned them there. The premise was right and
+     the conclusion did not survive a fourth route: /derbies matched neither
+     exclusion, inherited both cards, and drew the day's acca and the week's
+     nine-fold under the derby list. The fix is a permitted SET, not a single
+     route — which keeps /accas and defaults an unknown route to hidden, so the
+     fifth one fails closed. */
+  assert.ok(/onRoute\('home accas'\)[\s\S]{0,80}card\.hidden = true/.test(accaFn.slice(0, 900)),
+    "the day's acca no longer names the routes it belongs to (home and accas). " +
+    'It must not render on the season calendar, where there is no selected ' +
+    'date for it to be the acca of — and stating that as an exclusion is what ' +
+    'let /derbies inherit it.');
   const nineFn = t.slice(t.indexOf('function renderNine('));
-  /* Same shape of change as the day's acca above: an exclusion, not a single
-     permitted route. The rule is that a seven-day slip must not sit under
-     TODAY'S card, which is what made the home page several screens long — and
-     stating it as `!== 'season'` would have banned it from /accas, which is
-     the one page somebody visits specifically to see it. */
-  assert.ok(/ROUTE === 'home'[\s\S]{0,120}card\.hidden = true/.test(nineFn.slice(0, 800)),
-    'the nine-fold no longer refuses to render on the home page — it spans ' +
-    'seven days and under today\'s card it made the home page several screens long');
+  /* Same shape, same reason — see above. /accas is the one page somebody
+     visits specifically to see this, so it is named rather than excluded. */
+  assert.ok(/onRoute\('season accas'\)[\s\S]{0,120}card\.hidden = true/.test(nineFn.slice(0, 1000)),
+    'the nine-fold no longer names the routes it belongs to (season and ' +
+    'accas). It spans seven days, and under today\'s card it made the home ' +
+    'page several screens long.');
   /* Old links must still land somewhere right. #all and #accas were the two
      views that moved to /today, and links to them exist in shared cards. */
   /* THEY NO LONGER SHARE A DESTINATION, and that is the improvement: #accas

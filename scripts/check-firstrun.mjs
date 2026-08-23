@@ -859,15 +859,17 @@ for (const page of DESKS_WITH_A_TOUR) {
     'the leg-count control is no longer capped by the number of matches on ' +
     'the date, so a two-match Tuesday can be asked for a five-leg acca and ' +
     'would have to take two legs off one fixture to fill it');
-  /* The day's acca belongs to the home page. today.html serves two routes off
-     one file — `/` is today's matches, /today is the season calendar — and on
-     the calendar there is no selected date for this to be the acca OF, so it
-     refuses rather than picking one. Was `mode() === 'all'` when the two views
-     were radio buttons on one page; the question is the same, the answer now
-     comes from the route. */
-  assert.ok(/ROUTE === 'season'[\s\S]{0,80}?hidden = true/.test(acca),
-    "the day's acca no longer hides itself on the season calendar, where there " +
-    'is no selected date for it to be the acca of');
+  /* The day's acca belongs to the home page and to /accas. today.html serves
+     four routes off one file, and on the season calendar there is no selected
+     date for this to be the acca OF, so it refuses rather than picking one.
+     Was `mode() === 'all'` when the views were radio buttons on one page, then
+     `ROUTE === 'season'`; the question is the same each time, the answer now
+     comes from a named set of routes. The exclusion form is what let /derbies
+     inherit this card — see the longer note in scripts/check-accas.mjs. */
+  assert.ok(/onRoute\('home accas'\)[\s\S]{0,80}?hidden = true/.test(acca),
+    "the day's acca no longer names the routes it belongs to, so it renders " +
+    'on the season calendar, where there is no selected date for it to be ' +
+    'the acca of');
 
   /* PRICED THROUGH THE SHARED FUNCTION, and the margin shown rather than
      stripped and forgotten. Fair odds are 1/p, which no bookmaker offers. */

@@ -20,21 +20,31 @@
 <script>
   (function () {
     var p = location.pathname.replace(/\/+$/, '') || '/';
-    /* THREE ROUTES OFF ONE FILE, and the third is the reason the first two are
-       routes rather than pages. Every acca this site builds was already here or
-       on the Premier League desk, scattered: the day's acca under today's
-       fixture list, the week's nine-fold under the calendar, the record under
-       both, and the doubles and trebles nowhere at all except as pixels on an
-       exported share card. Nobody could find them. /accas is where they are.
-       A SEPARATE accas.html WOULD HAVE FORKED the pricing, the confirmed-XI
-       join and both card builders — see the note in scripts/check-share.mjs,
-       which asserts that this split stays a route and never becomes a copy. */
+    /* FOUR ROUTES OFF ONE FILE, and the last two are the reason the first two
+       are routes rather than pages. Every acca this site builds was already
+       here or on the Premier League desk, scattered: the day's acca under
+       today's fixture list, the week's nine-fold under the calendar, the
+       record under both, and the doubles and trebles nowhere at all except as
+       pixels on an exported share card. Nobody could find them. /accas is
+       where they are.
+       /derbies is the same problem one layer down. Which fixtures are derbies
+       was written down in FOUR places — core.js, plmodel.js, eflc.html and
+       laliga.html — and each was visible only to its own page, so a list
+       across the three divisions could not be drawn at all. The pairs are one
+       list in core.js now; this route is what you can finally see it as.
+       A SEPARATE accas.html OR derbies.html WOULD HAVE FORKED the pricing, the
+       confirmed-XI join and both card builders — see the note in
+       scripts/check-share.mjs, which asserts that this split stays a route and
+       never becomes a copy. */
     var route = p === '/accas' || p === '/accas.html' ? 'accas'
+      : p === '/derbies' || p === '/derbies.html' ? 'derbies'
       : (p === '/today' || p === '/season' || p === '/today.html') ? 'season'
       : 'home';
     document.documentElement.setAttribute('data-route', route);
     document.title = route === 'accas'
       ? 'Accas — every combination, in one place — Bookings Desk'
+      : route === 'derbies'
+      ? 'Every derby, all season, all three divisions — Bookings Desk'
       : route === 'season'
       ? 'Every date, all season — Bookings Desk'
       : "Today's matches — Bookings Desk";
@@ -153,6 +163,7 @@
   <div class="leaguebar-in">
     <a class="lb-item lb-today" href="/"><span class="lb-dot"></span><span class="lb-full">Today's matches</span><span class="lb-abbr">Today</span></a>
     <a class="lb-item lb-accas" href="/accas"><span class="lb-dot"></span><span class="lb-full">Accas</span><span class="lb-abbr">Accas</span></a>
+    <a class="lb-item lb-derbies" href="/derbies"><span class="lb-dot"></span><span class="lb-full">Derbies</span><span class="lb-abbr">Derbies</span></a>
     <a class="lb-item lb-pl" href="/pl"><span class="lb-dot"></span><span class="lb-full">Premier League</span><span class="lb-abbr">PL</span></a>
     <a class="lb-item lb-eflc" href="/eflc"><span class="lb-dot"></span><span class="lb-full">Championship</span><span class="lb-abbr">Championship</span></a>
     <a class="lb-item lb-ll" href="/laliga"><span class="lb-dot"></span><span class="lb-full">La Liga</span><span class="lb-abbr">La Liga</span></a>
@@ -210,6 +221,24 @@
     <div class="stats" id="statsAccas"></div>
   </section>
 
+  <section class="hero" data-for="derbies">
+    <h1>Every derby, all season</h1>
+    <p class="muted" style="margin:8px 0 0;max-width:70ch">
+      The recognised rivalries across all three divisions, in date order — Merseyside and
+      the North London derby, East Lancashire and Severnside, El Clásico and El Gran Derbi,
+      on one calendar. A derby is carded more than the same two clubs otherwise would be,
+      so each one carries a heat boost on its own desk; this is the whole set of fixtures
+      that boost applies to.
+      The pairs are <b>editorial</b>, because no feed carries &ldquo;these two dislike each
+      other&rdquo;, and a pair only appears while <b>both</b> clubs are in that division —
+      which is why West Ham v Millwall is a Championship fixture this season and the Premier
+      League&rsquo;s West Midlands derby is Villa and Coventry.
+      For every other fixture, see <a href="/">today&rsquo;s matches</a> or the
+      <a href="/today">season calendar</a>.
+    </p>
+    <div class="stats" id="statsDerbies"></div>
+  </section>
+
   <div class="card" id="listCard">
     <div class="controls">
       <!-- THE VIEW SWITCHER IS GONE, and its three views are now two pages.
@@ -264,6 +293,24 @@
     <p class="faint" id="comboSub" style="font-size:12.5px;margin:0"></p>
     <div id="comboBody"></div>
     <p class="note" id="comboNote"></p>
+  </section>
+
+  <!-- EVERY DERBY, ALL THREE DIVISIONS, IN DATE ORDER.
+       Built from the pairs in assets/core.js crossed with each league's own
+       committed fixture list, so a fixture appears here if and only if its
+       desk gives it the derby boost. It reads the same three datasets the
+       fixture list above does, off the same frames. /derbies only. -->
+  <section class="card" id="derbyCard" data-for="derbies" style="margin-top:14px" hidden>
+    <div class="controls" style="margin-bottom:4px">
+      <h2 style="font-size:16px">Every derby, in date order</h2>
+      <span class="spacer"></span>
+      <label style="font-size:13px;display:inline-flex;align-items:center;gap:6px">
+        <input type="checkbox" id="derbyUpcoming"> still to play only
+      </label>
+    </div>
+    <p class="faint" id="derbySub" style="font-size:12.5px;margin:0"></p>
+    <div id="derbyBody"></div>
+    <p class="note" id="derbyNote"></p>
   </section>
 
   <!-- THE WEEK'S CARD NINE-FOLD, across every division this page holds.
@@ -1025,11 +1072,17 @@
 
   function renderAcca() {
     var card = $('#accaCard');
-    /* NOT ON THE CALENDAR. The day's acca is about the matches on one date;
-       the calendar has no selected date, and 128 accas is not one acca. It
-       shows on the home page, beneath the matches it is built from, and on
-       /accas, which is where somebody goes looking for it. */
-    if (ROUTE === 'season') { card.hidden = true; return; }
+    /* THE ROUTES IT BELONGS TO, named. The day's acca is about the matches on
+       one date: the home page, beneath the matches it is built from, and
+       /accas, which is where somebody goes looking for it. Not the calendar,
+       which has no selected date, and where 128 accas is not one acca.
+       WRITTEN AS AN INCLUSION, and that is the point rather than a style
+       preference. This read `if (ROUTE === 'season') hide`, which is the same
+       thing while there are three routes and silently wrong on the fourth:
+       /derbies matched neither branch, so it fell through and drew the day's
+       acca under the derby list. A gate phrased as "not that one" admits every
+       route nobody had thought of yet. */
+    if (!onRoute('home accas')) { card.hidden = true; return; }
 
     var key = $('#day').value, all = dayLegs(key);
     /* The control cannot offer more legs than the date has matches — one leg
@@ -1328,7 +1381,7 @@
   function renderCombos() {
     var card = $('#comboCard');
     if (!card) return;
-    if (ROUTE !== 'accas') { card.hidden = true; return; }
+    if (!onRoute('accas')) { card.hidden = true; return; }
     var rows = rowsFor($('#day').value);
     if (!rows.length) { card.hidden = true; return; }
 
@@ -1380,14 +1433,154 @@
       + 'a third.';
   }
 
+  /* ---- every derby, all season, all three divisions --------------------- */
+  /*
+   * BUILT FROM THE FIXTURE LISTS, not from the priced rows in ALL. price()
+   * returns null for a club with no rated players, and a derby dropped for
+   * that reason would read on this page exactly like a fixture that is not a
+   * derby. A silently short list is the one failure this view cannot survive,
+   * because being COMPLETE is its entire claim — so every fixture is walked
+   * and the price is attached where there is one and shown as — where there
+   * is not.
+   *
+   * The pairs come from assets/core.js, the same list each desk prices its
+   * derby boost off, so a fixture appears here if and only if its own desk
+   * gives it the boost. That is the property worth having: this page is a
+   * view of the rule, not a second copy of it.
+   */
+  var PRICED_BY_FX = null;
+  function pricedByFx() {
+    if (PRICED_BY_FX) return PRICED_BY_FX;
+    PRICED_BY_FX = {};
+    ALL.forEach(function (p) { PRICED_BY_FX[p.L.code + '|' + p.fx.id] = p; });
+    return PRICED_BY_FX;
+  }
+
+  function derbyRows() {
+    var priced = pricedByFx(), out = [];
+    LEAGUES.forEach(function (L) {
+      (L.fixtures || []).forEach(function (fx) {
+        if (!fx.d || !C.isDerby(fx.h, fx.a, L.code)) return;
+        out.push({
+          L: L, fx: fx,
+          name: C.derbyName(fx.h, fx.a, L.code),
+          p: priced[L.code + '|' + fx.id] || null
+        });
+      });
+    });
+    return out.sort(function (a, b) {
+      return String(a.fx.d).localeCompare(String(b.fx.d));
+    });
+  }
+
+  function clubName(L, short) {
+    var c = L.clubBy && L.clubBy[short];
+    return (c && c.name) || short;
+  }
+  function monthOf(iso) {
+    var d = new Date(iso);
+    return isNaN(d) ? '' : d.toLocaleDateString(undefined,
+      { month: 'long', year: 'numeric' });
+  }
+  function dayOf(iso) {
+    var d = new Date(iso);
+    return isNaN(d) ? '' : d.toLocaleDateString(undefined,
+      { weekday: 'short', day: 'numeric', month: 'short' });
+  }
+
+  function derbyRowHtml(r) {
+    var done = r.fx.st && r.fx.st !== 'NS';
+    var heat = r.p && r.p.m ? r.p.m.expected : null;
+    return '<div class="drb' + (done ? ' done' : '') + '">'
+      + '<div class="drb-when"><b>' + esc(dayOf(r.fx.d)) + '</b>'
+      + '<span>' + esc(fmtTime(r.fx.d)) + '</span></div>'
+      + '<a class="lg ' + esc(r.L.code) + '" href="' + esc(r.L.href) + '"'
+      + ' title="' + esc(r.L.name) + '">' + esc(r.L.code) + '</a>'
+      + '<div class="drb-tie">'
+      /* BOTH NAMES, one shown per width — the same trick the league bar plays
+         with .lb-full/.lb-abbr. "Wolverhampton Wanderers v West Bromwich
+         Albion" is three wrapped lines on a phone, and a list of eighty-two
+         rows each three lines deep is not a calendar anybody scans. */
+      + '<b><span class="drb-long">' + esc(clubName(r.L, r.fx.h)) + '</span>'
+      + '<span class="drb-short">' + esc(r.fx.h) + '</span>'
+      + ' <span class="faint">v</span> '
+      + '<span class="drb-long">' + esc(clubName(r.L, r.fx.a)) + '</span>'
+      + '<span class="drb-short">' + esc(r.fx.a) + '</span></b>'
+      + (r.name ? '<span class="drb-name">' + esc(r.name) + '</span>' : '')
+      + '</div>'
+      + '<div class="drb-meta">'
+      + (r.fx.r != null ? 'Round ' + esc(r.fx.r) : '')
+      /* The referee is absent on most of these and that is ORDINARY: both
+         national bodies publish appointments about a week out, so a calendar
+         that runs to May is mostly unappointed by construction. Saying "not
+         yet appointed" rather than leaving the slot blank is the difference
+         between a missing field and a missing datum. */
+      + (r.fx.ref ? ' &middot; ' + esc(r.fx.ref)
+                  : ' &middot; <span class="faint">ref not yet appointed</span>')
+      + (done ? ' &middot; <span class="faint">played</span>' : '')
+      + '</div>'
+      + (heat == null
+          ? '<span class="fx-heat faint" title="Not priced — a club in this'
+            + ' fixture has no rated players yet">&mdash;</span>'
+          : '<span class="fx-heat' + (heat >= 4.2 ? ' hot' : '') + '"'
+            + ' title="Booking heat: expected cards, both sides added together,'
+            + ' with this fixture\'s derby boost already in">'
+            + n1(heat) + '</span>')
+      + '</div>';
+  }
+
+  function renderDerbies() {
+    var card = $('#derbyCard');
+    if (!card) return;
+    if (!onRoute('derbies')) { card.hidden = true; return; }
+    var all = derbyRows();
+    if (!all.length) { card.hidden = true; return; }
+    card.hidden = false;
+
+    var box = $('#derbyUpcoming');
+    var rows = (box && box.checked)
+      ? all.filter(function (r) { return !r.fx.st || r.fx.st === 'NS'; })
+      : all;
+
+    var counts = {};
+    rows.forEach(function (r) { counts[r.L.code] = (counts[r.L.code] || 0) + 1; });
+    var chips = LEAGUES.map(function (L) {
+      return counts[L.code]
+        ? '<span class="lg ' + esc(L.code) + '">' + esc(L.code) + ' '
+          + counts[L.code] + '</span>' : '';
+    }).join(' ');
+
+    var html = '', month = '';
+    rows.forEach(function (r) {
+      var m = monthOf(r.fx.d);
+      if (m !== month) {
+        month = m;
+        html += '<h3 class="drb-month">' + esc(m) + '</h3>';
+      }
+      html += derbyRowHtml(r);
+    });
+    $('#derbyBody').innerHTML = html
+      || '<p class="faint" style="font-size:13px">Every derby this season has'
+       + ' been played.</p>';
+
+    $('#derbySub').innerHTML = rows.length + ' derby fixture'
+      + (rows.length === 1 ? '' : 's') + ' &nbsp;' + chips;
+    $('#derbyNote').textContent = 'A derby is carded more than the same two clubs '
+      + 'otherwise would be, so the heat shown already carries each desk’s derby '
+      + 'boost — ×1.15 on the Premier League, ×1.08 on the other two. '
+      + 'The pairs are editorial: no feed carries which clubs are rivals, so they are '
+      + 'written down, and a pair only counts while both clubs are in that division.';
+  }
+
   function renderNine() {
     var card = $('#nineCard'), blank = $('#nineEmpty');
     if (blank) blank.hidden = true;
-    /* NOT ON THE HOME PAGE. The nine-fold spans seven days, so it belongs with
-       the view that shows more than one — putting it under today's card made
-       the home page several phone screens long for a slip about next weekend.
-       On /accas it is the whole point of the visit, so it shows there too. */
-    if (ROUTE === 'home') { card.hidden = true; NINE_BUILT = null; return; }
+    /* THE ROUTES IT BELONGS TO, named — see the note on renderAcca for why
+       these gates are inclusions. The nine-fold spans seven days, so it goes
+       with the view that shows more than one; putting it under today's card
+       made the home page several phone screens long for a slip about next
+       weekend. On /accas it is the whole point of the visit. */
+    if (!onRoute('season accas')) { card.hidden = true; NINE_BUILT = null; return; }
     var from = $('#day').value;
     var pool = weekPool(from);
     var got = C.accaAllocate(NINE.map(function (b) {
@@ -1503,12 +1696,22 @@
      reads exactly as it did — the question "am I in the calendar?" has not
      changed, only who answers it. */
   var ROUTE = document.documentElement.getAttribute('data-route');
-  if (ROUTE !== 'season' && ROUTE !== 'accas') ROUTE = 'home';
-  /* The accas route shows no fixture list, so which LIST it would have shown
-     is not a question it asks. It indexes and prices exactly as the other two
-     do — the slips are built off the same rows — and 'one' keeps the date
-     picker meaningful for the day's acca. */
+  if (ROUTE !== 'season' && ROUTE !== 'accas' && ROUTE !== 'derbies') ROUTE = 'home';
+  /* The accas and derbies routes show no fixture list, so which LIST they
+     would have shown is not a question they ask. Both index and price exactly
+     as the other two do — the slips and the derby heat are built off the same
+     rows — and 'one' keeps the date picker meaningful for the day's acca. */
   function mode() { return ROUTE === 'season' ? 'all' : 'one'; }
+
+  /* "Does this block belong on the route I am?" — the JS half of the
+     data-for attribute the CSS reads, and phrased the same way round on
+     purpose. Every card below names the routes it appears on; a route that is
+     not named does not get it. The alternative, each card naming the routes it
+     is absent from, is what let /derbies draw the day's acca: a fourth route
+     matched none of the exclusions and inherited everything. */
+  function onRoute(names) {
+    return (' ' + names + ' ').indexOf(' ' + ROUTE + ' ') >= 0;
+  }
 
   function render() {
     var all = mode() === 'all', accas = false;
@@ -1543,6 +1746,7 @@
     renderAcca();
     renderNine();
     renderCombos();
+    renderDerbies();
   }
 
   /* ---- the combined card ------------------------------------------------ */
@@ -1943,6 +2147,22 @@
         + stat(ALL.length, 'fixtures priced')
         + stat(DAYKEYS.length, 'match dates')
         + stat(multi, 'dates with more than one league');
+    } else if (ROUTE === 'derbies') {
+      /* RIVALRIES AND FIXTURES ARE DIFFERENT NUMBERS, and both are worth
+         showing: a pair produces two fixtures a season in every division here,
+         so 41 rivalries and 82 fixtures is not a doubling error. */
+      var drows = derbyRows();
+      var pairs = LEAGUES.reduce(function (a, L) {
+        return a + C.derbyPairs(L.code).length; }, 0);
+      var left = drows.filter(function (r) {
+        return !r.fx.st || r.fx.st === 'NS'; }).length;
+      var hot = drows.reduce(function (m, r) {
+        return r.p && r.p.m && (!m || r.p.m.expected > m.p.m.expected) ? r : m; }, null);
+      $('#statsDerbies').innerHTML =
+        stat(drows.length, 'derby fixtures')
+        + stat(pairs, 'rivalries')
+        + stat(left, 'still to play')
+        + (hot ? stat(hot.p.m.expected.toFixed(1), 'cards, hottest derby') : '');
     } else {
       /* Computed off the date the page will actually open on, which on a blank
          Tuesday is the next one with matches rather than today — the same date
@@ -1980,8 +2200,15 @@
        is marked here rather than in the markup, because one file is two pages
        and only one of them is current at a time. */
     var cur = document.querySelector(
-      ROUTE === 'season' ? '.lb-season' : ROUTE === 'accas' ? '.lb-accas' : '.lb-today');
+      ROUTE === 'season' ? '.lb-season'
+      : ROUTE === 'accas' ? '.lb-accas'
+      : ROUTE === 'derbies' ? '.lb-derbies'
+      : '.lb-today');
     if (cur) cur.setAttribute('aria-current', 'page');
+    /* Only the derby list redraws — nothing else on the page reads it. */
+    if ($('#derbyUpcoming')) {
+      $('#derbyUpcoming').addEventListener('change', renderDerbies);
+    }
     /* And scroll it into view NOW. The shared module already ran its own pass
        on DOMContentLoaded and found nothing current to centre, because on this
        file the marker is set here rather than in the markup. */

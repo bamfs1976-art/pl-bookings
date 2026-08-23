@@ -41,6 +41,15 @@
 # them.
 /accas        /today.html   200
 
+# EVERY DERBY, ALL THREE DIVISIONS, IN DATE ORDER. A fourth view of the same
+# file, for the same reason: which fixtures are derbies was written down in
+# four separate places, each visible only to its own page, so nothing could
+# draw the set across the divisions. The pairs are one list in assets/core.js
+# now and this is the view of it. Same fixtures, same pricing, same frames as
+# the routes above — a separate derbies.html would have forked all three to
+# show a list.
+/derbies      /today.html   200
+
 # The Premier League desk, moved off `/`. Its own internal routing is entirely
 # hash-based (#panel-...), so nothing inside it cares which path it is served
 # from — only the league bar's self-link had to change.
