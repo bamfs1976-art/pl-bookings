@@ -418,6 +418,14 @@ LALIGA_RFEF_ALIASES = {
     # is nothing, and "RC Celta de Vigo" ends in no listed suffix at all.
     "Club Atlético de Madrid": "Atletico Madrid",
     "RC Celta de Vigo": "Celta Vigo",
+    # Jornada 2's Monday sheet, and a fifth shape: the SAME legal prefix as
+    # Atlético de Madrid directly above, with no "de" and no city — the club is
+    # called Osasuna and "Club Atlético" is the legal form wrapped around it.
+    # The pair is exactly why this is a table and not a prefix rule: stripping
+    # "Club Atlético " resolves this one and breaks the other, leaving
+    # "de Madrid".
+    "Club Atlético Osasuna": "Osasuna",
+    "CA Osasuna": "Osasuna",
 }
 
 # Legal endings no registry carries. Stripped and retried,

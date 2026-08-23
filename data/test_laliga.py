@@ -628,6 +628,12 @@ def _rfef_legal_names_map_to_the_registry():
         # Jornada 2's later sheets: a legal prefix plus a city.
         ("Club Atlético de Madrid", "ATM"),
         ("RC Celta de Vigo", "CEL"),
+        # Jornada 2's Monday sheet: the same legal prefix as Atlético with no
+        # "de" and no city. Named beside it deliberately — the two together are
+        # why this is a table and not a prefix rule, since one strip resolves
+        # this and leaves "de Madrid" for the other.
+        ("Club Atlético Osasuna", "OSA"),
+        ("CA Osasuna", "OSA"),
     ):
         got = L.laliga_short(published)
         assert got == short, f"{published!r} -> {got!r}, expected {short!r}"
