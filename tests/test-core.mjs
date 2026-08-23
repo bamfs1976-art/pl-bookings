@@ -524,14 +524,42 @@ t('teamCardMarkets assembles the board consistently', () => {
   assert.ok(m.bothTwo < m.bothCarded, 'two cards each cannot beat one card each');
 });
 t('minute weights spread an XI across the squad', () => {
-  const w = core.minuteWeights([3000, 3000, 3000, 300], 11);
+  /* A REAL SQUAD, which this fixture was not. It used to be four players —
+     three regulars and a fringe — and asserted the fringe weighed less. With
+     only four men to cover eleven places every one of them plays the whole
+     match, so once the cap redistributes what it clips they all weigh 1 and
+     the ordering is gone. That is the correct answer to a degenerate input,
+     not a regression: the old code returned 3.355 players' worth of football
+     for a club that plainly fields four. The ordering claim needs a squad
+     where the fringe player has somewhere to sit. */
+  const mins = [3000, 3000, 3000, 2900, 2800, 2700, 2600, 2400, 2200, 2000, 1800, 300];
+  const w = core.minuteWeights(mins, 11);
   const sum = w.reduce((a, b) => a + b, 0);
-  assert.ok(sum <= 11 + 1e-9, `weights should not exceed the XI, got ${sum}`);
-  assert.ok(w[0] > w[3], 'a regular starter must outweigh a fringe player');
+  assert.ok(Math.abs(sum - 11) < 1e-9, `a squad of twelve spreads exactly 11, got ${sum}`);
+  assert.ok(w[0] > w[11], 'a regular starter must outweigh a fringe player');
   assert.ok(w.every((v) => v >= 0 && v <= 1), 'no weight may exceed one full match');
   // an even squad of 11 gives everyone a full match
   const even = core.minuteWeights(new Array(11).fill(2000), 11);
   assert.ok(even.every((v) => Math.abs(v - 1) < 1e-9), 'an even XI should each weight 1');
+});
+t('the cap redistributes what it clips instead of dropping it', () => {
+  /* THE BUG THIS EXISTS FOR. Clipping anyone over a full match is right;
+     throwing away the football they gave up is not. It made the desks price
+     clubs off less than eleven players' worth of a match — Bournemouth at
+     9.667, live, for months — and it stayed invisible while squads carried
+     forty players, because no share reached the cap. */
+  const hog = core.minuteWeights([3420, 100, 100, 100, 100, 100, 100, 100,
+                                  100, 100, 100, 100], 11);
+  assert.ok(Math.abs(hog.reduce((a, b) => a + b, 0) - 11) < 1e-9,
+    'one dominant player must not cost the club the football he could not play');
+  assert.ok(Math.abs(hog[0] - 1) < 1e-9, 'and he still plays at most one match');
+
+  /* FEWER RATED PLAYERS THAN PLACES is arithmetic, not a fault: four men
+     cannot cover eleven, and the honest answer is four full matches. */
+  const thin = core.minuteWeights([3000, 3000, 3000, 300], 11);
+  assert.ok(Math.abs(thin.reduce((a, b) => a + b, 0) - 4) < 1e-9,
+    'a four-man squad spreads four full matches, not three and a third');
+  assert.ok(thin.every((v) => Math.abs(v - 1) < 1e-9));
 });
 t('minute weights survive missing or zero minutes', () => {
   assert.deepEqual(core.minuteWeights([], 11), []);
