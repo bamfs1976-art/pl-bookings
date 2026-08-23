@@ -411,6 +411,13 @@ LALIGA_RFEF_ALIASES = {
     # leaving "Real Sociedad" itself alone.
     "Real Betis Balompié": "Real Betis",
     "Real Sociedad de Fútbol": "Real Sociedad",
+    # Jornada 2's Saturday and Sunday sheets. Two more shapes: a LEGAL PREFIX
+    # the registry does not carry ("Club" before Atlético, "RC" before Celta)
+    # combined with a city the registry spells differently or not at all. The
+    # suffix strip reaches neither — " de Madrid" leaves "Club Atlético", which
+    # is nothing, and "RC Celta de Vigo" ends in no listed suffix at all.
+    "Club Atlético de Madrid": "Atletico Madrid",
+    "RC Celta de Vigo": "Celta Vigo",
 }
 
 # Legal endings no registry carries. Stripped and retried,

@@ -152,6 +152,45 @@ def _an_ambiguous_initial_is_refused():
     assert A.resolve_ref_name("Jordan Smith", ["J Smith"])[0] == "J Smith"
 
 
+def _a_full_forename_beats_a_shared_initial():
+    """Two officials called J, and only one of them is Juan.
+
+    THE MISS THIS CLOSES. The CTA named Juan Martínez for Getafe v Racing.
+    La Liga's card table holds "Juan Martinez Munuera" AND "José María Sánchez
+    Martínez" — both start with J, and both have surnames that run with
+    "martinez" — so a rule comparing only the first INITIAL found two
+    candidates, called it ambiguous and left the fixture at the league rate.
+    The publisher had spelt the forename out; the rule was throwing that away.
+    """
+    LL = ["Juan Martinez Munuera", "José María Sánchez Martínez",
+          "Adrian Cordero Vega"]
+    assert A.resolve_ref_name("Juan Martínez", LL)[0] == "Juan Martinez Munuera"
+    assert A.resolve_ref_name("José María Sánchez", LL)[0] == "José María Sánchez Martínez"
+
+    # STRICTLY MORE SPECIFIC, so it can only ever reject. A forename that
+    # matches nobody must still find nobody rather than falling back to the
+    # initial and taking whichever J it meets first.
+    assert A.resolve_ref_name("Javier Martínez", LL)[0] is None, (
+        "a third J took a Martínez record off one of the other two")
+
+    # AND IT MUST NOT ROUTE AROUND _by_initial. A full published forename
+    # cannot be confirmed by a table entry carrying only an initial — that is
+    # the "J Smith / James Smith / Josh Smith" refusal, and the run rule
+    # reaching the same entry by a different path would undo it. Pinned here as
+    # well as in the ambiguity test above, because the two rules refuse it for
+    # different reasons and a fix to one has already broken the other.
+    assert A.resolve_ref_name("Jordan Smith", ["J Smith", "James Smith"])[0] is None
+
+    # An ABBREVIATED published name still resolves on the initial: that is all
+    # a harvested "J. Munuera" has to offer, and supersedes() depends on it.
+    assert A.resolve_ref_name("J. Munuera", ["José Luis Munuera Montero"])[0] \
+        == "José Luis Munuera Montero"
+
+
+t("a full forename beats a shared initial, without routing around the initial "
+  "rule", _a_full_forename_beats_a_shared_initial)
+
+
 def _an_unknown_official_is_left_as_published():
     assert A.resolve_ref_name("A Brand New Official", TABLE) == (None, None)
     assert A.resolve_ref_name("", TABLE) == (None, None)
