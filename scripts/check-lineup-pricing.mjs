@@ -322,6 +322,7 @@ group('the player-name join is the one that already exists');
     return p.length < 2 ? n : p[0][0] + '. ' + p.slice(1).join(' ');
   };
   let total = 0, lost = [];
+  const perDesk = [];
   for (const [file, konst] of [
     ['data/eflc_data.js', 'EFLC_PLAYERS'],
     ['data/laliga_data.js', 'LALIGA_PLAYERS'],
@@ -329,19 +330,41 @@ group('the player-name join is the one that already exists');
   ]) {
     const players = load(file, konst).filter((p) => !p.ls);
     const clubs = [...new Set(players.map((p) => p.c))];
+    let here = 0;
     for (const club of clubs) {
       const squad = players.filter((p) => p.c === club).map((p) => p.n);
       for (const n of squad) {
-        total++;
+        total++; here++;
         if (C.matchSquadName(abbrev(n), squad) !== n) lost.push(`${konst} ${club} ${n}`);
       }
     }
+    perDesk.push([konst, clubs.length, here]);
   }
-  /* 1,400 is the floor, not the count: squads change size through a window and
-     the Premier League desk's baked set is the smallest of the three. Set below
-     what the three currently carry, high enough that a desk dropping out of the
-     loop entirely fails here. */
-  assert.ok(total > 1300, `only ${total} squad names round-tripped — a desk looks empty`);
+  /* PER DESK, NOT A GRAND TOTAL, and the difference is the whole reason this
+     assertion exists. It read `total > 1300`, a number set just under what the
+     three desks happened to carry — so it failed the moment the Championship
+     and La Liga were reconciled from last season's 40-man appearance lists
+     down to real squads, which shrank the total to 1112 and had nothing at all
+     to do with a desk being empty. Worse, a grand total is the wrong shape for
+     the question: one desk vanishing can be masked by the other two growing.
+     "A desk looks empty" is a per-desk claim, so it is asserted per desk, and
+     the floor is a squad count rather than a tuned constant. */
+  /* ALL THREE WERE VISITED. A per-desk floor cannot see a desk that never
+     entered the loop — deleting a line from the list above simply stops it
+     being iterated, and every remaining assertion passes. That is the same
+     trap as a table-sweep that only checks the entries still in the table, and
+     it is why the desks are named here rather than counted. */
+  assert.deepEqual(perDesk.map((d) => d[0]).sort(),
+    ['EFLC_PLAYERS', 'LALIGA_PLAYERS', 'PL_PLAYERS'],
+    'a desk is missing from the round-trip loop entirely, so its squad names ' +
+    'are never checked and nothing above can notice');
+  for (const [konst, clubs, here] of perDesk) {
+    assert.ok(clubs >= 20,
+      `${konst} carries ${clubs} clubs — a division has dropped out of the loop`);
+    assert.ok(here >= clubs * 10,
+      `${konst} round-tripped ${here} names across ${clubs} clubs, fewer than ten ` +
+      'a club — that desk is empty or nearly so, whatever the other two carry');
+  }
   /* Some loss is legitimate: two players at one club who share an initial and
      a surname collapse to the same key, and the join REFUSES rather than pick
      one. That is the designed behaviour and it is why this is a ceiling, not
