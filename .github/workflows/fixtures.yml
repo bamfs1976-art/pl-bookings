@@ -105,5 +105,18 @@ jobs:
             echo "No fixture or appointment changed."
           else
             git commit -m "Fixtures and referee appointments"
-            git push
+            # PUSH INTO A MOVING BRANCH. Four workflows commit to main and
+            # they overlap: this run built everything, committed 249 lines of
+            # it, was rejected because the lineups bot had pushed meanwhile,
+            # and the runner was torn down with the commit still on it. All
+            # the work, thrown away, reported as a failed job with no clue
+            # that it had succeeded. Rebase onto whatever landed and try
+            # again — the commits touch different files, so there is nothing
+            # to resolve, only to re-order.
+            for attempt in 1 2 3; do
+              git push && break
+              echo "push rejected (attempt $attempt) — rebasing onto origin/main"
+              git pull --rebase --autostash origin main || exit 1
+              sleep $((attempt * 5))
+            done
           fi

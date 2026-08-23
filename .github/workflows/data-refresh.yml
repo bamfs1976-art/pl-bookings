@@ -223,6 +223,15 @@ jobs:
       - name: Harvest the Championship's current rosters (membership, not form)
         if: ${{ env.API_FOOTBALL_KEY != '' }}
         continue-on-error: true
+        env:
+          # THE SEASON BEING PLAYED, not the form season, and this is not a
+          # detail. The rosters themselves have no season — but the CLUB LIST
+          # this harvest walks is discovered from /teams?league&season, so
+          # inheriting the 2025 default asked last season's division for its
+          # rosters: 21 of 24 clubs, with the promoted three missing entirely.
+          # The floor in reconcile_squads refused the whole file, correctly,
+          # and the squads were left exactly as they were.
+          API_FOOTBALL_SEASON: ${{ inputs.season_fixtures || '2026' }}
         run: python3 data/harvest_apifootball.py --league EFLC --roster
 
       # THIS season's Championship cautions, for the suspension ladder. A
@@ -294,6 +303,10 @@ jobs:
       - name: Harvest La Liga's current rosters (membership, not form)
         if: ${{ env.API_FOOTBALL_KEY != '' && (github.event_name != 'workflow_dispatch' || inputs.refresh_laliga) }}
         continue-on-error: true
+        env:
+          # This season's division, for the same reason as the Championship's
+          # above: 17 of 20 clubs came back when this inherited 2025.
+          API_FOOTBALL_SEASON: ${{ inputs.season_fixtures || '2026' }}
         run: |
           echo "== rosters ==" >> data/laliga_harvest.log
           python3 data/harvest_apifootball.py --league LL --roster 2>&1 | tee -a data/laliga_harvest.log
@@ -611,5 +624,18 @@ jobs:
           else
             basis=$(node -e "console.log(require('./data/model.js').basis)")
             git commit -m "Refresh data + model (model basis: ${basis})"
-            git push
+            # PUSH INTO A MOVING BRANCH. Four workflows commit to main and
+            # they overlap: this run built everything, committed 249 lines of
+            # it, was rejected because the lineups bot had pushed meanwhile,
+            # and the runner was torn down with the commit still on it. All
+            # the work, thrown away, reported as a failed job with no clue
+            # that it had succeeded. Rebase onto whatever landed and try
+            # again — the commits touch different files, so there is nothing
+            # to resolve, only to re-order.
+            for attempt in 1 2 3; do
+            git push && break
+            echo "push rejected (attempt $attempt) — rebasing onto origin/main"
+            git pull --rebase --autostash origin main || exit 1
+            sleep $((attempt * 5))
+            done
           fi
