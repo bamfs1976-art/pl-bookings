@@ -55,6 +55,8 @@ const group = (t) => console.log(t);
 group('a fixture with no known lineup prices exactly as it did');
 
 const EFLC = load('data/eflc_data.js', 'EFLC_PLAYERS');
+const PL = load('data/pl_data.js', 'PL_PLAYERS');
+const LL = load('data/laliga_data.js', 'LALIGA_PLAYERS');
 const CLUBS = load('data/eflc_data.js', 'CLUBS');
 const REFS = load('data/eflc_data.js', 'REFS');
 const FIX = load('data/eflc_fixtures.js', 'EFLC_FIXTURES');
@@ -134,17 +136,41 @@ group('an XI weighting spreads the same football as a squad weighting');
 
 {
   /* What the squad weighting actually sums to, measured rather than assumed,
-     because that is the number the XI one has to match. */
-  const clubs = [...new Set(EFLC.filter((p) => !p.ls && p.min > 0).map((p) => p.c))];
-  const sums = clubs.map((c) => {
-    const mins = EFLC.filter((p) => p.c === c && !p.ls && p.min > 0).map((p) => p.min);
-    return C.minuteWeights(mins, 11).reduce((a, b) => a + b, 0);
-  });
-  const lo = Math.min(...sums), hi = Math.max(...sums);
-  assert.ok(lo > 10.9 && hi <= 11.0001,
-    `squad weights sum to ${lo.toFixed(2)}-${hi.toFixed(2)} per club, not ~11 — the ` +
-    'target the XI weighting is matched against has moved');
-  ok(`squad weighting spreads ${lo.toFixed(2)}-${hi.toFixed(2)} per club across ${clubs.length} clubs`);
+     because that is the number the XI one has to match.
+
+     ALL THREE DESKS, and that is the whole point of this block now. It read
+     only the Championship, and the Championship was the one league where the
+     shortfall did not show: its squads still carried 40 players a club, which
+     diluted every share below the 1.0 cap so nothing ever clipped. The
+     PREMIER LEAGUE, reconciled to real 30-man squads months earlier, was
+     summing to as little as 9.667 — fourteen of its twenty clubs priced off
+     less than eleven players' worth of football, under-counting their whole
+     match by up to 12%, live, with this guard green. A guard that reads one
+     desk is a guard for one desk. */
+  const DESKS = [['PL', PL], ['EFLC', EFLC], ['LL', LL]];
+  const worst = [];
+  let checked = 0;
+  for (const [code, rows] of DESKS) {
+    const clubs = [...new Set(rows.filter((p) => !p.ls && p.min > 0).map((p) => p.c))];
+    for (const c of clubs) {
+      const mins = rows.filter((p) => p.c === c && !p.ls && p.min > 0).map((p) => p.min);
+      /* Fewer than eleven rated players cannot spread eleven, and that is
+         arithmetic rather than a fault — it is a thin squad, which the desk
+         guards report on their own. */
+      if (mins.length < 11) continue;
+      const sum = C.minuteWeights(mins, 11).reduce((a, b) => a + b, 0);
+      checked++;
+      worst.push([sum, `${code} ${c}`]);
+    }
+  }
+  worst.sort((a, b) => a[0] - b[0]);
+  const lo = worst[0], hi = worst[worst.length - 1];
+  assert.ok(lo[0] > 10.999 && hi[0] <= 11.0001,
+    `squad weights sum to ${lo[0].toFixed(3)} at ${lo[1]} and ${hi[0].toFixed(3)} at ` +
+    `${hi[1]}, not 11 — a club priced off less than eleven players' worth of ` +
+    'football under-counts its whole match. The cap in minuteWeights has to ' +
+    'REDISTRIBUTE what it clips, not drop it');
+  ok(`squad weighting spreads exactly 11 across ${checked} clubs on all three desks`);
 
   /* THE XI WEIGHTING MUST LAND THERE TOO, at every bench size a real lineup
      can have — a Championship seven and a Premier League nine divide the same

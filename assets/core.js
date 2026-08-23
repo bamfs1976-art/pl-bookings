@@ -1245,7 +1245,38 @@
     });
     const total = list.reduce((s, v) => s + v, 0);
     if (!(total > 0)) return list.map(() => 0);
-    return list.map((v) => Math.min(1, (v / total) * n));
+
+    /* THE CAP HAS TO REDISTRIBUTE, not evaporate. Nobody plays more than a
+       whole match, so a share above 1 is clipped — but the football it
+       represents still happened, and the old one-pass `Math.min(1, share)`
+       simply dropped it. The sum then came out UNDER n, which understates a
+       club's whole match and under-prices every card market in its fixtures.
+       11 -> 9.43 was the measured worst case.
+       INVISIBLE UNTIL THE SQUADS WERE RIGHT. With 40-player squads — last
+       season's appearances, departed players included — no individual share
+       ever reached 1/11 of the total, so nothing capped and the sum was
+       exactly n by luck. Reconciling the Championship and La Liga down to real
+       31-man squads concentrated the minutes and the flaw surfaced at once.
+       Water-filling: clip whoever is over, share what they gave up among
+       those still under, repeat. It terminates because each pass caps at
+       least one more player, and it stops early when none is over. */
+    const w = list.map((v) => (v / total) * n);
+    for (let pass = 0; pass < w.length; pass++) {
+      let spill = 0, room = 0;
+      for (let i = 0; i < w.length; i++) {
+        if (w[i] > 1) { spill += w[i] - 1; w[i] = 1; }
+        else if (w[i] > 0) { room += 1 - w[i]; }
+      }
+      if (!(spill > 1e-12) || !(room > 1e-12)) break;
+      /* Proportional to the room each still has, so a player already near a
+         full match takes less of the spill than a squad player — the same
+         shape the minutes themselves have. */
+      const share = Math.min(1, spill / room);
+      for (let i = 0; i < w.length; i++) {
+        if (w[i] < 1 && w[i] > 0) w[i] += (1 - w[i]) * share;
+      }
+    }
+    return w;
   }
 
   /* Per-player card chances for a side, scaled to expected minutes. */
