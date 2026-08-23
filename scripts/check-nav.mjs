@@ -57,20 +57,40 @@ for (const from of DESKS) {
   }
   const current = [...bar[0].matchAll(/aria-current="page"[\s\S]{0,220}?<\/a>/g)];
   if (from.runtime) {
-    /* One file, two routes: marking either in the markup would mark it on BOTH
-       routes, which is the "two look authoritative" failure by another name.
-       It is set at boot from the route instead, and that is what is checked —
-       both arms, so a page cannot lose its "you are here" on one route only. */
+    /* One file, several routes: marking any of them in the markup would mark
+       it on ALL of them, which is the "two look authoritative" failure by
+       another name. It is set at boot from the route instead, and that is what
+       is checked. */
     assert.equal(current.length, 0,
-      `${from.file} hardcodes a current item, but it serves two routes — it ` +
-      'would claim to be the current page on both of them');
-    const code = codeOnly(read(from.file));
-    assert.ok(/\.lb-season['"]?\s*:\s*['"]\.lb-today/.test(code)
-      || /lb-season[\s\S]{0,60}lb-today/.test(code),
+      `${from.file} hardcodes a current item, but it serves several routes — ` +
+      'it would claim to be the current page on every one of them');
+    const src = read(from.file);
+    const code = codeOnly(src);
+    /* DERIVED FROM THE ROUTES THE FILE STAMPS, not from a list written here.
+       This pinned the two-route chooser by pattern — `lb-season` within sixty
+       characters of `lb-today` — which says nothing about a route added later
+       and broke on the fourth simply for making the expression longer. Both
+       failure modes are the same mistake: a guard that knows how many routes
+       there are. It counts them instead, so a new route with no league-bar
+       item to mark fails here rather than shipping with no "you are here". */
+    const stamp = /var route = ([\s\S]*?);\s*\n/.exec(src);
+    assert.ok(stamp, `${from.file} no longer stamps a route in its head`);
+    const routes = new Set([...stamp[1].matchAll(/'([a-z][a-z-]*)'/g)]
+      .map((m) => m[1]));
+    assert.ok(routes.size >= 2,
+      `${from.file} stamps ${routes.size} route(s) — it is listed as serving several`);
+    const chooser = /var cur = document\.querySelector\(([\s\S]*?)\);/.exec(code);
+    assert.ok(chooser,
       `${from.file} does not choose a current league-bar item from its route`);
+    const marks = new Set([...chooser[1].matchAll(/\.lb-[a-z-]+/g)].map((m) => m[0]));
+    assert.equal(marks.size, routes.size,
+      `${from.file} stamps ${routes.size} routes (${[...routes].join(', ')}) but ` +
+      `its chooser names ${marks.size} league-bar item(s) (${[...marks].join(', ')}) — ` +
+      'a route with no item to mark says "you are here" nowhere, or says it on ' +
+      'the wrong page');
     assert.ok(/setAttribute\('aria-current', 'page'\)/.test(code),
-      `${from.file} never marks any league-bar item as current, so neither of ` +
-      'its two routes says "you are here"');
+      `${from.file} never marks any league-bar item as current, so none of ` +
+      'its routes says "you are here"');
   } else {
     /* Exactly one current item, and it must be this page. Marking none loses
        the "you are here"; marking two is worse, because both look
@@ -425,24 +445,19 @@ for (const [f, dataFile, varName] of [
   assert.ok(/p\.n >= 3/.test(src),
     `${f} shows a head-to-head built on fewer than three meetings`);
 
-  /* Every derby code must be a club that is IN the division. A guessed short
-     code produces a derby that does not exist — the first list flagged
-     Bristol City v Millwall, which is not one. */
-  const derbies = /var DERBIES = \[([\s\S]*?)\n  \];/.exec(src);
-  assert.ok(derbies, `${f} has no derby list`);
-  const pairs = [...derbies[1].matchAll(/\['([A-Z]{2,4})','([A-Z]{2,4})'\]/g)]
-    .map((m) => [m[1], m[2]]);
-  assert.ok(pairs.length >= 8, `${f} lists only ${pairs.length} derbies`);
-  const clubsSrc = readFileSync(join(root, 'data',
-    f === 'eflc.html' ? 'eflc_data.js' : 'laliga_data.js'), 'utf8');
-  const block = /const CLUBS = \[([\s\S]*?)\n\];/.exec(clubsSrc);
-  const valid = new Set([...block[1].matchAll(/short:"([^"]+)"/g)].map((m) => m[1]));
-  for (const [a, b] of pairs) {
-    assert.ok(valid.has(a) && valid.has(b),
-      `${f} lists a derby between ${a} and ${b}, and ` +
-      `${valid.has(a) ? b : a} is not a club in this division`);
-    assert.notEqual(a, b, `${f} lists a club as its own derby`);
-  }
+  /* THE DESK MUST READ THE SHARED LIST. This used to parse a `var DERBIES`
+     out of the page and check every short code against the division's clubs —
+     correct while each desk wrote its own list, and the wrong place for it now
+     that there is one list in assets/core.js. The pairs themselves, their
+     names, their club codes and their fixture counts are checked once, against
+     that list, in scripts/check-derbies.mjs. What is still this file's
+     business is whether THIS PAGE reaches them, and what it does with them. */
+  assert.ok(/C\.isDerby\(h, a, DERBY_LEAGUE\)/.test(src),
+    `${f} no longer reads the shared derby list from PLDCore`);
+  assert.ok(/C\.derbyName\(/.test(src),
+    `${f} no longer names the rivalry, so every derby renders as a bare ` +
+    '"derby" pill — which is what the list looked like while the names were ' +
+    'comments no code could read');
 
   /* The derby must PRICE, not merely label. The Premier League desk applies
      1.08 per player; a tag with no effect on the number is decoration. */

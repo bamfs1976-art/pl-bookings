@@ -24,23 +24,21 @@
   var C = root.PLDCore;
 
   /* The recognised rivalries among the twenty. A derby runs hotter with the
-     referee, and this list is DATA rather than a model output — it lived in
-     index.html, and moving it here is what stops the two pages disagreeing
-     about which fixtures are derbies. */
-  var DERBIES = [
-    ['ARS', 'TOT'],   // North London
-    ['LIV', 'EVE'],   // Merseyside
-    ['LIV', 'MUN'],   // North-West
-    ['MUN', 'MCI'],   // Manchester
-    ['MUN', 'LEE'],   // Roses
-    ['CHE', 'TOT'],
-    ['CHE', 'ARS'],
-    ['CHE', 'FUL'],   // West London
-    ['CRY', 'BHA'],   // M23
-    ['NEW', 'SUN'],   // Tyne-Wear
-    ['AVL', 'COV'],   // West Midlands
-    ['LEE', 'HUL'],   // Yorkshire
-  ];
+     referee, and this list is DATA rather than a model output.
+
+     IT IS NO LONGER WRITTEN HERE. It moved out of index.html into this file to
+     stop two pages disagreeing about which fixtures are derbies — and then
+     disagreed anyway, with assets/core.js, which had thirteen pairs to this
+     file's twelve. The odd one was Brentford v Fulham: core.js called it a
+     West London derby, so the backtest EXCLUDED both fixtures from its
+     rest-effect control, while this file did not, so the desk priced them with
+     no derby boost and drew no chip. Neither number was wrong on its own
+     terms; they were answers to the same question from two lists.
+
+     core.js is now the only place any of the three divisions' pairs are
+     written down, and scripts/check-derbies.mjs fails the build if this file
+     or any desk grows its own again. */
+  var DERBIES = (C && C.DERBIES) || [];
   var DERBY_SET = new Set(DERBIES.map(function (d) {
     return d.slice().sort().join('|');
   }));

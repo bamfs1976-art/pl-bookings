@@ -261,28 +261,24 @@ function candidatesFor(league) {
  *   - the FULL squad probability vector, not the eight the card lists —
  *     teamCardMarkets is a Poisson-binomial over everyone who might play.
  *
- * THE DERBY LIST IS READ OUT OF THE PAGE. Each desk declares its own DERBIES
- * inline (eflc.html, laliga.html; the Premier League's live in
- * assets/plmodel.js), and a second copy here would be a second copy: the pages
- * are the published source, so this extracts theirs rather than restating it.
- * A page whose block cannot be found is a loud failure, not a quiet zero.
+ * THE DERBY LIST IS READ OUT OF THE SOURCE, and there is now one of it. This
+ * used to scrape a DERBIES literal out of each desk in turn — eflc.html,
+ * laliga.html, and assets/plmodel.js for the Premier League — because each
+ * desk declared its own inline and the pages were the published source. They
+ * are one list in assets/core.js now (see the note there, and the drift it
+ * hid), so this asks core for the division's pairs instead of parsing three
+ * files. A division whose pairs cannot be read is a loud failure, not a quiet
+ * zero.
  */
-const DERBY_PAGE = { EFLC: 'eflc.html', LL: 'laliga.html', PL: 'assets/plmodel.js' };
 const DERBY_BOOST = { EFLC: 1.08, LL: 1.08, PL: 1.15 };   /* as each page applies */
 
 function derbySet(code) {
-  const rel = DERBY_PAGE[code];
-  if (!rel) return new Set();
-  const src = readFileSync(join(root, rel), 'utf8');
-  const i = src.indexOf('DERBIES = [');
-  if (i < 0) throw new Error(`${rel}: no DERBIES block — the derby boost cannot be reproduced`);
-  const end = src.indexOf('];', i);
-  if (end < 0) throw new Error(`${rel}: DERBIES block is unterminated`);
-  const body = src.slice(src.indexOf('[', i), end + 1);
-  let pairs;
-  try { pairs = new Function(`return ${body};`)(); }
-  catch (e) { throw new Error(`${rel}: DERBIES did not parse (${e.message})`); }
-  return new Set(pairs.map((d) => d.slice().sort().join('|')));
+  const pairs = C.derbyPairs(code);
+  if (!pairs.length) {
+    throw new Error(`assets/core.js has no derby pairs for ${code} — the derby `
+      + 'boost cannot be reproduced');
+  }
+  return new Set(pairs.map((p) => [p.a, p.b].sort().join('|')));
 }
 
 /* One forecast row per fixture in the next round, in the shape the table

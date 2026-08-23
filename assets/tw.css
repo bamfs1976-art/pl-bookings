@@ -150,23 +150,79 @@ html[data-theme="dark"].lg-all {--accent:#22d3ee;--ring:var(--accent)}
 .lb-accas .lb-dot{background:conic-gradient(var(--pl),var(--eflc),var(--ll),var(--pl));
   -webkit-mask:radial-gradient(circle,transparent 32%,#000 34%);
   mask:radial-gradient(circle,transparent 32%,#000 34%)}
-/* ONE FILE, TWO ROUTES. today.html serves both `/` (today's matches) and
-   /today (the season calendar); an early script in its head stamps
-   <html data-route>. Anything marked data-for shows only on its own route.
-   Both blocks are in the markup so the page has real headings before any
-   script has run — the selection is presentational, not a rebuild.
-   The default hides nothing, so a document with no data-route (a saved copy,
-   a crawler that ignores the head script) shows both rather than neither. */
-[data-route="home"] [data-for="season"],
-[data-route="home"] [data-for="accas"],
-[data-route="season"] [data-for="home"],
-[data-route="season"] [data-for="accas"],
-[data-route="accas"] [data-for="home"],
-[data-route="accas"] [data-for="season"]{display:none}
+/* Derbies are also all three divisions and no competition of their own, and by
+   now the three-league sweep is out of variations that read differently at
+   9px. So: SPLIT DOWN THE MIDDLE, which is the only dot in the bar that says
+   something about its view rather than only distinguishing it — two halves,
+   facing each other. */
+.lb-derbies .lb-dot{background:linear-gradient(90deg,var(--pl) 0 46%,
+  transparent 46% 54%,var(--ll) 54% 100%)}
+/* ONE FILE, FOUR ROUTES. today.html serves `/` (today's matches), /today (the
+   season calendar), /accas (every combination) and /derbies (every derby, all
+   three divisions); an early script in its head stamps <html data-route>.
+   Anything marked data-for shows only on its own route. Every block is in the
+   markup so the page has real headings before any script has run — the
+   selection is presentational, not a rebuild.
+   The default hides nothing, so a document with no data-route (a saved copy, a
+   crawler that ignores the head script) shows them all rather than none.
+
+   HIDE WHAT IS NOT MINE, rather than listing every pair to hide. This was
+   written the other way — one rule per (route, foreign block) pair — which is
+   six rules for three routes and twelve for four, every one of them a line
+   someone has to remember to add. It is now one rule per route, and a fifth
+   route is one line that cannot be half-written: forgetting it shows the new
+   block everywhere instead of hiding the old blocks nowhere. `~=` so a block
+   can name more than one route it belongs to. */
+[data-route="home"] [data-for]:not([data-for~="home"]),
+[data-route="season"] [data-for]:not([data-for~="season"]),
+[data-route="accas"] [data-for]:not([data-for~="accas"]),
+[data-route="derbies"] [data-for]:not([data-for~="derbies"]){display:none}
 /* The fixture list is shared by the two match routes and belongs to neither
    alone, so it is hidden by route rather than tagged data-for. /accas is about
-   the slips; a reader who wants the matches has two routes that are. */
-[data-route="accas"] #listCard{display:none}
+   the slips and /derbies about the rivalries; a reader who wants the matches
+   has two routes that are. */
+[data-route="accas"] #listCard,
+[data-route="derbies"] #listCard{display:none}
+
+/* ─── /derbies ──────────────────────────────────────────────────────────────
+   A dense list rather than the fixture cards the other routes draw: eighty-odd
+   rows spanning a whole season is a reference you scan, not a set of matches
+   you are about to price. */
+.drb-month{margin:18px 0 6px;font-size:12px;font-weight:700;letter-spacing:.06em;
+  text-transform:uppercase;color:var(--text-3,#8b93a3)}
+.drb-month:first-child{margin-top:8px}
+/* 96px, because "Sat, Aug 15" is wider than "Sun, Sep 6" and a column cut to
+   the shorter one wraps half the rows and not the other half. */
+.drb{display:grid;grid-template-columns:96px auto 1fr auto;align-items:center;
+  gap:0 10px;padding:8px 2px;border-top:1px solid var(--border,#e3e7ee)}
+/* The date, the league chip and the heat each span both rows so they sit
+   centred against the two-line tie block rather than riding its first line. */
+.drb-when{grid-area:1/1/span 2/2;display:flex;flex-direction:column;line-height:1.25}
+.drb-when b{font-size:12.5px}
+.drb-when span{font-size:11.5px;color:var(--text-3,#8b93a3);font-variant-numeric:tabular-nums}
+.drb .lg{grid-area:1/2/span 2/3;text-decoration:none;align-self:center}
+.drb-tie{grid-area:1/3/2/4;min-width:0}
+.drb-tie b{font-size:13.5px;font-weight:600;display:block}
+.drb-name{font-size:11.5px;color:var(--text-2,#586275)}
+/* The round and the referee go UNDER the tie rather than in a column of their
+   own: a fourth metadata column does not fit a phone, and this list has to be
+   readable on one. */
+.drb-meta{grid-area:2/3/3/4;font-size:11.5px;color:var(--text-2,#586275);
+  margin-top:1px}
+.drb .fx-heat{grid-area:1/4/span 2/5;align-self:center}
+/* A played derby is still part of the set — greying it keeps the calendar
+   honest about how far through the season it is without dropping rows. */
+.drb.done .drb-tie b,.drb.done .drb-when b{opacity:.62}
+/* Full club names on a wide screen, short codes on a phone — the same swap the
+   league bar makes with .lb-full/.lb-abbr, and for the same reason. */
+.drb-short{display:none}
+@media (max-width:560px){
+  .drb{grid-template-columns:72px auto 1fr auto;gap:0 8px}
+  .drb-long{display:none}
+  .drb-short{display:inline}
+  .drb-tie b{font-size:13px;font-family:var(--mono,ui-monospace,monospace);
+    letter-spacing:.01em}
+}
 
 /* All four have to FIT. At full length the row needs 625px and the widest
    iPhone is 430, so "La Liga" and "Today" sat off the right edge on every

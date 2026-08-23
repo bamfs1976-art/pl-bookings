@@ -1762,39 +1762,124 @@
 
   /* ---- derbies -----------------------------------------------------------
    * A MANUAL LIST, and it has to be: no feed carries "these two dislike each
-   * other". Kept here so the backtest's control and any future display read
-   * the same pairs.
+   * other". Kept here so the backtest's control, all three desks' derby pill
+   * and the /derbies list read the same pairs.
    *
-   * The four clusters named in the brief, plus fixtures with documented
-   * rivalry history that happen to fall inside the 2026-27 division. Clubs
-   * come and go — Wolves, West Ham and Burnley went down, so the West Midlands
-   * cluster is Villa and Coventry this season and will be a different set next
-   * — which is why this is a pair list rather than a cluster list.
+   * ONE LIST FOR THREE DIVISIONS. This used to be three: this array for the
+   * Premier League, and a near-identical `var DERBIES` inlined in eflc.html
+   * and again in laliga.html, each with its own local isDerby. Three copies of
+   * one rule is how they come to disagree, and the copies were already only
+   * reachable from inside their own page — which is why a list spanning the
+   * three divisions could not be shown at all until they were folded together.
+   *
+   * THE RIVALRY NAME IS THE THIRD ELEMENT, not a comment. It was a comment in
+   * all three copies, which meant the pages knew a fixture was a derby but
+   * could not say WHICH — every one of them rendered the same bare word
+   * "derby". A name no code can read is a name the reader never sees.
+   *
+   * Clubs come and go — Wolves, West Ham and Burnley went down, so the Premier
+   * League's West Midlands pair is Villa and Coventry this season and West Ham
+   * v Millwall is a Championship fixture — which is why these are pair lists
+   * rather than cluster lists, and why every short code is checked against the
+   * shipped club list by scripts/check-derbies.mjs. A guessed code produces a
+   * derby that does not exist: the first Championship list flagged Bristol
+   * City v Millwall, which is not one.
    */
-  const DERBIES = [
-    ['LIV', 'EVE'],   // Merseyside
-    ['ARS', 'TOT'],   // North London
-    ['MCI', 'MUN'],   // Manchester
-    ['AVL', 'COV'],   // West Midlands
-    ['LIV', 'MUN'],   // North West
-    ['NEW', 'SUN'],   // Tyne-Wear
-    ['LEE', 'MUN'],   // Roses
-    ['LEE', 'HUL'],   // Yorkshire
-    ['CRY', 'BHA'],   // M23
-    ['CHE', 'TOT'],   // London
-    ['ARS', 'CHE'],   // London
-    ['CHE', 'FUL'],   // West London
-    ['BRE', 'FUL'],   // West London
-  ];
-  const DERBY_KEYS = new Set(DERBIES.map((p) => p.slice().sort().join('|')));
+  const DERBIES_BY_LEAGUE = {
+    PL: [
+      ['LIV', 'EVE', 'Merseyside'],
+      ['ARS', 'TOT', 'North London'],
+      ['MCI', 'MUN', 'Manchester'],
+      ['AVL', 'COV', 'West Midlands'],
+      ['LIV', 'MUN', 'North West'],
+      ['NEW', 'SUN', 'Tyne-Wear'],
+      ['LEE', 'MUN', 'Roses'],
+      ['LEE', 'HUL', 'Yorkshire'],
+      ['CRY', 'BHA', 'M23'],
+      ['CHE', 'TOT', 'London'],
+      ['ARS', 'CHE', 'London'],
+      ['CHE', 'FUL', 'West London'],
+      ['BRE', 'FUL', 'West London'],
+    ],
+    EFLC: [
+      ['BLB', 'BUR', 'East Lancashire'],
+      ['BLB', 'PRE', 'Lancashire'],
+      ['BUR', 'PRE', 'Lancashire'],
+      ['BOL', 'BLB', 'Lancashire'],
+      ['BOL', 'PRE', 'Lancashire'],
+      ['BRC', 'CAR', 'Severnside'],
+      ['BRC', 'SWA', 'Severnside'],
+      ['CAR', 'SWA', 'South Wales'],
+      ['CHA', 'MIL', 'South London'],
+      ['MIL', 'WHU', 'Dockers'],
+      ['POR', 'SOU', 'South Coast'],
+      ['BIR', 'WBA', 'West Midlands'],
+      ['BIR', 'WOL', 'West Midlands'],
+      ['WBA', 'WOL', 'Black Country'],
+    ],
+    LL: [
+      ['RMA', 'BAR', 'El Clásico'],
+      ['RMA', 'ATM', 'El Derbi madrileño'],
+      /* Named last, because it is the one pair here with no settled name of
+         its own — it is a rivalry between the two clubs that contest the other
+         two fixtures above, rather than a local derby. It carried no comment
+         at all in the La Liga copy, which is how the gap survived. */
+      ['ATM', 'BAR', 'Atlético–Barcelona'],
+      ['SEV', 'BET', 'El Gran Derbi'],
+      ['ATH', 'RSO', 'Basque derby'],
+      ['ATH', 'ALA', 'Basque'],
+      ['RSO', 'ALA', 'Basque'],
+      ['BAR', 'ESP', 'Barcelona derby'],
+      ['VAL', 'LEV', 'Valencia derby'],
+      ['VAL', 'VIL', 'Valencian community'],
+      ['LEV', 'VIL', 'Valencian community'],
+      ['CEL', 'DEP', 'O Noso Derbi — Galician'],
+      ['SEV', 'MAL', 'Andalusian'],
+      ['BET', 'MAL', 'Andalusian'],
+    ],
+  };
 
-  function isDerby(home, away) {
-    return DERBY_KEYS.has([String(home || ''), String(away || '')].sort().join('|'));
+  /* THE DEFAULT IS THE PREMIER LEAGUE, so every existing caller — the
+     backtest's control, the desk's model, the share cards — keeps working
+     unchanged with two arguments. */
+  const DERBY_NAMES = {};
+  Object.keys(DERBIES_BY_LEAGUE).forEach((code) => {
+    const m = {};
+    DERBIES_BY_LEAGUE[code].forEach((d) => { m[[d[0], d[1]].sort().join('|')] = d[2] || ''; });
+    DERBY_NAMES[code] = m;
+  });
+
+  /* The Premier League's own pairs, still two-element, still exported under
+     the old name: this is what plmodel.js and the backtest read. */
+  const DERBIES = DERBIES_BY_LEAGUE.PL.map((d) => [d[0], d[1]]);
+
+  function derbyKey(home, away) {
+    return [String(home || ''), String(away || '')].sort().join('|');
+  }
+
+  function isDerby(home, away, league) {
+    const m = DERBY_NAMES[league || 'PL'];
+    return !!m && Object.prototype.hasOwnProperty.call(m, derbyKey(home, away));
+  }
+
+  /* '' when the pair is not a derby, so a caller can print this straight into
+     a label without first asking isDerby. */
+  function derbyName(home, away, league) {
+    const m = DERBY_NAMES[league || 'PL'];
+    return (m && m[derbyKey(home, away)]) || '';
+  }
+
+  /* Every pair in one league, as objects rather than positional arrays,
+     because the /derbies list reads these by name. */
+  function derbyPairs(league) {
+    return (DERBIES_BY_LEAGUE[league] || []).map(
+      (d) => ({ a: d[0], b: d[1], name: d[2] || '' }));
   }
 
   const PLDCore = {
     rotationRisk, rotationBand,
-    restDays, restBucket, previousMatch, euroAway72h, isDerby, DERBIES,
+    restDays, restBucket, previousMatch, euroAway72h,
+    isDerby, derbyName, derbyPairs, DERBIES, DERBIES_BY_LEAGUE,
     riskScore, normName, matchRefName, refShort, pickPL, summarisePicks, calibrate, impliedProb, fairOdds, edgePct, LOGISTIC_SLOPE,
     per90, liveRate, joinLooksRight, foldLetters, MIN_LIVE_MINUTES,
     lineupMinutes, xiWeights, SUBS_USED, SUB_MINUTES,

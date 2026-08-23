@@ -842,6 +842,7 @@
   <div class="leaguebar-in">
     <a class="lb-item lb-today" href="/"><span class="lb-dot"></span><span class="lb-full">Today's matches</span><span class="lb-abbr">Today</span></a>
     <a class="lb-item lb-accas" href="/accas"><span class="lb-dot"></span><span class="lb-full">Accas</span><span class="lb-abbr">Accas</span></a>
+    <a class="lb-item lb-derbies" href="/derbies"><span class="lb-dot"></span><span class="lb-full">Derbies</span><span class="lb-abbr">Derbies</span></a>
     <a class="lb-item lb-pl" href="/pl" aria-current="page"><span class="lb-dot"></span><span class="lb-full">Premier League</span><span class="lb-abbr">PL</span></a>
     <a class="lb-item lb-eflc" href="/eflc"><span class="lb-dot"></span><span class="lb-full">Championship</span><span class="lb-abbr">Championship</span></a>
     <a class="lb-item lb-ll" href="/laliga"><span class="lb-dot"></span><span class="lb-full">La Liga</span><span class="lb-abbr">La Liga</span></a>
@@ -898,7 +899,8 @@
            things nothing else offers. -->
       <span><button type="button" class="linkish" data-open-tour>How to read this page</button> &middot;
         <a href="#p=accas">Nine-fold</a> &middot;
-        <a href="/">Today&rsquo;s matches</a> &middot; <a href="/today">Season calendar</a></span>
+        <a href="/">Today&rsquo;s matches</a> &middot; <a href="/today">Season calendar</a> &middot;
+        <a href="/derbies">Derbies</a></span>
       <button class="gw-intro-x" type="button" data-hint-dismiss aria-label="Dismiss this hint">&times;</button>
     </p>
     <!-- ONE ROW OF CONTROLS, not two bordered cards stacked.
@@ -3249,7 +3251,7 @@ function openPlayerProfile(k){
       <div style="display:flex;align-items:center;gap:.45rem;flex-wrap:wrap;margin-top:.25rem;font-size:.88rem;font-weight:600">
         ${crest(hS)} ${hS} <span class="faint">v</span> ${crest(aS)} ${aS}
         <span class="chip ${cls}" title="Booking heat — home side's home card rate + away side's away rate, ref- and derby-adjusted"><span class="heat">${heat.toFixed(1)}</span></span>
-        ${derby?'<span title="Derby">🔥</span>':""}${refChip(ref)||""}
+        ${derby?`<span title="${esc(derbyName(hS,aS)||"Derby")}">🔥</span>`:""}${refChip(ref)||""}
       </div>
       <div class="faint" style="font-size:.74rem;margin-top:.2rem">${fx.kickoff_time?fmtKO(fx.kickoff_time):"Kick-off TBC"} · ${home?"home":"away"} v ${esc(clubName(opp))}</div>
       ${fx.kickoff_time?`<button class="btn btn-ghost" type="button" data-ics="${esc(fx.id)}" data-ics-player="${esc(k)}" style="margin-top:.45rem;font-size:.74rem;padding:.28rem .6rem">📅 Add to calendar</button>`:""}
@@ -4131,13 +4133,20 @@ function nextFixtureFor(short){
 // so a derby fixture gets a heat boost and a chip. Includes the promoted
 // clubs' regional rivalries where the other side is in the league
 // (Coventry-Villa in the West Midlands, Hull-Leeds across Yorkshire).
-// The list itself lives in assets/plmodel.js, which /today also reads. It was
-// duplicated for exactly one commit and that was enough to notice: two pages
-// disagreeing about which fixtures are derbies would move every player's
-// number on those fixtures, on one page only, with nothing to catch it.
+// The list itself lives in assets/core.js — all three divisions' pairs, in one
+// place — and reaches this page through assets/plmodel.js, which /today also
+// reads. It was duplicated for exactly one commit and that was enough to
+// notice: two pages disagreeing about which fixtures are derbies would move
+// every player's number on those fixtures, on one page only, with nothing to
+// catch it. It then happened anyway, silently and for longer, between
+// plmodel.js and core.js — see the note in plmodel.js. scripts/check-derbies.mjs
+// now fails the build on a second list.
 const DERBIES=(typeof PLModel!=="undefined"&&PLModel.DERBIES)||[];
 const DERBY_SET=new Set(DERBIES.map(d=>[...d].sort().join("|")));
 function isDerby(h,a){ return DERBY_SET.has([h,a].sort().join("|")); }
+// The name of the rivalry, "" when the pair is not one. The chip said "Derby"
+// for every fixture until the names stopped being comments.
+function derbyName(h,a){ return (window.PLDCore&&PLDCore.derbyName(h,a,"PL"))||""; }
 const DERBY_BOOST=1.15;
 
 // ---- the match model (data/sim_model.js) ----

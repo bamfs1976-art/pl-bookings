@@ -311,6 +311,15 @@ jobs:
       - name: The referee path, end to end
         run: node scripts/check-referees.mjs
 
+      # Which fixtures are derbies was written down in FOUR places — core.js,
+      # plmodel.js and inline in both of the other desks — and two of them had
+      # already drifted: core called Brentford v Fulham a West London derby and
+      # plmodel did not, so the backtest excluded those fixtures as card-heavy
+      # while the desk priced them with no boost. One list now, and this fails
+      # the build on a second one.
+      - name: One derby list, and the route that shows it
+        run: node scripts/check-derbies.mjs
+
       # The pipeline front door against the pipeline. build_data.py is a
       # RUNNER over the same scripts data-refresh.yml calls; two lists of the
       # same steps drift, and a front door that has quietly lost one produces
