@@ -137,14 +137,42 @@ MONTHS = {m.lower(): i for i, m in enumerate(
     ["January", "February", "March", "April", "May", "June", "July",
      "August", "September", "October", "November", "December"], 1)}
 
+# THE EFL PUBLISHES THESE TWO WAYS, and both have now arrived. "Saturday, 15th
+# August 2026" with a comma, an ordinal and a year; and "Saturday 22 August"
+# with none of the three. The comma, the ordinal and the year are therefore all
+# optional — but see YEAR below, which is the part that cannot be shrugged off.
 DATE_RE = re.compile(
-    r"^(?:mon|tues|wednes|thurs|fri|satur|sun)day,\s+(\d{1,2})(?:st|nd|rd|th)?\s+"
-    r"([a-z]+)\s+(\d{4})\s*$", re.I)
-FIXTURE_RE = re.compile(r"^(.+?)\s+v\s+(.+?)\s*\((\d{1,2}:\d{2})\)\s*$", re.I)
+    r"^(?:mon|tues|wednes|thurs|fri|satur|sun)day,?\s+(\d{1,2})(?:st|nd|rd|th)?\s+"
+    r"([a-z]+)(?:\s+(\d{4}))?\s*$", re.I)
+# ...and kick-offs two ways as well: "(15:00)" and "(12:30pm)" or a bare
+# "(3pm)". Stored as 24-hour, because the overlay is read by a build and a
+# desk, not by a person, and "3:00" for a 15:00 kick-off would be a fixture
+# that looks like it starts in the morning.
+FIXTURE_RE = re.compile(
+    r"^(.+?)\s+v\s+(.+?)\s*\((\d{1,2})(?::(\d{2}))?\s*(am|pm)?\)\s*$", re.I)
 REFEREE_RE = re.compile(r"^referee:\s*(.+?)\s*$", re.I)
 
 
-def parse(text):
+def _ko24(hour, minute, meridiem):
+    """A published kick-off as 24-hour HH:MM.
+
+    Football's own convention settles the ambiguous cases without inventing a
+    rule: a Championship fixture kicks off between about 11:00 and 21:00, so a
+    bare "3" is the afternoon and a bare "12" is midday. An explicit am/pm is
+    always obeyed.
+    """
+    h, m = int(hour), int(minute or 0)
+    mer = (meridiem or "").lower()
+    if mer == "pm" and h != 12:
+        h += 12
+    elif mer == "am" and h == 12:
+        h = 0
+    elif not mer and h < 11:
+        h += 12          # "(3)" is three in the afternoon; nobody kicks off at 03:00
+    return f"{h:02d}:{m:02d}"
+
+
+def parse(text, default_year=None):
     """The article as a list of {competition, date, home, away, ko, ref}.
 
     Deliberately line-oriented and stateful — date and competition headings
@@ -152,7 +180,7 @@ def parse(text):
     dates under a competition heading, so both have to be tracked
     independently rather than assuming one nests inside the other.
     """
-    out, unknown_headings = [], []
+    out, unknown_headings, undated = [], [], []
     date = comp = None
     pending = None
 
@@ -163,9 +191,18 @@ def parse(text):
 
         m = DATE_RE.match(line)
         if m:
-            day, month, year = int(m.group(1)), MONTHS.get(m.group(2).lower()), int(m.group(3))
-            if month:
-                date = f"{year:04d}-{month:02d}-{day:02d}"
+            day, month = int(m.group(1)), MONTHS.get(m.group(2).lower())
+            yr = int(m.group(3)) if m.group(3) else default_year
+            # NO YEAR AND NONE SUPPLIED is left as None rather than guessed.
+            # "this year" is wrong for half of every season — a January round
+            # belongs to the year after the August one — and the caller is
+            # told rather than handed a date that will match no fixture, or
+            # worse, match one twelve months out.
+            if month and yr:
+                date = f"{yr:04d}-{month:02d}-{day:02d}"
+            elif month:
+                date = None
+                undated.append(line)
             pending = None
             continue
 
@@ -187,7 +224,7 @@ def parse(text):
         if m:
             pending = {"competition": comp, "date": date,
                        "home": m.group(1).strip(), "away": m.group(2).strip(),
-                       "ko": m.group(3), "ref": None}
+                       "ko": _ko24(m.group(3), m.group(4), m.group(5)), "ref": None}
             continue
 
         m = REFEREE_RE.match(line)
@@ -199,7 +236,7 @@ def parse(text):
         # Assistants, fourth officials, bylines: not appointments this desk
         # prices with, so they are dropped without comment.
 
-    return out, unknown_headings
+    return out, unknown_headings, undated
 
 
 def to_entries(parsed, source):
@@ -274,6 +311,10 @@ def main():
     ap.add_argument("--source", required=True, help="URL the appointments were published at")
     ap.add_argument("--dry-run", action="store_true",
                     help="report what would change and write nothing")
+    ap.add_argument("--year", type=int,
+                    help="Season year for date headings that carry none "
+                         "(\"Saturday 22 August\"). Only used where the "
+                         "article omits it; a heading with a year keeps it.")
     ap.add_argument("--format", choices=["efl", "rfef"], default="efl",
                     help="efl: the EFL's weekly prose (default). "
                          "rfef: a Comité Técnico de Árbitros designation sheet.")
@@ -284,12 +325,16 @@ def main():
         sys.exit("ERROR: no article text on stdin (or --file was empty).")
 
     if args.format == "rfef":
-        parsed, unknown = parse_rfef(text), []
+        parsed, unknown, undated = parse_rfef(text), [], []
         expected = ("a 'DD-MM-YYYY  Home  Away  HH:MM' row followed by "
                     "'Árbitro: Name'")
     else:
-        parsed, unknown = parse(text)
+        parsed, unknown, undated = parse(text, default_year=args.year)
         expected = "'Home v Away (15:00)' followed by 'Referee: Name'"
+    for line in dict.fromkeys(undated):
+        # Refused, not guessed. "This year" is wrong for half of every season.
+        print(f"  WARNING: {line!r} carries no year and none was given — pass "
+              "--year; its fixtures were skipped")
     if not parsed:
         sys.exit(f"ERROR: no appointments found. Expected {expected}.")
     print(f"read {len(parsed)} appointments from the article")

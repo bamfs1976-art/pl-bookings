@@ -1032,8 +1032,73 @@ def discover_clubs(payload, league, season):
     return clubs
 
 
+def emit_roster(host, key, league, ids):
+    """WHO IS AT EACH CLUB NOW, which is a different question from who played.
+
+    THE FAILURE THIS EXISTS FOR. Every squad on the Championship and La Liga
+    desks comes from /players?league&season — the STATISTICS endpoint — and
+    that answers "who appeared for this club in that season". Pointed at
+    2025-26, which is correct for FORM (see scripts/form-season.mjs: a player's
+    own record beats the positional prior only after about six rounds), it
+    returns last season's squad: everyone who played, including the loanee who
+    went back and the man sold in January.
+
+    Measured on the shipped files: the Premier League, whose membership is
+    reconciled against a live feed, carries 30.1 players a club. La Liga
+    carries 39.1 and the Championship 40.6, against real senior squads of
+    25-30. That third of a squad is players who have left, priced into their
+    old club's fixtures as though they were still there.
+
+    /players/squads?team= answers the other question — the CURRENT roster,
+    with no season parameter, because "who is at this club" has no season. It
+    is one call per club: 24 for the Championship, 20 for La Liga.
+
+    RATES ARE NOT TOUCHED. This file carries names and clubs and nothing else.
+    The card rate is a property of the player and keeps coming from the form
+    harvest, which is the whole point of separating the two: membership is a
+    fact about today, a rate is a record of last season, and conflating them is
+    what makes a transfer either delete a player's history or strand it at his
+    old club.
+    """
+    rows = []
+    for club_name, team_id in sorted(ids.items()):
+        payload = _get(host, key, "players/squads", {"team": team_id})
+        got = 0
+        for entry in (payload.get("response") or []):
+            for pl in (entry.get("players") or []):
+                name = (pl.get("name") or "").strip()
+                if not name:
+                    continue
+                rows.append({"team": club_name, "n": name,
+                             "pos": pl.get("position"), "id": pl.get("id")})
+                got += 1
+        print(f"    {club_name:26} {got:>3} players")
+
+    # A ROSTER THAT CAME BACK SHORT IS NOT A SMALLER DIVISION. Every consumer
+    # of this file treats absence as "has left", so a partial answer would
+    # retire half a league. Refuse to write rather than hand that on — the
+    # builders already do nothing when the file is missing, which is exactly
+    # the behaviour a failed harvest should fall back to.
+    thin = [c for c in ids if sum(1 for r in rows if r["team"] == c) < 15]
+    if thin:
+        sys.exit(f"ERROR: {len(thin)} club(s) came back with fewer than 15 "
+                 f"players, so {league.code}_squads.json was NOT written — "
+                 "absence in this file means 'has left', and a short answer "
+                 "would retire real players:\n  - " + "\n  - ".join(sorted(thin)))
+
+    name = f"{league.code.lower()}_squads.json"
+    payload = {"league": league.code, "players": rows}
+    (DATA / name).write_text(json.dumps(payload), encoding="utf-8")
+    print(f"\n{name} written ({len(rows)} players from {len(ids)} clubs, "
+          f"API-Football current rosters)")
+
+
 def main():
     ap = argparse.ArgumentParser()
+    ap.add_argument("--roster", action="store_true",
+                    help="harvest CURRENT club rosters (who is at each club "
+                         "now) to <league>_squads.json, rather than a season's "
+                         "statistics. Membership, not form.")
     ap.add_argument("--clubs", action="store_true",
                     help="discover the division's clubs and write the league's "
                          "club registry, then stop (run this FIRST for a "
@@ -1195,6 +1260,10 @@ def main():
         # so it gets read rather than assumed.
         print(f"  not in this desk's club list ({len(unmapped)}): "
               + ", ".join(unmapped))
+    if args.roster:
+        emit_roster(host, key, league, ids)
+        return
+
     print(f"  fetching {len(ids)} squads")
 
     rows = []

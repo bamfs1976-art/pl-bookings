@@ -298,9 +298,37 @@ def build_players(clubs, continuing, promoted, resolve):
         seen.add(key)
         deduped.append(r)
 
+    # WHO IS ACTUALLY AT EACH CLUB NOW. Everything above is 2025-26 evidence
+    # from the statistics endpoint, which answers "who appeared for this club
+    # last season" — loanees who went back and players sold in January
+    # included. Right for FORM, wrong for MEMBERSHIP, and it showed: this desk
+    # shipped 39.1 players a club against the Premier League's 30.1.
+    #
+    # The same reconcile the Premier League runs, against this league's own
+    # roster file. The club comes from the roster; the CARD RATE IS A PROPERTY
+    # OF THE PLAYER and travels with him. No roster file and nothing moves.
+    #
+    # NAME_BY_SHORT is built from the discovered registry rather than a
+    # constant, because Spain's twenty are discovered rather than declared —
+    # see clubs_registry().
+    name_by_short = {}
+    for cname, entry in (clubs or {}).items():
+        short = entry.get("short") if isinstance(entry, dict) else entry
+        if short:
+            name_by_short[short] = cname
+    deduped = P.reconcile_squads(
+        deduped, P.load_optional("ll_squads.json"),
+        short_of=resolve, name_of=name_by_short.get,
+        make=lambda row, basis: P.mk(row, basis, resolve),
+        league="LL", min_clubs=len(clubs or {}), min_players=15 * len(clubs or {}))
+
     # This season's cautions, stamped on where they are known. NOT defaulted
     # to zero: "no data" and "no cards yet" look identical on a strip that
     # tells someone a ban is one booking away, and only one is safe to act on.
+    #
+    # AFTER the reconcile: this keys on (club, name), so a player who moved in
+    # the summer would otherwise have his 2026-27 cautions looked up against
+    # last season's club and find nothing.
     live = season_cards(resolve)
     for r in deduped:
         got = live.get((r["c"], r["n"]))

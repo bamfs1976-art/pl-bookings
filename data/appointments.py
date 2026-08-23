@@ -430,8 +430,11 @@ def supersedes(harvested, published, known):
     THE THREE CONDITIONS, all required:
 
       1. the published name is in the card table, so replacing gains a rate;
-      2. the harvested name is NOT, so nothing priceable is being thrown away —
-         a harvest that already prices always wins, including when it disagrees;
+      2. the harvested name does not REACH one, so nothing priceable is being
+         thrown away — a harvest that already prices always wins, including
+         when it disagrees. "Reaches" and not "is": the desk resolves an
+         abbreviation, so a name absent from the table can still price
+         perfectly well through it;
       3. the harvested name resolves ONTO the published one, by the same rules
          used everywhere else, with the published name as the only candidate.
 
@@ -440,10 +443,22 @@ def supersedes(harvested, published, known):
     pair where neither prices — "C. Muniz" against "Carlos Muñiz" — fails (1)
     and stays reported, because swapping one unpriceable spelling for another
     would only hide that the card table has never heard of him.
+
+    CONDITION 2 WAS WRITTEN AS `harvested in known` AND THAT WAS WRONG. The
+    Championship table records officials by initial — "W Finnie", "T Reeves" —
+    and API-Football harvests them in full. None of those full names is a table
+    KEY, so the test passed and the overlay swapped eight of them for the
+    initial form: no card record was gained, because the desk already resolved
+    the full name through matchRefName, and the page lost the man's actual
+    forename. The question was never "is this string a key", it is "does this
+    string reach a rate", and it is asked with the same resolver everywhere
+    else uses.
     """
     if not harvested or not published:
         return False
-    if published not in known or harvested in known:
+    if published not in known and resolve_ref_name(published, known)[0] is None:
+        return False
+    if harvested in known or resolve_ref_name(harvested, known)[0] is not None:
         return False
     return resolve_ref_name(harvested, [published])[0] == published
 

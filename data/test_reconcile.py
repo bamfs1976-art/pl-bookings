@@ -297,6 +297,86 @@ ok(not [r for r in out if r["n"] == ROMERO],
    "the overlay must apply even when the FPL feed is too small to reconcile "
    f"against — it is separate evidence, not a refinement of the feed; got {out}")
 
+print("reconcile: the other two desks use the SAME implementation")
+# THE POINT OF PARAMETERISING IT. The Championship and La Liga had no
+# membership reconcile at all — their squads came from the 2025-26 STATISTICS
+# endpoint, which answers "who appeared for this club last season". Measured on
+# the shipped files: Premier League 30.1 players a club, La Liga 39.1,
+# Championship 40.6, against real senior squads of 25-30. A third of every
+# squad was players who had left, priced into their old club's fixtures.
+#
+# Copying reconcile_squads for each of them would have been three
+# implementations of "who plays for whom now". These assertions exist so the
+# one implementation is exercised through somebody else's club maps.
+FOREIGN = {"Reial Club": "RCB", "Club Atlètic": "CAT", "Unió Esportiva": "UES"}
+FOREIGN_BY_SHORT = {v: k for k, v in FOREIGN.items()}
+
+
+def foreign_feed(extra=(), skip=()):
+    """Shaped like the REAL roster file, which is the point.
+
+    emit_roster writes {"team": <club name>, "n": ...} with no short code — the
+    harvest knows clubs by name, not by this desk's three letters. A fixture
+    that supplied "c" directly would never call short_of at all, and a mutation
+    hard-coding the Premier League's club map went UNCAUGHT for exactly that
+    reason: the assertion was passing on a path the builder does not take.
+    """
+    rows = []
+    for name, short in FOREIGN.items():
+        for i in range(25):
+            n = f"Jugador{short} Cognom{chr(97 + i)}"
+            if n in skip:
+                continue
+            rows.append({"team": name, "n": n, "pos": "Midfielder"})
+    rows.extend(extra)
+    return rows
+
+
+def foreign_make(row, basis):
+    return b.mk(row, basis, FOREIGN.get)
+
+
+shipped_row = shipped("Jugador Traspassat", "RCB")
+out = b.reconcile_squads(
+    [shipped_row], foreign_feed(extra=[{"team": "Club Atlètic", "n": "Jugador Traspassat",
+                                        "pos": "Midfielder"}]),
+    short_of=FOREIGN.get, name_of=FOREIGN_BY_SHORT.get, make=foreign_make,
+    league="LL", min_clubs=3, min_players=60)
+moved = [r for r in out if r["n"] == "Jugador Traspassat"]
+ok(len(moved) == 1 and moved[0]["c"] == "CAT",
+   f"the shared reconcile did not move a player using another league's maps; {moved}")
+ok(moved[0]["yc"] == 4 and moved[0]["f"] == 1.2,
+   "the rate must follow the player on every desk, not just the Premier League")
+ok(moved[0]["_club"] == "Club Atlètic",
+   f"a moved player kept the old club's NAME — the 'MUN Aston Villa' failure, "
+   f"on a desk whose club map is not the Premier League's; got {moved[0].get('_club')!r}")
+
+# THE INFLATION THIS EXISTS TO END: a player the roster does not have has left,
+# and his row goes. That is the whole difference between 40.6 and 30.1.
+out = b.reconcile_squads([shipped("Jugador Marxat", "RCB")], foreign_feed(),
+                         short_of=FOREIGN.get, name_of=FOREIGN_BY_SHORT.get,
+                         make=foreign_make, league="LL", min_clubs=3,
+                         min_players=60)
+ok(not [r for r in out if r["n"] == "Jugador Marxat"],
+   "a player the current roster does not carry is still on the desk — this is "
+   "the third of a squad that should not be priced into anyone's fixtures")
+
+# AND THE REFUSALS COME WITH IT. A short roster must not empty a division on
+# a desk that has never had one before — the harvest is continue-on-error, so
+# "came back thin" is a live possibility every single run.
+rows = [shipped("Jugador Marxat", "RCB")]
+out = b.reconcile_squads(list(rows), [{"team": "Reial Club", "n": "Algu Altre"}],
+                         short_of=FOREIGN.get, name_of=FOREIGN_BY_SHORT.get,
+                         make=foreign_make, league="LL", min_clubs=3,
+                         min_players=60)
+ok(len(out) == 1 and out[0]["n"] == "Jugador Marxat",
+   "a one-club roster emptied the desk instead of being refused")
+out = b.reconcile_squads(list(rows), None,
+                         short_of=FOREIGN.get, name_of=FOREIGN_BY_SHORT.get,
+                         make=foreign_make, league="LL", min_clubs=3,
+                         min_players=60)
+ok(len(out) == 1, "no roster file at all must leave every row exactly where it was")
+
 print(f"\n{passed} checks passed")
 
 # MUTATIONS these assertions were checked against:

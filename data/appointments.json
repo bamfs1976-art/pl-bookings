@@ -1,6 +1,7 @@
 {
  "note": "Referee appointments as published by the competition, laid over the harvested fixture list by data/appointments.py. The harvest wins where it has a value; this fills the nulls.",
  "sources": [
+  "efl.com — Championship referee appointments, 22-23 August 2026 (supplied as text; exact article URL not captured)",
   "https://rfef.es/sites/default/files/designaciones_1a_division_masculina_-_temp_2026-27_-_jornada_1_domingo16.pdf",
   "https://rfef.es/sites/default/files/designaciones_1a_division_masculina_-_temp_2026-27_-_jornada_1_lunes17.pdf",
   "https://rfef.es/sites/default/files/designaciones_1a_division_masculina_-_temp_2026-27_-_jornada_1_sabado15.pdf",
@@ -141,6 +142,138 @@
    "refResolved": "Andrew Kitchen",
    "resolvedBy": "exact",
    "source": "https://www.efl.com/news/2026/august/11/referee-appointments--14-20-august/"
+  },
+  {
+   "league": "EFLC",
+   "date": "2026-08-22",
+   "h": "BIR",
+   "a": "BRC",
+   "ko": "12:30",
+   "ref": "Will Finnie",
+   "refResolved": "W Finnie",
+   "resolvedBy": "initial",
+   "source": "efl.com — Championship referee appointments, 22-23 August 2026 (supplied as text; exact article URL not captured)"
+  },
+  {
+   "league": "EFLC",
+   "date": "2026-08-22",
+   "h": "BLB",
+   "a": "MID",
+   "ko": "15:00",
+   "ref": "Tom Reeves",
+   "refResolved": "T Reeves",
+   "resolvedBy": "initial",
+   "source": "efl.com — Championship referee appointments, 22-23 August 2026 (supplied as text; exact article URL not captured)"
+  },
+  {
+   "league": "EFLC",
+   "date": "2026-08-22",
+   "h": "DER",
+   "a": "CAR",
+   "ko": "15:00",
+   "ref": "Rueben Ricardo",
+   "refResolved": "R Ricardo",
+   "resolvedBy": "initial",
+   "source": "efl.com — Championship referee appointments, 22-23 August 2026 (supplied as text; exact article URL not captured)"
+  },
+  {
+   "league": "EFLC",
+   "date": "2026-08-22",
+   "h": "LIN",
+   "a": "POR",
+   "ko": "12:30",
+   "ref": "Tony Harrington",
+   "refResolved": null,
+   "resolvedBy": null,
+   "source": "efl.com — Championship referee appointments, 22-23 August 2026 (supplied as text; exact article URL not captured)"
+  },
+  {
+   "league": "EFLC",
+   "date": "2026-08-22",
+   "h": "MIL",
+   "a": "NOR",
+   "ko": "12:30",
+   "ref": "Sam Allison",
+   "refResolved": "Sam Allison",
+   "resolvedBy": "exact",
+   "source": "efl.com — Championship referee appointments, 22-23 August 2026 (supplied as text; exact article URL not captured)"
+  },
+  {
+   "league": "EFLC",
+   "date": "2026-08-22",
+   "h": "PRE",
+   "a": "WOL",
+   "ko": "15:00",
+   "ref": "Elliot Bell",
+   "refResolved": "E Bell",
+   "resolvedBy": "initial",
+   "source": "efl.com — Championship referee appointments, 22-23 August 2026 (supplied as text; exact article URL not captured)"
+  },
+  {
+   "league": "EFLC",
+   "date": "2026-08-22",
+   "h": "QPR",
+   "a": "BOL",
+   "ko": "15:00",
+   "ref": "Ed Duckworth",
+   "refResolved": "E Duckworth",
+   "resolvedBy": "initial",
+   "source": "efl.com — Championship referee appointments, 22-23 August 2026 (supplied as text; exact article URL not captured)"
+  },
+  {
+   "league": "EFLC",
+   "date": "2026-08-22",
+   "h": "SOU",
+   "a": "STK",
+   "ko": "15:00",
+   "ref": "Steve Martin",
+   "refResolved": "S Martin",
+   "resolvedBy": "initial",
+   "source": "efl.com — Championship referee appointments, 22-23 August 2026 (supplied as text; exact article URL not captured)"
+  },
+  {
+   "league": "EFLC",
+   "date": "2026-08-22",
+   "h": "SWA",
+   "a": "SHU",
+   "ko": "15:00",
+   "ref": "Tom Nield",
+   "refResolved": "T Nield",
+   "resolvedBy": "initial",
+   "source": "efl.com — Championship referee appointments, 22-23 August 2026 (supplied as text; exact article URL not captured)"
+  },
+  {
+   "league": "EFLC",
+   "date": "2026-08-22",
+   "h": "WHU",
+   "a": "CHA",
+   "ko": "15:00",
+   "ref": "Andrew Kitchen",
+   "refResolved": "Andrew Kitchen",
+   "resolvedBy": "exact",
+   "source": "efl.com — Championship referee appointments, 22-23 August 2026 (supplied as text; exact article URL not captured)"
+  },
+  {
+   "league": "EFLC",
+   "date": "2026-08-22",
+   "h": "WRE",
+   "a": "WAT",
+   "ko": "15:00",
+   "ref": "John Busby",
+   "refResolved": "J Busby",
+   "resolvedBy": "initial",
+   "source": "efl.com — Championship referee appointments, 22-23 August 2026 (supplied as text; exact article URL not captured)"
+  },
+  {
+   "league": "EFLC",
+   "date": "2026-08-23",
+   "h": "WBA",
+   "a": "BUR",
+   "ko": "12:00",
+   "ref": "Anthony Backhouse",
+   "refResolved": "A Backhouse",
+   "resolvedBy": "initial",
+   "source": "efl.com — Championship referee appointments, 22-23 August 2026 (supplied as text; exact article URL not captured)"
   },
   {
    "league": "LL",
