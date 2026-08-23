@@ -174,9 +174,34 @@ def build_players():
         seen.add(key)
         deduped.append(r)
 
+    # WHO IS ACTUALLY AT EACH CLUB NOW. Everything above is 2025-26 evidence,
+    # harvested from the statistics endpoint, which answers "who appeared for
+    # this club last season" — the loanee who went back and the man sold in
+    # January included. That is right for FORM and wrong for MEMBERSHIP, and it
+    # showed: this desk shipped 40.6 players a club against the Premier
+    # League's 30.1, which is a third of every squad priced into fixtures for a
+    # club they have left.
+    #
+    # The same reconcile the Premier League runs, against this league's own
+    # roster file. A club is a fact about today and comes from the roster; a
+    # CARD RATE IS A PROPERTY OF THE PLAYER and travels with him. Absent
+    # roster file — the harvest is continue-on-error and this league had no
+    # roster at all until now — and every row stays exactly where it was.
+    deduped = P.reconcile_squads(
+        deduped, P.load_optional("eflc_squads.json"),
+        short_of=resolve, name_of=NAME_BY_SHORT.get,
+        make=lambda row, basis: P.mk(row, basis, resolve),
+        league="EFLC", min_clubs=len(all_shorts), min_players=15 * len(all_shorts))
+
     # This season's cautions where known. NOT defaulted to zero: "no data" and
     # "no cards yet" look identical on a strip that says a ban is one booking
     # away, and only one of them is safe to act on.
+    #
+    # AFTER the reconcile, deliberately: this keys on (club, name), so a player
+    # who moved in the summer would otherwise have his 2026-27 cautions looked
+    # up against last season's club and find nothing — and a suspension strip
+    # that silently reads zero for a man on four is worse than one that says
+    # nothing at all.
     live = season_cards()
     for r in deduped:
         got = live.get((r["c"], r["n"]))

@@ -349,7 +349,9 @@ def club_short_by_fpl_id(teams):
     return by_id, unmapped
 
 
-def reconcile_squads(rows, squads=None, transfers=None):
+def reconcile_squads(rows, squads=None, transfers=None, *,
+                     short_of=None, name_of=None, make=None, league="PL",
+                     min_clubs=18, min_players=400):
     """Move, add and retire players so the squads are THIS season's.
 
     TWO SOURCES, IN ORDER. The FPL feed decides first, then the committed
@@ -359,11 +361,15 @@ def reconcile_squads(rows, squads=None, transfers=None):
     FIRST would delete a row that the feed pass then re-created as an arrival —
     the player would come back, on basis NEW, with his card rate thrown away.
     """
-    rows = _reconcile_against_feed(rows, squads)
-    return apply_transfers(rows, transfers)
+    rows = _reconcile_against_feed(rows, squads, short_of=short_of,
+                                   name_of=name_of, make=make,
+                                   min_clubs=min_clubs, min_players=min_players)
+    return apply_transfers(rows, transfers, league=league)
 
 
-def _reconcile_against_feed(rows, squads=None):
+def _reconcile_against_feed(rows, squads=None, *,
+                            short_of=None, name_of=None, make=None,
+                            min_clubs=18, min_players=400):
     """The FPL pass: who the free feed says is where.
 
     THE FAILURE THIS EXISTS FOR. The player-to-club mapping for the seventeen
@@ -399,6 +405,15 @@ def _reconcile_against_feed(rows, squads=None):
     emptying the desk is the whole reason the staleness went unseen, and
     removing it here would trade a silent staleness for a silent deletion.
     """
+    # THE THREE LOOKUPS THAT WERE PREMIER LEAGUE GLOBALS. The Championship and
+    # La Liga need this same reconcile against their own rosters, and copying
+    # it for each of them would be three implementations of "who plays for whom
+    # now" — which is exactly the shape of duplication that has cost this
+    # repository a season's data more than once. The PL's own maps are the
+    # defaults, so its path is unchanged.
+    short_of = short_of or SHORT.get
+    name_of = name_of or NAME_BY_SHORT.get
+    make = make or mk
     if squads is None:
         squads = load_optional("fpl_squads.json")
     if not squads:
@@ -408,16 +423,22 @@ def _reconcile_against_feed(rows, squads=None):
 
     feed = []
     for s in squads:
-        short = s.get("c") or SHORT.get(s.get("team"))
+        short = s.get("c") or short_of(s.get("team"))
         toks = name_tokens(s.get("n"))
         if short and toks:
             feed.append({"c": short, "n": s.get("n"), "pos": s.get("pos"), "toks": toks})
 
+    # THE FLOOR IS THE CALLER'S, because 18 was a Premier League number. The
+    # Championship has 24 clubs, so a fixed 18 would accept a roster missing
+    # SIX of them and retire every player at all six — and absence in a roster
+    # means "has left", which is the one reading that deletes people. Each desk
+    # passes the division it expects.
     clubs = {f["c"] for f in feed}
-    if len(clubs) < 18 or len(feed) < 400:
-        print(f"fpl_squads.json holds {len(feed)} players across {len(clubs)} "
-              "clubs, which is too few to be this division — squads left "
-              "untouched rather than emptied.")
+    if len(clubs) < min_clubs or len(feed) < min_players:
+        print(f"the roster holds {len(feed)} players across {len(clubs)} "
+              f"clubs, against the {min_clubs} clubs and {min_players} players "
+              "this division should have — squads left untouched rather than "
+              "emptied.")
         return rows
 
     buckets = {}
@@ -456,7 +477,7 @@ def _reconcile_against_feed(rows, squads=None):
             # build_club_splits refused to write against the wreckage. The club
             # identity must come from the code, and the crest from somebody who
             # was already there.
-            r["_club"] = NAME_BY_SHORT.get(f["c"])
+            r["_club"] = name_of(f["c"])
             r["_tid"] = None
             r["_img"] = None
 
@@ -466,7 +487,7 @@ def _reconcile_against_feed(rows, squads=None):
     out = [r for r in rows if id(r) not in dropped]
     arrivals = [f for f in feed if id(f) not in kept]
     for f in arrivals:
-        row = mk({"team": NAME_BY_SHORT.get(f["c"]), "n": f["n"], "pos": f["pos"],
+        row = make({"team": name_of(f["c"]), "n": f["n"], "pos": f["pos"],
                   "min": 0, "yc": None, "rc": None, "fc90": None, "fd90": None,
                   "tid": None, "img": None}, "NEW")
         if row:

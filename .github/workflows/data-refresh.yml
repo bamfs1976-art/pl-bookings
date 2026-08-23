@@ -210,6 +210,21 @@ jobs:
           API_FOOTBALL_SEASON: ${{ inputs.season_af || steps.form.outputs.form_eflc || '2025' }}
         run: python3 data/harvest_apifootball.py --league EFLC
 
+      # WHO IS AT EACH CLUB NOW, which the form harvest above cannot answer.
+      # /players?league&season is the STATISTICS endpoint: pointed at 2025-26 it
+      # returns everyone who APPEARED for that club last season, loanees who
+      # went back and January departures included. Correct for form, wrong for
+      # membership — the Championship shipped 40.6 players a club and La Liga
+      # 39.1, against the FPL-reconciled Premier League's 30.1.
+      #
+      # continue-on-error, and the builders do nothing without the file, so a
+      # failed roster leaves the squads exactly as they were rather than
+      # emptying a division. NO SEASON: "who is at this club" has none.
+      - name: Harvest the Championship's current rosters (membership, not form)
+        if: ${{ env.API_FOOTBALL_KEY != '' }}
+        continue-on-error: true
+        run: python3 data/harvest_apifootball.py --league EFLC --roster
+
       # THIS season's Championship cautions, for the suspension ladder. A
       # different harvest from the squads: those are 2025-26 FORM, this is
       # 2026-27 STATE, and the English ladder counts only the current season.
@@ -274,6 +289,14 @@ jobs:
         run: |
           echo "== squads ==" >> data/laliga_harvest.log
           python3 data/harvest_apifootball.py --league LL 2>&1 | tee -a data/laliga_harvest.log
+
+      # The same membership harvest for Spain — see the Championship's above.
+      - name: Harvest La Liga's current rosters (membership, not form)
+        if: ${{ env.API_FOOTBALL_KEY != '' && (github.event_name != 'workflow_dispatch' || inputs.refresh_laliga) }}
+        continue-on-error: true
+        run: |
+          echo "== rosters ==" >> data/laliga_harvest.log
+          python3 data/harvest_apifootball.py --league LL --roster 2>&1 | tee -a data/laliga_harvest.log
 
       # THIS season's cautions, for the suspension strip. A different harvest
       # from the squads above and it has to be: those are 2025-26 FORM, while a
