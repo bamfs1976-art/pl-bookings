@@ -141,7 +141,17 @@ for (const L of A.LEAGUES) {
 const eflcFx = load('data/eflc_fixtures.js', 'EFLC_FIXTURES');
 const eflc = A.matchesFor(A.LEAGUES.find((l) => l.code === 'EFLC'));
 if (eflc.rows.length) {
-  const openRound = C.currentRound(eflcFx);
+  /* THE ROUND THE RECORD WAS ACTUALLY BUILT FOR, which is not necessarily the
+     one currentRound names. matchesFor builds rows for nextRound — the first
+     round with a fixture still unplayed — while this counted appointments in
+     currentRound. The two agree for most of a week and diverge the moment the
+     last fixture of a round kicks off: nextRound rolls forward to a round the
+     EFL has not published officials for yet, currentRound stays put, and the
+     guard compared twelve appointments in one round against zero referees in
+     another. It failed on a mid-morning rollover, for the world being in an
+     ordinary state — the exact failure the note above says this was rewritten
+     to stop. Comparing like with like is the whole fix. */
+  const openRound = eflc.round;
   const appointedInFile = eflcFx.filter((f) => f.r === openRound && f.ref).length;
   const withRef = eflc.rows.filter((r) => r.referee).length;
   if (appointedInFile > 0) {
