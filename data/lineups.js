@@ -5,7 +5,7 @@
 // through PLDCore.matchSquadName. A fixture absent from here prices off
 // squad minute-weights exactly as it always has — that is the normal
 // state until about an hour before kick-off, not a failure.
-// Fetched 2026-08-23T10:28Z.
+// Fetched 2026-08-23T11:25Z.
 //
 // THE GLOBAL IS NOT CALLED `LINEUPS`, and that is deliberate. index.html
 // already declares a top-level `const LINEUPS` for assets/lineup.js (the
@@ -14,6 +14,7 @@
 // a parse error, not a shadow: the whole inline script fails and the desk
 // renders blank. Read `window.LINEUP_SHEETS`.
 var __LINEUP_SHEETS = {
+  "1563104":{"BUR":{start:["Max Weiss", "Oliver Sonne", "Kyle Walker", "Max Alleyne", "Bashir Humphreys", "Josh Laurent", "Hannibal Mejbri", "Marcus Edwards", "Aaron Ramsey", "Jacob Bruun Larsen", "Armando Broja"],sub:["Grégoire Coudert", "Anel Ahmedhodžić", "Joe Worrall", "Connor Roberts", "Lucas Pires", "Mike Trésor", "Ugo Raghouber", "Zeki Amdouni", "Dastan Satpaev"]},"WBA":{start:["Max O'Leary", "Nolan Galves", "Nathaniel Phillips", "George Campbell", "Callum Styles", "Jayson Molumby", "Ousmane Diakité", "Felix Horn Myhre", "Isaac Price", "Harry Whitwell", "Jimmy Morgan"],sub:["Matt Ingram", "Alex Williams", "Chris Mepham", "Krystian Bielik", "Conor Townsend", "Rabby Nzingoula", "Oliver Bostock", "Barney Stewart", "Tammer Bany"]}},
 };
 if (typeof module !== "undefined" && module.exports) module.exports = __LINEUP_SHEETS;
 if (typeof window !== "undefined") window.LINEUP_SHEETS = __LINEUP_SHEETS;
