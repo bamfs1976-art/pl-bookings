@@ -5,7 +5,7 @@
 // through PLDCore.matchSquadName. A fixture absent from here prices off
 // squad minute-weights exactly as it always has — that is the normal
 // state until about an hour before kick-off, not a failure.
-// Fetched 2026-08-23T13:36Z.
+// Fetched 2026-08-23T14:27Z.
 //
 // THE GLOBAL IS NOT CALLED `LINEUPS`, and that is deliberate. index.html
 // already declares a top-level `const LINEUPS` for assets/lineup.js (the
@@ -15,7 +15,7 @@
 // renders blank. Read `window.LINEUP_SHEETS`.
 var __LINEUP_SHEETS = {
   "1557373":{"AVL":{start:["Marco Bizot", "Matty Cash", "Pau Torres", "Victor Lindelöf", "Ian Maatsen", "Ross Barkley", "Boubacar Kamara", "John McGinn", "João Gomes", "George Hemmings", "Emiliano Buendía"],sub:["Zion Suzuki", "Tyrone Mings", "Matteo Ruggeri", "Lamare Bogarde", "Alysson", "Triston Rowe", "Bradley Burrowes", "Alejandro Garnacho", "Luka Lynch"]},"BHA":{start:["Bart Verbruggen", "Mats Wieffer", "Luka Vušković", "Olivier Boscagli", "Lewis Dunk", "Pascal Groß", "Yasin Ayari", "Diego Gómez", "Jack Hinshelwood", "Maxim De Cuyper", "Georginio Rutter"],sub:["Jason Steele", "Pascal Struijk", "Costinha", "Michael Svoboda", "Ibrahim Osman", "Malick Yalcouyé", "Promise David", "Charalampos Kostoulas", "Zadok Yohanna"]}},
-  "1557374":{"BOU":{start:["Đorđe Petrović", "Adam Smith", "António Silva", "James Hill", "Adrien Truffert", "Lewis Cook", "Alex Scott", "Rayan", "Justin Kluivert", "Marcus Tavernier", "Evanilson"],sub:["Will Dennis", "Bafodé Diakité", "Ben Gannon-Doak", "Alex Tóth", "Juanlu Sánchez", "David Brooks", "Tyler Adams", "Álvaro Rodriguez", "Daniel Jebbison"]},"MCI":{start:["Gianluigi Donnarumma", "Abdukodir Khusanov", "Rúben Dias", "Marc Guéhi", "Joško Gvardiol", "Elliot Anderson", "Rico Lewis", "Antoine Semenyo", "Nico O'Reilly", "Phil Foden", "Erling Haaland"],sub:["Gerónimo Rulli", "Rayan Aït-Nouri", "Matheus Nunes", "Vitor Reis", "Mateo Kovačić", "Rayan Cherki", "Nico González", "Jack Grealish", "Omar Marmoush"]}},
+  "1557374":{"BOU":{start:["Đorđe Petrović", "Adam Smith", "James Hill", "António Silva", "Adrien Truffert", "Lewis Cook", "Alex Scott", "Rayan", "Justin Kluivert", "Marcus Tavernier", "Evanilson"],sub:["Will Dennis", "Bafodé Diakité", "Ben Gannon-Doak", "Alex Tóth", "Juanlu Sánchez", "David Brooks", "Tyler Adams", "Álvaro Rodriguez", "Daniel Jebbison"]},"MCI":{start:["Gianluigi Donnarumma", "Rico Lewis", "Abdukodir Khusanov", "Rúben Dias", "Joško Gvardiol", "Elliot Anderson", "Marc Guéhi", "Phil Foden", "Nico O'Reilly", "Antoine Semenyo", "Erling Haaland"],sub:["Gerónimo Rulli", "Rayan Aït-Nouri", "Matheus Nunes", "Vitor Reis", "Mateo Kovačić", "Rayan Cherki", "Nico González", "Jack Grealish", "Omar Marmoush"]}},
 };
 if (typeof module !== "undefined" && module.exports) module.exports = __LINEUP_SHEETS;
 if (typeof window !== "undefined") window.LINEUP_SHEETS = __LINEUP_SHEETS;
