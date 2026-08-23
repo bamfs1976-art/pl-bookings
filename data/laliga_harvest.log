@@ -1,4 +1,4 @@
-La Liga harvest — run 113
+La Liga harvest — run 114
 == discover ==
 La Liga: API-Football league 140, season 2026
 
@@ -92,7 +92,7 @@ La Liga: API-Football league 140, season 2026
   NOTE: no card record for Manuel Jesús Orellana (ALA v GET) — priced at the league rate
   NOTE: no card record for Carlos Muñiz (ESP v LEV) — priced at the league rate
 
-laliga_fixtures.js written (380 fixtures over 38 matchdays, 8 with a referee appointed)
+laliga_fixtures.js written (380 fixtures over 38 matchdays, 11 with a referee appointed)
 == build ==
 Division: 17 clubs were in it last season, 3 came up
   promoted: Deportivo La Coruna, Malaga, Racing Santander
