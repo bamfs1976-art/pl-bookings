@@ -9,14 +9,18 @@ name: CI
 #
 # workflow_run fires after each of those completes, against the default branch,
 # so a commit they made is checked within a minute of being made. It is the
-# BACKSTOP: each of the three now also runs scripts/check-all.mjs before its
-# own commit, which is what actually prevents the bad push. This catches the
-# case where that step is removed, skipped, or the commit lands some other way.
+# BACKSTOP: each of them now also runs scripts/check-all.mjs before its own
+# commit, which is what actually prevents the bad push. This catches the case
+# where that step is removed, skipped, or the commit lands some other way.
+#
+# EVERY WORKFLOW THAT PUSHES MUST BE IN THIS LIST, and check-ci-wiring.mjs
+# fails the build on one that is not — being left out is invisible, because a
+# workflow nobody watches looks exactly like a workflow nothing has broken.
 on:
   push:
   pull_request:
   workflow_run:
-    workflows: ["Data refresh", "Fixtures and referee appointments", "Confirmed team sheets", "Backfill a season's team sheets"]
+    workflows: ["Data refresh", "Fixtures and referee appointments", "Confirmed team sheets", "Backfill a season's team sheets", "Refresh sim model"]
     types: [completed]
 
 jobs:
