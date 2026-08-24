@@ -841,27 +841,54 @@ def same_tokens(ta, tb):
 
 
 def fouls_won_index(rows):
-    """(club, name key) -> fouls won, from the API-Football squads.
+    """(club, name key) -> {"fw": fouls won, "ph": photograph}, from the
+    API-Football squads.
+
+    TWO FIELDS OFF ONE JOIN. This read fd90 alone, and the photograph sitting
+    in the same row went unread — so the Premier League shipped 74 faces out of
+    606 while the join itself was matching 403 players, and every combined view
+    drew a monogram for a player the desk could perfectly well picture. The
+    Championship and La Liga are built entirely from this feed and carry ~80%
+    photographs; the Premier League is built from FPL and only meets
+    API-Football here.
+
+    A ROW IS INDEXED IF IT CARRIES EITHER. Gating the photograph on a
+    fouls-won number would have thrown away the faces of everyone the
+    statistics feed has nothing on yet, which in August is most of a promoted
+    club.
 
     Ambiguity is dropped rather than guessed. Two players at one club who share
     an initial and a surname collapse to the same second-stage key, and picking
-    either would attach one man's fouls to the other silently — so the key is
-    removed and those players simply keep their dash.
+    either would attach one man's fouls — or one man's FACE — to the other
+    silently, so the key is removed and those players keep their dash and their
+    monogram.
+
+    THE CLASH TEST IS NOW PER PLAYER, not per value. It compared fouls-won
+    numbers, so two different men who happened to share an initial, a surname
+    and an fd90 did not count as a clash and one of them won the key. Harmless
+    while the payload was that same number; not harmless at all once the payload
+    is a photograph of somebody's face.
     """
     exact, initial, clash = {}, {}, set()
+    seen = {}
     for r in rows or []:
         short = SHORT.get(r.get("team"))
+        if not short:
+            continue
         fw = num(r.get("fd90"))
-        if not short or fw is None:
+        ph = r.get("photo") or None
+        if fw is None and not ph:
             continue
         full, ini = name_keys(r.get("n"))
         if not full:
             continue
-        exact[(short, full)] = fw
+        rec = {"fw": fw, "ph": ph}
+        exact[(short, full)] = rec
         key = (short, ini)
-        if key in initial and initial[key] != fw:
+        if key in seen and seen[key] != full:
             clash.add(key)
-        initial[key] = fw
+        seen[key] = full
+        initial[key] = rec
     for key in clash:
         initial.pop(key, None)
     return exact, initial, len(clash)
@@ -905,6 +932,50 @@ def fill_fouls_won(rows):
             "or, if the form itself has moved on, move FORM_SEASON in this "
             "file to match it.")
 
+    exact, initial, clashes = fouls_won_index(src)
+
+    def hit(row):
+        full, ini = name_keys(row["n"])
+        if full is None:
+            return None, None
+        if (row["c"], full) in exact:
+            return exact[(row["c"], full)], "exact"
+        if (row["c"], ini) in initial:
+            return initial[(row["c"], ini)], "initial"
+        return None, None
+
+    # THE PHOTOGRAPH, FIRST, AND OVER EVERY ROW.
+    #
+    # Above the fouls-won early returns on purpose, because the two fields are
+    # independent and the returns below are about fouls:
+    #
+    #   "every row already carries one"  — a fully covered fouls column says
+    #       nothing about faces, and skipping the photographs there was a real
+    #       bug in the first version of this change, caught by its own test.
+    #   "not one carries a fouls number" — a season rollover hands back squads
+    #       without statistics. Those squads still have photographs, and that
+    #       is exactly when the desk most wants them.
+    #
+    # `gaps` is the rows missing a fouls-won NUMBER, which has nothing to do
+    # with which rows are missing a face: in the Premier League set 337 rows had
+    # the number and no face. Walking the gaps would have carried the join's
+    # reach across only by coincidence.
+    #
+    # Still a FILL: an existing photograph always wins and nothing else on the
+    # row is touched.
+    faces = 0
+    for r in rows:
+        if r.get("ph"):
+            continue
+        rec, _ = hit(r)
+        if rec and rec["ph"]:
+            r["ph"] = rec["ph"]
+            faces += 1
+    have = sum(1 for r in rows if r.get("ph"))
+    if faces or have < len(rows):
+        print(f"Photographs: filled {faces}, {have} of {len(rows)} rows now "
+              "carry a face; the rest draw a monogram.")
+
     if not gaps:
         print(f"Fouls won: every row already carries one; {AF_FILL} not needed.")
         return 0
@@ -935,17 +1006,15 @@ def fill_fouls_won(rows):
               "previous build rather than the refresh stopping here.")
         return 0
 
-    exact, initial, clashes = fouls_won_index(src)
     by_exact = by_initial = 0
     for r in gaps:
-        full, ini = name_keys(r["n"])
-        if full is None:
+        rec, how = hit(r)
+        if rec is None or rec["fw"] is None:
             continue
-        if (r["c"], full) in exact:
-            r["fw"] = exact[(r["c"], full)]
+        r["fw"] = rec["fw"]
+        if how == "exact":
             by_exact += 1
-        elif (r["c"], ini) in initial:
-            r["fw"] = initial[(r["c"], ini)]
+        else:
             by_initial += 1
 
     filled = by_exact + by_initial

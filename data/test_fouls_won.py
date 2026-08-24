@@ -39,9 +39,9 @@ def row(club, name, fw=None):
     return {"c": club, "n": name, "fw": fw}
 
 
-def af(team, name, fd90):
+def af(team, name, fd90, photo=None):
     """One API-Football source row, in the shape map_player() writes."""
-    return {"team": team, "n": name, "fd90": fd90}
+    return {"team": team, "n": name, "fd90": fd90, "photo": photo}
 
 
 def with_source(rows, src, season=B.FORM_SEASON, league="PL", stamped=True):
@@ -471,5 +471,104 @@ def _the_diagnostic_counts_the_unreachable():
 t("the diagnostic counts the gaps the source cannot reach",
   _the_diagnostic_counts_the_unreachable)
 
+
+
+# --- the photograph, off the same join ------------------------------------
+#
+# The Premier League shipped 74 faces out of 606 while this join was matching
+# 403 players. The photograph was sitting unread in the rows it already had.
+# Everything below is about the fill staying a fill, and about the join never
+# putting one man's face on another.
+
+FACE = "https://media.api-sports.io/football/players/1.png"
+OTHER = "https://media.api-sports.io/football/players/2.png"
+
+
+def _photo_fills_where_absent():
+    rows = [{"c": "ARS", "n": "Mikel Merino", "fw": None, "ph": None}]
+    with_source(rows, [af("Arsenal", "Mikel Merino", 1.25, FACE)])
+    assert rows[0]["ph"] == FACE, rows[0]
+
+
+def _photo_never_overwrites():
+    rows = [{"c": "ARS", "n": "Mikel Merino", "fw": None, "ph": OTHER}]
+    with_source(rows, [af("Arsenal", "Mikel Merino", 1.25, FACE)])
+    assert rows[0]["ph"] == OTHER, "the fill overwrote a photograph it already had"
+
+
+def _photo_fills_a_row_with_no_fouls_gap():
+    """The two fields are independent.
+
+    `gaps` is the rows missing a fouls-won NUMBER. A player the statistics feed
+    already covers can still have no face — 337 Premier League rows were in
+    exactly that state — so walking the fouls gaps would have carried the
+    photographs across only by coincidence.
+    """
+    rows = [{"c": "ARS", "n": "Mikel Merino", "fw": 1.9, "ph": None}]
+    with_source(rows, [af("Arsenal", "Mikel Merino", 1.25, FACE)])
+    assert rows[0]["ph"] == FACE, "a row with fouls already filled got no face"
+    assert rows[0]["fw"] == 1.9, "the fill overwrote a fouls-won number"
+
+
+def _photo_fills_when_the_source_has_no_fouls():
+    """And the source row is indexed on either field.
+
+    Gating the face on an fd90 would throw away everyone the statistics feed
+    has nothing on yet, which in August is most of a promoted club.
+    """
+    rows = [{"c": "COV", "n": "Ellis Simms", "fw": 2.0, "ph": None}]
+    with_source(rows, [af("Coventry City", "Ellis Simms", None, FACE)])
+    assert rows[0]["ph"] == FACE, rows[0]
+    assert rows[0]["fw"] == 2.0, "the fill invented a fouls-won number"
+
+
+def _two_players_one_key_get_no_face():
+    """THE ONE THAT MATTERS.
+
+    Two men at one club sharing an initial and a surname collapse to the same
+    second-stage key. The clash test used to compare fouls-won NUMBERS, so when
+    those matched — as they do here — it saw no clash and let one of them win
+    the key. Harmless while the payload was that same number; it would have put
+    one player's face on the other the moment the payload became a photograph.
+    """
+    # Two clean matches alongside, or the coverage floor refuses the whole
+    # build for shipping a column of dashes and the assertion never runs.
+    rows = [{"c": "ARS", "n": "J Smith", "fw": None, "ph": None},
+            {"c": "ARS", "n": "Mikel Merino", "fw": None, "ph": None},
+            {"c": "ARS", "n": "Bukayo Saka", "fw": None, "ph": None}]
+    src = [af("Arsenal", "James Smith", 1.4, FACE),
+           af("Arsenal", "Jack Smith", 1.4, OTHER),
+           af("Arsenal", "Mikel Merino", 1.25, OTHER),
+           af("Arsenal", "Bukayo Saka", 2.1, OTHER)]
+    with_source(rows, src)
+    assert rows[0]["ph"] is None, (
+        "an initial-and-surname collision resolved to a face: " + str(rows[0]))
+    assert rows[0]["fw"] is None, (
+        "the same collision resolved to a fouls-won number")
+    assert rows[1]["ph"] == OTHER, "the clean match beside it did not resolve"
+
+
+def _a_full_name_still_beats_the_collision():
+    """...and the exact key is unaffected, or the test above passes for a rule
+    that simply never matches anything."""
+    rows = [{"c": "ARS", "n": "James Smith", "fw": None, "ph": None},
+            {"c": "ARS", "n": "Bukayo Saka", "fw": None, "ph": None}]
+    src = [af("Arsenal", "James Smith", 1.4, FACE),
+           af("Arsenal", "Jack Smith", 1.4, OTHER),
+           af("Arsenal", "Bukayo Saka", 2.1, OTHER)]
+    with_source(rows, src)
+    assert rows[0]["ph"] == FACE, rows[0]
+
+
+t("a photograph fills where the row has none", _photo_fills_where_absent)
+t("a photograph already on the row always wins", _photo_never_overwrites)
+t("a face fills even when the fouls number is already there",
+  _photo_fills_a_row_with_no_fouls_gap)
+t("a face fills even when the source row carries no fouls",
+  _photo_fills_when_the_source_has_no_fouls)
+t("two players sharing an initial and a surname get neither face nor number",
+  _two_players_one_key_get_no_face)
+t("the full name still resolves through that collision",
+  _a_full_name_still_beats_the_collision)
 
 print(f"\n{passed} tests passed")
