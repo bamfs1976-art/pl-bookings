@@ -144,7 +144,7 @@ const EFLC_PLAYERS = [
   {c:"BRC",n:"A. Murphy",p:"MF",min:0,yc:0,rc:0,y:null,f:null,fw:null,r:null,ls:true,b:"EFLC",sc:null,sm:null,ph:"https://media.api-sports.io/football/players/319385.png"},
   {c:"BRC",n:"B. Collins",p:"GK",min:0,yc:null,rc:null,y:null,f:null,fw:null,r:null,ls:true,b:"NEW",sc:null,sm:null},
   {c:"BRC",n:"B. O'Neill",p:"FW",min:0,yc:null,rc:null,y:null,f:null,fw:null,r:null,ls:true,b:"NEW",sc:null,sm:null},
-  {c:"BRC",n:"D. Ballard",p:"MF",min:0,yc:null,rc:null,y:null,f:null,fw:null,r:null,ls:true,b:"NEW",sc:null,sm:null},
+  {c:"BRC",n:"D. Ballard",p:"FW",min:0,yc:null,rc:null,y:null,f:null,fw:null,r:null,ls:true,b:"NEW",sc:null,sm:null},
   {c:"BRC",n:"Daniel Ezendu",p:"MF",min:0,yc:0,rc:0,y:null,f:null,fw:null,r:null,ls:true,b:"EFLC",sc:null,sm:null,ph:"https://media.api-sports.io/football/players/636707.png"},
   {c:"BRC",n:"E. Morrison",p:"MF",min:0,yc:0,rc:0,y:null,f:null,fw:null,r:null,ls:true,b:"EFLC",sc:null,sm:null,ph:"https://media.api-sports.io/football/players/399607.png"},
   {c:"BRC",n:"Ephrahim Yeboah",p:"FW",min:0,yc:0,rc:0,y:null,f:null,fw:null,r:null,ls:true,b:"EFLC",sc:null,sm:null,ph:"https://media.api-sports.io/football/players/406175.png"},
