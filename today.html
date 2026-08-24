@@ -502,6 +502,54 @@
      why every step below is a PLDCore function. */
   var SHRINK_MATCHES = 6;
 
+  /* A REFEREE SOMEBODY ASSIGNED BY HAND, from whichever league desk they
+     assigned it on.
+
+     This page read the appointment out of its own data file and nothing else,
+     so a referee picked on the Premier League desk — which is the whole point
+     of that control, because PGMOL publish late and the desks ship before
+     they do — never reached here. The same fixture then priced with a
+     referee on one page and without one on the other, and the desks printed
+     two different numbers for the same match while this file's own comment
+     promised they could not.
+
+     Each desk owns its store and its key shape, so they are named here rather
+     than guessed: the Premier League namespaces by season, its two siblings
+     key on the fixture id alone. The ids are the ones the lineup sheets are
+     keyed by, which is what makes a cross-page lookup meaningful at all.
+
+     Read once, at prepare time. Nothing here writes: the assignment belongs
+     to the desk that owns the fixture, and a combined view that quietly
+     changed somebody's pick would be the wrong place to do it. */
+  var HAND_REF_STORES = {
+    PL:   { key: 'pl_desk_refs_v1',     season: '2026-27' },
+    EFLC: { key: 'eflc_desk_refs_v1',   season: null },
+    LL:   { key: 'laliga_desk_refs_v1', season: null }
+  };
+  var HAND_REFS = {};
+  Object.keys(HAND_REF_STORES).forEach(function (code) {
+    try {
+      HAND_REFS[code] = JSON.parse(localStorage.getItem(HAND_REF_STORES[code].key) || '{}') || {};
+    } catch (e) { HAND_REFS[code] = {}; }
+  });
+  function handRefName(L, fx) {
+    var st = HAND_REF_STORES[L && L.code];
+    if (!st || !fx || fx.id == null) return null;
+    var store = HAND_REFS[L.code] || {};
+    var name = store[st.season ? st.season + '|' + fx.id : String(fx.id)];
+    /* A name this league does not know is not a referee. Stores outlive
+       seasons and a stale pick must fall back to the appointment rather than
+       price the match with nothing. */
+    return (name && L.refBy && L.refBy[name]) ? name : null;
+  }
+  /* The hand pick wins, then the published appointment — the same precedence
+     the Premier League desk documents: "a hand pick always wins: the global
+     control is an assumption about fixtures nobody has chosen, not an
+     override of one somebody has." */
+  function refNameFor(L, fx) {
+    return handRefName(L, fx) || (fx && fx.ref) || null;
+  }
+
   function prepare(L) {
     L.clubBy = {};
     L.clubs.forEach(function (c) { L.clubBy[c.short] = c; });
@@ -598,15 +646,16 @@
        season's minutes would make them answer different questions. */
     var rh = rolesFor(L, fx, fx.h), ra = rolesFor(L, fx, fx.a);
     if (!rh || !ra) { rh = null; ra = null; }
+    var rname = refNameFor(L, fx), rhand = rname !== null && rname !== fx.ref;
     if (L.pl) {
-      var pref = fx.ref ? L.refBy[fx.ref] : null;
+      var pref = rname ? L.refBy[rname] : null;
       var derby = L.pl.isDerby(fx.h, fx.a);
       var b = L.pl.board(fx.h, fx.a, pref, derby, undefined, undefined,
                          rh ? { home: rh, away: ra } : null);
       if (!b) return null;
       var cands = L.pl.candidates(fx.h, fx.a, pref, derby);
       return {
-        L: L, fx: fx, ref: { ref: pref, name: fx.ref || null, appointed: !!fx.ref },
+        L: L, fx: fx, ref: { ref: pref, name: rname, appointed: !!fx.ref && !rhand, hand: rhand },
         factor: L.pl.refFactor(pref), derby: derby,
         roles: rh ? { home: rh, away: ra } : null,
         home: { ps: [], top: cands.filter(function (c) { return c.p.c === fx.h; }).slice(0, 4) },
@@ -614,7 +663,7 @@
         m: b
       };
     }
-    var ref = fx.ref ? L.refBy[fx.ref] : null;
+    var ref = rname ? L.refBy[rname] : null;
     var factor = refFactor(L, ref);
     var home = sideProbs(L, fx.h, factor, rh), away = sideProbs(L, fx.a, factor, ra);
     if (!home || !away) return null;
@@ -624,7 +673,7 @@
        plmodel.board; this is the sibling half of the same fact. */
     m.xi = !!(rh && ra);
     return {
-      L: L, fx: fx, ref: { ref: ref, name: fx.ref || null, appointed: !!fx.ref },
+      L: L, fx: fx, ref: { ref: ref, name: rname, appointed: !!fx.ref && !rhand, hand: rhand },
       factor: factor, home: home, away: away, m: m
     };
   }

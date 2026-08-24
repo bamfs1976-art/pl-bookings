@@ -3775,6 +3775,10 @@ async function loadLive(){
     const teamMap=buildTeamMap(bs.teams);
     const cur=bs.events.find(e=>e.is_current&&!e.finished)||bs.events.find(e=>e.is_next)||bs.events.find(e=>!e.finished)||bs.events[bs.events.length-1]||bs.events[0]||null;
     LIVE={bootstrap:bs,fixtures:fx,teamMap,currentGW:cur?cur.id:1,seasonStarted:bs.elements.some(el=>(el.minutes||0)>0)};
+    /* The priced board is memoised per fixture and referee; a fresh feed can
+       change minutes, availability and the squad under it, and the referee is
+       not part of THAT change, so the key would not notice. */
+    clearFixtureBoardCache();
     LIVE_STATE="ok";
     /* The appointment lookup is keyed off LIVE.fixtures, so it must be rebuilt
        whenever LIVE is. Caching it across a reload would keep pointing at the
@@ -4809,8 +4813,38 @@ function fixtureMeta(f){
      refactor. It reaches the per-player numbers through the game-state
      factor and is shown on the card; the sort is unchanged. */
   const sim=simFor(h,a);
-  return {f,h,a,ref,rf,derby,base,heat,cls,lbl,sim};
+  /* THE MODEL'S OWN NUMBER, carried here so the card, the heading, the share
+     text and the live pace all read the same figure.
+
+     Heat and expected cards are two different quantities and were being used
+     interchangeably. Heat is last season's club form — home cards-against plus
+     away cards-against, scaled by the referee and the derby boost. Expected
+     cards is this model's actual output: every rated available player's own
+     chance of a booking, added up. For Fulham v Chelsea they read 4.9 and 3.9,
+     and the card showed the first in its header while the strip immediately
+     below it showed the second.
+
+     Heat still ORDERS the list — that is a ranking decision with a backtest
+     behind it and this does not touch it. What changes is that nothing
+     labelled "expected cards" is a club-form proxy any more. */
+  const board=teamCardBoardCached(f,h,a,ref,derby);
+  const expected=board&&isFinite(board.expected)?board.expected:null;
+  return {f,h,a,ref,rf,derby,base,heat,cls,lbl,sim,board,expected};
 }
+/* fixtureMeta is called from inside sort comparators, so the board — which
+   prices every rated player on both sides — is memoised per fixture and
+   referee. The referee is in the key because assigning one rescales every
+   player's chance, which is the whole point of assigning one. */
+const FX_BOARD_CACHE=new Map();
+function teamCardBoardCached(f,h,a,ref,derby){
+  const key=f.id+"|"+((ref&&ref.n)||"")+"|"+(derby?1:0);
+  if(FX_BOARD_CACHE.has(key)) return FX_BOARD_CACHE.get(key);
+  let board=null;
+  try{ board=teamCardBoard(h,a,ref,derby,f.id); }catch(e){ board=null; }
+  FX_BOARD_CACHE.set(key,board);
+  return board;
+}
+function clearFixtureBoardCache(){ FX_BOARD_CACHE.clear(); }
 // Fixtures ordered hottest → coolest, kickoff time breaking ties.
 function sortFixturesByHeat(fx){
   return [...fx].sort((p,q)=>{
@@ -4831,10 +4865,15 @@ function liveTickerHtml(M){
     fixturesFor:c=>(LIVE&&LIVE.gwFixtureCount&&LIVE.gwFixtureCount[c])||1
   });
   if(!t) return "";
-  const exp=M.heat;
-  /* Against the forecast, not against a target. The heat is this fixture's
-     expected CARD TOTAL, so "3 of ~4.2" is the honest comparison and the one
-     a reader of this desk is actually holding in their head. */
+  /* Against the forecast, not against a target: "3 of ~3.9" is the honest
+     comparison and the one a reader is holding in their head.
+
+     It used to divide by HEAT, which is not a forecast of this match's cards
+     at all — it is last season's club form scaled by the referee. On a derby
+     with a strict whistle that runs a card above the model, so a game exactly
+     on forecast read as comfortably under it. The model's own expectation is
+     the only number this pace can be measured against. */
+  const exp=(M.expected!=null)?M.expected:M.heat;
   const pace=exp>0?t.cards/exp:0;
   const tone=pace>=1?"var(--danger)":pace>=0.6?"var(--warn)":"var(--fade)";
   const clock=t.finished?"FT":(t.minute>0?t.minute+"'":"live");
@@ -4856,7 +4895,7 @@ function liveTickerHtml(M){
 function fixtureCardHtml(f,opts){
   opts=opts||{};
   const M=fixtureMeta(f); if(!M) return "";
-  const {h,a,ref,rf,derby,base,heat,sim}=M;
+  const {h,a,ref,rf,derby,base,heat,sim,expected}=M;
   const s=refStrictness(ref);
   const derbyChip=derby?' <span class="mono" style="font-size:.6rem;color:var(--accent-ink);font-weight:800;letter-spacing:.06em">DERBY</span>':'';
   const score=f.finished?` <span class="mono muted" style="font-weight:700;font-size:.72rem">FT ${f.hs==null?"":f.hs}–${f.as==null?"":f.as}</span>`:"";
@@ -4869,10 +4908,19 @@ function fixtureCardHtml(f,opts){
      reader has to compare arithmetically; relative severity is the actual
      question and a length answers it without reading. Scaled 2.0-6.0, which is
      the range a Premier League fixture's expected total actually occupies. */
-  const heatPct=Math.max(0,Math.min(1,(heat-2)/4));
-  const heatBadge=`<span class="heatbar${heat>=4.2?" hot":""}" title="Booking heat: ${base.toFixed(1)} base × ${rf.toFixed(2)} ref${derby?" × "+DERBY_BOOST+" derby":""}">`
+  /* THE BADGE SHOWS THE MODEL, not the club-form proxy. It sat directly above
+     a strip whose first cell is "Expected cards", printing a different number
+     under no label at all — 4.9 over 3.9 on the same card. The bar and the
+     band are unchanged; only the quantity behind them is now the one the
+     card claims to be showing. Falls back to heat when the board cannot be
+     priced, which is the same figure this always showed. */
+  const shown=(expected!=null)?expected:heat;
+  const heatPct=Math.max(0,Math.min(1,(shown-2)/4));
+  const heatBadge=`<span class="heatbar${shown>=4.2?" hot":""}" title="${expected!=null
+    ?`Expected cards: every rated available player's own chance of a booking, added up${ref?`, with ${esc(ref.n)} applied`:""}. Booking heat (${heat.toFixed(1)} = ${base.toFixed(1)} base × ${rf.toFixed(2)} ref${derby?" × "+DERBY_BOOST+" derby":""}) still orders the list.`
+    :`Booking heat: ${base.toFixed(1)} base × ${rf.toFixed(2)} ref${derby?" × "+DERBY_BOOST+" derby":""}`}">`
     +`<span class="heatbar-t" aria-hidden="true"><i style="width:${(heatPct*100).toFixed(0)}%"></i></span>`
-    +`<span class="heatbar-n" data-num="heat-${f.id}">${heat.toFixed(1)}</span></span>`;
+    +`<span class="heatbar-n" data-num="heat-${f.id}">${shown.toFixed(1)}</span></span>`;
   const refDelta=(ref&&Math.abs(rf-1)>=0.02)?` <span class="mono" style="font-size:.64rem;color:${rf>1?"var(--warn)":"var(--fade)"}" title="Every player's chance scaled ×${rf.toFixed(2)} by ${esc(ref.n)}">×${rf.toFixed(2)} on every player</span>`:"";
   // Candidates, ranked by fixture-aware probability, position-filtered.
   let cands=gwFilterCands(gwCandidates(h,a,ref,derby));
@@ -4910,7 +4958,7 @@ function fixtureCardHtml(f,opts){
      row is the disclosure control: a heading nested inside role="button" is
      consumed into the button's name and exposed as no heading at all. */
   return `<section class="fx-card${folded?" collapsed":""}" data-fid="${f.id}" aria-labelledby="fxh-${f.id}">
-    <h2 class="visually-hidden" id="fxh-${f.id}">${esc(h)} v ${esc(a)}, ${f.kickoff_time?esc(fmtKOShort(f.kickoff_time)):"kick-off to be confirmed"}, ${heat.toFixed(1)} expected cards</h2>
+    <h2 class="visually-hidden" id="fxh-${f.id}">${esc(h)} v ${esc(a)}, ${f.kickoff_time?esc(fmtKOShort(f.kickoff_time)):"kick-off to be confirmed"}, ${shown.toFixed(1)} expected cards</h2>
     <div class="fxh2" role="button" tabindex="0" aria-expanded="${!folded}" data-fold="${f.id}" aria-label="${esc(h)} versus ${esc(a)} — ${folded?"expand":"collapse"}">
       <!-- FLAT, so the grid can align it. Nested in two wrapper divs the
            header was four independently-positioned blocks: "Ref —" sat on the
@@ -4994,7 +5042,7 @@ function renderGwHero(){
        390px and orphaned "expected cards" on the second. Shorter, and the
        fixture and its own number are one unbreakable run so the match can
        never be split from the figure describing it. */
-    if(m) top=`<div class="gw-hero-top">Hottest <span class="nowrap"><b>${esc(m.h)} v ${esc(m.a)}</b> &middot; <span class="gw-hero-heat">${m.heat.toFixed(1)}</span> cards</span></div>`;
+    if(m) top=`<div class="gw-hero-top">Hottest <span class="nowrap"><b>${esc(m.h)} v ${esc(m.a)}</b> &middot; <span class="gw-hero-heat">${(m.expected!=null?m.expected:m.heat).toFixed(1)}</span> cards</span></div>`;
   }
   el.innerHTML=`
     <div class="gw-hero-l">
@@ -5251,13 +5299,13 @@ function renderGwStats(fx){
   let heat=0, high=0, cands=0;
   fx.forEach(f=>{
     const m=fixtureMeta(f); if(!m) return;
-    heat+=m.heat;
+    heat+=(m.expected!=null?m.expected:m.heat);
     gwCandidates(m.h,m.a,m.ref,m.derby).forEach(c=>{ cands++; if(c.prob>=0.5) high++; });
   });
   const tile=(n,label,title)=>`<div class="stat"${title?` title="${esc(title)}"`:""}><b class="num">${n}</b><span>${label}</span></div>`;
   el.innerHTML=
     tile(fx.length,"matches")
-    +tile(heat.toFixed(1),"cards expected","Sum of every fixture's booking heat: each club's cards-against rate, scaled by the referee and any derby boost.")
+    +tile(heat.toFixed(1),"cards expected","The round's expected cards: every fixture's own model total, which is every rated available player's chance of a booking added up. Booking heat — each club's cards-against rate scaled by the referee and any derby boost — still orders the fixture list, but it is not this number.")
     +tile((heat/fx.length).toFixed(2),"a match")
     /* Only once there are rated players behind it. Pre-season, and any time
        the squad join has not landed, this is 0 out of 0 — a tile reading "0 in
@@ -6550,7 +6598,7 @@ function refAnnounce(fid,name){
   const cands=gwFilterCands(gwCandidates(m.h,m.a,m.ref,m.derby));
   const top=cands.length?`, ${cands[0].p.n} now ${(cands[0].prob*100).toFixed(0)} percent`:"";
   announce((name?`Simulated ${name} on `:"Referee cleared on ")
-    +`${m.h} versus ${m.a}. Expected cards ${m.heat.toFixed(1)}, referee factor times ${m.rf.toFixed(2)}${top}.`);
+    +`${m.h} versus ${m.a}. Expected cards ${(m.expected!=null?m.expected:m.heat).toFixed(1)}, referee factor times ${m.rf.toFixed(2)}${top}.`);
 }
 /* The referee picker. A pick moves the heat and every percentage on the card,
    so the old numbers are captured before the repaint and tweened to the new

@@ -372,6 +372,17 @@ jobs:
       - name: The match record agrees with the desks
         run: node scripts/check-match-record.mjs
 
+      # THE NUMBER ON A FIXTURE CARD. Two desks printed different figures for
+      # the same match — 4.9 and 3.9 — because booking heat (a club-form
+      # ranking) and expected cards (the model's forecast) were being used
+      # interchangeably under one name. The Premier League card even showed
+      # heat in its header directly above a strip cell labelled "Expected
+      # cards" showing the other. Heat still orders the list; nothing labelled
+      # expected cards may be fed by it. Also runs the referee resolution that
+      # carries a hand-picked official from a league desk to the combined view.
+      - name: One quantity behind every figure labelled expected cards
+        run: node scripts/check-card-figures.mjs
+
       # And the half of that path the harvested feed cannot supply. The EFL
       # publishes its officials a week out as prose; API-Football carries them
       # very late or not at all, so they are ingested into data/appointments.json
