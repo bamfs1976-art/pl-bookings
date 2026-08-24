@@ -678,7 +678,7 @@ const EFLC_PLAYERS = [
   {c:"WBA",n:"C. Taylor",p:"DF",min:0,yc:0,rc:0,y:null,f:null,fw:null,r:null,ls:true,b:"EFLC",sc:null,sm:null,ph:"https://media.api-sports.io/football/players/283273.png"},
   {c:"WBA",n:"C. Townsend",p:"DF",min:0,yc:null,rc:null,y:null,f:null,fw:null,r:null,ls:true,b:"NEW",sc:null,sm:null},
   {c:"WBA",n:"Cole Deeming",p:"MF",min:0,yc:0,rc:0,y:null,f:null,fw:null,r:null,ls:true,b:"EFLC",sc:null,sm:null,ph:"https://media.api-sports.io/football/players/400740.png"},
-  {c:"WBA",n:"F. Myhre",p:"MF",min:0,yc:null,rc:null,y:null,f:null,fw:null,r:null,ls:true,b:"NEW",sc:null,sm:null},
+  {c:"WBA",n:"F. Myhre",p:"FW",min:0,yc:null,rc:null,y:null,f:null,fw:null,r:null,ls:true,b:"NEW",sc:null,sm:null},
   {c:"WBA",n:"Harry Whitwell",p:"MF",min:11,yc:0,rc:0,y:0.0,f:null,fw:null,r:null,ls:true,b:"EFLC",sc:null,sm:null,ph:"https://media.api-sports.io/football/players/355226.png"},
   {c:"WBA",n:"J. Bray",p:"FW",min:0,yc:null,rc:null,y:null,f:null,fw:null,r:null,ls:true,b:"NEW",sc:null,sm:null},
   {c:"WBA",n:"J. Mohammed",p:"DF",min:0,yc:null,rc:null,y:null,f:null,fw:null,r:null,ls:true,b:"NEW",sc:null,sm:null},
