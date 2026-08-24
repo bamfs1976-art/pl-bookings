@@ -324,6 +324,14 @@ jobs:
       - name: One derby list, and the route that shows it
         run: node scripts/check-derbies.mjs
 
+      # "Booking heat" named two different quantities: the chip showed the two
+      # clubs' cards-against rates while the Model detail panel two lines below
+      # showed the model's expected cards, and /today showed the model's. One
+      # match read 4.9, 3.9 and 3.9 at the same time. The chip is the model's
+      # number now, and the bands moved with the scale — this pins both.
+      - name: Booking heat is the model's number, on the model's scale
+        run: node scripts/check-heat.mjs
+
       # The pipeline front door against the pipeline. build_data.py is a
       # RUNNER over the same scripts data-refresh.yml calls; two lists of the
       # same steps drift, and a front door that has quietly lost one produces

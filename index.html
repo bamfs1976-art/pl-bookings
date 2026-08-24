@@ -974,9 +974,14 @@
           <kbd class="gwt-kbd" aria-hidden="true">/</kbd>
           <span class="gwt-grp"><label class="gwt-lab" for="gwSort">Sort</label>
           <select id="gwSort" aria-label="Sort fixtures">
+            <!-- "Expected cards" was a fourth option here. Booking heat IS
+                 the model's expected cards now, so it sorted by the same
+                 number the default already sorts by — and had in fact never
+                 sorted by anything: it read mx.board, which fixtureMeta did
+                 not set, so both sides of the comparison were -1 and the
+                 order never changed. -->
             <option value="heat">Booking heat</option>
             <option value="ko">Kick-off time</option>
-            <option value="exp">Expected cards</option>
             <option value="ref">Referee severity</option>
           </select></span>
           <div class="seg-view" id="gwViewSeg" role="tablist" aria-label="Fixture view">
@@ -1304,7 +1309,7 @@
       <button class="btn btn-primary" id="fxShareBtn" style="padding:.4rem .8rem;font-size:.82rem;margin-left:auto" type="button" title="Download a shareable card of this gameweek's fixtures by booking heat">⬇ Share gameweek</button>
     </div>
     <div id="fixtureList"></div>
-    <p class="faint" style="font-size:.78rem;margin-top:.6rem">Booking heat is venue-aware: the home side's home card rate plus the away side's away card rate, from 2025-26 form (promoted clubs use the league median until they build Premier League data). Hot is 4.2 plus, warm 3.5 plus. The flame marks a combustible side; recognised derbies get a ×1.15 heat boost and a derby chip. Each card also carries the match model's read: win probabilities, the fitted chance the game finishes within one goal (“tight”), and the game-state factor each side's players are scaled by. Top risks are each fixture's highest-risk available players. Referee appointments are not published in the FPL feed — once the PGMOL announcement is out, assign the official with each fixture's Ref control (saved in this browser) and the booking heat scales to his card rate, clamped. Schedule via the official FPL API.</p>
+    <p class="faint" style="font-size:.78rem;margin-top:.6rem">Booking heat is the model's <strong>expected cards</strong> for the match — every rated available player's own chance of a booking, added up, with the referee's card rate and the derby boost already applied. It is the same number the card's Model detail panel shows, and the same one the combined <a href="/">Today's matches</a> view prices with. Hot is 4.0 plus, warm 3.5 plus. Each club's home/away cards-against split (2025-26 form; promoted clubs use the league median) is still shown in the heat tooltip as the two sides' own record. The flame marks a combustible side; recognised derbies get a ×1.15 heat boost and a derby chip. Each card also carries the match model's read: win probabilities, the fitted chance the game finishes within one goal (“tight”), and the game-state factor each side's players are scaled by. Top risks are each fixture's highest-risk available players. Referee appointments are not published in the FPL feed — once the PGMOL announcement is out, assign the official with each fixture's Ref control (saved in this browser) and the booking heat scales to his card rate, clamped. Schedule via the official FPL API.</p>
   </section>
 
   <!-- TRACKER -->
@@ -2684,7 +2689,7 @@ function saveFile(blob,name,mime,done){
     .catch(e=>{ console.warn("[Bookings Desk] save:",e); if(done) done("download"); });
 }
 
-function heatHex(heat){ return heat>=4.2?"#16a34a":heat>=3.5?"#d97706":"#64748b"; }
+function heatHex(heat){ return heat>=HEAT_HOT?"#16a34a":heat>=HEAT_WARM?"#d97706":"#64748b"; }
 function probHex(p){ return p>=0.50?"#dc2626":p>=0.30?"#d97706":"#64748b"; }
 function dlBlob(blob,name){
   saveFile(blob,name,"image/png",
@@ -3242,15 +3247,18 @@ function openPlayerProfile(k){
   if(fx){
     const hS=LIVE.teamMap[fx.team_h], aS=LIVE.teamMap[fx.team_a];
     const home=hS===p.c, opp=home?aS:hS;
-    const base=clubCAH(hS)+clubCAA(aS);
-    const ref=refFor(fx.id), rf=refFactor(ref), derby=isDerby(hS,aS);
-    const heat=Number((base*rf*(derby?DERBY_BOOST:1)).toFixed(1));
-    const cls=heat>=4.2?"tier-target":heat>=3.5?"tier-mid":"tier-fade";
+    /* THROUGH fixtureMeta, not a third copy of the formula. This block
+       computed its own booking heat, so the club page and the gameweek card
+       could disagree about the same match — and did, the moment heat moved
+       onto the model. */
+    const fm=fixtureMeta(fx);
+    const ref=fm?fm.ref:refFor(fx.id), derby=fm?fm.derby:isDerby(hS,aS);
+    const heat=fm?fm.heat:0, cls=fm?fm.cls:"tier-fade";
     h+=`<div class="surface-2" style="border-radius:10px;padding:.6rem .8rem;margin-bottom:.8rem">
       <div class="faint" style="font-size:.68rem;text-transform:uppercase;letter-spacing:.04em">Next fixture</div>
       <div style="display:flex;align-items:center;gap:.45rem;flex-wrap:wrap;margin-top:.25rem;font-size:.88rem;font-weight:600">
         ${crest(hS)} ${hS} <span class="faint">v</span> ${crest(aS)} ${aS}
-        <span class="chip ${cls}" title="Booking heat — home side's home card rate + away side's away rate, ref- and derby-adjusted"><span class="heat">${heat.toFixed(1)}</span></span>
+        <span class="chip ${cls}" title="Booking heat — the model's expected cards for this match, every rated player's own chance added up, with the referee and the derby already in"><span class="heat">${heat.toFixed(1)}</span></span>
         ${derby?`<span title="${esc(derbyName(hS,aS)||"Derby")}">🔥</span>`:""}${refChip(ref)||""}
       </div>
       <div class="faint" style="font-size:.74rem;margin-top:.2rem">${fx.kickoff_time?fmtKO(fx.kickoff_time):"Kick-off TBC"} · ${home?"home":"away"} v ${esc(clubName(opp))}</div>
@@ -3292,7 +3300,12 @@ function fixtureICS(fx,player){
   const start=new Date(fx.kickoff_time), end=new Date(start.getTime()+115*60000); // 90 + stoppage + half time
   const ref=refFor(fx.id);
   const title=`${clubName(hS)} v ${clubName(aS)}`;
-  const bits=[`Booking heat ${(clubCAH(hS)+clubCAA(aS)).toFixed(1)}`];
+  /* fixtureMeta, so the figure in someone's calendar is the figure on the
+     card. This was the raw cards-against sum — not ref-adjusted, not
+     derby-adjusted, and after the move to the model not the same quantity at
+     all. */
+  const fmCal=fixtureMeta(fx);
+  const bits=[`Booking heat ${(fmCal?fmCal.heat:clubCAH(hS)+clubCAA(aS)).toFixed(1)}`];
   if(ref) bits.push(`Referee ${ref.n}${ref.ypg!=null?` (${ref.ypg.toFixed(2)} cards/game)`:""}`);
   if(player) bits.push(`Watching: ${player}`);
   bits.push("Via Premier League Bookings Desk — 18+, research not betting advice.");
@@ -3559,6 +3572,10 @@ function attachLive(bootstrap,teamMap){
       p.rLive=p.liveRate?PLDCore.riskScore(p.yLive,p.f):undefined;
       if(p.rLive===undefined) delete p.rLive; } });
   }
+  /* The live feed changes who is available and how many cards they carry, and
+     booking heat is now priced off both. Anything cached before this ran was
+     priced on the vendored season alone. */
+  invalidateFixtureMeta();
   return matched;
 }
 
@@ -4793,23 +4810,68 @@ function candRowHtml(c,ref,isNew){
 }
 // Everything the card, the heat sort and the share exports need for one
 // fixture, computed once so they can't drift apart.
+/* BOOKING HEAT IS THE MODEL'S EXPECTED CARDS.
+ *
+ * It used to be clubCAH(home)+clubCAA(away), scaled by the referee and the
+ * derby — the two clubs' historical cards-against rates. That is a different
+ * quantity from the one this desk's own Model detail panel prints two lines
+ * below it as EXPECTED CARDS, and both were labelled "booking heat". On
+ * 24 August the chip on Fulham v Chelsea read 4.9 while the panel under it
+ * read 3.9, and /today read 3.9 for the same match. Three numbers, one name.
+ *
+ * The model number wins because it is the one everything else is built on:
+ * the per-player probabilities, the over-lines, the accas and the share cards
+ * all come off teamCardBoard, so the chip now leads with the figure the rest
+ * of the card is already made of. Same board, same call — the chip and the
+ * panel cannot disagree, because there is only one of them.
+ *
+ * THE BANDS MOVED WITH THE SCALE. The model's spread is tighter than the
+ * cards-against one (sd 0.42 against 0.61 over the season's 380 fixtures,
+ * means 3.46 and 3.41), so keeping 4.2 would have left 22 fixtures hot
+ * instead of 43 and swept 174 into warm. Hot is 4.0 — the same 1.29 standard
+ * deviations above the mean that 4.2 was on the old scale — and warm stays at
+ * 3.5, which lands within a twentieth of a standard deviation of where it
+ * was. The resulting season split is 50/146/184 against the old 43/120/217.
+ *
+ * `base` is kept: it is a real figure about the two clubs, it is what the
+ * breakdown tooltip shows, and it is the fallback for a fixture with too few
+ * rated players for the model to price at all.
+ */
+const HEAT_HOT=4.0, HEAT_WARM=3.5;
+/* Priced once per fixture per referee. teamCardBoard is a Poisson-binomial
+   over both squads at ~0.7ms, and sortFixturesByHeat calls this from inside a
+   comparator — O(n log n) boards for a list the renderer then walks again.
+   Keyed on the referee because picking one is exactly what re-prices a
+   fixture; cleared when the live feed lands, which is the only other input
+   that moves underneath it. */
+const FX_META=new Map();
+function invalidateFixtureMeta(){ FX_META.clear(); }
 function fixtureMeta(f){
   if(!LIVE) return null;
   const h=LIVE.teamMap[f.team_h], a=LIVE.teamMap[f.team_a];
   if(!h||!a) return null;
   const ref=refFor(f.id), rf=refFactor(ref), derby=isDerby(h,a);
-  const base=clubCAH(h)+clubCAA(a);
-  const heat=Number((base*rf*(derby?DERBY_BOOST:1)).toFixed(1));
-  const cls=heat>=4.2?"tier-target":heat>=3.5?"tier-mid":"tier-fade";
-  const lbl=heat>=4.2?"Hot":heat>=3.5?"Warm":"Cool";
-  /* The match model's read on this fixture. Deliberately NOT folded into
-     `heat`: the fitted closeness is the better closeness signal and should
-     eventually replace the hardcoded derby list, but swapping what orders
-     the fixture list is a decision for scripts/backtest.mjs, not a
-     refactor. It reaches the per-player numbers through the game-state
-     factor and is shown on the card; the sort is unchanged. */
+  const key=f.id+"|"+(ref&&ref.n||"");
+  const hit=FX_META.get(key);
+  if(hit) return hit;
+  /* The two clubs' own cards-against record, ref- and derby-adjusted. No
+     longer the headline, still the breakdown. */
+  const base=Number(((clubCAH(h)+clubCAA(a))*rf*(derby?DERBY_BOOST:1)).toFixed(1));
+  const board=teamCardBoard(h,a,ref,derby,f.id);
+  /* A fixture with no rated players cannot be modelled — early season, or a
+     squad the join missed. It keeps the cards-against figure rather than
+     dropping out of the ordering, and `modelled` lets the card say so. */
+  const heat=board?Number(board.expected.toFixed(1)):base;
+  const cls=heat>=HEAT_HOT?"tier-target":heat>=HEAT_WARM?"tier-mid":"tier-fade";
+  const lbl=heat>=HEAT_HOT?"Hot":heat>=HEAT_WARM?"Warm":"Cool";
+  /* The match model's read on this fixture. The fitted closeness is a better
+     closeness signal than the hardcoded derby list and should eventually
+     replace it, but that swap is a decision for scripts/backtest.mjs. It
+     reaches the per-player numbers through the game-state factor. */
   const sim=simFor(h,a);
-  return {f,h,a,ref,rf,derby,base,heat,cls,lbl,sim};
+  const meta={f,h,a,ref,rf,derby,base,board,modelled:!!board,heat,cls,lbl,sim};
+  FX_META.set(key,meta);
+  return meta;
 }
 // Fixtures ordered hottest → coolest, kickoff time breaking ties.
 function sortFixturesByHeat(fx){
@@ -4869,8 +4931,12 @@ function fixtureCardHtml(f,opts){
      reader has to compare arithmetically; relative severity is the actual
      question and a length answers it without reading. Scaled 2.0-6.0, which is
      the range a Premier League fixture's expected total actually occupies. */
-  const heatPct=Math.max(0,Math.min(1,(heat-2)/4));
-  const heatBadge=`<span class="heatbar${heat>=4.2?" hot":""}" title="Booking heat: ${base.toFixed(1)} base × ${rf.toFixed(2)} ref${derby?" × "+DERBY_BOOST+" derby":""}">`
+  /* 2.5-4.5, which is what the model's expected total actually spans across
+     the season's 380 fixtures. The old 2.0-6.0 was the range of the
+     cards-against figure this replaced; left alone it would have pinned every
+     bar between a seventh and two thirds and never filled one. */
+  const heatPct=Math.max(0,Math.min(1,(heat-2.5)/2));
+  const heatBadge=`<span class="heatbar${heat>=HEAT_HOT?" hot":""}" title="${M.modelled?`Booking heat: the model's expected cards, adding up every rated player's own chance — referee ×${rf.toFixed(2)}${derby?", derby ×"+DERBY_BOOST:""} already applied. These two clubs' own cards-against record reads ${base.toFixed(1)}.`:`Booking heat: too few rated players to model this fixture, so this is the two clubs' cards-against record — ×${rf.toFixed(2)} referee${derby?", ×"+DERBY_BOOST+" derby":""}.`}">`
     +`<span class="heatbar-t" aria-hidden="true"><i style="width:${(heatPct*100).toFixed(0)}%"></i></span>`
     +`<span class="heatbar-n" data-num="heat-${f.id}">${heat.toFixed(1)}</span></span>`;
   const refDelta=(ref&&Math.abs(rf-1)>=0.02)?` <span class="mono" style="font-size:.64rem;color:${rf>1?"var(--warn)":"var(--fade)"}" title="Every player's chance scaled ×${rf.toFixed(2)} by ${esc(ref.n)}">×${rf.toFixed(2)} on every player</span>`:"";
@@ -5257,7 +5323,7 @@ function renderGwStats(fx){
   const tile=(n,label,title)=>`<div class="stat"${title?` title="${esc(title)}"`:""}><b class="num">${n}</b><span>${label}</span></div>`;
   el.innerHTML=
     tile(fx.length,"matches")
-    +tile(heat.toFixed(1),"cards expected","Sum of every fixture's booking heat: each club's cards-against rate, scaled by the referee and any derby boost.")
+    +tile(heat.toFixed(1),"cards expected","Sum of every fixture's booking heat — the model's expected cards for each match, with the referee and any derby boost already applied.")
     +tile((heat/fx.length).toFixed(2),"a match")
     /* Only once there are rated players behind it. Pre-season, and any time
        the squad join has not landed, this is 0 out of 0 — a tile reading "0 in
@@ -5297,7 +5363,6 @@ function renderGameweek(){
   if(gwF.sort!=="heat") fx=fx.slice().sort((x,y)=>{
     const mx=fixtureMeta(x), my=fixtureMeta(y);
     if(gwF.sort==="ko") return String(x.kickoff_time||"9").localeCompare(String(y.kickoff_time||"9"));
-    if(gwF.sort==="exp"){ const bx=mx&&mx.board?mx.board.expected:-1, by=my&&my.board?my.board.expected:-1; return by-bx; }
     if(gwF.sort==="ref"){ const rx=refFor(x.id), ry=refFor(y.id);
       return ((ry&&ry.ypg!=null?ry.ypg:-1)-(rx&&rx.ypg!=null?rx.ypg:-1)); }
     return 0;
@@ -5954,7 +6019,7 @@ if("serviceWorker" in navigator&&(location.protocol==="https:"||location.hostnam
 
 // ---- Glossary: plain-English definitions of the desk's terms ----
 const GLOSS=[
-  ["Booking heat","A fixture's overall card temperature — the two sides' cards-against rates (home/away split), lifted for a strict referee and for recognised derbies. Fixtures sort hottest to coolest by it."],
+  ["Booking heat","A fixture's expected card total — every rated available player's own chance of being booked, added up, with the referee's card rate and any derby boost already in. The same number the Model detail panel calls Expected cards. Fixtures sort hottest to coolest by it; hot is 4.0 plus, warm 3.5 plus."],
   ["Booking probability / P(card)","The model's chance that a player picks up a card in a given match. On This Gameweek it's fixture-aware (scaled by the referee, the derby list, the venue and the game state); the Season table shows the pre-fixture season chance."],
   ["Fair odds","The price that exactly matches the model's probability — 1 ÷ P(card). A bookmaker paying more than this is, on the model's view, value."],
   ["Edge %","How much a bookmaker's price beats the model: (odds × probability − 1). Positive means the price pays more than the model thinks the chance is worth. A research screen, not a guarantee."],
