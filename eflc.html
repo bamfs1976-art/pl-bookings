@@ -1385,6 +1385,7 @@
         + priceBlock(x)
         + '<div class="mkts">'
         + '<button class="mkt fx-share" type="button" data-share="' + f.id + '">\u2b07 Share match</button>'
+        + '<button class="mkt fx-share" type="button" data-sheet="' + f.id + '">\u2b07 Stat sheet</button>'
         + '<span class="mkt">Home <b>' + n1(x.m.expectedHome) + '</b></span>'
         + '<span class="mkt">Away <b>' + n1(x.m.expectedAway) + '</b></span>'
         + [3.5, 4.5, 5.5].map(function (l) {
@@ -1477,6 +1478,40 @@
     btn.textContent = on ? 'Building…' : btn.dataset.label;
   }
 
+  /* THE STAT SHEET, off the same priced fixture the match card uses.
+     Two cards, one pricing: a figure on the dossier and the same figure on the
+     portrait card come from one call to priceFixture rather than two readings
+     of it. squadOf hands the adapter this desk's own player list, which it
+     cannot reach on its own — the three datasets each declare their players
+     under a different global. */
+  function shareSheet(id, btn) {
+    var fx = FIXTURES.filter(function (f) { return String(f.id) === String(id); })[0];
+    if (!fx) return;
+    var priced = priceFixture(fx);
+    var ctx = Object.assign({}, SHARE_CTX, {
+      squadOf: function (short) {
+        return EFLC_PLAYERS.filter(function (p) { return p.c === short; });
+      },
+      h2hRows: h2hRowsFor(fx)
+    });
+    var spec = S.deskStatSheetSpec(priced, ctx);
+    shareBusy(btn, true);
+    S.statSheetCard(spec)
+      .then(function (b) { S.download(b, spec.filename); })
+      .catch(function (e) { console.error(e); })
+      .then(function () { shareBusy(btn, false); });
+  }
+
+  /* The head-to-head panel, in CARDS rather than goals — which is the whole
+     difference between this desk and a general stats graphic. Empty when the
+     pair has no recorded meetings, and the card then omits the panel rather
+     than drawing an empty box. */
+  function h2hRowsFor(fx) {
+    var p = typeof h2hFor === 'function' ? h2hFor(fx.h, fx.a) : null;
+    if (!p || p.n == null || p.n < 3) return [];
+    return [{ left: 'Last ' + p.n + ' meetings', right: p.avg.toFixed(1) + ' cards avg' }];
+  }
+
   function shareMatch(id, btn) {
     var fx = FIXTURES.filter(function (f) { return String(f.id) === String(id); })[0];
     if (!fx) return;
@@ -1530,7 +1565,9 @@
     host._shareWired = true;
     host.addEventListener('click', function (e) {
       var b = e.target.closest && e.target.closest('[data-share]');
-      if (b) { b.dataset.label = b.dataset.label || b.textContent; shareMatch(b.dataset.share, b); }
+      if (b) { b.dataset.label = b.dataset.label || b.textContent; shareMatch(b.dataset.share, b); return; }
+      var sh = e.target.closest && e.target.closest('[data-sheet]');
+      if (sh) { sh.dataset.label = sh.dataset.label || sh.textContent; shareSheet(sh.dataset.sheet, sh); }
     });
   }
 

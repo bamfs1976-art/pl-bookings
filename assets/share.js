@@ -148,20 +148,27 @@
     return cx + w;
   }
 
-  function brandBand(x, th, title, subtitle) {
-    var g = x.createLinearGradient(0, 0, W, 0);
+  /* WIDTH AND HEIGHT ARE ARGUMENTS NOW, defaulting to the portrait card every
+     existing caller draws. The stat sheet is landscape, and the alternative —
+     its own band and its own footer — would have put a second copy of the 18+
+     line on the page. That line is the one piece of text on a share card that
+     is not allowed to drift, so there is still exactly one of it. */
+  function brandBand(x, th, title, subtitle, w) {
+    w = w || W;
+    var g = x.createLinearGradient(0, 0, w, 0);
     g.addColorStop(0, th.from); g.addColorStop(1, th.to);
-    x.fillStyle = g; x.fillRect(0, 0, W, 168);
-    drawMark(x, W - P - 30, 84, 86);
+    x.fillStyle = g; x.fillRect(0, 0, w, 168);
+    drawMark(x, w - P - 30, 84, 86);
     x.fillStyle = 'rgba(255,255,255,.82)'; x.font = '700 22px ' + BODY;
     x.fillText(th.strap, P, 66);
     x.fillStyle = '#ffffff'; x.font = '800 46px ' + DISP;
-    x.fillText(fit(x, title, W - P - 150), P, 126);
+    x.fillText(fit(x, title, w - P - 150), P, 126);
     x.fillStyle = '#586275'; x.font = '600 22px ' + BODY;
     x.fillText(String(subtitle || ''), P, 210);
   }
 
-  function footer(x, th, note) {
+  function footer(x, th, note, w, h) {
+    w = w || W; h = h || H;
     /* MEASURE the wordmark rather than reserving a guessed width for it.
        A fixed 300px reserve was fine for "PL BOOKINGS DESK" and ran straight
        through "CHAMPIONSHIP BOOKINGS" — the note is the piece that must give
@@ -176,22 +183,23 @@
     var markW = x.measureText(th.mark).width;
     var fixed = '18+ · begambleaware.org';
     x.fillStyle = '#8b94a5'; x.font = '600 18px ' + BODY;
-    x.fillText(fixed, P, H - 50);
+    x.fillText(fixed, P, h - 50);
     var used = x.measureText(fixed + ' · ').width;
-    var room = W - 2 * P - markW - 24 - used;
+    var room = w - 2 * P - markW - 24 - used;
     if (room > 60) {
       x.fillStyle = '#a8b0be';
-      x.fillText(fit(x, note, room), P + used, H - 50);
+      x.fillText(fit(x, note, room), P + used, h - 50);
     }
     x.fillStyle = th.ink; x.font = '800 20px ' + DISP;
-    x.textAlign = 'right'; x.fillText(th.mark, W - P, H - 50); x.textAlign = 'left';
+    x.textAlign = 'right'; x.fillText(th.mark, w - P, h - 50); x.textAlign = 'left';
   }
 
-  function canvas() {
+  function canvas(w, h) {
+    w = w || W; h = h || H;
     var c = document.createElement('canvas');
-    c.width = W; c.height = H;
+    c.width = w; c.height = h;
     var x = c.getContext('2d');
-    x.fillStyle = '#ffffff'; x.fillRect(0, 0, W, H);
+    x.fillStyle = '#ffffff'; x.fillRect(0, 0, w, h);
     x.textAlign = 'left'; x.textBaseline = 'alphabetic';
     return { c: c, x: x };
   }
@@ -349,6 +357,173 @@
       accaStrip(x, th, legs, 1034, 'ACCA BUILDER · SAME MATCH', 'ALL BOOKED');
       footer(x, th, spec.note ||
         'Same-match combos assume independent bookings · research, not a guarantee');
+      return toBlob(k.c);
+    });
+  }
+
+
+  /* ---- the stat sheet --------------------------------------------------- */
+  /*
+   * A LANDSCAPE THREE-COLUMN DOSSIER, in the shape the betting-graphic houses
+   * use: each club down one side, the match itself down the middle. It reads
+   * at a glance in a timeline, which the portrait card does not — that one is
+   * a ranked list and answers "who is likeliest booked", where this answers
+   * "what am I looking at".
+   *
+   * EVERY PANEL IS A BOOKINGS PANEL. The graphics this borrows its shape from
+   * rank goals, assists, shots and saves, none of which this desk models or
+   * has any business implying it does. The columns here are the four things
+   * that actually drive a card — yellows per 90, fouls committed, fouls won,
+   * and the season's cautions — plus the desk's own P(card) for this fixture,
+   * which is the one number a stats graphic cannot print.
+   *
+   * The referee panel drops "penalties per game" for CARDS PER FOUL. Penalties
+   * are not in the match records this desk builds referees from, so that field
+   * is null for every official in all three divisions; cards per foul is both
+   * available and the better question — how readily this official reaches for
+   * the card once a foul has been given.
+   *
+   * spec = {
+   *   league, title, subtitle, note, palette, filename,
+   *   home / away: { short, name, panels: [{label, unit, rows: [{n, v}]}] },
+   *   ref:   { line, stats: [{label, value}] },
+   *   match: { expected, heatLabel, cells: [{label, value, tone}] },
+   *   h2h:   { label, rows: [{left, right}] }
+   * }
+   */
+  var SW = 1600, SH = 1000;
+
+  function panelStack(x, th, side, cx, cy, cw, palette, avail) {
+    var col = clubColour(side.short, palette, th);
+    x.fillStyle = col; roundRect(x, cx, cy, cw, 62, 14); x.fill();
+    x.fillStyle = textOn(col); x.font = '800 30px ' + DISP;
+    x.textAlign = 'center';
+    x.fillText(fit(x, (side.name || side.short || '').toUpperCase(), cw - 32), cx + cw / 2, cy + 42);
+    x.textAlign = 'left';
+
+    var panels = (side.panels || []).slice(0, 4);
+    if (!panels.length) return;
+    var gap = 14, top = cy + 62 + gap;
+    var ph = Math.floor((avail - (cy + 62 + gap) - (panels.length - 1) * gap) / panels.length);
+    panels.forEach(function (pn, i) {
+      var py = top + i * (ph + gap);
+      x.fillStyle = '#f4f6fa'; roundRect(x, cx, py, cw, ph, 12); x.fill();
+      x.fillStyle = '#8b94a5'; x.font = '700 15px ' + BODY;
+      x.fillText(pn.label.toUpperCase(), cx + 14, py + 24);
+      if (pn.unit) {
+        x.textAlign = 'right';
+        x.fillText(pn.unit.toUpperCase(), cx + cw - 14, py + 24);
+        x.textAlign = 'left';
+      }
+      var rows = (pn.rows || []).slice(0, 5);
+      /* A panel with nothing in it says so. A desk with no rated players is an
+         ordinary early-season state, and five blank lines read as a broken
+         card rather than a thin squad. */
+      if (!rows.length) {
+        x.fillStyle = '#a8b0be'; x.font = '600 17px ' + BODY;
+        x.fillText('no rated players yet', cx + 14, py + 54);
+        return;
+      }
+      var rh = Math.min(30, (ph - 34) / rows.length);
+      rows.forEach(function (r, j) {
+        var ry = py + 32 + j * rh + rh - 8;
+        x.fillStyle = '#c2c8d4'; x.font = '700 15px ' + DISP;
+        x.fillText(String(j + 1) + '.', cx + 14, ry);
+        x.fillStyle = '#0c1322'; x.font = '600 19px ' + BODY;
+        x.fillText(fit(x, r.n, cw - 130), cx + 44, ry);
+        x.fillStyle = th.ink; x.font = '800 19px ' + DISP;
+        x.textAlign = 'right'; x.fillText(String(r.v), cx + cw - 14, ry);
+        x.textAlign = 'left';
+      });
+    });
+  }
+
+  function statSheetCard(spec) {
+    return ready().then(function () {
+      var th = theme(spec.league), k = canvas(SW, SH), x = k.x;
+      brandBand(x, th, spec.title, spec.subtitle, SW);
+
+      var P2 = 40, gap = 20, sideW = 450;
+      var centreX = P2 + sideW + gap, centreW = SW - 2 * (P2 + sideW + gap) + sideW + gap;
+      centreW = SW - 2 * P2 - 2 * sideW - 2 * gap;
+      var top = 232, bottom = SH - 96;
+
+      panelStack(x, th, spec.home || {}, P2, top, sideW, spec.palette, bottom);
+      panelStack(x, th, spec.away || {}, SW - P2 - sideW, top, sideW, spec.palette, bottom);
+
+      /* ---- the middle column ---- */
+      var cy = top;
+      /* THE REFEREE, first and largest, because he is the biggest single
+         multiplier this desk applies and the reason two identical squads price
+         differently on two weekends. */
+      var rf = spec.ref || {};
+      x.fillStyle = '#0c1322'; roundRect(x, centreX, cy, centreW, 132, 14); x.fill();
+      x.fillStyle = 'rgba(255,255,255,.6)'; x.font = '700 15px ' + BODY;
+      x.textAlign = 'center';
+      x.fillText('REFEREE', centreX + centreW / 2, cy + 28);
+      x.fillStyle = '#ffffff'; x.font = '800 30px ' + DISP;
+      x.fillText(fit(x, rf.line || 'Not yet appointed', centreW - 28), centreX + centreW / 2, cy + 64);
+      var rs = (rf.stats || []).slice(0, 4), rw = centreW / Math.max(1, rs.length);
+      rs.forEach(function (st, i) {
+        var sx = centreX + i * rw + rw / 2;
+        x.fillStyle = '#ffd84d'; x.font = '800 26px ' + DISP;
+        x.fillText(String(st.value), sx, cy + 106);
+        /* 12px, measured: "YELLOWS PER GAME" is the longest of the four and
+           at 13px it ran a hair over its quarter of the panel and came out as
+           "YELLOWS PER GA…". The labels are not abbreviated instead, because
+           three of these four are per game and one — cards per foul — is a
+           ratio, and a blanket "per game" heading would be wrong about it. */
+        x.fillStyle = 'rgba(255,255,255,.55)'; x.font = '600 12px ' + BODY;
+        x.fillText(fit(x, st.label.toUpperCase(), rw - 8), sx, cy + 124);
+      });
+      x.textAlign = 'left';
+      cy += 132 + 18;
+
+      /* ---- the match itself ---- */
+      var m = spec.match || {};
+      x.fillStyle = '#f4f6fa'; roundRect(x, centreX, cy, centreW, 150, 14); x.fill();
+      x.textAlign = 'center';
+      x.fillStyle = '#8b94a5'; x.font = '700 15px ' + BODY;
+      x.fillText('EXPECTED CARDS', centreX + centreW / 2, cy + 30);
+      x.fillStyle = m.expected != null ? heatHex(m.expected, spec.heatMid, spec.heatHot) : '#64748b';
+      x.font = '800 62px ' + DISP;
+      x.fillText(m.expected != null ? Number(m.expected).toFixed(1) : '—',
+                 centreX + centreW / 2, cy + 88);
+      var cells = (m.cells || []).slice(0, 4), cwid = centreW / Math.max(1, cells.length);
+      cells.forEach(function (cl, i) {
+        var sx = centreX + i * cwid + cwid / 2;
+        x.fillStyle = '#0c1322'; x.font = '800 22px ' + DISP;
+        x.fillText(String(cl.value), sx, cy + 122);
+        x.fillStyle = '#8b94a5'; x.font = '600 13px ' + BODY;
+        x.fillText(fit(x, cl.label.toUpperCase(), cwid - 10), sx, cy + 140);
+      });
+      x.textAlign = 'left';
+      cy += 150 + 18;
+
+      /* ---- head to head, in CARDS ---- */
+      var h = spec.h2h;
+      if (h && (h.rows || []).length) {
+        var hh = bottom - cy;
+        x.fillStyle = '#f4f6fa'; roundRect(x, centreX, cy, centreW, hh, 14); x.fill();
+        x.fillStyle = '#8b94a5'; x.font = '700 15px ' + BODY;
+        x.textAlign = 'center';
+        x.fillText((h.label || 'HEAD TO HEAD').toUpperCase(), centreX + centreW / 2, cy + 26);
+        x.textAlign = 'left';
+        var hr = (h.rows || []).slice(0, 5);
+        var rh2 = Math.min(34, (hh - 40) / Math.max(1, hr.length));
+        hr.forEach(function (r, i) {
+          var ry = cy + 36 + i * rh2 + rh2 - 10;
+          x.fillStyle = '#586275'; x.font = '600 18px ' + BODY;
+          x.fillText(fit(x, r.left, centreW - 120), centreX + 16, ry);
+          x.fillStyle = '#0c1322'; x.font = '800 18px ' + DISP;
+          x.textAlign = 'right'; x.fillText(String(r.right), centreX + centreW - 16, ry);
+          x.textAlign = 'left';
+        });
+      }
+
+      footer(x, th, spec.note ||
+        'Every figure is this desk’s own model · research, not a guarantee',
+        SW, SH);
       return toBlob(k.c);
     });
   }
@@ -639,6 +814,95 @@
         { label: 'Over 5.5', value: over[5.5] != null ? (over[5.5] * 100).toFixed(0) + '%' : '—' }
       ],
       filename: (theme(ctx.league).slug + '-' + slug(f.h) + '-' + slug(f.a) + '.png')
+    };
+  }
+
+
+  /* The stat sheet, from the same priced fixture deskMatchSpec reads.
+   *
+   * ONE ADAPTER PER CARD, both fed by the desks' own `priced` row, so a figure
+   * on the dossier and the same figure on the portrait card come from one
+   * pricing rather than two readings of it.
+   *
+   * `squadOf(short)` is the desk's own player list for a club — the adapter
+   * cannot reach into three different globals, so the caller passes the lookup
+   * it already has.
+   */
+  function deskStatSheetSpec(priced, ctx) {
+    var n1 = function (v) { return v == null ? '—' : Number(v).toFixed(1); };
+    var n2 = function (v) { return v == null ? '—' : Number(v).toFixed(2); };
+    var pc = function (v) { return v == null ? '—' : (v * 100).toFixed(0) + '%'; };
+    var f = priced.fx, m = priced.m || {}, over = m.over || {};
+    var ch = (ctx.clubBy && ctx.clubBy[f.h]) || {}, ca = (ctx.clubBy && ctx.clubBy[f.a]) || {};
+    var squadOf = ctx.squadOf || function () { return []; };
+
+    /* Top five by one field, dropping anyone the desk has no number for.
+       A null is not a zero: a player with no minutes has no rate, and ranking
+       him last would state that he never fouls. */
+    function top(short, key, dp) {
+      return squadOf(short)
+        .filter(function (p) { return p && p[key] != null && !p.ls; })
+        .sort(function (a, b) { return b[key] - a[key]; })
+        .slice(0, 5)
+        .map(function (p) {
+          return { n: p.n, v: dp === 0 ? String(p[key]) : Number(p[key]).toFixed(dp) };
+        });
+    }
+    /* The desk's own read on THIS fixture, which is the panel a stats graphic
+       cannot print: not a season rate but a probability for tonight. */
+    var cands = candidatesOf(priced, ctx.clubBy);
+    function risk(short) {
+      return cands
+        .filter(function (c) { return c.club === short; })
+        .slice(0, 5)
+        .map(function (c) { return { n: c.name, v: (c.prob * 100).toFixed(0) + '%' }; });
+    }
+    function side(short, club) {
+      return {
+        short: short, name: club.name || short,
+        panels: [
+          { label: 'Booked tonight', unit: 'p(card)', rows: risk(short) },
+          { label: 'Yellows', unit: 'per 90', rows: top(short, 'y', 2) },
+          { label: 'Fouls committed', unit: 'per 90', rows: top(short, 'f', 2) },
+          { label: 'Fouls won', unit: 'per 90', rows: top(short, 'fw', 2) }
+        ]
+      };
+    }
+
+    var r = priced.ref && priced.ref.ref;
+    return {
+      league: ctx.league,
+      title: (ch.name || f.h) + '  v  ' + (ca.name || f.a),
+      subtitle: [ctx.seasonLabel, f.r ? (ctx.roundWord || 'Matchday') + ' ' + f.r : null,
+                 ctx.whenText ? ctx.whenText(f.d) : null].filter(Boolean).join(' · '),
+      home: side(f.h, ch), away: side(f.a, ca),
+      ref: {
+        line: r ? r.n : (priced.ref && priced.ref.name) || 'Not yet appointed',
+        /* CARDS PER FOUL, not penalties per game. Penalties are not in the
+           match records the referee table is built from, so that field is null
+           for every official in all three divisions — and how readily a
+           referee cards a foul is the better question for this desk anyway. */
+        stats: [
+          { label: 'fouls per game', value: r ? n2(r.fpg) : '—' },
+          { label: 'yellows per game', value: r ? n2(r.ypg) : '—' },
+          { label: 'cards per foul', value: r && r.cpf != null ? Number(r.cpf).toFixed(3) : '—' },
+          { label: 'reds per game', value: r ? n2(r.red) : '—' }
+        ]
+      },
+      match: {
+        expected: m.expected,
+        cells: [
+          { label: 'over 3.5', value: pc(over[3.5]) },
+          { label: 'over 4.5', value: pc(over[4.5]) },
+          { label: 'both carded', value: pc(m.bothCarded) },
+          { label: 'both 2+', value: pc(m.bothTwo) }
+        ]
+      },
+      h2h: ctx.h2hRows && ctx.h2hRows.length
+        ? { label: 'Head to head · cards', rows: ctx.h2hRows } : null,
+      heatMid: ctx.heatMid, heatHot: ctx.heatHot,
+      palette: ctx.palette,
+      filename: (theme(ctx.league).slug + '-sheet-' + slug(f.h) + '-' + slug(f.a) + '.png')
     };
   }
 
@@ -1064,8 +1328,10 @@
     W: W, H: H, PAD: P,
     THEMES: THEMES, theme: theme,
     matchCard: matchCard, roundCard: roundCard, calendarCard: calendarCard,
+    statSheetCard: statSheetCard, SHEET_W: SW, SHEET_H: SH,
     accaCard: accaCard, accaRowSpec: accaRowSpec, nineFoldSpec: nineFoldSpec,
     deskMatchSpec: deskMatchSpec, deskRoundSpec: deskRoundSpec,
+    deskStatSheetSpec: deskStatSheetSpec,
     download: download, slug: slug,
     heatHex: heatHex, probHex: probHex, textOn: textOn,
     roundRect: roundRect, fit: fit, drawMark: drawMark

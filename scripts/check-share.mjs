@@ -186,6 +186,82 @@ assert.ok(text.includes('33%') && text.includes('21%'),
 assert.ok(/18\+/.test(text) && /begambleaware/.test(text),
   'a share card went out without the 18+ / BeGambleAware line');
 
+/* ---- the stat sheet ------------------------------------------------------
+ *
+ * A LANDSCAPE CARD ON A SHARED CANVAS. Adding it meant giving canvas(),
+ * brandBand() and footer() explicit dimensions, and the risk in that is the
+ * 18+ line: the alternative — the sheet drawing its own band and footer —
+ * would have put a second copy of it on the page, free to drift from the one
+ * every other card uses. There is still exactly one, so it is asserted here
+ * the same way as everywhere else.
+ *
+ * EVERY PANEL MUST BE A BOOKINGS PANEL. The graphic this borrows its shape
+ * from ranks goals, assists, shots and saves; this desk models none of those
+ * and must not imply it does. The assertion below is that the four panel
+ * headings are the card ones — a future edit that copies the reference
+ * layout's headings across fails here rather than shipping a card that claims
+ * numbers the desk cannot produce.
+ */
+drawn.length = 0;
+const sheetSpec = S.deskStatSheetSpec(priced, {
+  ...ctx,
+  /* A two-club squad, written here rather than loaded: this is about the
+     card's shape, and a real dataset would make the assertions below depend on
+     which players happen to lead a rate this week. `ls: true` is the
+     low-sample flag — a player with no minutes has no rate, and the panels
+     must drop him rather than rank him last, which would state that he never
+     fouls. */
+  squadOf: (short) => [
+    { c: 'CHA', n: 'H One', y: 0.42, f: 1.2, fw: 0.9, ls: false },
+    { c: 'CHA', n: 'H Two', y: 0.30, f: 0.8, fw: 1.4, ls: false },
+    { c: 'CHA', n: 'H Nought', y: 9.99, f: 9.99, fw: 9.99, ls: true },
+    { c: 'DER', n: 'A One', y: 0.55, f: 1.4, fw: 1.1, ls: false },
+    { c: 'DER', n: 'A Two', y: 0.28, f: 1.0, fw: 0.6, ls: false },
+  ].filter((p) => p.c === short),
+  h2hRows: [{ left: 'Last 6 meetings', right: '4.8 cards avg' }],
+});
+assert.equal(sheetSpec.home.short, 'CHA');
+assert.equal(sheetSpec.away.short, 'DER');
+/* The referee panel drops penalties per game for cards per foul — penalties
+   are not in the match records the referee table is built from, so that field
+   is null for every official in all three divisions. */
+const refLabels = sheetSpec.ref.stats.map((r) => r.label);
+assert.deepEqual(refLabels,
+  ['fouls per game', 'yellows per game', 'cards per foul', 'reds per game'],
+  `the stat sheet's referee panel changed shape: ${refLabels.join(', ')}`);
+assert.ok(!refLabels.some((l) => /penalt|pens/i.test(l)),
+  'the stat sheet is asking for penalties per game, which is null for every ' +
+  'referee in all three divisions — it would draw a column of dashes');
+
+const sheetBlob = await S.statSheetCard(sheetSpec);
+assert.ok(sheetBlob && sheetBlob.__blob, 'statSheetCard did not produce a blob');
+const sheetText = drawn.join('\n');
+assert.ok(/18\+/.test(sheetText) && /begambleaware/.test(sheetText),
+  'the stat sheet went out without the 18+ / BeGambleAware line — the ' +
+  'landscape canvas has its own dimensions and this is the line that must ' +
+  'survive them');
+for (const need of ['CHARLTON ATHLETIC', 'DERBY COUNTY', 'REFEREE',
+                    'EXPECTED CARDS', 'BOOKED TONIGHT', 'FOULS COMMITTED',
+                    'FOULS WON', 'YELLOWS']) {
+  assert.ok(sheetText.includes(need), `the stat sheet never drew ${JSON.stringify(need)}`);
+}
+/* Not the reference graphic's panels. */
+for (const banned of ['GOALS', 'ASSISTS', 'SHOTS ON TARGET', 'GOALKEEPER SAVES']) {
+  assert.ok(!sheetText.includes(banned),
+    `the stat sheet drew ${JSON.stringify(banned)} — this desk does not model ` +
+    'it, and a panel heading is a claim that it does');
+}
+/* And it draws the desk's OWN read on the fixture, which is the panel a stats
+   graphic cannot print: a probability for tonight, not a season rate. */
+assert.ok(/33%|21%/.test(sheetText),
+  'the stat sheet never drew a per-fixture booking probability');
+/* A LOW-SAMPLE PLAYER IS DROPPED, not ranked. "H Nought" carries the highest
+   rate in every column and no minutes behind it; a panel that ranks him first
+   is telling the reader he is the most foul-prone man on the pitch. */
+assert.ok(!sheetText.includes('H Nought'),
+  'the stat sheet ranked a player the desk has flagged low-sample, whose ' +
+  'rate is an artefact of having barely played');
+
 drawn.length = 0;
 const blob2 = await S.roundCard(round);
 assert.ok(blob2 && blob2.__blob, 'roundCard did not produce a blob');
