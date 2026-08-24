@@ -1,0 +1,50 @@
+name: Refresh sim model
+on:
+  schedule:
+    - cron: "30 7 * * 1"    # Mondays 07:30 UTC — after plsimulator's 06:00 refit + Netlify redeploy
+  workflow_dispatch: {}
+permissions:
+  contents: write
+jobs:
+  sim-model:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"       # global fetch available
+      - name: Rebuild data/sim_model.js from the published bundle
+        run: node scripts/build-sim-model.mjs
+
+      # EVERY GUARD, not the ones that look related to the sim model. This is
+      # the fifth workflow to commit to main and the rule is the same for all
+      # of them: the guards re-derive PRICES from the data, and sim_model.js
+      # feeds the Premier League desk's game-state factor, so a bad bundle
+      # moves numbers on pages this job never mentions. check-ci-wiring.mjs
+      # fails the build on a pusher that skips this — which is exactly what it
+      # did when this file was first added.
+      - name: Guard the rebuilt model
+        run: node scripts/check-all.mjs
+
+      - name: Commit if the ratings changed
+        run: |
+          git config user.name "plbookings-sim[bot]"
+          git config user.email "actions@github.com"
+          git add data/sim_model.js
+          if git diff --cached --quiet; then
+            echo "sim model unchanged this week"
+          else
+            git commit -m "Refresh sim model from plsimulation model.json"
+            # PUSH INTO A MOVING BRANCH — the same pattern as the other four,
+            # and for the same reason. 07:30 Monday sits inside the window the
+            # lineups and fixtures bots run in, so a collision here is likely
+            # rather than theoretical, and a rejected push takes the commit
+            # down with the runner: the work is done, thrown away, and reported
+            # as a failed job with nothing to say it had succeeded.
+            for attempt in 1 2 3; do
+              git push && break
+              echo "push rejected (attempt $attempt) — rebasing onto origin/main"
+              git pull --rebase --autostash origin main || exit 1
+              sleep $((attempt * 5))
+            done
+          fi
