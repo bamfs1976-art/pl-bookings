@@ -104,12 +104,25 @@ for (const page of ['eflc.html', 'laliga.html']) {
   assert.ok(grids >= 2,
     `${page} wraps ${grids} panel(s) in .fx-grid; both Matchday and Fixtures ` +
     'must use it or one of them stacks single-column');
-  /* 2600, measured, not guessed: renderMatchday's body reaches fixtureCard at
-     ~2040 characters. A bound set by eye failed the assertion rather than the
-     code the first time, which is the second time that has happened in this
-     file. Still bounded — unbounded would match a fixtureCard call anywhere
-     later in the page and pass whatever renderMatchday actually draws. */
-  assert.ok(/renderMatchday[\s\S]{0,2600}?fixtureCard\(/.test(src),
+  /* THE FUNCTION'S BODY, not a character count from its name.
+     This was `renderMatchday[\s\S]{0,2600}?fixtureCard\(` — a proximity bound
+     that had already failed twice on edits which changed nothing about the
+     markup, and failed a third time on a six-line comment explaining a sort.
+     A guard that trips on prose is a guard people learn to bump rather than
+     read. Braces are counted instead, so the question asked is the one meant:
+     does renderMatchday draw fixture cards? */
+  const bodyOf = (name) => {
+    const at = src.indexOf(`function ${name}(`);
+    assert.ok(at >= 0, `${page} has no ${name}()`);
+    const open = src.indexOf('{', at);
+    let depth = 0;
+    for (let i = open; i < src.length; i++) {
+      if (src[i] === '{') depth++;
+      else if (src[i] === '}' && --depth === 0) return src.slice(open, i + 1);
+    }
+    assert.fail(`${page}: ${name}() is unterminated`);
+  };
+  assert.ok(/fixtureCard\(/.test(bodyOf('renderMatchday')),
     `${page} renderMatchday does not draw fixture cards — it has regressed ` +
     'to the plain text list the Premier League desk never had');
   /* The old list's classes must not come back with it. */

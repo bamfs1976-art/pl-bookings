@@ -84,22 +84,59 @@ for (const desk of DESKS) {
      rule violated.
 
      Written as a property rather than "round 1, then round 2" because the
-     first draft asserted the latter and La Liga failed it — correctly.
-     Jornada 1 carries postponed fixtures on 25-27 August, AFTER the whole of
-     jornada 2 (20-24 August), so the rounds genuinely overlap and the desk
-     rightly sits on jornada 1 for a fortnight. Rounds are not a partition of
-     the calendar and a guard must not assume they are. */
+     first draft asserted the latter and La Liga failed it. Jornada 1 carries
+     postponed fixtures on 25-27 August, AFTER the whole of jornada 2 (20-24
+     August), so the rounds genuinely overlap. Rounds are not a partition of
+     the calendar and a guard must not assume they are.
+
+     THIS NOTE USED TO END "and the desk rightly sits on jornada 1 for a
+     fortnight". That was wrong, and it is the reason the bug survived being
+     looked at: on 24 August the desk showed "Matchday 1, Sat Aug 15 - Thu Aug
+     27" with six played fixtures in it, while the two La Liga matches kicking
+     off that evening were jornada 2 and appeared nowhere on the page. A
+     matchday view whose round has nothing on today is not "rightly" anything.
+     What the overlap actually means is that the matchday can go BACKWARDS,
+     which is asserted below as a bounded exception rather than forbidden. */
   const first = Math.min(...FIX.map((f) => Date.parse(f.d)));
   const last = Math.max(...FIX.map((f) => Date.parse(f.d)));
-  let prev = null, prevDay = null, jumps = [], midDayChanges = [];
+  /* The soonest day on or after `day` that has any fixture — the day the
+     division's next football is on. Everything below is stated against it. */
+  const allDays = [...new Set(FIX.map(dayOf))].sort();
+  const nextDayWithFootball = (day) => allDays.find((d) => d >= day) || null;
+  const roundsOn = (day) => new Set(FIX.filter((f) => dayOf(f) === day).map((f) => f.r));
+
+  let prev = null, prevDay = null, midDayChanges = [];
+  const unjustified = [], emptyMatchday = [];
   for (let t = first - 24 * HOUR; t <= last + 48 * HOUR; t += HOUR) {
     const r = C.currentRound(FIX, t);
     const day = new Date(t).toISOString().slice(0, 10);
     if (prev != null) {
-      if (r < prev) jumps.push(`${new Date(t).toISOString()} went ${prev} -> ${r}`);
       if (r !== prev && day === prevDay) {
         midDayChanges.push(`${new Date(t).toISOString()} changed ${prev} -> ${r} mid-day`);
       }
+      /* A DECREASE IS ALLOWED ONLY WHEN THE FOOTBALL WENT BACKWARDS. Rounds
+         overlap, so the matchday must be able to follow a postponed fixture
+         down — but only to a round that actually has the next match. A drop to
+         a round with nothing imminent is the season-end bug (falling back to
+         Matchday 1 with the whole calendar behind you), and it still fails
+         here, because a spent list has no next day at all. */
+      if (r < prev) {
+        const nd = nextDayWithFootball(day);
+        if (!nd || !roundsOn(nd).has(r)) {
+          unjustified.push(`${day} went ${prev} -> ${r}, but the next football `
+            + `is ${nd ? `${nd} (round${roundsOn(nd).size > 1 ? 's' : ''} `
+              + `${[...roundsOn(nd)].join(', ')})` : 'nowhere — the list is spent'}`);
+        }
+      }
+    }
+    /* THE BUG THIS REPLACED, AS A PROPERTY. If the division plays today, the
+       matchday on screen must be one that HAS a fixture today. The desk sat on
+       jornada 1 while jornada 2 kicked off in front of it, and every guard was
+       green. */
+    const on = roundsOn(day);
+    if (on.size && !on.has(r)) {
+      emptyMatchday.push(`${day}: showing round ${r}, but the round${on.size > 1 ? 's' : ''} `
+        + `playing today ${on.size > 1 ? 'are' : 'is'} ${[...on].join(', ')}`);
     }
     prev = r; prevDay = day;
   }
@@ -108,9 +145,15 @@ for (const desk of DESKS) {
     `kick-off granularity: ${midDayChanges.slice(0, 3).join('; ')}`);
   ok(`${desk.name}: over the whole season the matchday only ever changes at 00:00 UTC`);
 
-  assert.equal(jumps.length, 0,
-    `${desk.name}: the matchday went backwards: ${jumps.slice(0, 3).join('; ')}`);
-  ok(`${desk.name}: the matchday never goes backwards as time moves forward`);
+  assert.equal(emptyMatchday.length, 0,
+    `${desk.name}: the desk showed a matchday with nothing on while the ` +
+    `division was playing: ${emptyMatchday.slice(0, 3).join('; ')}`);
+  ok(`${desk.name}: on every day the division plays, the matchday shown is one that is playing`);
+
+  assert.equal(unjustified.length, 0,
+    `${desk.name}: the matchday went backwards to a round with no imminent ` +
+    `football: ${unjustified.slice(0, 3).join('; ')}`);
+  ok(`${desk.name}: the matchday only ever moves back to follow a postponed fixture`);
 
   /* And the concrete case that prompted all this, named so it stays legible. */
   const r1 = FIX.filter((f) => f.r === 1);
@@ -202,6 +245,84 @@ ok(`${DESKS.length} desks x 2 tabs all resolve the matchday through PLDCore.curr
     'the round is the same 30 hours apart across a boundary — currentRound is ' +
     'ignoring its `now` argument, which would make every check above vacuous');
   ok('currentRound is a pure function of (fixtures, now) and does read now');
+
+  /* ---- the tie-break, on a list built for it ----------------------------- */
+  /*
+   * NO DAY IN ANY OF THE THREE SHIPPED SEASONS CARRIES TWO ROUNDS, so the
+   * tie-break inside currentRound is unreachable from the real fixture files
+   * and every mutation to it passed the checks above in silence. It is not a
+   * far-fetched state — a postponed midweek fixture rescheduled onto the next
+   * round's Friday opener produces it — so it is pinned here on a list written
+   * for the purpose rather than left to whichever season first hits it.
+   *
+   * The tie goes to the HIGHER round: on a day carrying both a straggler and
+   * the new round, the desk is about the new round. The alternative drags it
+   * back to a matchday that is otherwise finished.
+   */
+  const tie = [
+    { r: 1, d: '2026-08-15T14:00:00+00:00' },
+    { r: 1, d: '2026-08-27T19:00:00+00:00' },   // postponed, on a day of its own
+    { r: 1, d: '2026-08-28T19:00:00+00:00' },   // postponed onto round 3's opener
+    { r: 3, d: '2026-08-28T19:00:00+00:00' },
+    { r: 3, d: '2026-08-29T14:00:00+00:00' },
+  ];
+  const onTheDay = Date.parse('2026-08-28T09:00:00Z');
+  assert.equal(C.currentRound(tie, onTheDay), 3,
+    'with a postponed round 1 fixture sharing a day with round 3, the desk ' +
+    'reads as round 1 — the tie-break is dragging it back to a matchday that ' +
+    'is otherwise over');
+  /* And the day before, when only the straggler is next, it IS round 1 —
+     otherwise the assertion above would pass for a rule that simply always
+     returns the highest round. */
+  assert.equal(C.currentRound(tie, Date.parse('2026-08-16T09:00:00Z')), 1,
+    'the day after round 1\'s opener, with its postponed fixture the next ' +
+    'thing to be played, the desk is not on round 1');
+  ok('a day carrying two rounds reads as the higher one, and a straggler alone reads as its own');
+
+  /* ---- what is still to play comes first -------------------------------- */
+  /*
+   * The matchday view ranks by booking heat, which is the product. It did so
+   * without asking whether a match had been played, and a round is not over
+   * the moment it starts: on 24 August the La Liga desk showed jornada 2 with
+   * the two fixtures kicking off that evening at the BOTTOM of the list, under
+   * eight that had already finished. A settled result cannot be researched or
+   * backed, so it must not outrank one that can.
+   *
+   * Asserted on the SOURCE of both desks rather than by re-deriving a price,
+   * because what can regress here is the comparator — the sort silently losing
+   * its first term and going back to heat alone.
+   */
+  for (const [file, name] of [['eflc.html', 'Championship'], ['laliga.html', 'La Liga']]) {
+    const src = readFileSync(join(root, file), 'utf8');
+    const at = src.indexOf('function renderMatchday(');
+    assert.ok(at >= 0, `${file} has no renderMatchday()`);
+    const body = src.slice(at, src.indexOf('\n  }', at));
+    assert.ok(/C\.isPlayed\(/.test(body),
+      `${name}: renderMatchday no longer asks whether a fixture has been ` +
+      'played, so finished matches rank above the ones still to kick off');
+    assert.ok(/b\.m\.expected - a\.m\.expected/.test(body),
+      `${name}: renderMatchday no longer ranks by booking heat within the ` +
+      'group, which is what the note under the list tells the reader it does');
+    /* The played test must come FIRST, or it is decoration on a heat sort. */
+    assert.ok(body.indexOf('C.isPlayed(') < body.indexOf('b.m.expected - a.m.expected'),
+      `${name}: renderMatchday compares heat before it compares whether the ` +
+      'match has been played, so the played test never decides anything');
+  }
+  /* And the rule itself is one implementation, not a status list per desk. */
+  assert.ok(C.isPlayed({ st: 'FT' }) && C.isPlayed({ st: 'AET' }) && C.isPlayed({ st: 'PEN' }),
+    'PLDCore.isPlayed does not recognise a finished match');
+  assert.ok(!C.isPlayed({ st: 'NS' }) && !C.isPlayed({ st: '1H' }) && !C.isPlayed({ st: 'HT' })
+         && !C.isPlayed({ st: 'PST' }) && !C.isPlayed(null) && !C.isPlayed({}),
+    'PLDCore.isPlayed files a live, postponed or unknown fixture as played — ' +
+    'a match in progress has not been played, and an unrecognised status must ' +
+    'keep its fixture visible rather than hiding it');
+  for (const f of ['eflc.html', 'laliga.html']) {
+    assert.ok(!/\['FT', 'AET', 'PEN'\]/.test(readFileSync(join(root, f), 'utf8')),
+      `${f} carries its own list of finished statuses again — it is one rule ` +
+      'in core.js, and the copy in playedFor() counts toward a suspension ' +
+      'ladder where a disagreement bans the wrong player');
+  }
+  ok('the matchday lists what is still to play first, and one rule decides what "played" means');
 }
 
 console.log(`\n${passed} checks passed`);

@@ -248,29 +248,69 @@
   function currentRound(fixtures, now) {
     const list = Array.isArray(fixtures) ? fixtures : [];
     const today = new Date(now == null ? Date.now() : now).toISOString().slice(0, 10);
-    let upcoming = null, latest = null;
+    /* FOLLOW THE FOOTBALL, NOT THE LOWEST ROUND NUMBER.
+     *
+     * This used to return the lowest round having any fixture today or later,
+     * which is right only while rounds partition the calendar — and the note
+     * below already knew they do not. La Liga's jornada 1 carried four
+     * postponed fixtures on 25-27 August, so from 15 August onwards the lowest
+     * round with anything ahead of it was 1, and the desk sat on "Matchday 1,
+     * Sat Aug 15 - Thu Aug 27" for thirteen days. On 24 August it showed that
+     * round's ten fixtures, six of them already played, while the two La Liga
+     * matches actually kicking off that evening were jornada 2 and appeared
+     * nowhere.
+     *
+     * So: the round of the SOONEST UNPLAYED FIXTURE. Whatever is on next is
+     * the matchday this desk is about. Ties go to the HIGHER round, so a day
+     * carrying both a straggler and the new round's opener reads as the new
+     * round rather than being dragged back.
+     *
+     * THIS CAN GO BACKWARDS, and that is the fixture list being out of order
+     * rather than the rule being wrong. Simulated hour by hour across all
+     * three shipped seasons it is identical to the old rule for the Premier
+     * League and the Championship — zero differences, zero decreases — and
+     * decreases exactly twice in La Liga: 2 -> 1 on 25 August, when the only
+     * match in the division is a postponed jornada 1 fixture, and 6 -> 4 on
+     * 4 September, after jornada 6's opener was brought forward to the 3rd.
+     * Both times the lower round is the football that is actually on. A desk
+     * that refused to move would be showing a matchday with nothing in it.
+     */
+    let soonest = null, round = null, latest = null;
     for (const f of list) {
       if (!f || f.r == null) continue;
       if (latest == null || f.r > latest) latest = f.r;
       /* Today counts as upcoming all day, whatever the kick-off time. That IS
-         the fix — anything finer re-introduces the mid-match rollover. */
-      if (f.d && String(f.d).slice(0, 10) >= today) {
-        if (upcoming == null || f.r < upcoming) upcoming = f.r;
+         the fix for the mid-match rollover — anything finer re-introduces it,
+         and a match in progress has not been played. */
+      const day = f.d ? String(f.d).slice(0, 10) : '';
+      if (!day || day < today) continue;
+      if (soonest == null || day < soonest || (day === soonest && f.r > round)) {
+        soonest = day; round = f.r;
       }
     }
     /* Nothing ahead means the list is spent, and the answer is the LAST round,
-       not the first. Both of the old rules fell back to the lowest round, so
+       not the first. Both of the older rules fell back to the lowest round, so
        on the day after the season ended each desk would have swung from
        Matchday 46 to Matchday 1 — a fixture list from nine months ago
-       presented as the next thing to happen. Caught by the never-goes-
-       backwards property in check-matchday.mjs, which is the sort of thing a
-       guard written as a property finds and one written as an example does
-       not. Also the right answer for a stale fixture file, which is the same
-       state arrived at by a different route.
-       ROUNDS ARE NOT A PARTITION OF THE CALENDAR — La Liga's jornada 1 carries
-       postponed fixtures after the whole of jornada 2 — so this is max of the
-       round numbers, not the round of the latest date. */
-    return upcoming != null ? upcoming : latest;
+       presented as the next thing to happen. Caught by a property rather than
+       an example in check-matchday.mjs. Also the right answer for a stale
+       fixture file, which is the same state reached by a different route. */
+    return round != null ? round : latest;
+  }
+
+  /* HAS THIS FIXTURE BEEN PLAYED? One list of finished statuses, because it
+     was two: eflc.html and laliga.html each carried their own
+     ['FT','AET','PEN'] inside playedFor(), which counts appearances toward a
+     suspension ladder — a rule where a disagreement bans the wrong player.
+
+     A MATCH IN PROGRESS IS NOT PLAYED, which is the same principle
+     currentRound above is built on: 1H, HT and 2H are all live football, and a
+     desk that files them under "done" drops them out of the view while people
+     are watching. Anything unrecognised is treated as not played, so a status
+     this list has never seen keeps its fixture visible rather than hiding it. */
+  const PLAYED_STATUS = ['FT', 'AET', 'PEN'];
+  function isPlayed(fx) {
+    return !!fx && PLAYED_STATUS.indexOf(String(fx.st)) >= 0;
   }
 
   function lineupRoles(sheet, squadNames) {
@@ -1883,7 +1923,7 @@
     riskScore, normName, matchRefName, refShort, pickPL, summarisePicks, calibrate, impliedProb, fairOdds, edgePct, LOGISTIC_SLOPE,
     per90, liveRate, joinLooksRight, foldLetters, MIN_LIVE_MINUTES,
     lineupMinutes, xiWeights, SUBS_USED, SUB_MINUTES,
-    playerKeys, matchSquadName, lineupRoles, currentRound,
+    playerKeys, matchSquadName, lineupRoles, currentRound, isPlayed, PLAYED_STATUS,
     marketProb, marketProbDeVig, valuePoint, TYPICAL_CARD_MARGIN, TYPICAL_GOAL_MARGIN,
     cardCountDist, probOverCards, expectedCards, probBothCarded, probBothAtLeast, teamCardMarkets,
     bookingPointsDist, expectedPoints, probOverPoints, leagueRedRate,
