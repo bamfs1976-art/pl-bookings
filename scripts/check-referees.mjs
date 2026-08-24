@@ -613,6 +613,124 @@ assert.ok(/plb_card_predictions/.test(calib) && !/rest\/v1\/plb_predictions/.tes
     'the maternal surname, and no two officials share a cell');
 }
 
+/* ---- the COMBINED page resolves an appointment too ----------------------- */
+/*
+ * EVERY PAGE THAT PRICES A FIXTURE, not just the three desks. today.html was
+ * the fourth, and the only one that looked appointments up by exact key:
+ *
+ *     L.refBy[fx.ref]        // "J. Brooks" — the record is "John Brooks"
+ *
+ * The competitions publish appointments in their own form and the card records
+ * are keyed on whatever the history carries, so the exact lookup missed 28 of
+ * the 50 appointed fixtures across the three divisions. A miss returns
+ * undefined, which is indistinguishable from no appointment: the fixture drew
+ * "Ref —" and priced at refFactor = 1 while the desk one tap away applied the
+ * official — Ed Duckworth at 1.571 on QPR v Bolton, Ben Speedie at 0.539 on
+ * Charlton v Derby.
+ *
+ * This is the same failure the header of this file describes, one page over,
+ * and every guard was green while it shipped. So the assertion is not "does
+ * today.html mention matchRefName" — it RUNS the resolver against the real
+ * shipped data, which is what a source check would have missed.
+ */
+{
+  const C = coreOf();
+  const today = readFileSync(join(root, 'today.html'), 'utf8');
+  /* From the two `var`s the closure captures, not from `L.refFor =` — a slice
+     that starts at the assignment leaves refNames and refCache undeclared and
+     the resolver throws on its first miss. */
+  const from = today.indexOf('var refNames = ');
+  assert.ok(from > 0 && today.indexOf('L.refFor = function (published)') > from,
+    'today.html no longer builds a referee resolver — if it is back to ' +
+    'L.refBy[fx.ref], every appointment published in an abbreviated form ' +
+    'prices at the neutral league rate and reads as "Ref —"');
+  const body = today.slice(from, today.indexOf('\n    };', from) + 7);
+  const L = { refBy: {}, refs: [] };
+  const ctx = { C, L, Object };
+  vm.createContext(ctx);
+
+  const DESKS = [
+    ['PL', 'pl_data.js', 'pl_fixtures.js', 'PL_FIXTURES'],
+    ['EFLC', 'eflc_data.js', 'eflc_fixtures.js', 'EFLC_FIXTURES'],
+    ['LL', 'laliga_data.js', 'laliga_fixtures.js', 'LALIGA_FIXTURES'],
+  ];
+  let joined = 0, appointed = 0, unrated = 0;
+  for (const [code, dataFile, fxFile, fxGlobal] of DESKS) {
+    const dCtx = {};
+    vm.createContext(dCtx);
+    vm.runInContext(readFileSync(join(root, 'data', dataFile), 'utf8'), dCtx);
+    vm.runInContext(readFileSync(join(root, 'data', fxFile), 'utf8'), dCtx);
+    const REFS = vm.runInContext('typeof REFS !== "undefined" ? REFS : []', dCtx);
+    const FX = vm.runInContext(fxGlobal, dCtx);
+
+    L.refs = REFS;
+    L.refBy = {};
+    REFS.forEach((r) => { L.refBy[r.n] = r; });
+    vm.runInContext(body, ctx);          // rebuild the resolver over this desk
+
+    const withRef = FX.filter((f) => f.ref);
+    appointed += withRef.length;
+    for (const f of withRef) {
+      const got = L.refFor(f.ref);
+      if (got) {
+        /* THE RIGHT RECORD, not merely a record. Counting non-null answers
+           passes a resolver that returns the first referee in the list for
+           every miss — it would raise the join count, not lower it, and every
+           fixture would price off a stranger. */
+        const want = L.refBy[f.ref] ? f.ref : C.matchRefName(f.ref, REFS.map((r) => r.n));
+        assert.equal(got.n, want,
+          `${code} ${f.h} v ${f.a}: "${f.ref}" resolved to "${got.n}", but the ` +
+          `shared rule says ${want ? `"${want}"` : 'no official at all'} — the ` +
+          'fixture is priced off the wrong referee');
+        joined += 1;
+        continue;
+      }
+      /* Null is a legitimate answer — an official with no card record, or an
+         abbreviation matchRefName refuses because two officials share it. It
+         must NOT be the answer for a name that plainly reaches a record. */
+      const direct = C.matchRefName(f.ref, REFS.map((r) => r.n));
+      assert.ok(!direct,
+        `${code} ${f.h} v ${f.a}: today.html's resolver returns nothing for ` +
+        `"${f.ref}", but it reaches "${direct}" — that fixture prices at the ` +
+        'neutral league rate on the combined page and at the official\'s own ' +
+        'rate on its desk');
+      unrated += 1;
+    }
+    /* An empty resolver would satisfy every assertion above by never being
+       asked, so assert it actually joined this desk's appointments. */
+    assert.ok(withRef.length === 0 || joined > 0,
+      `${code} has ${withRef.length} appointed fixtures and today.html ` +
+      'resolved none of them');
+  }
+  assert.ok(joined >= 40,
+    `today.html resolves only ${joined} of ${appointed} appointed fixtures — ` +
+    'it resolved 47 when this guard was written, so the join has regressed');
+
+  /* AND THE PRICING PATH MUST CALL IT. Everything above runs the resolver in
+     isolation, which says nothing about whether price() still asks it: the
+     first version of this guard passed with L.refFor defined and both call
+     sites reverted to the exact lookup. Testing a function while the caller
+     has stopped using it is the same mistake in miniature as the bug itself. */
+  assert.ok(!/L\.refBy\[fx\.ref\]/.test(today),
+    'today.html prices off L.refBy[fx.ref] again — the resolver exists but ' +
+    'the fixture path is back to the exact lookup that misses every ' +
+    'abbreviated appointment');
+  const calls = (today.match(/L\.refFor\(fx\.ref\)/g) || []).length;
+  assert.equal(calls, 2,
+    `today.html routes ${calls} of its 2 pricing paths through the resolver ` +
+    '(the Premier League model path and the shrink-then-hazard path) — both ' +
+    'price a fixture, so both need the appointment');
+
+  /* AND THE LABEL. An appointed official with no card record must not read the
+     same as no appointment — that was the visible half of the same bug. */
+  assert.ok(/p\.ref && p\.ref\.name/.test(today),
+    'today.html no longer distinguishes an appointed-but-unrated official ' +
+    'from an unappointed fixture — both read "Ref —"');
+  console.log(`  ok - the combined page joins ${joined} of ${appointed} ` +
+    `appointments (${unrated} appointed with no card record, priced at the ` +
+    'league rate and labelled as such)');
+}
+
 console.log('check-referees OK: the appointment joins across two id spaces, a ' +
   'hand pick still wins, the dropdown shows what the model prices with, all ' +
   'three leagues are harvested on a schedule that can catch them, and every ' +

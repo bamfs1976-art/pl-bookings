@@ -508,6 +508,43 @@
     L.refBy = {};
     (L.refs || []).forEach(function (r) { L.refBy[r.n] = r; });
 
+    /* THE APPOINTMENT AND THE CARD RECORD ARE IN DIFFERENT NAME SPACES, and
+       this page was the only one of the four that did not know it.
+       Appointments arrive as the competition publishes them — "J. Brooks" from
+       the Premier League feed, "Adam Herczeg" from the EFL — and the card
+       records are keyed on whatever the history carries: "John Brooks",
+       "A Herczeg". An exact lookup on that mismatch returns undefined, which
+       is indistinguishable from no appointment at all, so the fixture priced
+       at refFactor = 1 AND drew "Ref —".
+
+       28 of the 50 appointed fixtures across the three divisions were in that
+       state — 25 of them resolvable — while the desk beside this page priced
+       the same match with the official applied. The referee is the largest
+       single multiplier any of these desks uses: QPR v Bolton should carry
+       Ed Duckworth at 1.571 and read here as neutral; Charlton v Derby should
+       carry Ben Speedie at 0.539.
+
+       C.matchRefName is the rule the three desks already resolve through, and
+       it REFUSES an abbreviation that could be two different officials rather
+       than guessing — which is why Tony Harrington and the two La Liga
+       officials with no card record still come back null. That is the correct
+       answer for them, and it is now a different state from "not appointed".
+       Memoised because a season of fixtures asks the same handful of names
+       over and over. */
+    var refNames = (L.refs || []).map(function (r) { return r.n; });
+    var refCache = {};
+    L.refFor = function (published) {
+      if (!published) return null;
+      if (Object.prototype.hasOwnProperty.call(L.refBy, published)) {
+        return L.refBy[published];
+      }
+      if (!Object.prototype.hasOwnProperty.call(refCache, published)) {
+        var hit = C.matchRefName(published, refNames);
+        refCache[published] = hit ? (L.refBy[hit] || null) : null;
+      }
+      return refCache[published];
+    };
+
     /* The Premier League desk prices a fixture through a fitted GLM, a
        referee factor, a derby boost, a venue term and the match model's
        game-state term. assets/plmodel.js is that wiring, shared with the desk
@@ -599,7 +636,7 @@
     var rh = rolesFor(L, fx, fx.h), ra = rolesFor(L, fx, fx.a);
     if (!rh || !ra) { rh = null; ra = null; }
     if (L.pl) {
-      var pref = fx.ref ? L.refBy[fx.ref] : null;
+      var pref = L.refFor(fx.ref);
       var derby = L.pl.isDerby(fx.h, fx.a);
       var b = L.pl.board(fx.h, fx.a, pref, derby, undefined, undefined,
                          rh ? { home: rh, away: ra } : null);
@@ -614,7 +651,7 @@
         m: b
       };
     }
-    var ref = fx.ref ? L.refBy[fx.ref] : null;
+    var ref = L.refFor(fx.ref);
     var factor = refFactor(L, ref);
     var home = sideProbs(L, fx.h, factor, rh), away = sideProbs(L, fx.a, factor, ra);
     if (!home || !away) return null;
@@ -816,7 +853,20 @@
         }).join('')
       : '<div class="faint" style="font-size:12.5px">No rated players.</div>';
 
-    var refLine = (p.ref && p.ref.ref) ? 'Ref ' + esc(refAbbr(p.ref.ref.n)) : 'Ref \u2014';
+    /* THREE STATES, NOT TWO. An official who is appointed and rated, an
+       official who is appointed with no card record yet, and no appointment at
+       all. This collapsed the middle one into "Ref \u2014", which is the page
+       saying nobody has been appointed when somebody has \u2014 and it was the
+       visible half of the join bug fixed in prepare(). The unrated case is
+       ordinary rather than broken: Tony Harrington has been appointed to a
+       Championship fixture and simply has no history in the record yet, so the
+       match prices at the league rate and the name is still worth showing. */
+    var refLine = p.ref && p.ref.ref
+      ? 'Ref ' + esc(refAbbr(p.ref.ref.n))
+      : p.ref && p.ref.name
+      ? '<span title="Appointed, but no card record yet \u2014 this match prices at'
+        + ' the league rate">Ref ' + esc(refAbbr(p.ref.name)) + '*</span>'
+      : 'Ref \u2014';
     return '<div class="fx" data-lg="' + p.L.code + '" data-h="' + p.fx.h
       + '" data-a="' + p.fx.a + '">'
       + '<div class="fx-top">'
