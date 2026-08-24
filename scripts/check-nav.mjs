@@ -598,20 +598,49 @@ for (const d of CLUB_ROWS) {
     'tapped to open a player');
   assert.ok(/tabindex="0"/.test(code),
     'candidate rows are not focusable, so the keyboard cannot reach them');
-  assert.ok(/addEventListener\('click'[\s\S]{0,400}cand-open/.test(code),
+  /* THE HANDLER'S BODY, not a character count from its name. These were
+     `addEventListener('click'[\s\S]{0,400}cand-open` and a 300-char twin — a
+     proximity bound that says nothing about whether the handler reaches the
+     row and fails the moment anything unrelated is inserted above it. Adding
+     a second share button to the same delegated listener tripped it while the
+     handler still did exactly what it always had. Same repair as the one
+     check-styles.mjs needed for renderMatchday: count braces, ask the real
+     question. */
+  /* EVERY handler of that kind, not the first one found. today.html binds
+     several click listeners and the delegated fixture one is not the first,
+     so extracting a single body asks about the wrong function. */
+  const handlerBodies = (kind) => {
+    const out = [];
+    const needle = `addEventListener('${kind}'`;
+    for (let at = code.indexOf(needle); at >= 0; at = code.indexOf(needle, at + 1)) {
+      const open = code.indexOf('{', at);
+      if (open < 0) continue;
+      let depth = 0;
+      for (let i = open; i < code.length; i++) {
+        if (code[i] === '{') depth++;
+        else if (code[i] === '}' && --depth === 0) { out.push(code.slice(open, i + 1)); break; }
+      }
+    }
+    assert.ok(out.length, `today.html has no delegated ${kind} handler`);
+    return out;
+  };
+  const reaches = (kind) => handlerBodies(kind).some((b) => /cand-open/.test(b));
+  assert.ok(reaches('click'),
     'no click handler reaches .cand-open');
   /* BOTH ACTIVATIONS. A row reachable by Tab that Enter does not open is worse
      than one that was never focusable. */
-  assert.ok(/addEventListener\('keydown'[\s\S]{0,300}cand-open/.test(code),
+  assert.ok(reaches('keydown'),
     'no keydown handler reaches .cand-open — the rows take focus but Enter ' +
     'does nothing');
   /* Both keys, whichever way the test is spelled — the handler early-returns
      with !== and an assertion pinned to === passed only by accident of style.
-     Scoped to the keydown handler so a stray 'Enter' elsewhere cannot satisfy
-     it. */
-  const kd = /addEventListener\('keydown'[\s\S]{0,400}?\n    \}\);/.exec(code);
+     Scoped to the handler that actually reaches the row: a stray 'Enter'
+     elsewhere on the page must not satisfy it, and — the third proximity
+     bound in this file to be replaced — neither the handler's length nor its
+     indentation is any of this assertion's business. */
+  const kd = handlerBodies('keydown').filter((b) => /cand-open/.test(b))[0];
   assert.ok(kd, 'today.html has no keydown handler to inspect');
-  assert.ok(/'Enter'/.test(kd[0]) && /' '|'Spacebar'/.test(kd[0]),
+  assert.ok(/'Enter'/.test(kd) && /' '|'Spacebar'/.test(kd),
     'the keyboard handler no longer accepts both Enter and Space');
   assert.ok(/PLDProfile\.open\(/.test(code),
     'openCand no longer opens a profile card');

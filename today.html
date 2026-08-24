@@ -894,6 +894,16 @@
            + ' title="Download a shareable card of this match"'
            + ' aria-label="Share ' + esc(p.fx.h) + ' versus ' + esc(p.fx.a) + '">'
            + '\u2b07</button>' : '')
+      /* THE STAT SHEET, beside the portrait card rather than instead of it.
+         They answer different questions and suit different places: the
+         portrait is a ranked list at 4:5 for a timeline, the sheet is a
+         landscape dossier you read at a glance. */
+      + (S && S.statSheetCard ? '<button class="fx-shareico" type="button"'
+           + ' data-sheet-fx="' + esc(String(p.fx.id)) + '"'
+           + ' data-lg="' + esc(p.L.code) + '"'
+           + ' title="Download the stat sheet for this match"'
+           + ' aria-label="Stat sheet for ' + esc(p.fx.h) + ' versus ' + esc(p.fx.a) + '">'
+           + '\u25a4</button>' : '')
       + '<span class="fx-heat' + (p.m.expected >= 4.2 ? ' hot' : '') + '" '
       + 'title="Booking heat: expected cards, both sides added together">'
       + n1(p.m.expected) + '</span>'
@@ -1813,12 +1823,43 @@
     LL:   { seasonLabel: 'La Liga 2026-27', roundWord: 'Matchday' }
   };
 
+  /* The priced row for one fixture on one desk. Both share paths need it and
+     the id alone is not unique — three divisions, three id spaces. */
+  function pricedFor(fid, code) {
+    for (var i = 0; i < ALL.length; i++) {
+      if (String(ALL[i].fx.id) === String(fid) && ALL[i].L.code === code) return ALL[i];
+    }
+    return null;
+  }
+
+  function shareSheet(fid, code, btn) {
+    if (!S || !S.statSheetCard) return;
+    var p = pricedFor(fid, code);
+    if (!p) return;
+    var meta = SHARE_META[code] || {};
+    var spec = S.deskStatSheetSpec(p, {
+      league: code,
+      seasonLabel: meta.seasonLabel || p.L.name,
+      roundWord: meta.roundWord || 'Matchday',
+      clubBy: p.L.clubBy,
+      whenText: fmtWhen,
+      /* This page holds three datasets at once, so the squad lookup is the
+         one belonging to the fixture's OWN division — not a global. */
+      squadOf: function (short) {
+        return (p.L.players || []).filter(function (q) { return q.c === short; });
+      }
+    });
+    var label = btn ? btn.getAttribute('aria-label') : null;
+    if (btn) { btn.disabled = true; }
+    S.statSheetCard(spec)
+      .then(function (b) { S.download(b, spec.filename); })
+      .catch(function (e) { if (window.console) console.error(e); })
+      .then(function () { if (btn) { btn.disabled = false; if (label) btn.setAttribute('aria-label', label); } });
+  }
+
   function shareFixture(fid, code, btn) {
     if (!S) return;
-    var p = null;
-    for (var i = 0; i < ALL.length; i++) {
-      if (String(ALL[i].fx.id) === String(fid) && ALL[i].L.code === code) { p = ALL[i]; break; }
-    }
+    var p = pricedFor(fid, code);
     if (!p) return;
     var meta = SHARE_META[code] || {};
     var spec = S.deskMatchSpec(p, {
@@ -2274,6 +2315,11 @@
       if (!ev.target.closest) return;
       var b = ev.target.closest('[data-share]');
       if (b) { shareDay(b.getAttribute('data-share'), b); return; }
+      var shb = ev.target.closest('[data-sheet-fx]');
+      if (shb) {
+        shareSheet(shb.getAttribute('data-sheet-fx'), shb.getAttribute('data-lg'), shb);
+        return;
+      }
       var fxb = ev.target.closest('[data-share-fx]');
       if (fxb) {
         shareFixture(fxb.getAttribute('data-share-fx'), fxb.getAttribute('data-lg'), fxb);

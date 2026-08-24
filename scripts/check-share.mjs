@@ -43,7 +43,9 @@ function stubCtx(drawn, placed) {
         const w = String(t).length * 11;
         const a = this._align || 'left';
         const x0 = a === 'right' ? x - w : a === 'center' ? x - w / 2 : x;
-        placed.push({ t: String(t), y, x0, x1: x0 + w });
+        /* The font goes in too: the stat sheet sizes its headline figure to
+           the box it ends up with, and that is only observable here. */
+        placed.push({ t: String(t), y, x0, x1: x0 + w, f: this._font || '' });
       }
     }
   };
@@ -233,6 +235,7 @@ assert.ok(!refLabels.some((l) => /penalt|pens/i.test(l)),
   'the stat sheet is asking for penalties per game, which is null for every ' +
   'referee in all three divisions — it would draw a column of dashes');
 
+const sheetMark = placed.length;
 const sheetBlob = await S.statSheetCard(sheetSpec);
 assert.ok(sheetBlob && sheetBlob.__blob, 'statSheetCard did not produce a blob');
 const sheetText = drawn.join('\n');
@@ -261,6 +264,47 @@ assert.ok(/33%|21%/.test(sheetText),
 assert.ok(!sheetText.includes('H Nought'),
   'the stat sheet ranked a player the desk has flagged low-sample, whose ' +
   'rate is an artefact of having barely played');
+
+/* THE MIDDLE COLUMN FILLS, WITH A HEAD TO HEAD AND WITHOUT.
+ *
+ * Both of its lower panels are elastic, and both have been drawn wrong. The
+ * combined page carries no h2h files, so a card shared from /today left the
+ * bottom third of the column blank; and every desk emits h2h as a single
+ * summary line rather than a list of meetings, so with h2h the box was three
+ * hundred pixels tall around one row. Both read as a card that failed to
+ * finish rather than one with nothing to say.
+ *
+ * Asserted as a comparison between the two renders rather than against a
+ * pixel constant: the panel heights are derived from the canvas and the
+ * footer, and a guard that hard-coded where the last line lands would fail
+ * the next time the card is resized while catching nothing about the bug.
+ * What must hold is that BOTH cases reach the same floor, and that the
+ * headline figure is sized to the box it was given.
+ */
+const midCol = (from, to) =>
+  placed.slice(from, to).filter((p) => p.x0 >= 480 && p.x1 <= 1130);
+const floorOf = (rows) => Math.max(...rows.map((r) => r.y));
+const figureSize = (rows) => {
+  const i = rows.findIndex((r) => r.t === 'EXPECTED CARDS');
+  assert.ok(i >= 0 && rows[i + 1], 'the stat sheet drew no expected-cards figure');
+  return Number((/(\d+)px/.exec(rows[i + 1].f) || [])[1]);
+};
+const noH2HMark = placed.length;
+await S.statSheetCard({ ...sheetSpec, h2h: null });
+const withH2H = midCol(sheetMark, noH2HMark);
+const noH2H = midCol(noH2HMark);
+assert.ok(withH2H.length && noH2H.length, 'the stat sheet drew no middle column');
+assert.ok(Math.abs(floorOf(withH2H) - floorOf(noH2H)) <= 40,
+  'the stat sheet\'s middle column ends in a different place depending on ' +
+  `whether the fixture has a head to head (${Math.round(floorOf(withH2H))} ` +
+  `against ${Math.round(floorOf(noH2H))}) — one of the two leaves the column ` +
+  'short of the footer');
+for (const [what, rows] of [['with a head to head', withH2H], ['without one', noH2H]]) {
+  assert.ok(figureSize(rows) >= 100,
+    `the stat sheet ${what} drew its expected-cards figure at ` +
+    `${figureSize(rows)}px — it is meant to grow into the panel it is given, ` +
+    'and at the old fixed size it reads as one small number adrift in white');
+}
 
 drawn.length = 0;
 const blob2 = await S.roundCard(round);

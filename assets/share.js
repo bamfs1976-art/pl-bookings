@@ -444,8 +444,8 @@
       brandBand(x, th, spec.title, spec.subtitle, SW);
 
       var P2 = 40, gap = 20, sideW = 450;
-      var centreX = P2 + sideW + gap, centreW = SW - 2 * (P2 + sideW + gap) + sideW + gap;
-      centreW = SW - 2 * P2 - 2 * sideW - 2 * gap;
+      var centreX = P2 + sideW + gap;
+      var centreW = SW - 2 * P2 - 2 * sideW - 2 * gap;
       var top = 232, bottom = SH - 96;
 
       panelStack(x, th, spec.home || {}, P2, top, sideW, spec.palette, bottom);
@@ -480,36 +480,60 @@
       cy += 132 + 18;
 
       /* ---- the match itself ---- */
+      /* IT TAKES WHATEVER THE HEAD TO HEAD DOES NOT NEED. This was the other
+         way round — the match box was a fixed 150 and h2h took the rest of the
+         column — and it left white space in both directions. The combined page
+         has no h2h files at all, so a card shared from there drew a third of
+         the middle column empty; and every desk emits h2h as ONE summary line
+         rather than a list of meetings, so even with h2h the row sat at the
+         top of a box three hundred pixels tall. Sizing the smaller, fixed
+         panel first and giving the surplus to the bigger one settles both. */
       var m = spec.match || {};
-      x.fillStyle = '#f4f6fa'; roundRect(x, centreX, cy, centreW, 150, 14); x.fill();
+      var hRows = ((spec.h2h && spec.h2h.rows) || []).slice(0, 5);
+      var hasH2H = !!hRows.length;
+      var hh = hasH2H ? 46 + hRows.length * 34 : 0;
+      var mh = bottom - cy - (hasH2H ? hh + 18 : 0);
+      x.fillStyle = '#f4f6fa'; roundRect(x, centreX, cy, centreW, mh, 14); x.fill();
       x.textAlign = 'center';
+      /* CENTRED IN WHATEVER HEIGHT THE BOX HAS. Anchored to the top it sat
+         with a hole under it whenever the panel grew to fill a missing head to
+         head. At the box's natural 150 this puts it within a pixel of where it
+         always was, so the two cases are one expression rather than a branch. */
+      var midY = cy + (mh - 26) / 2;
+      /* AND IT GROWS WITH THE BOX. Centring alone left the number its old
+         62px in a box three times the height, so the panel read as one small
+         figure adrift in white. The floor is the height it has always been at
+         the natural 150, so the head-to-head case is unchanged. */
+      var efs = Math.max(62, Math.min(140, Math.round(mh * 0.32)));
       x.fillStyle = '#8b94a5'; x.font = '700 15px ' + BODY;
-      x.fillText('EXPECTED CARDS', centreX + centreW / 2, cy + 30);
+      x.fillText('EXPECTED CARDS', centreX + centreW / 2, midY - efs * 0.45);
       x.fillStyle = m.expected != null ? heatHex(m.expected, spec.heatMid, spec.heatHot) : '#64748b';
-      x.font = '800 62px ' + DISP;
+      x.font = '800 ' + efs + 'px ' + DISP;
       x.fillText(m.expected != null ? Number(m.expected).toFixed(1) : '—',
-                 centreX + centreW / 2, cy + 88);
+                 centreX + centreW / 2, midY + efs * 0.48);
       var cells = (m.cells || []).slice(0, 4), cwid = centreW / Math.max(1, cells.length);
+      /* Pinned to the BOTTOM of the box, not to a fixed offset from its top —
+         otherwise they stay up by the big number and float in a tall box. */
+      var cellY = cy + mh - 28;
       cells.forEach(function (cl, i) {
         var sx = centreX + i * cwid + cwid / 2;
         x.fillStyle = '#0c1322'; x.font = '800 22px ' + DISP;
-        x.fillText(String(cl.value), sx, cy + 122);
+        x.fillText(String(cl.value), sx, cellY);
         x.fillStyle = '#8b94a5'; x.font = '600 13px ' + BODY;
-        x.fillText(fit(x, cl.label.toUpperCase(), cwid - 10), sx, cy + 140);
+        x.fillText(fit(x, cl.label.toUpperCase(), cwid - 10), sx, cellY + 18);
       });
       x.textAlign = 'left';
-      cy += 150 + 18;
+      cy += mh + 18;
 
       /* ---- head to head, in CARDS ---- */
       var h = spec.h2h;
-      if (h && (h.rows || []).length) {
-        var hh = bottom - cy;
+      if (hasH2H) {
         x.fillStyle = '#f4f6fa'; roundRect(x, centreX, cy, centreW, hh, 14); x.fill();
         x.fillStyle = '#8b94a5'; x.font = '700 15px ' + BODY;
         x.textAlign = 'center';
         x.fillText((h.label || 'HEAD TO HEAD').toUpperCase(), centreX + centreW / 2, cy + 26);
         x.textAlign = 'left';
-        var hr = (h.rows || []).slice(0, 5);
+        var hr = hRows;
         var rh2 = Math.min(34, (hh - 40) / Math.max(1, hr.length));
         hr.forEach(function (r, i) {
           var ry = cy + 36 + i * rh2 + rh2 - 10;
