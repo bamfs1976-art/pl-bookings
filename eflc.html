@@ -1420,7 +1420,9 @@
     var n = 0;
     FIXTURES.forEach(function (f) {
       if (f.h !== short && f.a !== short) return;
-      if (['FT', 'AET', 'PEN'].indexOf(String(f.st)) >= 0) n++;
+      /* C.isPlayed, not a local list of statuses — this one counts toward a
+         suspension ladder, and the two desks each carried their own copy. */
+      if (C.isPlayed(f)) n++;
     });
     return n;
   }
@@ -1724,8 +1726,20 @@
       $('#mdStats').innerHTML = ''; $('#mdNote').textContent = '';
       return;
     }
+    /* STILL TO PLAY FIRST, then hottest to coolest within each group.
+       Ranking a whole round by heat alone put finished matches above the ones
+       kicking off tonight: on 24 August this desk listed jornada 2 with the
+       two matches actually being played that evening at the BOTTOM, under
+       eight that had already finished. A settled result cannot be researched
+       or backed, so it does not outrank a match that can. The heat ordering
+       inside each group is unchanged — it is what the note under the list
+       describes. */
     var list = FIXTURES.filter(function (f) { return f.r === r; }).map(priceFixture)
-      .sort(function (a, b) { return b.m.expected - a.m.expected; });
+      .sort(function (a, b) {
+        var ap = C.isPlayed(a.fx) ? 1 : 0, bp = C.isPlayed(b.fx) ? 1 : 0;
+        if (ap !== bp) return ap - bp;
+        return b.m.expected - a.m.expected;
+      });
     var cards = list.reduce(function (a, x) { return a + (x.m.expected || 0); }, 0);
     var withRef = list.filter(function (x) { return x.ref.appointed; }).length;
     var dates = list.map(function (x) { return x.fx.d; }).filter(Boolean).sort();
