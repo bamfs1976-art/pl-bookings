@@ -5,7 +5,7 @@
 // through PLDCore.matchSquadName. A fixture absent from here prices off
 // squad minute-weights exactly as it always has — that is the normal
 // state until about an hour before kick-off, not a failure.
-// Fetched 2026-08-25T19:36Z.
+// Fetched 2026-08-25T20:34Z.
 //
 // THE GLOBAL IS NOT CALLED `LINEUPS`, and that is deliberate. index.html
 // already declares a top-level `const LINEUPS` for assets/lineup.js (the
@@ -14,7 +14,7 @@
 // a parse error, not a shadow: the whole inline script fails and the desk
 // renders blank. Read `window.LINEUP_SHEETS`.
 var __LINEUP_SHEETS = {
-  "1570342":{"BET":{start:["Álvaro Valles", "Angel Ortiz", "Diego Llorente", "Valentín Gómez", "Junior Firpo", "Pablo Fornals", "Facundo Bernal", "Antony", "Nelson Deossa", "Rodrigo Riquelme", "Cucho Hernández"],sub:["Álvaro de Pablo", "Manu González", "Natan", "Fran García", "Héctor Bellerín", "Marc Bartra", "Marc Roca", "Pablo García", "Iker Losada", "Isco", "Álvaro Fidalgo", "Troy Parrott"]},"VAL":{start:["Stole Dimitrievski", "Pablo Maffeo", "César Tárrega", "Pepelu", "Mouctar Diakhaby", "Jesús Vázquez", "Ryunosuke Sato", "Guido Rodríguez", "Javier Guerra", "Hugo Duro", "Arnaut Danjuma"],sub:["Kayne van Oevelen", "José Luis Gayà", "Iker Cordoba", "Alejandro Panach Olmo", "Filip Ugrinić", "Luis Rioja", "Jaume Durá", "Aliou Dieng", "André Almeida", "David Otorbi", "Dani Raba", "Umar Sadiq"]}},
+  "1570342":{"BET":{start:["Álvaro Valles", "Angel Ortiz", "Diego Llorente", "Valentín Gómez", "Junior Firpo", "Pablo Fornals", "Facundo Bernal", "Antony", "Nelson Deossa", "Rodrigo Riquelme", "Cucho Hernández"],sub:["Álvaro de Pablo", "Manu González", "Natan", "Fran García", "Héctor Bellerín", "Marc Bartra", "Marc Roca", "Pablo García", "Iker Losada", "Isco", "Álvaro Fidalgo", "Troy Parrott"]},"VAL":{start:["Stole Dimitrievski", "Pablo Maffeo", "César Tárrega", "Pepelu", "Mouctar Diakhaby", "Jesús Vázquez", "Ryunosuke Sato", "Guido Rodríguez", "Javier Guerra", "Arnaut Danjuma", "Hugo Duro"],sub:["Kayne van Oevelen", "José Luis Gayà", "Iker Cordoba", "Alejandro Panach Olmo", "Filip Ugrinić", "Luis Rioja", "Jaume Durá", "Aliou Dieng", "André Almeida", "David Otorbi", "Dani Raba", "Umar Sadiq"]}},
 };
 if (typeof module !== "undefined" && module.exports) module.exports = __LINEUP_SHEETS;
 if (typeof window !== "undefined") window.LINEUP_SHEETS = __LINEUP_SHEETS;
