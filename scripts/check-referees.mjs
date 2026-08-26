@@ -471,31 +471,60 @@ assert.ok(/plb_card_predictions/.test(calib) && !/rest\/v1\/plb_predictions/.tes
  * pinned to the real opening fixtures, so this also fails if a season's
  * fixtures go missing from the repository entirely.
  */
+/*
+ * ON A FIXTURE SET THIS GUARD WRITES, not on the shipped one.
+ *
+ * It used to aim the three clocks at the first unappointed Championship
+ * fixture in data/eflc_fixtures.js, on the reasoning that hard-coding a date
+ * would need editing every August. But that made the test a question about
+ * which rounds the EFL had published officials for on the morning it ran, and
+ * on 26 August 2026 it failed for the best possible reason: the EFL had named
+ * two rounds instead of one, so 96 hours before the first UNAPPOINTED
+ * kick-off there was an APPOINTED round inside the same five-day window, the
+ * canary correctly stayed silent, and the guard called it a fault.
+ *
+ * The harvest regenerates that file, so the failing input never reaches the
+ * repository and a local run cannot see it — the same trap this file's
+ * neighbour recorded in August 2025. Writing the fixtures here removes both
+ * problems at once: the levels are exercised against a set whose appointment
+ * pattern is stated rather than discovered, and the real files are checked
+ * separately for the thing they can actually speak to.
+ */
 {
   const { execFileSync } = await import('node:child_process');
-  const at = (iso) => execFileSync('node',
-    [join(root, 'scripts', 'ref-coverage.mjs'), '--at', iso], { encoding: 'utf8' });
-  /* The first EFL Championship kick-off in the file, whenever the season is —
-     hard-coding 2026-08-14 would need editing every August. */
-  const eflc = vm.runInContext('EFLC_FIXTURES', (() => {
-    const ctx = {}; vm.createContext(ctx);
-    vm.runInContext(readFileSync(join(root, 'data', 'eflc_fixtures.js'), 'utf8'), ctx);
-    return ctx;
-  })()) || [];
-  const unappointed = eflc.filter((f) => f.d && !f.ref)
-    .map((f) => new Date(f.d).getTime()).sort((a, b) => a - b);
-  assert.ok(unappointed.length,
-    'every Championship fixture has an official, which cannot be true for a ' +
-    'whole season — the canary below can no longer be exercised');
-  const kick = unappointed[0];
-  const before = (hours) => new Date(kick - hours * 3600000).toISOString();
+  const { mkdtempSync, mkdirSync, writeFileSync } = await import('node:fs');
+  const { tmpdir } = await import('node:os');
 
-  const HOURS = [[96, 'notice'], [30, 'warning'], [6, 'error']];
-  for (const [hours, level] of HOURS) {
-    const out = at(before(hours));
+  const KICK = Date.parse('2026-09-05T14:00:00Z');
+  const before = (hours) => new Date(KICK - hours * 3600000).toISOString();
+  /* One Championship round, kicking off together, with `appointed` of its
+     twelve carrying an official. The other two leagues are present and empty
+     so that every annotation in the output is the Championship's. */
+  const setup = (appointed) => {
+    const dir = mkdtempSync(join(tmpdir(), 'refcov-'));
+    mkdirSync(join(dir, 'data'));
+    const round = Array.from({ length: 12 }, (_, i) => ({
+      id: 9000 + i, h: 'AAA', a: 'BBB', r: 7,
+      d: new Date(KICK + i * 3600000).toISOString(),
+      ref: i < appointed ? 'A Referee' : null
+    }));
+    const put = (file, konst, rows) => writeFileSync(join(dir, 'data', file),
+      `const ${konst} = ${JSON.stringify(rows)};\n`);
+    put('eflc_fixtures.js', 'EFLC_FIXTURES', round);
+    put('pl_fixtures.js', 'PL_FIXTURES', []);
+    put('laliga_fixtures.js', 'LALIGA_FIXTURES', []);
+    return dir;
+  };
+  const at = (iso, dir) => execFileSync('node',
+    [join(root, 'scripts', 'ref-coverage.mjs'), '--at', iso]
+      .concat(dir ? ['--data', dir] : []), { encoding: 'utf8' });
+
+  const empty = setup(0);
+  for (const [hours, level] of [[96, 'notice'], [30, 'warning'], [6, 'error']]) {
+    const out = at(before(hours), empty);
     assert.ok(new RegExp('::' + level + '::EFL Championship').test(out),
-      `${hours}h before the first unappointed Championship kick-off the canary ` +
-      `should annotate at ${level}, and it printed:\n${out}`);
+      `${hours}h before a Championship round with no official named, the ` +
+      `canary should annotate at ${level}, and it printed:\n${out}`);
     /* And NOT at either neighbouring level — a canary stuck on `error` would
        pass a check that only looked for the level it expected. */
     for (const other of ['notice', 'warning', 'error']) {
@@ -505,13 +534,36 @@ assert.ok(/plb_card_predictions/.test(calib) && !/rest\/v1\/plb_predictions/.tes
         `${level}. One kick-off, one level.`);
     }
   }
+
+  /* AND SILENT WHEN THE WINDOW IS PARTLY APPOINTED, which is the case that
+     broke the old version of this block and which it had no way to state.
+     The canary answers "has the source stopped carrying appointments, or is
+     the harvest failing" — one unnamed official six hours out is neither, and
+     a canary that fired on it would be back to crying every day. */
+  const partial = setup(1);
+  const quiet = at(before(6), partial);
+  assert.ok(!/::(notice|warning|error)::EFL Championship/.test(quiet),
+    'the canary fired for a Championship round that has an official named — ' +
+    'it is a check for the feed going dark, not for a complete team sheet ' +
+    'of referees:\n' + quiet);
+  assert.ok(/1\/12 appointed/.test(quiet),
+    'the countdown no longer counts a partly appointed round:\n' + quiet);
+
   /* The countdown line, which is what makes the days before an opener legible:
      the round about to be played, how many of it have officials, and how long
-     is left — not "552 upcoming", which is true and does not move. */
-  const now = at(before(96));
-  assert.ok(/round \d+\s+\d{4}-\d{2}-\d{2}[\s\S]*?\d+\/\d+ appointed[\s\S]*?first kick-off in/.test(now),
+     is left — not "552 upcoming", which is true and does not move. Read off
+     the REAL files, at the real clock, because that is the run this exists to
+     protect and it is also what fails if a season's fixtures go missing from
+     the repository entirely. */
+  const real = at(new Date().toISOString(), null);
+  for (const name of ['Premier League', 'EFL Championship', 'La Liga']) {
+    assert.ok(new RegExp(name + '\\s+\\d+ upcoming').test(real),
+      `ref-coverage reported nothing for ${name} — its fixture file is ` +
+      `missing or empty:\n${real}`);
+  }
+  assert.ok(/round \d+\s+\d{4}-\d{2}-\d{2}[\s\S]*?\d+\/\d+ appointed[\s\S]*?first kick-off in/.test(real),
     'ref-coverage no longer reports the round about to be played, its ' +
-    'appointment count and the time to its first kick-off:\n' + now);
+    'appointment count and the time to its first kick-off:\n' + real);
 }
 
 /* ---- the shortened name, and the surname it must not be ---------------- */

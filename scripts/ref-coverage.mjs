@@ -27,10 +27,23 @@ const LEAGUES = [
   { code: 'LL', name: 'La Liga', file: 'data/laliga_fixtures.js', konst: 'LALIGA_FIXTURES', lead: 1 }
 ];
 
+/* `--data <dir>` reads the fixture files from somewhere other than the
+   repository. Same purpose as `--at` below, and it exists for the same
+   reason: the canary's condition is a decision about a FIXTURE SET, and a
+   test that exercises it against the shipped files is pinned to whatever the
+   leagues happened to have published that morning. That is not hypothetical.
+   On 26 August 2026 the guard failed because the EFL had named the officials
+   for two rounds rather than one — the harvest working — which put an
+   appointed round inside the window the test was aiming at. Never used by the
+   workflow, which always reports on the real files. */
+const dataArg = process.argv.indexOf('--data');
+const dataRoot = dataArg > -1 && process.argv[dataArg + 1]
+  ? process.argv[dataArg + 1] : root;
+
 function load(file, konst) {
   const ctx = {};
   vm.createContext(ctx);
-  vm.runInContext(readFileSync(join(root, file), 'utf8'), ctx);
+  vm.runInContext(readFileSync(join(dataRoot, file), 'utf8'), ctx);
   return vm.runInContext(konst, ctx) || [];
 }
 
