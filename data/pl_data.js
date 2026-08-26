@@ -4,9 +4,9 @@
 const SUSPENSION = {"kind": "ladder", "cumulative": true, "review": 20, "rungs": [{"at": 5, "ban": 1, "by": 19}, {"at": 10, "ban": 2, "by": 32}, {"at": 15, "ban": 3, "by": null}]};
 const CLUBS = [
   {short:"CHE",name:"Chelsea",img:"https://cdn.sportmonks.com/images/soccer/teams/18/18.png",basis:"PL",ca:2.68,caH:2.51,caA:2.85,fm:12.5,squad:38},
-  {short:"TOT",name:"Tottenham Hotspur",img:"https://cdn.sportmonks.com/images/soccer/teams/6/6.png",basis:"PL",ca:2.47,caH:2.71,caA:2.23,fm:11.4,squad:36},
-  {short:"SUN",name:"Sunderland",img:"https://cdn.sportmonks.com/images/soccer/teams/3/3.png",basis:"PL",ca:1.97,caH:1.8,caA:2.14,fm:9.1,squad:25},
-  {short:"MCI",name:"Manchester City",img:"https://cdn.sportmonks.com/images/soccer/teams/9/9.png",basis:"PL",ca:1.87,caH:1.62,caA:2.12,fm:10.8,squad:30},
+  {short:"TOT",name:"Tottenham Hotspur",img:"https://cdn.sportmonks.com/images/soccer/teams/6/6.png",basis:"PL",ca:2.47,caH:2.71,caA:2.23,fm:11.4,squad:37},
+  {short:"SUN",name:"Sunderland",img:"https://cdn.sportmonks.com/images/soccer/teams/3/3.png",basis:"PL",ca:1.97,caH:1.8,caA:2.14,fm:9.1,squad:26},
+  {short:"MCI",name:"Manchester City",img:"https://cdn.sportmonks.com/images/soccer/teams/9/9.png",basis:"PL",ca:1.87,caH:1.62,caA:2.12,fm:10.8,squad:29},
   {short:"BHA",name:"Brighton & Hove Albion",img:"https://cdn.sportmonks.com/images/soccer/teams/14/78.png",basis:"PL",ca:1.79,caH:1.42,caA:2.16,fm:10.2,squad:32},
   {short:"CRY",name:"Crystal Palace",img:"https://cdn.sportmonks.com/images/soccer/teams/19/51.png",basis:"PL",ca:1.71,caH:1.4,caA:2.02,fm:9.4,squad:32},
   {short:"LEE",name:"Leeds United",img:"https://cdn.sportmonks.com/images/soccer/teams/7/71.png",basis:"PL",ca:1.66,caH:1.63,caA:1.69,fm:10.1,squad:27},
@@ -15,7 +15,7 @@ const CLUBS = [
   {short:"BRE",name:"Brentford",img:"https://cdn.sportmonks.com/images/soccer/teams/12/236.png",basis:"PL",ca:1.5,caH:1.22,caA:1.78,fm:8.9,squad:26},
   {short:"BOU",name:"AFC Bournemouth",img:"https://cdn.sportmonks.com/images/soccer/teams/20/52.png",basis:"PL",ca:1.45,caH:1.32,caA:1.58,fm:8.6,squad:28},
   {short:"ARS",name:"Arsenal",img:"https://cdn.sportmonks.com/images/soccer/teams/19/19.png",basis:"PL",ca:1.42,caH:0.95,caA:1.89,fm:11.2,squad:29},
-  {short:"AVL",name:"Aston Villa",img:"https://cdn.sportmonks.com/images/soccer/teams/15/15.png",basis:"PL",ca:1.37,caH:1.21,caA:1.53,fm:7.4,squad:31},
+  {short:"AVL",name:"Aston Villa",img:"https://cdn.sportmonks.com/images/soccer/teams/15/15.png",basis:"PL",ca:1.37,caH:1.21,caA:1.53,fm:7.4,squad:32},
   {short:"FUL",name:"Fulham",img:"https://cdn.sportmonks.com/images/soccer/teams/11/11.png",basis:"PL",ca:1.37,caH:1.33,caA:1.41,fm:7.5,squad:24},
   {short:"LIV",name:"Liverpool",img:"https://cdn.sportmonks.com/images/soccer/teams/8/8.png",basis:"PL",ca:1.29,caH:1.02,caA:1.56,fm:9.3,squad:35},
   {short:"NEW",name:"Newcastle United",img:"https://cdn.sportmonks.com/images/soccer/teams/20/20.png",basis:"PL",ca:1.24,caH:1.18,caA:1.3,fm:7.4,squad:27},
@@ -76,6 +76,7 @@ const PL_PLAYERS = [
   {c:"AVL",n:"Emiliano Martínez",p:"GK",min:2836,yc:2,rc:0,y:0.063,f:0.0,fw:0.54,r:0.126,ls:false,b:"PL",ph:"https://media.api-sports.io/football/players/19599.png"},
   {c:"AVL",n:"Alysson",p:"FW",min:47,yc:0,rc:0,y:0.0,f:0.0,fw:null,r:0.0,ls:true,b:"PL"},
   {c:"AVL",n:"Bradley Burrowes",p:"FW",min:16,yc:0,rc:0,y:0.0,f:0.0,fw:null,r:0.0,ls:true,b:"PL"},
+  {c:"AVL",n:"Aaron Wan-Bissaka",p:"DF",min:0,yc:null,rc:null,y:null,f:null,fw:null,r:null,ls:true,b:"NEW"},
   {c:"AVL",n:"Brian Madjo",p:"FW",min:0,yc:null,rc:null,y:null,f:null,fw:null,r:null,ls:true,b:"NEW"},
   {c:"AVL",n:"Joao Gomes",p:"MF",min:0,yc:null,rc:null,y:null,f:null,fw:null,r:null,ls:true,b:"NEW"},
   {c:"AVL",n:"Johan Manzambi",p:"MF",min:0,yc:null,rc:null,y:null,f:null,fw:null,r:null,ls:true,b:"NEW"},
@@ -481,7 +482,6 @@ const PL_PLAYERS = [
   {c:"MCI",n:"Jeremy Monga",p:"MF",min:0,yc:null,rc:null,y:null,f:null,fw:null,r:null,ls:true,b:"NEW"},
   {c:"MCI",n:"Kalvin Phillips",p:"MF",min:0,yc:null,rc:null,y:null,f:null,fw:null,r:null,ls:true,b:"NEW"},
   {c:"MCI",n:"Marcus Bettinelli",p:"GK",min:0,yc:null,rc:null,y:null,f:null,fw:null,r:null,ls:true,b:"NEW",ph:"https://media.api-sports.io/football/players/19012.png"},
-  {c:"MCI",n:"Sávio Moreira de Oliveira",p:"MF",min:0,yc:null,rc:null,y:null,f:null,fw:null,r:null,ls:true,b:"NEW"},
   {c:"MCI",n:"Vitor de Oliveira Nunes dos Reis",p:"DF",min:0,yc:null,rc:null,y:null,f:null,fw:null,r:null,ls:true,b:"NEW"},
   {c:"MUN",n:"S. Lacey",p:"FW",min:40,yc:0,rc:0,y:0.0,f:4.5,fw:3.529,r:4.5,ls:true,b:"PL",ph:"https://media.api-sports.io/football/players/557462.png"},
   {c:"MUN",n:"Manuel Ugarte",p:"MF",min:887,yc:1,rc:0,y:0.101,f:2.44,fw:1.498,r:2.642,ls:false,b:"PL",ph:"https://media.api-sports.io/football/players/51494.png"},
@@ -594,6 +594,7 @@ const PL_PLAYERS = [
   {c:"SUN",n:"Melker Ellborg",p:"GK",min:270,yc:0,rc:0,y:0.0,f:0.0,fw:0.333,r:0.0,ls:true,b:"PL",ph:"https://media.api-sports.io/football/players/278454.png"},
   {c:"SUN",n:"Anthony Patterson",p:"GK",min:0,yc:null,rc:null,y:null,f:null,fw:null,r:null,ls:true,b:"NEW",ph:"https://media.api-sports.io/football/players/19881.png"},
   {c:"SUN",n:"Daniel Ballard",p:"DF",min:0,yc:null,rc:null,y:null,f:null,fw:1.257,r:null,ls:true,b:"NEW",ph:"https://media.api-sports.io/football/players/55904.png"},
+  {c:"SUN",n:"Dayann Méthalie",p:"DF",min:0,yc:null,rc:null,y:null,f:null,fw:null,r:null,ls:true,b:"NEW"},
   {c:"SUN",n:"Leo Fuhr Hjelde",p:"DF",min:0,yc:null,rc:null,y:null,f:null,fw:null,r:null,ls:true,b:"NEW",ph:"https://media.api-sports.io/football/players/297187.png"},
   {c:"SUN",n:"Thomas Meunier",p:"DF",min:0,yc:null,rc:null,y:null,f:null,fw:null,r:null,ls:true,b:"NEW"},
   {c:"TOT",n:"Dane Scarlett",p:"FW",min:7,yc:0,rc:0,y:0.0,f:12.86,fw:null,r:12.86,ls:true,b:"PL",ph:"https://media.api-sports.io/football/players/162552.png"},
@@ -632,6 +633,7 @@ const PL_PLAYERS = [
   {c:"TOT",n:"Martin Dubravka",p:"GK",min:0,yc:null,rc:null,y:null,f:null,fw:null,r:null,ls:true,b:"NEW"},
   {c:"TOT",n:"Mateus Fernandes",p:"MF",min:0,yc:null,rc:null,y:null,f:null,fw:null,r:null,ls:true,b:"NEW"},
   {c:"TOT",n:"Mikey Moore",p:"MF",min:0,yc:null,rc:null,y:null,f:null,fw:null,r:null,ls:true,b:"NEW"},
+  {c:"TOT",n:"Sávio Moreira de Oliveira",p:"MF",min:0,yc:null,rc:null,y:null,f:null,fw:null,r:null,ls:true,b:"NEW"},
 ];
 const REFS = [
   {n:"Matthew Donohue",region:"",matches:3,ypg:5.0,red:0.0,pen:null,fpg:26.33,cpf:0.1899},
