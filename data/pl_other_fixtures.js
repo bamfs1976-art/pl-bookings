@@ -11,7 +11,7 @@
 //   comp  UCL, UEL, UECL, FAC (FA Cup), LCUP (League Cup)
 //   v     H or A — the away leg is what the 72-hour European flag needs
 //
-// LCUP 52, UECL 2
+// LCUP 74, UECL 2
 const PL_OTHER_FIXTURES = [
   {c:"BRC",d:"2026-08-06T18:45:00+00:00",comp:"LCUP",v:"H"},
   {c:"WOL",d:"2026-08-07T18:45:00+00:00",comp:"LCUP",v:"H"},
@@ -67,6 +67,28 @@ const PL_OTHER_FIXTURES = [
   {c:"BHA",d:"2026-08-27T18:30:00+00:00",comp:"UECL",v:"H"},
   {c:"CHE",d:"2026-08-27T18:30:00+00:00",comp:"LCUP",v:"H"},
   {c:"FUL",d:"2026-08-27T19:00:00+00:00",comp:"LCUP",v:"H"},
+  {c:"ARS",d:"2026-09-08T14:00:00+00:00",comp:"LCUP",v:"A"},
+  {c:"AVL",d:"2026-09-08T14:00:00+00:00",comp:"LCUP",v:"A"},
+  {c:"BHA",d:"2026-09-08T14:00:00+00:00",comp:"LCUP",v:"A"},
+  {c:"BOU",d:"2026-09-08T14:00:00+00:00",comp:"LCUP",v:"H"},
+  {c:"BRE",d:"2026-09-08T14:00:00+00:00",comp:"LCUP",v:"A"},
+  {c:"COV",d:"2026-09-08T14:00:00+00:00",comp:"LCUP",v:"H"},
+  {c:"CRY",d:"2026-09-08T14:00:00+00:00",comp:"LCUP",v:"H"},
+  {c:"EVE",d:"2026-09-08T14:00:00+00:00",comp:"LCUP",v:"H"},
+  {c:"HUL",d:"2026-09-08T14:00:00+00:00",comp:"LCUP",v:"A"},
+  {c:"IPS",d:"2026-09-08T14:00:00+00:00",comp:"LCUP",v:"H"},
+  {c:"LIN",d:"2026-09-08T14:00:00+00:00",comp:"LCUP",v:"A"},
+  {c:"LIV",d:"2026-09-08T14:00:00+00:00",comp:"LCUP",v:"H"},
+  {c:"MCI",d:"2026-09-08T14:00:00+00:00",comp:"LCUP",v:"H"},
+  {c:"MID",d:"2026-09-08T14:00:00+00:00",comp:"LCUP",v:"A"},
+  {c:"MIL",d:"2026-09-08T14:00:00+00:00",comp:"LCUP",v:"H"},
+  {c:"MUN",d:"2026-09-08T14:00:00+00:00",comp:"LCUP",v:"H"},
+  {c:"NEW",d:"2026-09-08T14:00:00+00:00",comp:"LCUP",v:"A"},
+  {c:"NOR",d:"2026-09-08T14:00:00+00:00",comp:"LCUP",v:"A"},
+  {c:"SHU",d:"2026-09-08T14:00:00+00:00",comp:"LCUP",v:"A"},
+  {c:"SUN",d:"2026-09-08T14:00:00+00:00",comp:"LCUP",v:"H"},
+  {c:"TOT",d:"2026-09-08T14:00:00+00:00",comp:"LCUP",v:"A"},
+  {c:"WOL",d:"2026-09-08T14:00:00+00:00",comp:"LCUP",v:"A"},
 ];
 
-const PL_OTHER_FIXTURES_CLUBS = {"Brighton & Hove Albion": "BHA", "Birmingham City": "BIR", "Blackburn Rovers": "BLB", "Bolton Wanderers": "BOL", "Bristol City": "BRC", "Brentford": "BRE", "Burnley": "BUR", "Cardiff City": "CAR", "Charlton Athletic": "CHA", "Chelsea": "CHE", "Coventry City": "COV", "Derby County": "DER", "Everton": "EVE", "Fulham": "FUL", "Hull City": "HUL", "Ipswich Town": "IPS", "Leeds United": "LEE", "Lincoln City": "LIN", "Middlesbrough": "MID", "Millwall": "MIL", "Newcastle United": "NEW", "Nottingham Forest": "NFO", "Norwich City": "NOR", "Portsmouth": "POR", "Preston North End": "PRE", "Queens Park Rangers": "QPR", "Sheffield United": "SHU", "Southampton": "SOU", "Stoke City": "STK", "Swansea City": "SWA", "Tottenham Hotspur": "TOT", "Watford": "WAT", "West Bromwich Albion": "WBA", "West Ham United": "WHU", "Wolverhampton Wanderers": "WOL", "Wrexham": "WRE"};
+const PL_OTHER_FIXTURES_CLUBS = {"Arsenal": "ARS", "Aston Villa": "AVL", "Brighton & Hove Albion": "BHA", "Birmingham City": "BIR", "Blackburn Rovers": "BLB", "Bolton Wanderers": "BOL", "AFC Bournemouth": "BOU", "Bristol City": "BRC", "Brentford": "BRE", "Burnley": "BUR", "Cardiff City": "CAR", "Charlton Athletic": "CHA", "Chelsea": "CHE", "Coventry City": "COV", "Crystal Palace": "CRY", "Derby County": "DER", "Everton": "EVE", "Fulham": "FUL", "Hull City": "HUL", "Ipswich Town": "IPS", "Leeds United": "LEE", "Lincoln City": "LIN", "Liverpool": "LIV", "Manchester City": "MCI", "Middlesbrough": "MID", "Millwall": "MIL", "Manchester United": "MUN", "Newcastle United": "NEW", "Nottingham Forest": "NFO", "Norwich City": "NOR", "Portsmouth": "POR", "Preston North End": "PRE", "Queens Park Rangers": "QPR", "Sheffield United": "SHU", "Southampton": "SOU", "Stoke City": "STK", "Sunderland": "SUN", "Swansea City": "SWA", "Tottenham Hotspur": "TOT", "Watford": "WAT", "West Bromwich Albion": "WBA", "West Ham United": "WHU", "Wolverhampton Wanderers": "WOL", "Wrexham": "WRE"};
