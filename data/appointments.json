@@ -2,6 +2,7 @@
  "note": "Referee appointments as published by the competition, laid over the harvested fixture list by data/appointments.py. The harvest wins where it has a value; this fills the nulls.",
  "sources": [
   "efl.com — Championship referee appointments, 22-23 August 2026 (supplied as text; exact article URL not captured)",
+  "efl.com — Championship referee appointments, 28 August - 2 September 2026 (supplied as text; exact article URL not captured)",
   "https://rfef.es/sites/default/files/designaciones_1a_division_masculina_-_temp_2026-27_-_jornada_1_domingo16.pdf",
   "https://rfef.es/sites/default/files/designaciones_1a_division_masculina_-_temp_2026-27_-_jornada_1_lunes17.pdf",
   "https://rfef.es/sites/default/files/designaciones_1a_division_masculina_-_temp_2026-27_-_jornada_1_sabado15.pdf",
@@ -277,6 +278,138 @@
    "refResolved": "A Backhouse",
    "resolvedBy": "initial",
    "source": "efl.com — Championship referee appointments, 22-23 August 2026 (supplied as text; exact article URL not captured)"
+  },
+  {
+   "league": "EFLC",
+   "date": "2026-08-28",
+   "h": "WRE",
+   "a": "BIR",
+   "ko": "20:00",
+   "ref": "Rob Jones",
+   "refResolved": null,
+   "resolvedBy": null,
+   "source": "efl.com — Championship referee appointments, 28 August - 2 September 2026 (supplied as text; exact article URL not captured)"
+  },
+  {
+   "league": "EFLC",
+   "date": "2026-08-29",
+   "h": "BLB",
+   "a": "QPR",
+   "ko": "15:00",
+   "ref": "Gavin Ward",
+   "refResolved": "G Ward",
+   "resolvedBy": "initial",
+   "source": "efl.com — Championship referee appointments, 28 August - 2 September 2026 (supplied as text; exact article URL not captured)"
+  },
+  {
+   "league": "EFLC",
+   "date": "2026-08-29",
+   "h": "BOL",
+   "a": "LIN",
+   "ko": "15:00",
+   "ref": "Ben Speedie",
+   "refResolved": "B Speedie",
+   "resolvedBy": "initial",
+   "source": "efl.com — Championship referee appointments, 28 August - 2 September 2026 (supplied as text; exact article URL not captured)"
+  },
+  {
+   "league": "EFLC",
+   "date": "2026-08-29",
+   "h": "BRC",
+   "a": "POR",
+   "ko": "15:00",
+   "ref": "James Bell",
+   "refResolved": "J Bell",
+   "resolvedBy": "initial",
+   "source": "efl.com — Championship referee appointments, 28 August - 2 September 2026 (supplied as text; exact article URL not captured)"
+  },
+  {
+   "league": "EFLC",
+   "date": "2026-08-29",
+   "h": "CAR",
+   "a": "SHU",
+   "ko": "15:00",
+   "ref": "John Busby",
+   "refResolved": "J Busby",
+   "resolvedBy": "initial",
+   "source": "efl.com — Championship referee appointments, 28 August - 2 September 2026 (supplied as text; exact article URL not captured)"
+  },
+  {
+   "league": "EFLC",
+   "date": "2026-08-29",
+   "h": "CHA",
+   "a": "PRE",
+   "ko": "15:00",
+   "ref": "Tom Reeves",
+   "refResolved": "T Reeves",
+   "resolvedBy": "initial",
+   "source": "efl.com — Championship referee appointments, 28 August - 2 September 2026 (supplied as text; exact article URL not captured)"
+  },
+  {
+   "league": "EFLC",
+   "date": "2026-08-29",
+   "h": "DER",
+   "a": "SWA",
+   "ko": "12:30",
+   "ref": "David Webb",
+   "refResolved": "D Webb",
+   "resolvedBy": "initial",
+   "source": "efl.com — Championship referee appointments, 28 August - 2 September 2026 (supplied as text; exact article URL not captured)"
+  },
+  {
+   "league": "EFLC",
+   "date": "2026-08-29",
+   "h": "MID",
+   "a": "WBA",
+   "ko": "12:30",
+   "ref": "Paul Tierney",
+   "refResolved": "Paul Tierney",
+   "resolvedBy": "exact",
+   "source": "efl.com — Championship referee appointments, 28 August - 2 September 2026 (supplied as text; exact article URL not captured)"
+  },
+  {
+   "league": "EFLC",
+   "date": "2026-08-29",
+   "h": "NOR",
+   "a": "BUR",
+   "ko": "15:00",
+   "ref": "Elliot Bell",
+   "refResolved": "E Bell",
+   "resolvedBy": "initial",
+   "source": "efl.com — Championship referee appointments, 28 August - 2 September 2026 (supplied as text; exact article URL not captured)"
+  },
+  {
+   "league": "EFLC",
+   "date": "2026-08-29",
+   "h": "SOU",
+   "a": "MIL",
+   "ko": "15:00",
+   "ref": "Adam Herczeg",
+   "refResolved": "A Herczeg",
+   "resolvedBy": "initial",
+   "source": "efl.com — Championship referee appointments, 28 August - 2 September 2026 (supplied as text; exact article URL not captured)"
+  },
+  {
+   "league": "EFLC",
+   "date": "2026-08-29",
+   "h": "WAT",
+   "a": "WHU",
+   "ko": "15:00",
+   "ref": "Bobby Madley",
+   "refResolved": "R Madley",
+   "resolvedBy": "alias",
+   "source": "efl.com — Championship referee appointments, 28 August - 2 September 2026 (supplied as text; exact article URL not captured)"
+  },
+  {
+   "league": "EFLC",
+   "date": "2026-08-29",
+   "h": "WOL",
+   "a": "STK",
+   "ko": "12:30",
+   "ref": "Tom Nield",
+   "refResolved": "T Nield",
+   "resolvedBy": "initial",
+   "source": "efl.com — Championship referee appointments, 28 August - 2 September 2026 (supplied as text; exact article URL not captured)"
   },
   {
    "league": "LL",
