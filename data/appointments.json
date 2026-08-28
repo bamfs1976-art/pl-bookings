@@ -10,7 +10,8 @@
   "rfef.es — CTA designation sheet, Primera División, Jornada 1, 27 August, issued Las Rozas 20-08-2026 (supplied as a screenshot; exact PDF URL not captured)",
   "rfef.es — CTA designation sheet, Primera División, Jornada 2, 24 August, issued Las Rozas 18-08-2026 (supplied as a screenshot; exact PDF URL not captured)",
   "rfef.es — CTA designation sheet, Primera División, Jornada 2, issued Las Rozas 18-08-2026 (supplied as a screenshot; exact PDF URL not captured)",
-  "rfef.es — CTA designation sheets, Primera División, Jornada 2, 22 and 23 August, issued Las Rozas 18-08-2026 (supplied as screenshots; exact PDF URLs not captured)"
+  "rfef.es — CTA designation sheets, Primera División, Jornada 2, 22 and 23 August, issued Las Rozas 18-08-2026 (supplied as screenshots; exact PDF URLs not captured)",
+  "rfef.es — CTA designation sheets, Primera División, Jornada 3, 28 and 29 August, issued Las Rozas 27-08-2026 (supplied as screenshots; exact PDF URLs not captured)"
  ],
  "appointments": [
   {
@@ -474,6 +475,61 @@
    "refResolved": "Miguel Sesma Espinosa",
    "resolvedBy": "run",
    "source": "rfef.es — CTA designation sheet, Primera División, Jornada 1, 27 August, issued Las Rozas 20-08-2026 (supplied as a screenshot; exact PDF URL not captured)"
+  },
+  {
+   "league": "LL",
+   "date": "2026-08-28",
+   "h": "ALA",
+   "a": "VIL",
+   "ko": "21:30",
+   "ref": "Isidro Díaz De Mera",
+   "refResolved": "Isidro Diaz de Mera Escuderos",
+   "resolvedBy": "run",
+   "source": "rfef.es — CTA designation sheets, Primera División, Jornada 3, 28 and 29 August, issued Las Rozas 27-08-2026 (supplied as screenshots; exact PDF URLs not captured)"
+  },
+  {
+   "league": "LL",
+   "date": "2026-08-28",
+   "h": "RAC",
+   "a": "ELC",
+   "ko": "19:00",
+   "ref": "Carlos Muñiz",
+   "refResolved": null,
+   "resolvedBy": null,
+   "source": "rfef.es — CTA designation sheets, Primera División, Jornada 3, 28 and 29 August, issued Las Rozas 27-08-2026 (supplied as screenshots; exact PDF URLs not captured)"
+  },
+  {
+   "league": "LL",
+   "date": "2026-08-29",
+   "h": "LEV",
+   "a": "BET",
+   "ko": "17:00",
+   "ref": "Ricardo De Burgos",
+   "refResolved": "Ricardo De Burgos Bengoetxea",
+   "resolvedBy": "run",
+   "source": "rfef.es — CTA designation sheets, Primera División, Jornada 3, 28 and 29 August, issued Las Rozas 27-08-2026 (supplied as screenshots; exact PDF URLs not captured)"
+  },
+  {
+   "league": "LL",
+   "date": "2026-08-29",
+   "h": "RSO",
+   "a": "ESP",
+   "ko": "19:00",
+   "ref": "Manuel Jesús Orellana",
+   "refResolved": null,
+   "resolvedBy": null,
+   "source": "rfef.es — CTA designation sheets, Primera División, Jornada 3, 28 and 29 August, issued Las Rozas 27-08-2026 (supplied as screenshots; exact PDF URLs not captured)"
+  },
+  {
+   "league": "LL",
+   "date": "2026-08-29",
+   "h": "SEV",
+   "a": "ATM",
+   "ko": "21:30",
+   "ref": "Javier Alberola",
+   "refResolved": "Javier Alberola Rojas",
+   "resolvedBy": "run",
+   "source": "rfef.es — CTA designation sheets, Primera División, Jornada 3, 28 and 29 August, issued Las Rozas 27-08-2026 (supplied as screenshots; exact PDF URLs not captured)"
   }
  ]
 }
