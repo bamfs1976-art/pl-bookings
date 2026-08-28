@@ -4039,6 +4039,23 @@ const REF_AVG_YPG=(()=>{ const v=REFS.map(r=>r.ypg).filter(x=>x!=null); return v
 // a refs refresh has harvested fouls (HF/AF), in which case the factor stays
 // on yellows-per-game exactly as before.
 const REF_AVG_CPF=(()=>{ const v=REFS.map(r=>r.cpf).filter(x=>typeof x==="number"&&x>0); return v.length?v.reduce((a,b)=>a+b,0)/v.length:null; })();
+/* BOOKING POINTS, which this desk was the only one not to price.
+ *
+ * The Championship and La Liga desks have carried the market since they were
+ * built; the Premier League desk — the oldest of the three — never gained it,
+ * so the one division with the deepest referee record was the one that could
+ * not answer the question a bookmaker actually posts. It matters most exactly
+ * where the cards line is quietest: Andy Madley is 17th of 22 for yellows and
+ * THIRD for reds, so Palace v City prices cool on cards and carries a
+ * dismissal risk twice the median. Points is where that shows up, because a
+ * red is 25 and a yellow 10.
+ *
+ * Reds come from the APPOINTED referee's own rate where there is one and the
+ * match-weighted league rate where there is not — the same rule the yellow
+ * side follows, so the two halves of the number are not built on different
+ * conventions. */
+const LEAGUE_RED=PLDCore.leagueRedRate(REFS);
+const BP_LINES=[35.5,45.5,55.5];
 /* NOT an exact match, for the reason the Championship proved on its opening
    round: the appointment overlay and the card table are different feeds and
    spell the same official differently. Eleven of twelve arrived as "F. Hallam"
@@ -4377,7 +4394,15 @@ function teamCardBoard(h,a,ref,derby,fid){
           PLDCore.xiWeights(s.map(x=>roles[x.p.n]||null)))
       : PLDCore.matchLambdas(s.map(x=>x.prob),s.map(x=>x.p.min));
   };
-  const board=PLDCore.teamCardMarkets(side(h,rh),side(a,ra),[3.5,4.5,5.5]);
+  /* Computed ONCE and handed to both markets. Calling side() twice would price
+     the cards and the points off two independent evaluations of the same
+     squads, which is how two cells on one strip come to describe different
+     teams. */
+  const hp=side(h,rh), ap=side(a,ra);
+  const board=PLDCore.teamCardMarkets(hp,ap,[3.5,4.5,5.5]);
+  /* The same weighted lambdas, plus the referee's red rate. */
+  board.bp=PLDCore.bookingPointsMarkets(hp,ap,
+    (ref&&ref.red!=null)?Number(ref.red):LEAGUE_RED,BP_LINES);
   board.thin=cands.length<12;   // too few rated players to trust the tails
   /* Shown on the card: a number priced off a team sheet and one priced off
      last season's minutes are different claims, and the reader cannot tell
@@ -4491,6 +4516,20 @@ function marketStripHtml(board,h2h,fouls){
      the desk had the inputs for all along. Both lines are placed relative to
      this fixture's own expectation rather than at a fixed number, so they mean
      the same thing on a 21-foul division and a 24-foul one. */
+  /* BOOKING POINTS, the market a bookmaker actually posts for cards: 10 a
+     yellow, 25 a red. It answers a question the cards line cannot — a referee
+     who books rarely and sends off often prices cool on cards and dear on
+     points, and the two are different bets on the same match.
+     Points land in steps of 5, so a half-line is never straddled: over 35.5
+     means 40. Said in the help text, because a reader who reads it as a
+     continuous total will misprice how often it lands. */
+  let bpCells = "";
+  if (board.bp) {
+    const src = board.bp.lambdaRed.toFixed(2) + " reds a game";
+    bpCells = `<div class="mk-cell">${PLDMetric.label("Booking points",{abbr:"PTS",help:"The bookmaker's card market: 10 points a yellow, 25 a red, both sides added together. Reds are priced at " + src + " — the appointed referee's own rate where there is one, the league's where there is not. Typically 30 to 60."})}<span class="mk-val">${board.bp.expected.toFixed(1)}</span></div>`
+      + BP_LINES.map((l) => cell(l + "+ points", "O" + l, board.bp.over[l],
+          "The chance the match produces more than " + l + " booking points. Points land in steps of 5, so a line is cleared or it is not — over " + l + " means " + Math.ceil(l / 5) * 5 + ". Reds priced at " + src + ".")).join("");
+  }
   let foulCells = "";
   if (fouls) {
     const fl = (o) => `<div class="mk-cell">${PLDMetric.label(o.line + "+ fouls", {abbr:"O" + o.line, help:"The chance the two sides commit more than " + o.line + " fouls between them. Placed either side of this match's expected total, so the line moves with the fixture rather than sitting at a number borrowed from another division."})}<span class="mk-val">${o.p==null?"—":Math.round(o.p*100)+"%"}</span></div>`;
@@ -4504,6 +4543,7 @@ function marketStripHtml(board,h2h,fouls){
     ${cell("Both teams carded","BTC",board.bothCarded,"The chance each side picks up at least one card. Usually 60% to 90% — the most likely of these four.")}
     ${cell("Both teams 2+ cards","BTC2",board.bothTwo,"The chance each side picks up two or more — both halves of the match booked twice. The two sides are priced independently, but real matches produce joint outcomes more often than that: one flashpoint books a man from each side. Read it as a floor.")}
     ${h2hCell}
+    ${bpCells}
     ${foulCells}
     ${board.thin?'<span class="mk-note">thin sample</span>':''}
   </div>`;

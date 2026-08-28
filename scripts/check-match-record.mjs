@@ -71,6 +71,44 @@ for (const [code, page] of Object.entries(DESKS)) {
     `${page} boosts a derby by ${boost[1]}, the record by ${A.DERBY_BOOST_FOR(code)}`);
 }
 
+/* ---- 1a. ALL THREE DESKS PRICE BOOKING POINTS, the same way ------------- */
+/*
+ * The Premier League desk did not, for as long as it existed. The market lived
+ * on the two younger desks, so the division with the deepest referee record
+ * was the one that could not answer the question a bookmaker actually posts.
+ *
+ * It matters most exactly where the cards line is quietest. Andy Madley is
+ * 17th of 22 for yellows and THIRD for reds at nearly double the median, so
+ * Crystal Palace v Manchester City prices cool on cards and carries a
+ * dismissal risk the cards line cannot express — a red is 25 points and a
+ * yellow 10, and points is where that shows up.
+ *
+ * Checked across all three, and tolerant of const/var and spacing, because
+ * what must hold is that the market is priced the same way everywhere — not
+ * which keyword a page happens to declare it with. The loop above deliberately
+ * stays on the two desks whose CONSTANTS are graded against the record.
+ */
+for (const page of ['index.html', 'eflc.html', 'laliga.html']) {
+  const src = readFileSync(join(root, page), 'utf8');
+  const flat = src.replace(/\s+/g, '');
+  const bp = /(?:var|const)BP_LINES=\[([^\]]+)\]/.exec(flat);
+  assert.ok(bp, `${page} does not price booking points — the market a bookmaker ` +
+    'posts for cards is missing from a desk that prices cards');
+  assert.equal(bp[1], '35.5,45.5,55.5',
+    `${page} prices booking points at [${bp[1]}] — the three desks must post ` +
+    'the same lines or a reader comparing two divisions is comparing nothing');
+  assert.ok(/bookingPointsMarkets\(/.test(flat),
+    `${page} declares BP_LINES and never prices with them`);
+  /* AND THE RED HALF COMES FROM THE APPOINTED OFFICIAL. A constant here would
+     price every fixture at the league's dismissal rate, which is the whole
+     fact this market exists to carry — and it would do it silently, because a
+     points line built on the league red rate looks entirely reasonable. */
+  assert.ok(/red!=null\)\?Number\([a-z.]*red\):LEAGUE_RED/.test(flat),
+    `${page} does not price reds off the appointed referee's own rate, ` +
+    'falling back to the league — every fixture would carry the same ' +
+    'dismissal risk, which is the one thing this market is for');
+}
+
 /* ---- 2. the derby list still parses out of each page -------------------- */
 for (const code of ['EFLC', 'LL', 'PL']) {
   const set = A.derbySet(code);
