@@ -1,4 +1,4 @@
-La Liga harvest — run 125
+La Liga harvest — run 126
 == discover ==
 La Liga: API-Football league 140, season 2026
 
@@ -73,10 +73,10 @@ ll_squads.json written (674 players from 20 clubs, API-Football current rosters)
 == season-cards ==
 La Liga: API-Football league 140, season 2026
   fetching 20 squads
-    Athletic Club               23 players
+    Athletic Club               24 players
     Atletico Madrid             24 players
-    Barcelona                   23 players
-    Celta Vigo                  23 players
+    Barcelona                   25 players
+    Celta Vigo                  24 players
     Deportivo Alaves            25 players
     Deportivo La Coruna         24 players
     Elche                       24 players
@@ -94,7 +94,7 @@ La Liga: API-Football league 140, season 2026
     Valencia                    26 players
     Villarreal                  24 players
 
-laliga_season_cards.json written (480 players from 20 clubs, API-Football, LL season 2026)
+laliga_season_cards.json written (484 players from 20 clubs, API-Football, LL season 2026)
 == segunda ==
 Segunda División: API-Football league 141, season 2025
   not in this desk's club list (19): AD Ceuta FC, Albacete, Almeria, Burgos, Cadiz, Castellón, Cordoba, Cultural Leonesa, Eibar, FC Andorra, Granada CF, Huesca, Las Palmas, Leganes, Mirandes, Real Sociedad II, Sporting Gijon, Valladolid, Zaragoza
@@ -110,30 +110,23 @@ La Liga: API-Football league 140, season 2025
 laliga_ref_fixtures.js written (380 matches over 20 clubs, 380 with an official named)
 == fixtures ==
 La Liga: API-Football league 140, season 2026
-  LL appointments overlay: 0 applied, 9 already harvested
-  CLARIFIED: RAY v ALA: harvested 'J. Munuera' is the same official as 'José Luis Munuera Montero', which the card table carries — the published spelling stands
+  LL appointments overlay: 0 applied, 16 already harvested
   CHANGED: ALA v GET: harvested 'Manuel Jesus Orellana Cid', published 'Manuel Jesús Orellana' — the harvested name stands
-  CHANGED: SEV v RAY: harvested 'R. De Burgos', published 'Ricardo De Burgos Bengoetxea' — the harvested name stands
   CHANGED: ESP v LEV: harvested 'Carlos Muniz Munoz', published 'Carlos Muñiz' — the harvested name stands
-  CHANGED: RAC v VIL: harvested 'M. Sesma', published 'Miguel Sesma Espinosa' — the harvested name stands
-  CHANGED: DEP v ELC: harvested 'F. Maeso', published 'Francisco Hernandez Maeso' — the harvested name stands
-  CHANGED: MAL v DEP: harvested 'J. Alberola', published 'Javier Alberola Rojas' — the harvested name stands
-  CHANGED: BAR v ATH: harvested 'M. Ortiz', published 'Miguel Angel Ortiz Arias' — the harvested name stands
-  CHANGED: CEL v OSA: harvested 'M. Sesma', published 'Miguel Sesma Espinosa' — the harvested name stands
   NOTE: no card record for Manuel Jesús Orellana (ALA v GET) — priced at the league rate
   NOTE: no card record for Carlos Muñiz (ESP v LEV) — priced at the league rate
 
-laliga_fixtures.js written (380 fixtures over 38 matchdays, 20 with a referee appointed)
+laliga_fixtures.js written (380 fixtures over 38 matchdays, 22 with a referee appointed)
 == build ==
 Division: 17 clubs were in it last season, 3 came up
   promoted: Deportivo La Coruna, Malaga, Racing Santander
   LL    673 players from the La Liga feed
   SEG   110 players from the Segunda feed
-  NEW   118 players from the squad fill feed
+  NEW   136 players from the squad fill feed
 Reusing the previous build for sources that did not harvest:
-  - laliga_squads.json (118 players kept from the previous build)
+  - laliga_squads.json (136 players kept from the previous build)
     28 duplicate row(s) collapsed after the moves, keeping the row with a rate on it
-Squads reconciled against the FPL feed: 51 moved, 18 joined, 223 left the division, 28 left alone as ambiguous (901 rows in, 668 out).
+Squads reconciled against the FPL feed: 51 moved, 0 joined, 223 left the division, 28 left alone as ambiguous (919 rows in, 668 out).
     A. Gonzalez RMA -> SEV
     A. Sánchez SEV -> ELC
     Adrià Alti VIL -> DEP
@@ -208,7 +201,7 @@ club rates from mirror (380 matches)
 players: 668  by basis: LL=457, NEW=136, SEG=75
 clubs with players: 20 of 20
 club rates from match records: 17 of 20
-season cautions (2026-27): 458 players
+season cautions (2026-27): 468 players
 referees: 20
 RESULT: WRITTEN laliga_data.js
 == referee-join ==
