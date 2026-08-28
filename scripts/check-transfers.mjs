@@ -133,6 +133,26 @@ for (const [i, e] of entries.entries()) {
       `has him at ${[...new Set(rows.map((r) => r.c))].join(', ')}`);
     continue;
   }
+  /* A `to: null` ENTRY MUST MEAN HE IS GONE, and leaving `from` is not the
+     same fact. This read "he is not at from any more, so the entry has done
+     its job" — which is true of a player who left the division AND of one who
+     simply moved down the road, and it called both spent.
+     It happened the day it was written. Nico González was entered as
+     MCI -> out on 26 August; the feed caught up in the same refresh and moved
+     him to Newcastle, where he is priced today. apply_transfers refused the
+     entry, correctly, because `from` no longer matched — but this guard read
+     the empty Manchester City side of it and reported "safe to delete" for a
+     committed statement that had turned out to be wrong. An overlay that
+     OVERRULES the feed cannot be allowed to carry a false claim quietly, so
+     the contradiction is a failure and not a note. */
+  if (!e.to && rows.length) {
+    stale.push(`${e.player} left ${e.from}, but this entry says he left the ` +
+      `DIVISION and the dataset has him at ` +
+      `${[...new Set(rows.map((r) => r.c))].join(', ')}. He moved clubs rather ` +
+      'than leaving: delete the entry, or set `to` to his club if the feed is ' +
+      'still wrong about where he is');
+    continue;
+  }
   redundant.push(`${e.player} (${e.from} -> ${e.to || 'out'})`);
 }
 

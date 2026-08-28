@@ -9,15 +9,6 @@
    "date": "2026-08-22",
    "source": "reported by the desk owner. NOT yet in the FPL bootstrap feed: the 22 August refresh read 600 players across 20 clubs, retired the 43 the feed no longer carried, and kept Romero at Tottenham.",
    "why_null": "The departure was reported without a destination. `to: null` means only that he is no longer in this division, which is what is actually known — naming a club would be a guess, and a guess here prices another club's fixtures off his card rate. If he has in fact joined a Premier League club, set `to` to that club's code and his rate travels with him."
-  },
-  {
-   "league": "PL",
-   "player": "Nico González",
-   "from": "MCI",
-   "to": null,
-   "date": "2026-08-26",
-   "source": "reported by the desk owner. STILL IN THE FPL BOOTSTRAP FEED: the 26 August refresh reconciled the squads against it and kept him at Manchester City, in a 30-man squad, on 2025-26 form — 1568 minutes, 6 yellows, 0.344 a 90. That rate is well above the City midfield and was being priced into City's fixtures.",
-   "why_null": "Reported without a destination, so `to` stays null for the reason set out on the entry above: it says he has left this division and nothing more. If he has joined another Premier League club, set `to` to that club's code and the 0.344 travels with him — which is the whole point of moving a row rather than deleting it."
   }
  ]
 }
