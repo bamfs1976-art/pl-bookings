@@ -1,4 +1,4 @@
-La Liga harvest — run 126
+La Liga harvest — run 127
 == discover ==
 La Liga: API-Football league 140, season 2026
 
@@ -110,13 +110,17 @@ La Liga: API-Football league 140, season 2025
 laliga_ref_fixtures.js written (380 matches over 20 clubs, 380 with an official named)
 == fixtures ==
 La Liga: API-Football league 140, season 2026
-  LL appointments overlay: 0 applied, 16 already harvested
+  LL appointments overlay: 3 applied, 16 already harvested
   CHANGED: ALA v GET: harvested 'Manuel Jesus Orellana Cid', published 'Manuel Jesús Orellana' — the harvested name stands
   CHANGED: ESP v LEV: harvested 'Carlos Muniz Munoz', published 'Carlos Muñiz' — the harvested name stands
+  CHANGED: ALA v VIL: harvested 'I. Diaz', published 'Isidro Diaz de Mera Escuderos' — the harvested name stands
+  CHANGED: RAC v ELC: harvested 'C. Muniz', published 'Carlos Muñiz' — the harvested name stands
   NOTE: no card record for Manuel Jesús Orellana (ALA v GET) — priced at the league rate
   NOTE: no card record for Carlos Muñiz (ESP v LEV) — priced at the league rate
+  NOTE: no card record for Carlos Muñiz (RAC v ELC) — priced at the league rate
+  NOTE: no card record for Manuel Jesús Orellana (RSO v ESP) — priced at the league rate
 
-laliga_fixtures.js written (380 fixtures over 38 matchdays, 22 with a referee appointed)
+laliga_fixtures.js written (380 fixtures over 38 matchdays, 25 with a referee appointed)
 == build ==
 Division: 17 clubs were in it last season, 3 came up
   promoted: Deportivo La Coruna, Malaga, Racing Santander
