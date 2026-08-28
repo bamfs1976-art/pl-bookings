@@ -773,11 +773,42 @@ assert.ok(/plb_card_predictions/.test(calib) && !/rest\/v1\/plb_predictions/.tes
     '(the Premier League model path and the shrink-then-hazard path) — both ' +
     'price a fixture, so both need the appointment');
 
-  /* AND THE LABEL. An appointed official with no card record must not read the
-     same as no appointment — that was the visible half of the same bug. */
-  assert.ok(/p\.ref && p\.ref\.name/.test(today),
-    'today.html no longer distinguishes an appointed-but-unrated official ' +
-    'from an unappointed fixture — both read "Ref —"');
+  /* AND THE LABEL, ON ALL FOUR PAGES THAT DRAW ONE. An appointed official with
+     no card record must not read the same as no appointment — that was the
+     visible half of the same bug.
+     This used to pin today.html's own expression, `p.ref && p.ref.name`, and
+     it pinned the wrong thing twice over: it said nothing about the two league
+     desks, which had the two-state version and shipped "Ref —" over an
+     appointed official for months, and it failed the day the rule was lifted
+     into core for all three to share. The rule is one function now, so this
+     tests the FUNCTION's three answers and then that every page asks it. */
+  {
+    const core = coreOf();
+    const rated = core.refLabel({ ref: { n: 'Mateo Busquets Ferrer' }, appointed: true });
+    const unrated = core.refLabel({ ref: null, appointed: true, name: 'Rob Jones' });
+    const none = core.refLabel({ ref: null, appointed: false });
+    assert.equal(rated.state, 'rated');
+    assert.equal(unrated.state, 'unrated');
+    assert.equal(none.state, 'none');
+    assert.notEqual(unrated.text, none.text,
+      'an appointed official with no card record reads the same as no ' +
+      'appointment — a neutral referee looking exactly like no referee is ' +
+      'the bug this whole file opens with');
+    assert.ok(/Rob Jones|R\. Jones/.test(unrated.text),
+      `the unrated label does not name the official: ${unrated.text}`);
+    assert.ok(unrated.title && /league rate/.test(unrated.title),
+      'the unrated label does not say why the match prices at the league rate');
+    assert.equal(none.text, 'Ref —');
+    for (const page of ['today.html', 'eflc.html', 'laliga.html']) {
+      const src = readFileSync(join(root, page), 'utf8');
+      assert.ok(/C\.refLabel\(/.test(src),
+        `${page} does not build its referee line through PLDCore.refLabel — ` +
+        'it has grown its own, and the two that did could only draw two of ' +
+        'the three states');
+      assert.ok(!/\?\s*'Ref '\s*\+/.test(src),
+        `${page} still carries a local "Ref ..." ternary beside the shared rule`);
+    }
+  }
   console.log(`  ok - the combined page joins ${joined} of ${appointed} ` +
     `appointments (${unrated} appointed with no card record, priced at the ` +
     'league rate and labelled as such)');

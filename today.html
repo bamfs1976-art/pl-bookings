@@ -861,12 +861,13 @@
        ordinary rather than broken: Tony Harrington has been appointed to a
        Championship fixture and simply has no history in the record yet, so the
        match prices at the league rate and the name is still worth showing. */
-    var refLine = p.ref && p.ref.ref
-      ? 'Ref ' + esc(refAbbr(p.ref.ref.n))
-      : p.ref && p.ref.name
-      ? '<span title="Appointed, but no card record yet \u2014 this match prices at'
-        + ' the league rate">Ref ' + esc(refAbbr(p.ref.name)) + '*</span>'
-      : 'Ref \u2014';
+    /* The rule itself now lives in PLDCore.refLabel, because the two league
+       desks had their own and both were the two-state version this page was
+       already fixed for. */
+    var rl = C.refLabel(p.ref, refAbbr);
+    var refLine = rl.title
+      ? '<span title="' + esc(rl.title) + '">' + esc(rl.text) + '</span>'
+      : esc(rl.text);
     return '<div class="fx" data-lg="' + p.L.code + '" data-h="' + p.fx.h
       + '" data-a="' + p.fx.a + '">'
       + '<div class="fx-top">'

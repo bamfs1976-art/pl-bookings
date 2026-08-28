@@ -458,6 +458,43 @@
     return initial + parts.slice(from).join(' ');
   }
 
+  /* THE REFEREE LINE ON A FIXTURE CARD, in one place, because there are THREE
+   * states and two of the four pages could only draw two of them.
+   *
+   *   rated      an official is named and the desk has his card record.
+   *   unrated    an official is named and the desk has NO record for him, so
+   *              the match prices at the league rate. This is ordinary — Rob
+   *              Jones, Carlos Muñiz and Manuel Jesús Orellana are all being
+   *              appointed this season with nothing behind them — and it is
+   *              NOT the same fact as nobody having been appointed.
+   *   none       no official yet.
+   *
+   * eflc.html and laliga.html collapsed the middle state into "Ref —", which
+   * is this repository's oldest bug wearing a different hat: check-referees
+   * opens by recording that "a neutral referee looks exactly like no referee",
+   * and that is precisely what the header said while the panel two lines below
+   * it said "appointed". today.html was fixed on 24 August and the desks were
+   * not, so the rule existed three times and one of the three was right.
+   *
+   * Returns the text and the tooltip; the caller escapes and wraps, because
+   * the three pages differ in markup and none of them should be building the
+   * SENTENCE. `shorten` is passed in rather than assumed so that a caller who
+   * wants the full name can have it.
+   */
+  function refLabel(state, shorten) {
+    const cut = typeof shorten === 'function' ? shorten : refShort;
+    const r = state || {};
+    if (r.ref && r.ref.n) return { text: 'Ref ' + cut(r.ref.n), title: null, state: 'rated' };
+    if (r.name) {
+      return {
+        text: 'Ref ' + cut(r.name) + '*',
+        title: 'Appointed, but no card record yet — this match prices at the league rate',
+        state: 'unrated'
+      };
+    }
+    return { text: 'Ref —', title: null, state: 'none' };
+  }
+
   function matchRefName(name, known) {
     const names = Array.isArray(known) ? known : Object.keys(known || {});
     if (!name) return null;
@@ -1920,7 +1957,7 @@
     rotationRisk, rotationBand,
     restDays, restBucket, previousMatch, euroAway72h,
     isDerby, derbyName, derbyPairs, DERBIES, DERBIES_BY_LEAGUE,
-    riskScore, normName, matchRefName, refShort, pickPL, summarisePicks, calibrate, impliedProb, fairOdds, edgePct, LOGISTIC_SLOPE,
+    riskScore, normName, matchRefName, refShort, refLabel, pickPL, summarisePicks, calibrate, impliedProb, fairOdds, edgePct, LOGISTIC_SLOPE,
     per90, liveRate, joinLooksRight, foldLetters, MIN_LIVE_MINUTES,
     lineupMinutes, xiWeights, SUBS_USED, SUB_MINUTES,
     playerKeys, matchSquadName, lineupRoles, currentRound, isPlayed, PLAYED_STATUS,

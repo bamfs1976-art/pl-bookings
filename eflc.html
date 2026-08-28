@@ -1359,9 +1359,13 @@
          the cards ragged and unlike the other desk. Nothing is lost: the full
          name is the title, and both appear in full as the side headings
          directly below. */
-      var refLine = (x.ref.appointed && x.ref.ref)
-        ? 'Ref ' + esc(refAbbr(x.ref.ref.n))
-        : 'Ref \u2014';
+      /* THREE STATES, from PLDCore.refLabel. This read "rated, or nothing", so
+         Wrexham v Birmingham \u2014 Rob Jones appointed, no card record \u2014 showed
+         "Ref \u2014" in the header while the panel below it said "appointed". */
+      var rl = C.refLabel(x.ref, refAbbr);
+      var refLine = rl.title
+        ? '<span title="' + esc(rl.title) + '">' + esc(rl.text) + '</span>'
+        : esc(rl.text);
       return '<div class="fx">'
         + '<div class="fx-top">'
         + '<div class="fx-topl">'
