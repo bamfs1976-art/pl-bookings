@@ -5,7 +5,7 @@
 // through PLDCore.matchSquadName. A fixture absent from here prices off
 // squad minute-weights exactly as it always has — that is the normal
 // state until about an hour before kick-off, not a failure.
-// Fetched 2026-08-27T20:14Z.
+// Fetched 2026-08-28T21:08Z.
 //
 // THE GLOBAL IS NOT CALLED `LINEUPS`, and that is deliberate. index.html
 // already declares a top-level `const LINEUPS` for assets/lineup.js (the
@@ -14,6 +14,7 @@
 // a parse error, not a shadow: the whole inline script fails and the desk
 // renders blank. Read `window.LINEUP_SHEETS`.
 var __LINEUP_SHEETS = {
+  "1570353":{"ALA":{start:["Antonio Sivera", "Ángel Pérez", "Nahuel Tenaglia", "Ville Koski", "Jonny Otto", "Abderrahman Rebbach", "Pablo Ibáñez", "Antonio Blanco", "Mikel Rodriguez", "Toni Martínez", "Lucas Boyé"],sub:["Adrián Rodríguez", "Youssef Enriquez", "Xanet Olaiz", "Nicolás Valentini", "Hugo Novoa", "Carlos Benavídez", "Denis Suárez", "Carles Aleñá", "Miguel Rodríguez", "Ander Guevara", "Aitor Mañas", "Mariano Díaz"]},"VIL":{start:["Luiz Júnior", "Santiago Mouriño", "Juan Foyth", "Renato Veiga", "Carlos Romero", "Nicolas Pépé", "Santi Comesaña", "Pape Gueye", "Tajon Buchanan", "Gerard Moreno", "Georges Mikautadze"],sub:["Péter Gulácsi", "Pau Navarro", "Alexander Freeman", "Sergi Cardona", "Logan Costa", "Alberto Moleiro", "Carlos Maciá", "Alassane Diatta", "Ilias Akhomach", "Nathan-Dylan Saliba", "Ayoze Pérez", "Tani Oluwaseyi"]}},
 };
 if (typeof module !== "undefined" && module.exports) module.exports = __LINEUP_SHEETS;
 if (typeof window !== "undefined") window.LINEUP_SHEETS = __LINEUP_SHEETS;
