@@ -25,7 +25,7 @@ const EFLC_FIXTURES = [
   {id:1563105,d:"2026-08-22T14:00:00+00:00",r:2,h:"WHU",a:"CHA",ref:"A. Kitchen",st:"FT"},
   {id:1563106,d:"2026-08-22T14:00:00+00:00",r:2,h:"WRE",a:"WAT",ref:"J. Busby",st:"FT"},
   {id:1563104,d:"2026-08-23T11:00:00+00:00",r:2,h:"WBA",a:"BUR",ref:"A. Backhouse",st:"FT"},
-  {id:1563118,d:"2026-08-28T19:00:00+00:00",r:3,h:"WRE",a:"BIR",ref:"R. Jones",st:"NS"},
+  {id:1563118,d:"2026-08-28T19:00:00+00:00",r:3,h:"WRE",a:"BIR",ref:"R. Jones",st:"1H"},
   {id:1563112,d:"2026-08-29T11:30:00+00:00",r:3,h:"DER",a:"SWA",ref:"D. Webb",st:"NS"},
   {id:1563113,d:"2026-08-29T11:30:00+00:00",r:3,h:"MID",a:"WBA",ref:"P. Tierney",st:"NS"},
   {id:1563117,d:"2026-08-29T11:30:00+00:00",r:3,h:"WOL",a:"STK",ref:"T. Nield",st:"NS"},
