@@ -28,8 +28,9 @@ const codeOnly = (src) => src
 /* file -> the public URL it is served at, and the label that must be current
    on it. The redirects are what make the pretty URLs work, so they are checked
    too: a bar full of links to /eflc is worth nothing if /eflc 404s. */
-/* FIVE ENTRIES ACROSS FOUR FILES. today.html serves two of them: `/` is
-   today's matches and /today is the season calendar. They are one file on
+/* SIX ENTRIES ACROSS FOUR FILES. today.html serves three of them: `/` is
+   today's matches, /today is the season calendar and /record is the graded
+   record (plus /accas and /derbies, which the bar reaches from the page). They are one file on
    purpose — a second copy would have forked the pricing, the confirmed-XI join
    and both card builders — so the bar has more entries than there are pages,
    and one page's current item depends on which route it was opened at.
@@ -40,7 +41,12 @@ const LINKS = [
   { file: 'index.html', url: '/pl', label: 'Premier League' },
   { file: 'eflc.html', url: '/eflc', label: 'Championship' },
   { file: 'laliga.html', url: '/laliga', label: 'La Liga' },
-  { file: 'today.html', url: '/today', label: 'Season calendar', runtime: true }
+  { file: 'today.html', url: '/today', label: 'Season calendar', runtime: true },
+  /* /record is the sixth entry and the only one that is not football: it is
+     the desk graded against what actually happened. It serves from the same
+     file for the same reason as the other three — a record page that forked
+     the pricing would grade a model nobody was shown. */
+  { file: 'today.html', url: '/record', label: 'Track record', runtime: true }
 ];
 /* The distinct files, for the per-page checks. */
 const DESKS = LINKS.filter((d, i) => LINKS.findIndex((x) => x.file === d.file) === i);

@@ -157,9 +157,13 @@ html[data-theme="dark"].lg-all {--accent:#22d3ee;--ring:var(--accent)}
    facing each other. */
 .lb-derbies .lb-dot{background:linear-gradient(90deg,var(--pl) 0 46%,
   transparent 46% 54%,var(--ll) 54% 100%)}
-/* ONE FILE, FOUR ROUTES. today.html serves `/` (today's matches), /today (the
-   season calendar), /accas (every combination) and /derbies (every derby, all
-   three divisions); an early script in its head stamps <html data-route>.
+/* THE TRACK RECORD. A ring rather than a disc: this view is the only one in
+   the bar that is about the desk rather than about the football, and the
+   hollow centre is what says so at 9px. */
+.lb-record .lb-dot{background:none;border:2px solid var(--warn-ink);box-sizing:border-box}
+/* ONE FILE, FIVE ROUTES. today.html serves `/` (today's matches), /today (the
+   season calendar), /accas (every combination), /derbies (every derby, all
+   three divisions) and /record (what the desk rated against what turned up); an early script in its head stamps <html data-route>.
    Anything marked data-for shows only on its own route. Every block is in the
    markup so the page has real headings before any script has run — the
    selection is presentational, not a rebuild.
@@ -176,13 +180,15 @@ html[data-theme="dark"].lg-all {--accent:#22d3ee;--ring:var(--accent)}
 [data-route="home"] [data-for]:not([data-for~="home"]),
 [data-route="season"] [data-for]:not([data-for~="season"]),
 [data-route="accas"] [data-for]:not([data-for~="accas"]),
-[data-route="derbies"] [data-for]:not([data-for~="derbies"]){display:none}
+[data-route="derbies"] [data-for]:not([data-for~="derbies"]),
+[data-route="record"] [data-for]:not([data-for~="record"]){display:none}
 /* The fixture list is shared by the two match routes and belongs to neither
    alone, so it is hidden by route rather than tagged data-for. /accas is about
    the slips and /derbies about the rivalries; a reader who wants the matches
    has two routes that are. */
 [data-route="accas"] #listCard,
-[data-route="derbies"] #listCard{display:none}
+[data-route="derbies"] #listCard,
+[data-route="record"] #listCard{display:none}
 
 /* ─── /derbies ──────────────────────────────────────────────────────────────
    A dense list rather than the fixture cards the other routes draw: eighty-odd
@@ -1555,3 +1561,22 @@ tr[data-club]:focus-visible{outline:3px solid var(--ring);outline-offset:-3px}
 .mrec-t.up{color:var(--good-ink)} .mrec-t.dn{color:var(--danger-ink)}
 .mrec-l{display:inline-block;margin-top:.5rem;margin-left:.7rem;font-size:.74rem;font-weight:700}
 .mrec-empty .mrec-h{margin-bottom:0}
+
+/* ── The track record: rated against actual ─────────────────────────────
+   Reuses the derby row (.drb) rather than growing a second row layout —
+   both are "a fixture, and one fact about it", and two layouts would drift
+   the way the referee line did. Only what is genuinely different is new:
+   the arrow between the two numbers, and the two tones that mark a match
+   that missed its rating by a card and a half either way. */
+.rec-nums{display:flex;align-items:center;gap:.15rem;margin-left:auto}
+.rec-arrow{color:var(--text-2);margin:0 .35rem;font-size:13px}
+.drb.rec-over{box-shadow:inset 3px 0 0 var(--danger-ink)}
+.drb.rec-under{box-shadow:inset 3px 0 0 var(--text-2)}
+.rec-table{width:100%;max-width:640px;border-collapse:collapse;margin:.7rem 0 0;
+  font-size:13px}
+.rec-table caption{text-align:left;font-size:12.5px;color:var(--text-2);
+  padding:.35rem 0}
+.rec-table th,.rec-table td{padding:.3rem .55rem;border-bottom:1px solid var(--border);
+  text-align:left}
+.rec-table td.num,.rec-table th[scope=col]:not(:first-child){text-align:right}
+.rec-table th[scope=row]{font-weight:600;color:var(--text)}

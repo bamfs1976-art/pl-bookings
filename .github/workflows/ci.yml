@@ -315,6 +315,15 @@ jobs:
       - name: The referee path, end to end
         run: node scripts/check-referees.mjs
 
+      # The only view on the site that is not a forecast. It grades the desk
+      # against what actually happened, which makes it the one table whose
+      # being wrong would be wrong ABOUT THE MODEL — and the number somebody
+      # would change the model by. The bands have to mean what the chip means,
+      # the referee split has to survive, and "cleared the line" and "beat its
+      # own number" have to stay two columns.
+      - name: The track record grades what the desk showed
+        run: node scripts/check-record.mjs
+
       # Which fixtures are derbies was written down in FOUR places — core.js,
       # plmodel.js and inline in both of the other desks — and two of them had
       # already drifted: core called Brentford v Fulham a West London derby and

@@ -38,6 +38,7 @@
        never becomes a copy. */
     var route = p === '/accas' || p === '/accas.html' ? 'accas'
       : p === '/derbies' || p === '/derbies.html' ? 'derbies'
+      : p === '/record' || p === '/record.html' ? 'record'
       : (p === '/today' || p === '/season' || p === '/today.html') ? 'season'
       : 'home';
     document.documentElement.setAttribute('data-route', route);
@@ -45,6 +46,8 @@
       ? 'Accas — every combination, in one place — Bookings Desk'
       : route === 'derbies'
       ? 'Every derby, all season, all three divisions — Bookings Desk'
+      : route === 'record'
+      ? 'Track record — what the desk rated against what turned up — Bookings Desk'
       : route === 'season'
       ? 'Every date, all season — Bookings Desk'
       : "Today's matches — Bookings Desk";
@@ -164,6 +167,7 @@
     <a class="lb-item lb-today" href="/"><span class="lb-dot"></span><span class="lb-full">Today's matches</span><span class="lb-abbr">Today</span></a>
     <a class="lb-item lb-accas" href="/accas"><span class="lb-dot"></span><span class="lb-full">Accas</span><span class="lb-abbr">Accas</span></a>
     <a class="lb-item lb-derbies" href="/derbies"><span class="lb-dot"></span><span class="lb-full">Derbies</span><span class="lb-abbr">Derbies</span></a>
+    <a class="lb-item lb-record" href="/record"><span class="lb-dot"></span><span class="lb-full">Track record</span><span class="lb-abbr">Record</span></a>
     <a class="lb-item lb-pl" href="/pl"><span class="lb-dot"></span><span class="lb-full">Premier League</span><span class="lb-abbr">PL</span></a>
     <a class="lb-item lb-eflc" href="/eflc"><span class="lb-dot"></span><span class="lb-full">Championship</span><span class="lb-abbr">Championship</span></a>
     <a class="lb-item lb-ll" href="/laliga"><span class="lb-dot"></span><span class="lb-full">La Liga</span><span class="lb-abbr">La Liga</span></a>
@@ -237,6 +241,43 @@
       <a href="/today">season calendar</a>.
     </p>
     <div class="stats" id="statsDerbies"></div>
+  </section>
+
+  <!-- WHAT THE DESK RATED AGAINST WHAT TURNED UP.
+       Every other view on this site is a forecast. This one is the only place
+       the forecasts are graded, and it is deliberately not a marketing number:
+       a rating is an EXPECTATION, so "did the 4.0+ games produce four cards"
+       and "did a game beat its own number" are different questions and both
+       are shown. The rows come from /api/match-record, which reads the row
+       scripts/accas.mjs writes once before kick-off and never revises —
+       so nothing here can be a forecast improved after the fact. /record only. -->
+  <section class="hero" data-for="record">
+    <h1>Track record</h1>
+    <p class="muted" style="margin:8px 0 0;max-width:70ch">
+      What the desk rated a fixture, and how many cards it actually produced. Every match
+      is logged <b>before kick-off</b> and never revised, so this grades the number that was
+      on the card rather than one tidied up afterwards.
+      Read the two columns as different questions: <b>hit 4+</b> is whether the match cleared
+      the line the card quotes, and <b>beat its rating</b> is whether it produced more cards
+      than the number itself. A rating of 3.6 that returns four has done nothing wrong.
+      Where a fixture was logged before its referee was appointed it was priced at the league
+      rate — those rows are marked, and kept apart in the summary, because pooling them
+      reports a bias the model does not have.
+    </p>
+    <div class="stats" id="statsRecord"></div>
+  </section>
+
+  <section class="card" id="recordCard" data-for="record" style="margin-top:14px" hidden>
+    <div class="controls" style="margin-bottom:4px">
+      <h2 style="font-size:16px">Every graded match</h2>
+      <span class="spacer"></span>
+      <label style="font-size:13px;display:inline-flex;align-items:center;gap:6px">
+        <input type="checkbox" id="recordRatedRef"> priced off a rated referee only
+      </label>
+    </div>
+    <p class="faint" id="recordSub" style="font-size:12.5px;margin:0"></p>
+    <div id="recordBody"></div>
+    <p class="note" id="recordNote"></p>
   </section>
 
   <div class="card" id="listCard">
@@ -1633,6 +1674,149 @@
       + 'written down, and a pair only counts while both clubs are in that division.';
   }
 
+  /* ═══════════════════════════════════════════════════════════
+   * THE TRACK RECORD
+   *
+   * Reads /api/match-record — the graded rows, server-side, shared across
+   * everyone rather than scored in this browser. Additive and best-effort:
+   * the card stays hidden until the deploy has the loop switched on and has
+   * graded a match, exactly like the calibration card on the Premier League
+   * desk.
+   *
+   * TWO COLUMNS, TWO QUESTIONS. "Hit 4+" is whether the match cleared the
+   * line the card quotes; "beat its rating" is whether it produced more than
+   * its own number. Collapsing them into one accuracy percentage is what
+   * makes a calibration table meaningless — a fixture rated 3.6 that returns
+   * four cards has cleared the line AND come in above its number, and a
+   * fixture rated 4.4 that returns four has cleared the line and come in
+   * below. They are not the same event.
+   */
+  var RECORD = null;
+
+  function recordRowHtml(m) {
+    var diff = m.actual - m.rated;
+    /* Built as one string rather than concatenated inside class="", so the
+       markup carries class names a reader (and check-styles) can see. */
+    var cls = 'drb' + (diff >= 1.5 ? ' rec-over' : diff <= -1.5 ? ' rec-under' : '');
+    /* THE SAME THREE-STATE RULE the fixture cards use, from core. The graded
+       row knows whether the desk had a card record for the official, which is
+       exactly refLabel's rated/unrated distinction. */
+    var rl = C.refLabel(m.ratedRef ? { ref: { n: m.referee } } : { name: m.referee }, refAbbr);
+    return '<div class="' + cls + '">'
+      + '<div class="drb-when"><b>' + esc(dayOf(m.kickoff)) + '</b>'
+      + '<span>' + esc(fmtTime(m.kickoff)) + '</span></div>'
+      + '<span class="lg ' + esc(m.league) + '">' + esc(m.league) + '</span>'
+      + '<div class="drb-tie">'
+      + '<b>' + esc(m.home) + ' <span class="faint">v</span> ' + esc(m.away) + '</b>'
+      + (m.derby ? '<span class="drb-name">derby</span>' : '')
+      + '</div>'
+      + '<div class="drb-meta">' + esc(rl.text)
+      + (m.ratedRef ? '' : ' \u00b7 priced at the league rate') + '</div>'
+      + '<div class="rec-nums">'
+      + '<span class="fx-heat" title="What the desk rated it before kick-off">'
+      + n1(m.rated) + '</span>'
+      + '<span class="rec-arrow">\u2192</span>'
+      + '<span class="fx-heat' + (m.actual >= 4 ? ' hot' : '') + '"'
+      + ' title="Cards actually shown \u2014 a second yellow counts once, as the'
+      + ' dismissal it is">' + m.actual + '</span>'
+      + '</div></div>';
+  }
+
+  function renderRecord() {
+    var card = $('#recordCard');
+    if (!card) return;
+    if (!onRoute('record') || !RECORD || !RECORD.n) { card.hidden = true; return; }
+    var box = $('#recordRatedRef');
+    var rows = (box && box.checked)
+      ? RECORD.matches.filter(function (m) { return m.ratedRef; })
+      : RECORD.matches;
+    if (!rows.length) { card.hidden = true; return; }
+    card.hidden = false;
+
+    var html = '', month = '';
+    rows.forEach(function (m) {
+      var mo = monthOf(m.kickoff);
+      if (mo !== month) { month = mo; html += '<h3 class="drb-month">' + esc(mo) + '</h3>'; }
+      html += recordRowHtml(m);
+    });
+    $('#recordBody').innerHTML = html;
+
+    var hit = rows.filter(function (m) { return m.actual >= 4; }).length;
+    var beat = rows.filter(function (m) { return m.actual > m.rated; }).length;
+    $('#recordSub').innerHTML = rows.length + ' graded match'
+      + (rows.length === 1 ? '' : 'es') + ' &nbsp;'
+      + '<span class="lg">' + hit + ' hit 4+</span> '
+      + '<span class="lg">' + beat + ' beat their rating</span>';
+    $('#recordNote').textContent = 'Cards counted the way the market counts them: a '
+      + 'second yellow is one dismissal, not a fresh booking. Every row was logged '
+      + 'before kick-off and never revised.';
+  }
+
+  function recordBandRow(name, b, label) {
+    if (!b) return '';
+    return '<tr><th scope="row">' + esc(label) + '</th>'
+      + '<td class="num">' + b.n + '</td>'
+      + '<td class="num">' + b.rated.toFixed(2) + '</td>'
+      + '<td class="num">' + b.actual.toFixed(2) + '</td>'
+      + '<td class="num">' + (b.bias > 0 ? '+' : '') + b.bias.toFixed(2) + '</td>'
+      + '<td class="num">' + Math.round(b.hitOver35 * 100) + '%</td>'
+      + '<td class="num">' + Math.round(b.fcOver35 * 100) + '%</td></tr>';
+  }
+
+  function renderRecordStats() {
+    var host = $('#statsRecord');
+    if (!host || !RECORD || !RECORD.n) return;
+    var o = RECORD.overall;
+    /* THE STANDARD ERROR IS SHOWN NEXT TO THE BIAS, deliberately. The bias is
+       the number somebody will want to correct the model by, and on a sample
+       this size it is usually indistinguishable from zero. A figure printed
+       without its spread invites exactly that mistake. */
+    var sig = o.se ? Math.abs(o.bias / o.se) : 0;
+    host.innerHTML = ''
+      + '<div class="stat"><b>' + o.n + '</b><span>matches graded</span></div>'
+      + '<div class="stat"><b>' + o.rated.toFixed(2) + ' \u2192 ' + o.actual.toFixed(2)
+      + '</b><span>rated, then actual</span></div>'
+      + '<div class="stat"><b>' + (o.bias > 0 ? '+' : '') + o.bias.toFixed(2)
+      + ' \u00b1 ' + (o.se == null ? '?' : o.se.toFixed(2))
+      + '</b><span>bias a match ' + (sig >= 2 ? '(real)' : '(inside the noise)') + '</span></div>'
+      + '<div class="stat"><b>' + Math.round(o.hitOver35 * 100) + '%</b>'
+      + '<span>hit 4+, against ' + Math.round(o.fcOver35 * 100) + '% forecast</span></div>'
+      + '<table class="rec-table"><caption>By the band the card shows</caption>'
+      + '<thead><tr><th scope="col">Band</th><th scope="col">n</th>'
+      + '<th scope="col">Rated</th><th scope="col">Actual</th><th scope="col">Bias</th>'
+      + '<th scope="col">Hit 4+</th><th scope="col">Forecast</th></tr></thead><tbody>'
+      + recordBandRow('hot', RECORD.bands.hot, 'Hot \u2014 rated ' + RECORD.cuts.hot + '+')
+      + recordBandRow('warm', RECORD.bands.warm, 'Warm \u2014 ' + RECORD.cuts.warm + ' to '
+          + (RECORD.cuts.hot - 0.1).toFixed(1))
+      + recordBandRow('cool', RECORD.bands.cool, 'Cool \u2014 under ' + RECORD.cuts.warm)
+      + '</tbody></table>'
+      + '<table class="rec-table"><caption>And by whether the referee was known when it was logged</caption>'
+      + '<thead><tr><th scope="col">Logged</th><th scope="col">n</th>'
+      + '<th scope="col">Rated</th><th scope="col">Actual</th><th scope="col">Bias</th>'
+      + '<th scope="col">Hit 4+</th><th scope="col">Forecast</th></tr></thead><tbody>'
+      + recordBandRow('ref', RECORD.withRatedRef, 'With a rated official')
+      + recordBandRow('noref', RECORD.withoutRatedRef, 'Before one was appointed')
+      + '</tbody></table>';
+  }
+
+  function loadRecord() {
+    if (!onRoute('record')) return;
+    fetch('/api/match-record').then(function (r) {
+      return r.ok ? r.json() : null;
+    }).then(function (d) {
+      if (!d || !d.configured || !d.n && !(d.overall && d.overall.n)) return;
+      RECORD = { n: (d.overall && d.overall.n) || 0, matches: d.matches || [],
+                 overall: d.overall, bands: d.bands || {}, cuts: d.cuts,
+                 withRatedRef: d.withRatedRef, withoutRatedRef: d.withoutRatedRef };
+      renderRecordStats();
+      renderRecord();
+      /* Logged rather than swallowed. A bare catch here hid a real render
+         error for the whole of this card's first build: the page looked like
+         a deploy with the loop switched off, which is the one state this is
+         supposed to be able to tell apart. */
+    }).catch(function (e) { console.warn('[Bookings Desk] match record:', e); });
+  }
+
   function renderNine() {
     var card = $('#nineCard'), blank = $('#nineEmpty');
     if (blank) blank.hidden = true;
@@ -1757,7 +1941,12 @@
      reads exactly as it did — the question "am I in the calendar?" has not
      changed, only who answers it. */
   var ROUTE = document.documentElement.getAttribute('data-route');
-  if (ROUTE !== 'season' && ROUTE !== 'accas' && ROUTE !== 'derbies') ROUTE = 'home';
+  /* THE KNOWN ROUTES, listed once. Anything else is the home page — a saved
+     copy, a crawler that ignored the head script, a typo'd path. Forgetting to
+     add a route here is silent: the head stamps data-route correctly, the CSS
+     shows the right blocks, and the SCRIPT quietly builds the home page
+     underneath them. It cost this route a debugging session. */
+  if (['season', 'accas', 'derbies', 'record'].indexOf(ROUTE) < 0) ROUTE = 'home';
   /* The accas and derbies routes show no fixture list, so which LIST they
      would have shown is not a question they ask. Both index and price exactly
      as the other two do — the slips and the derby heat are built off the same
@@ -1808,6 +1997,7 @@
     renderNine();
     renderCombos();
     renderDerbies();
+    renderRecord();
   }
 
   /* ---- the combined card ------------------------------------------------ */
@@ -2295,12 +2485,21 @@
       ROUTE === 'season' ? '.lb-season'
       : ROUTE === 'accas' ? '.lb-accas'
       : ROUTE === 'derbies' ? '.lb-derbies'
+      : ROUTE === 'record' ? '.lb-record'
       : '.lb-today');
     if (cur) cur.setAttribute('aria-current', 'page');
     /* Only the derby list redraws — nothing else on the page reads it. */
     if ($('#derbyUpcoming')) {
       $('#derbyUpcoming').addEventListener('change', renderDerbies);
     }
+    /* Only the graded list redraws — the summary above it is the whole record
+       and does not change with the filter. */
+    if ($('#recordRatedRef')) {
+      $('#recordRatedRef').addEventListener('change', renderRecord);
+    }
+    /* Fetched rather than baked: the record grows every time a match is
+       graded, and a build is not what should decide how fresh it is. */
+    loadRecord();
     /* And scroll it into view NOW. The shared module already ran its own pass
        on DOMContentLoaded and found nothing current to centre, because on this
        file the marker is set here rather than in the markup. */

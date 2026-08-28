@@ -747,9 +747,33 @@ async function cmdMatchPredict() {
     const { round, rows } = matchesFor(L);
     if (round == null || !rows.length) { console.log(`${L.code}: no open round.`); continue; }
     const now = Date.now();
-    const fresh = rows.filter((r) => !r.kickoff || new Date(r.kickoff).getTime() > now);
-    const late = rows.length - fresh.length;
-    if (!fresh.length) { console.log(`${L.code}: round ${round} has all kicked off.`); continue; }
+    /* WAIT FOR THE OFFICIAL, THEN FREEZE. The row is written once and never
+       revised, which is right — but it was written the first hour the round
+       became "next", days before anyone is appointed, so it froze a forecast
+       at refFactor = 1 and graded the desk on a number the desk had stopped
+       showing by kick-off.
+       That is not a small effect. Across the 44 settled matches, the ones
+       logged with no rated official under-forecast by 0.62 cards a match and
+       the ones logged with one by 0.19 — the apparent bias in this record is
+       mostly the missing referee, and it was the LOGGER's timing, not the
+       model's.
+       So a fixture is logged when its official is known, or at the deadline
+       below, whichever comes first. Nothing goes ungraded: an unappointed
+       fixture still lands, and ref_carded says which it was. Still write-once,
+       still never revised, still before kick-off. */
+    const DEADLINE_H = 6;
+    const due = (r) => !r.kickoff
+      || new Date(r.kickoff).getTime() - now <= DEADLINE_H * 3600000;
+    const fresh = rows.filter((r) =>
+      (!r.kickoff || new Date(r.kickoff).getTime() > now) && (r.ref_carded || due(r)));
+    const late = rows.filter((r) => r.kickoff && new Date(r.kickoff).getTime() <= now).length;
+    const waiting = rows.length - fresh.length - late;
+    if (!fresh.length) {
+      console.log(`${L.code}: round ${round} — nothing due yet`
+        + `${waiting ? ` (${waiting} waiting on an official)` : ''}`
+        + `${late ? `, ${late} already kicked off` : ''}.`);
+      continue;
+    }
     const res = await fetch(`${rest('plb_match_predictions')}?on_conflict=season,league,fixture_id`, {
       method: 'POST',
       headers: { ...H, Prefer: 'resolution=ignore-duplicates,return=minimal' },
@@ -758,7 +782,9 @@ async function cmdMatchPredict() {
     if (!res.ok) throw new Error(`plb_match_predictions: ${res.status} ${await res.text()}`);
     total += fresh.length;
     console.log(`${L.code}: round ${round} — ${fresh.length} match forecast(s) logged`
-      + (late ? ` (${late} skipped, already kicked off)` : ''));
+      + ` (${fresh.filter((r) => r.ref_carded).length} with a rated official)`
+      + (waiting ? `, ${waiting} waiting on one` : '')
+      + (late ? `, ${late} already kicked off` : ''));
   }
   console.log(`\n${total} match forecast(s) offered.`);
 }

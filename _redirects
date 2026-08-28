@@ -1,6 +1,7 @@
 /api/fpl/*    /.netlify/functions/fpl        200
 /api/insights /.netlify/functions/insights   200
 /api/model-calibration /.netlify/functions/model-calibration 200
+/api/match-record /.netlify/functions/match-record 200
 /api/push-key /.netlify/functions/push-key 200
 /api/push-subscribe /.netlify/functions/push-subscribe 200
 /api/push-unsubscribe /.netlify/functions/push-unsubscribe 200
@@ -49,6 +50,7 @@
 # the routes above — a separate derbies.html would have forked all three to
 # show a list.
 /derbies      /today.html   200
+/record       /today.html   200
 
 # The Premier League desk, moved off `/`. Its own internal routing is entirely
 # hash-based (#panel-...), so nothing inside it cares which path it is served
