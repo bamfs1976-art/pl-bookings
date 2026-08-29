@@ -556,36 +556,6 @@ jobs:
           # published price.
           cat data/fit_report.txt || true
 
-      # THE BOOKINGS LEDGER — who has been booked this season, and in which
-      # rounds. One call per FINISHED fixture, and `--only-new` skips the ones
-      # already in the ledger, so an ordinary morning fetches the round that
-      # has just been played rather than re-walking the season: by May a full
-      # walk would be 380 calls a league for the sake of ten new matches.
-      #
-      # Runs on every refresh, including cron, because a leaderboard that
-      # updates when somebody remembers to tick a box is a leaderboard nobody
-      # trusts. continue-on-error like every other optional leg: a league the
-      # plan refuses must not take the refresh down.
-      - name: This season's bookings ledger (all three leagues)
-        if: ${{ env.API_FOOTBALL_KEY != '' }}
-        continue-on-error: true
-        env:
-          API_FOOTBALL_SEASON: ${{ inputs.season_fixtures || '2026' }}
-        run: |
-          for L in PL EFLC LL; do
-            LOWER=$(echo $L | tr A-Z a-z)
-            case $L in
-              PL)   LEDGER=pl_bookings.js ;;
-              EFLC) LEDGER=eflc_bookings.js ;;
-              LL)   LEDGER=laliga_bookings.js ;;
-            esac
-            python3 data/harvest_apifootball.py --player-matches --league $L \
-              --out ${LOWER}_season_matches.json --only-new $LEDGER \
-              && python3 data/build_bookings.py --league $L \
-                   --from ${LOWER}_season_matches.json --season 2026-27 \
-              || echo "::warning::$L bookings ledger unavailable this run"
-          done
-
       # Tier 2: harvest per-match booking history from the public FPL
       # element-summary endpoint and refit the logistic GLM by IRLS. Runs on
       # GitHub's runners, which can reach the FPL API. build-model.mjs keeps the
@@ -646,7 +616,6 @@ jobs:
                    data/laliga_clubs.json data/laliga_refs.json data/laliga_data.js \
                    data/laliga_status.txt data/laliga_fixtures.js data/laliga_ref_fixtures.js \
                    data/player_matches_status.txt data/fit_report.txt \
-                   data/pl_bookings.js data/eflc_bookings.js data/laliga_bookings.js \
                    backtest_report.md; do
             [ -f "$f" ] && git add "$f"
           done

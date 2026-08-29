@@ -1768,7 +1768,19 @@
         if (fromRound != null && Number(k) < fromRound) continue;
         n += Number(p.rds[k]) || 0;
       }
-      if (n > 0) out.push({ L: L, n: p.n, c: p.c, cards: n });
+      if (n > 0) {
+        /* THE ROUNDS THEMSELVES, not only the total. Carried on every row so
+           the recent table and its share card read the same cells rather than
+           each deriving them — the totals and the cells are the same sum. */
+        var cells = null;
+        if (fromRound != null) {
+          cells = [];
+          for (var rd = fromRound; rd <= (led.rounds || 0); rd++) {
+            cells.push(Number(p.rds[String(rd)]) || 0);
+          }
+        }
+        out.push({ L: L, n: p.n, c: p.c, cards: n, cells: cells });
+      }
     });
     /* Most cards first; ties by club then name, so the order is stable
        between builds rather than however the ledger happened to be sorted. */
@@ -1800,17 +1812,33 @@
     if (!show.length) {
       return '<p class="faint" style="font-size:13px">Nobody booked yet.</p>';
     }
+    /* WHICH ROUNDS, when the caller passes them. A total says a man has two
+       cards; the cells say he was booked in the last round and the one before,
+       which is the difference between a tally and a run of form. */
+    var heads = o.rounds || null;
     var body = show.map(function (r, i) {
       var club = o.club === false ? ''
         : '<td><span class="lg ' + esc(r.L.code) + '">' + esc(r.c) + '</span></td>';
+      var cells = '';
+      if (heads) {
+        cells = (r.cells || []).map(function (n, ci) {
+          var cls = n > 1 ? 'bk-cell bk-cell-2' : n > 0 ? 'bk-cell bk-cell-1' : 'bk-cell';
+          return '<td class="' + cls + '" title="Round ' + heads[ci] + ': '
+            + (n ? n + ' card' + (n === 1 ? '' : 's') : 'not booked') + '">'
+            + (n || '') + '</td>';
+        }).join('');
+      }
       return '<tr><td class="num bk-rank">' + (i + 1) + '</td>'
         + '<th scope="row">' + esc(r.n) + '</th>'
-        + club
+        + club + cells
         + '<td class="num"><b>' + r.cards + '</b></td></tr>';
     }).join('');
     return '<table class="bk-table"><thead><tr>'
       + '<th scope="col" class="bk-rank">#</th><th scope="col">Player</th>'
       + (o.club === false ? '' : '<th scope="col">Club</th>')
+      + (heads ? heads.map(function (r) {
+          return '<th scope="col" class="bk-cell" title="Round ' + r + '">R'
+            + r + '</th>'; }).join('') : '')
       + '<th scope="col">Cards</th></tr></thead><tbody>' + body + '</tbody></table>';
   }
 
@@ -1855,12 +1883,14 @@
     $('#bookedRecent').innerHTML = withLedger.map(function (L) {
       var from = recentFrom(L);
       var rows = bookedRows(L, from);
+      var heads = [];
+      for (var rd = from; rd <= (L.bookings.rounds || 0); rd++) heads.push(rd);
       return '<div class="bk-block"><h3 class="bk-h">'
         + '<a class="lg ' + esc(L.code) + '" href="' + esc(L.href) + '">'
         + esc(L.code) + '</a> ' + esc(L.name)
         + ' <span class="faint">rounds ' + from + '\u2013' + (L.bookings.rounds || 0)
         + '</span></h3>'
-        + bookedTable(rows, 10, {}) + '</div>';
+        + bookedTable(rows, 10, { rounds: heads }) + '</div>';
     }).join('');
     $('#bookedRecentSub').textContent = 'The five most recent rounds each division has '
       + 'played. Early in a season that is every round it has played, so this table and '
@@ -1951,17 +1981,26 @@
       var recent = kind === 'recent';
       spec = {
         league: 'ALL', limit: 10,
+        /* ONE COLUMN when the rows carry cells. Five round markers plus a name
+           does not fit a third of a portrait card at any font worth reading. */
+        cols: recent ? 1 : null,
         title: recent ? 'Most booked, last five rounds' : 'Most booked this season',
         subtitle: withLedger.map(function (L) { return L.code; }).join(' \u00b7 ')
           + ' \u00b7 2026-27',
         panels: withLedger.map(function (L) {
           var from = recent ? recentFrom(L) : null;
+          var heads = null;
+          if (recent) {
+            heads = [];
+            for (var rd = from; rd <= (L.bookings.rounds || 0); rd++) heads.push('R' + rd);
+          }
           return {
             code: L.code, title: L.name,
             sub: recent ? 'rounds ' + from + '\u2013' + (L.bookings.rounds || 0)
                         : 'through round ' + (L.bookings.rounds || 0),
+            cells: heads,
             rows: bookedRows(L, from).slice(0, 10).map(function (r) {
-              return { n: r.n, c: r.c, v: r.cards };
+              return { n: r.n, c: r.c, v: r.cards, cells: r.cells };
             })
           };
         })

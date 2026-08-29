@@ -28,6 +28,18 @@ on:
     - cron: '20 7 * * *'
     - cron: '20 15 * * *'
     - cron: '20 19 * * *'
+    # AND AFTER THE FOOTBALL. The three above were placed for when APPOINTMENTS
+    # are published; this job now also carries the bookings ledger, which is
+    # only interesting once matches have FINISHED. These four cover the windows
+    # the three divisions actually kick off in — an English 15:00 and 17:30, an
+    # English midweek 19:45 and a Spanish 21:00 — so a card shown on Saturday
+    # afternoon is on the page within about two hours rather than the following
+    # morning. Each run costs three calls plus one per newly finished fixture,
+    # because the ledger harvest skips what it already has.
+    - cron: '20 17 * * *'
+    - cron: '20 21 * * *'
+    - cron: '20 23 * * *'
+    - cron: '20 1 * * *'
   workflow_dispatch:
     inputs:
       season_fixtures:
@@ -73,6 +85,32 @@ jobs:
               || echo "::warning::$L fixtures unavailable this run — keeping the committed file"
           done
 
+      # THE BOOKINGS LEDGER, here rather than in the daily refresh because a
+      # leaderboard of cards shown is stale the moment a match finishes, and
+      # data-refresh.yml runs once a day. Incremental: `--only-new` skips every
+      # fixture already recorded, so an ordinary run is one fixtures call a
+      # league plus one per match that has finished since the last run.
+      #
+      # continue-on-error, like every optional leg: a league the plan refuses
+      # must not take the fixture harvest down with it, and a ledger that fails
+      # to build leaves the committed one exactly as it was.
+      - name: This season's bookings ledger
+        continue-on-error: true
+        run: |
+          for L in PL EFLC LL; do
+            LOWER=$(echo $L | tr A-Z a-z)
+            case $L in
+              PL)   LEDGER=pl_bookings.js ;;
+              EFLC) LEDGER=eflc_bookings.js ;;
+              LL)   LEDGER=laliga_bookings.js ;;
+            esac
+            python3 data/harvest_apifootball.py --player-matches --league $L \
+              --out ${LOWER}_season_matches.json --only-new $LEDGER \
+              && python3 data/build_bookings.py --league $L \
+                   --from ${LOWER}_season_matches.json --season 2026-27 \
+              || echo "::warning::$L bookings ledger unavailable this run"
+          done
+
       # The measurement the sourcing note asked for: how many appointments are
       # known, and how far ahead. Printed every run so the lead time by league
       # becomes an observed fact rather than an assumption.
@@ -91,7 +129,8 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          for f in data/pl_fixtures.js data/eflc_fixtures.js data/laliga_fixtures.js; do
+          for f in data/pl_fixtures.js data/eflc_fixtures.js data/laliga_fixtures.js \
+                   data/pl_bookings.js data/eflc_bookings.js data/laliga_bookings.js; do
             [ -f "$f" ] && git add "$f"
           done
           # appointments.json is hand-ingested, not written here — but staging

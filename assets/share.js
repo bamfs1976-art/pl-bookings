@@ -592,7 +592,12 @@
          the band is the same height on both canvases, so the content must
          start at the same place on both. */
       var top = 240, gap = many ? 14 : 18;
-      var cols = many ? Math.min(6, Math.ceil(Math.sqrt(panels.length * 1.6)))
+      /* The caller may fix the column count, and the last-five card does:
+         its rows carry a cell per round and need the width, so three leagues
+         are stacked rather than set side by side. Everything else lets the
+         panel count decide. */
+      var cols = spec.cols ? Math.max(1, spec.cols)
+               : many ? Math.min(6, Math.ceil(Math.sqrt(panels.length * 1.6)))
                       : Math.max(1, panels.length);
       var rowsOf = Math.ceil(panels.length / cols) || 1;
       var cw = (w - 2 * pad - gap * (cols - 1)) / cols;
@@ -643,6 +648,24 @@
           return;
         }
         var fs = many ? 14 : 17;
+        /* WHICH ROUNDS, not just how many. A leaderboard says a man has two
+           cards; the cells say he was booked in the last round and the one
+           before, which is the shape of a run rather than a total. Drawn only
+           when the caller supplies them, and reserved for BEFORE the name is
+           fitted so a long name is truncated rather than drawn over them. */
+        var cellW = 30, cellGap = 5;
+        var cellsW = p.cells && p.cells.length
+          ? p.cells.length * cellW + (p.cells.length - 1) * cellGap + 14 : 0;
+        if (p.cells && p.cells.length) {
+          x.fillStyle = '#8b94a5'; x.font = '600 11px ' + BODY;
+          x.textAlign = 'center';
+          p.cells.forEach(function (label, ci) {
+            x.fillText(String(label),
+              cx + cw - 12 - cellsW + 14 + ci * (cellW + cellGap) + cellW / 2,
+              listTop - 8);
+          });
+          x.textAlign = 'left';
+        }
         rows.forEach(function (r, j) {
           var ry = listTop + j * rh + rh - 9;
           x.fillStyle = '#b6bdca'; x.font = '700 ' + (fs - 3) + 'px ' + BODY;
@@ -655,10 +678,32 @@
           x.fillText(String(r.v), cx + cw - 12, ry);
           var vw = x.measureText(String(r.v)).width;
           x.textAlign = 'left';
-          x.font = '700 ' + fs + 'px ' + BODY;
+          if (r.cells) {
+            r.cells.forEach(function (n, ci) {
+              var bx = cx + cw - 12 - vw - 10 - cellsW + 14 + ci * (cellW + cellGap);
+              var by = ry - rh + 10, bh = rh - 8;
+              if (n > 0) {
+                x.fillStyle = n > 1 ? '#b91c1c' : '#f2c200';
+                roundRect(x, bx, by, cellW, bh, 6); x.fill();
+                x.fillStyle = n > 1 ? '#fff' : '#3a2f00';
+                x.font = '800 ' + (fs - 3) + 'px ' + DISP;
+                x.textAlign = 'center';
+                x.fillText(String(n), bx + cellW / 2, by + bh - 5);
+                x.textAlign = 'left';
+              } else {
+                /* An empty round is drawn, not skipped: five cells always,
+                   so the columns line up down the panel and a gap reads as a
+                   match he got through rather than a missing round. */
+                x.fillStyle = '#e6e9ef';
+                roundRect(x, bx, by, cellW, bh, 6); x.fill();
+              }
+            });
+          }
+          x.fillStyle = '#0c1322'; x.font = '700 ' + fs + 'px ' + BODY;
           var nameX = cx + 12 + (fs > 15 ? 24 : 20);
           var label = r.c ? r.n + '  ' + r.c : r.n;
-          x.fillText(fit(x, label, cx + cw - 12 - vw - 10 - nameX), nameX, ry);
+          x.fillText(fit(x, label, cx + cw - 12 - vw - 10 - cellsW - 10 - nameX),
+                     nameX, ry);
         });
       });
 

@@ -24,7 +24,7 @@
 //      not a fault.
 //
 //     node scripts/check-booked.mjs
-import { readFileSync, existsSync } from 'node:fs';
+import { readFileSync, existsSync, readdirSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
 import assert from 'node:assert/strict';
@@ -145,6 +145,26 @@ for (const [file, konst, code] of LEDGERS) {
   }
 }
 
+/* ---- 4a. and WHICH round, not only how many ---------------------------- */
+/* The recent table's whole point is the shape of a run: two cards is a total,
+   "booked in the last round and the one before" is form. Both the table and
+   its share card have to carry the per-round cells, and they have to come
+   from the SAME row — deriving them twice is how the card would come to
+   disagree with the table it was exported from. */
+/* Two assertions, not one with an `||`. Written as an alternation it passed
+   with either half deleted, which is the one thing it was there to prevent:
+   the row builder and the card each need their own. */
+assert.ok(/cells: cells/.test(today),
+  'bookedRows no longer attaches the per-round cells to a row, so the ' +
+  'last-five table and its card can only show a total');
+assert.ok(/bookedTable\(rows, 10, \{ rounds: heads \}\)/.test(today),
+  'the last-five table is drawn without its round columns');
+assert.ok(/cells: r\.cells/.test(today),
+  'the last-five share card is built without the per-round cells the table shows');
+assert.ok(/r\.cells\.forEach/.test(read('assets/share.js')),
+  'assets/share.js no longer draws the per-round cells, so the card and the ' +
+  'page show different things');
+
 /* ---- 5. an absent ledger is a state, not a fault ----------------------- */
 assert.ok(/No bookings have been/.test(today),
   'today.html no longer says anything when no ledger has been built — a blank ' +
@@ -167,7 +187,38 @@ assert.ok(/rankCard: rankCard/.test(share), 'assets/share.js does not export ran
 assert.equal((share.match(/function rankCard\(/g) || []).length, 1,
   'there is more than one rank-card builder');
 
+/* ---- 7. exactly ONE workflow builds the ledger, and it commits it ------- */
+/* It was in two: the daily refresh and the three-times-a-day fixture job. Two
+   copies of a build step is this repository's most reliable way of producing
+   two that disagree, and the daily one was redundant the moment the frequent
+   one existed. The ledger is only interesting once matches have FINISHED, so
+   it belongs with the job that runs after them. */
+const wf = join(root, '.github', 'workflows');
+const flows = readdirSync(wf).filter((f) => /\.ya?ml$/.test(f));
+const ledgerJobs = flows.filter((f) =>
+  /build_bookings\.py/.test(readFileSync(join(wf, f), 'utf8')));
+assert.equal(ledgerJobs.length, 1,
+  `${ledgerJobs.length} workflow(s) build the bookings ledger (${ledgerJobs.join(', ')}) — ` +
+  'one owner, or the two will drift and the page will show whichever ran last');
+const owner = readFileSync(join(wf, ledgerJobs[0]), 'utf8');
+for (const f of ['pl_bookings.js', 'eflc_bookings.js', 'laliga_bookings.js']) {
+  assert.ok(owner.includes('data/' + f),
+    `${ledgerJobs[0]} builds the ledger but never stages data/${f} — the file is ` +
+    'written on the runner, reported in the log, and discarded when it is torn down');
+}
+/* AND IT RUNS AFTER THE FOOTBALL, not once a day. A leaderboard of cards
+   shown is stale the moment a match finishes. */
+const crons = [...owner.matchAll(/cron:\s*'(\d+)\s+(\d+)/g)].map((m) => Number(m[2]));
+assert.ok(crons.length >= 5,
+  `the ledger is rebuilt ${crons.length} time(s) a day, which cannot follow a ` +
+  'round of football — matches finish through the afternoon and the evening');
+assert.ok(crons.some((h) => h >= 16 && h <= 18),
+  'nothing runs in the hour after an English afternoon kick-off finishes');
+assert.ok(crons.some((h) => h >= 21 || h <= 1),
+  'nothing runs after a Spanish evening kick-off finishes');
+
 console.log(`check-booked OK: ${seen} ledger(s), ${players} booked player(s), ` +
   `${cards} card(s); no player recorded with more than two in a match, the ` +
   'recent window slices on rounds, one row builder feeds all three tables, ' +
-  'and every section shares through one card');
+  `every section shares through one card, and ${ledgerJobs[0]} rebuilds it ` +
+  `${crons.length} times a day`);
