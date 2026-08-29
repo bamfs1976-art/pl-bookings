@@ -1,7 +1,6 @@
-La Liga 2025: 10166 player-matches over 374 fixtures, 1435 carded.
-fouls recorded on 5066/10166 rows (50%)
+La Liga 2026: 698 player-matches over 22 fixtures, 104 carded.
+fouls recorded on 371/698 rows (53%)
 explicit zeros: 0
-fixtures wholly without fouls: 0, partly: 374, of 374
-minutes on null rows: median 65, max 90
+fixtures wholly without fouls: 0, partly: 22, of 22
+minutes on null rows: median 64, max 102
 VERDICT: the feed never writes an explicit 0, so null MEANS zero — decode it as zero rather than as missing.
-ll_match_history.json: 10166 match rows over 554 players, 1435 carded (14.1%); 5100 row(s) (50%) had a null foul count, decoded as nought.
