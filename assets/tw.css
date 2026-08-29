@@ -161,6 +161,8 @@ html[data-theme="dark"].lg-all {--accent:#22d3ee;--ring:var(--accent)}
    the bar that is about the desk rather than about the football, and the
    hollow centre is what says so at 9px. */
 .lb-record .lb-dot{background:none;border:2px solid var(--warn-ink);box-sizing:border-box}
+/* MOST BOOKED. A solid yellow, the colour of the thing being counted. */
+.lb-booked .lb-dot{background:var(--yellow-card,#f2c200)}
 /* ONE FILE, FIVE ROUTES. today.html serves `/` (today's matches), /today (the
    season calendar), /accas (every combination), /derbies (every derby, all
    three divisions) and /record (what the desk rated against what turned up); an early script in its head stamps <html data-route>.
@@ -181,14 +183,16 @@ html[data-theme="dark"].lg-all {--accent:#22d3ee;--ring:var(--accent)}
 [data-route="season"] [data-for]:not([data-for~="season"]),
 [data-route="accas"] [data-for]:not([data-for~="accas"]),
 [data-route="derbies"] [data-for]:not([data-for~="derbies"]),
-[data-route="record"] [data-for]:not([data-for~="record"]){display:none}
+[data-route="record"] [data-for]:not([data-for~="record"]),
+[data-route="booked"] [data-for]:not([data-for~="booked"]){display:none}
 /* The fixture list is shared by the two match routes and belongs to neither
    alone, so it is hidden by route rather than tagged data-for. /accas is about
    the slips and /derbies about the rivalries; a reader who wants the matches
    has two routes that are. */
 [data-route="accas"] #listCard,
 [data-route="derbies"] #listCard,
-[data-route="record"] #listCard{display:none}
+[data-route="record"] #listCard,
+[data-route="booked"] #listCard{display:none}
 
 /* ─── /derbies ──────────────────────────────────────────────────────────────
    A dense list rather than the fixture cards the other routes draw: eighty-odd
@@ -1580,3 +1584,18 @@ tr[data-club]:focus-visible{outline:3px solid var(--ring);outline-offset:-3px}
   text-align:left}
 .rec-table td.num,.rec-table th[scope=col]:not(:first-child){text-align:right}
 .rec-table th[scope=row]{font-weight:600;color:var(--text)}
+
+/* ── Most booked: three ranked tables off one ledger ────────────────────── */
+.bk-block,.bk-club{margin:0 0 1.1rem}
+.bk-h{font-size:14px;margin:.9rem 0 .3rem;display:flex;align-items:center;gap:.4rem}
+.bk-h .faint{font-weight:400;font-size:12.5px}
+.bk-table{width:100%;max-width:520px;border-collapse:collapse;font-size:13.5px}
+.bk-table th,.bk-table td{padding:.28rem .5rem;border-bottom:1px solid var(--border);
+  text-align:left}
+.bk-table th[scope=col]{font-size:12px;color:var(--text-2);font-weight:600}
+.bk-table td.num,.bk-table th[scope=col]:last-child{text-align:right}
+.bk-table th[scope=row]{font-weight:600}
+.bk-rank{width:2.2rem;color:var(--text-2);text-align:right}
+/* The club tables are short and there are twenty-four of them, so they read as
+   a grid rather than a column half a mile long. */
+#bookedClubs{display:grid;gap:1rem;grid-template-columns:repeat(auto-fill,minmax(280px,1fr))}

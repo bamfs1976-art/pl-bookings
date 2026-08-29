@@ -39,6 +39,7 @@
     var route = p === '/accas' || p === '/accas.html' ? 'accas'
       : p === '/derbies' || p === '/derbies.html' ? 'derbies'
       : p === '/record' || p === '/record.html' ? 'record'
+      : p === '/booked' || p === '/booked.html' ? 'booked'
       : (p === '/today' || p === '/season' || p === '/today.html') ? 'season'
       : 'home';
     document.documentElement.setAttribute('data-route', route);
@@ -48,6 +49,8 @@
       ? 'Every derby, all season, all three divisions — Bookings Desk'
       : route === 'record'
       ? 'Track record — what the desk rated against what turned up — Bookings Desk'
+      : route === 'booked'
+      ? 'Most booked — every league, every club — Bookings Desk'
       : route === 'season'
       ? 'Every date, all season — Bookings Desk'
       : "Today's matches — Bookings Desk";
@@ -168,6 +171,7 @@
     <a class="lb-item lb-accas" href="/accas"><span class="lb-dot"></span><span class="lb-full">Accas</span><span class="lb-abbr">Accas</span></a>
     <a class="lb-item lb-derbies" href="/derbies"><span class="lb-dot"></span><span class="lb-full">Derbies</span><span class="lb-abbr">Derbies</span></a>
     <a class="lb-item lb-record" href="/record"><span class="lb-dot"></span><span class="lb-full">Track record</span><span class="lb-abbr">Record</span></a>
+    <a class="lb-item lb-booked" href="/booked"><span class="lb-dot"></span><span class="lb-full">Most booked</span><span class="lb-abbr">Booked</span></a>
     <a class="lb-item lb-pl" href="/pl"><span class="lb-dot"></span><span class="lb-full">Premier League</span><span class="lb-abbr">PL</span></a>
     <a class="lb-item lb-eflc" href="/eflc"><span class="lb-dot"></span><span class="lb-full">Championship</span><span class="lb-abbr">Championship</span></a>
     <a class="lb-item lb-ll" href="/laliga"><span class="lb-dot"></span><span class="lb-full">La Liga</span><span class="lb-abbr">La Liga</span></a>
@@ -265,6 +269,61 @@
       reports a bias the model does not have.
     </p>
     <div class="stats" id="statsRecord"></div>
+  </section>
+
+  <!-- MOST BOOKED — three questions, one ledger.
+       Season totals per league, season totals per club, and the last five
+       rounds. All three come from data/<league>_bookings.js, which records
+       only the rounds a player was booked in: the season figure is the sum
+       and the recent one is the sum over the last five rounds. There is no
+       second source and no second convention, so the three tables cannot
+       disagree with each other. /booked only. -->
+  <section class="hero" data-for="booked">
+    <h1>Most booked</h1>
+    <p class="muted" style="margin:8px 0 0;max-width:70ch">
+      Cards actually shown this season, across all three divisions — not the model's
+      forecast. A <b>second yellow counts once</b>, as the dismissal it is, which is how
+      every card market counts it and how the desk's own match record does.
+      The last-five table is by <b>round</b>, not by date: a league plays a round at a
+      time, so a Friday fixture and the following Monday's belong to the same week of
+      football however the calendar falls.
+      For what the desk <i>expects</i> rather than what happened, see
+      <a href="/">today&rsquo;s matches</a>; for how those forecasts have scored, the
+      <a href="/record">track record</a>.
+    </p>
+    <div class="stats" id="statsBooked"></div>
+  </section>
+
+  <section class="card" id="bookedCard" data-for="booked" style="margin-top:14px" hidden>
+    <div class="controls" style="margin-bottom:4px">
+      <h2 style="font-size:16px">Top 10 in each division</h2>
+      <span class="spacer"></span>
+      <button class="mkt" type="button" data-book-share="league">&#11015; Share</button>
+    </div>
+    <div id="bookedLeagues"></div>
+  </section>
+
+  <section class="card" id="bookedRecentCard" data-for="booked" style="margin-top:14px" hidden>
+    <div class="controls" style="margin-bottom:4px">
+      <h2 style="font-size:16px">Top 10 in the last five rounds</h2>
+      <span class="spacer"></span>
+      <button class="mkt" type="button" data-book-share="recent">&#11015; Share</button>
+    </div>
+    <p class="faint" id="bookedRecentSub" style="font-size:12.5px;margin:0"></p>
+    <div id="bookedRecent"></div>
+  </section>
+
+  <section class="card" id="bookedClubCard" data-for="booked" style="margin-top:14px" hidden>
+    <div class="controls" style="margin-bottom:4px">
+      <h2 style="font-size:16px">Top 5 at every club</h2>
+      <span class="spacer"></span>
+      <label style="font-size:13px;display:inline-flex;align-items:center;gap:6px">
+        League
+        <select id="bookedClubLeague"></select>
+      </label>
+      <button class="mkt" type="button" data-book-share="clubs">&#11015; Share</button>
+    </div>
+    <div id="bookedClubs"></div>
   </section>
 
   <section class="card" id="recordCard" data-for="record" style="margin-top:14px" hidden>
@@ -509,7 +568,12 @@
       var L = {
         code: s.code, name: s.name, href: s.href,
         clubs: d.CLUBS, refs: d.REFS, players: d.players, fixtures: d.fixtures,
-        model: d.model, sim: d.sim
+        model: d.model, sim: d.sim,
+        /* Optional: the ledger only exists once a harvest has run, and a
+           league without one is a league with no leaderboard yet rather than
+           a league that fails to load. It is NOT in the readiness test below
+           for that reason. */
+        bookings: d.bookings || null
       };
       return (L.clubs && L.clubs.length && L.players && L.players.length
               && L.fixtures && L.fixtures.length) ? L : null;
@@ -1675,6 +1739,246 @@
   }
 
   /* ═══════════════════════════════════════════════════════════
+   * MOST BOOKED
+   *
+   * Three tables off ONE ledger. data/<league>_bookings.js records, per
+   * booked player, a map of round number to cards shown in that round —
+   * nothing else — so every question here is a sum over the same rows and no
+   * two tables can disagree about how many cards a man has.
+   *
+   * A SECOND YELLOW IS ONE DISMISSAL. Counted in the ledger, not here, so the
+   * page cannot adopt a second convention: see data/build_bookings.py.
+   *
+   * THE RECENT WINDOW IS ROUNDS, NOT DATES. "The last five games" is a
+   * question about a league, and a league plays a round at a time. Slicing on
+   * dates would put a Friday fixture and the following Monday's in different
+   * windows depending on when the page was opened, and the leaderboard would
+   * change under a reader who had not moved.
+   */
+  var RECENT_ROUNDS = 5;
+
+  function bookedRows(L, fromRound) {
+    var led = L.bookings;
+    if (!led || !led.players || !led.players.length) return [];
+    var out = [];
+    led.players.forEach(function (p) {
+      var n = 0;
+      for (var k in p.rds) {
+        if (!Object.prototype.hasOwnProperty.call(p.rds, k)) continue;
+        if (fromRound != null && Number(k) < fromRound) continue;
+        n += Number(p.rds[k]) || 0;
+      }
+      if (n > 0) out.push({ L: L, n: p.n, c: p.c, cards: n });
+    });
+    /* Most cards first; ties by club then name, so the order is stable
+       between builds rather than however the ledger happened to be sorted. */
+    return out.sort(function (a, b) {
+      return b.cards - a.cards || (a.c < b.c ? -1 : a.c > b.c ? 1 : 0)
+        || (a.n < b.n ? -1 : a.n > b.n ? 1 : 0);
+    });
+  }
+
+  function recentFrom(L) {
+    var led = L.bookings;
+    if (!led) return null;
+    return Math.max(1, (Number(led.rounds) || 0) - RECENT_ROUNDS + 1);
+  }
+
+  function leaguesWithLedger() {
+    return LEAGUES.filter(function (L) {
+      return L.bookings && L.bookings.players && L.bookings.players.length;
+    });
+  }
+
+  /* One ranked list, as a table. Shared by all three sections because they
+     differ only in which rows they are given — a second row builder is how
+     the club table would come to count a second yellow differently from the
+     league table above it. */
+  function bookedTable(rows, limit, opts) {
+    var o = opts || {};
+    var show = rows.slice(0, limit);
+    if (!show.length) {
+      return '<p class="faint" style="font-size:13px">Nobody booked yet.</p>';
+    }
+    var body = show.map(function (r, i) {
+      var club = o.club === false ? ''
+        : '<td><span class="lg ' + esc(r.L.code) + '">' + esc(r.c) + '</span></td>';
+      return '<tr><td class="num bk-rank">' + (i + 1) + '</td>'
+        + '<th scope="row">' + esc(r.n) + '</th>'
+        + club
+        + '<td class="num"><b>' + r.cards + '</b></td></tr>';
+    }).join('');
+    return '<table class="bk-table"><thead><tr>'
+      + '<th scope="col" class="bk-rank">#</th><th scope="col">Player</th>'
+      + (o.club === false ? '' : '<th scope="col">Club</th>')
+      + '<th scope="col">Cards</th></tr></thead><tbody>' + body + '</tbody></table>';
+  }
+
+  function renderBooked() {
+    if (!onRoute('booked')) {
+      ['#bookedCard', '#bookedRecentCard', '#bookedClubCard'].forEach(function (id) {
+        var el = $(id); if (el) el.hidden = true;
+      });
+      return;
+    }
+    var withLedger = leaguesWithLedger();
+    var host = $('#bookedLeagues');
+    if (!withLedger.length) {
+      /* NOT AN ERROR, AND SAID SO. Before the first harvest there is no ledger
+         and the honest state is "no cards recorded yet", not a blank page —
+         which is indistinguishable from a broken one. */
+      if (host) {
+        host.innerHTML = '<p class="faint" style="font-size:13px">No bookings have been '
+          + 'recorded yet. The ledger is built by the data-refresh workflow from the '
+          + 'finished fixtures of this season; it appears here on the first run after '
+          + 'a round has been played.</p>';
+      }
+      $('#bookedCard').hidden = false;
+      $('#bookedRecentCard').hidden = true;
+      $('#bookedClubCard').hidden = true;
+      return;
+    }
+
+    /* ---- top 10 in each division ---- */
+    host.innerHTML = withLedger.map(function (L) {
+      var rows = bookedRows(L, null);
+      return '<div class="bk-block"><h3 class="bk-h">'
+        + '<a class="lg ' + esc(L.code) + '" href="' + esc(L.href) + '">'
+        + esc(L.code) + '</a> ' + esc(L.name)
+        + ' <span class="faint">' + rows.length + ' booked · through round '
+        + (L.bookings.rounds || 0) + '</span></h3>'
+        + bookedTable(rows, 10, {}) + '</div>';
+    }).join('');
+    $('#bookedCard').hidden = false;
+
+    /* ---- top 10 in the last five rounds ---- */
+    $('#bookedRecent').innerHTML = withLedger.map(function (L) {
+      var from = recentFrom(L);
+      var rows = bookedRows(L, from);
+      return '<div class="bk-block"><h3 class="bk-h">'
+        + '<a class="lg ' + esc(L.code) + '" href="' + esc(L.href) + '">'
+        + esc(L.code) + '</a> ' + esc(L.name)
+        + ' <span class="faint">rounds ' + from + '\u2013' + (L.bookings.rounds || 0)
+        + '</span></h3>'
+        + bookedTable(rows, 10, {}) + '</div>';
+    }).join('');
+    $('#bookedRecentSub').textContent = 'The five most recent rounds each division has '
+      + 'played. Early in a season that is every round it has played, so this table and '
+      + 'the one above say the same thing until round six.';
+    $('#bookedRecentCard').hidden = false;
+
+    /* ---- top 5 at every club ---- */
+    var sel = $('#bookedClubLeague');
+    if (sel && !sel.options.length) {
+      sel.innerHTML = withLedger.map(function (L) {
+        return '<option value="' + esc(L.code) + '">' + esc(L.name) + '</option>';
+      }).join('');
+      sel.addEventListener('change', renderBooked);
+    }
+    var pick = withLedger.filter(function (L) {
+      return !sel || !sel.value || L.code === sel.value;
+    })[0] || withLedger[0];
+    var byClub = {};
+    bookedRows(pick, null).forEach(function (r) {
+      (byClub[r.c] = byClub[r.c] || []).push(r);
+    });
+    /* EVERY club in the division, not only the ones with a booking. A club
+       missing from a list of clubs reads as a page that failed to load it;
+       "nobody booked yet" is a fact about a quiet fortnight. */
+    var clubs = (pick.clubs || []).map(function (c) { return c.short; })
+      .filter(Boolean).sort();
+    if (!clubs.length) clubs = Object.keys(byClub).sort();
+    $('#bookedClubs').innerHTML = clubs.map(function (short) {
+      var rows = byClub[short] || [];
+      var total = rows.reduce(function (a, r) { return a + r.cards; }, 0);
+      return '<div class="bk-club"><h3 class="bk-h">' + esc(clubName(pick, short))
+        + ' <span class="faint">' + total + ' card' + (total === 1 ? '' : 's')
+        + '</span></h3>' + bookedTable(rows, 5, { club: false }) + '</div>';
+    }).join('');
+    $('#bookedClubCard').hidden = false;
+
+    var totals = withLedger.reduce(function (a, L) {
+      var rows = bookedRows(L, null);
+      a.players += rows.length;
+      a.cards += rows.reduce(function (x, r) { return x + r.cards; }, 0);
+      return a;
+    }, { players: 0, cards: 0 });
+    var top = withLedger.reduce(function (m, L) {
+      var r = bookedRows(L, null)[0];
+      return r && (!m || r.cards > m.cards) ? r : m;
+    }, null);
+    $('#statsBooked').innerHTML = ''
+      + '<div class="stat"><b>' + totals.cards + '</b><span>cards shown</span></div>'
+      + '<div class="stat"><b>' + totals.players + '</b><span>players booked</span></div>'
+      + '<div class="stat"><b>' + withLedger.length + '</b><span>divisions recorded</span></div>'
+      + (top ? '<div class="stat"><b>' + esc(top.n) + ' ' + top.cards
+          + '</b><span>most booked</span></div>' : '');
+  }
+
+  /* ---- the three share cards ---- */
+  /* All three go through S.rankCard, which chooses portrait or a landscape
+     grid from the number of panels. The page does not pick a shape; three
+     divisions and twenty-four clubs are different pictures and the data says
+     which. */
+  function bookedShare(kind, btn) {
+    if (!S || !S.rankCard) return;
+    var withLedger = leaguesWithLedger();
+    if (!withLedger.length) return;
+    var spec, sel = $('#bookedClubLeague');
+    if (kind === 'clubs') {
+      var pick = withLedger.filter(function (L) {
+        return !sel || !sel.value || L.code === sel.value;
+      })[0] || withLedger[0];
+      var byClub = {};
+      bookedRows(pick, null).forEach(function (r) {
+        (byClub[r.c] = byClub[r.c] || []).push(r);
+      });
+      var clubs = (pick.clubs || []).map(function (c) { return c.short; })
+        .filter(Boolean).sort();
+      if (!clubs.length) clubs = Object.keys(byClub).sort();
+      spec = {
+        league: pick.code, limit: 5,
+        title: 'Most booked at every club',
+        subtitle: pick.name + ' \u00b7 2026-27 \u00b7 through round ' + (pick.bookings.rounds || 0),
+        panels: clubs.map(function (short) {
+          return { title: clubName(pick, short),
+                   rows: (byClub[short] || []).slice(0, 5).map(function (r) {
+                     return { n: r.n, v: r.cards };
+                   }) };
+        })
+      };
+    } else {
+      var recent = kind === 'recent';
+      spec = {
+        league: 'ALL', limit: 10,
+        title: recent ? 'Most booked, last five rounds' : 'Most booked this season',
+        subtitle: withLedger.map(function (L) { return L.code; }).join(' \u00b7 ')
+          + ' \u00b7 2026-27',
+        panels: withLedger.map(function (L) {
+          var from = recent ? recentFrom(L) : null;
+          return {
+            code: L.code, title: L.name,
+            sub: recent ? 'rounds ' + from + '\u2013' + (L.bookings.rounds || 0)
+                        : 'through round ' + (L.bookings.rounds || 0),
+            rows: bookedRows(L, from).slice(0, 10).map(function (r) {
+              return { n: r.n, c: r.c, v: r.cards };
+            })
+          };
+        })
+      };
+    }
+    if (btn) { btn.disabled = true; btn.dataset.label = btn.dataset.label || btn.textContent;
+               btn.textContent = 'Building\u2026'; }
+    S.rankCard(spec).then(function (b) {
+      S.download(b, S.slug(spec.title) + '.png');
+    }).catch(function (e) {
+      console.warn('[Bookings Desk] booked card:', e);
+    }).then(function () {
+      if (btn) { btn.disabled = false; btn.textContent = btn.dataset.label; }
+    });
+  }
+
+  /* ═══════════════════════════════════════════════════════════
    * THE TRACK RECORD
    *
    * Reads /api/match-record — the graded rows, server-side, shared across
@@ -1946,7 +2250,7 @@
      add a route here is silent: the head stamps data-route correctly, the CSS
      shows the right blocks, and the SCRIPT quietly builds the home page
      underneath them. It cost this route a debugging session. */
-  if (['season', 'accas', 'derbies', 'record'].indexOf(ROUTE) < 0) ROUTE = 'home';
+  if (['season', 'accas', 'derbies', 'record', 'booked'].indexOf(ROUTE) < 0) ROUTE = 'home';
   /* The accas and derbies routes show no fixture list, so which LIST they
      would have shown is not a question they ask. Both index and price exactly
      as the other two do — the slips and the derby heat are built off the same
@@ -1998,6 +2302,7 @@
     renderCombos();
     renderDerbies();
     renderRecord();
+    renderBooked();
   }
 
   /* ---- the combined card ------------------------------------------------ */
@@ -2486,6 +2791,7 @@
       : ROUTE === 'accas' ? '.lb-accas'
       : ROUTE === 'derbies' ? '.lb-derbies'
       : ROUTE === 'record' ? '.lb-record'
+      : ROUTE === 'booked' ? '.lb-booked'
       : '.lb-today');
     if (cur) cur.setAttribute('aria-current', 'page');
     /* Only the derby list redraws — nothing else on the page reads it. */
@@ -2500,6 +2806,12 @@
     /* Fetched rather than baked: the record grows every time a match is
        graded, and a build is not what should decide how fresh it is. */
     loadRecord();
+    /* Delegated on the page: the three /booked cards are rebuilt whenever the
+       club filter changes, so a listener per button would be lost. */
+    document.addEventListener('click', function (ev) {
+      var b = ev.target.closest ? ev.target.closest('[data-book-share]') : null;
+      if (b) bookedShare(b.getAttribute('data-book-share'), b);
+    });
     /* And scroll it into view NOW. The shared module already ran its own pass
        on DOMContentLoaded and found nothing current to centre, because on this
        file the marker is set here rather than in the markup. */

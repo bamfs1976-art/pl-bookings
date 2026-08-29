@@ -562,6 +562,112 @@
    * `tag` is drawn as a small league flag — used only by the combined card,
    * where a row's league is not implied by the header.
    */
+  /* ---- a ranked leaderboard, one to many panels ------------------------- */
+  /*
+   * spec = {
+   *   league, title, subtitle, note,
+   *   panels: [{ title, sub, code, rows: [{n, c, v}] }]
+   * }
+   *
+   * ONE BUILDER FOR ALL THREE SECTIONS on /booked — the divisions, the last
+   * five rounds, and every club. They differ only in how many panels there
+   * are and what is in them, and a second builder is how the club card would
+   * come to count a second yellow differently from the league card beside it.
+   *
+   * THE CANVAS FOLLOWS THE PANEL COUNT rather than the other way round. Three
+   * panels of ten fit the portrait card every other share here uses; twenty-four
+   * panels of five do not, at any font a phone can read. So a card with more
+   * than four panels is drawn landscape on a grid, and the caller does not
+   * choose — the shape of the data does. A fixed portrait card would have
+   * produced twenty-four unreadable columns, and a fixed landscape one would
+   * have made the three-division card mostly white.
+   */
+  function rankCard(spec) {
+    return ready().then(function () {
+      var panels = (spec.panels || []).filter(function (p) { return p && p.rows; });
+      var many = panels.length > 4;
+      var w = many ? SW : W, pad = many ? 40 : P;
+      /* 240 EITHER WAY. The landscape grid started at 210 and the subtitle
+         brandBand draws at ~203 was overlapped by the first row of panels —
+         the band is the same height on both canvases, so the content must
+         start at the same place on both. */
+      var top = 240, gap = many ? 14 : 18;
+      var cols = many ? Math.min(6, Math.ceil(Math.sqrt(panels.length * 1.6)))
+                      : Math.max(1, panels.length);
+      var rowsOf = Math.ceil(panels.length / cols) || 1;
+      var cw = (w - 2 * pad - gap * (cols - 1)) / cols;
+
+      /* THE CANVAS IS SIZED TO THE CONTENT, not the content to the canvas.
+         Ten names in a panel a thousand pixels tall is the same defect the
+         stat sheet's middle column had — a card that reads as though it
+         failed to finish. Every other share here is a fixed portrait because
+         its content is fixed; this one holds anywhere from five rows to
+         twenty-four panels of five, so the height follows. */
+      var rh = many ? 26 : 34;
+      var limit = spec.limit || 10;
+      var deepest = panels.reduce(function (m, p) {
+        return Math.max(m, Math.min(p.rows.length, limit) || 1);
+      }, 1);
+      var headH = panels.some(function (p) { return p.sub; }) ? (many ? 52 : 58) : 44;
+      var ch = headH + deepest * rh + 12;
+      var footH = many ? 84 : 108;
+      var h = Math.round(top + rowsOf * ch + gap * (rowsOf - 1) + footH);
+
+      var th = theme(spec.league), k = canvas(w, h), x = k.x;
+      brandBand(x, th, spec.title, spec.subtitle, w);
+
+      panels.forEach(function (p, i) {
+        var cx = pad + (i % cols) * (cw + gap);
+        var cy = top + Math.floor(i / cols) * (ch + gap);
+        x.fillStyle = '#f4f6fa'; roundRect(x, cx, cy, cw, ch, 14); x.fill();
+
+        var hy = cy + 26;
+        if (p.code) {
+          var after = leagueChip(x, cx + 12, hy - 2, p.code);
+          x.fillStyle = '#0c1322'; x.font = '800 17px ' + DISP;
+          x.fillText(fit(x, p.title || '', cx + cw - 12 - after), after + 4, hy + 6);
+        } else {
+          x.fillStyle = '#0c1322'; x.font = '800 ' + (many ? 16 : 19) + 'px ' + DISP;
+          x.fillText(fit(x, p.title || '', cw - 24), cx + 12, hy + 4);
+        }
+        if (p.sub) {
+          x.fillStyle = '#8b94a5'; x.font = '600 12px ' + BODY;
+          x.fillText(fit(x, p.sub, cw - 24), cx + 12, hy + (p.code ? 24 : 22));
+        }
+
+        var listTop = cy + headH;
+        var rows = p.rows.slice(0, limit);
+        if (!rows.length) {
+          x.fillStyle = '#8b94a5'; x.font = '600 13px ' + BODY;
+          x.fillText('Nobody booked yet', cx + 12, listTop + 16);
+          return;
+        }
+        var fs = many ? 14 : 17;
+        rows.forEach(function (r, j) {
+          var ry = listTop + j * rh + rh - 9;
+          x.fillStyle = '#b6bdca'; x.font = '700 ' + (fs - 3) + 'px ' + BODY;
+          x.fillText(String(j + 1), cx + 12, ry);
+          /* The value is drawn first, at the right edge, and the name fitted
+             to what is left — so a long name is truncated and a card is never
+             printed with its numbers overlapped by them. */
+          x.textAlign = 'right';
+          x.fillStyle = '#0c1322'; x.font = '800 ' + fs + 'px ' + DISP;
+          x.fillText(String(r.v), cx + cw - 12, ry);
+          var vw = x.measureText(String(r.v)).width;
+          x.textAlign = 'left';
+          x.font = '700 ' + fs + 'px ' + BODY;
+          var nameX = cx + 12 + (fs > 15 ? 24 : 20);
+          var label = r.c ? r.n + '  ' + r.c : r.n;
+          x.fillText(fit(x, label, cx + cw - 12 - vw - 10 - nameX), nameX, ry);
+        });
+      });
+
+      footer(x, th, spec.note || 'Cards shown \u00b7 a second yellow counts once',
+             w, h);
+      return toBlob(k.c);
+    });
+  }
+
   function roundCard(spec) {
     return ready().then(function () {
       var th = theme(spec.league), k = canvas(), x = k.x;
@@ -1353,6 +1459,7 @@
     THEMES: THEMES, theme: theme,
     matchCard: matchCard, roundCard: roundCard, calendarCard: calendarCard,
     statSheetCard: statSheetCard, SHEET_W: SW, SHEET_H: SH,
+    rankCard: rankCard,
     accaCard: accaCard, accaRowSpec: accaRowSpec, nineFoldSpec: nineFoldSpec,
     deskMatchSpec: deskMatchSpec, deskRoundSpec: deskRoundSpec,
     deskStatSheetSpec: deskStatSheetSpec,

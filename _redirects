@@ -51,6 +51,7 @@
 # show a list.
 /derbies      /today.html   200
 /record       /today.html   200
+/booked       /today.html   200
 
 # The Premier League desk, moved off `/`. Its own internal routing is entirely
 # hash-based (#panel-...), so nothing inside it cares which path it is served

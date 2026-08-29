@@ -332,6 +332,15 @@ jobs:
       - name: The track record grades what the desk showed
         run: node scripts/check-record.mjs
 
+      # /booked states FACTS about named players, which makes it different in
+      # kind from every forecast on this site: a leaderboard that miscounts is
+      # a public claim that a particular man has been booked more often than
+      # he has. The arithmetic that would do it is one specific mistake —
+      # counting a second yellow as a yellow AND a red — and it inflates
+      # exactly the players a leaderboard puts at the top.
+      - name: The bookings leaderboards count what was shown
+        run: node scripts/check-booked.mjs
+
       # Which fixtures are derbies was written down in FOUR places — core.js,
       # plmodel.js and inline in both of the other desks — and two of them had
       # already drifted: core called Brentford v Fulham a West London derby and
