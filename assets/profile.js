@@ -146,15 +146,19 @@
     return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
   }
 
-  function avatar(rec) {
+  /* `cls` for the same reason crest() takes one: the dialog head wants a 34px
+     portrait and the most-booked tables want a 22px one, and the alternative
+     was a second face builder — which is how the leaderboards would come to
+     draw a monogram in a case the player card draws a photograph. */
+  function avatar(rec, cls) {
     var mono = initials(rec.name);
     var style = 'background:hsl(' + clubHue((rec.club && rec.club.short) || rec.name) + ' 45% 38%)';
     if (!rec.photo) {
-      return '<span class="crest crest-chip pp-avatar" style="' + style
-        + '" aria-hidden="true">' + esc(mono) + '</span>';
+      return '<span class="crest crest-chip pp-avatar ' + (cls || '') + '" style="' + style
+        + '" title="' + esc(rec.name || '') + '" aria-hidden="true">' + esc(mono) + '</span>';
     }
-    return '<span class="crest crest-wrap pp-avatar" style="' + style
-      + '" data-mono="' + esc(mono) + '">'
+    return '<span class="crest crest-wrap pp-avatar ' + (cls || '') + '" style="' + style
+      + '" data-mono="' + esc(mono) + '" title="' + esc(rec.name || '') + '">'
       + '<img class="crest-img" src="' + esc(rec.photo) + '" alt="" '
       + 'loading="lazy" decoding="async">'
       + '</span>';
@@ -368,5 +372,6 @@
     if (x) x.focus();
   }
 
-  root.PLDProfile = { crest: crest, wire: wireCrests, open: open, clubHue: clubHue };
+  root.PLDProfile = { crest: crest, face: avatar, wire: wireCrests, open: open,
+                      clubHue: clubHue };
 })(typeof window !== 'undefined' ? window : this);

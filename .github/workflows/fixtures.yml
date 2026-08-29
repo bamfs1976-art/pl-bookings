@@ -104,10 +104,19 @@ jobs:
               EFLC) LEDGER=eflc_bookings.js ;;
               LL)   LEDGER=laliga_bookings.js ;;
             esac
+            # THE BUILD RUNS EVEN IF THE HARVEST DOES NOT, and that is not
+            # belt-and-braces. The build does two jobs now: fold in the newly
+            # finished fixtures, and re-attach each booked player's photograph
+            # from the division's shipped squads. The squads are refreshed by a
+            # different workflow on a different schedule, so a face that only
+            # arrived this morning would otherwise wait for the next round of
+            # football — and on a day the API is down, forever. A missing
+            # harvest file is a stated, handled case in build_bookings.py.
             python3 data/harvest_apifootball.py --player-matches --league $L \
               --out ${LOWER}_season_matches.json --only-new $LEDGER \
-              && python3 data/build_bookings.py --league $L \
-                   --from ${LOWER}_season_matches.json --season 2026-27 \
+              || echo "::warning::$L player-match harvest unavailable this run"
+            python3 data/build_bookings.py --league $L \
+              --from ${LOWER}_season_matches.json --season 2026-27 \
               || echo "::warning::$L bookings ledger unavailable this run"
           done
 

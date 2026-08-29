@@ -215,6 +215,112 @@
     return new Promise(function (res) { c.toBlob(res, 'image/png'); });
   }
 
+  /* ---- faces and badges on the canvas ------------------------------------
+   *
+   * The one rule that matters here: `crossOrigin = 'anonymous'` IS WHAT MAKES
+   * THIS SAFE, and it is not an optimisation. Draw a cross-origin image onto a
+   * canvas without it and the canvas becomes TAINTED — every later toBlob()
+   * throws SecurityError, so a single unlucky badge does not lose a badge, it
+   * loses the whole card, and it does so in a way that looks like the export
+   * button is broken. With the attribute set the browser refuses the image
+   * unless the host sent Access-Control-Allow-Origin, and a refused image
+   * fires `error` and is never drawn. So the canvas cannot be tainted, and the
+   * worst case is the monogram this file drew before any of this existed.
+   *
+   * WHETHER THE HOSTS SEND THAT HEADER IS NOT KNOWN HERE — both are blocked
+   * from the sandbox this was written in, so the fallback is not a nicety, it
+   * is the branch that was actually tested. Nothing about the card depends on
+   * a photograph arriving.
+   *
+   * AND IT NEVER BLOCKS. A share card that waited on a dead host would fail
+   * exactly when someone wanted it (see the file header), so every load is
+   * raced against a deadline and a slow image simply loses. Results are cached
+   * for the session: the club card asks for the same twenty badges every time.
+   */
+  var IMG_MS = 2500;
+  var imgCache = {};
+  function loadImage(url) {
+    if (!url) return Promise.resolve(null);
+    if (imgCache[url]) return imgCache[url];
+    var p = new Promise(function (res) {
+      var done = false, img = new Image();
+      var settle = function (v) { if (!done) { done = true; res(v); } };
+      img.crossOrigin = 'anonymous';
+      img.onload = function () { settle(img.naturalWidth ? img : null); };
+      img.onerror = function () { settle(null); };
+      setTimeout(function () { settle(null); }, IMG_MS);
+      img.src = url;
+    });
+    imgCache[url] = p;
+    return p;
+  }
+
+  /* Every image a spec asks for, resolved before a pixel is drawn — the draw
+     itself stays synchronous, which is what keeps the layout arithmetic in one
+     readable pass rather than scattered across callbacks. */
+  function loadAll(urls) {
+    var want = [];
+    (urls || []).forEach(function (u) { if (u && want.indexOf(u) < 0) want.push(u); });
+    return Promise.all(want.map(loadImage)).then(function (imgs) {
+      var by = {};
+      want.forEach(function (u, i) { by[u] = imgs[i]; });
+      return by;
+    });
+  }
+
+  /* A round portrait, or the initials in a coloured disc. The monogram is the
+     SAME answer the page gives for the same player (assets/profile.js), which
+     is the point: a card that drew a blank where the page draws initials would
+     read as a card that failed to load rather than a face nobody has. */
+  function initials(name) {
+    var parts = String(name || '').trim().split(/\s+/).filter(Boolean);
+    if (!parts.length) return '?';
+    if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
+    return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+  }
+
+  function hueOf(seed) {
+    var s = String(seed || ''), h = 0;
+    for (var i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) % 360;
+    return h;
+  }
+
+  function face(x, img, name, seed, cx, cy, d) {
+    var r = d / 2;
+    x.save();
+    x.beginPath(); x.arc(cx + r, cy + r, r, 0, Math.PI * 2); x.clip();
+    if (img) {
+      /* COVER, not fit. The feed's portraits are head-and-shoulders on a wide
+         plate, and letterboxing one into a circle puts the face in the middle
+         third with grey above and below it. */
+      var s = Math.max(d / img.naturalWidth, d / img.naturalHeight);
+      var iw = img.naturalWidth * s, ih = img.naturalHeight * s;
+      x.drawImage(img, cx + (d - iw) / 2, cy + (d - ih) / 2, iw, ih);
+    } else {
+      x.fillStyle = 'hsl(' + hueOf(seed || name) + ' 45% 38%)';
+      x.fillRect(cx, cy, d, d);
+      x.fillStyle = '#ffffff';
+      x.font = '800 ' + Math.round(d * 0.4) + 'px ' + BODY;
+      x.textAlign = 'center';
+      x.fillText(initials(name), cx + r, cy + r + d * 0.14);
+      x.textAlign = 'left';
+    }
+    x.restore();
+  }
+
+  /* A club badge, or the code on the club's own colour — the same ladder the
+     text badge() already walked, with one rung added on top. */
+  function crestOn(x, img, short, palette, th, cx, cy, d) {
+    if (!img) return badge(x, cx, cy + d / 2, short, palette, th, d, d);
+    var s = Math.min(d / img.naturalWidth, d / img.naturalHeight);
+    var iw = img.naturalWidth * s, ih = img.naturalHeight * s;
+    /* CONTAIN for a badge, where cover is right for a face: a crest is a
+       designed shape and cropping it is how a club's mark stops being its
+       mark. */
+    x.drawImage(img, cx + (d - iw) / 2, cy + (d - ih) / 2, iw, ih);
+    return cx + d;
+  }
+
   /* ---- the acca strip --------------------------------------------------- */
   /* Combined chance assumes the legs are independent, which is a research
      estimate rather than a price: two bookings in the SAME match are
@@ -583,8 +689,18 @@
    * have made the three-division card mostly white.
    */
   function rankCard(spec) {
-    return ready().then(function () {
-      var panels = (spec.panels || []).filter(function (p) { return p && p.rows; });
+    var panels0 = (spec.panels || []).filter(function (p) { return p && p.rows; });
+    var wanted = [];
+    panels0.forEach(function (p) {
+      if (p.img) wanted.push(p.img);
+      (p.rows || []).forEach(function (r) {
+        if (r.ph) wanted.push(r.ph);
+        if (r.img) wanted.push(r.img);
+      });
+    });
+    return Promise.all([ready(), loadAll(wanted)]).then(function (got) {
+      var pics = got[1];
+      var panels = panels0;
       var many = panels.length > 4;
       var w = many ? SW : W, pad = many ? 40 : P;
       /* 240 EITHER WAY. The landscape grid started at 210 and the subtitle
@@ -632,8 +748,18 @@
           x.fillStyle = '#0c1322'; x.font = '800 17px ' + DISP;
           x.fillText(fit(x, p.title || '', cx + cw - 12 - after), after + 4, hy + 6);
         } else {
+          /* The club card's panels are clubs, so the badge belongs in the
+             heading — it is the only thing that names the club besides the
+             text, and twenty-four text headings read as a spreadsheet. */
+          var tx = cx + 12;
+          if (p.img || p.short) {
+            var bd = many ? 22 : 26;
+            crestOn(x, p.img ? pics[p.img] : null, p.short || '',
+                    spec.palette, th, tx, hy - bd + 4, bd);
+            tx += bd + 8;
+          }
           x.fillStyle = '#0c1322'; x.font = '800 ' + (many ? 16 : 19) + 'px ' + DISP;
-          x.fillText(fit(x, p.title || '', cw - 24), cx + 12, hy + 4);
+          x.fillText(fit(x, p.title || '', cx + cw - 12 - tx), tx, hy + 4);
         }
         if (p.sub) {
           x.fillStyle = '#8b94a5'; x.font = '600 12px ' + BODY;
@@ -699,8 +825,14 @@
               }
             });
           }
-          x.fillStyle = '#0c1322'; x.font = '700 ' + fs + 'px ' + BODY;
+          /* THE FACE, between the rank and the name. Sized off the row so the
+             portrait card's 34px rows and the landscape grid's 26px ones both
+             hold one without crowding the text. */
           var nameX = cx + 12 + (fs > 15 ? 24 : 20);
+          var fd = Math.min(rh - 8, many ? 20 : 26);
+          face(x, r.ph ? pics[r.ph] : null, r.n, r.c, nameX, ry - fd + 4, fd);
+          nameX += fd + 8;
+          x.fillStyle = '#0c1322'; x.font = '700 ' + fs + 'px ' + BODY;
           var label = r.c ? r.n + '  ' + r.c : r.n;
           x.fillText(fit(x, label, cx + cw - 12 - vw - 10 - cellsW - 10 - nameX),
                      nameX, ry);

@@ -1779,7 +1779,15 @@
             cells.push(Number(p.rds[String(rd)]) || 0);
           }
         }
-        out.push({ L: L, n: p.n, c: p.c, cards: n, cells: cells });
+        /* THE FACE COMES OFF THE ROW, joined at build time by
+           data/build_bookings.py against this division's own squads. The page
+           does no name matching: the ledger writes a player the player-match
+           feed's way and the squads write him the squad feed's way, and the
+           rule that reconciles the two is Python, tested, and already the only
+           one in the pipeline. `ph` is absent for a man the join refused —
+           which it does whenever two players at the club match — and a
+           monogram is the honest answer there. */
+        out.push({ L: L, n: p.n, c: p.c, cards: n, cells: cells, ph: p.ph || null });
       }
     });
     /* Most cards first; ties by club then name, so the order is stable
@@ -1817,8 +1825,16 @@
        which is the difference between a tally and a run of form. */
     var heads = o.rounds || null;
     var body = show.map(function (r, i) {
+      /* THE CLUB CELL IS A CREST AND A CODE, on exactly the machinery every
+         other table on this site uses — PLDProfile.crest, which falls back to
+         the club's own colour and a monogram when the badge host does not
+         answer. A second <img> with its own error handling here is a second
+         way for the same failure to look different. */
+      var cb = r.L.clubBy[r.c] || { short: r.c };
       var club = o.club === false ? ''
-        : '<td><span class="lg ' + esc(r.L.code) + '">' + esc(r.c) + '</span></td>';
+        : '<td class="bk-club-cell"><span class="bk-in">'
+          + PLDProfile.crest({ short: r.c, name: cb.name, img: cb.img })
+          + '<span class="lg ' + esc(r.L.code) + '">' + esc(r.c) + '</span></span></td>';
       var cells = '';
       if (heads) {
         cells = (r.cells || []).map(function (n, ci) {
@@ -1829,7 +1845,9 @@
         }).join('');
       }
       return '<tr><td class="num bk-rank">' + (i + 1) + '</td>'
-        + '<th scope="row">' + esc(r.n) + '</th>'
+        + '<th scope="row" class="bk-name"><span class="bk-in">'
+        + PLDProfile.face({ name: r.n, photo: r.ph, club: { short: r.c } }, 'bk-face')
+        + '<span>' + esc(r.n) + '</span></span></th>'
         + club + cells
         + '<td class="num"><b>' + r.cards + '</b></td></tr>';
     }).join('');
@@ -1921,9 +1939,14 @@
     $('#bookedClubs').innerHTML = clubs.map(function (short) {
       var rows = byClub[short] || [];
       var total = rows.reduce(function (a, r) { return a + r.cards; }, 0);
-      return '<div class="bk-club"><h3 class="bk-h">' + esc(clubName(pick, short))
+      /* The badge moves to the heading here, because the rows below it have no
+         club column — every man in this block plays for the club named. */
+      var cb = pick.clubBy[short] || { short: short };
+      return '<div class="bk-club"><h3 class="bk-h bk-club-h">'
+        + PLDProfile.crest({ short: short, name: cb.name, img: cb.img })
+        + '<span>' + esc(clubName(pick, short))
         + ' <span class="faint">' + total + ' card' + (total === 1 ? '' : 's')
-        + '</span></h3>' + bookedTable(rows, 5, { club: false }) + '</div>';
+        + '</span></span></h3>' + bookedTable(rows, 5, { club: false }) + '</div>';
     }).join('');
     $('#bookedClubCard').hidden = false;
 
@@ -1971,9 +1994,10 @@
         title: 'Most booked at every club',
         subtitle: pick.name + ' \u00b7 2026-27 \u00b7 through round ' + (pick.bookings.rounds || 0),
         panels: clubs.map(function (short) {
-          return { title: clubName(pick, short),
+          var cb = pick.clubBy[short] || { short: short };
+          return { title: clubName(pick, short), short: short, img: cb.img || null,
                    rows: (byClub[short] || []).slice(0, 5).map(function (r) {
-                     return { n: r.n, v: r.cards };
+                     return { n: r.n, v: r.cards, ph: r.ph };
                    }) };
         })
       };
@@ -2000,7 +2024,7 @@
                         : 'through round ' + (L.bookings.rounds || 0),
             cells: heads,
             rows: bookedRows(L, from).slice(0, 10).map(function (r) {
-              return { n: r.n, c: r.c, v: r.cards, cells: r.cells };
+              return { n: r.n, c: r.c, v: r.cards, cells: r.cells, ph: r.ph };
             })
           };
         })
@@ -2745,6 +2769,16 @@
 
   whenReady(function () {
   try {
+  /* BEFORE ANYTHING RENDERS. The crest fallback is a delegated `error`
+     listener, and `error` on an <img> fires once and does not replay — so an
+     image that has already failed by the time the listener is attached keeps
+     the browser's broken-image glyph forever. Wiring it after the first render
+     therefore does not fail cleanly, it fails PARTIALLY: the badges that lost
+     the race show a torn-page icon and the rest show the monogram chip, on the
+     same screen. That is what this page had been doing, because it never
+     called wire() at all — the two league desks did, and the guard that
+     enforces it looped over those two pages. */
+  if (typeof PLDProfile !== 'undefined' && PLDProfile.wire) PLDProfile.wire();
   LEAGUES = readFrames();
   LEAGUES.forEach(prepare);
   index();

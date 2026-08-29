@@ -48,12 +48,22 @@ from pathlib import Path
 DATA = Path(__file__).resolve().parent
 sys.path.insert(0, str(DATA))
 
+import build_pl_data as P  # noqa: E402
 import leagues  # noqa: E402
 
 OUT_FOR = {
     "PL": ("pl_bookings.js", "PL_BOOKINGS"),
     "EFLC": ("eflc_bookings.js", "EFLC_BOOKINGS"),
     "LL": ("laliga_bookings.js", "LALIGA_BOOKINGS"),
+}
+
+# The shipped dataset each ledger borrows its faces from. Same division, same
+# club codes, and — the whole reason the join happens HERE — a name written the
+# other feed's way. See attach_photos.
+DATA_FOR = {
+    "PL": ("pl_data.js", "PL_PLAYERS"),
+    "EFLC": ("eflc_data.js", "EFLC_PLAYERS"),
+    "LL": ("laliga_data.js", "LALIGA_PLAYERS"),
 }
 
 
@@ -133,12 +143,63 @@ def merge(shipped, rows, season):
     }
 
 
+def attach_photos(led, league):
+    """Give each booked player his face, from the division's own dataset.
+
+    WHY THE JOIN IS HERE AND NOT ON THE PAGE. The ledger writes a player the
+    way API-Football's player-match feed spells him — "Bright Osayi-Samuel" —
+    and the shipped squads write him the way that division's squad feed does:
+    "B. Osayi-Samuel". An exact match on club and name finds 3 of the
+    Championship's 85 booked players. The rule that reconciles those two
+    spellings already exists, is already tested against real names in both
+    directions (data/test_names.py), and is written in Python. Re-implementing
+    it in the browser to run on every render is how this repository has
+    produced two joins that disagree every previous time, so the page does no
+    joining at all: it reads `ph` off the row.
+
+    AMBIGUITY IS REFUSED, NOT GUESSED, and here that matters more than it does
+    anywhere else in the pipeline. Everywhere else a wrong join costs a rate;
+    on this page it puts a PHOTOGRAPH OF THE WRONG MAN next to a public claim
+    about how often he has been booked. So a name matching two players at the
+    club yields no photograph, and he keeps his monogram.
+
+    Returns (matched, total). Mutates the ledger's rows.
+    """
+    name, konst = DATA_FOR[league]
+    src = DATA / name
+    if not src.exists():
+        return 0, len(led.get("players") or [])
+    squad = P.js_array(src.read_text(encoding="utf-8"), konst, label=name)
+
+    # Tokenise the squad ONCE. This runs over a few hundred booked players
+    # against a few hundred squad rows; tokenising inside the inner loop is
+    # the same work several hundred times over.
+    by_club = {}
+    for s in squad:
+        if not s.get("ph"):
+            continue
+        by_club.setdefault(s.get("c"), []).append((P.name_tokens(s.get("n")), s["ph"]))
+
+    matched = 0
+    for p in led.get("players") or []:
+        p.pop("ph", None)
+        toks = P.name_tokens(p.get("n"))
+        hits = [ph for t, ph in by_club.get(p.get("c"), []) if P.same_tokens(toks, t)]
+        # `set` rather than `len(hits) == 1`: one man listed twice in a squad
+        # with the same photograph is not an ambiguity, two men are.
+        if len(set(hits)) == 1:
+            p["ph"] = hits[0]
+            matched += 1
+    return matched, len(led.get("players") or [])
+
+
 def main():
     ap = argparse.ArgumentParser(description=__doc__,
                                  formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--league", default="EFLC", choices=sorted(OUT_FOR))
-    ap.add_argument("--from", dest="src", required=True,
-                    help="the player-matches harvest to fold in")
+    ap.add_argument("--from", dest="src",
+                    help="the player-matches harvest to fold in; omit to re-attach "
+                         "photographs to the shipped ledger without harvesting")
     ap.add_argument("--season", help="e.g. 2026-27; kept from the ledger if omitted")
     ap.add_argument("--dry-run", action="store_true")
     args = ap.parse_args()
@@ -147,22 +208,41 @@ def main():
     name, konst = OUT_FOR[args.league]
     out = DATA / name
 
-    src = DATA / args.src
-    if not src.exists():
-        print(f"{args.src} not present — nothing harvested, ledger untouched.")
-        return
-    rows = json.loads(src.read_text(encoding="utf-8"))
-    rows = [r for r in rows if (r.get("league") or args.league) == args.league]
+    # NO HARVEST IS A VALID RUN. A round of football changes who is in the
+    # ledger; a squad refresh changes what they look like, and the two arrive
+    # on different schedules. Folding in nothing is a faithful round-trip —
+    # merge() rebuilds every row from the shipped file — so this re-attaches
+    # the faces and rewrites, rather than making a new photograph wait for
+    # somebody to be booked.
+    rows = []
+    src = DATA / args.src if args.src else None
+    if src is not None and not src.exists():
+        print(f"{args.src} not present — nothing to fold in; "
+              "re-attaching photographs only.")
+    elif src is not None:
+        rows = json.loads(src.read_text(encoding="utf-8"))
+        rows = [r for r in rows if (r.get("league") or args.league) == args.league]
 
     shipped = load_shipped(out)
+    if not (shipped.get("players") or rows):
+        print(f"{L.name}: no ledger and nothing harvested — nothing to write.")
+        return
     before = len(shipped.get("players") or [])
     led = merge(shipped, rows, args.season)
+    # AFTER the merge, and every run. merge() rebuilds each row from n, c and
+    # rds alone, so a photograph never survives from the shipped file — which
+    # is what makes this self-healing: a player the squad feed had no face for
+    # in August picks one up on the first build after it does, and a player
+    # who has moved clubs loses one that is no longer his.
+    faces, of = attach_photos(led, args.league)
 
     total = sum(sum(int(v) for v in p["rds"].values()) for p in led["players"])
     print(f"{L.name}: {len(rows)} player-match rows folded in")
     print(f"  {len(led['players'])} booked player(s) (was {before}), "
           f"{total} card(s), rounds 1-{led['rounds']}, "
           f"{len(led['fixtures'])} fixture(s) recorded")
+    print(f"  {faces} of {of} with a photograph"
+          + (f" ({of - faces} draw a monogram)" if of > faces else ""))
     if led["players"]:
         top = led["players"][0]
         print(f"  most booked: {top['n']} ({top['c']}) "

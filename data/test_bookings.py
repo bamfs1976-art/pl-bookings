@@ -94,6 +94,66 @@ just3 = {p["n"]: sum(v for k, v in p["rds"].items() if int(k) in narrow)
 check("a one-round window sees only that round", just3,
       {"A One": 1, "B Two": 0, "D Four": 0})
 
+# ---- the faces, and the one man they must never belong to ----------------
+# The ledger spells a player the player-match feed's way and the squads spell
+# him the squad feed's way, so this join is the reason the page can show a face
+# at all. It is also the most dangerous join in the pipeline: everywhere else a
+# wrong match costs a rate, here it puts a photograph of the wrong man beside a
+# public statement about how often he has been booked.
+def with_squad(players, ledger_names):
+    """Run attach_photos against a written-out squad file for one league."""
+    rows = ",\n".join(
+        '  {c:"%s",n:"%s",ph:%s}' % (c, n, f'"{ph}"' if ph else "null")
+        for c, n, ph in players)
+    led = {"season": "2026-27", "rounds": 1, "fixtures": [1],
+           "players": [{"n": n, "c": c, "rds": {"1": 1}} for c, n in ledger_names]}
+    name, konst = B.DATA_FOR["LL"]
+    real = B.DATA / name
+    keep = real.read_text(encoding="utf-8") if real.exists() else None
+    try:
+        real.write_text(f"const {konst} = [\n{rows},\n];\n", encoding="utf-8")
+        B.attach_photos(led, "LL")
+    finally:
+        if keep is None:
+            real.unlink()
+        else:
+            real.write_text(keep, encoding="utf-8")
+    return {p["n"]: p.get("ph") for p in led["players"]}
+
+
+check("the abbreviated forename the Championship is full of",
+      with_squad([("BIR", "B. Osayi-Samuel", "face1")],
+                 [("BIR", "Bright Osayi-Samuel")]),
+      {"Bright Osayi-Samuel": "face1"})
+check("an appended surname does not lose the man",
+      with_squad([("ARS", "Gabriel Martinelli Silva", "face2")],
+                 [("ARS", "Gabriel Martinelli")]),
+      {"Gabriel Martinelli": "face2"})
+# THE NEGATIVE CASES. Two men who merely look alike, and one man at the wrong
+# club. Both would be invisible on the page: a plausible face beside a real name.
+check("two men sharing an initial and a surname get no face at all",
+      with_squad([("TOT", "B. Johnson", "face3"), ("TOT", "B. Johnson", "face4")],
+                 [("TOT", "Brennan Johnson")]),
+      {"Brennan Johnson": None})
+check("a surname alone is not a man",
+      with_squad([("BOU", "Eli Kroupi", "face5")], [("BOU", "Junior Kroupi")]),
+      {"Junior Kroupi": None})
+check("the same club, or no face",
+      with_squad([("SEV", "Gorka Guruzeta", "face6")], [("ATH", "Gorka Guruzeta")]),
+      {"Gorka Guruzeta": None})
+check("one man listed twice with one photograph is not an ambiguity",
+      with_squad([("VAL", "H. Duro", "face7"), ("VAL", "Hugo Duro", "face7")],
+                 [("VAL", "Hugo Duro")]),
+      {"Hugo Duro": "face7"})
+# AND IT IS REBUILT, NOT INHERITED. A photograph carried over from the shipped
+# ledger would outlive the transfer that made it wrong.
+stale = {"season": "2026-27", "rounds": 1, "fixtures": [1],
+         "players": [{"n": "Nobody At All", "c": "VAL", "rds": {"1": 1},
+                      "ph": "https://example.invalid/old.png"}]}
+B.attach_photos(stale, "LL")
+check("a face that no longer joins is dropped, not kept",
+      stale["players"][0].get("ph"), None)
+
 # ---- a ledger that will not parse stops the build ------------------------
 with tempfile.TemporaryDirectory() as d:
     bad = Path(d) / "x.js"
@@ -113,6 +173,7 @@ if FAIL:
     for f in FAIL:
         print("  -", f)
     sys.exit(1)
-print(f"bookings ledger OK: {5 + 14} checks — second yellows counted once, the "
+print(f"bookings ledger OK: {5 + 21} checks — second yellows counted once, the "
       "merge keeps earlier rounds and never doubles a fixture, unbooked players "
-      "stay out, and the last-five window slices on rounds")
+      "stay out, the last-five window slices on rounds, and a face is attached "
+      "only to the man it belongs to")

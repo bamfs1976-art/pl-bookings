@@ -1167,6 +1167,51 @@ for (const page of ['eflc.html', 'laliga.html']) {
 
 console.log('check-share: both fixture grids and the matchday button are wired on eflc.html and laliga.html');
 
+/* ---- an image on the canvas must not be able to destroy the card ---------
+ *
+ * This is not a style rule, it is the difference between a card with a
+ * monogram and NO CARD AT ALL. Draw a cross-origin image onto a canvas without
+ * asking for CORS and the canvas is tainted; every later toBlob() on it throws
+ * SecurityError, so one uncooperative badge loses the whole export and the
+ * share button looks broken. Reproduced in a browser before this was written:
+ * with `crossOrigin` removed, building a rank card whose row carries a photo
+ * from another origin fails with
+ *
+ *   SecurityError: Failed to execute 'toBlob' on 'HTMLCanvasElement':
+ *   Tainted canvases may not be exported.
+ *
+ * and with it set the same card exports. That test needs a browser, so what
+ * is pinned here is the property it depends on.
+ */
+{
+  const s = readFileSync(join(root, 'assets', 'share.js'), 'utf8');
+  const m = /function loadImage\([\s\S]*?\n  \}/.exec(s);
+  assert.ok(m, 'assets/share.js no longer loads images for the canvas');
+  assert.ok(/crossOrigin\s*=\s*'anonymous'/.test(m[0]),
+    'assets/share.js draws remote images onto the share canvas without ' +
+    "crossOrigin = 'anonymous'. A host that sends no Access-Control-Allow-Origin " +
+    'then taints the canvas and toBlob throws SecurityError — the card is not ' +
+    'degraded, it is gone.');
+  /* AND BEFORE src. Assigning src starts the fetch; a crossOrigin set after it
+     is a request the browser has already made without CORS. */
+  assert.ok(m[0].indexOf('crossOrigin') < m[0].indexOf('img.src'),
+    'assets/share.js sets img.src before img.crossOrigin — the fetch has already ' +
+    'started by then, so the CORS request is never made and the canvas taints');
+  /* NEVER BLOCKING. The file's first promise is that a card renders from what
+     is already on the page; a deadline is what keeps that true once it asks
+     the network for a face. */
+  assert.ok(/setTimeout\(function \(\) \{ settle\(null\); \}/.test(m[0]),
+    'assets/share.js waits on an image with no deadline — a share card that ' +
+    'hangs on a dead image host fails exactly when someone wants it');
+  /* AND A MISSING IMAGE IS STILL A CARD. Both draw paths must survive null:
+     this is the branch that runs today, since neither image host answers from
+     the sandbox this was built in. */
+  assert.ok(/function face\(x, img, name/.test(s) && /if \(img\) \{/.test(s),
+    'assets/share.js has no monogram branch for a player with no photograph');
+  assert.ok(/function crestOn\([\s\S]{0,200}if \(!img\) return badge\(/.test(s),
+    'assets/share.js has no badge branch for a club whose crest did not load');
+}
+
 console.log(
   `check-share OK: ${['PL', 'EFLC', 'LL', 'ALL'].length} themes, match + round + ` +
   'combined cards render, adapters agree with the desks, every card carries 18+, ' +

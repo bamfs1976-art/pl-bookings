@@ -228,17 +228,22 @@ def quote_keys(js):
     return "".join(out)
 
 
-def js_array(src, name):
-    """Parse `const NAME = [...]` out of the generated file.
+def js_array(src, name, label=None):
+    """Parse `const NAME = [...]` out of a generated dataset file.
 
-    Safe here, and only here, because main() writes it: JSON scalars, one
-    object per line, trailing comma. This is not a JavaScript parser and must
-    not be pointed at a hand-written file."""
+    Safe here because main() writes it: JSON scalars, one object per line,
+    trailing comma. This is not a JavaScript parser and must not be pointed at
+    a hand-written file.
+
+    `label` NAMES THE FILE IN THE ERROR. build_bookings.py reads the other two
+    divisions' datasets through this to find a player's photograph, and without
+    it a malformed laliga_data.js reported itself as pl_data.js — which is the
+    kind of message that sends someone to read the wrong file."""
     m = re.search(r"^const " + name + r" = \[$(.*?)^\];$", src, re.S | re.M)
     if not m:
-        raise SystemExit(f"ERROR: {OUT.name} has no `const {name} = [` block, so "
-                         "it cannot serve as the previous harvest. It was not "
-                         "written by this script.")
+        raise SystemExit(f"ERROR: {label or OUT.name} has no `const {name} = [` "
+                         "block, so it cannot serve as the previous harvest. It "
+                         "was not written by this script.")
     body = quote_keys(m.group(1)).strip().rstrip(",")
     return json.loads("[" + body + "]")
 

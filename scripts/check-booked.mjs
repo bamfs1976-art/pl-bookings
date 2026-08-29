@@ -165,6 +165,67 @@ assert.ok(/r\.cells\.forEach/.test(read('assets/share.js')),
   'assets/share.js no longer draws the per-round cells, so the card and the ' +
   'page show different things');
 
+/* ---- 4b. the faces, and the join that must not be done twice ------------ */
+/* A leaderboard of names is a list; a leaderboard of faces is the page. But a
+   photograph is the most dangerous payload in this pipeline: everywhere else a
+   bad join costs a rate, here it prints the WRONG MAN beside a public claim
+   about how often he has been booked.
+   So the join happens once, in Python, against the rule data/test_names.py
+   already exercises in both directions — and the page reads `ph` off the row.
+   The three assertions below are the three ways that arrangement gets undone:
+   the page starts matching names itself, the ledger stops carrying the field,
+   or the card stops asking for it. */
+assert.ok(!/same_?[Pp]erson|nameTokens|name_keys/.test(today),
+  'today.html has grown its own player-name matcher. The ledger spells a ' +
+  'player one feed\'s way and the squads spell him another\'s; that rule lives ' +
+  'in data/build_pl_data.py and is tested in both directions. A second copy in ' +
+  'the browser is how the two come to disagree about who somebody is.');
+assert.ok(/ph: p\.ph \|\| null/.test(today),
+  'bookedRows no longer carries the photograph the ledger joined, so every row ' +
+  'draws a monogram whatever the build found');
+assert.ok(/PLDProfile\.face\(/.test(today),
+  'today.html draws the booked tables without PLDProfile.face — a bare <img> ' +
+  'here brings back the broken-image glyph the crest helper exists to prevent');
+/* TWO SITES, TWO ASSERTIONS. `ph: r.ph` appears in both the league/recent card
+   and the club card, so one regex over the file passed with either deleted —
+   the same shape of hole the cells assertion had, found the same way. */
+assert.ok(/cells: r\.cells, ph: r\.ph/.test(today),
+  'the league and last-five share cards are built without the photographs ' +
+  'their tables show');
+assert.ok(/n: r\.n, v: r\.cards, ph: r\.ph/.test(today),
+  'the per-club share card is built without the photographs its tables show');
+assert.ok(/img: cb\.img \|\| null/.test(today),
+  'the club share card is built without club crests');
+/* AND THE LEDGERS ACTUALLY CARRY THEM. A build that silently stopped joining
+   would leave the page correct and empty-faced, which looks like a design. */
+for (const [file, konst] of LEDGERS) {
+  if (!existsSync(join(root, file))) continue;
+  const c = {}; vm.createContext(c);
+  vm.runInContext(read(file), c);
+  const led = vm.runInContext(konst, c);
+  let faces = 0;
+  for (const p of led.players) {
+    if (!p.ph) continue;
+    faces++;
+    assert.ok(/^https:\/\/(media\.api-sports\.io|cdn\.sportmonks\.com)\//.test(p.ph),
+      `${file}: ${p.n} carries a photograph at ${p.ph}, which is not one of ` +
+      'the two hosts the pages\' Content-Security-Policy allows — it would be ' +
+      'blocked in the browser and drawn as a monogram');
+  }
+  /* A FLOOR, PER DIVISION. Two things this must not be. Not a presence check —
+     `some row has a face` passes when the join has collapsed from 185 to 1,
+     which is exactly what happens when a feed changes how it writes a name.
+     And not an average over all three: the Championship losing every face
+     while the other two hold would leave the aggregate above any sensible
+     floor, and the Championship is the division whose squad feed abbreviates
+     forenames, so it is the one most likely to go. */
+  assert.ok(!led.players.length || faces / led.players.length > 0.5,
+    `${file}: only ${faces} of ${led.players.length} booked players have a ` +
+    'photograph. An exact join on club and name finds about 35% and the shared ' +
+    'name rule about 85%, so this reads as the join having quietly stopped ' +
+    'matching in this division.');
+}
+
 /* ---- 5. an absent ledger is a state, not a fault ----------------------- */
 assert.ok(/No bookings have been/.test(today),
   'today.html no longer says anything when no ledger has been built — a blank ' +
@@ -220,5 +281,6 @@ assert.ok(crons.some((h) => h >= 21 || h <= 1),
 console.log(`check-booked OK: ${seen} ledger(s), ${players} booked player(s), ` +
   `${cards} card(s); no player recorded with more than two in a match, the ` +
   'recent window slices on rounds, one row builder feeds all three tables, ' +
+  'every face is joined once in Python and served from a host the CSP allows, ' +
   `every section shares through one card, and ${ledgerJobs[0]} rebuilds it ` +
   `${crons.length} times a day`);

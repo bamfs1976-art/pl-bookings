@@ -171,6 +171,33 @@ assert.ok(!/\.fx-sides\s*\{[^}]*grid-template-columns:\s*1fr 1fr/.test(shared),
   assert.ok(/PLDProfile\.crest\(/.test(t), 'today.html emits crests without the shared helper');
 }
 
+/* ---- and every page that emits a crest must WIRE the fallback -----------
+ * DERIVED, NOT LISTED. The wire() assertion below lived inside a loop over
+ * eflc.html and laliga.html, so today.html — which draws crests on six views
+ * and now on three leaderboards — never called it and nobody was told. The
+ * failure is worse than no fallback at all: `error` fires once per <img> and
+ * does not replay, so the badges that failed before the listener was attached
+ * keep the browser's torn-page glyph while the rest show the monogram chip,
+ * side by side on one screen, which reads as a rendering bug rather than an
+ * image host being down.
+ * So the list of pages is now whichever ones CALL PLDProfile.crest — a page
+ * added tomorrow is covered without anyone remembering to add it here. */
+for (const page of PAGES) {
+  const src = read(page);
+  if (!/PLDProfile\.crest\(/.test(src)) continue;
+  assert.ok(/PLDProfile\.wire\(\)/.test(src),
+    `${page} draws crests through PLDProfile.crest but never calls ` +
+    'PLDProfile.wire(), so the error listener that swaps a dead image for a ' +
+    'monogram chip is never attached');
+}
+/* WHAT THIS DOES NOT CHECK is that wire() runs BEFORE the first render, which
+   is the other half of getting it right and is not a property of the source
+   text — the crest calls sit in function bodies declared long before the boot
+   block that wires them. It was verified by rendering the page with the image
+   hosts unreachable and counting surviving <img class="crest-img"> elements;
+   an assertion here would have had to be written as something always true,
+   which is worse than no assertion because it reads like one. */
+
 /* The card CSS lives in the SHARED sheet, not in any page's inline <style>.
    Four pages draw this card; the moment one keeps its own copy they drift. */
 for (const sel of ['.fx-teams', '.fx-heat', '.cand', '.cbadge', '.mkts', '.band']) {

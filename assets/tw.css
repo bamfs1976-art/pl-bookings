@@ -1608,3 +1608,27 @@ tr[data-club]:focus-visible{outline:3px solid var(--ring);outline-offset:-3px}
 .bk-table td.bk-cell{border-radius:5px;background:var(--surface-2,#eef1f6)}
 .bk-table td.bk-cell-1{background:#f2c200;color:#3a2f00}
 .bk-table td.bk-cell-2{background:#b91c1c;color:#fff}
+
+/* The faces and the badges. Both ride the crest machinery in assets/profile.js
+   — same wrapper, same capture listener, same ::after monogram — so a missing
+   photograph and a missing badge fail the same way and neither can move the
+   name off its line.
+   THE FLEX BOX IS INSIDE THE CELL, NOT THE CELL. `display:flex` on a <th> or
+   <td> takes it out of the table's own layout: the row stops being a row, so
+   the club chip drops to a second line and the per-round columns no longer sit
+   under the R1/R2 headings — the cells are still there and still correct, and
+   the table reads as scrambled. Caught by rendering it; every guard passed. */
+.bk-in{display:inline-flex;align-items:center;gap:.4rem;min-width:0}
+/* A ceiling on the name column so a long one gives way rather than pushing the
+   round cells off the right of a phone. */
+.bk-table th.bk-name{max-width:13rem}
+.bk-in>span:last-child{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.bk-table .bk-face{width:22px;height:22px;border-radius:50%;font-size:8.5px;
+  flex:none;overflow:hidden}
+.bk-table .bk-face .crest-img{border-radius:50%;
+  /* The feed's portraits are head-and-shoulders on a wide plate; cover crops
+     to the head rather than letterboxing a face into a circle. */
+  object-fit:cover}
+.bk-club-cell .crest{width:17px;height:17px;font-size:7.5px}
+.bk-club-h .crest{width:22px;height:22px;border-radius:6px;font-size:9px;flex:none}
+.bk-club-h{align-items:center}
