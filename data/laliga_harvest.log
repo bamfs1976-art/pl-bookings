@@ -1,4 +1,4 @@
-La Liga harvest — run 129
+La Liga harvest — run 130
 == discover ==
 La Liga: API-Football league 140, season 2026
 
@@ -134,11 +134,11 @@ Division: 17 clubs were in it last season, 3 came up
   promoted: Deportivo La Coruna, Malaga, Racing Santander
   LL    673 players from the La Liga feed
   SEG   110 players from the Segunda feed
-  NEW   136 players from the squad fill feed
+  NEW   135 players from the squad fill feed
 Reusing the previous build for sources that did not harvest:
-  - laliga_squads.json (136 players kept from the previous build)
+  - laliga_squads.json (135 players kept from the previous build)
     28 duplicate row(s) collapsed after the moves, keeping the row with a rate on it
-Squads reconciled against the FPL feed: 51 moved, 0 joined, 225 left the division, 28 left alone as ambiguous (919 rows in, 666 out).
+Squads reconciled against the FPL feed: 51 moved, 0 joined, 224 left the division, 28 left alone as ambiguous (918 rows in, 666 out).
     A. Gonzalez RMA -> SEV
     A. Sánchez SEV -> ELC
     Adrià Alti VIL -> DEP
