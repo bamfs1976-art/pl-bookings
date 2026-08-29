@@ -105,6 +105,14 @@ jobs:
       - name: Squads follow the feed, rates follow the player
         run: python3 data/test_reconcile.py
 
+      # The bookings ledger is built from an INCREMENTAL harvest, and both of
+      # its failure modes come from that: a rebuild that replaced rather than
+      # merged would throw away every earlier round, and a re-walk that
+      # re-read a recorded fixture would double it. Either produces a
+      # leaderboard of plausible names and wrong numbers.
+      - name: The bookings ledger merges rather than replaces
+        run: python3 data/test_bookings.py
+
       # The multi-league data layer. Holds the Premier League path byte-stable
       # while a second competition moves in beside it, and holds the rule that
       # a league whose records name no official is refused rather than shipped

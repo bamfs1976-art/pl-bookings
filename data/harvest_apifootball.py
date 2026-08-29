@@ -535,8 +535,15 @@ def map_fixture_player(entry, club_of):
     }
 
 
-def harvest_player_matches(host, key, league, season, limit=None):
-    """Every finished fixture of a season, one call each."""
+def harvest_player_matches(host, key, league, season, limit=None, skip=None):
+    """Every finished fixture of a season, one call each.
+
+    `skip` is a set of fixture ids already recorded. It exists because this is
+    ONE CALL PER FIXTURE and the bookings ledger is refreshed daily: walking
+    the whole season every morning is 380 calls a league by May, for the sake
+    of the ten fixtures that are new. The caller passes what it already has and
+    the harvest fetches the rest.
+    """
     af = str(league.af_league)
     payload = _get(host, key, "fixtures", {"league": af, "season": season})
     err = api_errors(payload)
@@ -546,9 +553,15 @@ def harvest_player_matches(host, key, league, season, limit=None):
     done = [f for f in fixtures
             if (((f.get("fixture") or {}).get("status") or {}).get("short") in FINISHED)]
     done.sort(key=lambda f: (f.get("fixture") or {}).get("date") or "")
+    seen = set(skip or ())
+    fresh = [f for f in done
+             if (f.get("fixture") or {}).get("id") not in seen]
+    already = len(done) - len(fresh)
+    done = fresh
     if limit:
         done = done[:limit]
-    print(f"  {len(fixtures)} fixtures, {len(done)} finished"
+    print(f"  {len(fixtures)} fixtures, {len(done) + already} finished"
+          + (f", {already} already recorded" if already else "")
           + (f" (capped at {limit})" if limit else ""))
 
     rows, missing = [], 0
@@ -1110,6 +1123,11 @@ def main():
                          "cards for a COMPLETED season — the training table "
                          "for the model fit, which FPL can only provide for "
                          "the Premier League")
+    ap.add_argument("--only-new", metavar="LEDGER",
+                    help="skip fixtures already recorded in this bookings "
+                         "ledger (data/<name>). One call per fixture makes a "
+                         "full-season walk expensive by spring; this fetches "
+                         "only what is missing.")
     ap.add_argument("--limit", type=int,
                     help="cap the number of fixtures fetched (one call each), "
                          "for a first run that should not spend the day's quota")
@@ -1220,8 +1238,21 @@ def main():
                      .strftime("%Y-%m-%dT%H:%MZ"))
         return
     if args.player_matches:
+        skip = set()
+        if args.only_new:
+            path = DATA / args.only_new
+            if path.exists():
+                try:
+                    prior = json.loads(path.read_text(encoding="utf-8"))
+                except (ValueError, OSError) as e:
+                    # A ledger that cannot be read must not silently become
+                    # "nothing recorded" — that is a full-season re-walk and a
+                    # spent quota, reported as a normal run.
+                    sys.exit(f"ERROR: --only-new {args.only_new}: {e}")
+                skip = {int(f) for f in (prior.get("fixtures") or [])}
+            print(f"  {len(skip)} fixture(s) already recorded in {args.only_new}")
         emit_player_matches(
-            harvest_player_matches(host, key, league, season, args.limit),
+            harvest_player_matches(host, key, league, season, args.limit, skip),
             league, season, args.out)
         return
     teams_payload = _get(host, key, "teams", {"league": af, "season": season})
