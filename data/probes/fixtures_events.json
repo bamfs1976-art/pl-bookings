@@ -1,12 +1,12 @@
 {
   "endpoint": "fixtures/events",
   "params": {
-    "fixture": 1557367
+    "fixture": 1563085
   },
-  "league": "PL",
-  "fetched": "2026-08-30T12:05Z",
+  "league": "EFLC",
+  "fetched": "2026-08-30T12:07Z",
   "errors": null,
-  "results": 14,
+  "results": 17,
   "paging": {
     "current": 1,
     "total": 1
@@ -18,21 +18,21 @@
         "extra": null
       },
       "team": {
-        "id": 42,
-        "name": "Arsenal",
-        "logo": "https://media.api-sports.io/football/teams/42.png"
+        "id": 58,
+        "name": "Millwall",
+        "logo": "https://media.api-sports.io/football/teams/58.png"
       },
       "player": {
-        "id": 978,
-        "name": "K. Havertz"
+        "id": 272553,
+        "name": "Josh Coburn"
       },
       "assist": {
-        "id": 157052,
-        "name": "R. Calafiori"
+        "id": null,
+        "name": null
       },
-      "type": "Goal",
-      "detail": "Normal Goal",
-      "comments": null
+      "type": "Card",
+      "detail": "Yellow Card",
+      "comments": "Simulation"
     },
     {
       "time": {
@@ -40,35 +40,13 @@
         "extra": null
       },
       "team": {
-        "id": 42,
-        "name": "Arsenal",
-        "logo": "https://media.api-sports.io/football/teams/42.png"
+        "id": 56,
+        "name": "Bristol City",
+        "logo": "https://media.api-sports.io/football/teams/56.png"
       },
       "player": {
-        "id": 1460,
-        "name": "B. Saka"
-      },
-      "assist": {
-        "id": null,
-        "name": null
-      },
-      "type": "Goal",
-      "detail": "Normal Goal",
-      "comments": null
-    },
-    {
-      "time": {
-        "elapsed": 27,
-        "extra": null
-      },
-      "team": {
-        "id": 1346,
-        "name": "Coventry",
-        "logo": "https://media.api-sports.io/football/teams/1346.png"
-      },
-      "player": {
-        "id": 475575,
-        "name": "Caleb Yirenkyi"
+        "id": 20409,
+        "name": "Adam Randell"
       },
       "assist": {
         "id": null,
@@ -80,17 +58,39 @@
     },
     {
       "time": {
-        "elapsed": 34,
+        "elapsed": 29,
         "extra": null
       },
       "team": {
-        "id": 42,
-        "name": "Arsenal",
-        "logo": "https://media.api-sports.io/football/teams/42.png"
+        "id": 58,
+        "name": "Millwall",
+        "logo": "https://media.api-sports.io/football/teams/58.png"
       },
       "player": {
-        "id": 22224,
-        "name": "Gabriel Magalhães"
+        "id": 282637,
+        "name": "F. Azeez"
+      },
+      "assist": {
+        "id": 405300,
+        "name": "K. Lisbie"
+      },
+      "type": "subst",
+      "detail": "Substitution 1",
+      "comments": null
+    },
+    {
+      "time": {
+        "elapsed": 36,
+        "extra": null
+      },
+      "team": {
+        "id": 56,
+        "name": "Bristol City",
+        "logo": "https://media.api-sports.io/football/teams/56.png"
+      },
+      "player": {
+        "id": 20409,
+        "name": "Adam Randell"
       },
       "assist": {
         "id": null,
@@ -102,21 +102,43 @@
     },
     {
       "time": {
-        "elapsed": 49,
+        "elapsed": 36,
         "extra": null
       },
       "team": {
-        "id": 42,
-        "name": "Arsenal",
-        "logo": "https://media.api-sports.io/football/teams/42.png"
+        "id": 56,
+        "name": "Bristol City",
+        "logo": "https://media.api-sports.io/football/teams/56.png"
       },
       "player": {
-        "id": 37127,
-        "name": "M. Odegaard"
+        "id": 20409,
+        "name": "Adam Randell"
       },
       "assist": {
-        "id": 19959,
-        "name": "B. White"
+        "id": null,
+        "name": null
+      },
+      "type": "Card",
+      "detail": "Red Card",
+      "comments": "Foul"
+    },
+    {
+      "time": {
+        "elapsed": 41,
+        "extra": null
+      },
+      "team": {
+        "id": 58,
+        "name": "Millwall",
+        "logo": "https://media.api-sports.io/football/teams/58.png"
+      },
+      "player": {
+        "id": 272553,
+        "name": "J. Coburn"
+      },
+      "assist": {
+        "id": null,
+        "name": null
       },
       "type": "Goal",
       "detail": "Normal Goal",
@@ -124,21 +146,43 @@
     },
     {
       "time": {
-        "elapsed": 62,
+        "elapsed": 45,
         "extra": null
       },
       "team": {
-        "id": 1346,
-        "name": "Coventry",
-        "logo": "https://media.api-sports.io/football/teams/1346.png"
+        "id": 58,
+        "name": "Millwall",
+        "logo": "https://media.api-sports.io/football/teams/58.png"
       },
       "player": {
-        "id": 475575,
-        "name": "C. Yirenkyi"
+        "id": 297641,
+        "name": "Jenson Metcalfe"
       },
       "assist": {
-        "id": 16046,
-        "name": "V. Torp"
+        "id": null,
+        "name": null
+      },
+      "type": "Card",
+      "detail": "Yellow Card",
+      "comments": "Handball"
+    },
+    {
+      "time": {
+        "elapsed": 46,
+        "extra": null
+      },
+      "team": {
+        "id": 56,
+        "name": "Bristol City",
+        "logo": "https://media.api-sports.io/football/teams/56.png"
+      },
+      "player": {
+        "id": 348800,
+        "name": "Y. Hirakawa"
+      },
+      "assist": {
+        "id": 19712,
+        "name": "J. Williams"
       },
       "type": "subst",
       "detail": "Substitution 1",
@@ -146,65 +190,43 @@
     },
     {
       "time": {
-        "elapsed": 68,
+        "elapsed": 50,
         "extra": null
       },
       "team": {
-        "id": 42,
-        "name": "Arsenal",
-        "logo": "https://media.api-sports.io/football/teams/42.png"
+        "id": 58,
+        "name": "Millwall",
+        "logo": "https://media.api-sports.io/football/teams/58.png"
       },
       "player": {
-        "id": 2937,
-        "name": "D. Rice"
+        "id": 272553,
+        "name": "J. Coburn"
       },
       "assist": {
-        "id": 47315,
-        "name": "M. Zubimendi"
+        "id": 531386,
+        "name": "J. Metcalfe"
       },
-      "type": "subst",
-      "detail": "Substitution 1",
+      "type": "Goal",
+      "detail": "Normal Goal",
       "comments": null
     },
     {
       "time": {
-        "elapsed": 68,
+        "elapsed": 56,
         "extra": null
       },
       "team": {
-        "id": 42,
-        "name": "Arsenal",
-        "logo": "https://media.api-sports.io/football/teams/42.png"
+        "id": 56,
+        "name": "Bristol City",
+        "logo": "https://media.api-sports.io/football/teams/56.png"
       },
       "player": {
-        "id": 1460,
-        "name": "B. Saka"
+        "id": 349224,
+        "name": "L. Eissat"
       },
       "assist": {
-        "id": 136723,
-        "name": "N. Madueke"
-      },
-      "type": "subst",
-      "detail": "Substitution 2",
-      "comments": null
-    },
-    {
-      "time": {
-        "elapsed": 70,
-        "extra": null
-      },
-      "team": {
-        "id": 1346,
-        "name": "Coventry",
-        "logo": "https://media.api-sports.io/football/teams/1346.png"
-      },
-      "player": {
-        "id": 82090,
-        "name": "B. Thomas-Asante"
-      },
-      "assist": {
-        "id": 20372,
-        "name": "J. Rudoni"
+        "id": 380703,
+        "name": "R. Cardines"
       },
       "type": "subst",
       "detail": "Substitution 2",
@@ -212,21 +234,21 @@
     },
     {
       "time": {
-        "elapsed": 70,
+        "elapsed": 64,
         "extra": null
       },
       "team": {
-        "id": 1346,
-        "name": "Coventry",
-        "logo": "https://media.api-sports.io/football/teams/1346.png"
+        "id": 56,
+        "name": "Bristol City",
+        "logo": "https://media.api-sports.io/football/teams/56.png"
       },
       "player": {
-        "id": 138786,
-        "name": "E. Simms"
+        "id": 303460,
+        "name": "D. Ballard"
       },
       "assist": {
-        "id": 8598,
-        "name": "T. Awoniyi"
+        "id": 19646,
+        "name": "J. Wallace"
       },
       "type": "subst",
       "detail": "Substitution 3",
@@ -234,43 +256,21 @@
     },
     {
       "time": {
-        "elapsed": 76,
+        "elapsed": 64,
         "extra": null
       },
       "team": {
-        "id": 42,
-        "name": "Arsenal",
-        "logo": "https://media.api-sports.io/football/teams/42.png"
+        "id": 56,
+        "name": "Bristol City",
+        "logo": "https://media.api-sports.io/football/teams/56.png"
       },
       "player": {
-        "id": 37127,
-        "name": "M. Odegaard"
+        "id": 153400,
+        "name": "S. Greenwood"
       },
       "assist": {
-        "id": 47311,
-        "name": "M. Merino"
-      },
-      "type": "subst",
-      "detail": "Substitution 3",
-      "comments": null
-    },
-    {
-      "time": {
-        "elapsed": 76,
-        "extra": null
-      },
-      "team": {
-        "id": 42,
-        "name": "Arsenal",
-        "logo": "https://media.api-sports.io/football/teams/42.png"
-      },
-      "player": {
-        "id": 161800,
-        "name": "C. Tzolis"
-      },
-      "assist": {
-        "id": 19586,
-        "name": "E. Eze"
+        "id": 15705,
+        "name": "E. Riis"
       },
       "type": "subst",
       "detail": "Substitution 4",
@@ -278,24 +278,68 @@
     },
     {
       "time": {
-        "elapsed": 81,
+        "elapsed": 64,
         "extra": null
       },
       "team": {
-        "id": 42,
-        "name": "Arsenal",
-        "logo": "https://media.api-sports.io/football/teams/42.png"
+        "id": 56,
+        "name": "Bristol City",
+        "logo": "https://media.api-sports.io/football/teams/56.png"
       },
       "player": {
-        "id": 157052,
-        "name": "R. Calafiori"
+        "id": 180556,
+        "name": "L. Tolaj"
       },
       "assist": {
-        "id": 127817,
-        "name": "P. Hincapie"
+        "id": 294904,
+        "name": "S. Bell"
       },
       "type": "subst",
       "detail": "Substitution 5",
+      "comments": null
+    },
+    {
+      "time": {
+        "elapsed": 64,
+        "extra": null
+      },
+      "team": {
+        "id": 58,
+        "name": "Millwall",
+        "logo": "https://media.api-sports.io/football/teams/58.png"
+      },
+      "player": {
+        "id": 305959,
+        "name": "T. Arconte"
+      },
+      "assist": {
+        "id": 149564,
+        "name": "L. Cundle"
+      },
+      "type": "subst",
+      "detail": "Substitution 2",
+      "comments": null
+    },
+    {
+      "time": {
+        "elapsed": 64,
+        "extra": null
+      },
+      "team": {
+        "id": 58,
+        "name": "Millwall",
+        "logo": "https://media.api-sports.io/football/teams/58.png"
+      },
+      "player": {
+        "id": 531386,
+        "name": "J. Metcalfe"
+      },
+      "assist": {
+        "id": 20120,
+        "name": "M. Sykes"
+      },
+      "type": "subst",
+      "detail": "Substitution 3",
       "comments": null
     },
     {
@@ -304,20 +348,42 @@
         "extra": null
       },
       "team": {
-        "id": 1346,
-        "name": "Coventry",
-        "logo": "https://media.api-sports.io/football/teams/1346.png"
+        "id": 58,
+        "name": "Millwall",
+        "logo": "https://media.api-sports.io/football/teams/58.png"
       },
       "player": {
-        "id": 161621,
-        "name": "L. Tchaouna"
+        "id": 284532,
+        "name": "Z. Sturge"
       },
       "assist": {
-        "id": 36929,
-        "name": "G. Hamer"
+        "id": 375467,
+        "name": "D. Kelly"
       },
       "type": "subst",
       "detail": "Substitution 4",
+      "comments": null
+    },
+    {
+      "time": {
+        "elapsed": 83,
+        "extra": null
+      },
+      "team": {
+        "id": 58,
+        "name": "Millwall",
+        "logo": "https://media.api-sports.io/football/teams/58.png"
+      },
+      "player": {
+        "id": 272553,
+        "name": "J. Coburn"
+      },
+      "assist": {
+        "id": 45307,
+        "name": "L. Dykes"
+      },
+      "type": "subst",
+      "detail": "Substitution 5",
       "comments": null
     }
   ]
