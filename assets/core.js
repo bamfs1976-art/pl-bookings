@@ -206,6 +206,53 @@
     return uniq(keyed.filter((x) => joinLooksRight(x.n, published)));
   }
 
+  /* ---- who is not available to be booked --------------------------------
+   *
+   * A player who is out cannot be carded, and until now the boards rated him
+   * exactly as though he were playing — a 40% top risk who is not in the
+   * squad. docs/desk-parity.md has listed this as "open — needs a key" since
+   * the desk was built.
+   *
+   * ON THE SAME JOIN AS THE TEAM SHEETS, deliberately. The injury feed spells
+   * a player its own way and the squads spell him theirs, which is the join
+   * this repository has been bitten by more than any other; a second
+   * implementation here would be the fifth. matchSquadName's rule is unique or
+   * nothing, so two players at a club who look alike produce no flag rather
+   * than the wrong man flagged as injured.
+   *
+   * AND IT DOES NOT CHANGE A PRICE. A flag is shown; the probability is left
+   * alone. The feed reports "Questionable" as readily as "Missing Fixture",
+   * and a desk that silently zeroed a doubtful player would be making a
+   * selection call the reader came here to make. Removing him from a board is
+   * the reader's decision, and the flag is what lets them make it. */
+  function unavailable(name, club, list) {
+    if (!name || !Array.isArray(list) || !list.length) return null;
+    const mine = list.filter((r) => r && (!club || r.c === club));
+    if (!mine.length) return null;
+    const hit = matchSquadName(name, mine.map((r) => r.n));
+    if (!hit) return null;
+    const rows = mine.filter((r) => r.n === hit);
+    /* One man, one status. Two rows for one name is the feed listing him
+       against two fixtures; the first is this one. */
+    return rows[0] || null;
+  }
+
+  /* The words the feed uses, and what a reader should take from them. Kept as
+     a lookup rather than a two-state flag because "out" and "a doubt" are
+     genuinely different answers and collapsing them decides for the reader. */
+  function availabilityLabel(rec) {
+    if (!rec) return null;
+    const t = String(rec.type || '').toLowerCase();
+    const out = t.indexOf('missing') === 0 || t === 'suspended';
+    return {
+      text: out ? 'OUT' : 'DOUBT',
+      out: out,
+      title: (rec.type || 'Unavailable')
+        + (rec.reason ? ' — ' + rec.reason : '')
+        + '. Reported by the feed; this does not change the card price.',
+    };
+  }
+
   /* One club's sheet as a squad-name -> role map, or NULL.
    *
    * ALL ELEVEN OR NONE, and this is the rule that stops the conservation above
@@ -2027,7 +2074,7 @@
     rotationRisk, rotationBand,
     restDays, restBucket, previousMatch, euroAway72h,
     isDerby, derbyName, derbyPairs, DERBIES, DERBIES_BY_LEAGUE,
-    riskScore, normName, matchRefName, refShort, refLabel, refBorrowNote, leagueRates, pickPL, summarisePicks, calibrate, impliedProb, fairOdds, edgePct, LOGISTIC_SLOPE,
+    riskScore, normName, matchRefName, refShort, refLabel, refBorrowNote, leagueRates, unavailable, availabilityLabel, pickPL, summarisePicks, calibrate, impliedProb, fairOdds, edgePct, LOGISTIC_SLOPE,
     per90, liveRate, joinLooksRight, foldLetters, MIN_LIVE_MINUTES,
     lineupMinutes, xiWeights, SUBS_USED, SUB_MINUTES,
     playerKeys, matchSquadName, lineupRoles, currentRound, isPlayed, PLAYED_STATUS,

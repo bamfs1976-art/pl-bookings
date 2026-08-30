@@ -118,6 +118,50 @@ for (const f of OUTPUTS) {
   assert.ok(val !== undefined, `${f} declares ${konst[1]} as nothing`);
 }
 
+/* ---- 3a. availability reaches the board, on the SHARED name join ------- */
+/* A player who is out cannot be booked, and the boards rated him exactly as
+   though he were playing. The join is the danger: the injury feed spells a
+   player its own way and the squads spell him theirs, which is the join this
+   repository has been bitten by more than any other. */
+{
+  const core = read('assets/core.js');
+  assert.ok(/function unavailable\(/.test(core),
+    'assets/core.js has no availability lookup');
+  const fn = /function unavailable\([\s\S]*?\n  \}/.exec(core);
+  assert.ok(fn && /matchSquadName\(/.test(fn[0]),
+    'unavailable() does its own name matching instead of calling ' +
+    'matchSquadName — a fifth implementation of the join that has gone wrong ' +
+    'more often than any other here. Unique or nothing is the rule, and a ' +
+    'looser one flags the wrong man as injured.');
+  assert.ok(/r\.c === club/.test(fn[0]),
+    'unavailable() does not scope to the club, so a player who shares a name ' +
+    'with an injured man at another club is flagged as out');
+
+  /* A FLAG, NOT A PRICE. The feed says "Questionable" as readily as "Missing
+     Fixture"; a desk that zeroed a doubtful player would be making the
+     selection call the reader came for. */
+  const today = read('today.html');
+  assert.ok(/availFlag\(/.test(today), 'today.html does not show availability');
+  const flag = /function availFlag\([\s\S]*?\n  \}/.exec(today);
+  assert.ok(flag, 'today.html has no availFlag builder');
+  assert.ok(!/prob|\bp\.m\b|expected/.test(flag[0]),
+    'the availability flag touches a probability. It annotates a price it must ' +
+    'not change: "Questionable" is not "not playing", and deciding that for ' +
+    'the reader is the judgement they came here to make.');
+  assert.ok(/if \(!L \|\| !L\.injuries\) return/.test(flag[0]),
+    'today.html assumes an injuries file exists. None does for any division ' +
+    'until the first extra-feeds run lands.');
+  assert.ok(/injuries: d\.injuries \|\| null/.test(today)
+    && /injuries:/.test(read('data-frame.html')),
+    'the injuries file is not published through the data frame, so /today ' +
+    'cannot see it whatever the harvest writes');
+  /* Both states reach the stylesheet, or one of them is invisible. */
+  const css = read('assets/tw.css');
+  for (const cls of ['avail-out', 'avail-doubt']) {
+    assert.ok(css.includes('.' + cls), `${cls} has no rule, so that state is invisible`);
+  }
+}
+
 /* ---- 4. one owner, and it checks before it pushes ---------------------- */
 const wf = join(root, '.github', 'workflows');
 const flows = readdirSync(wf).filter((f) => /\.ya?ml$/.test(f));

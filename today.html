@@ -573,7 +573,8 @@
            league without one is a league with no leaderboard yet rather than
            a league that fails to load. It is NOT in the readiness test below
            for that reason. */
-        bookings: d.bookings || null
+        bookings: d.bookings || null,
+        injuries: d.injuries || null
       };
       return (L.clubs && L.clubs.length && L.players && L.players.length
               && L.fixtures && L.fixtures.length) ? L : null;
@@ -924,6 +925,20 @@
     });
   }
 
+  /* The availability chip, from the one join in core.js — the same rule the
+     team sheets use, because the injury feed and the squads spell a player
+     differently and this repository has been bitten by that join more than
+     any other. Absent for every division until the first extra-feeds run
+     lands, which is why L.injuries is allowed to be null. */
+  function availFlag(L, pl) {
+    if (!L || !L.injuries) return '';
+    var rec = C.unavailable(pl.n, pl.c, L.injuries);
+    var lab = C.availabilityLabel(rec);
+    if (!lab) return '';
+    return ' <span class="avail ' + (lab.out ? 'avail-out' : 'avail-doubt')
+      + '" title="' + esc(lab.title) + '">' + esc(lab.text) + '</span>';
+  }
+
   function rowHTML(p) {
     var ch = p.L.clubBy[p.fx.h] || { short: p.fx.h }, ca = p.L.clubBy[p.fx.a] || { short: p.fx.a };
     var all = [];
@@ -950,6 +965,13 @@
             + '<span class="cbadge">' + esc(t.p.c) + '</span>'
             + '<span class="nm">' + esc(t.p.n)
             + ' <span class="faint">' + esc(t.p.p || '') + '</span>'
+            /* OUT, OR A DOUBT. A player who is not playing cannot be booked,
+               and this board rated him exactly as though he were — a 40% top
+               risk who is not in the squad. The flag does NOT move the
+               probability: the feed says "Questionable" as readily as
+               "Missing Fixture", and dropping a doubtful player would be the
+               desk making the selection call the reader came here to make. */
+            + availFlag(p.L, t.p)
             + pipMeter(t.p) + '</span>'
             + '<span class="pc-wrap"><span class="pc band ' + b[0] + '">' + pct(t.prob) + '</span>'
             + (b[1] ? '<span class="sev">' + esc(b[1]) + '</span>' : '') + '</span>'
