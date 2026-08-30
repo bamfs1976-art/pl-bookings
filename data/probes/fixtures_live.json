@@ -1,0 +1,15 @@
+{
+  "endpoint": "fixtures",
+  "params": {
+    "live": "39-40-140"
+  },
+  "league": "PL",
+  "fetched": "2026-08-30T12:44Z",
+  "errors": null,
+  "results": 0,
+  "paging": {
+    "current": 1,
+    "total": 1
+  },
+  "response_sample": []
+}
