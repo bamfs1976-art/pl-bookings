@@ -678,12 +678,11 @@
         ? C.shrinkRate(p.yc, m, L.prior(p.p), SHRINK_MATCHES) : null;
     });
     /* The league's own average card rate, which the referee factor is
-       relative to. Match-weighted, because REFS carries a rate and a count. */
-    var mm = 0, tot = 0;
-    (L.refs || []).forEach(function (r) {
-      var k = Number(r.matches) || 0; mm += k; tot += (Number(r.ypg) || 0) * k;
-    });
-    L.leagueYpg = mm ? tot / mm : null;
+       relative to. Match-weighted, and computed by the one implementation in
+       core.js — which is also what excludes an official BORROWED from another
+       division, whose matches belong to that league's baseline and not this
+       one's. See data/cross_refs.py. */
+    L.leagueYpg = C.leagueRates(L.refs).avgYpg;
   }
 
   function refFactor(L, ref) {

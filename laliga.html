@@ -579,16 +579,13 @@
 
   /* League averages the referee factor is measured against. Weighted by the
      matches each official actually took, so a one-off appointment does not
-     move the baseline as much as a season's work. */
-  var LEAGUE = (function () {
-    var yW = 0, cW = 0, m = 0, mc = 0;
-    REFLIST.forEach(function (r) {
-      var k = Number(r.matches) || 0;
-      if (r.ypg != null) { yW += r.ypg * k; m += k; }
-      if (r.cpf != null) { cW += r.cpf * k; mc += k; }
-    });
-    return { avgYpg: m ? yW / m : null, avgCpf: mc ? cW / mc : null };
-  })();
+     move the baseline as much as a season's work — and computed by the ONE
+     implementation in core.js, which is also what keeps an official borrowed
+     from another division out of this division's baseline. His matches were
+     played there and are already counted there; counting them here as well
+     would move the very number his borrowed rate is measured against. See
+     data/cross_refs.py. */
+  var LEAGUE = C.leagueRates(REFLIST);
 
   function refFactor(ref) { return ref ? C.refCardFactor(ref, LEAGUE, {}) : 1; }
 
@@ -1052,8 +1049,12 @@
     $('#tblRefs tbody').innerHTML = list.map(function (x) {
       var r = x.r, w = Math.round((x.factor / maxF) * 100);
       var cls = x.factor >= 1.08 ? 't1' : x.factor <= 0.94 ? 't3' : 't2';
+      /* The borrowed marker, from the one place that words it (core.js).
+         Without it this row reads as N matches in THIS division. */
+      var bn = C.refBorrowNote(r);
       return '<tr>'
-        + '<td>' + esc(r.n) + '</td>'
+        + '<td' + (bn ? ' title="' + esc(bn.title) + '"' : '') + '>' + esc(r.n)
+        + (bn ? '<span class="ref-borrowed">' + bn.mark + '</span>' : '') + '</td>'
         + '<td class="num">' + (r.matches || 0) + '</td>'
         + '<td class="num">' + n2(r.ypg) + '</td>'
         + '<td class="num">' + n1(r.fpg) + '</td>'
@@ -1064,11 +1065,19 @@
         + '<td><span class="bar" style="width:110px;display:inline-block"><i style="width:' + w + '%"></i></span></td>'
         + '</tr>';
     }).join('');
-    $('#refFoot').innerHTML = 'League average across ' + REFLIST.length + ' officials, weighted by matches: <b>'
+    /* NATIVE officials, not every row. The average deliberately skips the
+         borrowed ones, so counting them here would caption the number with a
+         population it was not taken over. */
+      var nOwn = REFLIST.filter(function (x) { return !x.borrowed; }).length;
+      var nLent = REFLIST.length - nOwn;
+      $('#refFoot').innerHTML = 'League average across ' + nOwn + ' officials, weighted by matches: <b>'
       + n2(LEAGUE.avgYpg) + '</b> yellows a game and <b>' + (LEAGUE.avgCpf == null ? '—' : LEAGUE.avgCpf.toFixed(3))
       + '</b> cards per foul. The ×factor blends the two equally and is clamped to ×0.75–×1.30. '
       + 'Cards per foul is the purer strictness signal: it divides out how foul-heavy an official’s '
-      + 'fixtures happened to be.';
+      + 'fixtures happened to be.'
+      + (nLent ? ' † marks ' + nLent + ' official' + (nLent === 1 ? '' : 's')
+          + ' with no record in this division, priced off their record in another and '
+          + 'excluded from the average above.' : '');
   }
   $$('#tblRefs th[data-sort]').forEach(function (th) {
     th.addEventListener('click', function () {
@@ -1644,14 +1653,14 @@
       if (isFinite(t)) { sum += t; n++; }
     });
     if (!n) return '';
-    var m = 0, mm = 0;
-    REFLIST.forEach(function (r) {
-      var k = Number(r.matches) || 0;
-      m += (Number(r.ypg) || 0) * k; mm += k;
-    });
-    if (!mm) return '';
+    /* The FIFTH copy of this loop, found by the guard rather than by reading:
+       it captions the appointed-fixtures line and had drifted nowhere only
+       because nothing had changed. Same call as LEAGUE above, same exclusion
+       of an official borrowed from another division. */
+    var avg = C.leagueRates(REFLIST).avgYpg;
+    if (avg == null) return '';
     return ' Prices ' + n2(sum / n) + ' cards a match against the '
-      + n2(m / mm) + ' the division produced last season.';
+      + n2(avg) + ' the division produced last season.';
   }
 
   /* ---- sample confidence and card form ---------------------------------- */

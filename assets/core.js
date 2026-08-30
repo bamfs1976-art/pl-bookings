@@ -431,6 +431,14 @@
     'van', 'von', 'di', 'du', "d'", 'st', 'mc', 'mac'
   ]);
 
+  /* Only for the borrowed-referee tooltip below, which has to name the
+     competition a record came from — "27 match(es) in the EFLC" tells a reader
+     nothing. The desks each know their own league's name; none of them knows
+     the others', which is exactly why this sits here. */
+  const LEAGUE_LABEL = {
+    PL: 'Premier League', EFLC: 'EFL Championship', LL: 'La Liga'
+  };
+
   function refShort(name) {
     const parts = String(name == null ? '' : name).trim().split(/\s+/).filter(Boolean);
     if (!parts.length) return '';
@@ -481,9 +489,41 @@
    * SENTENCE. `shorten` is passed in rather than assumed so that a caller who
    * wants the full name can have it.
    */
+  /* The same marker, for a REFEREE TABLE rather than a fixture line.
+     A table listing "Tony Harrington · 11 matches · 2.97 yellows" inside the
+     Championship desk is a factual claim that he took eleven Championship
+     matches, and he took none — they were Premier League. The fixture line has
+     carried its dagger since refLabel gained the state; the tables need the
+     same one from the same place, or the page contradicts itself. */
+  function refBorrowNote(r) {
+    if (!r || !r.borrowed) return null;
+    return {
+      mark: '†',
+      title: r.matches + ' match(es) in the '
+        + (LEAGUE_LABEL[r.borrowed] || r.borrowed)
+        + ', not this division — the rate is scaled to this league and does '
+        + 'not count toward its average'
+    };
+  }
+
   function refLabel(state, shorten) {
     const cut = typeof shorten === 'function' ? shorten : refShort;
     const r = state || {};
+    /* FOUR STATES NOW, and the new one is the honest half of cross_refs.py.
+       An official carrying a BORROWED record is priced off a real number, but
+       one measured in a different competition — Josh Smith's 27 Championship
+       matches on a Premier League appointment. Showing that as an ordinary
+       rating would be quietly passing off one league's evidence as another's,
+       which is the sort of thing nobody can catch by looking at the page. */
+    if (r.ref && r.ref.n && r.ref.borrowed) {
+      return {
+        text: 'Ref ' + cut(r.ref.n) + '†',
+        title: 'No record in this division — priced off ' + r.ref.matches
+          + ' match(es) in the ' + (LEAGUE_LABEL[r.ref.borrowed] || r.ref.borrowed)
+          + ', scaled to this league’s card rate',
+        state: 'borrowed'
+      };
+    }
     if (r.ref && r.ref.n) return { text: 'Ref ' + cut(r.ref.n), title: null, state: 'rated' };
     if (r.name) {
       return {
@@ -1500,18 +1540,48 @@
     return Math.min(1, Math.max(0, acc));
   }
 
-  /* The league's red rate, weighted by matches refereed. Used when no
-     official is appointed. Weighted, because an unweighted mean lets a
-     referee with three games swing the league rate as hard as one with
-     thirty — which is the same reason ypg is shrunk elsewhere. */
-  function leagueRedRate(refs) {
-    let n = 0, m = 0;
+  /* ---- the division's own averages, which every referee factor is measured
+     against ------------------------------------------------------------
+     Weighted by matches refereed, because an unweighted mean lets an official
+     with three games swing the baseline as hard as one with thirty — the same
+     reason a player's rate is shrunk elsewhere.
+
+     A BORROWED ROW IS NOT PART OF THE DIVISION. data/cross_refs.py fills a
+     table with an official who has a record in a NEIGHBOURING competition and
+     none here — Josh Smith's 27 Championship matches, standing in for the
+     Premier League record he does not have. Those matches were played in
+     another league and are already counted in its baseline; counting them here
+     too would move the number that the borrowed row is then measured against,
+     which is circular. So the average is over what this division actually
+     refereed, and `borrowed` rows are priced by it without contributing to it.
+
+     ONE IMPLEMENTATION, and that is the point of putting it here. This loop
+     existed four times — once per desk plus leagueRedRate below — all
+     identical, and the exclusion above would have had to be remembered in
+     every one of them. Three of the four are now callers. */
+  function leagueRates(refs) {
+    let yW = 0, ym = 0, cW = 0, cm = 0, rW = 0, rm = 0;
     for (const r of (Array.isArray(refs) ? refs : [])) {
-      const g = Number(r && r.matches), v = Number(r && r.red);
-      if (isFinite(g) && g > 0 && isFinite(v) && v >= 0) { n += v * g; m += g; }
+      if (!r || r.borrowed) continue;
+      const g = Number(r.matches);
+      if (!(isFinite(g) && g > 0)) continue;
+      const y = Number(r.ypg), c = Number(r.cpf), d = Number(r.red);
+      if (isFinite(y)) { yW += y * g; ym += g; }
+      if (isFinite(c)) { cW += c * g; cm += g; }
+      if (isFinite(d) && d >= 0) { rW += d * g; rm += g; }
     }
-    return m > 0 ? n / m : 0;
+    return {
+      avgYpg: ym ? yW / ym : null,
+      avgCpf: cm ? cW / cm : null,
+      avgRed: rm ? rW / rm : 0,
+      matches: ym,
+    };
   }
+
+  /* The league's red rate alone — used when no official is appointed. Kept as
+     its own name because that is what the booking-points market asks for, but
+     it is the same sum. */
+  function leagueRedRate(refs) { return leagueRates(refs).avgRed; }
 
   function bookingPointsMarkets(homePs, awayPs, lambdaRed, lines) {
     const all = [].concat(homePs || [], awayPs || []);
@@ -1957,7 +2027,7 @@
     rotationRisk, rotationBand,
     restDays, restBucket, previousMatch, euroAway72h,
     isDerby, derbyName, derbyPairs, DERBIES, DERBIES_BY_LEAGUE,
-    riskScore, normName, matchRefName, refShort, refLabel, pickPL, summarisePicks, calibrate, impliedProb, fairOdds, edgePct, LOGISTIC_SLOPE,
+    riskScore, normName, matchRefName, refShort, refLabel, refBorrowNote, leagueRates, pickPL, summarisePicks, calibrate, impliedProb, fairOdds, edgePct, LOGISTIC_SLOPE,
     per90, liveRate, joinLooksRight, foldLetters, MIN_LIVE_MINUTES,
     lineupMinutes, xiWeights, SUBS_USED, SUB_MINUTES,
     playerKeys, matchSquadName, lineupRoles, currentRound, isPlayed, PLAYED_STATUS,

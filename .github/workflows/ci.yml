@@ -341,6 +341,22 @@ jobs:
       - name: The bookings leaderboards count what was shown
         run: node scripts/check-booked.mjs
 
+      # A referee's card rate is stored per division because that is how it is
+      # measured, but officials are not per division: Josh Smith took a Premier
+      # League fixture with 27 Championship matches on record and none in the
+      # Premier League table, so it priced at the league rate while the number
+      # was one file away. Borrowing it is arithmetic, and arithmetic is where
+      # this can go wrong silently — a rate COPIED rather than scaled, or a
+      # borrowed row counted into the very average it is measured against,
+      # changes what a fixture is priced at and nothing says so. The averaging
+      # loop existed FIVE times across the desks; the exclusion has to hold in
+      # every one.
+      - name: A referee's record from the division next door
+        run: node scripts/check-cross-refs.mjs
+
+      - name: Borrowing a referee record is scaled, not copied
+        run: python3 data/test_cross_refs.py
+
       # Which fixtures are derbies was written down in FOUR places — core.js,
       # plmodel.js and inline in both of the other desks — and two of them had
       # already drifted: core called Brentford v Fulham a West London derby and

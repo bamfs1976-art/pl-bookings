@@ -1632,3 +1632,9 @@ tr[data-club]:focus-visible{outline:3px solid var(--ring);outline-offset:-3px}
 .bk-club-cell .crest{width:17px;height:17px;font-size:7.5px}
 .bk-club-h .crest{width:22px;height:22px;border-radius:6px;font-size:9px;flex:none}
 .bk-club-h{align-items:center}
+
+/* An official priced off another division's record. The dagger is the same
+   mark the fixture line carries (PLDCore.refLabel / refBorrowNote) — one
+   symbol, one wording, three tables and four page types. */
+.ref-borrowed{color:var(--text-2);font-size:.8em;vertical-align:super;
+  margin-left:.15em;cursor:help}

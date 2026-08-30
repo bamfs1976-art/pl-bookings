@@ -2384,9 +2384,12 @@ function renderRefs(){
     const col=r.ypg>=4?"var(--danger)":r.ypg>=3.5?"var(--warn)":r.ypg>=3?"var(--good)":"var(--text-2)";
     const h=REF_HIST_MAP[refHistKey(r.n)];
     const hist=h?`<span class="num" title="${h.matches} matches, ${h.first}–${h.last} (epldata, yellows only)">${h.ypg.toFixed(2)}</span> <span class="faint" style="font-size:.72rem">${h.matches}g</span>`:'<span class="faint">—</span>';
+    const bn=PLDCore.refBorrowNote(r);
     const tr=document.createElement("tr");
     tr.innerHTML=
-      `<td style="padding:.55rem .7rem">${esc(r.n)}${r.region?` <span class="faint" style="font-size:.72rem">${esc(r.region)}</span>`:''}</td>`+
+      /* The borrowed marker, worded once in core.js. This row otherwise reads
+         as N Premier League matches for a man who has refereed none. */
+      `<td style="padding:.55rem .7rem"${bn?` title="${esc(bn.title)}"`:''}>${esc(r.n)}${bn?`<span class="ref-borrowed">${bn.mark}</span>`:''}${r.region?` <span class="faint" style="font-size:.72rem">${esc(r.region)}</span>`:''}</td>`+
       `<td style="text-align:right" class="num muted">${r.matches==null?'—':r.matches}</td>`+
       `<td style="text-align:right"><span class="display num" style="font-size:1.05rem;color:${col}">${r.ypg==null?'—':r.ypg.toFixed(2)}</span></td>`+
       `<td style="text-align:right" class="num muted">${r.fpg==null?'<span class="faint">—</span>':r.fpg.toFixed(1)}</td>`+
@@ -4036,11 +4039,23 @@ async function loadLiveCalibration(){
 const REF_KEY="pl_desk_refs_v1", SEASON="2026-27";
 let refAssign=(()=>{ try{ return JSON.parse(localStorage.getItem(REF_KEY))||{}; }catch(e){ return {}; } })();
 function saveRefs(){ try{ localStorage.setItem(REF_KEY,JSON.stringify(refAssign)); }catch(e){} }
-const REF_AVG_YPG=(()=>{ const v=REFS.map(r=>r.ypg).filter(x=>x!=null); return v.length?v.reduce((a,b)=>a+b,0)/v.length:3.7; })();
+/* A BORROWED ROW IS NOT PART OF THIS DIVISION. data/cross_refs.py adds an
+   official who has a record in a neighbouring competition and none here — Josh
+   Smith, 27 Championship matches, on a Premier League appointment. Those
+   matches are already counted in that league's baseline; counting them here as
+   well would move the very number his borrowed rate is measured against. He is
+   priced BY this average without contributing TO it.
+   AND A REAL DIFFERENCE, WRITTEN DOWN: this desk takes an UNWEIGHTED mean
+   while the other three take one weighted by matches refereed
+   (PLDCore.leagueRates). Four copies of this loop existed and three are now
+   that one call. This one is left as it is deliberately — making it weighted
+   moves every price on the desk, which is a change to make on purpose and
+   measure, not a side effect of adding a referee. */
+const REF_AVG_YPG=(()=>{ const v=REFS.filter(r=>!r.borrowed).map(r=>r.ypg).filter(x=>x!=null); return v.length?v.reduce((a,b)=>a+b,0)/v.length:3.7; })();
 // League-average cards per foul, for the second strictness signal. Null until
 // a refs refresh has harvested fouls (HF/AF), in which case the factor stays
 // on yellows-per-game exactly as before.
-const REF_AVG_CPF=(()=>{ const v=REFS.map(r=>r.cpf).filter(x=>typeof x==="number"&&x>0); return v.length?v.reduce((a,b)=>a+b,0)/v.length:null; })();
+const REF_AVG_CPF=(()=>{ const v=REFS.filter(r=>!r.borrowed).map(r=>r.cpf).filter(x=>typeof x==="number"&&x>0); return v.length?v.reduce((a,b)=>a+b,0)/v.length:null; })();
 /* BOOKING POINTS, which this desk was the only one not to price.
  *
  * The Championship and La Liga desks have carried the market since they were

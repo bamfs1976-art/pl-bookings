@@ -482,6 +482,22 @@ jobs:
           echo "== referee-join ==" >> data/laliga_harvest.log
           python3 data/build_refs.py --league LL --season "${{ inputs.season_sp || '2526' }}" 2>&1 | tee -a data/laliga_harvest.log
 
+      # AN OFFICIAL'S RECORD FROM THE DIVISION NEXT DOOR. Must run AFTER all
+      # three build_refs steps above, because it reads every division's table
+      # to fill each one — Josh Smith took a Premier League fixture with 27
+      # Championship matches on record and nothing in the Premier League table,
+      # so that match priced at the league rate while the number was one file
+      # away. It rewrites the same <league>_data.js files build_refs just
+      # patched, which is why it belongs to this workflow and only this one:
+      # two owners of one file is the failure this repository keeps meeting.
+      #
+      # Idempotent — every borrowed row is dropped before anything is decided,
+      # so a referee who has since earned a record of his own, or stopped being
+      # appointed in that division, simply does not come back.
+      - name: Borrow referee records across the divisions
+        continue-on-error: true
+        run: python3 data/cross_refs.py
+
       # Re-vendor Plsimulator's match model, which it refits weekly and
       # publishes CORS-open at plsimulation.netlify.app/model.json. Feeds the
       # game-state factor and the fitted closeness signal.
