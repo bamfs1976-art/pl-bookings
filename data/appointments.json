@@ -12,7 +12,8 @@
   "rfef.es — CTA designation sheet, Primera División, Jornada 2, 24 August, issued Las Rozas 18-08-2026 (supplied as a screenshot; exact PDF URL not captured)",
   "rfef.es — CTA designation sheet, Primera División, Jornada 2, issued Las Rozas 18-08-2026 (supplied as a screenshot; exact PDF URL not captured)",
   "rfef.es — CTA designation sheets, Primera División, Jornada 2, 22 and 23 August, issued Las Rozas 18-08-2026 (supplied as screenshots; exact PDF URLs not captured)",
-  "rfef.es — CTA designation sheets, Primera División, Jornada 3, 28 and 29 August, issued Las Rozas 27-08-2026 (supplied as screenshots; exact PDF URLs not captured)"
+  "rfef.es — CTA designation sheets, Primera División, Jornada 3, 28 and 29 August, issued Las Rozas 27-08-2026 (supplied as screenshots; exact PDF URLs not captured)",
+  "rfef.es — CTA designation sheets, Primera División, Jornada 3, 29 and 30 August 2026 (supplied as screenshots; exact PDF URLs not captured)"
  ],
  "appointments": [
   {
@@ -640,7 +641,7 @@
    "ref": "Ricardo De Burgos",
    "refResolved": "Ricardo De Burgos Bengoetxea",
    "resolvedBy": "run",
-   "source": "rfef.es — CTA designation sheets, Primera División, Jornada 3, 28 and 29 August, issued Las Rozas 27-08-2026 (supplied as screenshots; exact PDF URLs not captured)"
+   "source": "rfef.es — CTA designation sheets, Primera División, Jornada 3, 29 and 30 August 2026 (supplied as screenshots; exact PDF URLs not captured)"
   },
   {
    "league": "LL",
@@ -651,7 +652,7 @@
    "ref": "Manuel Jesús Orellana",
    "refResolved": null,
    "resolvedBy": null,
-   "source": "rfef.es — CTA designation sheets, Primera División, Jornada 3, 28 and 29 August, issued Las Rozas 27-08-2026 (supplied as screenshots; exact PDF URLs not captured)"
+   "source": "rfef.es — CTA designation sheets, Primera División, Jornada 3, 29 and 30 August 2026 (supplied as screenshots; exact PDF URLs not captured)"
   },
   {
    "league": "LL",
@@ -662,7 +663,40 @@
    "ref": "Javier Alberola",
    "refResolved": "Javier Alberola Rojas",
    "resolvedBy": "run",
-   "source": "rfef.es — CTA designation sheets, Primera División, Jornada 3, 28 and 29 August, issued Las Rozas 27-08-2026 (supplied as screenshots; exact PDF URLs not captured)"
+   "source": "rfef.es — CTA designation sheets, Primera División, Jornada 3, 29 and 30 August 2026 (supplied as screenshots; exact PDF URLs not captured)"
+  },
+  {
+   "league": "LL",
+   "date": "2026-08-30",
+   "h": "CEL",
+   "a": "ATH",
+   "ko": "21:30",
+   "ref": "Mateo Busquets",
+   "refResolved": "Mateo Busquets Ferrer",
+   "resolvedBy": "run",
+   "source": "rfef.es — CTA designation sheets, Primera División, Jornada 3, 29 and 30 August 2026 (supplied as screenshots; exact PDF URLs not captured)"
+  },
+  {
+   "league": "LL",
+   "date": "2026-08-30",
+   "h": "DEP",
+   "a": "VAL",
+   "ko": "19:30",
+   "ref": "Miguel Ángel Ortiz",
+   "refResolved": "Miguel Angel Ortiz Arias",
+   "resolvedBy": "run",
+   "source": "rfef.es — CTA designation sheets, Primera División, Jornada 3, 29 and 30 August 2026 (supplied as screenshots; exact PDF URLs not captured)"
+  },
+  {
+   "league": "LL",
+   "date": "2026-08-30",
+   "h": "RMA",
+   "a": "MAL",
+   "ko": "17:00",
+   "ref": "Juan Martínez",
+   "refResolved": "Juan Martinez Munuera",
+   "resolvedBy": "run",
+   "source": "rfef.es — CTA designation sheets, Primera División, Jornada 3, 29 and 30 August 2026 (supplied as screenshots; exact PDF URLs not captured)"
   }
  ]
 }
