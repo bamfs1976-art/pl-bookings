@@ -109,8 +109,28 @@ jobs:
           python3 data/harvest_extra.py $ARGS
 
       # ---- the daily half: things that change once a day at most -----------
+      # ONCE A DAY, ON THE FIRST CRON ONLY — and it was running on all four.
+      #
+      # `inputs.what` is empty on a SCHEDULED run (the inputs context belongs
+      # to workflow_dispatch), so `inputs.what == ''` was true on every firing
+      # and this step fired four times a day. It is the most expensive step
+      # here by a distance: /teams/statistics and /transfers are both ONE CALL
+      # PER CLUB, so across 64 clubs in three divisions it is ~143 calls a run
+      # — 572 a day to refresh a league table and a transfer list that change
+      # once a day, against the 143 that actually buys the data.
+      #
+      # The step name said "the daily half" and the schedule comment said
+      # "things that change once a day at most". Both were describing intent;
+      # the `if` was the only thing that decided, and it disagreed with them.
+      # So the schedule is now named explicitly, and a manual run still gets
+      # it on demand.
       - name: Standings, team card profiles and transfer proposals
-        if: ${{ !inputs.probe && (inputs.what == '' || contains(inputs.what, 'daily') || inputs.what == 'all') }}
+        if: >-
+          ${{ !inputs.probe && (
+                (github.event_name == 'schedule' && github.event.schedule == '40 5 * * *')
+                || (github.event_name != 'schedule'
+                    && (inputs.what == '' || contains(inputs.what, 'daily') || inputs.what == 'all'))
+              ) }}
         continue-on-error: true
         run: |
           python3 data/harvest_extra.py --league PL,EFLC,LL \

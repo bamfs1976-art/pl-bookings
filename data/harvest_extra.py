@@ -1106,7 +1106,20 @@ def run_one(host, key, L, season, want, args):
                     json.dumps(rows, indent=2, ensure_ascii=False), encoding="utf-8")
 
 
+_TEAM_IDS = {}
+
+
 def af_team_ids(host, key, league, season):
+    """The division's club ids — fetched once per run, not once per caller.
+
+    Both `teamstats` and `transfers` open with this, and a run that does the
+    two spent two identical /teams calls for a list that cannot change between
+    them. Small on its own; the reason to fix it is that the number of callers
+    is the thing that grows.
+    """
+    cached = _TEAM_IDS.get((league.code, season))
+    if cached is not None:
+        return cached
     payload = af._get(host, key, "teams",
                       {"league": str(league.af_league), "season": season})
     err = af.api_errors(payload)
@@ -1120,6 +1133,11 @@ def af_team_ids(host, key, league, season):
             short = club_of(league.code, tm.get("name"))
             if short and tm.get("id"):
                 ids[short] = tm["id"]
+    # Only a real answer is cached. An empty registry means the division was
+    # not recognised, and caching that would turn one bad call into a silent
+    # no-op for every later caller in the run.
+    if ids:
+        _TEAM_IDS[(league.code, season)] = ids
     return ids
 
 

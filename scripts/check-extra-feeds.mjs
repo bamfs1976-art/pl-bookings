@@ -200,7 +200,11 @@ for (const f of OUTPUTS) {
   /* THE CACHE IS THE COST CONTROL. Without it a hundred readers polling once a
      minute is a hundred calls a minute, which empties a 7,500 allowance inside
      an hour of one busy Saturday. */
-  assert.ok(/max-age=\$\{TTL\}/.test(fn),
+  /* The value is now CHOSEN per response — TTL when the live payload inlined
+     its events, FANOUT_TTL when the function had to spend a call per live
+     match. That relationship is check-api-budget.mjs's to police; this only
+     insists the header is there and is driven by a TTL rather than hardcoded. */
+  assert.ok(/max-age=\$\{ttl\}/.test(fn),
     'netlify/functions/live-cards.js serves the live payload without an edge ' +
     'cache. It is called by browsers and every call is metered: uncached, one ' +
     'popular Saturday afternoon costs the week\'s quota.');

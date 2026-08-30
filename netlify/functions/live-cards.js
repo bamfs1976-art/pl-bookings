@@ -62,6 +62,26 @@ const SECOND_YELLOW = 'second yellow card';
 const MAX_FIXTURES = 24;
 const TTL = 60;
 
+/* THE TTL THE EXPENSIVE PATH GETS, and the reason there are two.
+ *
+ * The cheap path is one call a refresh: at 60s that is 60 calls an hour, which
+ * is nothing. The fan-out path is one call PER LIVE MATCH, and at 60s across a
+ * Saturday's twenty in-play fixtures it is 1,200 an hour — 7,200 over a day of
+ * football, against an allowance of 7,500. data/api_budget.py carries both
+ * branches precisely because the gap between them is the whole risk.
+ *
+ * So the path that costs twenty times as much refreshes three times as slowly,
+ * and the response says which TTL it was given. This is self-regulating: no
+ * ceiling to breach, no state to keep, and the day the live payload starts
+ * inlining events the function speeds back up on its own.
+ *
+ * WHY NOT SKIP THE FAN-OUT ON SOME REFRESHES INSTEAD. Because a response
+ * assembled without it carries `cards: []`, which is indistinguishable on the
+ * page from a match in which nobody has been booked. A slower complete answer
+ * is safe; a fast empty one that reads as "not booked" is not.
+ */
+const FANOUT_TTL = 180;
+
 const CORS = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Methods': 'GET, OPTIONS',
@@ -181,18 +201,26 @@ exports.handler = async (event) => {
       }
     }
 
+    /* WHAT THIS REFRESH ACTUALLY COST decides how long it is cached. A refresh
+       that fanned out spent `upstream` calls instead of one, so it is held
+       three times as long; one that got its events inlined stays on the fast
+       TTL. The choice is made from what happened, not from what we assumed
+       would happen — which matters because which branch runs is the thing
+       this repository has never been able to verify. */
+    const ttl = needEvents.length ? FANOUT_TTL : TTL;
+
     return {
       statusCode: 200,
       headers: headers({
         /* THE COST CONTROL. One upstream refresh per TTL however many readers
            are watching. stale-while-revalidate so a reader never waits on the
            upstream call, and never sees a blank ticker while it runs. */
-        'Cache-Control': `public, max-age=${TTL}, stale-while-revalidate=${TTL * 3}`,
+        'Cache-Control': `public, max-age=${ttl}, stale-while-revalidate=${ttl * 3}`,
       }),
       body: JSON.stringify({
         live: true,
         fetched: new Date().toISOString(),
-        ttl: TTL,
+        ttl,
         /* WHAT THIS REFRESH COST, in the response rather than a log, because
            the question "what is the live layer spending" should be answerable
            from the page. */

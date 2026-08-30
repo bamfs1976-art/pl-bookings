@@ -1324,16 +1324,12 @@
       + '</span>';
   }
 
-  async function livePoll() {
-    try {
-      var r = await fetch('/api/live-cards?leagues=LL', { cache: 'no-store' });
-      var d = await r.json();
-      /* A FAILED POLL IS NOT NEWS THAT THE CARDS WERE RESCINDED — the previous
-         state is kept. Only an explicit "not live" clears it. */
-      if (d && d.live === false) { LIVE.fixtures = null; }
-      else if (d && d.fixtures) { LIVE.fixtures = d.fixtures; LIVE.at = Date.now(); }
-      renderFixtures();
-    } catch (e) { /* keep what we had */ }
+  function liveApply(d) {
+    /* A FAILED POLL IS NOT NEWS THAT THE CARDS WERE RESCINDED — the previous
+       state is kept. Only an explicit "not live" clears it. */
+    if (d && d.live === false) { LIVE.fixtures = null; }
+    else if (d && d.fixtures) { LIVE.fixtures = d.fixtures; LIVE.at = Date.now(); }
+    renderFixtures();
   }
 
   function liveStart() {
@@ -1347,8 +1343,9 @@
       return isFinite(ko) && Date.now() >= ko && Date.now() < ko + LiveCards.WINDOW_MS;
     });
     if (!on) return;
-    livePoll();
-    LIVE.timer = setInterval(livePoll, 60000);
+    /* The cadence comes from the function's own TTL, and the edge cache is
+       left to do its job — see LiveCards.pollLoop. */
+    LIVE.timer = LiveCards.pollLoop('/api/live-cards?leagues=LL', liveApply);
   }
 
   function renderFixtures() {

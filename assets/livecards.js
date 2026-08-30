@@ -272,8 +272,53 @@
     };
   }
 
+  /* ONE POLLING LOOP FOR EVERY DESK THAT READS THE LIVE FUNCTION.
+   *
+   * The Championship and La Liga desks each had their own, and they agreed
+   * only because they were written the same afternoon. Both got two things
+   * wrong in the same way, which is what a second copy is for:
+   *
+   * 1. THEY ASKED FOR `cache: 'no-store'`. The edge cache is the ENTIRE cost
+   *    control on a metered endpoint behind a public URL — one upstream
+   *    refresh per TTL however many people are watching. A request that tells
+   *    the CDN not to serve from cache is a request to pay for every reader
+   *    separately, and the browsers that turn 'no-store' into a no-cache
+   *    request header do exactly that. Freshness is the RESPONSE's job, and
+   *    it already does it: max-age plus stale-while-revalidate.
+   *
+   * 2. THEY POLLED ON A FIXED 60s TIMER. The function now answers with the
+   *    TTL it chose — 60s when the live payload inlined its events, 180s
+   *    when it had to fan out one call per match — so the loop follows what
+   *    it is told rather than a number written on the page. Polling faster
+   *    than the TTL cannot produce newer data; it only spends invocations.
+   */
+  function pollLoop(url, onData) {
+    var timer = null, stopped = false, ttl = 60;
+
+    async function tick() {
+      if (stopped) return;
+      try {
+        var r = await fetch(url, { headers: { Accept: 'application/json' } });
+        var d = await r.json();
+        if (d && typeof d.ttl === 'number' && d.ttl > 0) ttl = d.ttl;
+        onData(d);
+      } catch (e) {
+        /* A FAILED POLL IS NOT NEWS. The caller keeps what it had; we only
+           make sure the loop does not die with the request. */
+        onData(null);
+      }
+      if (!stopped) timer = setTimeout(tick, ttl * 1000);
+    }
+
+    tick();
+    return { stop: function () {
+      stopped = true;
+      if (timer) { clearTimeout(timer); timer = null; }
+    }, ttl: function () { return ttl; } };
+  }
+
   var api = { create: create, indexLive: indexLive, indexApiLive: indexApiLive,
-    clubTally: clubTally,
+    clubTally: clubTally, pollLoop: pollLoop,
     fixtureTicker: fixtureTicker, playerState: playerState, anyLive: anyLive,
     WINDOW_MS: WINDOW_MS };
 

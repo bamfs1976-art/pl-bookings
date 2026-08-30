@@ -41,6 +41,7 @@ deliberately loud for that reason: on the first real run, a field that has
 moved will stop the harvest and name itself rather than write a plausible file.
 """
 import argparse
+import atexit
 import datetime as dt
 import json
 import re
@@ -297,6 +298,73 @@ REQUEST_DELAY = 0.25    # seconds between requests, ~240/min
 RATE_RETRIES = 4        # a refusal is temporary; back off rather than fail
 _last_request = [0.0]
 
+# ─────────────────────────────────────────────────────────────────────────
+# THE DAY'S USAGE IS MEASURED, NOT MODELLED.
+#
+# API-Football returns x-ratelimit-requests-remaining and -limit on EVERY
+# response: the exact number of calls this key has left today, from the only
+# party that actually knows. This module threw those headers away and read
+# nothing but the body, so the only way to answer "what are we spending?" was
+# to count loops by hand and hope the model matched the code.
+#
+# It does not have to. Every call now records what the API said, and a run
+# ends by printing it. A harvest that adds a per-club loop reports its true
+# cost the next morning without anybody re-deriving anything — which is the
+# whole point, because a hand-built estimate is a second copy of the schedule
+# that can disagree with it silently.
+#
+# `remaining` is a live figure shared by every workflow and the Netlify
+# function, so it falls all day and is the honest measure of the WHOLE app's
+# consumption, not just this process's. `spent_here` counts this run alone.
+_usage = {"limit": None, "remaining": None, "spent_here": 0}
+
+
+def note_usage(headers):
+    """Record what the API said about the day's allowance."""
+    _usage["spent_here"] += 1
+    for key, field in (("x-ratelimit-requests-limit", "limit"),
+                       ("x-ratelimit-requests-remaining", "remaining")):
+        raw = headers.get(key) if headers else None
+        if raw is None:
+            continue
+        try:
+            _usage[field] = int(str(raw).strip())
+        except (TypeError, ValueError):
+            # A header that is not a number is not a reason to fail a harvest
+            # that has already succeeded. It only costs us the report.
+            pass
+    return _usage
+
+
+def usage_line():
+    """One line on the day's allowance, or None if the API never said."""
+    spent = _usage["spent_here"]
+    limit, left = _usage["limit"], _usage["remaining"]
+    if limit is None or left is None:
+        return (f"API-Football: {spent} call(s) this run "
+                "(the allowance headers were not returned)") if spent else None
+    used = limit - left
+    pct = (used / limit * 100) if limit else 0
+    return (f"API-Football: {spent} call(s) this run; "
+            f"{used} of {limit} used today ({pct:.0f}%), {left} left")
+
+
+def report_usage():
+    """Print the day's allowance, if anything was fetched at all."""
+    line = usage_line()
+    if line:
+        print(f"\n{line}")
+    return line
+
+
+# ON EVERY EXIT PATH, not just the happy one. The run that most needs to say
+# what it spent is the run that died — a shape error half way through a
+# per-club walk, or the 429 that means the day is gone. A report printed at
+# the end of main() is exactly the report you do not get on those days.
+# usage_line() returns None when nothing was fetched, so importing this module
+# (tests, build_bookings) stays silent.
+atexit.register(report_usage)
+
 
 def _rate_limited(payload):
     """Whether this 200 is actually a rate-limit refusal."""
@@ -328,15 +396,21 @@ def _fetch_once(host, key, url):
     req = urllib.request.Request(url, headers=_headers(host, key))
     try:
         with urllib.request.urlopen(req, timeout=60) as r:
-            return json.loads(r.read().decode("utf-8"))
+            body = json.loads(r.read().decode("utf-8"))
+            note_usage(r.headers)
+            return body
     except urllib.error.HTTPError as e:
+        # A REFUSAL CARRIES THE ALLOWANCE HEADERS TOO, and a 429 is the one
+        # moment the number is worth most. Recording it here is what lets the
+        # exit below say how much was spent rather than only that it ran out.
+        note_usage(getattr(e, "headers", None))
         if e.code in (401, 403):
             sys.exit(f"ERROR: {url} answered {e.code} — API_FOOTBALL_KEY is "
                      "missing, wrong, or not entitled to this endpoint.")
         if e.code == 429:
             sys.exit("ERROR: API-Football answered 429. The per-DAY quota is "
-                     "spent (the per-minute one is handled by backing off). "
-                     "Check the day's usage with --check.")
+                     "spent (the per-minute one is handled by backing off).\n"
+                     f"  {usage_line() or 'the allowance headers said nothing'}")
         raise
 
 

@@ -370,6 +370,20 @@ jobs:
       - name: The extra feeds are optional, guarded and owned by one workflow
         run: node scripts/check-extra-feeds.mjs
 
+      # THE ALLOWANCE IS 7,500 CALLS A DAY AND NOTHING WAS COUNTING. Two ways
+      # to overspend it that no unit test can see: a workflow step whose `if`
+      # disagrees with its own name (extra-feeds.yml's "daily half" ran on all
+      # four crons, because `inputs.what == ''` is true on a scheduled run),
+      # and a browser-facing function whose cost scales with READERS rather
+      # than with football. The budget is computed from the workflow files and
+      # the function themselves so it cannot drift from them, and the day's
+      # real usage is now read off the API's own rate-limit headers.
+      - name: The API budget stays well inside the allowance
+        run: node scripts/check-api-budget.mjs
+
+      - name: The budget model itself holds up
+        run: python3 data/test_api_budget.py
+
       # Which fixtures are derbies was written down in FOUR places — core.js,
       # plmodel.js and inline in both of the other desks — and two of them had
       # already drifted: core called Brentford v Fulham a West London derby and
