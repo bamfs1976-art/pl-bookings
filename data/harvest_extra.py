@@ -571,7 +571,26 @@ def harvest_h2h(host, key, league, pairs, last=5):
 # 10. odds — the line, which is the honest thing to grade against
 # ─────────────────────────────────────────────────────────────────────────
 
-CARD_BETS = ("cards", "total cards", "cards over/under")
+# THE MARKETS THIS DESK PRICES, named exactly, FROM THE PROBE.
+#
+# This was a substring match on "cards", written blind. The recorded payload
+# (data/probes/odds.json) shows why that was wrong in both directions: one
+# fixture carries 184 distinct markets across 12 bookmakers and 840KB, of
+# which FOURTEEN mention a card — "Cards Asian Handicap", "First Card
+# Received (3 way)", "RCARD", "Yellow Cards 1x2 (2nd Half)" and so on. The
+# loose match swept up handicaps and first-card novelties the desk cannot
+# price, and still MISSED the singular ones ("Red Card In The Match") because
+# the needle was plural.
+#
+# So it is an allowlist of the three the desk actually quotes: the match card
+# total, and each side's total. Those are the numbers /record could be graded
+# against; everything else is somebody else's market. Lowercased for
+# comparison because bookmakers differ on capitalisation.
+CARD_BETS = (
+    "cards over/under",        # the match total — Over 3.5 / 4.5 / 5.5
+    "home team total cards",   # the team card lines the desks already price
+    "away team total cards",
+)
 
 
 def parse_odds(payload, fixture_id):
@@ -590,7 +609,7 @@ def parse_odds(payload, fixture_id):
             books += 1
             for bet in (bk.get("bets") or []):
                 name = (bet.get("name") or "").strip()
-                if not any(c in name.lower() for c in CARD_BETS):
+                if name.lower() not in CARD_BETS:
                     continue
                 for v in (bet.get("values") or []):
                     lines.append({
@@ -654,6 +673,11 @@ def harvest_sidelined(host, key, players):
 # probe — turn every assumption above into evidence
 # ─────────────────────────────────────────────────────────────────────────
 
+# Rows kept per endpoint. Bigger only where the rows DIFFER from each other:
+# an events response is goals, cards, subs and VAR in one list, and the card
+# branch is the whole reason this endpoint is here.
+SAMPLE = {"fixtures_events": 40}
+
 PROBE_CALLS = [
     ("injuries", "injuries", lambda L, s, ctx: {"league": str(L.af_league), "season": s}),
     ("topyellowcards", "players/topyellowcards", lambda L, s, ctx: {"league": str(L.af_league), "season": s}),
@@ -670,7 +694,7 @@ PROBE_CALLS = [
 ]
 
 
-def probe(host, key, league, season, ctx):
+def probe(host, key, league, season, ctx, only=None):
     """One call per endpoint, saved raw. About a dozen requests.
 
     The saved payloads are the ONLY evidence in this repository of what these
@@ -681,6 +705,8 @@ def probe(host, key, league, season, ctx):
     PROBES.mkdir(exist_ok=True)
     ok, failed = [], []
     for name, path, params in PROBE_CALLS:
+        if only and name != only:
+            continue
         try:
             p = params(league, season, ctx)
         except KeyError as e:
@@ -695,9 +721,13 @@ def probe(host, key, league, season, ctx):
             "errors": err or None,
             "results": payload.get("results"),
             "paging": payload.get("paging"),
-            # THE FIRST TWO ROWS ONLY. A full /injuries response is a megabyte
-            # and the shape is in the first row; this file exists to be read.
-            "response_sample": (payload.get("response") or [])[:2]
+            # HOW MANY ROWS TO KEEP, and it is not one number. Two is plenty
+            # to see a SHAPE and useless for seeing a VARIANT: the first probe
+            # of /fixtures/events returned two goals, so the branch that reads
+            # a card detail — the one that RAISES on a label it does not know
+            # — was still unverified by a probe that passed. Endpoints whose
+            # rows are heterogeneous keep more.
+            "response_sample": (payload.get("response") or [])[:SAMPLE.get(name, 2)]
             if isinstance(payload.get("response"), list) else payload.get("response"),
         }, indent=2, ensure_ascii=False), encoding="utf-8")
         (failed if err else ok).append(f"{name} -> {out.name}"
@@ -785,6 +815,10 @@ def main():
                     help="comma-separated: " + ", ".join(WHAT) + ", or 'all'")
     ap.add_argument("--league", default="PL", help="PL, EFLC, LL (comma-separated)")
     ap.add_argument("--season", help="season START year; defaults to the env")
+    ap.add_argument("--probe-only", metavar="NAME",
+                    help="probe ONE endpoint by name (see PROBE_CALLS). "
+                         "Correcting a single parser against reality should "
+                         "cost one call, not the whole dozen.")
     ap.add_argument("--probe", action="store_true",
                     help="one call per endpoint into data/probes/, and stop. "
                          "Run this FIRST: every parser here was written from "
@@ -812,7 +846,7 @@ def main():
     bad = [w for w in want if w not in WHAT]
     if bad:
         sys.exit(f"--what: unknown {', '.join(bad)}. Choose from {', '.join(WHAT)}.")
-    if not want and not args.probe:
+    if not want and not (args.probe or args.probe_only):
         sys.exit("nothing to do: pass --what or --probe")
 
     for code in codes:
@@ -829,7 +863,7 @@ def main():
 
 
 def run_one(host, key, L, season, want, args):
-    if args.probe:
+    if args.probe or args.probe_only:
         fin = finished_ids(L, limit=1)
         up = upcoming_ids(L, hours=24 * 30, limit=1)
         ids = af_team_ids(host, key, L, season)
@@ -843,7 +877,7 @@ def run_one(host, key, L, season, want, args):
             ctx["fixture"] = fin[0]
         if up:
             ctx["upcoming"] = up[0]
-        ok, failed = probe(host, key, L, season, ctx)
+        ok, failed = probe(host, key, L, season, ctx, only=args.probe_only)
         for line in ok:
             print(f"  probed {line}")
         for line in failed:

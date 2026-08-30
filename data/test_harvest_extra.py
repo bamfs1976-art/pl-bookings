@@ -229,18 +229,37 @@ hh = X.parse_h2h(HH, "PL")
 check("h2h: newest first", [r["d"] for r in hh], ["2026-01-02", "2025-09-14"])
 refuses("h2h", lambda: X.parse_h2h({"response": [{"fixture": {}}]}, "PL"))
 
-# ── odds: the CARD markets only ──────────────────────────────────────────
+# ── odds: the three markets this desk prices ─────────────────────────────
+# MARKET NAMES FROM THE PROBE, not from memory. data/probes/odds.json shows
+# one fixture carrying 184 distinct markets across 12 bookmakers and 840KB, of
+# which fourteen mention a card. The names below are real; "Total Cards" —
+# which this test used before the probe landed — is not one of them.
 OD = {"response": [{"bookmakers": [
     {"id": 8, "name": "Bet365", "bets": [
         {"id": 1, "name": "Match Winner", "values": [
             {"value": "Home", "odd": "1.50"}]},
-        {"id": 80, "name": "Total Cards", "values": [
+        {"id": 80, "name": "Cards Over/Under", "values": [
             {"value": "Over 4.5", "odd": "2.10"},
             {"value": "Under 4.5", "odd": "1.70"}]},
+        {"id": 81, "name": "Home Team Total Cards", "values": [
+            {"value": "Over 1.5", "odd": "2.40"}]},
+        # THE ONES THE SUBSTRING MATCH SWEPT UP. A handicap and a novelty are
+        # not lines this desk can be graded against, and 12 bookmakers' worth
+        # of them is what made the raw payload 840KB.
+        {"id": 82, "name": "Cards Asian Handicap", "values": [
+            {"value": "Home -1.5", "odd": "3.00"}]},
+        {"id": 83, "name": "First Card Received (3 way)", "values": [
+            {"value": "Home", "odd": "1.90"}]},
+        # AND THE ONE IT MISSED, because the needle was plural.
+        {"id": 84, "name": "Red Card In The Match (1st Half)", "values": [
+            {"value": "Yes", "odd": "9.00"}]},
     ]},
 ]}]}
 od = X.parse_odds(OD, 77)
-check("odds: only the card market is kept", len(od["lines"]), 2)
+check("odds: only the markets the desk prices are kept", len(od["lines"]), 3)
+check("odds: and they are the right three",
+      sorted(set(l["bet"] for l in od["lines"])),
+      ["Cards Over/Under", "Home Team Total Cards"])
 check("odds: the line and the price",
       (od["lines"][0]["label"], od["lines"][0]["odd"]), ("Over 4.5", 2.10))
 check("odds: the bookmaker is named, because two books disagree",
