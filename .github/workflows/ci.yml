@@ -393,6 +393,16 @@ jobs:
       - name: One derby list, and the route that shows it
         run: node scripts/check-derbies.mjs
 
+      # Eleven places formatted a kick-off and they did not agree. Six passed
+      # `undefined` as the locale, which hands the choice of clock to the
+      # READER'S machine — so the same 15:30 fixture read "16:30" in London and
+      # "04:30 PM" in New York, on pages that are nothing but timestamps. The
+      # hour cycle is decided once now, and this checks it by running the
+      # helpers in the locale that would betray a slip (en-US) rather than by
+      # grepping for the option.
+      - name: Every clock reads 24-hour, from one rule
+        run: node scripts/check-clock.mjs
+
       # "Booking heat" named two different quantities: the chip showed the two
       # clubs' cards-against rates while the Model detail panel two lines below
       # showed the model's expected cards, and /today showed the model's. One

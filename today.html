@@ -833,8 +833,7 @@
   }
   function fmtTime(iso) {
     var d = new Date(iso);
-    return isNaN(d) ? '' : d.toLocaleTimeString(undefined,
-      { hour: '2-digit', minute: '2-digit' });
+    return PLDCore.clock(d);
   }
   function n1(v) { return v == null ? '—' : Number(v).toFixed(1); }
   function esc(s) {
@@ -1453,8 +1452,7 @@
   function koShort(iso) {
     var d = new Date(iso);
     if (isNaN(d)) return '';
-    return d.toLocaleDateString(undefined, { weekday: 'short', day: 'numeric', month: 'short' })
-      + ' ' + d.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' });
+    return PLDCore.dateClock(d, undefined, ' ');
   }
 
   /* The nine-fold currently on screen, held for the share button. The card
@@ -2467,10 +2465,7 @@
     if (!iso) return '';
     var d = new Date(iso);
     if (isNaN(d)) return '';
-    return d.toLocaleString(undefined, {
-      weekday: 'short', day: 'numeric', month: 'short',
-      hour: '2-digit', minute: '2-digit'
-    });
+    return PLDCore.dateClock(d);
   }
 
   /* Takes the date rather than reading the dropdown, because in the calendar

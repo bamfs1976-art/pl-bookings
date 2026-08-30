@@ -2070,7 +2070,74 @@
       (d) => ({ a: d[0], b: d[1], name: d[2] || '' }));
   }
 
+  /* ═══════════════════════════════════════════════════════════════════════
+     THE CLOCK — 24 HOUR, FOR EVERY READER, IN ONE PLACE
+     ═══════════════════════════════════════════════════════════════════════
+
+     Ten call sites across four pages formatted a kick-off, and they did not
+     agree. Five passed `undefined` as the locale, which means THE READER'S
+     locale decides the clock — so the same 15:30 fixture rendered "16:30" to a
+     British reader and "04:30 PM" to an American one, on a desk whose fixture
+     headers, /today calendar and acca lines are all timestamps. The other five
+     hardcoded "en-GB" and were 24-hour by accident of that locale rather than
+     by decision.
+
+     hourCycle:'h23' rather than hour12:false. The two agree in every locale
+     tested here, but they do not mean the same thing: hour12:false asks for
+     "not 12-hour" and lets the locale pick between h23 (00-23) and h24
+     (01-24), so midnight can come out as "24:05". h23 asks for the thing we
+     actually want.
+
+     THE LOCALE IS LEFT ALONE. Only the clock is pinned; weekday and month
+     names still come from the reader's own locale, because "make the clock
+     24-hour" is not the same request as "make the app English". A caller that
+     wants a fixed language passes one, and the two sites that already did keep
+     doing it. */
+  const CLOCK = { hour: '2-digit', minute: '2-digit', hourCycle: 'h23' };
+
+  /* NULL IS NOT A DATE, AND new Date(null) DOES NOT SAY SO — it is the epoch,
+     a perfectly valid Thursday in 1970, so an isNaN check waves it through and
+     a fixture with no kick-off renders as "Thu, Jan 1, 00:00" instead of
+     nothing. Same for 0 and ''. The callers that guarded with `if (!iso)`
+     before now delegate that here, so the rule holds wherever the helper is
+     used rather than wherever somebody remembered. */
+  function asDate(v) {
+    if (v == null || v === '' || v === 0) return null;
+    const d = v instanceof Date ? v : new Date(v);
+    return isNaN(d) ? null : d;
+  }
+
+  /* "16:30" */
+  function clock(iso, locale) {
+    const d = asDate(iso);
+    return d ? d.toLocaleTimeString(locale, CLOCK) : '';
+  }
+
+  /* "Sat 16:30", or "SAT 16:30" when `upper` — the terse fixture header. */
+  function dayClock(iso, locale, upper) {
+    const d = asDate(iso);
+    if (!d) return '';
+    const day = d.toLocaleDateString(locale, { weekday: 'short' });
+    return (upper ? day.toUpperCase() : day) + ' ' + clock(d, locale);
+  }
+
+  /* "Sat 30 Aug, 16:30".
+
+     BUILT FROM PARTS, not from one toLocaleString call, so the separator is
+     ours to choose: the acca fixture line has always joined with a space and
+     the fixture headers with a comma, and unifying them would be a rendering
+     change nobody asked for. Verified to reproduce toLocaleString's own output
+     exactly, comma included, across en-GB, en-US, es-ES and de-DE. */
+  function dateClock(iso, locale, sep) {
+    const d = asDate(iso);
+    if (!d) return '';
+    return d.toLocaleDateString(locale,
+      { weekday: 'short', day: 'numeric', month: 'short' })
+      + (sep == null ? ', ' : sep) + clock(d, locale);
+  }
+
   const PLDCore = {
+    clock, dayClock, dateClock, CLOCK,
     rotationRisk, rotationBand,
     restDays, restBucket, previousMatch, euroAway72h,
     isDerby, derbyName, derbyPairs, DERBIES, DERBIES_BY_LEAGUE,

@@ -1194,9 +1194,7 @@
     if (!iso) return '';
     var d = new Date(iso);
     if (isNaN(d)) return '';
-    return d.toLocaleString(undefined, {
-      weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit'
-    });
+    return PLDCore.dateClock(d);
   }
 
   (function initRounds() {

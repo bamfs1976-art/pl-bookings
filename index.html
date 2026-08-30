@@ -3825,8 +3825,8 @@ async function loadLive(){
     try{ renderSuspension(); }catch(e){ console.warn("[Bookings Desk] renderSuspension:",e); }
     status.hidden=false; status.className="chip tier-target";
     const fetchedAt=(()=>{ try{ const c=JSON.parse(localStorage.getItem(FPL_CACHE_KEY))||{}; const h=c["bootstrap-static"]; return h?new Date(h.t):null; }catch(e){ return null; } })();
-    status.textContent="● Live FPL data"+(fetchedAt?" · "+fetchedAt.toLocaleTimeString("en-GB",{hour:"2-digit",minute:"2-digit"}):"");
-    status.title="Availability"+(LIVE.seasonStarted?" and 2026-27 card counts":"")+" from the official FPL API"+(fetchedAt?", fetched "+fetchedAt.toLocaleString("en-GB",{weekday:"short",hour:"2-digit",minute:"2-digit"})+" (30-min cache)":"")+". "+LIVE.matchedCount+" players matched.";
+    status.textContent="● Live FPL data"+(fetchedAt?" · "+PLDCore.clock(fetchedAt,"en-GB"):"");
+    status.title="Availability"+(LIVE.seasonStarted?" and 2026-27 card counts":"")+" from the official FPL API"+(fetchedAt?", fetched "+PLDCore.dayClock(fetchedAt,"en-GB")+" (30-min cache)":"")+". "+LIVE.matchedCount+" players matched.";
     const curEv=bs.events.find(e=>e.id===LIVE.currentGW);
     const gwEl=$("gwNum"), prevGw=parseInt(gwEl.textContent,10);
     gwEl.textContent=LIVE.currentGW;
@@ -4269,9 +4269,9 @@ function fixtureRisks(h,a){
   return PL_PLAYERS.filter(p=>(p.c===h||p.c===a)&&rEff(p)!=null&&!p.ls&&!(p.live&&"isu".includes(p.live.st)))
     .sort((x,y)=>rEff(y)-rEff(x)).slice(0,3);
 }
-function fmtKO(iso){ try{ return new Date(iso).toLocaleString("en-GB",{weekday:"short",day:"numeric",month:"short",hour:"2-digit",minute:"2-digit"}); }catch(e){ return ""; } }
+function fmtKO(iso){ return PLDCore.dateClock(iso,"en-GB"); }
 // Terse "SAT 16:30" for the prototype fixture header.
-function fmtKOShort(iso){ try{ const d=new Date(iso); return d.toLocaleDateString("en-GB",{weekday:"short"}).toUpperCase()+" "+d.toLocaleTimeString("en-GB",{hour:"2-digit",minute:"2-digit"}); }catch(e){ return "TBC"; } }
+function fmtKOShort(iso){ try{ return PLDCore.dayClock(iso,"en-GB",true); }catch(e){ return "TBC"; } }
 // "Anthony Taylor" -> "A. Taylor"
 /* PLDCore.refShort — one implementation across four pages. This one was
    already different from the other three: initial plus everything after,
@@ -4679,8 +4679,7 @@ function koRange(picks){
 function koShort(iso){
   const d=new Date(iso);
   if(isNaN(d)) return "";
-  return d.toLocaleDateString(undefined,{weekday:"short"})+" "
-    +d.toLocaleTimeString(undefined,{hour:"2-digit",minute:"2-digit"});
+  return PLDCore.dayClock(d);
 }
 function roundAccaHtml(a){
   const pc=v=>(v*100).toFixed(0)+"%";
