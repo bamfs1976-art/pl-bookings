@@ -668,7 +668,7 @@ const REFS = [
   {n:"Andy Madley",region:"",matches:21,ypg:3.24,red:0.19,pen:0.29,fpg:22.86,cpf:0.1417},
   {n:"Michael Oliver",region:"",matches:29,ypg:3.17,red:0.07,pen:0.07,fpg:22.72,cpf:0.1396},
   {n:"Tony Harrington",region:"",matches:11,ypg:3.0,red:0.09,pen:null,fpg:20.0,cpf:0.15},
-  {n:"Craig Pawson",region:"",matches:21,ypg:2.67,red:0.1,pen:null,fpg:21.71,cpf:0.1228},
+  {n:"Craig Pawson",region:"",matches:21,ypg:2.67,red:0.1,pen:0.29,fpg:21.71,cpf:0.1228},
   {n:"Thomas Kirk",region:"",matches:6,ypg:2.67,red:0.5,pen:null,fpg:24.0,cpf:0.1111},
   {n:"Farai Hallam",region:"",matches:5,ypg:2.6,red:0.0,pen:null,fpg:21.8,cpf:0.1193},
 ];
