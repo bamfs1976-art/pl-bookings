@@ -815,6 +815,12 @@ def main():
                     help="comma-separated: " + ", ".join(WHAT) + ", or 'all'")
     ap.add_argument("--league", default="PL", help="PL, EFLC, LL (comma-separated)")
     ap.add_argument("--season", help="season START year; defaults to the env")
+    ap.add_argument("--probe-fixture", type=int, metavar="ID",
+                    help="probe the per-fixture endpoints against THIS fixture. "
+                         "The events parser RAISES on a card label it does not "
+                         "know, so the branch that matters can only be checked "
+                         "on a match that produced a dismissal — and the first "
+                         "finished fixture of a season usually did not.")
     ap.add_argument("--probe-only", metavar="NAME",
                     help="probe ONE endpoint by name (see PROBE_CALLS). "
                          "Correcting a single parser against reality should "
@@ -873,7 +879,9 @@ def run_one(host, key, L, season, want, args):
             ctx["team"] = two[0]
         if len(two) == 2:
             ctx["h2h"] = f"{two[0]}-{two[1]}"
-        if fin:
+        if args.probe_fixture:
+            ctx["fixture"] = args.probe_fixture
+        elif fin:
             ctx["fixture"] = fin[0]
         if up:
             ctx["upcoming"] = up[0]
