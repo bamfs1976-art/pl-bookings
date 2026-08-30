@@ -1,0 +1,8295 @@
+{
+  "note": "PROPOSALS from API-Football /transfers, for a person to read. data/transfers.json is the hand-curated overlay that is actually applied; this is not.",
+  "since": "2026-05-02",
+  "moves": [
+    {
+      "n": "D. Mukasa",
+      "from": "Manchester City",
+      "to": "West Ham",
+      "fromCode": null,
+      "toCode": "WHU",
+      "date": "2026-08-20",
+      "type": "Loan"
+    },
+    {
+      "n": "D. Bentley",
+      "from": "Wolves",
+      "to": "Coventry",
+      "fromCode": "WOL",
+      "toCode": null,
+      "date": "2026-08-20",
+      "type": "-"
+    },
+    {
+      "n": "B. Johnson",
+      "from": "Ipswich",
+      "to": "Stoke City",
+      "fromCode": null,
+      "toCode": "STK",
+      "date": "2026-08-20",
+      "type": "Loan"
+    },
+    {
+      "n": "A. Wan-Bissaka",
+      "from": "West Ham",
+      "to": "Aston Villa",
+      "fromCode": "WHU",
+      "toCode": null,
+      "date": "2026-08-20",
+      "type": "Loan"
+    },
+    {
+      "n": "B. Wales",
+      "from": "Swansea",
+      "to": "Dundee",
+      "fromCode": "SWA",
+      "toCode": null,
+      "date": "2026-08-19",
+      "type": "Loan"
+    },
+    {
+      "n": "A. Ahmedhodžić",
+      "from": "Feyenoord",
+      "to": "Burnley",
+      "fromCode": null,
+      "toCode": "BUR",
+      "date": "2026-08-19",
+      "type": "Transfer"
+    },
+    {
+      "n": "R. Šimić",
+      "from": "Cardiff",
+      "to": "1. FC Magdeburg",
+      "fromCode": "CAR",
+      "toCode": null,
+      "date": "2026-08-18",
+      "type": "Loan"
+    },
+    {
+      "n": "J. Piroe",
+      "from": "Leeds",
+      "to": "West Ham",
+      "fromCode": null,
+      "toCode": "WHU",
+      "date": "2026-08-18",
+      "type": "Loan"
+    },
+    {
+      "n": "G. Hirst",
+      "from": "Ipswich",
+      "to": "Stoke City",
+      "fromCode": null,
+      "toCode": "STK",
+      "date": "2026-08-18",
+      "type": "Transfer"
+    },
+    {
+      "n": "G. Coudert",
+      "from": "Stade Brestois 29",
+      "to": "Burnley",
+      "fromCode": null,
+      "toCode": "BUR",
+      "date": "2026-08-18",
+      "type": "-"
+    },
+    {
+      "n": "A. Musaba",
+      "from": "Fenerbahçe",
+      "to": "Norwich",
+      "fromCode": null,
+      "toCode": "NOR",
+      "date": "2026-08-18",
+      "type": "Loan"
+    },
+    {
+      "n": "A. Ahmedhodžić",
+      "from": "Feyenoord",
+      "to": "Burnley",
+      "fromCode": null,
+      "toCode": "BUR",
+      "date": "2026-08-18",
+      "type": "Transfer"
+    },
+    {
+      "n": "Y. Konak",
+      "from": "Brentford",
+      "to": "Lincoln",
+      "fromCode": null,
+      "toCode": "LIN",
+      "date": "2026-08-17",
+      "type": "Loan"
+    },
+    {
+      "n": "N. Füllkrug",
+      "from": "West Ham",
+      "to": "Werder Bremen",
+      "fromCode": "WHU",
+      "toCode": null,
+      "date": "2026-08-17",
+      "type": "Loan"
+    },
+    {
+      "n": "G. Coudert",
+      "from": "Stade Brestois 29",
+      "to": "Burnley",
+      "fromCode": null,
+      "toCode": "BUR",
+      "date": "2026-08-17",
+      "type": "-"
+    },
+    {
+      "n": "B. Bateman",
+      "from": "Birmingham",
+      "to": "Oxford City",
+      "fromCode": "BIR",
+      "toCode": null,
+      "date": "2026-08-17",
+      "type": "Loan"
+    },
+    {
+      "n": "S. Dieng",
+      "from": "Middlesbrough",
+      "to": "Atromitos",
+      "fromCode": "MID",
+      "toCode": null,
+      "date": "2026-08-16",
+      "type": "Free agent"
+    },
+    {
+      "n": "T. Seko",
+      "from": "Stoke City",
+      "to": "Urawa",
+      "fromCode": "STK",
+      "toCode": null,
+      "date": "2026-08-15",
+      "type": "Transfer"
+    },
+    {
+      "n": "S. Dieng",
+      "from": "Middlesbrough",
+      "to": "Atromitos",
+      "fromCode": "MID",
+      "toCode": null,
+      "date": "2026-08-15",
+      "type": "Free agent"
+    },
+    {
+      "n": "J. O&apos;Brien-Whitmarsh",
+      "from": "Southampton",
+      "to": "Northampton",
+      "fromCode": "SOU",
+      "toCode": null,
+      "date": "2026-08-15",
+      "type": "Transfer"
+    },
+    {
+      "n": "A. Coulibaly",
+      "from": "Turku PS",
+      "to": "Lincoln",
+      "fromCode": null,
+      "toCode": "LIN",
+      "date": "2026-08-15",
+      "type": "Free agent"
+    },
+    {
+      "n": "T. Seko",
+      "from": "Stoke City",
+      "to": "Urawa",
+      "fromCode": "STK",
+      "toCode": null,
+      "date": "2026-08-14",
+      "type": "Transfer"
+    },
+    {
+      "n": "N. Irankunda",
+      "from": "Watford",
+      "to": "Sporting CP",
+      "fromCode": "WAT",
+      "toCode": null,
+      "date": "2026-08-14",
+      "type": "Transfer"
+    },
+    {
+      "n": "L. Skinner",
+      "from": "Bristol City",
+      "to": "Carlisle",
+      "fromCode": "BRC",
+      "toCode": null,
+      "date": "2026-08-14",
+      "type": "Loan"
+    },
+    {
+      "n": "F. Turley",
+      "from": "Derby",
+      "to": "Dunfermline",
+      "fromCode": "DER",
+      "toCode": null,
+      "date": "2026-08-14",
+      "type": "Loan"
+    },
+    {
+      "n": "C. Scanlon",
+      "from": "Liverpool",
+      "to": "Cardiff",
+      "fromCode": null,
+      "toCode": "CAR",
+      "date": "2026-08-14",
+      "type": "Loan"
+    },
+    {
+      "n": "A. Phillips",
+      "from": "Tottenham",
+      "to": "Middlesbrough",
+      "fromCode": null,
+      "toCode": "MID",
+      "date": "2026-08-14",
+      "type": "Transfer"
+    },
+    {
+      "n": "A. Engels",
+      "from": "Celtic",
+      "to": "West Ham",
+      "fromCode": null,
+      "toCode": "WHU",
+      "date": "2026-08-14",
+      "type": "Transfer"
+    },
+    {
+      "n": "S. Iling-Junior",
+      "from": "Aston Villa",
+      "to": "Bolton",
+      "fromCode": null,
+      "toCode": "BOL",
+      "date": "2026-08-13",
+      "type": "Loan"
+    },
+    {
+      "n": "R. Owen",
+      "from": "Wrexham",
+      "to": "AFC Telford United",
+      "fromCode": "WRE",
+      "toCode": null,
+      "date": "2026-08-13",
+      "type": "Loan"
+    },
+    {
+      "n": "R. Kavuma McQueen",
+      "from": "Chelsea",
+      "to": "Portsmouth",
+      "fromCode": null,
+      "toCode": "POR",
+      "date": "2026-08-13",
+      "type": "Loan"
+    },
+    {
+      "n": "N. Irankunda",
+      "from": "Watford",
+      "to": "Sporting CP",
+      "fromCode": "WAT",
+      "toCode": null,
+      "date": "2026-08-13",
+      "type": "Transfer"
+    },
+    {
+      "n": "Max Alleyne",
+      "from": "Manchester City",
+      "to": "Burnley",
+      "fromCode": null,
+      "toCode": "BUR",
+      "date": "2026-08-13",
+      "type": "Loan"
+    },
+    {
+      "n": "M. Smit",
+      "from": "Stoke City",
+      "to": "SV Darmstadt 98",
+      "fromCode": "STK",
+      "toCode": null,
+      "date": "2026-08-13",
+      "type": "Loan"
+    },
+    {
+      "n": "M. Jurásek",
+      "from": "Norwich",
+      "to": "Sparta Praha",
+      "fromCode": "NOR",
+      "toCode": null,
+      "date": "2026-08-13",
+      "type": "Loan"
+    },
+    {
+      "n": "M. Bird",
+      "from": "Bristol City",
+      "to": "Birmingham",
+      "fromCode": "BRC",
+      "toCode": "BIR",
+      "date": "2026-08-13",
+      "type": "Transfer"
+    },
+    {
+      "n": "L. Leroy",
+      "from": "FC Basel 1893",
+      "to": "Preston",
+      "fromCode": null,
+      "toCode": "PRE",
+      "date": "2026-08-13",
+      "type": "Transfer"
+    },
+    {
+      "n": "J. Pétris",
+      "from": "Watford",
+      "to": "Aris Thessalonikis",
+      "fromCode": "WAT",
+      "toCode": null,
+      "date": "2026-08-13",
+      "type": "Transfer"
+    },
+    {
+      "n": "J. Pearman",
+      "from": "QPR",
+      "to": "Swindon Town",
+      "fromCode": "QPR",
+      "toCode": null,
+      "date": "2026-08-13",
+      "type": "Loan"
+    },
+    {
+      "n": "H. Clarke",
+      "from": "Ipswich",
+      "to": "Preston",
+      "fromCode": null,
+      "toCode": "PRE",
+      "date": "2026-08-13",
+      "type": "Transfer"
+    },
+    {
+      "n": "D. Satpaev",
+      "from": "Chelsea",
+      "to": "Burnley",
+      "fromCode": null,
+      "toCode": "BUR",
+      "date": "2026-08-13",
+      "type": "Loan"
+    },
+    {
+      "n": "A. Weimann",
+      "from": "Derby",
+      "to": "Cheltenham",
+      "fromCode": "DER",
+      "toCode": null,
+      "date": "2026-08-13",
+      "type": "Free agent"
+    },
+    {
+      "n": "A. Phillips",
+      "from": "Tottenham",
+      "to": "Middlesbrough",
+      "fromCode": null,
+      "toCode": "MID",
+      "date": "2026-08-13",
+      "type": "Transfer"
+    },
+    {
+      "n": "A. Mowatt",
+      "from": "West Brom",
+      "to": "Derby",
+      "fromCode": "WBA",
+      "toCode": "DER",
+      "date": "2026-08-13",
+      "type": "Transfer"
+    },
+    {
+      "n": "A. Engels",
+      "from": "Celtic",
+      "to": "West Ham",
+      "fromCode": null,
+      "toCode": "WHU",
+      "date": "2026-08-13",
+      "type": "Transfer"
+    },
+    {
+      "n": "T. Smith",
+      "from": "QPR",
+      "to": "New England Revolution",
+      "fromCode": "QPR",
+      "toCode": null,
+      "date": "2026-08-12",
+      "type": "Loan"
+    },
+    {
+      "n": "M. Bird",
+      "from": "Bristol City",
+      "to": "Birmingham",
+      "fromCode": "BRC",
+      "toCode": "BIR",
+      "date": "2026-08-12",
+      "type": "Transfer"
+    },
+    {
+      "n": "L. Leroy",
+      "from": "FC Basel 1893",
+      "to": "Preston",
+      "fromCode": null,
+      "toCode": "PRE",
+      "date": "2026-08-12",
+      "type": "Transfer"
+    },
+    {
+      "n": "J. Pétris",
+      "from": "Watford",
+      "to": "Aris Thessalonikis",
+      "fromCode": "WAT",
+      "toCode": null,
+      "date": "2026-08-12",
+      "type": "Transfer"
+    },
+    {
+      "n": "H. Clarke",
+      "from": "Ipswich",
+      "to": "Preston",
+      "fromCode": null,
+      "toCode": "PRE",
+      "date": "2026-08-12",
+      "type": "Transfer"
+    },
+    {
+      "n": "E. Selvik",
+      "from": "Watford",
+      "to": "Stade Brestois 29",
+      "fromCode": "WAT",
+      "toCode": null,
+      "date": "2026-08-12",
+      "type": "Loan"
+    },
+    {
+      "n": "A. Mowatt",
+      "from": "West Brom",
+      "to": "Derby",
+      "fromCode": "WBA",
+      "toCode": "DER",
+      "date": "2026-08-12",
+      "type": "Transfer"
+    },
+    {
+      "n": "Vernon Masara",
+      "from": "Burnley",
+      "to": "Peterborough",
+      "fromCode": "BUR",
+      "toCode": null,
+      "date": "2026-08-11",
+      "type": "Transfer"
+    },
+    {
+      "n": "S. Walker",
+      "from": "Bradford",
+      "to": "Watford",
+      "fromCode": null,
+      "toCode": "WAT",
+      "date": "2026-08-11",
+      "type": "Transfer"
+    },
+    {
+      "n": "S. Tronstad",
+      "from": "Blackburn",
+      "to": "Brann",
+      "fromCode": "BLB",
+      "toCode": null,
+      "date": "2026-08-11",
+      "type": "Free agent"
+    },
+    {
+      "n": "L. Brunt",
+      "from": "Wrexham",
+      "to": "Bolton",
+      "fromCode": "WRE",
+      "toCode": "BOL",
+      "date": "2026-08-11",
+      "type": "Transfer"
+    },
+    {
+      "n": "K. Phillips",
+      "from": "Manchester City",
+      "to": "Sheffield Utd",
+      "fromCode": null,
+      "toCode": "SHU",
+      "date": "2026-08-11",
+      "type": "Loan"
+    },
+    {
+      "n": "G. Hamer",
+      "from": "Sheffield Utd",
+      "to": "Coventry",
+      "fromCode": "SHU",
+      "toCode": null,
+      "date": "2026-08-11",
+      "type": "Transfer"
+    },
+    {
+      "n": "D. Cirkin",
+      "from": "Sunderland",
+      "to": "QPR",
+      "fromCode": null,
+      "toCode": "QPR",
+      "date": "2026-08-11",
+      "type": "Free agent"
+    },
+    {
+      "n": "Benjamin Arthur",
+      "from": "Brentford",
+      "to": "Portsmouth",
+      "fromCode": null,
+      "toCode": "POR",
+      "date": "2026-08-11",
+      "type": "Loan"
+    },
+    {
+      "n": "S. Walker",
+      "from": "Bradford",
+      "to": "Watford",
+      "fromCode": null,
+      "toCode": "WAT",
+      "date": "2026-08-10",
+      "type": "Transfer"
+    },
+    {
+      "n": "S. Tronstad",
+      "from": "Blackburn",
+      "to": "Brann",
+      "fromCode": "BLB",
+      "toCode": null,
+      "date": "2026-08-10",
+      "type": "Free agent"
+    },
+    {
+      "n": "S. Charles",
+      "from": "Southampton",
+      "to": "Fulham",
+      "fromCode": "SOU",
+      "toCode": null,
+      "date": "2026-08-10",
+      "type": "Transfer"
+    },
+    {
+      "n": "Rio Cardines",
+      "from": "Crystal Palace",
+      "to": "Bristol City",
+      "fromCode": null,
+      "toCode": "BRC",
+      "date": "2026-08-10",
+      "type": "Loan"
+    },
+    {
+      "n": "R. Nzingoula",
+      "from": "Strasbourg",
+      "to": "West Brom",
+      "fromCode": null,
+      "toCode": "WBA",
+      "date": "2026-08-10",
+      "type": "Transfer"
+    },
+    {
+      "n": "R. Hardie",
+      "from": "Wrexham",
+      "to": "Bolton",
+      "fromCode": "WRE",
+      "toCode": "BOL",
+      "date": "2026-08-10",
+      "type": "Loan"
+    },
+    {
+      "n": "G. Hamer",
+      "from": "Sheffield Utd",
+      "to": "Coventry",
+      "fromCode": "SHU",
+      "toCode": null,
+      "date": "2026-08-10",
+      "type": "Transfer"
+    },
+    {
+      "n": "D. Mubama",
+      "from": "Manchester City",
+      "to": "Southampton",
+      "fromCode": null,
+      "toCode": "SOU",
+      "date": "2026-08-10",
+      "type": "Loan"
+    },
+    {
+      "n": "D. Cirkin",
+      "from": "Sunderland",
+      "to": "QPR",
+      "fromCode": null,
+      "toCode": "QPR",
+      "date": "2026-08-10",
+      "type": "Free agent"
+    },
+    {
+      "n": "A. Patterson",
+      "from": "Sunderland",
+      "to": "Wrexham",
+      "fromCode": null,
+      "toCode": "WRE",
+      "date": "2026-08-10",
+      "type": "Transfer"
+    },
+    {
+      "n": "A. Gilchrist",
+      "from": "West Brom",
+      "to": "Leyton Orient",
+      "fromCode": "WBA",
+      "toCode": null,
+      "date": "2026-08-10",
+      "type": "Loan"
+    },
+    {
+      "n": "T. Ouma",
+      "from": "Slavia Praha",
+      "to": "Charlton",
+      "fromCode": null,
+      "toCode": "CHA",
+      "date": "2026-08-09",
+      "type": "Loan"
+    },
+    {
+      "n": "Sam Morsy",
+      "from": "Bristol City",
+      "to": "Blackburn",
+      "fromCode": "BRC",
+      "toCode": "BLB",
+      "date": "2026-08-09",
+      "type": "Free agent"
+    },
+    {
+      "n": "S. Charles",
+      "from": "Southampton",
+      "to": "Fulham",
+      "fromCode": "SOU",
+      "toCode": null,
+      "date": "2026-08-09",
+      "type": "Transfer"
+    },
+    {
+      "n": "R. Nzingoula",
+      "from": "Strasbourg",
+      "to": "West Brom",
+      "fromCode": null,
+      "toCode": "WBA",
+      "date": "2026-08-09",
+      "type": "Transfer"
+    },
+    {
+      "n": "N. Oyekunle",
+      "from": "Southampton",
+      "to": "Leyton Orient",
+      "fromCode": "SOU",
+      "toCode": null,
+      "date": "2026-08-09",
+      "type": "Loan"
+    },
+    {
+      "n": "M. Solomon",
+      "from": "Tottenham",
+      "to": "West Ham",
+      "fromCode": null,
+      "toCode": "WHU",
+      "date": "2026-08-09",
+      "type": "Transfer"
+    },
+    {
+      "n": "Finley Munroe",
+      "from": "Middlesbrough",
+      "to": "Blackpool",
+      "fromCode": "MID",
+      "toCode": null,
+      "date": "2026-08-09",
+      "type": "Loan"
+    },
+    {
+      "n": "Ethan Sutherland",
+      "from": "Wolves",
+      "to": "Exeter City",
+      "fromCode": "WOL",
+      "toCode": null,
+      "date": "2026-08-09",
+      "type": "Loan"
+    },
+    {
+      "n": "A. Patterson",
+      "from": "Sunderland",
+      "to": "Wrexham",
+      "fromCode": null,
+      "toCode": "WRE",
+      "date": "2026-08-09",
+      "type": "Transfer"
+    },
+    {
+      "n": "A. Kamara",
+      "from": "Hull City",
+      "to": "Portsmouth",
+      "fromCode": null,
+      "toCode": "POR",
+      "date": "2026-08-09",
+      "type": "Transfer"
+    },
+    {
+      "n": "M. Solomon",
+      "from": "Tottenham",
+      "to": "West Ham",
+      "fromCode": null,
+      "toCode": "WHU",
+      "date": "2026-08-08",
+      "type": "Transfer"
+    },
+    {
+      "n": "A. Kamara",
+      "from": "Hull City",
+      "to": "Portsmouth",
+      "fromCode": null,
+      "toCode": "POR",
+      "date": "2026-08-08",
+      "type": "Transfer"
+    },
+    {
+      "n": "R. Vítek",
+      "from": "Manchester United",
+      "to": "Middlesbrough",
+      "fromCode": null,
+      "toCode": "MID",
+      "date": "2026-08-07",
+      "type": "Transfer"
+    },
+    {
+      "n": "K. Sène",
+      "from": "Middlesbrough",
+      "to": "BSC Young Boys",
+      "fromCode": "MID",
+      "toCode": null,
+      "date": "2026-08-07",
+      "type": "Transfer"
+    },
+    {
+      "n": "T. Onyango",
+      "from": "Everton",
+      "to": "Sheffield Utd",
+      "fromCode": null,
+      "toCode": "SHU",
+      "date": "2026-08-06",
+      "type": "Free agent"
+    },
+    {
+      "n": "T. Dobson-Ventura",
+      "from": "Southampton",
+      "to": "Eastleigh",
+      "fromCode": "SOU",
+      "toCode": null,
+      "date": "2026-08-06",
+      "type": "Loan"
+    },
+    {
+      "n": "R. Vítek",
+      "from": "Manchester United",
+      "to": "Middlesbrough",
+      "fromCode": null,
+      "toCode": "MID",
+      "date": "2026-08-06",
+      "type": "Transfer"
+    },
+    {
+      "n": "O. Thorn",
+      "from": "Lincoln",
+      "to": "Colchester",
+      "fromCode": "LIN",
+      "toCode": null,
+      "date": "2026-08-06",
+      "type": "Loan"
+    },
+    {
+      "n": "N. Chalobah",
+      "from": "Sheffield Wednesday",
+      "to": "Charlton",
+      "fromCode": null,
+      "toCode": "CHA",
+      "date": "2026-08-06",
+      "type": "Free agent"
+    },
+    {
+      "n": "Keenan Gough",
+      "from": "Charlton",
+      "to": "Bristol Rovers",
+      "fromCode": "CHA",
+      "toCode": null,
+      "date": "2026-08-06",
+      "type": "Loan"
+    },
+    {
+      "n": "K. Sène",
+      "from": "Middlesbrough",
+      "to": "BSC Young Boys",
+      "fromCode": "MID",
+      "toCode": null,
+      "date": "2026-08-06",
+      "type": "Transfer"
+    },
+    {
+      "n": "Jay Robinson",
+      "from": "Southampton",
+      "to": "Monza",
+      "fromCode": "SOU",
+      "toCode": null,
+      "date": "2026-08-06",
+      "type": "Loan"
+    },
+    {
+      "n": "I. Olaofe",
+      "from": "Charlton",
+      "to": "Lincoln",
+      "fromCode": "CHA",
+      "toCode": "LIN",
+      "date": "2026-08-06",
+      "type": "Loan"
+    },
+    {
+      "n": "D. Burgzorg",
+      "from": "Middlesbrough",
+      "to": "Preston",
+      "fromCode": "MID",
+      "toCode": "PRE",
+      "date": "2026-08-06",
+      "type": "Loan"
+    },
+    {
+      "n": "T. Onyango",
+      "from": "Everton",
+      "to": "Sheffield Utd",
+      "fromCode": null,
+      "toCode": "SHU",
+      "date": "2026-08-05",
+      "type": "Free agent"
+    },
+    {
+      "n": "S. Mandey",
+      "from": "West Brom",
+      "to": "Grazer AK",
+      "fromCode": "WBA",
+      "toCode": null,
+      "date": "2026-08-05",
+      "type": "Transfer"
+    },
+    {
+      "n": "R. Stewart",
+      "from": "Southampton",
+      "to": "Swansea",
+      "fromCode": "SOU",
+      "toCode": "SWA",
+      "date": "2026-08-05",
+      "type": "Free agent"
+    },
+    {
+      "n": "N. Chalobah",
+      "from": "Sheffield Wednesday",
+      "to": "Charlton",
+      "fromCode": null,
+      "toCode": "CHA",
+      "date": "2026-08-05",
+      "type": "Free agent"
+    },
+    {
+      "n": "M. Melia",
+      "from": "Tottenham",
+      "to": "Lincoln",
+      "fromCode": null,
+      "toCode": "LIN",
+      "date": "2026-08-05",
+      "type": "Loan"
+    },
+    {
+      "n": "L. Temple",
+      "from": "Bolton",
+      "to": "Oldham",
+      "fromCode": "BOL",
+      "toCode": null,
+      "date": "2026-08-05",
+      "type": "Loan"
+    },
+    {
+      "n": "L. Dykes",
+      "from": "Charlton",
+      "to": "Millwall",
+      "fromCode": "CHA",
+      "toCode": "MIL",
+      "date": "2026-08-05",
+      "type": "Free agent"
+    },
+    {
+      "n": "L. Derrick",
+      "from": "Bristol City",
+      "to": "Weston-super-Mare",
+      "fromCode": "BRC",
+      "toCode": null,
+      "date": "2026-08-05",
+      "type": "Loan"
+    },
+    {
+      "n": "J. Veltman",
+      "from": "Brighton",
+      "to": "West Ham",
+      "fromCode": null,
+      "toCode": "WHU",
+      "date": "2026-08-05",
+      "type": "Free agent"
+    },
+    {
+      "n": "J. Jeffries",
+      "from": "Southampton",
+      "to": "Eastleigh",
+      "fromCode": "SOU",
+      "toCode": null,
+      "date": "2026-08-05",
+      "type": "Free agent"
+    },
+    {
+      "n": "D. Traoré",
+      "from": "Southampton",
+      "to": "Le Mans",
+      "fromCode": "SOU",
+      "toCode": null,
+      "date": "2026-08-05",
+      "type": "Loan"
+    },
+    {
+      "n": "D. Brown",
+      "from": "Derby",
+      "to": "Rochdale",
+      "fromCode": "DER",
+      "toCode": null,
+      "date": "2026-08-05",
+      "type": "Loan"
+    },
+    {
+      "n": "Conal McDermott",
+      "from": "Portsmouth",
+      "to": "Derry City",
+      "fromCode": "POR",
+      "toCode": null,
+      "date": "2026-08-05",
+      "type": "Free agent"
+    },
+    {
+      "n": "S. Mandey",
+      "from": "West Brom",
+      "to": "Grazer AK",
+      "fromCode": "WBA",
+      "toCode": null,
+      "date": "2026-08-04",
+      "type": "Transfer"
+    },
+    {
+      "n": "R. Stewart",
+      "from": "Southampton",
+      "to": "Swansea",
+      "fromCode": "SOU",
+      "toCode": "SWA",
+      "date": "2026-08-04",
+      "type": "Free agent"
+    },
+    {
+      "n": "M. Melia",
+      "from": "Tottenham",
+      "to": "Lincoln",
+      "fromCode": null,
+      "toCode": "LIN",
+      "date": "2026-08-04",
+      "type": "Loan"
+    },
+    {
+      "n": "L. Thompson",
+      "from": "Derby",
+      "to": "Mansfield Town",
+      "fromCode": "DER",
+      "toCode": null,
+      "date": "2026-08-04",
+      "type": "Transfer"
+    },
+    {
+      "n": "L. Dykes",
+      "from": "Charlton",
+      "to": "Millwall",
+      "fromCode": "CHA",
+      "toCode": "MIL",
+      "date": "2026-08-04",
+      "type": "Free agent"
+    },
+    {
+      "n": "Kyrell Wilson",
+      "from": "Swansea",
+      "to": "Gent",
+      "fromCode": "SWA",
+      "toCode": null,
+      "date": "2026-08-04",
+      "type": "Transfer"
+    },
+    {
+      "n": "Joshua Beecher",
+      "from": "Cardiff",
+      "to": "Cambrian & Clydach",
+      "fromCode": "CAR",
+      "toCode": null,
+      "date": "2026-08-04",
+      "type": "Free agent"
+    },
+    {
+      "n": "J. Veltman",
+      "from": "Brighton",
+      "to": "West Ham",
+      "fromCode": null,
+      "toCode": "WHU",
+      "date": "2026-08-04",
+      "type": "Free agent"
+    },
+    {
+      "n": "J. Moylan",
+      "from": "Lincoln",
+      "to": "Cardiff",
+      "fromCode": "LIN",
+      "toCode": "CAR",
+      "date": "2026-08-04",
+      "type": "Transfer"
+    },
+    {
+      "n": "I. Bowat",
+      "from": "Portsmouth",
+      "to": "Huddersfield",
+      "fromCode": "POR",
+      "toCode": null,
+      "date": "2026-08-04",
+      "type": "Transfer"
+    },
+    {
+      "n": "Florentino",
+      "from": "Burnley",
+      "to": "Ipswich",
+      "fromCode": "BUR",
+      "toCode": null,
+      "date": "2026-08-04",
+      "type": "Transfer"
+    },
+    {
+      "n": "F. Myhre",
+      "from": "Brann",
+      "to": "West Brom",
+      "fromCode": null,
+      "toCode": "WBA",
+      "date": "2026-08-04",
+      "type": "Transfer"
+    },
+    {
+      "n": "D. Barden",
+      "from": "Norwich",
+      "to": "Stevenage",
+      "fromCode": "NOR",
+      "toCode": null,
+      "date": "2026-08-04",
+      "type": "Free agent"
+    },
+    {
+      "n": "Conal McDermott",
+      "from": "Portsmouth",
+      "to": "Derry City",
+      "fromCode": "POR",
+      "toCode": null,
+      "date": "2026-08-04",
+      "type": "Free agent"
+    },
+    {
+      "n": "B. Whiteman",
+      "from": "Preston",
+      "to": "Wrexham",
+      "fromCode": "PRE",
+      "toCode": "WRE",
+      "date": "2026-08-04",
+      "type": "Transfer"
+    },
+    {
+      "n": "B. Amos",
+      "from": "Port Vale",
+      "to": "Burnley",
+      "fromCode": null,
+      "toCode": "BUR",
+      "date": "2026-08-04",
+      "type": "Free agent"
+    },
+    {
+      "n": "S. Kendall",
+      "from": "Millwall",
+      "to": "Gillingham",
+      "fromCode": "MIL",
+      "toCode": null,
+      "date": "2026-08-03",
+      "type": "Loan"
+    },
+    {
+      "n": "M. Arfsten",
+      "from": "Columbus Crew",
+      "to": "Middlesbrough",
+      "fromCode": null,
+      "toCode": "MID",
+      "date": "2026-08-03",
+      "type": "Transfer"
+    },
+    {
+      "n": "L. Thompson",
+      "from": "Derby",
+      "to": "Mansfield Town",
+      "fromCode": "DER",
+      "toCode": null,
+      "date": "2026-08-03",
+      "type": "Transfer"
+    },
+    {
+      "n": "Kyrell Wilson",
+      "from": "Swansea",
+      "to": "Gent",
+      "fromCode": "SWA",
+      "toCode": null,
+      "date": "2026-08-03",
+      "type": "Transfer"
+    },
+    {
+      "n": "J. Moylan",
+      "from": "Lincoln",
+      "to": "Cardiff",
+      "fromCode": "LIN",
+      "toCode": "CAR",
+      "date": "2026-08-03",
+      "type": "Transfer"
+    },
+    {
+      "n": "I. Bowat",
+      "from": "Portsmouth",
+      "to": "Huddersfield",
+      "fromCode": "POR",
+      "toCode": null,
+      "date": "2026-08-03",
+      "type": "Transfer"
+    },
+    {
+      "n": "Florentino",
+      "from": "Burnley",
+      "to": "Ipswich",
+      "fromCode": "BUR",
+      "toCode": null,
+      "date": "2026-08-03",
+      "type": "Transfer"
+    },
+    {
+      "n": "F. Potts",
+      "from": "West Ham",
+      "to": "Club Brugge KV",
+      "fromCode": "WHU",
+      "toCode": null,
+      "date": "2026-08-03",
+      "type": "Transfer"
+    },
+    {
+      "n": "F. Myhre",
+      "from": "Brann",
+      "to": "West Brom",
+      "fromCode": null,
+      "toCode": "WBA",
+      "date": "2026-08-03",
+      "type": "Transfer"
+    },
+    {
+      "n": "D. Yongwa",
+      "from": "Lorient",
+      "to": "Norwich",
+      "fromCode": null,
+      "toCode": "NOR",
+      "date": "2026-08-03",
+      "type": "Free agent"
+    },
+    {
+      "n": "D. Barden",
+      "from": "Norwich",
+      "to": "Stevenage",
+      "fromCode": "NOR",
+      "toCode": null,
+      "date": "2026-08-03",
+      "type": "Free agent"
+    },
+    {
+      "n": "D. Ballard",
+      "from": "Leyton Orient",
+      "to": "Bristol City",
+      "fromCode": null,
+      "toCode": "BRC",
+      "date": "2026-08-03",
+      "type": "Transfer"
+    },
+    {
+      "n": "B. Whiteman",
+      "from": "Preston",
+      "to": "Wrexham",
+      "fromCode": "PRE",
+      "toCode": "WRE",
+      "date": "2026-08-03",
+      "type": "Transfer"
+    },
+    {
+      "n": "Alfie Marriott",
+      "from": "Watford",
+      "to": "Chelmsford City",
+      "fromCode": "WAT",
+      "toCode": null,
+      "date": "2026-08-03",
+      "type": "Loan"
+    },
+    {
+      "n": "Tiago Parente",
+      "from": "Benfica",
+      "to": "Swansea",
+      "fromCode": null,
+      "toCode": "SWA",
+      "date": "2026-08-02",
+      "type": "Loan"
+    },
+    {
+      "n": "S. Inwood",
+      "from": "Bolton",
+      "to": "Swindon Town",
+      "fromCode": "BOL",
+      "toCode": null,
+      "date": "2026-08-02",
+      "type": "Loan"
+    },
+    {
+      "n": "O. Cooper",
+      "from": "Swansea",
+      "to": "Notts County",
+      "fromCode": "SWA",
+      "toCode": null,
+      "date": "2026-08-02",
+      "type": "Loan"
+    },
+    {
+      "n": "M. Arfsten",
+      "from": "Columbus Crew",
+      "to": "Middlesbrough",
+      "fromCode": null,
+      "toCode": "MID",
+      "date": "2026-08-02",
+      "type": "Transfer"
+    },
+    {
+      "n": "L. Wheeldon",
+      "from": "Derby",
+      "to": "Boston United",
+      "fromCode": "DER",
+      "toCode": null,
+      "date": "2026-08-02",
+      "type": "Free agent"
+    },
+    {
+      "n": "J. Mullins",
+      "from": "Watford",
+      "to": "Wealdstone",
+      "fromCode": "WAT",
+      "toCode": null,
+      "date": "2026-08-02",
+      "type": "Loan"
+    },
+    {
+      "n": "G. Kamara",
+      "from": "Rennes",
+      "to": "QPR",
+      "fromCode": null,
+      "toCode": "QPR",
+      "date": "2026-08-02",
+      "type": "Loan"
+    },
+    {
+      "n": "F. Potts",
+      "from": "West Ham",
+      "to": "West Ham United U21",
+      "fromCode": "WHU",
+      "toCode": null,
+      "date": "2026-08-02",
+      "type": "-"
+    },
+    {
+      "n": "F. Potts",
+      "from": "West Ham",
+      "to": "Club Brugge KV",
+      "fromCode": "WHU",
+      "toCode": null,
+      "date": "2026-08-02",
+      "type": "Transfer"
+    },
+    {
+      "n": "D. Yongwa",
+      "from": "Lorient",
+      "to": "Norwich",
+      "fromCode": null,
+      "toCode": "NOR",
+      "date": "2026-08-02",
+      "type": "Free agent"
+    },
+    {
+      "n": "D. Ballard",
+      "from": "Leyton Orient",
+      "to": "Bristol City",
+      "fromCode": null,
+      "toCode": "BRC",
+      "date": "2026-08-02",
+      "type": "Transfer"
+    },
+    {
+      "n": "C. Congreve",
+      "from": "Swansea",
+      "to": "KVC Westerlo",
+      "fromCode": "SWA",
+      "toCode": null,
+      "date": "2026-08-02",
+      "type": "Transfer"
+    },
+    {
+      "n": "Li-Bao Stowell",
+      "from": "Preston",
+      "to": "Chorley",
+      "fromCode": "PRE",
+      "toCode": null,
+      "date": "2026-08-01",
+      "type": "Loan"
+    },
+    {
+      "n": "L. Wheeldon",
+      "from": "South Shields",
+      "to": "Derby",
+      "fromCode": null,
+      "toCode": "DER",
+      "date": "2026-08-01",
+      "type": "Return from loan"
+    },
+    {
+      "n": "J. Zemura",
+      "from": "Udinese",
+      "to": "Watford",
+      "fromCode": null,
+      "toCode": "WAT",
+      "date": "2026-08-01",
+      "type": "Loan"
+    },
+    {
+      "n": "D. Batth",
+      "from": "Derby",
+      "to": "Millwall",
+      "fromCode": "DER",
+      "toCode": "MIL",
+      "date": "2026-08-01",
+      "type": "Free agent"
+    },
+    {
+      "n": "C. Congreve",
+      "from": "Swansea",
+      "to": "KVC Westerlo",
+      "fromCode": "SWA",
+      "toCode": null,
+      "date": "2026-08-01",
+      "type": "Transfer"
+    },
+    {
+      "n": "S. Szmodics",
+      "from": "Ipswich",
+      "to": "Derby",
+      "fromCode": null,
+      "toCode": "DER",
+      "date": "2026-07-31",
+      "type": "Loan"
+    },
+    {
+      "n": "N. Michalski",
+      "from": "Blackburn",
+      "to": "Crawley Town",
+      "fromCode": "BLB",
+      "toCode": null,
+      "date": "2026-07-31",
+      "type": "Loan"
+    },
+    {
+      "n": "M. Wigley",
+      "from": "Cardiff",
+      "to": "Merthyr Town",
+      "fromCode": "CAR",
+      "toCode": null,
+      "date": "2026-07-31",
+      "type": "Free agent"
+    },
+    {
+      "n": "Kamari Antonio Grant",
+      "from": "Millwall",
+      "to": "Bromley",
+      "fromCode": "MIL",
+      "toCode": null,
+      "date": "2026-07-31",
+      "type": "Loan"
+    },
+    {
+      "n": "J. Maja",
+      "from": "West Brom",
+      "to": "Le Havre",
+      "fromCode": "WBA",
+      "toCode": null,
+      "date": "2026-07-31",
+      "type": "Free agent"
+    },
+    {
+      "n": "H. Rylah",
+      "from": "Charlton",
+      "to": "Solihull Moors",
+      "fromCode": "CHA",
+      "toCode": null,
+      "date": "2026-07-31",
+      "type": "Loan"
+    },
+    {
+      "n": "C. Nwachukwu",
+      "from": "Sheffield Utd",
+      "to": "Sabah FA",
+      "fromCode": "SHU",
+      "toCode": null,
+      "date": "2026-07-31",
+      "type": "Transfer"
+    },
+    {
+      "n": "C. Heywood",
+      "from": "Swansea",
+      "to": "Swansea",
+      "fromCode": "SWA",
+      "toCode": "SWA",
+      "date": "2026-07-31",
+      "type": "-"
+    },
+    {
+      "n": "S. Silvera",
+      "from": "Middlesbrough",
+      "to": "Milton Keynes Dons",
+      "fromCode": "MID",
+      "toCode": null,
+      "date": "2026-07-30",
+      "type": "Free agent"
+    },
+    {
+      "n": "S. Nzonzi",
+      "from": "Stoke City",
+      "to": "Dunkerque",
+      "fromCode": "STK",
+      "toCode": null,
+      "date": "2026-07-30",
+      "type": "Free agent"
+    },
+    {
+      "n": "N. Mendy",
+      "from": "Watford",
+      "to": "Metz",
+      "fromCode": "WAT",
+      "toCode": null,
+      "date": "2026-07-30",
+      "type": "Free agent"
+    },
+    {
+      "n": "N. Anyadike",
+      "from": "Cardiff",
+      "to": "Cardiff",
+      "fromCode": "CAR",
+      "toCode": "CAR",
+      "date": "2026-07-30",
+      "type": "Raise"
+    },
+    {
+      "n": "M. Payero",
+      "from": "Udinese",
+      "to": "Watford",
+      "fromCode": null,
+      "toCode": "WAT",
+      "date": "2026-07-30",
+      "type": "Transfer"
+    },
+    {
+      "n": "L. Cullen",
+      "from": "Swansea",
+      "to": "Leicester",
+      "fromCode": "SWA",
+      "toCode": null,
+      "date": "2026-07-30",
+      "type": "Transfer"
+    },
+    {
+      "n": "Jamie Knight-Lebel",
+      "from": "Bristol City",
+      "to": "Motherwell",
+      "fromCode": "BRC",
+      "toCode": null,
+      "date": "2026-07-30",
+      "type": "Loan"
+    },
+    {
+      "n": "F. Ravaglia",
+      "from": "Bologna",
+      "to": "Watford",
+      "fromCode": null,
+      "toCode": "WAT",
+      "date": "2026-07-30",
+      "type": "Transfer"
+    },
+    {
+      "n": "C. Nwachukwu",
+      "from": "Sheffield Utd",
+      "to": "Sabah FA",
+      "fromCode": "SHU",
+      "toCode": null,
+      "date": "2026-07-30",
+      "type": "Transfer"
+    },
+    {
+      "n": "T. George",
+      "from": "Cardiff",
+      "to": "Sligo Rovers",
+      "fromCode": "CAR",
+      "toCode": null,
+      "date": "2026-07-29",
+      "type": "Loan"
+    },
+    {
+      "n": "R. Lamptey",
+      "from": "Millwall",
+      "to": "Chesterfield",
+      "fromCode": "MIL",
+      "toCode": null,
+      "date": "2026-07-29",
+      "type": "Loan"
+    },
+    {
+      "n": "M. Payero",
+      "from": "Udinese",
+      "to": "Watford",
+      "fromCode": null,
+      "toCode": "WAT",
+      "date": "2026-07-29",
+      "type": "Transfer"
+    },
+    {
+      "n": "L. Cullen",
+      "from": "Swansea",
+      "to": "Leicester",
+      "fromCode": "SWA",
+      "toCode": null,
+      "date": "2026-07-29",
+      "type": "Transfer"
+    },
+    {
+      "n": "K. Lund",
+      "from": "Palermo",
+      "to": "Birmingham",
+      "fromCode": null,
+      "toCode": "BIR",
+      "date": "2026-07-29",
+      "type": "Transfer"
+    },
+    {
+      "n": "Hevertton Santos",
+      "from": "QPR",
+      "to": "Levski Sofia",
+      "fromCode": "QPR",
+      "toCode": null,
+      "date": "2026-07-29",
+      "type": "Free agent"
+    },
+    {
+      "n": "G. Ikoroha",
+      "from": "QPR",
+      "to": "QPR",
+      "fromCode": "QPR",
+      "toCode": "QPR",
+      "date": "2026-07-29",
+      "type": "Free agent"
+    },
+    {
+      "n": "F. Ravaglia",
+      "from": "Bologna",
+      "to": "Watford",
+      "fromCode": null,
+      "toCode": "WAT",
+      "date": "2026-07-29",
+      "type": "Transfer"
+    },
+    {
+      "n": "F. Fawunmi",
+      "from": "Stoke City",
+      "to": "Oldham",
+      "fromCode": "STK",
+      "toCode": null,
+      "date": "2026-07-29",
+      "type": "Loan"
+    },
+    {
+      "n": "C. Marshall",
+      "from": "West Ham",
+      "to": "Luton",
+      "fromCode": "WHU",
+      "toCode": null,
+      "date": "2026-07-29",
+      "type": "Transfer"
+    },
+    {
+      "n": "T. Arokodare",
+      "from": "Wolves",
+      "to": "Ajax",
+      "fromCode": "WOL",
+      "toCode": null,
+      "date": "2026-07-28",
+      "type": "Loan"
+    },
+    {
+      "n": "S. Tabares",
+      "from": "Southampton",
+      "to": "Gillingham",
+      "fromCode": "SOU",
+      "toCode": null,
+      "date": "2026-07-28",
+      "type": "Free agent"
+    },
+    {
+      "n": "P. Mullin",
+      "from": "Wrexham",
+      "to": "Rotherham",
+      "fromCode": "WRE",
+      "toCode": null,
+      "date": "2026-07-28",
+      "type": "Free agent"
+    },
+    {
+      "n": "L. Koleosho",
+      "from": "Burnley",
+      "to": "Paris FC",
+      "fromCode": "BUR",
+      "toCode": null,
+      "date": "2026-07-28",
+      "type": "Transfer"
+    },
+    {
+      "n": "K. Lund",
+      "from": "Palermo",
+      "to": "Birmingham",
+      "fromCode": null,
+      "toCode": "BIR",
+      "date": "2026-07-28",
+      "type": "Transfer"
+    },
+    {
+      "n": "J. Williams",
+      "from": "Portsmouth",
+      "to": "Blackpool",
+      "fromCode": "POR",
+      "toCode": null,
+      "date": "2026-07-28",
+      "type": "Loan"
+    },
+    {
+      "n": "Hevertton Santos",
+      "from": "QPR",
+      "to": "Levski Sofia",
+      "fromCode": "QPR",
+      "toCode": null,
+      "date": "2026-07-28",
+      "type": "Free agent"
+    },
+    {
+      "n": "Daniel Edward Peter Imray",
+      "from": "Crystal Palace",
+      "to": "Wrexham",
+      "fromCode": null,
+      "toCode": "WRE",
+      "date": "2026-07-28",
+      "type": "Transfer"
+    },
+    {
+      "n": "D. Bennie",
+      "from": "QPR",
+      "to": "Dundee Utd",
+      "fromCode": "QPR",
+      "toCode": null,
+      "date": "2026-07-28",
+      "type": "Loan"
+    },
+    {
+      "n": "C. Marshall",
+      "from": "West Ham",
+      "to": "Luton",
+      "fromCode": "WHU",
+      "toCode": null,
+      "date": "2026-07-28",
+      "type": "Transfer"
+    },
+    {
+      "n": "U. Raghouber",
+      "from": "Lille",
+      "to": "Burnley",
+      "fromCode": null,
+      "toCode": "BUR",
+      "date": "2026-07-27",
+      "type": "Transfer"
+    },
+    {
+      "n": "Sam Parker",
+      "from": "Swansea",
+      "to": "Wycombe",
+      "fromCode": "SWA",
+      "toCode": null,
+      "date": "2026-07-27",
+      "type": "Loan"
+    },
+    {
+      "n": "S. Tabares",
+      "from": "Southampton",
+      "to": "Gillingham",
+      "fromCode": "SOU",
+      "toCode": null,
+      "date": "2026-07-27",
+      "type": "Free agent"
+    },
+    {
+      "n": "S. Berhalter",
+      "from": "Vancouver Whitecaps",
+      "to": "Middlesbrough",
+      "fromCode": null,
+      "toCode": "MID",
+      "date": "2026-07-27",
+      "type": "Transfer"
+    },
+    {
+      "n": "P. Mullin",
+      "from": "Wrexham",
+      "to": "Rotherham",
+      "fromCode": "WRE",
+      "toCode": null,
+      "date": "2026-07-27",
+      "type": "Free agent"
+    },
+    {
+      "n": "N. Mawene",
+      "from": "Preston",
+      "to": "Fleetwood Town",
+      "fromCode": "PRE",
+      "toCode": null,
+      "date": "2026-07-27",
+      "type": "Free agent"
+    },
+    {
+      "n": "N. Galves",
+      "from": "Rodez",
+      "to": "West Brom",
+      "fromCode": null,
+      "toCode": "WBA",
+      "date": "2026-07-27",
+      "type": "Transfer"
+    },
+    {
+      "n": "L. Vázquez",
+      "from": "Anderlecht",
+      "to": "Birmingham",
+      "fromCode": null,
+      "toCode": "BIR",
+      "date": "2026-07-27",
+      "type": "Transfer"
+    },
+    {
+      "n": "L. Koleosho",
+      "from": "Burnley",
+      "to": "Paris FC",
+      "fromCode": "BUR",
+      "toCode": null,
+      "date": "2026-07-27",
+      "type": "Transfer"
+    },
+    {
+      "n": "J. Pradic",
+      "from": "Preston",
+      "to": "Fleetwood Town",
+      "fromCode": "PRE",
+      "toCode": null,
+      "date": "2026-07-27",
+      "type": "Free agent"
+    },
+    {
+      "n": "J. Gauci",
+      "from": "Aston Villa",
+      "to": "Lincoln",
+      "fromCode": null,
+      "toCode": "LIN",
+      "date": "2026-07-27",
+      "type": "Loan"
+    },
+    {
+      "n": "J. Fevrier",
+      "from": "Stockport County",
+      "to": "Blackburn",
+      "fromCode": null,
+      "toCode": "BLB",
+      "date": "2026-07-27",
+      "type": "Transfer"
+    },
+    {
+      "n": "J. Buyabu",
+      "from": "Sheffield Utd",
+      "to": "Rotherham",
+      "fromCode": "SHU",
+      "toCode": null,
+      "date": "2026-07-27",
+      "type": "Loan"
+    },
+    {
+      "n": "E. Dixon-Bonner",
+      "from": "QPR",
+      "to": "Dixon-Bonner Elijah",
+      "fromCode": "QPR",
+      "toCode": null,
+      "date": "2026-07-27",
+      "type": "Free agent"
+    },
+    {
+      "n": "Daniel Edward Peter Imray",
+      "from": "Crystal Palace",
+      "to": "Wrexham",
+      "fromCode": null,
+      "toCode": "WRE",
+      "date": "2026-07-27",
+      "type": "Transfer"
+    },
+    {
+      "n": "U. Raghouber",
+      "from": "Lille",
+      "to": "Burnley",
+      "fromCode": null,
+      "toCode": "BUR",
+      "date": "2026-07-26",
+      "type": "Transfer"
+    },
+    {
+      "n": "T. Ince",
+      "from": "Watford",
+      "to": "Tranmere",
+      "fromCode": "WAT",
+      "toCode": null,
+      "date": "2026-07-26",
+      "type": "Free agent"
+    },
+    {
+      "n": "S. Berhalter",
+      "from": "Vancouver Whitecaps",
+      "to": "Middlesbrough",
+      "fromCode": null,
+      "toCode": "MID",
+      "date": "2026-07-26",
+      "type": "Transfer"
+    },
+    {
+      "n": "R. Taylor",
+      "from": "Bolton",
+      "to": "Bromley",
+      "fromCode": "BOL",
+      "toCode": null,
+      "date": "2026-07-26",
+      "type": "Loan"
+    },
+    {
+      "n": "N. Galves",
+      "from": "Rodez",
+      "to": "West Brom",
+      "fromCode": null,
+      "toCode": "WBA",
+      "date": "2026-07-26",
+      "type": "Transfer"
+    },
+    {
+      "n": "L. Vázquez",
+      "from": "Anderlecht",
+      "to": "Birmingham",
+      "fromCode": null,
+      "toCode": "BIR",
+      "date": "2026-07-26",
+      "type": "Transfer"
+    },
+    {
+      "n": "J. McKiernan",
+      "from": "Lincoln",
+      "to": "Bromley",
+      "fromCode": "LIN",
+      "toCode": null,
+      "date": "2026-07-26",
+      "type": "Transfer"
+    },
+    {
+      "n": "J. McEvilly",
+      "from": "Burnley",
+      "to": "Tranmere",
+      "fromCode": "BUR",
+      "toCode": null,
+      "date": "2026-07-26",
+      "type": "Free agent"
+    },
+    {
+      "n": "J. Fevrier",
+      "from": "Stockport County",
+      "to": "Blackburn",
+      "fromCode": null,
+      "toCode": "BLB",
+      "date": "2026-07-26",
+      "type": "Transfer"
+    },
+    {
+      "n": "J. Ashton",
+      "from": "Burnley",
+      "to": "Waterford",
+      "fromCode": "BUR",
+      "toCode": null,
+      "date": "2026-07-26",
+      "type": "Free agent"
+    },
+    {
+      "n": "Charlie Veevers",
+      "from": "Burnley",
+      "to": "Tranmere",
+      "fromCode": "BUR",
+      "toCode": null,
+      "date": "2026-07-26",
+      "type": "Free agent"
+    },
+    {
+      "n": "B. Osborn",
+      "from": "Derby",
+      "to": "Stockport County",
+      "fromCode": "DER",
+      "toCode": null,
+      "date": "2026-07-26",
+      "type": "Free agent"
+    },
+    {
+      "n": "T. Ince",
+      "from": "Watford",
+      "to": "Tranmere",
+      "fromCode": "WAT",
+      "toCode": null,
+      "date": "2026-07-25",
+      "type": "Free agent"
+    },
+    {
+      "n": "S. Finch",
+      "from": "Middlesbrough",
+      "to": "South Shields",
+      "fromCode": "MID",
+      "toCode": null,
+      "date": "2026-07-25",
+      "type": "-"
+    },
+    {
+      "n": "N. Fisher",
+      "from": "Middlesbrough",
+      "to": "Hartlepool",
+      "fromCode": "MID",
+      "toCode": null,
+      "date": "2026-07-25",
+      "type": "Free agent"
+    },
+    {
+      "n": "M. Alli",
+      "from": "Luton",
+      "to": "Charlton",
+      "fromCode": null,
+      "toCode": "CHA",
+      "date": "2026-07-25",
+      "type": "Transfer"
+    },
+    {
+      "n": "K. Lisbie",
+      "from": "Peterborough",
+      "to": "Millwall",
+      "fromCode": null,
+      "toCode": "MIL",
+      "date": "2026-07-25",
+      "type": "Transfer"
+    },
+    {
+      "n": "J. McKiernan",
+      "from": "Lincoln",
+      "to": "Bromley",
+      "fromCode": "LIN",
+      "toCode": null,
+      "date": "2026-07-25",
+      "type": "Transfer"
+    },
+    {
+      "n": "J. McEvilly",
+      "from": "Burnley",
+      "to": "Tranmere",
+      "fromCode": "BUR",
+      "toCode": null,
+      "date": "2026-07-25",
+      "type": "Free agent"
+    },
+    {
+      "n": "J. Ashton",
+      "from": "Burnley",
+      "to": "Waterford",
+      "fromCode": "BUR",
+      "toCode": null,
+      "date": "2026-07-25",
+      "type": "Free agent"
+    },
+    {
+      "n": "Charlie Veevers",
+      "from": "Burnley",
+      "to": "Tranmere",
+      "fromCode": "BUR",
+      "toCode": null,
+      "date": "2026-07-25",
+      "type": "Free agent"
+    },
+    {
+      "n": "N. Fisher",
+      "from": "Middlesbrough",
+      "to": "Hartlepool",
+      "fromCode": "MID",
+      "toCode": null,
+      "date": "2026-07-24",
+      "type": "Free agent"
+    },
+    {
+      "n": "M. Alli",
+      "from": "Luton",
+      "to": "Charlton",
+      "fromCode": null,
+      "toCode": "CHA",
+      "date": "2026-07-24",
+      "type": "Transfer"
+    },
+    {
+      "n": "K. Lisbie",
+      "from": "Peterborough",
+      "to": "Millwall",
+      "fromCode": null,
+      "toCode": "MIL",
+      "date": "2026-07-24",
+      "type": "Transfer"
+    },
+    {
+      "n": "A. Doherty",
+      "from": "Blackburn",
+      "to": "Falkirk",
+      "fromCode": "BLB",
+      "toCode": null,
+      "date": "2026-07-24",
+      "type": "Loan"
+    },
+    {
+      "n": "A. Coubiș",
+      "from": "Universitatea Cluj",
+      "to": "Lincoln",
+      "fromCode": null,
+      "toCode": "LIN",
+      "date": "2026-07-24",
+      "type": "Transfer"
+    },
+    {
+      "n": "O. Adewumi",
+      "from": "Burnley",
+      "to": "Hertha BSC",
+      "fromCode": "BUR",
+      "toCode": null,
+      "date": "2026-07-23",
+      "type": "Loan"
+    },
+    {
+      "n": "N. Lonwijk",
+      "from": "Wolves",
+      "to": "Maccabi Haifa",
+      "fromCode": "WOL",
+      "toCode": null,
+      "date": "2026-07-23",
+      "type": "Transfer"
+    },
+    {
+      "n": "L. Kjerrumgaard",
+      "from": "Udinese",
+      "to": "Watford",
+      "fromCode": null,
+      "toCode": "WAT",
+      "date": "2026-07-23",
+      "type": "Transfer"
+    },
+    {
+      "n": "Iker Bravo",
+      "from": "Udinese",
+      "to": "Watford",
+      "fromCode": null,
+      "toCode": "WAT",
+      "date": "2026-07-23",
+      "type": "Transfer"
+    },
+    {
+      "n": "D. Bielica",
+      "from": "NAC Breda",
+      "to": "Portsmouth",
+      "fromCode": null,
+      "toCode": "POR",
+      "date": "2026-07-23",
+      "type": "Transfer"
+    },
+    {
+      "n": "C. Townsend",
+      "from": "Ipswich",
+      "to": "West Brom",
+      "fromCode": null,
+      "toCode": "WBA",
+      "date": "2026-07-23",
+      "type": "Free agent"
+    },
+    {
+      "n": "C. Summerville",
+      "from": "West Ham",
+      "to": "Al-Hilal Saudi FC",
+      "fromCode": "WHU",
+      "toCode": null,
+      "date": "2026-07-23",
+      "type": "Transfer"
+    },
+    {
+      "n": "A. Coubiș",
+      "from": "Universitatea Cluj",
+      "to": "Lincoln",
+      "fromCode": null,
+      "toCode": "LIN",
+      "date": "2026-07-23",
+      "type": "Transfer"
+    },
+    {
+      "n": "A. Baptiste",
+      "from": "Middlesbrough",
+      "to": "Harrogate Town",
+      "fromCode": "MID",
+      "toCode": null,
+      "date": "2026-07-23",
+      "type": "Free agent"
+    },
+    {
+      "n": "R. Vaughan",
+      "from": "QPR",
+      "to": "Harrogate Town",
+      "fromCode": "QPR",
+      "toCode": null,
+      "date": "2026-07-22",
+      "type": "-"
+    },
+    {
+      "n": "N. Lonwijk",
+      "from": "Wolves",
+      "to": "Maccabi Haifa",
+      "fromCode": "WOL",
+      "toCode": null,
+      "date": "2026-07-22",
+      "type": "Transfer"
+    },
+    {
+      "n": "M. Milovanović",
+      "from": "Almeria",
+      "to": "Portsmouth",
+      "fromCode": null,
+      "toCode": "POR",
+      "date": "2026-07-22",
+      "type": "Transfer"
+    },
+    {
+      "n": "L. Kjerrumgaard",
+      "from": "Udinese",
+      "to": "Watford",
+      "fromCode": null,
+      "toCode": "WAT",
+      "date": "2026-07-22",
+      "type": "Transfer"
+    },
+    {
+      "n": "Joseph Okopu",
+      "from": "Zulte Waregem",
+      "to": "Swansea",
+      "fromCode": null,
+      "toCode": "SWA",
+      "date": "2026-07-22",
+      "type": "Transfer"
+    },
+    {
+      "n": "J. Rooney",
+      "from": "Derby",
+      "to": "Boston United",
+      "fromCode": "DER",
+      "toCode": null,
+      "date": "2026-07-22",
+      "type": "Free agent"
+    },
+    {
+      "n": "Iker Bravo",
+      "from": "Udinese",
+      "to": "Watford",
+      "fromCode": null,
+      "toCode": "WAT",
+      "date": "2026-07-22",
+      "type": "Transfer"
+    },
+    {
+      "n": "Gaizka Larrazabal",
+      "from": "Casa Pia",
+      "to": "Bolton",
+      "fromCode": null,
+      "toCode": "BOL",
+      "date": "2026-07-22",
+      "type": "Free agent"
+    },
+    {
+      "n": "E. Tezgel",
+      "from": "Stoke City",
+      "to": "Wycombe",
+      "fromCode": "STK",
+      "toCode": null,
+      "date": "2026-07-22",
+      "type": "Loan"
+    },
+    {
+      "n": "D. McNamara",
+      "from": "Millwall",
+      "to": "Charlton",
+      "fromCode": "MIL",
+      "toCode": "CHA",
+      "date": "2026-07-22",
+      "type": "Free agent"
+    },
+    {
+      "n": "D. Bielica",
+      "from": "NAC Breda",
+      "to": "Portsmouth",
+      "fromCode": null,
+      "toCode": "POR",
+      "date": "2026-07-22",
+      "type": "Transfer"
+    },
+    {
+      "n": "C. Townsend",
+      "from": "Ipswich",
+      "to": "West Brom",
+      "fromCode": null,
+      "toCode": "WBA",
+      "date": "2026-07-22",
+      "type": "Free agent"
+    },
+    {
+      "n": "C. Summerville",
+      "from": "West Ham",
+      "to": "Al-Hilal Saudi FC",
+      "fromCode": "WHU",
+      "toCode": null,
+      "date": "2026-07-22",
+      "type": "Transfer"
+    },
+    {
+      "n": "A. Mitchell",
+      "from": "Charlton",
+      "to": "Plymouth",
+      "fromCode": "CHA",
+      "toCode": null,
+      "date": "2026-07-22",
+      "type": "Transfer"
+    },
+    {
+      "n": "A. Baptiste",
+      "from": "Middlesbrough",
+      "to": "Harrogate Town",
+      "fromCode": "MID",
+      "toCode": null,
+      "date": "2026-07-22",
+      "type": "Free agent"
+    },
+    {
+      "n": "W. Lankshear",
+      "from": "Tottenham",
+      "to": "Middlesbrough",
+      "fromCode": null,
+      "toCode": "MID",
+      "date": "2026-07-21",
+      "type": "Transfer"
+    },
+    {
+      "n": "T. Dele-Bashiru",
+      "from": "Watford",
+      "to": "Aris Thessalonikis",
+      "fromCode": "WAT",
+      "toCode": null,
+      "date": "2026-07-21",
+      "type": "Transfer"
+    },
+    {
+      "n": "R. Vaughan",
+      "from": "QPR",
+      "to": "Harrogate Town",
+      "fromCode": "QPR",
+      "toCode": null,
+      "date": "2026-07-21",
+      "type": "-"
+    },
+    {
+      "n": "P. Nardi",
+      "from": "QPR",
+      "to": "Auxerre",
+      "fromCode": "QPR",
+      "toCode": null,
+      "date": "2026-07-21",
+      "type": "Free agent"
+    },
+    {
+      "n": "M. Milovanović",
+      "from": "Almeria",
+      "to": "Portsmouth",
+      "fromCode": null,
+      "toCode": "POR",
+      "date": "2026-07-21",
+      "type": "Transfer"
+    },
+    {
+      "n": "Joseph Okopu",
+      "from": "Zulte Waregem",
+      "to": "Swansea",
+      "fromCode": null,
+      "toCode": "SWA",
+      "date": "2026-07-21",
+      "type": "Transfer"
+    },
+    {
+      "n": "J. Rooney",
+      "from": "Derby",
+      "to": "Boston United",
+      "fromCode": "DER",
+      "toCode": null,
+      "date": "2026-07-21",
+      "type": "Free agent"
+    },
+    {
+      "n": "Gaizka Larrazabal",
+      "from": "Casa Pia",
+      "to": "Bolton",
+      "fromCode": null,
+      "toCode": "BOL",
+      "date": "2026-07-21",
+      "type": "Free agent"
+    },
+    {
+      "n": "F. Bilbija",
+      "from": "SC Paderborn 07",
+      "to": "Derby",
+      "fromCode": null,
+      "toCode": "DER",
+      "date": "2026-07-21",
+      "type": "Free agent"
+    },
+    {
+      "n": "E. Just",
+      "from": "Motherwell",
+      "to": "Swansea",
+      "fromCode": null,
+      "toCode": "SWA",
+      "date": "2026-07-21",
+      "type": "Transfer"
+    },
+    {
+      "n": "D. McNamara",
+      "from": "Millwall",
+      "to": "Charlton",
+      "fromCode": "MIL",
+      "toCode": "CHA",
+      "date": "2026-07-21",
+      "type": "Free agent"
+    },
+    {
+      "n": "A. Mitchell",
+      "from": "Charlton",
+      "to": "Plymouth",
+      "fromCode": "CHA",
+      "toCode": null,
+      "date": "2026-07-21",
+      "type": "Transfer"
+    },
+    {
+      "n": "Z. Okoro",
+      "from": "Lincoln",
+      "to": "Tranmere",
+      "fromCode": "LIN",
+      "toCode": null,
+      "date": "2026-07-20",
+      "type": "Loan"
+    },
+    {
+      "n": "W. Lankshear",
+      "from": "Tottenham",
+      "to": "Middlesbrough",
+      "fromCode": null,
+      "toCode": "MID",
+      "date": "2026-07-20",
+      "type": "Transfer"
+    },
+    {
+      "n": "True Grant",
+      "from": "Stoke City",
+      "to": "FC Halifax Town",
+      "fromCode": "STK",
+      "toCode": null,
+      "date": "2026-07-20",
+      "type": "Loan"
+    },
+    {
+      "n": "T. Lamptey",
+      "from": "Fiorentina",
+      "to": "QPR",
+      "fromCode": null,
+      "toCode": "QPR",
+      "date": "2026-07-20",
+      "type": "Free agent"
+    },
+    {
+      "n": "T. Dele-Bashiru",
+      "from": "Watford",
+      "to": "Aris Thessalonikis",
+      "fromCode": "WAT",
+      "toCode": null,
+      "date": "2026-07-20",
+      "type": "Transfer"
+    },
+    {
+      "n": "S. Sachdev",
+      "from": "Sheffield Utd",
+      "to": "Boston United",
+      "fromCode": "SHU",
+      "toCode": null,
+      "date": "2026-07-20",
+      "type": "Loan"
+    },
+    {
+      "n": "P. Nardi",
+      "from": "QPR",
+      "to": "Auxerre",
+      "fromCode": "QPR",
+      "toCode": null,
+      "date": "2026-07-20",
+      "type": "Free agent"
+    },
+    {
+      "n": "O. Gallagher",
+      "from": "Lincoln",
+      "to": "Barnet",
+      "fromCode": "LIN",
+      "toCode": null,
+      "date": "2026-07-20",
+      "type": "Loan"
+    },
+    {
+      "n": "Karoy Anderson",
+      "from": "Charlton",
+      "to": "Blackpool",
+      "fromCode": "CHA",
+      "toCode": null,
+      "date": "2026-07-20",
+      "type": "Transfer"
+    },
+    {
+      "n": "K. Furuhashi",
+      "from": "Birmingham",
+      "to": "Los Angeles Galaxy",
+      "fromCode": "BIR",
+      "toCode": null,
+      "date": "2026-07-20",
+      "type": "Transfer"
+    },
+    {
+      "n": "F. Bilbija",
+      "from": "SC Paderborn 07",
+      "to": "Derby",
+      "fromCode": null,
+      "toCode": "DER",
+      "date": "2026-07-20",
+      "type": "Free agent"
+    },
+    {
+      "n": "E. Just",
+      "from": "Motherwell",
+      "to": "Swansea",
+      "fromCode": null,
+      "toCode": "SWA",
+      "date": "2026-07-20",
+      "type": "Transfer"
+    },
+    {
+      "n": "C. Dillon",
+      "from": "QPR",
+      "to": "Dundalk",
+      "fromCode": "QPR",
+      "toCode": null,
+      "date": "2026-07-20",
+      "type": "Transfer"
+    },
+    {
+      "n": "M. Doherty",
+      "from": "Wolves",
+      "to": "Sheffield Utd",
+      "fromCode": "WOL",
+      "toCode": "SHU",
+      "date": "2026-07-19",
+      "type": "Free agent"
+    },
+    {
+      "n": "L. Tolaj",
+      "from": "Plymouth",
+      "to": "Bristol City",
+      "fromCode": null,
+      "toCode": "BRC",
+      "date": "2026-07-19",
+      "type": "Transfer"
+    },
+    {
+      "n": "Karoy Anderson",
+      "from": "Charlton",
+      "to": "Blackpool",
+      "fromCode": "CHA",
+      "toCode": null,
+      "date": "2026-07-19",
+      "type": "Transfer"
+    },
+    {
+      "n": "K. Furuhashi",
+      "from": "Birmingham",
+      "to": "Los Angeles Galaxy",
+      "fromCode": "BIR",
+      "toCode": null,
+      "date": "2026-07-19",
+      "type": "Transfer"
+    },
+    {
+      "n": "João Gomes",
+      "from": "Wolves",
+      "to": "Aston Villa",
+      "fromCode": "WOL",
+      "toCode": null,
+      "date": "2026-07-19",
+      "type": "Transfer"
+    },
+    {
+      "n": "C. Dillon",
+      "from": "QPR",
+      "to": "Dundalk",
+      "fromCode": "QPR",
+      "toCode": null,
+      "date": "2026-07-19",
+      "type": "Transfer"
+    },
+    {
+      "n": "M. Doherty",
+      "from": "Wolves",
+      "to": "Sheffield Utd",
+      "fromCode": "WOL",
+      "toCode": "SHU",
+      "date": "2026-07-18",
+      "type": "Free agent"
+    },
+    {
+      "n": "L. Tolaj",
+      "from": "Plymouth",
+      "to": "Bristol City",
+      "fromCode": null,
+      "toCode": "BRC",
+      "date": "2026-07-18",
+      "type": "Transfer"
+    },
+    {
+      "n": "K. Ahearne-Grant",
+      "from": "West Brom",
+      "to": "Charlton",
+      "fromCode": "WBA",
+      "toCode": "CHA",
+      "date": "2026-07-18",
+      "type": "Free agent"
+    },
+    {
+      "n": "João Gomes",
+      "from": "Wolves",
+      "to": "Aston Villa",
+      "fromCode": "WOL",
+      "toCode": null,
+      "date": "2026-07-18",
+      "type": "Transfer"
+    },
+    {
+      "n": "B. Mitchell",
+      "from": "Millwall",
+      "to": "Sheffield Wednesday",
+      "fromCode": "MIL",
+      "toCode": null,
+      "date": "2026-07-18",
+      "type": "Free agent"
+    },
+    {
+      "n": "K. Ahearne-Grant",
+      "from": "West Brom",
+      "to": "Charlton",
+      "fromCode": "WBA",
+      "toCode": "CHA",
+      "date": "2026-07-17",
+      "type": "Free agent"
+    },
+    {
+      "n": "B. Mitchell",
+      "from": "Millwall",
+      "to": "Sheffield Wednesday",
+      "fromCode": "MIL",
+      "toCode": null,
+      "date": "2026-07-17",
+      "type": "Free agent"
+    },
+    {
+      "n": "Ž. Celar",
+      "from": "QPR",
+      "to": "FC Basel 1893",
+      "fromCode": "QPR",
+      "toCode": null,
+      "date": "2026-07-16",
+      "type": "Transfer"
+    },
+    {
+      "n": "M. Estève",
+      "from": "Burnley",
+      "to": "RB Leipzig",
+      "fromCode": "BUR",
+      "toCode": null,
+      "date": "2026-07-16",
+      "type": "Transfer"
+    },
+    {
+      "n": "K. Wagner",
+      "from": "Birmingham",
+      "to": "Philadelphia Union",
+      "fromCode": "BIR",
+      "toCode": null,
+      "date": "2026-07-16",
+      "type": "Transfer"
+    },
+    {
+      "n": "H. Foulkes",
+      "from": "Derby",
+      "to": "Worthing",
+      "fromCode": "DER",
+      "toCode": null,
+      "date": "2026-07-16",
+      "type": "Free agent"
+    },
+    {
+      "n": "D. Dike",
+      "from": "West Brom",
+      "to": "Orlando City SC",
+      "fromCode": "WBA",
+      "toCode": null,
+      "date": "2026-07-16",
+      "type": "Free agent"
+    },
+    {
+      "n": "B. McKenzie",
+      "from": "Swansea",
+      "to": "Waterford",
+      "fromCode": "SWA",
+      "toCode": null,
+      "date": "2026-07-16",
+      "type": "Loan"
+    },
+    {
+      "n": "Ž. Celar",
+      "from": "QPR",
+      "to": "FC Basel 1893",
+      "fromCode": "QPR",
+      "toCode": null,
+      "date": "2026-07-15",
+      "type": "Transfer"
+    },
+    {
+      "n": "Vivaldo Semedo",
+      "from": "Watford",
+      "to": "Alverca",
+      "fromCode": "WAT",
+      "toCode": null,
+      "date": "2026-07-15",
+      "type": "Loan"
+    },
+    {
+      "n": "O. Traoré",
+      "from": "Udinese",
+      "to": "Watford",
+      "fromCode": null,
+      "toCode": "WAT",
+      "date": "2026-07-15",
+      "type": "Transfer"
+    },
+    {
+      "n": "M. Kirk",
+      "from": "Portsmouth",
+      "to": "Barnsley",
+      "fromCode": "POR",
+      "toCode": null,
+      "date": "2026-07-15",
+      "type": "Loan"
+    },
+    {
+      "n": "K. Wagner",
+      "from": "Birmingham",
+      "to": "Philadelphia Union",
+      "fromCode": "BIR",
+      "toCode": null,
+      "date": "2026-07-15",
+      "type": "Transfer"
+    },
+    {
+      "n": "A. McCarthy",
+      "from": "Southampton",
+      "to": "Leicester",
+      "fromCode": "SOU",
+      "toCode": null,
+      "date": "2026-07-15",
+      "type": "Free agent"
+    },
+    {
+      "n": "O. Traoré",
+      "from": "Udinese",
+      "to": "Watford",
+      "fromCode": null,
+      "toCode": "WAT",
+      "date": "2026-07-14",
+      "type": "Transfer"
+    },
+    {
+      "n": "M. Polendakov",
+      "from": "Sheffield Utd",
+      "to": "Ludogorets",
+      "fromCode": "SHU",
+      "toCode": null,
+      "date": "2026-07-14",
+      "type": "Loan"
+    },
+    {
+      "n": "L. Ugochukwu",
+      "from": "Burnley",
+      "to": "Galatasaray",
+      "fromCode": "BUR",
+      "toCode": null,
+      "date": "2026-07-14",
+      "type": "Loan"
+    },
+    {
+      "n": "L. Dobbin",
+      "from": "Aston Villa",
+      "to": "Southampton",
+      "fromCode": null,
+      "toCode": "SOU",
+      "date": "2026-07-14",
+      "type": "Transfer"
+    },
+    {
+      "n": "E. Baggott",
+      "from": "Ipswich",
+      "to": "Millwall",
+      "fromCode": null,
+      "toCode": "MIL",
+      "date": "2026-07-14",
+      "type": "Transfer"
+    },
+    {
+      "n": "A. McCarthy",
+      "from": "Southampton",
+      "to": "Leicester",
+      "fromCode": "SOU",
+      "toCode": null,
+      "date": "2026-07-14",
+      "type": "Free agent"
+    },
+    {
+      "n": "N. Lowe",
+      "from": "Stoke City",
+      "to": "Hibernian",
+      "fromCode": "STK",
+      "toCode": null,
+      "date": "2026-07-13",
+      "type": "Loan"
+    },
+    {
+      "n": "M. Mahoney",
+      "from": "QPR",
+      "to": "Plymouth",
+      "fromCode": "QPR",
+      "toCode": null,
+      "date": "2026-07-13",
+      "type": "Transfer"
+    },
+    {
+      "n": "L. Dobbin",
+      "from": "Aston Villa",
+      "to": "Southampton",
+      "fromCode": null,
+      "toCode": "SOU",
+      "date": "2026-07-13",
+      "type": "Transfer"
+    },
+    {
+      "n": "Eseosa Sule",
+      "from": "West Brom",
+      "to": "ST Mirren",
+      "fromCode": "WBA",
+      "toCode": null,
+      "date": "2026-07-13",
+      "type": "-"
+    },
+    {
+      "n": "E. Baggott",
+      "from": "Ipswich",
+      "to": "Millwall",
+      "fromCode": null,
+      "toCode": "MIL",
+      "date": "2026-07-13",
+      "type": "Transfer"
+    },
+    {
+      "n": "C. Taylor",
+      "from": "Southampton",
+      "to": "Derby",
+      "fromCode": "SOU",
+      "toCode": "DER",
+      "date": "2026-07-13",
+      "type": "Free agent"
+    },
+    {
+      "n": "A. Mayor",
+      "from": "Millwall",
+      "to": "Hibernian",
+      "fromCode": "MIL",
+      "toCode": null,
+      "date": "2026-07-13",
+      "type": "Transfer"
+    },
+    {
+      "n": "A. Cannon",
+      "from": "Wrexham",
+      "to": "Fleetwood Town",
+      "fromCode": "WRE",
+      "toCode": null,
+      "date": "2026-07-13",
+      "type": "Free agent"
+    },
+    {
+      "n": "R. Wintle",
+      "from": "Cardiff",
+      "to": "Milton Keynes Dons",
+      "fromCode": "CAR",
+      "toCode": null,
+      "date": "2026-07-12",
+      "type": "Free agent"
+    },
+    {
+      "n": "R. Shein",
+      "from": "Fredrikstad",
+      "to": "Portsmouth",
+      "fromCode": null,
+      "toCode": "POR",
+      "date": "2026-07-12",
+      "type": "Transfer"
+    },
+    {
+      "n": "Oriol Romeu",
+      "from": "Southampton",
+      "to": "Avispa Fukuoka",
+      "fromCode": "SOU",
+      "toCode": null,
+      "date": "2026-07-12",
+      "type": "Free agent"
+    },
+    {
+      "n": "M. Smith",
+      "from": "Preston",
+      "to": "Mansfield Town",
+      "fromCode": "PRE",
+      "toCode": null,
+      "date": "2026-07-12",
+      "type": "Free agent"
+    },
+    {
+      "n": "M. Mahoney",
+      "from": "QPR",
+      "to": "Plymouth",
+      "fromCode": "QPR",
+      "toCode": null,
+      "date": "2026-07-12",
+      "type": "Transfer"
+    },
+    {
+      "n": "J. Lawson",
+      "from": "Watford",
+      "to": "FF Jaro",
+      "fromCode": "WAT",
+      "toCode": null,
+      "date": "2026-07-12",
+      "type": "Free agent"
+    },
+    {
+      "n": "J. Erabi",
+      "from": "Genk",
+      "to": "Preston",
+      "fromCode": null,
+      "toCode": "PRE",
+      "date": "2026-07-12",
+      "type": "Loan"
+    },
+    {
+      "n": "Eseosa Sule",
+      "from": "West Brom",
+      "to": "ST Mirren",
+      "fromCode": "WBA",
+      "toCode": null,
+      "date": "2026-07-12",
+      "type": "-"
+    },
+    {
+      "n": "C. Taylor",
+      "from": "Southampton",
+      "to": "Derby",
+      "fromCode": "SOU",
+      "toCode": "DER",
+      "date": "2026-07-12",
+      "type": "Free agent"
+    },
+    {
+      "n": "A. Mayor",
+      "from": "Millwall",
+      "to": "Hibernian",
+      "fromCode": "MIL",
+      "toCode": null,
+      "date": "2026-07-12",
+      "type": "Transfer"
+    },
+    {
+      "n": "A. Dozzell",
+      "from": "Portsmouth",
+      "to": "DC United",
+      "fromCode": "POR",
+      "toCode": null,
+      "date": "2026-07-12",
+      "type": "Free agent"
+    },
+    {
+      "n": "A. Cannon",
+      "from": "Wrexham",
+      "to": "Fleetwood Town",
+      "fromCode": "WRE",
+      "toCode": null,
+      "date": "2026-07-12",
+      "type": "Free agent"
+    },
+    {
+      "n": "R. Wintle",
+      "from": "Cardiff",
+      "to": "Milton Keynes Dons",
+      "fromCode": "CAR",
+      "toCode": null,
+      "date": "2026-07-11",
+      "type": "Free agent"
+    },
+    {
+      "n": "R. Shein",
+      "from": "Fredrikstad",
+      "to": "Portsmouth",
+      "fromCode": null,
+      "toCode": "POR",
+      "date": "2026-07-11",
+      "type": "Transfer"
+    },
+    {
+      "n": "Oriol Romeu",
+      "from": "Southampton",
+      "to": "Avispa Fukuoka",
+      "fromCode": "SOU",
+      "toCode": null,
+      "date": "2026-07-11",
+      "type": "Free agent"
+    },
+    {
+      "n": "M. Smith",
+      "from": "Preston",
+      "to": "Mansfield Town",
+      "fromCode": "PRE",
+      "toCode": null,
+      "date": "2026-07-11",
+      "type": "Free agent"
+    },
+    {
+      "n": "L. Castell",
+      "from": "Espanyol",
+      "to": "Burnley",
+      "fromCode": null,
+      "toCode": "BUR",
+      "date": "2026-07-11",
+      "type": "Transfer"
+    },
+    {
+      "n": "J. Lawson",
+      "from": "Watford",
+      "to": "FF Jaro",
+      "fromCode": "WAT",
+      "toCode": null,
+      "date": "2026-07-11",
+      "type": "Free agent"
+    },
+    {
+      "n": "B. Collins",
+      "from": "Coventry",
+      "to": "Bristol City",
+      "fromCode": null,
+      "toCode": "BRC",
+      "date": "2026-07-11",
+      "type": "Free agent"
+    },
+    {
+      "n": "A. Dozzell",
+      "from": "Portsmouth",
+      "to": "DC United",
+      "fromCode": "POR",
+      "toCode": null,
+      "date": "2026-07-11",
+      "type": "Free agent"
+    },
+    {
+      "n": "R. Saïd",
+      "from": "Standard Liege",
+      "to": "Wolves",
+      "fromCode": null,
+      "toCode": "WOL",
+      "date": "2026-07-10",
+      "type": "Transfer"
+    },
+    {
+      "n": "L. Tchaouna",
+      "from": "Burnley",
+      "to": "Coventry",
+      "fromCode": "BUR",
+      "toCode": null,
+      "date": "2026-07-10",
+      "type": "Transfer"
+    },
+    {
+      "n": "L. Eissat",
+      "from": "Maccabi Haifa",
+      "to": "Bristol City",
+      "fromCode": null,
+      "toCode": "BRC",
+      "date": "2026-07-10",
+      "type": "Transfer"
+    },
+    {
+      "n": "L. Castell",
+      "from": "Espanyol",
+      "to": "Burnley",
+      "fromCode": null,
+      "toCode": "BUR",
+      "date": "2026-07-10",
+      "type": "Transfer"
+    },
+    {
+      "n": "J. Lumley",
+      "from": "Bristol City",
+      "to": "Sheffield Wednesday",
+      "fromCode": "BRC",
+      "toCode": null,
+      "date": "2026-07-10",
+      "type": "Free agent"
+    },
+    {
+      "n": "E. Easton",
+      "from": "Sheffield Utd",
+      "to": "Airdrie United",
+      "fromCode": "SHU",
+      "toCode": null,
+      "date": "2026-07-10",
+      "type": "Free agent"
+    },
+    {
+      "n": "R. Saïd",
+      "from": "Standard Liege",
+      "to": "Wolves",
+      "fromCode": null,
+      "toCode": "WOL",
+      "date": "2026-07-09",
+      "type": "Transfer"
+    },
+    {
+      "n": "P. Charles",
+      "from": "Manchester City",
+      "to": "QPR",
+      "fromCode": null,
+      "toCode": "QPR",
+      "date": "2026-07-09",
+      "type": "Loan"
+    },
+    {
+      "n": "L. Tchaouna",
+      "from": "Burnley",
+      "to": "Coventry",
+      "fromCode": "BUR",
+      "toCode": null,
+      "date": "2026-07-09",
+      "type": "Transfer"
+    },
+    {
+      "n": "L. Eissat",
+      "from": "Maccabi Haifa",
+      "to": "Bristol City",
+      "fromCode": null,
+      "toCode": "BRC",
+      "date": "2026-07-09",
+      "type": "Transfer"
+    },
+    {
+      "n": "K. Joseph",
+      "from": "Hull City",
+      "to": "Middlesbrough",
+      "fromCode": null,
+      "toCode": "MID",
+      "date": "2026-07-09",
+      "type": "Transfer"
+    },
+    {
+      "n": "J. Stokes",
+      "from": "Bristol City",
+      "to": "Reading",
+      "fromCode": "BRC",
+      "toCode": null,
+      "date": "2026-07-09",
+      "type": "Loan"
+    },
+    {
+      "n": "J. Lumley",
+      "from": "Bristol City",
+      "to": "Sheffield Wednesday",
+      "fromCode": "BRC",
+      "toCode": null,
+      "date": "2026-07-09",
+      "type": "Free agent"
+    },
+    {
+      "n": "I. Hayden",
+      "from": "QPR",
+      "to": "Leyton Orient",
+      "fromCode": "QPR",
+      "toCode": null,
+      "date": "2026-07-09",
+      "type": "Free agent"
+    },
+    {
+      "n": "Ty Ewens-Findlay",
+      "from": "Charlton",
+      "to": "Crawley Town",
+      "fromCode": "CHA",
+      "toCode": null,
+      "date": "2026-07-08",
+      "type": "Loan"
+    },
+    {
+      "n": "M. Sykes",
+      "from": "Bristol City",
+      "to": "Millwall",
+      "fromCode": "BRC",
+      "toCode": "MIL",
+      "date": "2026-07-08",
+      "type": "Free agent"
+    },
+    {
+      "n": "L. Pearce",
+      "from": "Cardiff",
+      "to": "Sligo Rovers",
+      "fromCode": "CAR",
+      "toCode": null,
+      "date": "2026-07-08",
+      "type": "Free agent"
+    },
+    {
+      "n": "K. Joseph",
+      "from": "Hull City",
+      "to": "Middlesbrough",
+      "fromCode": null,
+      "toCode": "MID",
+      "date": "2026-07-08",
+      "type": "Transfer"
+    },
+    {
+      "n": "J. Walsh",
+      "from": "QPR",
+      "to": "Wigan",
+      "fromCode": "QPR",
+      "toCode": null,
+      "date": "2026-07-08",
+      "type": "Loan"
+    },
+    {
+      "n": "C. Wilson",
+      "from": "West Ham",
+      "to": "Brentford",
+      "fromCode": "WHU",
+      "toCode": null,
+      "date": "2026-07-08",
+      "type": "Free agent"
+    },
+    {
+      "n": "C. Ward",
+      "from": "Motherwell",
+      "to": "QPR",
+      "fromCode": null,
+      "toCode": "QPR",
+      "date": "2026-07-08",
+      "type": "Transfer"
+    },
+    {
+      "n": "B. Bannan",
+      "from": "Millwall",
+      "to": "Sheffield Wednesday",
+      "fromCode": "MIL",
+      "toCode": null,
+      "date": "2026-07-08",
+      "type": "Transfer"
+    },
+    {
+      "n": "R. Donovan",
+      "from": "Brentford",
+      "to": "Sheffield Utd",
+      "fromCode": null,
+      "toCode": "SHU",
+      "date": "2026-07-07",
+      "type": "Loan"
+    },
+    {
+      "n": "M. Faal",
+      "from": "Wrexham",
+      "to": "Port Vale",
+      "fromCode": "WRE",
+      "toCode": null,
+      "date": "2026-07-07",
+      "type": "Loan"
+    },
+    {
+      "n": "Junior Wilson",
+      "from": "Aston Villa",
+      "to": "Birmingham",
+      "fromCode": null,
+      "toCode": "BIR",
+      "date": "2026-07-07",
+      "type": "Free agent"
+    },
+    {
+      "n": "C. Wilson",
+      "from": "West Ham",
+      "to": "Brentford",
+      "fromCode": "WHU",
+      "toCode": null,
+      "date": "2026-07-07",
+      "type": "Free agent"
+    },
+    {
+      "n": "C. Ward",
+      "from": "Motherwell",
+      "to": "QPR",
+      "fromCode": null,
+      "toCode": "QPR",
+      "date": "2026-07-07",
+      "type": "Transfer"
+    },
+    {
+      "n": "B. Bannan",
+      "from": "Millwall",
+      "to": "Sheffield Wednesday",
+      "fromCode": "MIL",
+      "toCode": null,
+      "date": "2026-07-07",
+      "type": "Transfer"
+    },
+    {
+      "n": "T. Steward",
+      "from": "Portsmouth",
+      "to": "ST Johnstone",
+      "fromCode": "POR",
+      "toCode": null,
+      "date": "2026-07-06",
+      "type": "Loan"
+    },
+    {
+      "n": "Q. Hartman",
+      "from": "Burnley",
+      "to": "Espanyol",
+      "fromCode": "BUR",
+      "toCode": null,
+      "date": "2026-07-06",
+      "type": "Loan"
+    },
+    {
+      "n": "K. Dong",
+      "from": "FC Augsburg",
+      "to": "Bolton",
+      "fromCode": null,
+      "toCode": "BOL",
+      "date": "2026-07-06",
+      "type": "Loan"
+    },
+    {
+      "n": "J. Anthony",
+      "from": "Burnley",
+      "to": "Brentford",
+      "fromCode": "BUR",
+      "toCode": null,
+      "date": "2026-07-06",
+      "type": "Transfer"
+    },
+    {
+      "n": "A. Devine",
+      "from": "Tottenham",
+      "to": "Preston",
+      "fromCode": null,
+      "toCode": "PRE",
+      "date": "2026-07-06",
+      "type": "Transfer"
+    },
+    {
+      "n": "Z. Mitchell",
+      "from": "Charlton",
+      "to": "ST Johnstone",
+      "fromCode": "CHA",
+      "toCode": null,
+      "date": "2026-07-05",
+      "type": "Loan"
+    },
+    {
+      "n": "N. Jojić",
+      "from": "Stoke City",
+      "to": "Jojic Nikola",
+      "fromCode": "STK",
+      "toCode": null,
+      "date": "2026-07-05",
+      "type": "Free agent"
+    },
+    {
+      "n": "M. Terry",
+      "from": "West Ham",
+      "to": "Port Vale",
+      "fromCode": "WHU",
+      "toCode": null,
+      "date": "2026-07-05",
+      "type": "Loan"
+    },
+    {
+      "n": "M. Servais",
+      "from": "KV Mechelen",
+      "to": "Millwall",
+      "fromCode": null,
+      "toCode": "MIL",
+      "date": "2026-07-05",
+      "type": "Transfer"
+    },
+    {
+      "n": "J. Anthony",
+      "from": "Burnley",
+      "to": "Brentford",
+      "fromCode": "BUR",
+      "toCode": null,
+      "date": "2026-07-05",
+      "type": "Transfer"
+    },
+    {
+      "n": "G. Chakvetadze",
+      "from": "Watford",
+      "to": "Udinese",
+      "fromCode": "WAT",
+      "toCode": null,
+      "date": "2026-07-05",
+      "type": "Transfer"
+    },
+    {
+      "n": "E. Kenny",
+      "from": "Dundalk",
+      "to": "Portsmouth",
+      "fromCode": null,
+      "toCode": "POR",
+      "date": "2026-07-05",
+      "type": "Transfer"
+    },
+    {
+      "n": "A. Pond",
+      "from": "Wolves",
+      "to": "Chesterfield",
+      "fromCode": "WOL",
+      "toCode": null,
+      "date": "2026-07-05",
+      "type": "Free agent"
+    },
+    {
+      "n": "A. Devine",
+      "from": "Tottenham",
+      "to": "Preston",
+      "fromCode": null,
+      "toCode": "PRE",
+      "date": "2026-07-05",
+      "type": "Transfer"
+    },
+    {
+      "n": "M. Servais",
+      "from": "KV Mechelen",
+      "to": "Millwall",
+      "fromCode": null,
+      "toCode": "MIL",
+      "date": "2026-07-04",
+      "type": "Transfer"
+    },
+    {
+      "n": "G. Chakvetadze",
+      "from": "Watford",
+      "to": "Udinese",
+      "fromCode": "WAT",
+      "toCode": null,
+      "date": "2026-07-04",
+      "type": "Transfer"
+    },
+    {
+      "n": "E. Kenny",
+      "from": "Dundalk",
+      "to": "Portsmouth",
+      "fromCode": null,
+      "toCode": "POR",
+      "date": "2026-07-04",
+      "type": "Transfer"
+    },
+    {
+      "n": "A. Pond",
+      "from": "Wolves",
+      "to": "Chesterfield",
+      "fromCode": "WOL",
+      "toCode": null,
+      "date": "2026-07-04",
+      "type": "Free agent"
+    },
+    {
+      "n": "M. Reindorf",
+      "from": "Cardiff",
+      "to": "Farnborough",
+      "fromCode": "CAR",
+      "toCode": null,
+      "date": "2026-07-03",
+      "type": "Free agent"
+    },
+    {
+      "n": "E. Ring",
+      "from": "Lincoln",
+      "to": "Kilmarnock",
+      "fromCode": "LIN",
+      "toCode": null,
+      "date": "2026-07-03",
+      "type": "Transfer"
+    },
+    {
+      "n": "D. Barlaser",
+      "from": "Middlesbrough",
+      "to": "Milton Keynes Dons",
+      "fromCode": "MID",
+      "toCode": null,
+      "date": "2026-07-03",
+      "type": "Free agent"
+    },
+    {
+      "n": "S. Cook",
+      "from": "QPR",
+      "to": "Wycombe",
+      "fromCode": "QPR",
+      "toCode": null,
+      "date": "2026-07-02",
+      "type": "Free agent"
+    },
+    {
+      "n": "O. Wright",
+      "from": "Southampton",
+      "to": "Gillingham",
+      "fromCode": "SOU",
+      "toCode": null,
+      "date": "2026-07-02",
+      "type": "Loan"
+    },
+    {
+      "n": "N. Baxter",
+      "from": "Watford",
+      "to": "Leyton Orient",
+      "fromCode": "WAT",
+      "toCode": null,
+      "date": "2026-07-02",
+      "type": "Transfer"
+    },
+    {
+      "n": "M. Langstaff",
+      "from": "Millwall",
+      "to": "Salford City",
+      "fromCode": "MIL",
+      "toCode": null,
+      "date": "2026-07-02",
+      "type": "Transfer"
+    },
+    {
+      "n": "Luke Faxon",
+      "from": "Sheffield Utd",
+      "to": "Boston United",
+      "fromCode": "SHU",
+      "toCode": null,
+      "date": "2026-07-02",
+      "type": "Loan"
+    },
+    {
+      "n": "Lennon Maclorg",
+      "from": "Charlton",
+      "to": "Gillingham",
+      "fromCode": "CHA",
+      "toCode": null,
+      "date": "2026-07-02",
+      "type": "Free agent"
+    },
+    {
+      "n": "L. Graham",
+      "from": "Dundee",
+      "to": "Stoke City",
+      "fromCode": null,
+      "toCode": "STK",
+      "date": "2026-07-02",
+      "type": "Transfer"
+    },
+    {
+      "n": "J. Wallace",
+      "from": "West Brom",
+      "to": "Bristol City",
+      "fromCode": "WBA",
+      "toCode": "BRC",
+      "date": "2026-07-02",
+      "type": "Free agent"
+    },
+    {
+      "n": "G. Boakye",
+      "from": "Birmingham",
+      "to": "Sabah FA",
+      "fromCode": "BIR",
+      "toCode": null,
+      "date": "2026-07-02",
+      "type": "Free agent"
+    },
+    {
+      "n": "E. Ring",
+      "from": "Lincoln",
+      "to": "Kilmarnock",
+      "fromCode": "LIN",
+      "toCode": null,
+      "date": "2026-07-02",
+      "type": "Transfer"
+    },
+    {
+      "n": "D. Fry",
+      "from": "Middlesbrough",
+      "to": "Birmingham",
+      "fromCode": "MID",
+      "toCode": "BIR",
+      "date": "2026-07-02",
+      "type": "Free agent"
+    },
+    {
+      "n": "Archie Kirby",
+      "from": "Millwall",
+      "to": "Millwall",
+      "fromCode": "MIL",
+      "toCode": "MIL",
+      "date": "2026-07-02",
+      "type": "-"
+    },
+    {
+      "n": "A. Higgins",
+      "from": "West Brom",
+      "to": "Wigan",
+      "fromCode": "WBA",
+      "toCode": null,
+      "date": "2026-07-02",
+      "type": "Free agent"
+    },
+    {
+      "n": "S. Cook",
+      "from": "QPR",
+      "to": "Wycombe",
+      "fromCode": "QPR",
+      "toCode": null,
+      "date": "2026-07-01",
+      "type": "Free agent"
+    },
+    {
+      "n": "Noah McCann",
+      "from": "QPR",
+      "to": "Central Coast Mariners",
+      "fromCode": "QPR",
+      "toCode": null,
+      "date": "2026-07-01",
+      "type": "Free agent"
+    },
+    {
+      "n": "N. Baxter",
+      "from": "Watford",
+      "to": "Leyton Orient",
+      "fromCode": "WAT",
+      "toCode": null,
+      "date": "2026-07-01",
+      "type": "Transfer"
+    },
+    {
+      "n": "Mateus Fernandes",
+      "from": "West Ham",
+      "to": "Tottenham",
+      "fromCode": "WHU",
+      "toCode": null,
+      "date": "2026-07-01",
+      "type": "Transfer"
+    },
+    {
+      "n": "M. Langstaff",
+      "from": "Millwall",
+      "to": "Salford City",
+      "fromCode": "MIL",
+      "toCode": null,
+      "date": "2026-07-01",
+      "type": "Transfer"
+    },
+    {
+      "n": "Luca Stephenson",
+      "from": "Liverpool",
+      "to": "Bolton",
+      "fromCode": null,
+      "toCode": "BOL",
+      "date": "2026-07-01",
+      "type": "Transfer"
+    },
+    {
+      "n": "L. Graham",
+      "from": "Dundee",
+      "to": "Stoke City",
+      "fromCode": null,
+      "toCode": "STK",
+      "date": "2026-07-01",
+      "type": "Transfer"
+    },
+    {
+      "n": "D. Fry",
+      "from": "Middlesbrough",
+      "to": "Birmingham",
+      "fromCode": "MID",
+      "toCode": "BIR",
+      "date": "2026-07-01",
+      "type": "Free agent"
+    },
+    {
+      "n": "Alex Matos",
+      "from": "Sheffield Utd",
+      "to": "Göztepe",
+      "fromCode": "SHU",
+      "toCode": null,
+      "date": "2026-07-01",
+      "type": "Loan"
+    },
+    {
+      "n": "A. Higgins",
+      "from": "West Brom",
+      "to": "Wigan",
+      "fromCode": "WBA",
+      "toCode": null,
+      "date": "2026-07-01",
+      "type": "Free agent"
+    },
+    {
+      "n": "Z. Jeacock",
+      "from": "Lincoln",
+      "to": "Northampton",
+      "fromCode": "LIN",
+      "toCode": null,
+      "date": "2026-06-30",
+      "type": "Loan"
+    },
+    {
+      "n": "W. Harding",
+      "from": "Millwall",
+      "to": "Plymouth",
+      "fromCode": "MIL",
+      "toCode": null,
+      "date": "2026-06-30",
+      "type": "Free agent"
+    },
+    {
+      "n": "Tommy Simkin",
+      "from": "Stoke City",
+      "to": "Doncaster",
+      "fromCode": "STK",
+      "toCode": null,
+      "date": "2026-06-30",
+      "type": "Loan"
+    },
+    {
+      "n": "T. Taylor",
+      "from": "Charlton",
+      "to": "Stevenage",
+      "fromCode": "CHA",
+      "toCode": null,
+      "date": "2026-06-30",
+      "type": "Free agent"
+    },
+    {
+      "n": "T. Springett",
+      "from": "Norwich",
+      "to": "Leyton Orient",
+      "fromCode": "NOR",
+      "toCode": null,
+      "date": "2026-06-30",
+      "type": "Free agent"
+    },
+    {
+      "n": "T. O&apos;Connor",
+      "from": "Wrexham",
+      "to": "Peterborough",
+      "fromCode": "WRE",
+      "toCode": null,
+      "date": "2026-06-30",
+      "type": "Free agent"
+    },
+    {
+      "n": "T. Arconte",
+      "from": "Rodez",
+      "to": "Millwall",
+      "fromCode": null,
+      "toCode": "MIL",
+      "date": "2026-06-30",
+      "type": "Transfer"
+    },
+    {
+      "n": "S. Welsh",
+      "from": "Celtic",
+      "to": "Swansea",
+      "fromCode": null,
+      "toCode": "SWA",
+      "date": "2026-06-30",
+      "type": "Transfer"
+    },
+    {
+      "n": "S. Tickle",
+      "from": "Wigan",
+      "to": "Bristol City",
+      "fromCode": null,
+      "toCode": "BRC",
+      "date": "2026-06-30",
+      "type": "Transfer"
+    },
+    {
+      "n": "S. Schön",
+      "from": "Bolton",
+      "to": "Gyori ETO FC",
+      "fromCode": "BOL",
+      "toCode": null,
+      "date": "2026-06-30",
+      "type": "Transfer"
+    },
+    {
+      "n": "S. Ingelsson",
+      "from": "Sheffield Wednesday",
+      "to": "Stoke City",
+      "fromCode": null,
+      "toCode": "STK",
+      "date": "2026-06-30",
+      "type": "Transfer"
+    },
+    {
+      "n": "S. Greenwood",
+      "from": "Pogon Szczecin",
+      "to": "Bristol City",
+      "fromCode": null,
+      "toCode": "BRC",
+      "date": "2026-06-30",
+      "type": "Transfer"
+    },
+    {
+      "n": "S. Field",
+      "from": "QPR",
+      "to": "Norwich",
+      "fromCode": "QPR",
+      "toCode": "NOR",
+      "date": "2026-06-30",
+      "type": "Transfer"
+    },
+    {
+      "n": "S. Armstrong",
+      "from": "Bristol City",
+      "to": "Göztepe",
+      "fromCode": "BRC",
+      "toCode": null,
+      "date": "2026-06-30",
+      "type": "Transfer"
+    },
+    {
+      "n": "Ricardo",
+      "from": "Swansea",
+      "to": "Sheffield Wednesday",
+      "fromCode": "SWA",
+      "toCode": null,
+      "date": "2026-06-30",
+      "type": "Transfer"
+    },
+    {
+      "n": "R. McCrorie",
+      "from": "Bristol City",
+      "to": "Rangers",
+      "fromCode": "BRC",
+      "toCode": null,
+      "date": "2026-06-30",
+      "type": "Transfer"
+    },
+    {
+      "n": "R. Jiménez",
+      "from": "Fulham",
+      "to": "Wolves",
+      "fromCode": null,
+      "toCode": "WOL",
+      "date": "2026-06-30",
+      "type": "Free agent"
+    },
+    {
+      "n": "O. Dodgson",
+      "from": "Burnley",
+      "to": "Stockport County",
+      "fromCode": "BUR",
+      "toCode": null,
+      "date": "2026-06-30",
+      "type": "Transfer"
+    },
+    {
+      "n": "O. Bailey",
+      "from": "Stockport County",
+      "to": "Portsmouth",
+      "fromCode": null,
+      "toCode": "POR",
+      "date": "2026-06-30",
+      "type": "Free agent"
+    },
+    {
+      "n": "N. Trott",
+      "from": "FC Copenhagen",
+      "to": "Cardiff",
+      "fromCode": null,
+      "toCode": "CAR",
+      "date": "2026-06-30",
+      "type": "Transfer"
+    },
+    {
+      "n": "Michael-John Kamson-Kamara",
+      "from": "Lincoln",
+      "to": "Heart Of Midlothian",
+      "fromCode": "LIN",
+      "toCode": null,
+      "date": "2026-06-30",
+      "type": "Free agent"
+    },
+    {
+      "n": "Max Hammond",
+      "from": "Portsmouth",
+      "to": "Portsmouth",
+      "fromCode": "POR",
+      "toCode": "POR",
+      "date": "2026-06-30",
+      "type": "-"
+    },
+    {
+      "n": "Mateus Fernandes",
+      "from": "West Ham",
+      "to": "Tottenham",
+      "fromCode": "WHU",
+      "toCode": null,
+      "date": "2026-06-30",
+      "type": "Transfer"
+    },
+    {
+      "n": "M. Yeo",
+      "from": "Red Bull Salzburg",
+      "to": "Swansea",
+      "fromCode": null,
+      "toCode": "SWA",
+      "date": "2026-06-30",
+      "type": "Transfer"
+    },
+    {
+      "n": "M. Smit",
+      "from": "GO Ahead Eagles",
+      "to": "Stoke City",
+      "fromCode": null,
+      "toCode": "STK",
+      "date": "2026-06-30",
+      "type": "Transfer"
+    },
+    {
+      "n": "M. Purvis",
+      "from": "Wrexham",
+      "to": "Bangor City 1876 FC",
+      "fromCode": "WRE",
+      "toCode": null,
+      "date": "2026-06-30",
+      "type": "Free agent"
+    },
+    {
+      "n": "M. Peart-Harris",
+      "from": "Oxford United",
+      "to": "Middlesbrough",
+      "fromCode": null,
+      "toCode": "MID",
+      "date": "2026-06-30",
+      "type": "Free agent"
+    },
+    {
+      "n": "M. Ingram",
+      "from": "Oxford United",
+      "to": "West Brom",
+      "fromCode": null,
+      "toCode": "WBA",
+      "date": "2026-06-30",
+      "type": "Transfer"
+    },
+    {
+      "n": "M. Gillesphey",
+      "from": "Charlton",
+      "to": "Bradford",
+      "fromCode": "CHA",
+      "toCode": null,
+      "date": "2026-06-30",
+      "type": "Transfer"
+    },
+    {
+      "n": "M. Forbes",
+      "from": "West Ham",
+      "to": "Dundee Utd",
+      "fromCode": "WHU",
+      "toCode": null,
+      "date": "2026-06-30",
+      "type": "Free agent"
+    },
+    {
+      "n": "M. Dúbravka",
+      "from": "Burnley",
+      "to": "Tottenham",
+      "fromCode": "BUR",
+      "toCode": null,
+      "date": "2026-06-30",
+      "type": "Free agent"
+    },
+    {
+      "n": "M. Baradji",
+      "from": "Yverdon Sport",
+      "to": "Blackburn",
+      "fromCode": null,
+      "toCode": "BLB",
+      "date": "2026-06-30",
+      "type": "Transfer"
+    },
+    {
+      "n": "Luca Stephenson",
+      "from": "Liverpool",
+      "to": "Bolton",
+      "fromCode": null,
+      "toCode": "BOL",
+      "date": "2026-06-30",
+      "type": "Transfer"
+    },
+    {
+      "n": "L. Walta",
+      "from": "Sirius",
+      "to": "Swansea",
+      "fromCode": null,
+      "toCode": "SWA",
+      "date": "2026-06-30",
+      "type": "Transfer"
+    },
+    {
+      "n": "L. Nicholls",
+      "from": "Huddersfield",
+      "to": "Preston",
+      "fromCode": null,
+      "toCode": "PRE",
+      "date": "2026-06-30",
+      "type": "Transfer"
+    },
+    {
+      "n": "L. Moulden",
+      "from": "Norwich",
+      "to": "Accrington ST",
+      "fromCode": "NOR",
+      "toCode": null,
+      "date": "2026-06-30",
+      "type": "Loan"
+    },
+    {
+      "n": "L. Krejčí",
+      "from": "Girona",
+      "to": "Wolves",
+      "fromCode": null,
+      "toCode": "WOL",
+      "date": "2026-06-30",
+      "type": "Transfer"
+    },
+    {
+      "n": "L. Baker",
+      "from": "Stoke City",
+      "to": "Bursaspor",
+      "fromCode": "STK",
+      "toCode": null,
+      "date": "2026-06-30",
+      "type": "Free agent"
+    },
+    {
+      "n": "K. Trippier",
+      "from": "Newcastle",
+      "to": "Wolves",
+      "fromCode": null,
+      "toCode": "WOL",
+      "date": "2026-06-30",
+      "type": "Free agent"
+    },
+    {
+      "n": "K. Lamadrid",
+      "from": "Deportivo La Guaira",
+      "to": "West Ham",
+      "fromCode": null,
+      "toCode": "WHU",
+      "date": "2026-06-30",
+      "type": "Transfer"
+    },
+    {
+      "n": "K. Hegyi",
+      "from": "West Ham",
+      "to": "Sparta Praha",
+      "fromCode": "WHU",
+      "toCode": null,
+      "date": "2026-06-30",
+      "type": "Transfer"
+    },
+    {
+      "n": "K. Dixon",
+      "from": "Charlton",
+      "to": "Novi Pazar",
+      "fromCode": "CHA",
+      "toCode": null,
+      "date": "2026-06-30",
+      "type": "Transfer"
+    },
+    {
+      "n": "K. Dempsey",
+      "from": "Bolton",
+      "to": "Port Vale",
+      "fromCode": "BOL",
+      "toCode": null,
+      "date": "2026-06-30",
+      "type": "Free agent"
+    },
+    {
+      "n": "Joshua Thomas",
+      "from": "Swansea",
+      "to": "Fleetwood Town",
+      "fromCode": "SWA",
+      "toCode": null,
+      "date": "2026-06-30",
+      "type": "Free agent"
+    },
+    {
+      "n": "J. Walton",
+      "from": "Preston",
+      "to": "Dundee Utd",
+      "fromCode": "PRE",
+      "toCode": null,
+      "date": "2026-06-30",
+      "type": "Transfer"
+    },
+    {
+      "n": "J. Storer",
+      "from": "Wolves",
+      "to": "Plymouth",
+      "fromCode": "WOL",
+      "toCode": null,
+      "date": "2026-06-30",
+      "type": "Free agent"
+    },
+    {
+      "n": "J. Solis",
+      "from": "Girona",
+      "to": "Birmingham",
+      "fromCode": null,
+      "toCode": "BIR",
+      "date": "2026-06-30",
+      "type": "Transfer"
+    },
+    {
+      "n": "J. Sarmiento",
+      "from": "Brighton",
+      "to": "Middlesbrough",
+      "fromCode": null,
+      "toCode": "MID",
+      "date": "2026-06-30",
+      "type": "Transfer"
+    },
+    {
+      "n": "J. Morgan",
+      "from": "Chelsea",
+      "to": "West Brom",
+      "fromCode": null,
+      "toCode": "WBA",
+      "date": "2026-06-30",
+      "type": "Transfer"
+    },
+    {
+      "n": "J. Metcalfe",
+      "from": "Bradford",
+      "to": "Millwall",
+      "fromCode": null,
+      "toCode": "MIL",
+      "date": "2026-06-30",
+      "type": "Transfer"
+    },
+    {
+      "n": "J. Griffiths",
+      "from": "West Brom",
+      "to": "Stoke City",
+      "fromCode": "WBA",
+      "toCode": "STK",
+      "date": "2026-06-30",
+      "type": "Transfer"
+    },
+    {
+      "n": "J. Fisher",
+      "from": "Wrexham",
+      "to": "Llandudno",
+      "fromCode": "WRE",
+      "toCode": null,
+      "date": "2026-06-30",
+      "type": "Free agent"
+    },
+    {
+      "n": "J. Cabezas",
+      "from": "Watford",
+      "to": "Deportes Tolima",
+      "fromCode": "WAT",
+      "toCode": null,
+      "date": "2026-06-30",
+      "type": "Loan"
+    },
+    {
+      "n": "I. Mesík",
+      "from": "Heracles",
+      "to": "Charlton",
+      "fromCode": null,
+      "toCode": "CHA",
+      "date": "2026-06-30",
+      "type": "Transfer"
+    },
+    {
+      "n": "H. Hackney",
+      "from": "Middlesbrough",
+      "to": "Everton",
+      "fromCode": "MID",
+      "toCode": null,
+      "date": "2026-06-30",
+      "type": "Transfer"
+    },
+    {
+      "n": "G. Yah",
+      "from": "FC Volendam",
+      "to": "Bristol City",
+      "fromCode": null,
+      "toCode": "BRC",
+      "date": "2026-06-30",
+      "type": "Transfer"
+    },
+    {
+      "n": "G. Long",
+      "from": "Norwich",
+      "to": "Southampton",
+      "fromCode": "NOR",
+      "toCode": "SOU",
+      "date": "2026-06-30",
+      "type": "Free agent"
+    },
+    {
+      "n": "G. Kodua",
+      "from": "West Ham",
+      "to": "Luton",
+      "fromCode": "WHU",
+      "toCode": null,
+      "date": "2026-06-30",
+      "type": "Transfer"
+    },
+    {
+      "n": "G. Johnston",
+      "from": "Bolton",
+      "to": "Luton",
+      "fromCode": "BOL",
+      "toCode": null,
+      "date": "2026-06-30",
+      "type": "Free agent"
+    },
+    {
+      "n": "G. Ahadme",
+      "from": "Charlton",
+      "to": "Cambridge United",
+      "fromCode": "CHA",
+      "toCode": null,
+      "date": "2026-06-30",
+      "type": "Loan"
+    },
+    {
+      "n": "Florentino",
+      "from": "Benfica",
+      "to": "Burnley",
+      "fromCode": null,
+      "toCode": "BUR",
+      "date": "2026-06-30",
+      "type": "Transfer"
+    },
+    {
+      "n": "El Hadji Djibril Soumaré",
+      "from": "SC Braga",
+      "to": "Stoke City",
+      "fromCode": null,
+      "toCode": "STK",
+      "date": "2026-06-30",
+      "type": "Transfer"
+    },
+    {
+      "n": "E. Galbraith",
+      "from": "Swansea",
+      "to": "Stoke City",
+      "fromCode": "SWA",
+      "toCode": "STK",
+      "date": "2026-06-30",
+      "type": "Transfer"
+    },
+    {
+      "n": "Daniel Peretz",
+      "from": "Bayern München",
+      "to": "Southampton",
+      "fromCode": null,
+      "toCode": "SOU",
+      "date": "2026-06-30",
+      "type": "Transfer"
+    },
+    {
+      "n": "D. Watson",
+      "from": "Kilmarnock",
+      "to": "Bolton",
+      "fromCode": null,
+      "toCode": "BOL",
+      "date": "2026-06-30",
+      "type": "Free agent"
+    },
+    {
+      "n": "D. Sanderson",
+      "from": "Birmingham",
+      "to": "Derby",
+      "fromCode": "BIR",
+      "toCode": "DER",
+      "date": "2026-06-30",
+      "type": "Transfer"
+    },
+    {
+      "n": "D. Lipsiuc",
+      "from": "Stoke City",
+      "to": "Notts County",
+      "fromCode": "STK",
+      "toCode": null,
+      "date": "2026-06-30",
+      "type": "Transfer"
+    },
+    {
+      "n": "D. Daley",
+      "from": "Norwich",
+      "to": "Hull City",
+      "fromCode": "NOR",
+      "toCode": null,
+      "date": "2026-06-30",
+      "type": "Free agent"
+    },
+    {
+      "n": "D. Cox",
+      "from": "Derby",
+      "to": "Southend",
+      "fromCode": "DER",
+      "toCode": null,
+      "date": "2026-06-30",
+      "type": "Free agent"
+    },
+    {
+      "n": "C. Larin",
+      "from": "Mallorca",
+      "to": "Southampton",
+      "fromCode": null,
+      "toCode": "SOU",
+      "date": "2026-06-30",
+      "type": "Transfer"
+    },
+    {
+      "n": "C. Elder",
+      "from": "Derby",
+      "to": "Lincoln",
+      "fromCode": "DER",
+      "toCode": "LIN",
+      "date": "2026-06-30",
+      "type": "Free agent"
+    },
+    {
+      "n": "Bruno Alves",
+      "from": "Cruzeiro",
+      "to": "Norwich",
+      "fromCode": null,
+      "toCode": "NOR",
+      "date": "2026-06-30",
+      "type": "Loan"
+    },
+    {
+      "n": "Billy Dawson Koumetio",
+      "from": "Dundee",
+      "to": "Charlton",
+      "fromCode": null,
+      "toCode": "CHA",
+      "date": "2026-06-30",
+      "type": "Transfer"
+    },
+    {
+      "n": "Ben Phillipson",
+      "from": "Portsmouth",
+      "to": "Portsmouth",
+      "fromCode": "POR",
+      "toCode": "POR",
+      "date": "2026-06-30",
+      "type": "Raise"
+    },
+    {
+      "n": "B. Stewart",
+      "from": "Falkirk",
+      "to": "West Brom",
+      "fromCode": null,
+      "toCode": "WBA",
+      "date": "2026-06-30",
+      "type": "Transfer"
+    },
+    {
+      "n": "B. Pendleton",
+      "from": "Birmingham",
+      "to": "Shrewsbury",
+      "fromCode": "BIR",
+      "toCode": null,
+      "date": "2026-06-30",
+      "type": "Transfer"
+    },
+    {
+      "n": "B. Kemper",
+      "from": "NAC Breda",
+      "to": "QPR",
+      "fromCode": null,
+      "toCode": "QPR",
+      "date": "2026-06-30",
+      "type": "Free agent"
+    },
+    {
+      "n": "B. Downey",
+      "from": "Crusaders FC",
+      "to": "Portsmouth",
+      "fromCode": null,
+      "toCode": "POR",
+      "date": "2026-06-30",
+      "type": "-"
+    },
+    {
+      "n": "B. Davies",
+      "from": "Rangers",
+      "to": "Bolton",
+      "fromCode": null,
+      "toCode": "BOL",
+      "date": "2026-06-30",
+      "type": "Free agent"
+    },
+    {
+      "n": "B. Clark",
+      "from": "Red Bull Salzburg",
+      "to": "Derby",
+      "fromCode": null,
+      "toCode": "DER",
+      "date": "2026-06-30",
+      "type": "Transfer"
+    },
+    {
+      "n": "A. Famewo",
+      "from": "Hull City",
+      "to": "Bolton",
+      "fromCode": null,
+      "toCode": "BOL",
+      "date": "2026-06-30",
+      "type": "Transfer"
+    },
+    {
+      "n": "A. Brooks",
+      "from": "Sheffield Utd",
+      "to": "Norwich",
+      "fromCode": "SHU",
+      "toCode": "NOR",
+      "date": "2026-06-30",
+      "type": "Transfer"
+    },
+    {
+      "n": "Ž. Celar",
+      "from": "Fortuna Düsseldorf",
+      "to": "QPR",
+      "fromCode": null,
+      "toCode": "QPR",
+      "date": "2026-06-29",
+      "type": "Return from loan"
+    },
+    {
+      "n": "Ł. Fabiański",
+      "from": "West Ham",
+      "to": "Fabianski Lukasz",
+      "fromCode": "WHU",
+      "toCode": null,
+      "date": "2026-06-29",
+      "type": "Free agent"
+    },
+    {
+      "n": "Y. Sugawara",
+      "from": "Werder Bremen",
+      "to": "Southampton",
+      "fromCode": null,
+      "toCode": "SOU",
+      "date": "2026-06-29",
+      "type": "Return from loan"
+    },
+    {
+      "n": "Y. Hirakawa",
+      "from": "Hull City",
+      "to": "Bristol City",
+      "fromCode": null,
+      "toCode": "BRC",
+      "date": "2026-06-29",
+      "type": "Return from loan"
+    },
+    {
+      "n": "W. Smallbone",
+      "from": "Millwall",
+      "to": "Southampton",
+      "fromCode": "MIL",
+      "toCode": "SOU",
+      "date": "2026-06-29",
+      "type": "Return from loan"
+    },
+    {
+      "n": "W. Smallbone",
+      "from": "Southampton",
+      "to": "Smallbone William",
+      "fromCode": "SOU",
+      "toCode": null,
+      "date": "2026-06-29",
+      "type": "Free agent"
+    },
+    {
+      "n": "W. Keane",
+      "from": "Preston",
+      "to": "Keane Will",
+      "fromCode": "PRE",
+      "toCode": null,
+      "date": "2026-06-29",
+      "type": "Free agent"
+    },
+    {
+      "n": "W. Harding",
+      "from": "Millwall",
+      "to": "Plymouth",
+      "fromCode": "MIL",
+      "toCode": null,
+      "date": "2026-06-29",
+      "type": "Free agent"
+    },
+    {
+      "n": "V. Hladký",
+      "from": "Burnley",
+      "to": "Hladky Vaclav",
+      "fromCode": "BUR",
+      "toCode": null,
+      "date": "2026-06-29",
+      "type": "Free agent"
+    },
+    {
+      "n": "Tyler Bindon",
+      "from": "Sheffield Utd",
+      "to": "Nottingham Forest",
+      "fromCode": "SHU",
+      "toCode": null,
+      "date": "2026-06-29",
+      "type": "Return from loan"
+    },
+    {
+      "n": "Tom Tweedy",
+      "from": "Burnley",
+      "to": "Truro City",
+      "fromCode": "BUR",
+      "toCode": null,
+      "date": "2026-06-29",
+      "type": "Free agent"
+    },
+    {
+      "n": "T. Taylor",
+      "from": "Charlton",
+      "to": "Stevenage",
+      "fromCode": "CHA",
+      "toCode": null,
+      "date": "2026-06-29",
+      "type": "Free agent"
+    },
+    {
+      "n": "T. Steward",
+      "from": "ST Johnstone",
+      "to": "Portsmouth",
+      "fromCode": null,
+      "toCode": "POR",
+      "date": "2026-06-29",
+      "type": "Return from loan"
+    },
+    {
+      "n": "T. Springett",
+      "from": "Norwich",
+      "to": "Leyton Orient",
+      "fromCode": "NOR",
+      "toCode": null,
+      "date": "2026-06-29",
+      "type": "Free agent"
+    },
+    {
+      "n": "T. Perrett",
+      "from": "Yeovil Town",
+      "to": "Cardiff",
+      "fromCode": null,
+      "toCode": "CAR",
+      "date": "2026-06-29",
+      "type": "Return from loan"
+    },
+    {
+      "n": "T. Onyango",
+      "from": "Everton",
+      "to": "Sheffield Utd",
+      "fromCode": null,
+      "toCode": "SHU",
+      "date": "2026-06-29",
+      "type": "Free agent"
+    },
+    {
+      "n": "T. O&apos;Connor",
+      "from": "Wrexham",
+      "to": "Peterborough",
+      "fromCode": "WRE",
+      "toCode": null,
+      "date": "2026-06-29",
+      "type": "Free agent"
+    },
+    {
+      "n": "T. Kelly",
+      "from": "Wrexham",
+      "to": "Kelly Tom",
+      "fromCode": "WRE",
+      "toCode": null,
+      "date": "2026-06-29",
+      "type": "Free agent"
+    },
+    {
+      "n": "T. Ince",
+      "from": "Watford",
+      "to": "Ince Tom",
+      "fromCode": "WAT",
+      "toCode": null,
+      "date": "2026-06-29",
+      "type": "Free agent"
+    },
+    {
+      "n": "T. Gardner-Hickman",
+      "from": "Blackburn",
+      "to": "Birmingham",
+      "fromCode": "BLB",
+      "toCode": "BIR",
+      "date": "2026-06-29",
+      "type": "Return from loan"
+    },
+    {
+      "n": "T. Dele-Bashiru",
+      "from": "Gençlerbirliği S.K.",
+      "to": "Watford",
+      "fromCode": null,
+      "toCode": "WAT",
+      "date": "2026-06-29",
+      "type": "Return from loan"
+    },
+    {
+      "n": "T. Davies",
+      "from": "Sheffield Utd",
+      "to": "Davies Tom",
+      "fromCode": "SHU",
+      "toCode": null,
+      "date": "2026-06-29",
+      "type": "Free agent"
+    },
+    {
+      "n": "T. Ballo",
+      "from": "Millwall",
+      "to": "Wolfsberger AC",
+      "fromCode": "MIL",
+      "toCode": null,
+      "date": "2026-06-29",
+      "type": "Return from loan"
+    },
+    {
+      "n": "T. Arconte",
+      "from": "Rodez",
+      "to": "Millwall",
+      "fromCode": null,
+      "toCode": "MIL",
+      "date": "2026-06-29",
+      "type": "Transfer"
+    },
+    {
+      "n": "T. Akinyimika",
+      "from": "Watford",
+      "to": "Akinyimika Tobi",
+      "fromCode": "WAT",
+      "toCode": null,
+      "date": "2026-06-29",
+      "type": "Free agent"
+    },
+    {
+      "n": "Sam Morsy",
+      "from": "Bristol City",
+      "to": "Blackburn",
+      "fromCode": "BRC",
+      "toCode": "BLB",
+      "date": "2026-06-29",
+      "type": "Free agent"
+    },
+    {
+      "n": "Sam Morsy",
+      "from": "Bristol City",
+      "to": "Morsy Samy",
+      "fromCode": "BRC",
+      "toCode": null,
+      "date": "2026-06-29",
+      "type": "Free agent"
+    },
+    {
+      "n": "S. Welsh",
+      "from": "Celtic",
+      "to": "Swansea",
+      "fromCode": null,
+      "toCode": "SWA",
+      "date": "2026-06-29",
+      "type": "Transfer"
+    },
+    {
+      "n": "S. Tronstad",
+      "from": "Blackburn",
+      "to": "Tronstad Sondre",
+      "fromCode": "BLB",
+      "toCode": null,
+      "date": "2026-06-29",
+      "type": "Free agent"
+    },
+    {
+      "n": "S. Tickle",
+      "from": "Wigan",
+      "to": "Bristol City",
+      "fromCode": null,
+      "toCode": "BRC",
+      "date": "2026-06-29",
+      "type": "Transfer"
+    },
+    {
+      "n": "S. Szmodics",
+      "from": "Derby",
+      "to": "Ipswich",
+      "fromCode": "DER",
+      "toCode": null,
+      "date": "2026-06-29",
+      "type": "Return from loan"
+    },
+    {
+      "n": "S. Silvera",
+      "from": "Middlesbrough",
+      "to": "Silvera Sam",
+      "fromCode": "MID",
+      "toCode": null,
+      "date": "2026-06-29",
+      "type": "Free agent"
+    },
+    {
+      "n": "S. Silvera",
+      "from": "Middlesbrough",
+      "to": "Milton Keynes Dons",
+      "fromCode": "MID",
+      "toCode": null,
+      "date": "2026-06-29",
+      "type": "Free agent"
+    },
+    {
+      "n": "S. Sharples-Ahmed",
+      "from": "Bolton",
+      "to": "Hednesford Town",
+      "fromCode": "BOL",
+      "toCode": null,
+      "date": "2026-06-29",
+      "type": "Transfer"
+    },
+    {
+      "n": "S. Schön",
+      "from": "Bolton",
+      "to": "Gyori ETO FC",
+      "fromCode": "BOL",
+      "toCode": null,
+      "date": "2026-06-29",
+      "type": "Transfer"
+    },
+    {
+      "n": "S. Schön",
+      "from": "Gyori ETO FC",
+      "to": "Bolton",
+      "fromCode": null,
+      "toCode": "BOL",
+      "date": "2026-06-29",
+      "type": "Return from loan"
+    },
+    {
+      "n": "S. Sambo",
+      "from": "Sparta Rotterdam",
+      "to": "Burnley",
+      "fromCode": null,
+      "toCode": "BUR",
+      "date": "2026-06-29",
+      "type": "Return from loan"
+    },
+    {
+      "n": "S. Nzonzi",
+      "from": "Stoke City",
+      "to": "N'Zonzi Steven",
+      "fromCode": "STK",
+      "toCode": null,
+      "date": "2026-06-29",
+      "type": "Free agent"
+    },
+    {
+      "n": "S. Nzonzi",
+      "from": "Stoke City",
+      "to": "Dunkerque",
+      "fromCode": "STK",
+      "toCode": null,
+      "date": "2026-06-29",
+      "type": "Free agent"
+    },
+    {
+      "n": "S. Mfuni",
+      "from": "Watford",
+      "to": "Manchester City",
+      "fromCode": "WAT",
+      "toCode": null,
+      "date": "2026-06-29",
+      "type": "Return from loan"
+    },
+    {
+      "n": "S. Kalajdzic",
+      "from": "Lask Linz",
+      "to": "Wolves",
+      "fromCode": null,
+      "toCode": "WOL",
+      "date": "2026-06-29",
+      "type": "Return from loan"
+    },
+    {
+      "n": "S. Ingelsson",
+      "from": "Sheffield Wednesday",
+      "to": "Stoke City",
+      "fromCode": null,
+      "toCode": "STK",
+      "date": "2026-06-29",
+      "type": "Transfer"
+    },
+    {
+      "n": "S. Greenwood",
+      "from": "Pogon Szczecin",
+      "to": "Bristol City",
+      "fromCode": null,
+      "toCode": "BRC",
+      "date": "2026-06-29",
+      "type": "Transfer"
+    },
+    {
+      "n": "S. Goglichidze",
+      "from": "Watford",
+      "to": "Udinese",
+      "fromCode": "WAT",
+      "toCode": null,
+      "date": "2026-06-29",
+      "type": "Return from loan"
+    },
+    {
+      "n": "S. Field",
+      "from": "QPR",
+      "to": "Norwich",
+      "fromCode": "QPR",
+      "toCode": "NOR",
+      "date": "2026-06-29",
+      "type": "Transfer"
+    },
+    {
+      "n": "S. Duffy",
+      "from": "Norwich",
+      "to": "Duffy Shane",
+      "fromCode": "NOR",
+      "toCode": null,
+      "date": "2026-06-29",
+      "type": "Free agent"
+    },
+    {
+      "n": "S. Armstrong",
+      "from": "Bristol City",
+      "to": "Göztepe",
+      "fromCode": "BRC",
+      "toCode": null,
+      "date": "2026-06-29",
+      "type": "Transfer"
+    },
+    {
+      "n": "Ricardo",
+      "from": "Swansea",
+      "to": "Sheffield Wednesday",
+      "fromCode": "SWA",
+      "toCode": null,
+      "date": "2026-06-29",
+      "type": "Transfer"
+    },
+    {
+      "n": "R. Šimić",
+      "from": "Karlsruher SC",
+      "to": "Cardiff",
+      "fromCode": null,
+      "toCode": "CAR",
+      "date": "2026-06-29",
+      "type": "Return from loan"
+    },
+    {
+      "n": "R. Wintle",
+      "from": "Cardiff",
+      "to": "Wintle Ryan",
+      "fromCode": "CAR",
+      "toCode": null,
+      "date": "2026-06-29",
+      "type": "Free agent"
+    },
+    {
+      "n": "R. Vítek",
+      "from": "Bristol City",
+      "to": "Manchester United",
+      "fromCode": "BRC",
+      "toCode": null,
+      "date": "2026-06-29",
+      "type": "Return from loan"
+    },
+    {
+      "n": "R. Swann",
+      "from": "Portsmouth",
+      "to": "Swann Reuben",
+      "fromCode": "POR",
+      "toCode": null,
+      "date": "2026-06-29",
+      "type": "Free agent"
+    },
+    {
+      "n": "R. Stewart",
+      "from": "Southampton",
+      "to": "Stewart Ross",
+      "fromCode": "SOU",
+      "toCode": null,
+      "date": "2026-06-29",
+      "type": "Free agent"
+    },
+    {
+      "n": "R. Norrington-Davies",
+      "from": "QPR",
+      "to": "Sheffield Utd",
+      "fromCode": "QPR",
+      "toCode": "SHU",
+      "date": "2026-06-29",
+      "type": "Return from loan"
+    },
+    {
+      "n": "R. McCrorie",
+      "from": "Bristol City",
+      "to": "Rangers",
+      "fromCode": "BRC",
+      "toCode": null,
+      "date": "2026-06-29",
+      "type": "Transfer"
+    },
+    {
+      "n": "R. Jiménez",
+      "from": "Fulham",
+      "to": "Wolves",
+      "fromCode": null,
+      "toCode": "WOL",
+      "date": "2026-06-29",
+      "type": "Free agent"
+    },
+    {
+      "n": "R. Hedges",
+      "from": "Blackburn",
+      "to": "Hedges Ryan",
+      "fromCode": "BLB",
+      "toCode": null,
+      "date": "2026-06-29",
+      "type": "Free agent"
+    },
+    {
+      "n": "R. Egan",
+      "from": "Wrexham",
+      "to": "Egan Reuben",
+      "fromCode": "WRE",
+      "toCode": null,
+      "date": "2026-06-29",
+      "type": "Free agent"
+    },
+    {
+      "n": "R. Brady",
+      "from": "Preston",
+      "to": "Brady Robbie",
+      "fromCode": "PRE",
+      "toCode": null,
+      "date": "2026-06-29",
+      "type": "Free agent"
+    },
+    {
+      "n": "R. Battrum",
+      "from": "Braintree",
+      "to": "West Ham",
+      "fromCode": null,
+      "toCode": "WHU",
+      "date": "2026-06-29",
+      "type": "Return from loan"
+    },
+    {
+      "n": "P. Nardi",
+      "from": "QPR",
+      "to": "Nardi Paul",
+      "fromCode": "QPR",
+      "toCode": null,
+      "date": "2026-06-29",
+      "type": "Free agent"
+    },
+    {
+      "n": "P. Mullin",
+      "from": "Wrexham",
+      "to": "Mullin Paul",
+      "fromCode": "WRE",
+      "toCode": null,
+      "date": "2026-06-29",
+      "type": "Free agent"
+    },
+    {
+      "n": "P. Mullin",
+      "from": "Bradford",
+      "to": "Wrexham",
+      "fromCode": null,
+      "toCode": "WRE",
+      "date": "2026-06-29",
+      "type": "Return from loan"
+    },
+    {
+      "n": "P. Ekwah",
+      "from": "Watford",
+      "to": "Saint Etienne",
+      "fromCode": "WAT",
+      "toCode": null,
+      "date": "2026-06-29",
+      "type": "Return from loan"
+    },
+    {
+      "n": "P. Dwomoh",
+      "from": "Watford",
+      "to": "Dwomoh Pierre",
+      "fromCode": "WAT",
+      "toCode": null,
+      "date": "2026-06-29",
+      "type": "Free agent"
+    },
+    {
+      "n": "Oriol Romeu",
+      "from": "Southampton",
+      "to": "Romeu Oriol",
+      "fromCode": "SOU",
+      "toCode": null,
+      "date": "2026-06-29",
+      "type": "Free agent"
+    },
+    {
+      "n": "O. Sonne",
+      "from": "Sparta Praha",
+      "to": "Burnley",
+      "fromCode": null,
+      "toCode": "BUR",
+      "date": "2026-06-29",
+      "type": "Return from loan"
+    },
+    {
+      "n": "O. Dodgson",
+      "from": "Burnley",
+      "to": "Stockport County",
+      "fromCode": "BUR",
+      "toCode": null,
+      "date": "2026-06-29",
+      "type": "Transfer"
+    },
+    {
+      "n": "O. Bailey",
+      "from": "Stockport County",
+      "to": "Portsmouth",
+      "fromCode": null,
+      "toCode": "POR",
+      "date": "2026-06-29",
+      "type": "Free agent"
+    },
+    {
+      "n": "O. Adewumi",
+      "from": "Cercle Brugge",
+      "to": "Burnley",
+      "fromCode": null,
+      "toCode": "BUR",
+      "date": "2026-06-29",
+      "type": "Return from loan"
+    },
+    {
+      "n": "Noah McCann",
+      "from": "QPR",
+      "to": "Central Coast Mariners",
+      "fromCode": "QPR",
+      "toCode": null,
+      "date": "2026-06-29",
+      "type": "Free agent"
+    },
+    {
+      "n": "N. Zätterström",
+      "from": "Genoa",
+      "to": "Sheffield Utd",
+      "fromCode": null,
+      "toCode": "SHU",
+      "date": "2026-06-29",
+      "type": "Return from loan"
+    },
+    {
+      "n": "N. Trott",
+      "from": "FC Copenhagen",
+      "to": "Cardiff",
+      "fromCode": null,
+      "toCode": "CAR",
+      "date": "2026-06-29",
+      "type": "Transfer"
+    },
+    {
+      "n": "N. Trott",
+      "from": "Cardiff",
+      "to": "FC Copenhagen",
+      "fromCode": "CAR",
+      "toCode": null,
+      "date": "2026-06-29",
+      "type": "Return from loan"
+    },
+    {
+      "n": "N. Redmond",
+      "from": "Blackburn",
+      "to": "Redmond Nathan",
+      "fromCode": "BLB",
+      "toCode": null,
+      "date": "2026-06-29",
+      "type": "Free agent"
+    },
+    {
+      "n": "N. Mendy",
+      "from": "Watford",
+      "to": "Mendy Nampalys",
+      "fromCode": "WAT",
+      "toCode": null,
+      "date": "2026-06-29",
+      "type": "Free agent"
+    },
+    {
+      "n": "N. Mawene",
+      "from": "Preston",
+      "to": "Mawene Noah",
+      "fromCode": "PRE",
+      "toCode": null,
+      "date": "2026-06-29",
+      "type": "Free agent"
+    },
+    {
+      "n": "N. Mawene",
+      "from": "Preston",
+      "to": "Fleetwood Town",
+      "fromCode": "PRE",
+      "toCode": null,
+      "date": "2026-06-29",
+      "type": "Free agent"
+    },
+    {
+      "n": "N. Jojić",
+      "from": "Radomlje",
+      "to": "Stoke City",
+      "fromCode": null,
+      "toCode": "STK",
+      "date": "2026-06-29",
+      "type": "Return from loan"
+    },
+    {
+      "n": "N. Füllkrug",
+      "from": "AC Milan",
+      "to": "West Ham",
+      "fromCode": null,
+      "toCode": "WHU",
+      "date": "2026-06-29",
+      "type": "Return from loan"
+    },
+    {
+      "n": "Michael-John Kamson-Kamara",
+      "from": "Lincoln",
+      "to": "Heart Of Midlothian",
+      "fromCode": "LIN",
+      "toCode": null,
+      "date": "2026-06-29",
+      "type": "Free agent"
+    },
+    {
+      "n": "Mason Paul James Burstow",
+      "from": "Bolton",
+      "to": "Hull City",
+      "fromCode": "BOL",
+      "toCode": null,
+      "date": "2026-06-29",
+      "type": "Return from loan"
+    },
+    {
+      "n": "M. Yeo",
+      "from": "Red Bull Salzburg",
+      "to": "Swansea",
+      "fromCode": null,
+      "toCode": "SWA",
+      "date": "2026-06-29",
+      "type": "Transfer"
+    },
+    {
+      "n": "M. Targett",
+      "from": "Middlesbrough",
+      "to": "Newcastle",
+      "fromCode": "MID",
+      "toCode": null,
+      "date": "2026-06-29",
+      "type": "Return from loan"
+    },
+    {
+      "n": "M. Sykes",
+      "from": "Bristol City",
+      "to": "Sykes Mark",
+      "fromCode": "BRC",
+      "toCode": null,
+      "date": "2026-06-29",
+      "type": "Free agent"
+    },
+    {
+      "n": "M. Sykes",
+      "from": "Bristol City",
+      "to": "Millwall",
+      "fromCode": "BRC",
+      "toCode": "MIL",
+      "date": "2026-06-29",
+      "type": "Free agent"
+    },
+    {
+      "n": "M. Smit",
+      "from": "Stoke City",
+      "to": "GO Ahead Eagles",
+      "fromCode": "STK",
+      "toCode": null,
+      "date": "2026-06-29",
+      "type": "Return from loan"
+    },
+    {
+      "n": "M. Smit",
+      "from": "GO Ahead Eagles",
+      "to": "Stoke City",
+      "fromCode": null,
+      "toCode": "STK",
+      "date": "2026-06-29",
+      "type": "Transfer"
+    },
+    {
+      "n": "M. Roberts",
+      "from": "Watford",
+      "to": "Roberts Myles",
+      "fromCode": "WAT",
+      "toCode": null,
+      "date": "2026-06-29",
+      "type": "Free agent"
+    },
+    {
+      "n": "M. Roberts",
+      "from": "Walsall",
+      "to": "Watford",
+      "fromCode": null,
+      "toCode": "WAT",
+      "date": "2026-06-29",
+      "type": "Return from loan"
+    },
+    {
+      "n": "M. Reindorf",
+      "from": "Tamworth",
+      "to": "Cardiff",
+      "fromCode": null,
+      "toCode": "CAR",
+      "date": "2026-06-29",
+      "type": "Return from loan"
+    },
+    {
+      "n": "M. Purvis",
+      "from": "Wrexham",
+      "to": "Bangor City 1876 FC",
+      "fromCode": "WRE",
+      "toCode": null,
+      "date": "2026-06-29",
+      "type": "Free agent"
+    },
+    {
+      "n": "M. Peart-Harris",
+      "from": "Oxford United",
+      "to": "Middlesbrough",
+      "fromCode": null,
+      "toCode": "MID",
+      "date": "2026-06-29",
+      "type": "Free agent"
+    },
+    {
+      "n": "M. Munetsi",
+      "from": "Paris FC",
+      "to": "Wolves",
+      "fromCode": null,
+      "toCode": "WOL",
+      "date": "2026-06-29",
+      "type": "Return from loan"
+    },
+    {
+      "n": "M. Luongo",
+      "from": "Millwall",
+      "to": "Luongo Massimo",
+      "fromCode": "MIL",
+      "toCode": null,
+      "date": "2026-06-29",
+      "type": "Free agent"
+    },
+    {
+      "n": "M. Luković",
+      "from": "Preston",
+      "to": "Strasbourg",
+      "fromCode": "PRE",
+      "toCode": null,
+      "date": "2026-06-29",
+      "type": "Return from loan"
+    },
+    {
+      "n": "M. Ingram",
+      "from": "Oxford United",
+      "to": "West Brom",
+      "fromCode": null,
+      "toCode": "WBA",
+      "date": "2026-06-29",
+      "type": "Transfer"
+    },
+    {
+      "n": "M. Gillesphey",
+      "from": "Charlton",
+      "to": "Bradford",
+      "fromCode": "CHA",
+      "toCode": null,
+      "date": "2026-06-29",
+      "type": "Transfer"
+    },
+    {
+      "n": "M. Forss",
+      "from": "Middlesbrough",
+      "to": "Forss Marcus",
+      "fromCode": "MID",
+      "toCode": null,
+      "date": "2026-06-29",
+      "type": "Free agent"
+    },
+    {
+      "n": "M. Forbes",
+      "from": "West Ham",
+      "to": "Dundee Utd",
+      "fromCode": "WHU",
+      "toCode": null,
+      "date": "2026-06-29",
+      "type": "Free agent"
+    },
+    {
+      "n": "M. Faal",
+      "from": "Cheltenham",
+      "to": "Wrexham",
+      "fromCode": null,
+      "toCode": "WRE",
+      "date": "2026-06-29",
+      "type": "Return from loan"
+    },
+    {
+      "n": "M. Estève",
+      "from": "Burnley",
+      "to": "RB Leipzig",
+      "fromCode": "BUR",
+      "toCode": null,
+      "date": "2026-06-29",
+      "type": "Transfer"
+    },
+    {
+      "n": "M. Dúbravka",
+      "from": "Burnley",
+      "to": "Tottenham",
+      "fromCode": "BUR",
+      "toCode": null,
+      "date": "2026-06-29",
+      "type": "Free agent"
+    },
+    {
+      "n": "M. Doherty",
+      "from": "Wolves",
+      "to": "Doherty Matt",
+      "fromCode": "WOL",
+      "toCode": null,
+      "date": "2026-06-29",
+      "type": "Free agent"
+    },
+    {
+      "n": "M. Cornet",
+      "from": "Genoa",
+      "to": "West Ham",
+      "fromCode": null,
+      "toCode": "WHU",
+      "date": "2026-06-29",
+      "type": "Return from loan"
+    },
+    {
+      "n": "M. Baradji",
+      "from": "Yverdon Sport",
+      "to": "Blackburn",
+      "fromCode": null,
+      "toCode": "BLB",
+      "date": "2026-06-29",
+      "type": "Transfer"
+    },
+    {
+      "n": "M. Alli",
+      "from": "Portsmouth",
+      "to": "Luton",
+      "fromCode": "POR",
+      "toCode": null,
+      "date": "2026-06-29",
+      "type": "Return from loan"
+    },
+    {
+      "n": "M. Adu-Poku",
+      "from": "Wealdstone",
+      "to": "Watford",
+      "fromCode": null,
+      "toCode": "WAT",
+      "date": "2026-06-29",
+      "type": "Return from loan"
+    },
+    {
+      "n": "Lennon Maclorg",
+      "from": "Charlton",
+      "to": "Gillingham",
+      "fromCode": "CHA",
+      "toCode": null,
+      "date": "2026-06-29",
+      "type": "Free agent"
+    },
+    {
+      "n": "L. Walta",
+      "from": "Swansea",
+      "to": "Sirius",
+      "fromCode": "SWA",
+      "toCode": null,
+      "date": "2026-06-29",
+      "type": "Return from loan"
+    },
+    {
+      "n": "L. Walta",
+      "from": "Sirius",
+      "to": "Swansea",
+      "fromCode": null,
+      "toCode": "SWA",
+      "date": "2026-06-29",
+      "type": "Transfer"
+    },
+    {
+      "n": "L. Pearce",
+      "from": "Cardiff",
+      "to": "Sligo Rovers",
+      "fromCode": "CAR",
+      "toCode": null,
+      "date": "2026-06-29",
+      "type": "Free agent"
+    },
+    {
+      "n": "L. Pearce",
+      "from": "Mariehamn",
+      "to": "Cardiff",
+      "fromCode": null,
+      "toCode": "CAR",
+      "date": "2026-06-29",
+      "type": "Return from loan"
+    },
+    {
+      "n": "L. Nicholls",
+      "from": "Huddersfield",
+      "to": "Preston",
+      "fromCode": null,
+      "toCode": "PRE",
+      "date": "2026-06-29",
+      "type": "Transfer"
+    },
+    {
+      "n": "L. Krejčí",
+      "from": "Wolves",
+      "to": "Girona",
+      "fromCode": "WOL",
+      "toCode": null,
+      "date": "2026-06-29",
+      "type": "Return from loan"
+    },
+    {
+      "n": "L. Krejčí",
+      "from": "Girona",
+      "to": "Wolves",
+      "fromCode": null,
+      "toCode": "WOL",
+      "date": "2026-06-29",
+      "type": "Transfer"
+    },
+    {
+      "n": "L. Koleosho",
+      "from": "Paris FC",
+      "to": "Burnley",
+      "fromCode": null,
+      "toCode": "BUR",
+      "date": "2026-06-29",
+      "type": "Return from loan"
+    },
+    {
+      "n": "L. Kjerrumgaard",
+      "from": "Watford",
+      "to": "Udinese",
+      "fromCode": "WAT",
+      "toCode": null,
+      "date": "2026-06-29",
+      "type": "Return from loan"
+    },
+    {
+      "n": "L. Kjerrumgaard",
+      "from": "Watford",
+      "to": "Odense",
+      "fromCode": "WAT",
+      "toCode": null,
+      "date": "2026-06-29",
+      "type": "Return from loan"
+    },
+    {
+      "n": "L. Giles",
+      "from": "Eastleigh",
+      "to": "Cardiff",
+      "fromCode": null,
+      "toCode": "CAR",
+      "date": "2026-06-29",
+      "type": "Return from loan"
+    },
+    {
+      "n": "L. Duru",
+      "from": "Birmingham Legion",
+      "to": "Blackburn",
+      "fromCode": null,
+      "toCode": "BLB",
+      "date": "2026-06-29",
+      "type": "Return from loan"
+    },
+    {
+      "n": "L. Berry",
+      "from": "Charlton",
+      "to": "Berry Luke",
+      "fromCode": "CHA",
+      "toCode": null,
+      "date": "2026-06-29",
+      "type": "Free agent"
+    },
+    {
+      "n": "L. Baker",
+      "from": "Stoke City",
+      "to": "Bursaspor",
+      "fromCode": "STK",
+      "toCode": null,
+      "date": "2026-06-29",
+      "type": "Free agent"
+    },
+    {
+      "n": "Kit Margetson",
+      "from": "GAP Connah S Quay FC",
+      "to": "Swansea",
+      "fromCode": null,
+      "toCode": "SWA",
+      "date": "2026-06-29",
+      "type": "Return from loan"
+    },
+    {
+      "n": "K. Trippier",
+      "from": "Newcastle",
+      "to": "Wolves",
+      "fromCode": null,
+      "toCode": "WOL",
+      "date": "2026-06-29",
+      "type": "Free agent"
+    },
+    {
+      "n": "K. Lamadrid",
+      "from": "West Ham",
+      "to": "Deportivo La Guaira",
+      "fromCode": "WHU",
+      "toCode": null,
+      "date": "2026-06-29",
+      "type": "Return from loan"
+    },
+    {
+      "n": "K. Lamadrid",
+      "from": "Deportivo La Guaira",
+      "to": "West Ham",
+      "fromCode": null,
+      "toCode": "WHU",
+      "date": "2026-06-29",
+      "type": "Transfer"
+    },
+    {
+      "n": "K. Hegyi",
+      "from": "MTK Budapest",
+      "to": "West Ham",
+      "fromCode": null,
+      "toCode": "WHU",
+      "date": "2026-06-29",
+      "type": "Return from loan"
+    },
+    {
+      "n": "K. Hegyi",
+      "from": "West Ham",
+      "to": "Sparta Praha",
+      "fromCode": "WHU",
+      "toCode": null,
+      "date": "2026-06-29",
+      "type": "Transfer"
+    },
+    {
+      "n": "K. Goudmijn",
+      "from": "GO Ahead Eagles",
+      "to": "Derby",
+      "fromCode": null,
+      "toCode": "DER",
+      "date": "2026-06-29",
+      "type": "Return from loan"
+    },
+    {
+      "n": "K. Dixon",
+      "from": "Charlton",
+      "to": "Novi Pazar",
+      "fromCode": "CHA",
+      "toCode": null,
+      "date": "2026-06-29",
+      "type": "Transfer"
+    },
+    {
+      "n": "K. Dempsey",
+      "from": "Bolton",
+      "to": "Port Vale",
+      "fromCode": "BOL",
+      "toCode": null,
+      "date": "2026-06-29",
+      "type": "Free agent"
+    },
+    {
+      "n": "K. Conteh",
+      "from": "Lincoln",
+      "to": "Bristol Rovers",
+      "fromCode": "LIN",
+      "toCode": null,
+      "date": "2026-06-29",
+      "type": "Return from loan"
+    },
+    {
+      "n": "K. Casey",
+      "from": "Leyton Orient",
+      "to": "West Ham",
+      "fromCode": null,
+      "toCode": "WHU",
+      "date": "2026-06-29",
+      "type": "Return from loan"
+    },
+    {
+      "n": "Juan Larios",
+      "from": "Zaragoza",
+      "to": "Southampton",
+      "fromCode": null,
+      "toCode": "SOU",
+      "date": "2026-06-29",
+      "type": "Return from loan"
+    },
+    {
+      "n": "Joshua Thomas",
+      "from": "Swansea",
+      "to": "Fleetwood Town",
+      "fromCode": "SWA",
+      "toCode": null,
+      "date": "2026-06-29",
+      "type": "Free agent"
+    },
+    {
+      "n": "Joshua Thomas",
+      "from": "Derry City",
+      "to": "Swansea",
+      "fromCode": null,
+      "toCode": "SWA",
+      "date": "2026-06-29",
+      "type": "Return from loan"
+    },
+    {
+      "n": "James Jones",
+      "from": "Southampton",
+      "to": "Jones Jamie",
+      "fromCode": "SOU",
+      "toCode": null,
+      "date": "2026-06-29",
+      "type": "Free agent"
+    },
+    {
+      "n": "James Edmondson",
+      "from": "Macclesfield",
+      "to": "Blackburn",
+      "fromCode": null,
+      "toCode": "BLB",
+      "date": "2026-06-29",
+      "type": "Return from loan"
+    },
+    {
+      "n": "J. Wildsmith",
+      "from": "West Brom",
+      "to": "Wildsmith Joe",
+      "fromCode": "WBA",
+      "toCode": null,
+      "date": "2026-06-29",
+      "type": "Free agent"
+    },
+    {
+      "n": "J. Walton",
+      "from": "Preston",
+      "to": "Dundee Utd",
+      "fromCode": "PRE",
+      "toCode": null,
+      "date": "2026-06-29",
+      "type": "Transfer"
+    },
+    {
+      "n": "J. Storer",
+      "from": "Wolves",
+      "to": "Plymouth",
+      "fromCode": "WOL",
+      "toCode": null,
+      "date": "2026-06-29",
+      "type": "Free agent"
+    },
+    {
+      "n": "J. Solis",
+      "from": "Birmingham",
+      "to": "Girona",
+      "fromCode": "BIR",
+      "toCode": null,
+      "date": "2026-06-29",
+      "type": "Return from loan"
+    },
+    {
+      "n": "J. Solis",
+      "from": "Girona",
+      "to": "Birmingham",
+      "fromCode": null,
+      "toCode": "BIR",
+      "date": "2026-06-29",
+      "type": "Transfer"
+    },
+    {
+      "n": "J. Schlupp",
+      "from": "Norwich",
+      "to": "Schlupp Jeffrey",
+      "fromCode": "NOR",
+      "toCode": null,
+      "date": "2026-06-29",
+      "type": "Free agent"
+    },
+    {
+      "n": "J. Sarmiento",
+      "from": "Brighton",
+      "to": "Middlesbrough",
+      "fromCode": null,
+      "toCode": "MID",
+      "date": "2026-06-29",
+      "type": "Transfer"
+    },
+    {
+      "n": "J. Sarmiento",
+      "from": "Middlesbrough",
+      "to": "Brighton",
+      "fromCode": "MID",
+      "toCode": null,
+      "date": "2026-06-29",
+      "type": "Return from loan"
+    },
+    {
+      "n": "J. Rooney",
+      "from": "Derby",
+      "to": "Rooney Jake",
+      "fromCode": "DER",
+      "toCode": null,
+      "date": "2026-06-29",
+      "type": "Free agent"
+    },
+    {
+      "n": "J. Rodríguez",
+      "from": "Wrexham",
+      "to": "Rodriguez Jay",
+      "fromCode": "WRE",
+      "toCode": null,
+      "date": "2026-06-29",
+      "type": "Free agent"
+    },
+    {
+      "n": "J. Riedewald",
+      "from": "Sheffield Utd",
+      "to": "Riedewald Jairo",
+      "fromCode": "SHU",
+      "toCode": null,
+      "date": "2026-06-29",
+      "type": "Free agent"
+    },
+    {
+      "n": "J. Pradic",
+      "from": "Preston",
+      "to": "Pradic James",
+      "fromCode": "PRE",
+      "toCode": null,
+      "date": "2026-06-29",
+      "type": "Free agent"
+    },
+    {
+      "n": "J. Pradic",
+      "from": "Preston",
+      "to": "Fleetwood Town",
+      "fromCode": "PRE",
+      "toCode": null,
+      "date": "2026-06-29",
+      "type": "Free agent"
+    },
+    {
+      "n": "J. Panzo",
+      "from": "Birmingham",
+      "to": "Panzo Jonathan",
+      "fromCode": "BIR",
+      "toCode": null,
+      "date": "2026-06-29",
+      "type": "Free agent"
+    },
+    {
+      "n": "J. Osei-Tutu",
+      "from": "Bolton",
+      "to": "Osei-Tutu Jordi",
+      "fromCode": "BOL",
+      "toCode": null,
+      "date": "2026-06-29",
+      "type": "Free agent"
+    },
+    {
+      "n": "J. Morgan",
+      "from": "Chelsea",
+      "to": "West Brom",
+      "fromCode": null,
+      "toCode": "WBA",
+      "date": "2026-06-29",
+      "type": "Transfer"
+    },
+    {
+      "n": "J. Metcalfe",
+      "from": "Bradford",
+      "to": "Millwall",
+      "fromCode": null,
+      "toCode": "MIL",
+      "date": "2026-06-29",
+      "type": "Transfer"
+    },
+    {
+      "n": "J. McLaughlin",
+      "from": "Middlesbrough",
+      "to": "McLaughlin Jon",
+      "fromCode": "MID",
+      "toCode": null,
+      "date": "2026-06-29",
+      "type": "Free agent"
+    },
+    {
+      "n": "J. Maja",
+      "from": "West Brom",
+      "to": "Le Havre",
+      "fromCode": "WBA",
+      "toCode": null,
+      "date": "2026-06-29",
+      "type": "Free agent"
+    },
+    {
+      "n": "J. Lewis",
+      "from": "Preston",
+      "to": "Lewis Jamal",
+      "fromCode": "PRE",
+      "toCode": null,
+      "date": "2026-06-29",
+      "type": "Free agent"
+    },
+    {
+      "n": "J. Key",
+      "from": "Swansea",
+      "to": "Key Josh",
+      "fromCode": "SWA",
+      "toCode": null,
+      "date": "2026-06-29",
+      "type": "Free agent"
+    },
+    {
+      "n": "J. Kenny",
+      "from": "Bolton",
+      "to": "Celtic",
+      "fromCode": "BOL",
+      "toCode": null,
+      "date": "2026-06-29",
+      "type": "Return from loan"
+    },
+    {
+      "n": "J. Jimoh",
+      "from": "West Brom",
+      "to": "Aston Villa",
+      "fromCode": "WBA",
+      "toCode": null,
+      "date": "2026-06-29",
+      "type": "Return from loan"
+    },
+    {
+      "n": "J. Griffiths",
+      "from": "West Brom",
+      "to": "Stoke City",
+      "fromCode": "WBA",
+      "toCode": "STK",
+      "date": "2026-06-29",
+      "type": "Transfer"
+    },
+    {
+      "n": "J. Fisher",
+      "from": "Wrexham",
+      "to": "Llandudno",
+      "fromCode": "WRE",
+      "toCode": null,
+      "date": "2026-06-29",
+      "type": "Free agent"
+    },
+    {
+      "n": "J. Cabezas",
+      "from": "Millonarios",
+      "to": "Watford",
+      "fromCode": null,
+      "toCode": "WAT",
+      "date": "2026-06-29",
+      "type": "Return from loan"
+    },
+    {
+      "n": "J. Bryan",
+      "from": "Millwall",
+      "to": "Bryan Joe",
+      "fromCode": "MIL",
+      "toCode": null,
+      "date": "2026-06-29",
+      "type": "End of career"
+    },
+    {
+      "n": "J. Baptiste",
+      "from": "Rotherham",
+      "to": "Sheffield Utd",
+      "fromCode": null,
+      "toCode": "SHU",
+      "date": "2026-06-29",
+      "type": "Return from loan"
+    },
+    {
+      "n": "J. Aribo",
+      "from": "Southampton",
+      "to": "Aribo Joe",
+      "fromCode": "SOU",
+      "toCode": null,
+      "date": "2026-06-29",
+      "type": "Free agent"
+    },
+    {
+      "n": "J. Archer",
+      "from": "Portsmouth",
+      "to": "Archer Jordan",
+      "fromCode": "POR",
+      "toCode": null,
+      "date": "2026-06-29",
+      "type": "Free agent"
+    },
+    {
+      "n": "J. Abankwah",
+      "from": "Watford",
+      "to": "Udinese",
+      "fromCode": "WAT",
+      "toCode": null,
+      "date": "2026-06-29",
+      "type": "Return from loan"
+    },
+    {
+      "n": "I. Mesík",
+      "from": "Heracles",
+      "to": "Charlton",
+      "fromCode": null,
+      "toCode": "CHA",
+      "date": "2026-06-29",
+      "type": "Transfer"
+    },
+    {
+      "n": "I. Hayden",
+      "from": "QPR",
+      "to": "Hayden Isaac",
+      "fromCode": "QPR",
+      "toCode": null,
+      "date": "2026-06-29",
+      "type": "Free agent"
+    },
+    {
+      "n": "I. Hayden",
+      "from": "QPR",
+      "to": "Leyton Orient",
+      "fromCode": "QPR",
+      "toCode": null,
+      "date": "2026-06-29",
+      "type": "Free agent"
+    },
+    {
+      "n": "I. Grbić",
+      "from": "Fatih Karagümrük",
+      "to": "Sheffield Utd",
+      "fromCode": null,
+      "toCode": "SHU",
+      "date": "2026-06-29",
+      "type": "Return from loan"
+    },
+    {
+      "n": "I. Cissoko",
+      "from": "Bolton",
+      "to": "Toulouse",
+      "fromCode": "BOL",
+      "toCode": null,
+      "date": "2026-06-29",
+      "type": "Return from loan"
+    },
+    {
+      "n": "Hevertton Santos",
+      "from": "GIL Vicente",
+      "to": "QPR",
+      "fromCode": null,
+      "toCode": "QPR",
+      "date": "2026-06-29",
+      "type": "Return from loan"
+    },
+    {
+      "n": "Harry Clout",
+      "from": "Portsmouth",
+      "to": "Clout Harry",
+      "fromCode": "POR",
+      "toCode": null,
+      "date": "2026-06-29",
+      "type": "Free agent"
+    },
+    {
+      "n": "Harry Ashfield",
+      "from": "Cheltenham",
+      "to": "Wrexham",
+      "fromCode": null,
+      "toCode": "WRE",
+      "date": "2026-06-29",
+      "type": "Return from loan"
+    },
+    {
+      "n": "H. Rylah",
+      "from": "Derry City",
+      "to": "Charlton",
+      "fromCode": null,
+      "toCode": "CHA",
+      "date": "2026-06-29",
+      "type": "Return from loan"
+    },
+    {
+      "n": "H. Hackney",
+      "from": "Middlesbrough",
+      "to": "Everton",
+      "fromCode": "MID",
+      "toCode": null,
+      "date": "2026-06-29",
+      "type": "Transfer"
+    },
+    {
+      "n": "H. Cornick",
+      "from": "Bristol City",
+      "to": "Cornick Harry",
+      "fromCode": "BRC",
+      "toCode": null,
+      "date": "2026-06-29",
+      "type": "Free agent"
+    },
+    {
+      "n": "H. Amass",
+      "from": "Norwich",
+      "to": "Manchester United",
+      "fromCode": "NOR",
+      "toCode": null,
+      "date": "2026-06-29",
+      "type": "Return from loan"
+    },
+    {
+      "n": "Gustavo Gomes",
+      "from": "Swansea",
+      "to": "Brentford",
+      "fromCode": "SWA",
+      "toCode": null,
+      "date": "2026-06-29",
+      "type": "Return from loan"
+    },
+    {
+      "n": "G. Yah",
+      "from": "FC Volendam",
+      "to": "Bristol City",
+      "fromCode": null,
+      "toCode": "BRC",
+      "date": "2026-06-29",
+      "type": "Transfer"
+    },
+    {
+      "n": "G. Long",
+      "from": "Southampton",
+      "to": "Norwich",
+      "fromCode": "SOU",
+      "toCode": "NOR",
+      "date": "2026-06-29",
+      "type": "Return from loan"
+    },
+    {
+      "n": "G. Long",
+      "from": "Norwich",
+      "to": "Southampton",
+      "fromCode": "NOR",
+      "toCode": "SOU",
+      "date": "2026-06-29",
+      "type": "Free agent"
+    },
+    {
+      "n": "G. Kodua",
+      "from": "West Ham",
+      "to": "Luton",
+      "fromCode": "WHU",
+      "toCode": null,
+      "date": "2026-06-29",
+      "type": "Transfer"
+    },
+    {
+      "n": "G. Johnston",
+      "from": "Bolton",
+      "to": "Luton",
+      "fromCode": "BOL",
+      "toCode": null,
+      "date": "2026-06-29",
+      "type": "Free agent"
+    },
+    {
+      "n": "G. Caballero",
+      "from": "Portsmouth",
+      "to": "Santos",
+      "fromCode": "POR",
+      "toCode": null,
+      "date": "2026-06-29",
+      "type": "Return from loan"
+    },
+    {
+      "n": "G. Boakye",
+      "from": "Sabah FA",
+      "to": "Birmingham",
+      "fromCode": null,
+      "toCode": "BIR",
+      "date": "2026-06-29",
+      "type": "Return from loan"
+    },
+    {
+      "n": "G. Ahadme",
+      "from": "Stevenage",
+      "to": "Charlton",
+      "fromCode": null,
+      "toCode": "CHA",
+      "date": "2026-06-29",
+      "type": "Return from loan"
+    },
+    {
+      "n": "Florentino",
+      "from": "Benfica",
+      "to": "Burnley",
+      "fromCode": null,
+      "toCode": "BUR",
+      "date": "2026-06-29",
+      "type": "Transfer"
+    },
+    {
+      "n": "Florentino",
+      "from": "Burnley",
+      "to": "Benfica",
+      "fromCode": "BUR",
+      "toCode": null,
+      "date": "2026-06-29",
+      "type": "Return from loan"
+    },
+    {
+      "n": "Fer López",
+      "from": "Celta Vigo",
+      "to": "Wolves",
+      "fromCode": null,
+      "toCode": "WOL",
+      "date": "2026-06-29",
+      "type": "Return from loan"
+    },
+    {
+      "n": "F. Mendy",
+      "from": "Watford",
+      "to": "Lorient",
+      "fromCode": "WAT",
+      "toCode": null,
+      "date": "2026-06-29",
+      "type": "Return from loan"
+    },
+    {
+      "n": "El Hadji Djibril Soumaré",
+      "from": "Sheffield Utd",
+      "to": "SC Braga",
+      "fromCode": "SHU",
+      "toCode": null,
+      "date": "2026-06-29",
+      "type": "Return from loan"
+    },
+    {
+      "n": "El Hadji Djibril Soumaré",
+      "from": "SC Braga",
+      "to": "Stoke City",
+      "fromCode": null,
+      "toCode": "STK",
+      "date": "2026-06-29",
+      "type": "Transfer"
+    },
+    {
+      "n": "E. Álvarez",
+      "from": "Fenerbahçe",
+      "to": "West Ham",
+      "fromCode": null,
+      "toCode": "WHU",
+      "date": "2026-06-29",
+      "type": "Return from loan"
+    },
+    {
+      "n": "E. Ukaki",
+      "from": "Atromitos",
+      "to": "Sheffield Utd",
+      "fromCode": null,
+      "toCode": "SHU",
+      "date": "2026-06-29",
+      "type": "Return from loan"
+    },
+    {
+      "n": "E. Marcondes",
+      "from": "Norwich",
+      "to": "Marcondes Emiliano",
+      "fromCode": "NOR",
+      "toCode": null,
+      "date": "2026-06-29",
+      "type": "Free agent"
+    },
+    {
+      "n": "E. Jelert",
+      "from": "Southampton",
+      "to": "Galatasaray",
+      "fromCode": "SOU",
+      "toCode": null,
+      "date": "2026-06-29",
+      "type": "Return from loan"
+    },
+    {
+      "n": "E. Galbraith",
+      "from": "Swansea",
+      "to": "Stoke City",
+      "fromCode": "SWA",
+      "toCode": "STK",
+      "date": "2026-06-29",
+      "type": "Transfer"
+    },
+    {
+      "n": "E. Easton",
+      "from": "Sheffield Utd",
+      "to": "Airdrie United",
+      "fromCode": "SHU",
+      "toCode": null,
+      "date": "2026-06-29",
+      "type": "Free agent"
+    },
+    {
+      "n": "E. Easton",
+      "from": "Crusaders FC",
+      "to": "Sheffield Utd",
+      "fromCode": null,
+      "toCode": "SHU",
+      "date": "2026-06-29",
+      "type": "Return from loan"
+    },
+    {
+      "n": "E. Dixon-Bonner",
+      "from": "Wealdstone",
+      "to": "QPR",
+      "fromCode": null,
+      "toCode": "QPR",
+      "date": "2026-06-29",
+      "type": "Return from loan"
+    },
+    {
+      "n": "Daniel Peretz",
+      "from": "Southampton",
+      "to": "Bayern München",
+      "fromCode": "SOU",
+      "toCode": null,
+      "date": "2026-06-29",
+      "type": "Return from loan"
+    },
+    {
+      "n": "Daniel Peretz",
+      "from": "Bayern München",
+      "to": "Southampton",
+      "fromCode": null,
+      "toCode": "SOU",
+      "date": "2026-06-29",
+      "type": "Transfer"
+    },
+    {
+      "n": "D. Watson",
+      "from": "Kilmarnock",
+      "to": "Bolton",
+      "fromCode": null,
+      "toCode": "BOL",
+      "date": "2026-06-29",
+      "type": "Free agent"
+    },
+    {
+      "n": "D. Traoré",
+      "from": "Bari",
+      "to": "Southampton",
+      "fromCode": null,
+      "toCode": "SOU",
+      "date": "2026-06-29",
+      "type": "Return from loan"
+    },
+    {
+      "n": "D. Sanderson",
+      "from": "Birmingham",
+      "to": "Derby",
+      "fromCode": "BIR",
+      "toCode": "DER",
+      "date": "2026-06-29",
+      "type": "Transfer"
+    },
+    {
+      "n": "D. Rigge",
+      "from": "West Ham",
+      "to": "Middlesbrough U21",
+      "fromCode": "WHU",
+      "toCode": null,
+      "date": "2026-06-29",
+      "type": "-"
+    },
+    {
+      "n": "D. Mubama",
+      "from": "Stoke City",
+      "to": "Manchester City",
+      "fromCode": "STK",
+      "toCode": null,
+      "date": "2026-06-29",
+      "type": "Return from loan"
+    },
+    {
+      "n": "D. McNamara",
+      "from": "Millwall",
+      "to": "McNamara Dan",
+      "fromCode": "MIL",
+      "toCode": null,
+      "date": "2026-06-29",
+      "type": "Free agent"
+    },
+    {
+      "n": "D. Mafico",
+      "from": "Yeovil Town",
+      "to": "Cardiff",
+      "fromCode": null,
+      "toCode": "CAR",
+      "date": "2026-06-29",
+      "type": "Return from loan"
+    },
+    {
+      "n": "D. Lipsiuc",
+      "from": "Stoke City",
+      "to": "Notts County",
+      "fromCode": "STK",
+      "toCode": null,
+      "date": "2026-06-29",
+      "type": "Transfer"
+    },
+    {
+      "n": "D. Lenihan",
+      "from": "Middlesbrough",
+      "to": "Lenihan Darragh",
+      "fromCode": "MID",
+      "toCode": null,
+      "date": "2026-06-29",
+      "type": "Free agent"
+    },
+    {
+      "n": "D. Jebbison",
+      "from": "Preston",
+      "to": "Bournemouth",
+      "fromCode": "PRE",
+      "toCode": null,
+      "date": "2026-06-29",
+      "type": "Return from loan"
+    },
+    {
+      "n": "D. Ings",
+      "from": "Sheffield Utd",
+      "to": "Ings Danny",
+      "fromCode": "SHU",
+      "toCode": null,
+      "date": "2026-06-29",
+      "type": "Free agent"
+    },
+    {
+      "n": "D. Downs",
+      "from": "Hamburger SV",
+      "to": "Southampton",
+      "fromCode": null,
+      "toCode": "SOU",
+      "date": "2026-06-29",
+      "type": "Return from loan"
+    },
+    {
+      "n": "D. Dike",
+      "from": "West Brom",
+      "to": "Dike Daryl",
+      "fromCode": "WBA",
+      "toCode": null,
+      "date": "2026-06-29",
+      "type": "Free agent"
+    },
+    {
+      "n": "D. Dike",
+      "from": "West Brom",
+      "to": "Orlando City SC",
+      "fromCode": "WBA",
+      "toCode": null,
+      "date": "2026-06-29",
+      "type": "Free agent"
+    },
+    {
+      "n": "D. Daley",
+      "from": "Norwich",
+      "to": "Hull City",
+      "fromCode": "NOR",
+      "toCode": null,
+      "date": "2026-06-29",
+      "type": "Free agent"
+    },
+    {
+      "n": "D. Cox",
+      "from": "Derby",
+      "to": "Southend",
+      "fromCode": "DER",
+      "toCode": null,
+      "date": "2026-06-29",
+      "type": "Free agent"
+    },
+    {
+      "n": "D. Burgzorg",
+      "from": "Bristol City",
+      "to": "Middlesbrough",
+      "fromCode": "BRC",
+      "toCode": "MID",
+      "date": "2026-06-29",
+      "type": "Return from loan"
+    },
+    {
+      "n": "D. Batth",
+      "from": "Derby",
+      "to": "Batth Danny",
+      "fromCode": "DER",
+      "toCode": null,
+      "date": "2026-06-29",
+      "type": "Free agent"
+    },
+    {
+      "n": "D. Batth",
+      "from": "Derby",
+      "to": "Millwall",
+      "fromCode": "DER",
+      "toCode": "MIL",
+      "date": "2026-06-29",
+      "type": "Free agent"
+    },
+    {
+      "n": "D. Barlaser",
+      "from": "Middlesbrough",
+      "to": "Milton Keynes Dons",
+      "fromCode": "MID",
+      "toCode": null,
+      "date": "2026-06-29",
+      "type": "Free agent"
+    },
+    {
+      "n": "D. Barden",
+      "from": "Norwich",
+      "to": "Barden Daniel",
+      "fromCode": "NOR",
+      "toCode": null,
+      "date": "2026-06-29",
+      "type": "Free agent"
+    },
+    {
+      "n": "D. Bachmann",
+      "from": "Leyton Orient",
+      "to": "Watford",
+      "fromCode": null,
+      "toCode": "WAT",
+      "date": "2026-06-29",
+      "type": "Return from loan"
+    },
+    {
+      "n": "Carlos Gomes",
+      "from": "Bolton",
+      "to": "Mendes Carlos",
+      "fromCode": "BOL",
+      "toCode": null,
+      "date": "2026-06-29",
+      "type": "Free agent"
+    },
+    {
+      "n": "C. Taylor",
+      "from": "Southampton",
+      "to": "Taylor Charlie",
+      "fromCode": "SOU",
+      "toCode": null,
+      "date": "2026-06-29",
+      "type": "Free agent"
+    },
+    {
+      "n": "C. Taylor",
+      "from": "West Brom",
+      "to": "Southampton",
+      "fromCode": "WBA",
+      "toCode": "SOU",
+      "date": "2026-06-29",
+      "type": "Return from loan"
+    },
+    {
+      "n": "C. Nwachukwu",
+      "from": "Serik Spor",
+      "to": "Sheffield Utd",
+      "fromCode": null,
+      "toCode": "SHU",
+      "date": "2026-06-29",
+      "type": "Return from loan"
+    },
+    {
+      "n": "C. Marshall",
+      "from": "VfL Bochum",
+      "to": "West Ham",
+      "fromCode": null,
+      "toCode": "WHU",
+      "date": "2026-06-29",
+      "type": "Return from loan"
+    },
+    {
+      "n": "C. Larin",
+      "from": "Southampton",
+      "to": "Mallorca",
+      "fromCode": "SOU",
+      "toCode": null,
+      "date": "2026-06-29",
+      "type": "Return from loan"
+    },
+    {
+      "n": "C. Larin",
+      "from": "Mallorca",
+      "to": "Southampton",
+      "fromCode": null,
+      "toCode": "SOU",
+      "date": "2026-06-29",
+      "type": "Transfer"
+    },
+    {
+      "n": "C. Elder",
+      "from": "Derby",
+      "to": "Lincoln",
+      "fromCode": "DER",
+      "toCode": "LIN",
+      "date": "2026-06-29",
+      "type": "Free agent"
+    },
+    {
+      "n": "C. Edwards",
+      "from": "Wrexham",
+      "to": "Edwards Callum",
+      "fromCode": "WRE",
+      "toCode": null,
+      "date": "2026-06-29",
+      "type": "Free agent"
+    },
+    {
+      "n": "C. Congreve",
+      "from": "Dundee",
+      "to": "Swansea",
+      "fromCode": null,
+      "toCode": "SWA",
+      "date": "2026-06-29",
+      "type": "Return from loan"
+    },
+    {
+      "n": "C. Coady",
+      "from": "Charlton",
+      "to": "Wrexham",
+      "fromCode": "CHA",
+      "toCode": "WRE",
+      "date": "2026-06-29",
+      "type": "Return from loan"
+    },
+    {
+      "n": "C. Chaplin",
+      "from": "Portsmouth",
+      "to": "Ipswich",
+      "fromCode": "POR",
+      "toCode": null,
+      "date": "2026-06-29",
+      "type": "Return from loan"
+    },
+    {
+      "n": "Billy Dawson Koumetio",
+      "from": "Dundee",
+      "to": "Charlton",
+      "fromCode": null,
+      "toCode": "CHA",
+      "date": "2026-06-29",
+      "type": "Transfer"
+    },
+    {
+      "n": "B. Wilmot",
+      "from": "Stoke City",
+      "to": "Wilmot Ben",
+      "fromCode": "STK",
+      "toCode": null,
+      "date": "2026-06-29",
+      "type": "Free agent"
+    },
+    {
+      "n": "B. Wales",
+      "from": "Huddersfield",
+      "to": "Swansea",
+      "fromCode": null,
+      "toCode": "SWA",
+      "date": "2026-06-29",
+      "type": "Return from loan"
+    },
+    {
+      "n": "B. Traoré",
+      "from": "Metz",
+      "to": "Wolves",
+      "fromCode": null,
+      "toCode": "WOL",
+      "date": "2026-06-29",
+      "type": "Return from loan"
+    },
+    {
+      "n": "B. Stewart",
+      "from": "Falkirk",
+      "to": "West Brom",
+      "fromCode": null,
+      "toCode": "WBA",
+      "date": "2026-06-29",
+      "type": "Transfer"
+    },
+    {
+      "n": "B. Pendleton",
+      "from": "Birmingham",
+      "to": "Shrewsbury",
+      "fromCode": "BIR",
+      "toCode": null,
+      "date": "2026-06-29",
+      "type": "Transfer"
+    },
+    {
+      "n": "B. Osborn",
+      "from": "Derby",
+      "to": "Osborn Ben",
+      "fromCode": "DER",
+      "toCode": null,
+      "date": "2026-06-29",
+      "type": "Free agent"
+    },
+    {
+      "n": "B. Osborn",
+      "from": "Derby",
+      "to": "Stockport County",
+      "fromCode": "DER",
+      "toCode": null,
+      "date": "2026-06-29",
+      "type": "Free agent"
+    },
+    {
+      "n": "B. Mee",
+      "from": "Sheffield Utd",
+      "to": "Mee Ben",
+      "fromCode": "SHU",
+      "toCode": null,
+      "date": "2026-06-29",
+      "type": "End of career"
+    },
+    {
+      "n": "B. Kemper",
+      "from": "NAC Breda",
+      "to": "QPR",
+      "fromCode": null,
+      "toCode": "QPR",
+      "date": "2026-06-29",
+      "type": "Free agent"
+    },
+    {
+      "n": "B. Hamer",
+      "from": "QPR",
+      "to": "Hamer Ben",
+      "fromCode": "QPR",
+      "toCode": null,
+      "date": "2026-06-29",
+      "type": "Free agent"
+    },
+    {
+      "n": "B. Davies",
+      "from": "Rangers",
+      "to": "Bolton",
+      "fromCode": null,
+      "toCode": "BOL",
+      "date": "2026-06-29",
+      "type": "Free agent"
+    },
+    {
+      "n": "B. Collins",
+      "from": "Coventry",
+      "to": "Bristol City",
+      "fromCode": null,
+      "toCode": "BRC",
+      "date": "2026-06-29",
+      "type": "Free agent"
+    },
+    {
+      "n": "B. Clark",
+      "from": "Red Bull Salzburg",
+      "to": "Derby",
+      "fromCode": null,
+      "toCode": "DER",
+      "date": "2026-06-29",
+      "type": "Transfer"
+    },
+    {
+      "n": "B. Clark",
+      "from": "Derby",
+      "to": "Red Bull Salzburg",
+      "fromCode": "DER",
+      "toCode": null,
+      "date": "2026-06-29",
+      "type": "Return from loan"
+    },
+    {
+      "n": "Alfie Massey",
+      "from": "Southend",
+      "to": "Millwall",
+      "fromCode": null,
+      "toCode": "MIL",
+      "date": "2026-06-29",
+      "type": "Return from loan"
+    },
+    {
+      "n": "Adama Traoré",
+      "from": "West Ham",
+      "to": "Traore Adama",
+      "fromCode": "WHU",
+      "toCode": null,
+      "date": "2026-06-29",
+      "type": "Free agent"
+    },
+    {
+      "n": "A. Weimann",
+      "from": "Derby",
+      "to": "Weimann Andreas",
+      "fromCode": "DER",
+      "toCode": null,
+      "date": "2026-06-29",
+      "type": "Free agent"
+    },
+    {
+      "n": "A. Weimann",
+      "from": "Rapid Vienna",
+      "to": "Derby",
+      "fromCode": null,
+      "toCode": "DER",
+      "date": "2026-06-29",
+      "type": "Return from loan"
+    },
+    {
+      "n": "A. Weimann",
+      "from": "Derby",
+      "to": "Cheltenham",
+      "fromCode": "DER",
+      "toCode": null,
+      "date": "2026-06-29",
+      "type": "Free agent"
+    },
+    {
+      "n": "A. Ramsdale",
+      "from": "Newcastle",
+      "to": "Southampton",
+      "fromCode": null,
+      "toCode": "SOU",
+      "date": "2026-06-29",
+      "type": "Return from loan"
+    },
+    {
+      "n": "A. Patterson",
+      "from": "Millwall",
+      "to": "Sunderland",
+      "fromCode": "MIL",
+      "toCode": null,
+      "date": "2026-06-29",
+      "type": "Return from loan"
+    },
+    {
+      "n": "A. McCarthy",
+      "from": "Southampton",
+      "to": "McCarthy Alex",
+      "fromCode": "SOU",
+      "toCode": null,
+      "date": "2026-06-29",
+      "type": "Free agent"
+    },
+    {
+      "n": "A. Kanté",
+      "from": "Saint Etienne",
+      "to": "Middlesbrough",
+      "fromCode": null,
+      "toCode": "MID",
+      "date": "2026-06-29",
+      "type": "Return from loan"
+    },
+    {
+      "n": "A. Hountondji",
+      "from": "FC St. Pauli",
+      "to": "Burnley",
+      "fromCode": null,
+      "toCode": "BUR",
+      "date": "2026-06-29",
+      "type": "Return from loan"
+    },
+    {
+      "n": "A. Gilbert",
+      "from": "Middlesbrough",
+      "to": "Gilbert Alex",
+      "fromCode": "MID",
+      "toCode": null,
+      "date": "2026-06-29",
+      "type": "Free agent"
+    },
+    {
+      "n": "A. Famewo",
+      "from": "Hull City",
+      "to": "Bolton",
+      "fromCode": null,
+      "toCode": "BOL",
+      "date": "2026-06-29",
+      "type": "Transfer"
+    },
+    {
+      "n": "A. Disasi",
+      "from": "West Ham",
+      "to": "Chelsea",
+      "fromCode": "WHU",
+      "toCode": null,
+      "date": "2026-06-29",
+      "type": "Return from loan"
+    },
+    {
+      "n": "A. Cannon",
+      "from": "Wrexham",
+      "to": "Cannon Andy",
+      "fromCode": "WRE",
+      "toCode": null,
+      "date": "2026-06-29",
+      "type": "Free agent"
+    },
+    {
+      "n": "A. Cannon",
+      "from": "Burton Albion",
+      "to": "Wrexham",
+      "fromCode": null,
+      "toCode": "WRE",
+      "date": "2026-06-29",
+      "type": "Return from loan"
+    },
+    {
+      "n": "A. Brooks",
+      "from": "Sheffield Utd",
+      "to": "Norwich",
+      "fromCode": "SHU",
+      "toCode": "NOR",
+      "date": "2026-06-29",
+      "type": "Transfer"
+    },
+    {
+      "n": "A. Alese",
+      "from": "Portsmouth",
+      "to": "Sunderland",
+      "fromCode": "POR",
+      "toCode": null,
+      "date": "2026-06-29",
+      "type": "Return from loan"
+    },
+    {
+      "n": "J. Wallace",
+      "from": "West Brom",
+      "to": "Bristol City",
+      "fromCode": "WBA",
+      "toCode": "BRC",
+      "date": "2026-06-01",
+      "type": "Free agent"
+    },
+    {
+      "n": "Z. Okoro",
+      "from": "Coleraine FC",
+      "to": "Lincoln",
+      "fromCode": null,
+      "toCode": "LIN",
+      "date": "2026-05-30",
+      "type": "Return from loan"
+    },
+    {
+      "n": "Xu Bin",
+      "from": "Barnsley",
+      "to": "Wolves",
+      "fromCode": null,
+      "toCode": "WOL",
+      "date": "2026-05-30",
+      "type": "Return from loan"
+    },
+    {
+      "n": "W. Spiers",
+      "from": "Merthyr Town",
+      "to": "Cardiff",
+      "fromCode": null,
+      "toCode": "CAR",
+      "date": "2026-05-30",
+      "type": "Return from loan"
+    },
+    {
+      "n": "W. Keane",
+      "from": "Reading",
+      "to": "Preston",
+      "fromCode": null,
+      "toCode": "PRE",
+      "date": "2026-05-30",
+      "type": "Return from loan"
+    },
+    {
+      "n": "W. Harding",
+      "from": "Plymouth",
+      "to": "Millwall",
+      "fromCode": null,
+      "toCode": "MIL",
+      "date": "2026-05-30",
+      "type": "Return from loan"
+    },
+    {
+      "n": "Travis Akomeah",
+      "from": "Gillingham",
+      "to": "Watford",
+      "fromCode": null,
+      "toCode": "WAT",
+      "date": "2026-05-30",
+      "type": "Return from loan"
+    },
+    {
+      "n": "Tom Tweedy",
+      "from": "Darlington 1883",
+      "to": "Burnley",
+      "fromCode": null,
+      "toCode": "BUR",
+      "date": "2026-05-30",
+      "type": "Return from loan"
+    },
+    {
+      "n": "T. Watson",
+      "from": "Millwall",
+      "to": "Brighton",
+      "fromCode": "MIL",
+      "toCode": null,
+      "date": "2026-05-30",
+      "type": "Return from loan"
+    },
+    {
+      "n": "T. Taylor",
+      "from": "Northampton",
+      "to": "Charlton",
+      "fromCode": null,
+      "toCode": "CHA",
+      "date": "2026-05-30",
+      "type": "Return from loan"
+    },
+    {
+      "n": "T. Ojinnaka",
+      "from": "Shrewsbury",
+      "to": "Wolves",
+      "fromCode": null,
+      "toCode": "WOL",
+      "date": "2026-05-30",
+      "type": "Return from loan"
+    },
+    {
+      "n": "T. Nyakuhwa",
+      "from": "Newport County",
+      "to": "Cardiff",
+      "fromCode": null,
+      "toCode": "CAR",
+      "date": "2026-05-30",
+      "type": "Return from loan"
+    },
+    {
+      "n": "T. Kelly",
+      "from": "Bala Town",
+      "to": "Wrexham",
+      "fromCode": null,
+      "toCode": "WRE",
+      "date": "2026-05-30",
+      "type": "Return from loan"
+    },
+    {
+      "n": "T. Doyle",
+      "from": "Birmingham",
+      "to": "Wolves",
+      "fromCode": "BIR",
+      "toCode": "WOL",
+      "date": "2026-05-30",
+      "type": "Return from loan"
+    },
+    {
+      "n": "T. Chirewa",
+      "from": "Barnsley",
+      "to": "Wolves",
+      "fromCode": null,
+      "toCode": "WOL",
+      "date": "2026-05-30",
+      "type": "Return from loan"
+    },
+    {
+      "n": "T. Akindileni",
+      "from": "Morecambe",
+      "to": "QPR",
+      "fromCode": null,
+      "toCode": "QPR",
+      "date": "2026-05-30",
+      "type": "Return from loan"
+    },
+    {
+      "n": "T. Adeyemo",
+      "from": "Crawley Town",
+      "to": "Watford",
+      "fromCode": null,
+      "toCode": "WAT",
+      "date": "2026-05-30",
+      "type": "Return from loan"
+    },
+    {
+      "n": "S. Wright",
+      "from": "Dundee",
+      "to": "Birmingham",
+      "fromCode": null,
+      "toCode": "BIR",
+      "date": "2026-05-30",
+      "type": "Return from loan"
+    },
+    {
+      "n": "S. Revan",
+      "from": "Burton Albion",
+      "to": "Wrexham",
+      "fromCode": null,
+      "toCode": "WRE",
+      "date": "2026-05-30",
+      "type": "Return from loan"
+    },
+    {
+      "n": "S. Inwood",
+      "from": "Aldershot Town",
+      "to": "Bolton",
+      "fromCode": null,
+      "toCode": "BOL",
+      "date": "2026-05-30",
+      "type": "Return from loan"
+    },
+    {
+      "n": "S. Finch",
+      "from": "South Shields",
+      "to": "Middlesbrough",
+      "fromCode": null,
+      "toCode": "MID",
+      "date": "2026-05-30",
+      "type": "Return from loan"
+    },
+    {
+      "n": "S. Field",
+      "from": "Norwich",
+      "to": "QPR",
+      "fromCode": "NOR",
+      "toCode": "QPR",
+      "date": "2026-05-30",
+      "type": "Return from loan"
+    },
+    {
+      "n": "S. Curtis",
+      "from": "Chesterfield",
+      "to": "Sheffield Utd",
+      "fromCode": null,
+      "toCode": "SHU",
+      "date": "2026-05-30",
+      "type": "Return from loan"
+    },
+    {
+      "n": "R. Vaughan",
+      "from": "Dartford",
+      "to": "QPR",
+      "fromCode": null,
+      "toCode": "QPR",
+      "date": "2026-05-30",
+      "type": "Return from loan"
+    },
+    {
+      "n": "R. Oné",
+      "from": "Lincoln",
+      "to": "Sheffield Utd",
+      "fromCode": "LIN",
+      "toCode": "SHU",
+      "date": "2026-05-30",
+      "type": "Return from loan"
+    },
+    {
+      "n": "R. Nyambe",
+      "from": "Reading",
+      "to": "Derby",
+      "fromCode": null,
+      "toCode": "DER",
+      "date": "2026-05-30",
+      "type": "Return from loan"
+    },
+    {
+      "n": "R. Hardie",
+      "from": "Huddersfield",
+      "to": "Wrexham",
+      "fromCode": null,
+      "toCode": "WRE",
+      "date": "2026-05-30",
+      "type": "Return from loan"
+    },
+    {
+      "n": "R. Apter",
+      "from": "Bolton",
+      "to": "Charlton",
+      "fromCode": "BOL",
+      "toCode": "CHA",
+      "date": "2026-05-30",
+      "type": "Return from loan"
+    },
+    {
+      "n": "R. Akachukwu",
+      "from": "Colchester",
+      "to": "Southampton",
+      "fromCode": null,
+      "toCode": "SOU",
+      "date": "2026-05-30",
+      "type": "Return from loan"
+    },
+    {
+      "n": "Princewill  Ehibhatiomhan",
+      "from": "Salford City",
+      "to": "Southampton",
+      "fromCode": null,
+      "toCode": "SOU",
+      "date": "2026-05-30",
+      "type": "Return from loan"
+    },
+    {
+      "n": "P. Casey",
+      "from": "Dorking Wanderers",
+      "to": "Charlton",
+      "fromCode": null,
+      "toCode": "CHA",
+      "date": "2026-05-30",
+      "type": "Return from loan"
+    },
+    {
+      "n": "Ollie Hobden",
+      "from": "Chatham Town",
+      "to": "Charlton",
+      "fromCode": null,
+      "toCode": "CHA",
+      "date": "2026-05-30",
+      "type": "Return from loan"
+    },
+    {
+      "n": "O. Wright",
+      "from": "Accrington ST",
+      "to": "Southampton",
+      "fromCode": null,
+      "toCode": "SOU",
+      "date": "2026-05-30",
+      "type": "Return from loan"
+    },
+    {
+      "n": "O. Thomas",
+      "from": "Dunfermline",
+      "to": "Bristol City",
+      "fromCode": null,
+      "toCode": "BRC",
+      "date": "2026-05-30",
+      "type": "Return from loan"
+    },
+    {
+      "n": "O. Kellyman",
+      "from": "Cardiff",
+      "to": "Chelsea",
+      "fromCode": "CAR",
+      "toCode": null,
+      "date": "2026-05-30",
+      "type": "Return from loan"
+    },
+    {
+      "n": "O. Gallagher",
+      "from": "Boston United",
+      "to": "Lincoln",
+      "fromCode": null,
+      "toCode": "LIN",
+      "date": "2026-05-30",
+      "type": "Return from loan"
+    },
+    {
+      "n": "O. Ellis",
+      "from": "Oxford City",
+      "to": "Birmingham",
+      "fromCode": null,
+      "toCode": "BIR",
+      "date": "2026-05-30",
+      "type": "Return from loan"
+    },
+    {
+      "n": "O. Dodgson",
+      "from": "Stockport County",
+      "to": "Burnley",
+      "fromCode": null,
+      "toCode": "BUR",
+      "date": "2026-05-30",
+      "type": "Return from loan"
+    },
+    {
+      "n": "Neto Borges",
+      "from": "Bristol City",
+      "to": "Middlesbrough",
+      "fromCode": "BRC",
+      "toCode": "MID",
+      "date": "2026-05-30",
+      "type": "Return from loan"
+    },
+    {
+      "n": "N. Mawene",
+      "from": "Southend",
+      "to": "Preston",
+      "fromCode": null,
+      "toCode": "PRE",
+      "date": "2026-05-30",
+      "type": "Return from loan"
+    },
+    {
+      "n": "N. Lowe",
+      "from": "Wycombe",
+      "to": "Stoke City",
+      "fromCode": null,
+      "toCode": "STK",
+      "date": "2026-05-30",
+      "type": "Return from loan"
+    },
+    {
+      "n": "N. Lonwijk",
+      "from": "Luton",
+      "to": "Wolves",
+      "fromCode": null,
+      "toCode": "WOL",
+      "date": "2026-05-30",
+      "type": "Return from loan"
+    },
+    {
+      "n": "N. Djiga",
+      "from": "Rangers",
+      "to": "Wolves",
+      "fromCode": null,
+      "toCode": "WOL",
+      "date": "2026-05-30",
+      "type": "Return from loan"
+    },
+    {
+      "n": "N. Asiimwe",
+      "from": "AFC Wimbledon",
+      "to": "Charlton",
+      "fromCode": null,
+      "toCode": "CHA",
+      "date": "2026-05-30",
+      "type": "Return from loan"
+    },
+    {
+      "n": "Michael-John Kamson-Kamara",
+      "from": "Glentoran",
+      "to": "Lincoln",
+      "fromCode": null,
+      "toCode": "LIN",
+      "date": "2026-05-30",
+      "type": "Return from loan"
+    },
+    {
+      "n": "Micah Mbick",
+      "from": "Colchester",
+      "to": "Charlton",
+      "fromCode": null,
+      "toCode": "CHA",
+      "date": "2026-05-30",
+      "type": "Return from loan"
+    },
+    {
+      "n": "M. Yalcouyé",
+      "from": "Swansea",
+      "to": "Brighton",
+      "fromCode": "SWA",
+      "toCode": null,
+      "date": "2026-05-30",
+      "type": "Return from loan"
+    },
+    {
+      "n": "M. Terry",
+      "from": "Braintree",
+      "to": "West Ham",
+      "fromCode": null,
+      "toCode": "WHU",
+      "date": "2026-05-30",
+      "type": "Return from loan"
+    },
+    {
+      "n": "M. Purvis",
+      "from": "Flint Town United",
+      "to": "Wrexham",
+      "fromCode": null,
+      "toCode": "WRE",
+      "date": "2026-05-30",
+      "type": "Return from loan"
+    },
+    {
+      "n": "M. Obafemi",
+      "from": "Blackpool",
+      "to": "Burnley",
+      "fromCode": null,
+      "toCode": "BUR",
+      "date": "2026-05-30",
+      "type": "Return from loan"
+    },
+    {
+      "n": "M. Mazwi",
+      "from": "Queen of the South",
+      "to": "Birmingham",
+      "fromCode": null,
+      "toCode": "BIR",
+      "date": "2026-05-30",
+      "type": "Return from loan"
+    },
+    {
+      "n": "M. Mahoney",
+      "from": "Sheffield Wednesday",
+      "to": "QPR",
+      "fromCode": null,
+      "toCode": "QPR",
+      "date": "2026-05-30",
+      "type": "Return from loan"
+    },
+    {
+      "n": "M. Leonard",
+      "from": "Heart Of Midlothian",
+      "to": "Birmingham",
+      "fromCode": null,
+      "toCode": "BIR",
+      "date": "2026-05-30",
+      "type": "Return from loan"
+    },
+    {
+      "n": "M. Forss",
+      "from": "Bolton",
+      "to": "Middlesbrough",
+      "fromCode": "BOL",
+      "toCode": "MID",
+      "date": "2026-05-30",
+      "type": "Return from loan"
+    },
+    {
+      "n": "M. Forbes",
+      "from": "Northampton",
+      "to": "West Ham",
+      "fromCode": null,
+      "toCode": "WHU",
+      "date": "2026-05-30",
+      "type": "Return from loan"
+    },
+    {
+      "n": "M. Baradji",
+      "from": "Blackburn",
+      "to": "Yverdon Sport",
+      "fromCode": "BLB",
+      "toCode": null,
+      "date": "2026-05-30",
+      "type": "Return from loan"
+    },
+    {
+      "n": "Leo Pecover",
+      "from": "Weston-super-Mare",
+      "to": "Bristol City",
+      "fromCode": null,
+      "toCode": "BRC",
+      "date": "2026-05-30",
+      "type": "Return from loan"
+    },
+    {
+      "n": "L. Morrison",
+      "from": "Aberdeen",
+      "to": "QPR",
+      "fromCode": null,
+      "toCode": "QPR",
+      "date": "2026-05-30",
+      "type": "Return from loan"
+    },
+    {
+      "n": "L. Marsh",
+      "from": "Falkirk",
+      "to": "Sheffield Utd",
+      "fromCode": null,
+      "toCode": "SHU",
+      "date": "2026-05-30",
+      "type": "Return from loan"
+    },
+    {
+      "n": "L. Hjelde",
+      "from": "Sheffield Utd",
+      "to": "Sunderland",
+      "fromCode": "SHU",
+      "toCode": null,
+      "date": "2026-05-30",
+      "type": "Return from loan"
+    },
+    {
+      "n": "L. Dobbin",
+      "from": "Preston",
+      "to": "Aston Villa",
+      "fromCode": "PRE",
+      "toCode": null,
+      "date": "2026-05-30",
+      "type": "Return from loan"
+    },
+    {
+      "n": "L. Chambers",
+      "from": "Charlton",
+      "to": "Liverpool",
+      "fromCode": "CHA",
+      "toCode": null,
+      "date": "2026-05-30",
+      "type": "Return from loan"
+    },
+    {
+      "n": "L. Benjamin",
+      "from": "Chester",
+      "to": "Wolves",
+      "fromCode": null,
+      "toCode": "WOL",
+      "date": "2026-05-30",
+      "type": "Return from loan"
+    },
+    {
+      "n": "Kyrell Wilson",
+      "from": "Falkirk",
+      "to": "Swansea",
+      "fromCode": null,
+      "toCode": "SWA",
+      "date": "2026-05-30",
+      "type": "Return from loan"
+    },
+    {
+      "n": "Karoy Anderson",
+      "from": "Blackpool",
+      "to": "Charlton",
+      "fromCode": null,
+      "toCode": "CHA",
+      "date": "2026-05-30",
+      "type": "Return from loan"
+    },
+    {
+      "n": "Kamari Antonio Grant",
+      "from": "Blackpool",
+      "to": "Millwall",
+      "fromCode": null,
+      "toCode": "MIL",
+      "date": "2026-05-30",
+      "type": "Return from loan"
+    },
+    {
+      "n": "K. Phillips",
+      "from": "Sheffield Utd",
+      "to": "Manchester City",
+      "fromCode": "SHU",
+      "toCode": null,
+      "date": "2026-05-30",
+      "type": "Return from loan"
+    },
+    {
+      "n": "K. Kamara",
+      "from": "Ross County",
+      "to": "Preston",
+      "fromCode": null,
+      "toCode": "PRE",
+      "date": "2026-05-30",
+      "type": "Return from loan"
+    },
+    {
+      "n": "K. Hoever",
+      "from": "Sheffield Utd",
+      "to": "Wolves",
+      "fromCode": "SHU",
+      "toCode": "WOL",
+      "date": "2026-05-30",
+      "type": "Return from loan"
+    },
+    {
+      "n": "K. Etete",
+      "from": "ST Mirren",
+      "to": "Cardiff",
+      "fromCode": null,
+      "toCode": "CAR",
+      "date": "2026-05-30",
+      "type": "Return from loan"
+    },
+    {
+      "n": "Junior Robinson",
+      "from": "Boreham Wood",
+      "to": "West Ham",
+      "fromCode": null,
+      "toCode": "WHU",
+      "date": "2026-05-30",
+      "type": "Return from loan"
+    },
+    {
+      "n": "Joshua Laqueretabua",
+      "from": "Bath City",
+      "to": "Charlton",
+      "fromCode": null,
+      "toCode": "CHA",
+      "date": "2026-05-30",
+      "type": "Return from loan"
+    },
+    {
+      "n": "Jayden Moore",
+      "from": "Eastleigh",
+      "to": "Southampton",
+      "fromCode": null,
+      "toCode": "SOU",
+      "date": "2026-05-30",
+      "type": "Return from loan"
+    },
+    {
+      "n": "Jamie Knight-Lebel",
+      "from": "Swindon Town",
+      "to": "Bristol City",
+      "fromCode": null,
+      "toCode": "BRC",
+      "date": "2026-05-30",
+      "type": "Return from loan"
+    },
+    {
+      "n": "James Andrew Clarridge",
+      "from": "Braintree",
+      "to": "Watford",
+      "fromCode": null,
+      "toCode": "WAT",
+      "date": "2026-05-30",
+      "type": "Return from loan"
+    },
+    {
+      "n": "Jack Joseph Barrett",
+      "from": "Tranmere",
+      "to": "Blackburn",
+      "fromCode": null,
+      "toCode": "BLB",
+      "date": "2026-05-30",
+      "type": "Return from loan"
+    },
+    {
+      "n": "J. Wildsmith",
+      "from": "Middlesbrough",
+      "to": "West Brom",
+      "fromCode": "MID",
+      "toCode": "WBA",
+      "date": "2026-05-30",
+      "type": "Return from loan"
+    },
+    {
+      "n": "J. Ward-Prowse",
+      "from": "Burnley",
+      "to": "West Ham",
+      "fromCode": "BUR",
+      "toCode": "WHU",
+      "date": "2026-05-30",
+      "type": "Return from loan"
+    },
+    {
+      "n": "J. Storer",
+      "from": "Morton",
+      "to": "Wolves",
+      "fromCode": null,
+      "toCode": "WOL",
+      "date": "2026-05-30",
+      "type": "Return from loan"
+    },
+    {
+      "n": "J. Stokes",
+      "from": "Stockport County",
+      "to": "Bristol City",
+      "fromCode": null,
+      "toCode": "BRC",
+      "date": "2026-05-30",
+      "type": "Return from loan"
+    },
+    {
+      "n": "J. Rooney",
+      "from": "Boston United",
+      "to": "Derby",
+      "fromCode": null,
+      "toCode": "DER",
+      "date": "2026-05-30",
+      "type": "Return from loan"
+    },
+    {
+      "n": "J. Randall",
+      "from": "Blackpool",
+      "to": "Bolton",
+      "fromCode": null,
+      "toCode": "BOL",
+      "date": "2026-05-30",
+      "type": "Return from loan"
+    },
+    {
+      "n": "J. Rak-Sakyi",
+      "from": "Stoke City",
+      "to": "Crystal Palace",
+      "fromCode": "STK",
+      "toCode": null,
+      "date": "2026-05-30",
+      "type": "Return from loan"
+    },
+    {
+      "n": "J. McKiernan",
+      "from": "Burton Albion",
+      "to": "Lincoln",
+      "fromCode": null,
+      "toCode": "LIN",
+      "date": "2026-05-30",
+      "type": "Return from loan"
+    },
+    {
+      "n": "J. Fevrier",
+      "from": "Charlton",
+      "to": "Stockport County",
+      "fromCode": "CHA",
+      "toCode": null,
+      "date": "2026-05-30",
+      "type": "Return from loan"
+    },
+    {
+      "n": "J. Farrell",
+      "from": "Western Sydney Wanderers",
+      "to": "Portsmouth",
+      "fromCode": null,
+      "toCode": "POR",
+      "date": "2026-05-30",
+      "type": "Return from loan"
+    },
+    {
+      "n": "J. Cotterill",
+      "from": "Dundee",
+      "to": "Swansea",
+      "fromCode": null,
+      "toCode": "SWA",
+      "date": "2026-05-30",
+      "type": "Return from loan"
+    },
+    {
+      "n": "J. Carbon",
+      "from": "Ross County",
+      "to": "Middlesbrough",
+      "fromCode": null,
+      "toCode": "MID",
+      "date": "2026-05-30",
+      "type": "Return from loan"
+    },
+    {
+      "n": "J. Buyabu",
+      "from": "Forest Green",
+      "to": "Sheffield Utd",
+      "fromCode": null,
+      "toCode": "SHU",
+      "date": "2026-05-30",
+      "type": "Return from loan"
+    },
+    {
+      "n": "J. Brown",
+      "from": "Portsmouth",
+      "to": "Luton",
+      "fromCode": "POR",
+      "toCode": null,
+      "date": "2026-05-30",
+      "type": "Return from loan"
+    },
+    {
+      "n": "J. Bickerstaff",
+      "from": "Cheltenham",
+      "to": "Wrexham",
+      "fromCode": null,
+      "toCode": "WRE",
+      "date": "2026-05-30",
+      "type": "Return from loan"
+    },
+    {
+      "n": "J. Beadle",
+      "from": "Birmingham",
+      "to": "Brighton",
+      "fromCode": "BIR",
+      "toCode": null,
+      "date": "2026-05-30",
+      "type": "Return from loan"
+    },
+    {
+      "n": "J. Banel",
+      "from": "Derby",
+      "to": "Burnley",
+      "fromCode": "DER",
+      "toCode": "BUR",
+      "date": "2026-05-30",
+      "type": "Return from loan"
+    },
+    {
+      "n": "J. Aribo",
+      "from": "Leicester",
+      "to": "Southampton",
+      "fromCode": null,
+      "toCode": "SOU",
+      "date": "2026-05-30",
+      "type": "Return from loan"
+    },
+    {
+      "n": "I. Samuels-Smith",
+      "from": "Swansea",
+      "to": "Chelsea",
+      "fromCode": "SWA",
+      "toCode": null,
+      "date": "2026-05-30",
+      "type": "Return from loan"
+    },
+    {
+      "n": "I. Osman",
+      "from": "Birmingham",
+      "to": "Brighton",
+      "fromCode": "BIR",
+      "toCode": null,
+      "date": "2026-05-30",
+      "type": "Return from loan"
+    },
+    {
+      "n": "I. Olaofe",
+      "from": "Stockport County",
+      "to": "Charlton",
+      "fromCode": null,
+      "toCode": "CHA",
+      "date": "2026-05-30",
+      "type": "Return from loan"
+    },
+    {
+      "n": "I. Kaboré",
+      "from": "Wrexham",
+      "to": "Manchester City",
+      "fromCode": "WRE",
+      "toCode": null,
+      "date": "2026-05-30",
+      "type": "Return from loan"
+    },
+    {
+      "n": "H. Wood",
+      "from": "Rylands",
+      "to": "Blackburn",
+      "fromCode": null,
+      "toCode": "BLB",
+      "date": "2026-05-30",
+      "type": "Return from loan"
+    },
+    {
+      "n": "H. Cornick",
+      "from": "Stevenage",
+      "to": "Bristol City",
+      "fromCode": null,
+      "toCode": "BRC",
+      "date": "2026-05-30",
+      "type": "Return from loan"
+    },
+    {
+      "n": "H. Clarke",
+      "from": "Charlton",
+      "to": "Ipswich",
+      "fromCode": "CHA",
+      "toCode": null,
+      "date": "2026-05-30",
+      "type": "Return from loan"
+    },
+    {
+      "n": "George Earthy",
+      "from": "Bristol City",
+      "to": "West Ham",
+      "fromCode": "BRC",
+      "toCode": "WHU",
+      "date": "2026-05-30",
+      "type": "Return from loan"
+    },
+    {
+      "n": "G. Kodua",
+      "from": "Luton",
+      "to": "West Ham",
+      "fromCode": null,
+      "toCode": "WHU",
+      "date": "2026-05-30",
+      "type": "Return from loan"
+    },
+    {
+      "n": "G. Bazunu",
+      "from": "Stoke City",
+      "to": "Southampton",
+      "fromCode": "STK",
+      "toCode": "SOU",
+      "date": "2026-05-30",
+      "type": "Return from loan"
+    },
+    {
+      "n": "F. Turley",
+      "from": "Dunfermline",
+      "to": "Derby",
+      "fromCode": null,
+      "toCode": "DER",
+      "date": "2026-05-30",
+      "type": "Return from loan"
+    },
+    {
+      "n": "F. Lissah",
+      "from": "Falkirk",
+      "to": "Swansea",
+      "fromCode": null,
+      "toCode": "SWA",
+      "date": "2026-05-30",
+      "type": "Return from loan"
+    },
+    {
+      "n": "F. Fawunmi",
+      "from": "Leyton Orient",
+      "to": "Stoke City",
+      "fromCode": null,
+      "toCode": "STK",
+      "date": "2026-05-30",
+      "type": "Return from loan"
+    },
+    {
+      "n": "F. Bianchini",
+      "from": "Portsmouth",
+      "to": "Swansea",
+      "fromCode": "POR",
+      "toCode": "SWA",
+      "date": "2026-05-30",
+      "type": "Return from loan"
+    },
+    {
+      "n": "F. Anderson",
+      "from": "Barrow",
+      "to": "Stoke City",
+      "fromCode": null,
+      "toCode": "STK",
+      "date": "2026-05-30",
+      "type": "Return from loan"
+    },
+    {
+      "n": "Ephrahim Yeboah",
+      "from": "Carlisle",
+      "to": "Bristol City",
+      "fromCode": null,
+      "toCode": "BRC",
+      "date": "2026-05-30",
+      "type": "Return from loan"
+    },
+    {
+      "n": "E. Tezgel",
+      "from": "Crewe",
+      "to": "Stoke City",
+      "fromCode": null,
+      "toCode": "STK",
+      "date": "2026-05-30",
+      "type": "Return from loan"
+    },
+    {
+      "n": "E. Sutton",
+      "from": "Harrogate Town",
+      "to": "QPR",
+      "fromCode": null,
+      "toCode": "QPR",
+      "date": "2026-05-30",
+      "type": "Return from loan"
+    },
+    {
+      "n": "E. Morrison",
+      "from": "Forest Green",
+      "to": "Bristol City",
+      "fromCode": null,
+      "toCode": "BRC",
+      "date": "2026-05-30",
+      "type": "Return from loan"
+    },
+    {
+      "n": "E. Lee",
+      "from": "Doncaster",
+      "to": "Wrexham",
+      "fromCode": null,
+      "toCode": "WRE",
+      "date": "2026-05-30",
+      "type": "Return from loan"
+    },
+    {
+      "n": "E. Cashin",
+      "from": "Blackburn",
+      "to": "Brighton",
+      "fromCode": "BLB",
+      "toCode": null,
+      "date": "2026-05-30",
+      "type": "Return from loan"
+    },
+    {
+      "n": "Daniel Higgs",
+      "from": "Penybont",
+      "to": "Cardiff",
+      "fromCode": null,
+      "toCode": "CAR",
+      "date": "2026-05-30",
+      "type": "Return from loan"
+    },
+    {
+      "n": "Daniel Edward Peter Imray",
+      "from": "West Brom",
+      "to": "Crystal Palace",
+      "fromCode": "WBA",
+      "toCode": null,
+      "date": "2026-05-30",
+      "type": "Return from loan"
+    },
+    {
+      "n": "D. Sanderson",
+      "from": "Derby",
+      "to": "Birmingham",
+      "fromCode": "DER",
+      "toCode": "BIR",
+      "date": "2026-05-30",
+      "type": "Return from loan"
+    },
+    {
+      "n": "D. Ozoh",
+      "from": "Derby",
+      "to": "Crystal Palace",
+      "fromCode": "DER",
+      "toCode": null,
+      "date": "2026-05-30",
+      "type": "Return from loan"
+    },
+    {
+      "n": "D. Lipsiuc",
+      "from": "Solihull Moors",
+      "to": "Stoke City",
+      "fromCode": null,
+      "toCode": "STK",
+      "date": "2026-05-30",
+      "type": "Return from loan"
+    },
+    {
+      "n": "D. Kanu",
+      "from": "Walsall",
+      "to": "Charlton",
+      "fromCode": null,
+      "toCode": "CHA",
+      "date": "2026-05-30",
+      "type": "Return from loan"
+    },
+    {
+      "n": "D. Isichei",
+      "from": "Tamworth",
+      "to": "Birmingham",
+      "fromCode": null,
+      "toCode": "BIR",
+      "date": "2026-05-30",
+      "type": "Return from loan"
+    },
+    {
+      "n": "D. Cox",
+      "from": "Solihull Moors",
+      "to": "Derby",
+      "fromCode": null,
+      "toCode": "DER",
+      "date": "2026-05-30",
+      "type": "Return from loan"
+    },
+    {
+      "n": "D. Brown",
+      "from": "Port Vale",
+      "to": "Derby",
+      "fromCode": null,
+      "toCode": "DER",
+      "date": "2026-05-30",
+      "type": "Return from loan"
+    },
+    {
+      "n": "D. Barlaser",
+      "from": "Hibernian",
+      "to": "Middlesbrough",
+      "fromCode": null,
+      "toCode": "MID",
+      "date": "2026-05-30",
+      "type": "Return from loan"
+    },
+    {
+      "n": "D. Abimbola",
+      "from": "Accrington ST",
+      "to": "Bolton",
+      "fromCode": null,
+      "toCode": "BOL",
+      "date": "2026-05-30",
+      "type": "Return from loan"
+    },
+    {
+      "n": "Cole Deeming",
+      "from": "Cheltenham",
+      "to": "West Brom",
+      "fromCode": null,
+      "toCode": "WBA",
+      "date": "2026-05-30",
+      "type": "Return from loan"
+    },
+    {
+      "n": "Carlos Gomes",
+      "from": "Exeter City",
+      "to": "Bolton",
+      "fromCode": null,
+      "toCode": "BOL",
+      "date": "2026-05-30",
+      "type": "Return from loan"
+    },
+    {
+      "n": "C. Warren",
+      "from": "Aldershot Town",
+      "to": "Bolton",
+      "fromCode": null,
+      "toCode": "BOL",
+      "date": "2026-05-30",
+      "type": "Return from loan"
+    },
+    {
+      "n": "C. Scanlon",
+      "from": "Cardiff",
+      "to": "Liverpool",
+      "fromCode": "CAR",
+      "toCode": null,
+      "date": "2026-05-30",
+      "type": "Return from loan"
+    },
+    {
+      "n": "C. Ogbene",
+      "from": "Sheffield Utd",
+      "to": "Ipswich",
+      "fromCode": "SHU",
+      "toCode": null,
+      "date": "2026-05-30",
+      "type": "Return from loan"
+    },
+    {
+      "n": "C. Blackett-Taylor",
+      "from": "Bolton",
+      "to": "Derby",
+      "fromCode": "BOL",
+      "toCode": "DER",
+      "date": "2026-05-30",
+      "type": "Return from loan"
+    },
+    {
+      "n": "B. Powell",
+      "from": "Barrow",
+      "to": "Blackburn",
+      "fromCode": null,
+      "toCode": "BLB",
+      "date": "2026-05-30",
+      "type": "Return from loan"
+    },
+    {
+      "n": "B. Osborn",
+      "from": "Stockport County",
+      "to": "Derby",
+      "fromCode": null,
+      "toCode": "DER",
+      "date": "2026-05-30",
+      "type": "Return from loan"
+    },
+    {
+      "n": "B. Lloyd",
+      "from": "Newport County",
+      "to": "Swansea",
+      "fromCode": null,
+      "toCode": "SWA",
+      "date": "2026-05-30",
+      "type": "Return from loan"
+    },
+    {
+      "n": "B. Brereton",
+      "from": "Derby",
+      "to": "Southampton",
+      "fromCode": "DER",
+      "toCode": "SOU",
+      "date": "2026-05-30",
+      "type": "Return from loan"
+    },
+    {
+      "n": "B. Blacker",
+      "from": "Tranmere",
+      "to": "Sheffield Utd",
+      "fromCode": null,
+      "toCode": "SHU",
+      "date": "2026-05-30",
+      "type": "Return from loan"
+    },
+    {
+      "n": "Ajay Matthews",
+      "from": "Leyton Orient",
+      "to": "Millwall",
+      "fromCode": null,
+      "toCode": "MIL",
+      "date": "2026-05-30",
+      "type": "Return from loan"
+    },
+    {
+      "n": "A. Ramsey",
+      "from": "Leicester",
+      "to": "Burnley",
+      "fromCode": null,
+      "toCode": "BUR",
+      "date": "2026-05-30",
+      "type": "Return from loan"
+    },
+    {
+      "n": "A. Pond",
+      "from": "Crewe",
+      "to": "Wolves",
+      "fromCode": null,
+      "toCode": "WOL",
+      "date": "2026-05-30",
+      "type": "Return from loan"
+    },
+    {
+      "n": "A. Phillips",
+      "from": "Stoke City",
+      "to": "Tottenham",
+      "fromCode": "STK",
+      "toCode": null,
+      "date": "2026-05-30",
+      "type": "Return from loan"
+    },
+    {
+      "n": "A. Mitchell",
+      "from": "Plymouth",
+      "to": "Charlton",
+      "fromCode": null,
+      "toCode": "CHA",
+      "date": "2026-05-30",
+      "type": "Return from loan"
+    },
+    {
+      "n": "A. Mayor",
+      "from": "Cambridge United",
+      "to": "Millwall",
+      "fromCode": null,
+      "toCode": "MIL",
+      "date": "2026-05-30",
+      "type": "Return from loan"
+    },
+    {
+      "n": "A. Lloyd",
+      "from": "Lincoln",
+      "to": "QPR",
+      "fromCode": "LIN",
+      "toCode": "QPR",
+      "date": "2026-05-30",
+      "type": "Return from loan"
+    },
+    {
+      "n": "A. Higgins",
+      "from": "Exeter City",
+      "to": "West Brom",
+      "fromCode": null,
+      "toCode": "WBA",
+      "date": "2026-05-30",
+      "type": "Return from loan"
+    },
+    {
+      "n": "A. Gomes",
+      "from": "Wolves",
+      "to": "Marseille",
+      "fromCode": "WOL",
+      "toCode": null,
+      "date": "2026-05-30",
+      "type": "Return from loan"
+    },
+    {
+      "n": "A. Devine",
+      "from": "Preston",
+      "to": "Tottenham",
+      "fromCode": "PRE",
+      "toCode": null,
+      "date": "2026-05-30",
+      "type": "Return from loan"
+    },
+    {
+      "n": "A. Cozier-Duberry",
+      "from": "Bolton",
+      "to": "Brighton",
+      "fromCode": "BOL",
+      "toCode": null,
+      "date": "2026-05-30",
+      "type": "Return from loan"
+    },
+    {
+      "n": "A. Browne",
+      "from": "Middlesbrough",
+      "to": "Sunderland",
+      "fromCode": "MID",
+      "toCode": null,
+      "date": "2026-05-30",
+      "type": "Return from loan"
+    },
+    {
+      "n": "A. Baptiste",
+      "from": "Rochdale",
+      "to": "Middlesbrough",
+      "fromCode": null,
+      "toCode": "MID",
+      "date": "2026-05-30",
+      "type": "Return from loan"
+    },
+    {
+      "n": "R. Owen",
+      "from": "Caernarfon Town",
+      "to": "Wrexham",
+      "fromCode": null,
+      "toCode": "WRE",
+      "date": "2026-05-29",
+      "type": "Return from loan"
+    },
+    {
+      "n": "Felipe Rodriguez-Gentile",
+      "from": "AFC Fylde",
+      "to": "Preston",
+      "fromCode": null,
+      "toCode": "PRE",
+      "date": "2026-05-29",
+      "type": "Return from loan"
+    },
+    {
+      "n": "T. McDermott",
+      "from": "Shrewsbury",
+      "to": "Burnley",
+      "fromCode": null,
+      "toCode": "BUR",
+      "date": "2026-05-12",
+      "type": "Return from loan"
+    }
+  ]
+}
