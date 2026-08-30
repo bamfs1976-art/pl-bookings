@@ -1,0 +1,165 @@
+name: Extra API-Football feeds
+
+# The eleven endpoints the desk was not calling.
+#
+# WHY ITS OWN WORKFLOW. The three that exist are each shaped by a cadence:
+# data-refresh.yml rebuilds the season's form once a day, fixtures.yml chases
+# referee appointments seven times, lineups.yml chases team sheets hourly
+# because a sheet's whole life begins an hour before the whistle. These feeds
+# split across all three of those cadences and belong to none of them — and
+# every one of them already owns a set of files that a second writer would
+# fight over. So this is a fourth owner with its own files and nothing shared.
+#
+# WHAT IT COSTS, from the audit that prompted it. The desk was using ~360
+# calls a day of 7,500 — five per cent. Everything scheduled here adds about
+# 200 on a quiet day and 560 at peak, so the whole app lands near 13%. The
+# dominant term is odds: one call per fixture, refreshed, and refreshing it
+# hourly rather than daily is 264 calls against 22 on the busiest day of the
+# season. It is scheduled here at four times a day, which is the shape of a
+# market moving rather than a tick chart, for a page that grades a rating
+# against a line once the match is over.
+#
+# ═══════════════════════════════════════════════════════════════════════
+# READ THIS BEFORE TRUSTING ANY FILE THIS PRODUCES
+# ═══════════════════════════════════════════════════════════════════════
+# Every parser in data/harvest_extra.py was written WITHOUT ACCESS TO THE API,
+# from the documented v3 shape. Not one was checked against a live payload.
+#
+# So the FIRST thing this workflow does on a manual run is `--probe`: one call
+# per endpoint, saved raw under data/probes/ and committed, which turns each
+# of those assumptions into evidence. Until the probes have landed and the
+# parsers have been reconciled against them, treat every output file here as
+# unverified. The parsers refuse a shape they were not written for rather than
+# writing an empty file, so the failure mode is a red step and a message
+# naming the keys that were actually present — not a silent hole.
+
+on:
+  workflow_dispatch:
+    inputs:
+      probe:
+        description: "Probe every endpoint into data/probes/ and stop (~12 calls)"
+        type: boolean
+        default: false
+      what:
+        description: "Comma-separated feeds, or 'all'"
+        required: false
+        default: ""
+      limit:
+        description: "Cap per-fixture walks (events, fxstats)"
+        required: false
+        default: ""
+  schedule:
+    # Once a day, after data-refresh has rebuilt the squads these join against.
+    - cron: '40 5 * * *'
+    # Odds and injuries move; the rest do not. Four spread across the day.
+    - cron: '40 11 * * *'
+    - cron: '40 16 * * *'
+    - cron: '40 20 * * *'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: extra-feeds
+  cancel-in-progress: false
+
+jobs:
+  feeds:
+    runs-on: ubuntu-latest
+    env:
+      API_FOOTBALL_KEY: ${{ secrets.API_FOOTBALL_KEY }}
+      API_FOOTBALL_SEASON: '2026'
+      # A SHAPE MISMATCH MUST FAIL THE STEP, not print and carry on. The whole
+      # design of harvest_extra.py is that an unrecognised payload writes
+      # nothing; without this it would say so in a log pane nobody opens.
+      HARVEST_EXTRA_STRICT: '1'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Refuse to run blind
+        if: ${{ env.API_FOOTBALL_KEY == '' }}
+        run: |
+          echo "::error::API_FOOTBALL_KEY is not set — no feed can be fetched."
+          exit 1
+
+      # ONE CALL PER ENDPOINT, and the only step that matters until it has run.
+      # Manual only: the probes are evidence about a shape, and a shape does
+      # not change nightly.
+      - name: Probe every endpoint (shapes, not data)
+        if: ${{ inputs.probe }}
+        run: python3 data/harvest_extra.py --probe --league PL
+
+      # ---- the daily half: things that change once a day at most -----------
+      - name: Standings, team card profiles and transfer proposals
+        if: ${{ !inputs.probe && (inputs.what == '' || contains(inputs.what, 'daily') || inputs.what == 'all') }}
+        continue-on-error: true
+        run: |
+          python3 data/harvest_extra.py --league PL,EFLC,LL \
+            --what standings,teamstats,transfers,cards
+
+      # ---- the per-fixture half: only what has finished and is not recorded --
+      - name: Card events and the feed's own fixture stats
+        if: ${{ !inputs.probe && (inputs.what == '' || contains(inputs.what, 'fixture') || inputs.what == 'all') }}
+        continue-on-error: true
+        run: |
+          LIM=""
+          [ -n "${{ inputs.limit }}" ] && LIM="--limit ${{ inputs.limit }}"
+          python3 data/harvest_extra.py --league PL,EFLC,LL \
+            --what events,fxstats $LIM
+
+      # ---- the moving half: run on every firing ----------------------------
+      - name: Injuries, odds and predictions
+        if: ${{ !inputs.probe }}
+        continue-on-error: true
+        run: |
+          python3 data/harvest_extra.py --league PL,EFLC,LL \
+            --what injuries,odds,predictions --within-hours 72
+
+      # ONE GUARD STEP, BEFORE EITHER COMMIT. It was after the probe push,
+      # which meant the probe path put a commit on main without running them —
+      # caught by check-ci-wiring.mjs, whose whole job is that a workflow does
+      # not push what it has not checked. A recorded payload is still a commit.
+      - name: Every guard, before anything is pushed
+        run: node scripts/check-all.mjs
+
+      - name: Commit the probes
+        if: ${{ inputs.probe }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add -f data/probes/ || true
+          git diff --cached --quiet && echo "probes unchanged" && exit 0
+          git commit -m "API-Football endpoint probes (recorded shapes)"
+          for i in 1 2 3; do
+            git push && exit 0
+            git pull --rebase origin main || exit 1
+          done
+
+      - name: Commit if anything changed
+        if: ${{ !inputs.probe }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          for f in pl eflc laliga; do
+            for n in injuries cardleaders standings teamstats cardevents \
+                     fxstats predictions odds; do
+              [ -f "data/${f}_${n}.js" ] && git add "data/${f}_${n}.js"
+            done
+            [ -f "data/${f}_transfers_feed.json" ] && git add -f "data/${f}_transfers_feed.json"
+          done
+          if git diff --cached --quiet; then
+            echo "No feed changed."
+            exit 0
+          fi
+          git commit -m "Extra API-Football feeds"
+          # Four workflows push to main now; a rejected push is expected.
+          for i in 1 2 3; do
+            git push && exit 0
+            echo "push rejected (attempt $i) — rebasing on origin/main"
+            git pull --rebase origin main || exit 1
+          done
+          echo "::error::could not push the feeds after three attempts"
+          exit 1

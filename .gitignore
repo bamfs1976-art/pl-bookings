@@ -77,3 +77,14 @@ data/*_match_history.json
 # WHERE each figure came from, which is the whole basis for admitting
 # third-party data at all.
 !data/ref_pens.json
+# ...and the RECORDED ENDPOINT SHAPES. data/harvest_extra.py was written
+# without access to the API — no key, no network — so every parser in it is an
+# assumption about a payload nobody had seen. `--probe` fetches one response
+# per endpoint and saves it here, and these files are the ONLY evidence in the
+# repository of what those endpoints actually return. A shape nobody can look
+# at is a shape nobody can check a parser against.
+!data/probes/
+# ...and the transfer PROPOSALS, which are read by a person rather than
+# applied. data/transfers.json stays the hand-curated overlay; this is what the
+# feed thinks happened, and the difference is the whole point of keeping both.
+!data/*_transfers_feed.json

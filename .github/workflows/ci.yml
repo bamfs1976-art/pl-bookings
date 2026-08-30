@@ -20,7 +20,7 @@ on:
   push:
   pull_request:
   workflow_run:
-    workflows: ["Data refresh", "Fixtures and referee appointments", "Confirmed team sheets", "Backfill a season's team sheets", "Refresh sim model"]
+    workflows: ["Data refresh", "Fixtures and referee appointments", "Confirmed team sheets", "Backfill a season's team sheets", "Refresh sim model", "Extra API-Football feeds"]
     types: [completed]
 
 jobs:
@@ -356,6 +356,19 @@ jobs:
 
       - name: Borrowing a referee record is scaled, not copied
         run: python3 data/test_cross_refs.py
+
+      # ELEVEN ENDPOINTS THE DESK WAS NOT CALLING, and every parser for them
+      # written WITHOUT a key to check the shape against. That is the whole
+      # reason this test exists: it writes down the assumed payload for each,
+      # so a probe that disagrees is a diff rather than an argument. The
+      # refusals matter more than the parses — a parser that reaches for a key
+      # that is not there and returns [] writes a file full of nothing, and
+      # every guard downstream reads that as a quiet week.
+      - name: The extra feeds parse what they claim, and refuse what they do not
+        run: python3 data/test_harvest_extra.py
+
+      - name: The extra feeds are optional, guarded and owned by one workflow
+        run: node scripts/check-extra-feeds.mjs
 
       # Which fixtures are derbies was written down in FOUR places — core.js,
       # plmodel.js and inline in both of the other desks — and two of them had
