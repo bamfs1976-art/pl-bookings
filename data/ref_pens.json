@@ -1,0 +1,31 @@
+{
+  "note": "Penalties a game, per official, HAND-SEEDED. The free football-data.co.uk match records this repository builds referee rates from carry yellows, reds and fouls but NOT penalties, so data/build_refs.py has always written pen:null and carried the previous value forward. A regex in previous_details once stopped matching, every carried value was dropped, and the column has been empty on all three desks since. There is no free feed that would refill it, so these are read off published referee-stat graphics and entered by hand.",
+  "caveats": [
+    "A THIRD-PARTY GRAPHIC IS NOT A PRIMARY SOURCE. Every figure here was read off a Betting Village Stats fixture card, which states its own scope ('all data taken from 2025/26 Premier League only') but shows no working. Where the same cards quote yellows and reds, they agree with this repository's own count to within 0.14 and exactly respectively — that is corroboration, not verification.",
+    "THREE OF SEVENTY-TWO. The three divisions carry 72 officials between them and this file names three. The column stays null for the rest, which is the honest state: pen:null means nobody knows, and a zero would mean he has never given one.",
+    "NOTHING IS PRICED OFF IT. The pen column is displayed in the three referee tables and read by no model, so a wrong figure here misinforms a reader and moves no probability. That is the only reason hand-seeded third-party data is admissible at all."
+  ],
+  "entries": [
+    {
+      "league": "PL",
+      "ref": "Andy Madley",
+      "pen": 0.29,
+      "source": "Betting Village Stats fixture card — Crystal Palace v Manchester City, Premier League Gameweek 2, 2026-27 (card states 2025/26 Premier League only)",
+      "seen": "2026-08-28"
+    },
+    {
+      "league": "PL",
+      "ref": "Samuel Barrott",
+      "pen": 0.29,
+      "source": "Betting Village Stats fixture card — Liverpool v Nottingham Forest, Premier League Gameweek 2, 2026-27 (card states 2025/26 Premier League only)",
+      "seen": "2026-08-29"
+    },
+    {
+      "league": "PL",
+      "ref": "Michael Oliver",
+      "pen": 0.07,
+      "source": "Betting Village Stats fixture card — Chelsea v Brighton, Premier League Gameweek 2, 2026-27 (card states 2025/26 Premier League only)",
+      "seen": "2026-08-30"
+    }
+  ]
+}

@@ -7,9 +7,13 @@ Every match row carries the referee plus both teams' yellow (HY/AY) and red
 (HR/AR) card counts and fouls (HF/AF), so yellows-per-game, fouls-per-game and
 cards-per-foul can be computed for every official who took a match.
 
-Penalties are not in this source, so pen-per-game (and the region label) are
-carried over from the previous dataset where the referee matches, and null for
-new officials.
+Penalties are not in this source. The region label is carried over from the
+previous dataset where the referee matches; the penalty column is HAND-SEEDED
+from data/ref_pens.json, which carries a source and a read-date beside every
+figure, and falls back to the carried value. Null for everyone else, because
+null means nobody knows and zero would mean he has never given one.
+
+    python3 data/build_refs.py --pens-only --league ALL   # seed only, no fetch
 
 Usage:
     python3 data/build_refs.py                          # Premier League, 2526
@@ -41,6 +45,57 @@ DATA = Path(__file__).resolve().parent
 sys.path.insert(0, str(DATA))
 import leagues  # noqa: E402
 import build_pl_data  # noqa: E402
+
+
+PENS = DATA / "ref_pens.json"
+
+
+def seeded_pens(league):
+    """Hand-seeded penalties a game, keyed like previous_details.
+
+    THE COLUMN HAS NO FEED. football-data.co.uk carries yellows, reds and fouls
+    and no penalties, so this build has always written pen:null and carried the
+    previous file's value forward — and when the carry-over regex silently
+    stopped matching, every value was dropped and the column has been empty on
+    all three desks since. Nothing refills it automatically because there is
+    nothing free to refill it from.
+
+    So data/ref_pens.json is entered by hand, from published referee-stat
+    graphics, WITH the source and the date it was read written beside each
+    figure. It is a separate file rather than an edit to the generated dataset
+    for the reason every hand-fact in this repository is: a number nobody can
+    trace is a number nobody can check, and one edited into an auto-generated
+    file looks exactly like something the pipeline produced.
+
+    It WINS over the carried value, because the carried value is only ever an
+    older copy of this one and re-stating it in two places is how the two come
+    to disagree. It does not win over a measured figure, because there is no
+    measured figure; if a source that carries penalties is ever harvested, that
+    branch goes above this one.
+    """
+    if not PENS.exists():
+        return {}
+    try:
+        doc = json.loads(PENS.read_text(encoding="utf-8"))
+    except ValueError as e:
+        raise SystemExit(f"ERROR: data/ref_pens.json will not parse: {e}")
+    out = {}
+    for e in doc.get("entries") or []:
+        if e.get("league") != league.code or e.get("pen") is None:
+            continue
+        name = str(e.get("ref") or "").strip()
+        if not name or len(name.split()) < 2:
+            raise SystemExit(
+                f"ERROR: data/ref_pens.json has an entry with no full name: {e!r}. "
+                "The key is initial-plus-surname, so a one-word name cannot be "
+                "matched to an official and would be silently dropped.")
+        if not e.get("source"):
+            raise SystemExit(
+                f"ERROR: data/ref_pens.json entry for {name} has no source. A "
+                "hand-entered figure without one cannot be checked or corrected.")
+        key = (name.split()[0][0] + " " + name.split()[-1]).lower()
+        out[key] = float(e["pen"])
+    return out
 
 
 def previous_details(league):
@@ -381,8 +436,12 @@ def tally_refs(rows):
     return tally, skipped
 
 
-def build_refs(tally, prev, min_matches):
-    """The ranked referee rows. Pure, so the rates are unit-testable."""
+def build_refs(tally, prev, min_matches, pens=None):
+    """The ranked referee rows. Pure, so the rates are unit-testable.
+
+    `pens` is the hand-seeded penalty column (see seeded_pens). Optional so
+    every existing caller and test keeps its exact behaviour."""
+    pens = pens or {}
     refs = []
     for abbrev, d in tally.items():
         if d["matches"] < min_matches:
@@ -406,7 +465,8 @@ def build_refs(tally, prev, min_matches):
             "yellows": d["yellows"],
             "ypg": round(d["yellows"] / d["matches"], 2),
             "red_pg": round(d["reds"] / d["matches"], 2),
-            "pen_pg": old.get("pen_pg"),
+            # The seed wins over the carried value; see seeded_pens.
+            "pen_pg": pens.get(key, old.get("pen_pg")),
             "fouls_pg": fpg,
             "cards_per_foul": cpf,
         })
@@ -452,6 +512,61 @@ def patch_data_file(league, refs):
     return f"patched the REFS block of {league.data_file}"
 
 
+def patch_pens_only(league, dry_run=False):
+    """Update the pen column from data/ref_pens.json and touch nothing else.
+
+    ONE FIELD, IN PLACE — not a rewritten block. The full build regenerates the
+    whole REFS literal from its own computation, which is correct for it and
+    wrong here for two reasons: it needs a season CSV this cannot always fetch,
+    and the shipped rows now carry fields it does not know about. An official
+    BORROWED from another division (data/cross_refs.py) is marked with one, and
+    re-emitting the block through refs_block would drop that marker while
+    appearing to succeed — the row would stay, silently reclassified as a
+    measured record of this division.
+
+    Returns (updated, missing, total).
+    """
+    path = league.path(league.data_file)
+    if not path.exists():
+        return 0, [], 0
+    pens = seeded_pens(league)
+    if not pens:
+        return 0, [], 0
+    src = path.read_text(encoding="utf-8")
+    block = re.search(r"const REFS = \[(.*?)\];", src, re.S)
+    if not block:
+        sys.exit(f"ERROR: could not find the REFS block in {league.data_file}.")
+
+    seen, updated = set(), 0
+    ROW = re.compile(r"(\{n:(\".*?\"),region:\".*?\",matches:(?:null|[\d.]+),"
+                     r"ypg:(?:null|[\d.]+),red:(?:null|[\d.]+),pen:)(null|[\d.]+)")
+
+    def sub(m):
+        nonlocal updated
+        name = json.loads(m.group(2))
+        parts = name.split()
+        key = (parts[0][0] + " " + parts[-1]).lower()
+        if key not in pens:
+            return m.group(0)
+        seen.add(key)
+        want = repr(pens[key]) if pens[key] != int(pens[key]) else str(pens[key])
+        if m.group(3) == want:
+            return m.group(0)
+        updated += 1
+        return m.group(1) + want
+
+    body, n = ROW.subn(sub, block.group(1))
+    if not n:
+        sys.exit(f"ERROR: no referee rows matched in {league.data_file} — the row "
+                 "format has changed and this would have reported 0 updates "
+                 "rather than failing.")
+    missing = sorted(k for k in pens if k not in seen)
+    if updated and not dry_run:
+        path.write_text(src[:block.start(1)] + body + src[block.end(1):],
+                        encoding="utf-8")
+    return updated, missing, n
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--league", default="PL",
@@ -460,7 +575,22 @@ def main():
     ap.add_argument("--csv", help="local season CSV instead of fetching")
     ap.add_argument("--dry-run", action="store_true",
                     help="print the ranking, write nothing")
+    ap.add_argument("--pens-only", action="store_true",
+                    help="apply data/ref_pens.json to the shipped table and do "
+                         "nothing else — no fetch, no recomputation")
     args = ap.parse_args()
+
+    if args.pens_only:
+        for code in sorted(leagues.LEAGUES) if args.league == "ALL" else [args.league]:
+            L = leagues.LEAGUES[code]
+            updated, missing, rows = patch_pens_only(L, args.dry_run)
+            print(f"{L.name}: {updated} of {rows} referee row(s) given a penalty rate"
+                  + (" (--dry-run: nothing written)" if args.dry_run and updated else ""))
+            for k in missing:
+                print(f"  WARNING: data/ref_pens.json names '{k}' for {code}, and no "
+                      "official in that table matches — the figure is being kept "
+                      "and applied to nobody")
+        return
 
     league = leagues.get(args.league)
     if league.referee_source not in ("football-data", "api-football"):
@@ -506,7 +636,8 @@ def main():
                  "referee on any of them. This source does not publish "
                  f"referees for {league.name}; refusing to write an empty set.")
 
-    refs = build_refs(tally, previous_details(league), league.min_ref_matches)
+    refs = build_refs(tally, previous_details(league), league.min_ref_matches,
+                      seeded_pens(league))
     if not refs:
         sys.exit(f"ERROR: no referee reached {league.min_ref_matches} matches "
                  f"in {len(rows)} rows — partial season; refusing to write.")

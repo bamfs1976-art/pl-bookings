@@ -67,3 +67,13 @@ data/*_player_matches.json
 data/*_match_history.json
 !data/player_matches_status.txt
 !data/fit_report.txt
+# ...and the HAND-SEEDED PENALTY COLUMN, which is a source and not an output.
+# No free feed carries penalties per referee, so data/build_refs.py has always
+# written pen:null; these figures are read off published fixture graphics and
+# typed in, with the source and read-date beside each. data/pl_data.js is
+# rebuilt from the harvest, and build_refs re-reads this file on every run — so
+# an uncommitted seed is not a lost convenience, it is a column that silently
+# empties again on the next scheduled build. It is also the only record of
+# WHERE each figure came from, which is the whole basis for admitting
+# third-party data at all.
+!data/ref_pens.json

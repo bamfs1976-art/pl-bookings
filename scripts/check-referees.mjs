@@ -814,6 +814,97 @@ assert.ok(/plb_card_predictions/.test(calib) && !/rest\/v1\/plb_predictions/.tes
     'league rate and labelled as such)');
 }
 
+/* ---- the penalty column, which is hand-entered from a third party --------
+ *
+ * Every other number on a referee row is COUNTED, from public-domain match
+ * records this repository reads itself. The penalty column is not: that source
+ * carries no penalties, nothing free does, and the column sat empty on all
+ * three desks. The figures in data/ref_pens.json are read off published
+ * fixture graphics and typed in by hand.
+ *
+ * That is admissible for exactly one reason — NOTHING IS PRICED OFF IT — and
+ * the day that stops being true, hand-entered third-party data starts moving
+ * probabilities. So the first assertion here is the one that matters, and it
+ * is a negative: the pricing core must never read the field.
+ */
+{
+  const pens = JSON.parse(readFileSync(join(root, 'data', 'ref_pens.json'), 'utf8'));
+  const entries = pens.entries || [];
+  assert.ok(entries.length, 'data/ref_pens.json holds no figures');
+
+  /* THE LOAD-BEARING ONE. assets/core.js is where every price is computed; a
+     read of `.pen` there means a graphic somebody screenshotted is in the
+     model. If penalties ever DO belong in the model, they need a counted
+     source first, and this assertion is the conversation about it. */
+  const core = readFileSync(join(root, 'assets', 'core.js'), 'utf8');
+  assert.ok(!/\.pen\b/.test(core),
+    'assets/core.js reads the referee penalty column. Every other figure on a ' +
+    'referee row is counted from match records; this one is typed in by hand ' +
+    'from a third-party fixture graphic (data/ref_pens.json), and it is only ' +
+    'admissible while it is displayed and not priced.');
+
+  const seen = new Set();
+  for (const e of entries) {
+    const where = `data/ref_pens.json entry ${JSON.stringify(e.ref || e)}`;
+    assert.ok(e.league, `${where} names no league`);
+    assert.ok(typeof e.ref === 'string' && e.ref.trim().split(/\s+/).length >= 2,
+      `${where} has no full name — the key is initial-plus-surname, so a ` +
+      'one-word name would match nobody and be dropped without a word');
+    assert.ok(typeof e.pen === 'number' && e.pen >= 0 && e.pen <= 1,
+      `${where} has a penalty rate of ${e.pen}. Penalties a game live around ` +
+      '0.3 in these divisions; anything above 1 is a decimal point in the ' +
+      'wrong place, and that is what a hand-entered column gets wrong.');
+    assert.ok(e.source && /\S/.test(e.source),
+      `${where} has no source. A hand-entered figure nobody can trace is a ` +
+      'figure nobody can check or correct.');
+    assert.ok(/^\d{4}-\d{2}-\d{2}$/.test(e.seen || ''),
+      `${where} does not say when it was read, so nothing can tell how stale ` +
+      'it is');
+    const key = e.league + '|' + e.ref;
+    assert.ok(!seen.has(key), `${where} appears twice`);
+    seen.add(key);
+  }
+
+  /* AND EVERY NAME REACHES AN OFFICIAL. A figure keyed to somebody who is not
+     in the table is applied to nobody, and the build says so only in a log
+     line no one reads. */
+  let applied = 0;
+  for (const e of entries) {
+    const file = { PL: 'data/pl_data.js', EFLC: 'data/eflc_data.js',
+                   LL: 'data/laliga_data.js' }[e.league];
+    assert.ok(file, `data/ref_pens.json names league ${e.league}, which has no dataset`);
+    const c = {};
+    vm.createContext(c);
+    vm.runInContext(readFileSync(join(root, file), 'utf8'), c);
+    const row = vm.runInContext('REFS', c).find((r) => r.n === e.ref);
+    assert.ok(row,
+      `data/ref_pens.json gives ${e.ref} a penalty rate, and ${file} has no ` +
+      'official of that name — the figure is applied to nobody');
+    assert.equal(row.pen, e.pen,
+      `${file}: ${e.ref} carries pen ${row.pen} but the seed says ${e.pen}. ` +
+      'Run: python3 data/build_refs.py --pens-only --league ALL');
+    applied++;
+  }
+
+  /* THE REST STAY NULL, NOT ZERO. Three officials of seventy-odd have a figure;
+     a zero for the others would read as "he has never given one". */
+  for (const [, file] of [['PL', 'data/pl_data.js'], ['EFLC', 'data/eflc_data.js'],
+                          ['LL', 'data/laliga_data.js']]) {
+    const c = {};
+    vm.createContext(c);
+    vm.runInContext(readFileSync(join(root, file), 'utf8'), c);
+    for (const r of vm.runInContext('REFS', c)) {
+      assert.ok(r.pen === null || typeof r.pen === 'number',
+        `${file}: ${r.n} has a penalty rate that is neither a number nor null`);
+      assert.notEqual(r.pen, 0,
+        `${file}: ${r.n} has pen:0, which the table draws as "0.00" and reads ` +
+        'as an official who has never given a penalty. Unknown is null.');
+    }
+  }
+  console.log(`  ok - ${applied} hand-seeded penalty rate(s), each with a source ` +
+    'and a date, applied to a real official, and read by no model');
+}
+
 console.log('check-referees OK: the appointment joins across two id spaces, a ' +
   'hand pick still wins, the dropdown shows what the model prices with, all ' +
   'three leagues are harvested on a schedule that can catch them, and every ' +
