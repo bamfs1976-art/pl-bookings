@@ -76,10 +76,33 @@ assert.ok(probed >= 10,
 /* THE DOCSTRING MUST KEEP SAYING SO. This is the one caveat a reader needs
    before trusting an output file, and it is exactly the kind of warning that
    gets tidied away once the code looks finished. */
-assert.ok(/WITHOUT ACCESS TO THE API/.test(src),
-  'the module no longer says that its response shapes were never verified. ' +
-  'Delete that only when the probes have landed and the parsers have been ' +
-  'reconciled against them — not because the code looks settled.');
+/* The caveat has EARNED its change: the probes landed and the parsers were
+   reconciled, so the module no longer claims nothing is verified. What it must
+   still do is name what is NOT — the two that were never probed. A module that
+   quietly stops distinguishing verified from assumed is back where it started
+   with a more confident tone. */
+assert.ok(/STILL UNVERIFIED/.test(src),
+  'data/harvest_extra.py no longer names which endpoints are still unverified. ' +
+  'Ten of eleven were reconciled against recorded probes; /sidelined was not, ' +
+  'and neither was whether /fixtures?live= inlines events. Saying so is the ' +
+  'difference between evidence and a confident tone.');
+assert.ok(/sidelined/.test(src.slice(0, src.indexOf('import argparse'))),
+  'the docstring no longer names /sidelined as unprobed');
+/* AND THE FINDING ITSELF, which is the one a future edit is most likely to
+   undo because it looks like defensive noise. */
+assert.ok(/def collapse_second_yellow\(/.test(src),
+  'collapse_second_yellow is gone. The feed sends a second-yellow dismissal ' +
+  'as two yellows AND a red at the same minute — no "Second Yellow card" ' +
+  'detail exists — so counting the events straight gives three cards for one ' +
+  'sending-off, which is the arithmetic build_bookings.cards_in() exists to ' +
+  'prevent, on a leaderboard, inflating the players at the top of it.');
+{
+  const lc2 = read('assets/livecards.js');
+  assert.ok(/idx\[k\]\.yc >= 2 && idx\[k\]\.rc > 0/.test(lc2),
+    'assets/livecards.js does not collapse a second yellow. The live ticker ' +
+    'reads the same events feed and has the same exposure: two yellows and a ' +
+    'red for one man would count as three cards, in front of a reader.');
+}
 
 /* ---- 3. every output file is OPTIONAL --------------------------------- */
 /* None of these exist yet, and most will not exist for a division until its

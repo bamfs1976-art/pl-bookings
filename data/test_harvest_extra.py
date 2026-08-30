@@ -118,16 +118,57 @@ EV = {"response": [
 ]}
 ev = X.parse_events(EV, "PL", 1)
 check("events: goals are not cards", len(ev), 3)
+# CHRONOLOGICAL, not feed order. Collapsing a second yellow has to reorder
+# anyway — the card it produces carries the red's minute — so the list is
+# sorted by minute, which is also the order a reader of a live ticker expects.
+check("events: sorted by minute", [e["m"] for e in ev], [23, 71, 93])
 check("events: a second yellow is its own kind", [e["k"] for e in ev],
-      ["Y", "Y2", "R"])
-check("events: stoppage time is added to the minute", ev[1]["m"], 93)
-check("events: both clubs resolve", [e["c"] for e in ev], ["ARS", "ARS", "CHE"])
+      ["Y", "R", "Y2"])
+check("events: stoppage time is added to the minute",
+      [e["m"] for e in ev if e["k"] == "Y2"], [93])
+check("events: both clubs resolve", [e["c"] for e in ev], ["ARS", "CHE", "ARS"])
 # AN UNKNOWN CARD LABEL MUST STOP THE HARVEST. Dropping it silently shrinks
 # every count that reads this file, and the count still looks plausible.
 refuses("events: an unrecognised card detail", lambda: X.parse_events(
     {"response": [{"type": "Card", "detail": "Sin Bin", "team": {"name": ARS},
                    "player": {"name": "X"}, "time": {"elapsed": 5}}]}, "PL", 1))
 refuses("events", lambda: X.parse_events({"response": [{"type": "Card"}]}, "PL", 1))
+
+# THE SEQUENCE THE FEED ACTUALLY SENDS, from data/probes/fixtures_events.json.
+# There is no "Second Yellow card" detail: a dismissal for a second booking
+# arrives as THREE events — two yellows and a red carrying the same minute as
+# the second one. Counted straight that is three cards for one sending-off,
+# the arithmetic build_bookings.cards_in() exists to prevent, and it would
+# have shipped inflating exactly the players a leaderboard puts at the top.
+REAL = {"response": [
+    {"type": "Card", "detail": "Yellow Card", "team": {"name": ARS},
+     "player": {"name": "Josh Coburn"}, "time": {"elapsed": 15, "extra": None}},
+    {"type": "Card", "detail": "Yellow Card", "team": {"name": CHE},
+     "player": {"name": "Adam Randell"}, "time": {"elapsed": 23, "extra": None}},
+    {"type": "Card", "detail": "Yellow Card", "team": {"name": CHE},
+     "player": {"name": "Adam Randell"}, "time": {"elapsed": 36, "extra": None}},
+    {"type": "Card", "detail": "Red Card", "team": {"name": CHE},
+     "player": {"name": "Adam Randell"}, "time": {"elapsed": 36, "extra": None}},
+]}
+real = X.parse_events(REAL, "PL", 1)
+check("a second-yellow dismissal is TWO cards, not three", len(real), 3)
+check("and the second one is marked as the dismissal it is",
+      sorted(r["k"] for r in real), ["Y", "Y", "Y2"])
+check("the collapsed card keeps the red's minute",
+      [r["m"] for r in real if r["k"] == "Y2"], [36])
+# A STRAIGHT RED IS UNTOUCHED — one offence, one card.
+straight = X.parse_events({"response": [
+    {"type": "Card", "detail": "Red Card", "team": {"name": ARS},
+     "player": {"name": "S"}, "time": {"elapsed": 20, "extra": None}}]}, "PL", 1)
+check("a straight red is the one card it is", [r["k"] for r in straight], ["R"])
+# AND A BOOKING PLUS A LATER STRAIGHT RED IS TWO OFFENCES AND TWO CARDS.
+two_off = X.parse_events({"response": [
+    {"type": "Card", "detail": "Yellow Card", "team": {"name": ARS},
+     "player": {"name": "T"}, "time": {"elapsed": 10, "extra": None}},
+    {"type": "Card", "detail": "Red Card", "team": {"name": ARS},
+     "player": {"name": "T"}, "time": {"elapsed": 70, "extra": None}}]}, "PL", 1)
+check("a booking and a later straight red stay two cards",
+      sorted(r["k"] for r in two_off), ["R", "Y"])
 
 # ── transfers ────────────────────────────────────────────────────────────
 TR = {"response": [
@@ -304,5 +345,6 @@ if FAIL:
 print(f"harvest_extra OK: {passed} checks over 11 endpoints — clubs resolve to "
       "short codes, a second yellow is its own kind, stoppage time is added, "
       "only card markets are read from the odds, and every parser REFUSES a "
-      "shape it was not written for rather than returning nothing. The shapes "
-      "are assumed, not verified: run --probe.")
+      "shape it was not written for rather than returning nothing. Ten of the "
+      "eleven shapes are now RECORDED in data/probes/ and reconciled; "
+      "/sidelined is not, and is named as such.")

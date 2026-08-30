@@ -116,6 +116,21 @@
       else if (e.k === 'R') { idx[key].rc += 1; idx[key].off = true; }
       else idx[key].yc += 1;   /* an unrecognised label is still a card shown */
     }
+    /* TWO YELLOWS AND A RED ARE TWO CARDS, NOT THREE — and this is not a
+       hypothetical. The feed does NOT send a "Second Yellow card" detail. A
+       recorded payload (data/probes/fixtures_events.json, Bristol City v
+       Millwall) shows Adam Randell's dismissal arriving as THREE events: a
+       yellow at 23', a yellow at 36', and a red at 36'. Tallied straight that
+       is three cards for one sending-off, which is precisely the arithmetic
+       data/build_bookings.py's cards_in() exists to prevent — and here it
+       would be on a live page, counting up in front of a reader.
+       Same rule, same words: a red alongside two or more yellows is the
+       dismissal FOR the second one, so it adds no card of its own. A STRAIGHT
+       red is untouched and stays the one card it is. */
+    for (var k in idx) {
+      if (!Object.prototype.hasOwnProperty.call(idx, k)) continue;
+      if (idx[k].yc >= 2 && idx[k].rc > 0) { idx[k].rc = 0; idx[k].off = true; }
+    }
     return { idx: idx, elClub: elClub };
   }
 

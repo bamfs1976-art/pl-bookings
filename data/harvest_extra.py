@@ -38,10 +38,29 @@ happens to offer.
 WHY EVERY PARSER REFUSES RATHER THAN GUESSES
 ═══════════════════════════════════════════════════════════════════════════
 
-This module was written WITHOUT ACCESS TO THE API. The sandbox it was built in
-cannot reach v3.football.api-sports.io and holds no key, so not one of these
-response shapes was verified against a live payload — they are written from the
-published shape of the v3 API and nothing more.
+This module was written WITHOUT ACCESS TO THE API — the sandbox it was built in
+cannot reach v3.football.api-sports.io and holds no key — so every response
+shape here began as the published v3 shape and nothing more.
+
+THE PROBES HAVE SINCE LANDED, and data/probes/ holds one recorded payload per
+endpoint. Ten of the eleven parsers met a real response and needed no change.
+Two did, and neither could have been found any other way:
+
+  * /odds carries 184 distinct markets across 12 bookmakers and 840KB for ONE
+    fixture, fourteen of them mentioning a card. A substring match swept up
+    handicaps and novelties and still missed the singular "Red Card In The
+    Match". It is an exact allowlist of the three markets this desk quotes.
+
+  * /fixtures/events DOES NOT SEND a "Second Yellow card" detail, whatever the
+    documentation lists. A dismissal for a second booking arrives as THREE
+    events — two yellows and a red carrying the same minute as the second.
+    Counted straight that is three cards for one sending-off. See
+    collapse_second_yellow.
+
+STILL UNVERIFIED, and named so nobody assumes otherwise:
+  * /sidelined — the probe had no player id to spend a call on.
+  * whether /fixtures?live= inlines events (netlify/functions/live-cards.js
+    takes both paths and reports which ran in `upstream`).
 
 That is a perfectly ordinary way to write a client and a catastrophic way to
 write one for THIS repository, where the recurring failure is a join that finds
@@ -291,7 +310,50 @@ def parse_events(payload, code, fixture_id):
             "m": None if minute is None else int(minute + extra),
             "k": kind,
         })
-    return out
+    return collapse_second_yellow(out)
+
+
+def collapse_second_yellow(cards):
+    """Two yellows and a red for one man are TWO cards, not three.
+
+    THE PROBE FOUND THIS AND NOTHING ELSE COULD HAVE. The parser was written
+    expecting a 'Second Yellow card' detail, because that is what the
+    documented event details list. The recorded payload for Bristol City v
+    Millwall (data/probes/fixtures_events.json) shows what the feed actually
+    sends when Adam Randell is dismissed for a second booking:
+
+        23'  Adam Randell  'Yellow Card'  Foul
+        36'  Adam Randell  'Yellow Card'  Foul
+        36'  Adam Randell  'Red Card'     Foul
+
+    Three events, no 'Second Yellow card' anywhere, and the red carrying the
+    same minute as the second yellow. Counted naively that is three cards for
+    one dismissal — which is EXACTLY the arithmetic data/build_bookings.py's
+    cards_in() exists to prevent, and it would have shipped as a leaderboard
+    that inflates precisely the players it puts at the top.
+
+    So the same rule is applied here, in the same words: a red alongside two
+    or more yellows is the dismissal FOR the second one. The last yellow and
+    the red collapse into a single Y2, which carries the red's minute; a
+    STRAIGHT red (nothing, or one earlier booking, then off) is untouched and
+    stays the one card it is.
+    """
+    by_player = {}
+    for c in cards:
+        by_player.setdefault((c["c"], c["n"]), []).append(c)
+    out = []
+    for _, rows in by_player.items():
+        yellows = [r for r in rows if r["k"] == "Y"]
+        reds = [r for r in rows if r["k"] == "R"]
+        if len(yellows) >= 2 and reds:
+            keep = [r for r in rows if r is not yellows[-1] and r not in reds]
+            second = dict(yellows[-1])
+            second["k"] = "Y2"
+            second["m"] = reds[0]["m"] if reds[0]["m"] is not None else second["m"]
+            out += keep + [second] + reds[1:]
+        else:
+            out += rows
+    return sorted(out, key=lambda r: (r["m"] is None, r["m"] or 0))
 
 
 def harvest_events(host, key, league, fixture_ids):
