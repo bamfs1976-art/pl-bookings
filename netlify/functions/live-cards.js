@@ -31,10 +31,11 @@
  *
  * WHAT IT SPENDS, PER REFRESH. One /fixtures?live= call for all the requested
  * divisions at once, plus — only if that response does not already carry the
- * events — one /fixtures/events per in-play fixture. Whether the live payload
- * inlines events is NOT something this repository has been able to verify (see
- * data/harvest_extra.py: the module was written without a key), so the code
- * takes the cheap path when it can and the expensive one when it must, and
+ * events — one /fixtures/events per in-play fixture. It DOES carry them:
+ * probed 2026-08-30 against three live fixtures, all three holding a
+ * populated `events` array (data/probes/fixtures_live.json). So the cheap
+ * path is the one that runs, one call a refresh, and the fan-out below is the
+ * fallback for a day the feed changes. The code takes whichever it must and
  * REPORTS which in `upstream`. That number is the answer to "what is this
  * costing", and it is in the response rather than a log so it can be read from
  * the page.
@@ -69,6 +70,14 @@ const TTL = 60;
  * Saturday's twenty in-play fixtures it is 1,200 an hour — 7,200 over a day of
  * football, against an allowance of 7,500. data/api_budget.py carries both
  * branches precisely because the gap between them is the whole risk.
+ *
+ * WHICH PATH RUNS IS NOW KNOWN, and it is the cheap one: probed 2026-08-30,
+ * three live fixtures, every one carrying a populated `events` array (see
+ * data/probes/fixtures_live.json). So this is not dead code and not the
+ * common case either — it is what happens the day the feed stops inlining,
+ * which nothing would announce. The ticker would simply start costing twenty
+ * times more, and FANOUT_TTL is what keeps that inside the allowance long
+ * enough for somebody to notice.
  *
  * So the path that costs twenty times as much refreshes three times as slowly,
  * and the response says which TTL it was given. This is self-regulating: no

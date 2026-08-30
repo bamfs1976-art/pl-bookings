@@ -57,10 +57,19 @@ Two did, and neither could have been found any other way:
     Counted straight that is three cards for one sending-off. See
     collapse_second_yellow.
 
+  * /fixtures?live= DOES inline each match's events, and they are POPULATED.
+    Probed 2026-08-30T13:22Z against three Premier League fixtures 21 minutes
+    in: all three carried an `events` array, one of them holding two goals.
+    That last part is the half that mattered. A key present but always EMPTY
+    would have been worse than a key absent — absent makes
+    netlify/functions/live-cards.js fan out and fetch the real events, whereas
+    empty-but-present makes it take the cheap branch and report that nobody
+    has been booked, for ever. So the ticker costs ONE call a refresh, and
+    FANOUT_TTL is the fallback for a day the feed changes rather than a path
+    taken today.
+
 STILL UNVERIFIED, and named so nobody assumes otherwise:
   * /sidelined — the probe had no player id to spend a call on.
-  * whether /fixtures?live= inlines events (netlify/functions/live-cards.js
-    takes both paths and reports which ran in `upstream`).
 
 That is a perfectly ordinary way to write a client and a catastrophic way to
 write one for THIS repository, where the recurring failure is a join that finds

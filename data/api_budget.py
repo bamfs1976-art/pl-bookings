@@ -196,7 +196,7 @@ def budget(shapes, day):
         + 2                                      # cup/European dates, 2 seasons
     )
     rows.append(("data-refresh.yml", n, daily,
-                 "season form: /players is per club and paged 20", None))
+                 "season form: /players is per club and paged 20", None, None))
 
     # ── fixtures.yml: appointments, and the ledger after the football ────
     n = firings("fixtures.yml")
@@ -204,15 +204,15 @@ def budget(shapes, day):
     # division. The per-match walk is incremental, so across the DAY it costs
     # one call per match that finished, however many runs there are.
     rows.append(("fixtures.yml", n, 3 + 3,
-                 "3 x /fixtures + 3 x ledger listing, every run", None))
+                 "3 x /fixtures + 3 x ledger listing, every run", None, None))
     rows.append(("fixtures.yml (ledger walk)", 1, played,
-                 f"/fixtures/players, once per match finished ({played})", None))
+                 f"/fixtures/players, once per match finished ({played})", None, None))
 
     # ── lineups.yml: team sheets in the hour before kick-off ─────────────
     n = firings("lineups.yml")
     rows.append(("lineups.yml", 1, played,
                  f"--within-hours 1, so ~one call a match ({played}); "
-                 f"{n} firings, most of them empty", None))
+                 f"{n} firings, most of them empty", None, None))
 
     # ── extra-feeds.yml: the eleven endpoints ───────────────────────────
     ex = firings("extra-feeds.yml")
@@ -223,14 +223,14 @@ def budget(shapes, day):
                  + clubs                # /teams/statistics, one a club
                  + clubs                # /transfers, one a club
                  + 6,                   # top yellow + red cards, two a division
-                 "standings, team stats, transfers, card leaders", None))
+                 "standings, team stats, transfers, card leaders", None, None))
     rows.append(("extra-feeds.yml (per fixture)", 1, played * 2,
                  f"/events + /fixtures/statistics, once ever per match "
-                 f"({played} finished x 2)", None))
+                 f"({played} finished x 2)", None, None))
     rows.append(("extra-feeds.yml (moving half)", ex,
                  3 + upcoming * 2,
                  f"injuries (3) + odds and predictions on {upcoming} upcoming",
-                 None))
+                 None, None))
 
     # ── the live ticker: the only term driven by READERS, not by football ──
     #
@@ -254,16 +254,29 @@ def budget(shapes, day):
     cheap_refreshes = int(3600 / ttl) * LIVE_WINDOW_HOURS
     fan_refreshes = int(3600 / fanout_ttl) * LIVE_WINDOW_HOURS
     # THESE TWO CANNOT BOTH HAPPEN — the live payload either inlines its
-    # events or it does not — so they are marked as alternatives and the total
-    # takes the worse of them rather than adding both. Summing them would
-    # overstate the bill by a branch that never runs, and a budget that cries
-    # wolf is a budget that gets its ceiling raised.
+    # events or it does not — so they are marked as alternatives rather than
+    # added. Summing them would overstate the bill by a branch that does not
+    # run, and a budget that cries wolf is a budget that gets its ceiling
+    # raised.
+    #
+    # AND WE NOW KNOW WHICH ONE RUNS. The probe of 2026-08-30T13:22Z caught
+    # three Premier League fixtures 21 minutes in, and all three carried a
+    # populated `events` array — two Chelsea goals among them, so the key is
+    # not merely present and empty, which would have been the worse outcome:
+    # the function would have taken the cheap branch and reported no cards
+    # for ever. See data/probes/fixtures_live.json.
+    #
+    # So the OBSERVED branch is what the day is totalled on, and the other is
+    # carried as a bounded worst case the ceiling is still checked against.
+    # It is not dead code — it is what happens if the feed ever stops
+    # inlining, and the whole point of FANOUT_TTL is that the day survives
+    # that without anybody noticing in time to intervene.
     rows.append(("live-cards (events inlined)", cheap_refreshes, 1,
-                 f"1 call a refresh, {3600 // ttl}/hour x {LIVE_WINDOW_HOURS}h",
-                 "live"))
+                 f"1 call a refresh, {3600 // ttl}/hour x {LIVE_WINDOW_HOURS}h "
+                 "— OBSERVED 2026-08-30", "live", True))
     rows.append(("live-cards (events NOT inlined)", fan_refreshes, 1 + concurrent,
                  f"1 + {concurrent} live matches, capped at {cap}, held "
-                 f"{fanout_ttl}s — UNVERIFIED branch", "live"))
+                 f"{fanout_ttl}s — fallback, not observed", "live", False))
 
     return rows, {"clubs": clubs, "played": played, "upcoming": upcoming,
                   "live_refreshes": cheap_refreshes, "live_concurrent": concurrent}
@@ -297,17 +310,28 @@ def main():
 
     for day in ("typical", "peak"):
         rows, facts = budget(shapes, day)
-        total = sum(r * c for _, r, c, _, g in rows if g is None)
-        groups = {}
-        for _, r, c, _, g in rows:
-            if g is not None:
-                groups[g] = max(groups.get(g, 0), r * c)
-        total += sum(groups.values())
+        base = sum(r * c for _, r, c, _, g, _o in rows if g is None)
+        # An alternative group contributes the branch we have OBSERVED, and —
+        # separately — the dearest branch it could take, which is what the
+        # ceiling is judged on. Reporting only the observed one would hide a
+        # regression the day the feed changes; reporting only the worst would
+        # be quoting a bill nobody pays.
+        seen, worst = {}, {}
+        for _, r, c, _, g, o in rows:
+            if g is None:
+                continue
+            worst[g] = max(worst.get(g, 0), r * c)
+            if o:
+                seen[g] = seen.get(g, 0) + r * c
+        total = base + sum(seen.get(g, worst[g]) for g in worst)
+        worst_total = base + sum(worst.values())
         out["days"][day] = {
             "total": total,
             "facts": facts,
+            "worst_case": worst_total,
             "lines": [{"job": j, "runs": r, "per_run": c, "total": r * c,
-                       "why": w, "alternative": g} for j, r, c, w, g in rows],
+                       "why": w, "alternative": g, "observed": o}
+                      for j, r, c, w, g, o in rows],
         }
 
     if args.json:
@@ -321,12 +345,16 @@ def main():
                   f"({d['facts']['played']} matches played, "
                   f"{d['facts']['upcoming']} upcoming)")
             for ln in d["lines"]:
-                mark = "  or " if ln["alternative"] else "     "
+                mark = ("  >  " if ln["observed"]
+                        else "  or " if ln["alternative"] else "     ")
                 print(f"{mark}{ln['total']:5}  = {ln['runs']:3} x {ln['per_run']:4}"
                       f"  {ln['job']:32} {ln['why']}")
             pct = d["total"] / DAILY_ALLOWANCE * 100
-            print(f"  {d['total']:5}  TOTAL — {pct:.0f}% of {DAILY_ALLOWANCE}, "
-                  f"{DAILY_ALLOWANCE - d['total']} spare")
+            wpct = d["worst_case"] / DAILY_ALLOWANCE * 100
+            print(f"  {d['total']:5}  TOTAL as observed — {pct:.0f}% of "
+                  f"{DAILY_ALLOWANCE}, {DAILY_ALLOWANCE - d['total']} spare")
+            print(f"  {d['worst_case']:5}  worst case if the live feed stops "
+                  f"inlining events — {wpct:.0f}%")
         w = season_worst_case(shapes)
         print(f"\nthe incremental walk, on the last day of the season:")
         print(f"  {w['season_fixtures']} fixtures across three divisions")
@@ -335,7 +363,7 @@ def main():
         print(f"  {w['as_built']} extra as built — a recorded fixture is never "
               "fetched twice")
 
-    peak = out["days"]["peak"]["total"]
+    peak = out["days"]["peak"]["worst_case"]
     if peak > args.ceiling:
         sys.exit(f"\nERROR: a peak day is {peak} calls, over the {args.ceiling} "
                  f"ceiling. The allowance is {DAILY_ALLOWANCE}; the ceiling is "

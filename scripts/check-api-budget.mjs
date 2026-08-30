@@ -16,8 +16,10 @@
  *   2. THE UNCAPPED TERM IS THE ONE NOBODY SCHEDULES. live-cards.js is a
  *      browser-facing function on a metered API, and its cost scales with
  *      READERS. Its fan-out branch — one call per live match — is 2,520 calls
- *      on a Saturday against 360 for the cheap one, and which branch runs has
- *      never been verified.
+ *      on a Saturday against 360 for the cheap one. The probe of 2026-08-30
+ *      settled that it takes the CHEAP one — so the observed bill is 360 and
+ *      the fan-out is a fallback. Both are still modelled, and the ceiling is
+ *      judged on the fallback, because nothing announces the day it changes.
  *
  * So the budget is computed from the workflows and the function themselves
  * (data/api_budget.py) rather than from a number somebody typed, and this
@@ -57,6 +59,16 @@ if (budget) {
     ok(d && typeof d.total === 'number', `no ${day} day in the budget`);
     ok(d.total <= ceiling,
       `a ${day} day is ${d.total} calls, over the ${ceiling} ceiling`);
+    /* THE CEILING IS JUDGED ON THE WORST CASE, not the comfortable number.
+       The live feed inlines its events today, which is why the observed total
+       is what it is; the day it stops, the fan-out branch runs and nobody
+       finds out from a dashboard. The budget has to survive that silently. */
+    ok(d.worst_case <= ceiling,
+      `a ${day} day would be ${d.worst_case} calls if the live feed stopped ` +
+      `inlining events, over the ${ceiling} ceiling — the fallback must fit ` +
+      'inside the allowance too, because nothing announces the switch');
+    ok(d.worst_case >= d.total,
+      'the worst case cannot be cheaper than the observed cost');
     ok(d.total > 0, `a ${day} day computed as ${d.total} calls, which cannot be right`);
   }
   /* The peak day must genuinely cost more than the typical one. If they match,
@@ -98,6 +110,46 @@ if (budget) {
   ok(fan.total > cheap.total,
     'the fan-out branch is modelled as no dearer than the inlined one, which ' +
     'is the whole reason it is capped and cached for longer');
+  /* EXACTLY ONE BRANCH IS THE OBSERVED ONE. Marking both, or neither, means
+     the total is being taken from a guess again — and the probe of
+     2026-08-30 settled which it is. */
+  ok(live.filter((l) => l.observed).length === 1,
+    'exactly one live-cards branch must be marked as observed; the probe ' +
+    'settled which one runs, and a budget that forgets that is back to ' +
+    'quoting a range');
+  ok(cheap.observed && !fan.observed,
+    'the INLINED branch is the observed one — data/probes/fixtures_live.json, ' +
+    '2026-08-30T13:22Z, three live fixtures all carrying a populated events array');
+}
+
+/* ── 1b. the script's OWN ceiling is judged on the fallback ──────────────
+   Run standalone, api_budget.py exits non-zero when the day is over budget,
+   and that exit is what a human sees. It has to fail on the same number this
+   guard fails on, or the two disagree — the exact "N copies of one rule" this
+   whole file exists to catch. So this checks the BEHAVIOUR rather than
+   restating the rule: given a ceiling above the observed cost but below the
+   fallback, the script must still refuse. */
+if (budget) {
+  const observed = budget.days.peak.total;
+  const worst = budget.days.peak.worst_case;
+  if (worst > observed) {
+    const between = Math.floor((observed + worst) / 2);
+    const probe = spawnSync('python3',
+      [join(root, 'data/api_budget.py'), '--ceiling', String(between)],
+      { encoding: 'utf8' });
+    ok(probe.status !== 0,
+      `api_budget.py accepted a ceiling of ${between}, which is above the ` +
+      `observed peak (${observed}) but below the fallback (${worst}). Its own ` +
+      'exit must be judged on the branch we are not currently on, because ' +
+      'nothing announces the day the feed switches to it');
+    const far = worst + 1000;
+    const okRun = spawnSync('python3',
+      [join(root, 'data/api_budget.py'), '--ceiling', String(far)],
+      { encoding: 'utf8' });
+    ok(okRun.status === 0,
+      `api_budget.py refused a ceiling of ${far}, which is above even the ` +
+      'fallback — it is now failing on something other than the budget');
+  }
 }
 
 /* ── 2. the model reads the schedules, it does not keep its own copy ─────── */
@@ -212,9 +264,11 @@ if (problems.length) {
 }
 
 const t = budget.days.typical.total, pk = budget.days.peak.total;
+const wc = budget.days.peak.worst_case;
 console.log(
-  `check-api-budget OK: ${t} calls on a typical day and ${pk} at peak against ` +
-  `an allowance of ${budget.allowance} (${Math.round(pk / budget.allowance * 100)}%), ` +
+  `check-api-budget OK: ${t} calls on a typical day and ${pk} at peak (${wc} ` +
+  'if the live feed ever stops inlining events) against ' +
+  `an allowance of ${budget.allowance} (${Math.round(wc / budget.allowance * 100)}% at worst), ` +
   'every schedule read from the workflows themselves, the live ticker\'s ' +
   'expensive branch cached longer than its cheap one and polled through one ' +
   'shared loop, and the true usage recorded from the API on every exit path');

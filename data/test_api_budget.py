@@ -76,23 +76,51 @@ typical, _ = B.budget(shapes, "typical")
 peak, facts = B.budget(shapes, "peak")
 
 
-def total(rows):
-    t = sum(r * c for _, r, c, _, g in rows if g is None)
-    groups = {}
-    for _, r, c, _, g in rows:
-        if g is not None:
-            groups[g] = max(groups.get(g, 0), r * c)
-    return t + sum(groups.values())
+def total(rows, worst=False):
+    """The day's cost. `worst` takes the dearest branch of each alternative
+    rather than the one actually observed."""
+    t = sum(r * c for _, r, c, _, g, _o in rows if g is None)
+    seen, dearest = {}, {}
+    for _, r, c, _, g, o in rows:
+        if g is None:
+            continue
+        dearest[g] = max(dearest.get(g, 0), r * c)
+        if o:
+            seen[g] = seen.get(g, 0) + r * c
+    for g in dearest:
+        t += dearest[g] if worst else seen.get(g, dearest[g])
+    return t
 
 
 check(total(peak) > total(typical), "a peak day must cost more than a typical one")
 check(total(peak) < B.DAILY_ALLOWANCE,
       f"a peak day is {total(peak)} against an allowance of {B.DAILY_ALLOWANCE}")
+# THE FALLBACK MUST FIT TOO. The live feed inlines its events today, which is
+# why the observed figure is what it is. Nothing would announce the day it
+# stops — the ticker would simply start costing twenty times more — so the
+# branch we are NOT on has to sit inside the allowance as well.
+check(total(peak, worst=True) < B.DAILY_ALLOWANCE,
+      f"the peak-day fallback is {total(peak, worst=True)} against "
+      f"{B.DAILY_ALLOWANCE}")
+check(total(peak, worst=True) > total(peak),
+      "the worst case must exceed the observed cost, or the alternatives are "
+      "not being distinguished at all")
+
+# EXACTLY ONE branch of each alternative is the observed one. Both marked, or
+# neither, and the total is back to being a guess.
+groups = {}
+for _, _r, _c, _w, g, o in peak:
+    if g is not None:
+        groups.setdefault(g, []).append(o)
+for g, flags in groups.items():
+    check(sum(1 for f in flags if f) == 1,
+          f"alternative group {g!r} has {sum(1 for f in flags if f)} observed "
+          "branches; exactly one is right")
 check(facts["played"] > 0 and facts["upcoming"] > 0, "the peak day has football in it")
 
 # Every row must carry a reason. A budget line without one is a number nobody
 # can check, and the ones that were wrong were wrong in the derivation.
-for name, runs, cost, why, _ in peak:
+for name, runs, cost, why, _g, _o in peak:
     check(bool(why and why.strip()), f"budget row {name!r} has no derivation")
     check(runs >= 0 and cost >= 0, f"budget row {name!r} has a negative term")
 
