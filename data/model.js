@@ -36,7 +36,7 @@ const CARD_MODEL = {
   },
   "twoStage": {
     "baseHazard": 0.1947,
-    "refPivotYpg": 3.71
+    "refPivotYpg": 3.696
   },
   "nbFouls": {
     "dispersion": 6
