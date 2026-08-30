@@ -1,0 +1,207 @@
+{
+  "endpoint": "players/topyellowcards",
+  "params": {
+    "league": "39",
+    "season": "2026"
+  },
+  "league": "PL",
+  "fetched": "2026-08-30T12:02Z",
+  "errors": null,
+  "results": 20,
+  "paging": {
+    "current": 1,
+    "total": 1
+  },
+  "response_sample": [
+    {
+      "player": {
+        "id": 2771,
+        "name": "O. Aina",
+        "firstname": "Temitayo Olufisayo Olaoluwa",
+        "lastname": "Aina",
+        "age": 29,
+        "birth": {
+          "date": "1996-10-08",
+          "place": "London",
+          "country": "England"
+        },
+        "nationality": "Nigeria",
+        "height": "184",
+        "weight": "82",
+        "injured": false,
+        "photo": "https://media.api-sports.io/football/players/2771.png"
+      },
+      "statistics": [
+        {
+          "team": {
+            "id": 65,
+            "name": "Nottingham Forest",
+            "logo": "https://media.api-sports.io/football/teams/65.png"
+          },
+          "league": {
+            "id": 39,
+            "name": "Premier League",
+            "country": "England",
+            "logo": "https://media.api-sports.io/football/leagues/39.png",
+            "flag": "https://media.api-sports.io/flags/gb-eng.svg",
+            "season": 2026
+          },
+          "games": {
+            "appearences": 2,
+            "lineups": 2,
+            "minutes": 160,
+            "number": 34,
+            "position": "Midfielder",
+            "rating": "7.05",
+            "captain": false
+          },
+          "substitutes": {
+            "in": 0,
+            "out": 2,
+            "bench": 0
+          },
+          "shots": {
+            "total": 1,
+            "on": 1
+          },
+          "goals": {
+            "total": 0,
+            "conceded": 0,
+            "assists": 0,
+            "saves": null
+          },
+          "passes": {
+            "total": 58,
+            "key": 4,
+            "accuracy": 63
+          },
+          "tackles": {
+            "total": 2,
+            "blocks": null,
+            "interceptions": 1
+          },
+          "duels": {
+            "total": 20,
+            "won": 10
+          },
+          "dribbles": {
+            "attempts": 7,
+            "success": 4,
+            "past": null
+          },
+          "fouls": {
+            "drawn": 2,
+            "committed": 3
+          },
+          "cards": {
+            "yellow": 2,
+            "yellowred": 0,
+            "red": 0
+          },
+          "penalty": {
+            "won": null,
+            "commited": null,
+            "scored": 0,
+            "missed": 0,
+            "saved": null
+          }
+        }
+      ]
+    },
+    {
+      "player": {
+        "id": 195103,
+        "name": "João Gomes",
+        "firstname": "João Victor",
+        "lastname": "Gomes da Silva",
+        "age": 24,
+        "birth": {
+          "date": "2001-02-12",
+          "place": "Rio de Janeiro",
+          "country": "Brazil"
+        },
+        "nationality": "Brazil",
+        "height": "176",
+        "weight": "74",
+        "injured": false,
+        "photo": "https://media.api-sports.io/football/players/195103.png"
+      },
+      "statistics": [
+        {
+          "team": {
+            "id": 66,
+            "name": "Aston Villa",
+            "logo": "https://media.api-sports.io/football/teams/66.png"
+          },
+          "league": {
+            "id": 39,
+            "name": "Premier League",
+            "country": "England",
+            "logo": "https://media.api-sports.io/football/leagues/39.png",
+            "flag": "https://media.api-sports.io/flags/gb-eng.svg",
+            "season": 2026
+          },
+          "games": {
+            "appearences": 1,
+            "lineups": 1,
+            "minutes": 40,
+            "number": 35,
+            "position": "Midfielder",
+            "rating": "5",
+            "captain": false
+          },
+          "substitutes": {
+            "in": 0,
+            "out": 0,
+            "bench": 0
+          },
+          "shots": {
+            "total": null,
+            "on": null
+          },
+          "goals": {
+            "total": 0,
+            "conceded": 0,
+            "assists": 0,
+            "saves": null
+          },
+          "passes": {
+            "total": 14,
+            "key": 1,
+            "accuracy": 100
+          },
+          "tackles": {
+            "total": 4,
+            "blocks": null,
+            "interceptions": null
+          },
+          "duels": {
+            "total": 11,
+            "won": 6
+          },
+          "dribbles": {
+            "attempts": 1,
+            "success": 1,
+            "past": null
+          },
+          "fouls": {
+            "drawn": 1,
+            "committed": 2
+          },
+          "cards": {
+            "yellow": 1,
+            "yellowred": 0,
+            "red": 1
+          },
+          "penalty": {
+            "won": null,
+            "commited": null,
+            "scored": 0,
+            "missed": 0,
+            "saved": null
+          }
+        }
+      ]
+    }
+  ]
+}

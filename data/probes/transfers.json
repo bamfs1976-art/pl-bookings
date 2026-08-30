@@ -1,0 +1,66 @@
+{
+  "endpoint": "transfers",
+  "params": {
+    "team": 33
+  },
+  "league": "PL",
+  "fetched": "2026-08-30T12:02Z",
+  "errors": null,
+  "results": 278,
+  "paging": {
+    "current": 1,
+    "total": 1
+  },
+  "response_sample": [
+    {
+      "player": {
+        "id": 19285,
+        "name": "L. Steele"
+      },
+      "update": "2023-04-05T04:02:27+00:00",
+      "transfers": [
+        {
+          "date": "2006-08-10",
+          "type": "€ 250K",
+          "teams": {
+            "in": {
+              "id": 60,
+              "name": "West Brom",
+              "logo": "https://media.api-sports.io/football/teams/60.png"
+            },
+            "out": {
+              "id": 33,
+              "name": "Manchester United",
+              "logo": "https://media.api-sports.io/football/teams/33.png"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "player": {
+        "id": 231667,
+        "name": "L. Giverin"
+      },
+      "update": "2023-09-03T13:53:31+00:00",
+      "transfers": [
+        {
+          "date": "2012-08-29",
+          "type": "Loan",
+          "teams": {
+            "in": {
+              "id": 740,
+              "name": "Antwerp",
+              "logo": "https://media.api-sports.io/football/teams/740.png"
+            },
+            "out": {
+              "id": 33,
+              "name": "Manchester United",
+              "logo": "https://media.api-sports.io/football/teams/33.png"
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

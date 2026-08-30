@@ -1,0 +1,73 @@
+{
+  "endpoint": "injuries",
+  "params": {
+    "league": "39",
+    "season": "2026"
+  },
+  "league": "PL",
+  "fetched": "2026-08-30T12:02Z",
+  "errors": null,
+  "results": 304,
+  "paging": {
+    "current": 1,
+    "total": 1
+  },
+  "response_sample": [
+    {
+      "player": {
+        "id": 30435,
+        "name": "D. Kulusevski",
+        "photo": "https://media.api-sports.io/football/players/30435.png",
+        "type": "Missing Fixture",
+        "reason": "Knee Injury"
+      },
+      "team": {
+        "id": 47,
+        "name": "Tottenham",
+        "logo": "https://media.api-sports.io/football/teams/47.png"
+      },
+      "fixture": {
+        "id": 1557386,
+        "timezone": "UTC",
+        "date": "2026-08-29T16:30:00+00:00",
+        "timestamp": 1788021000
+      },
+      "league": {
+        "id": 39,
+        "season": 2026,
+        "name": "Premier League",
+        "country": "England",
+        "logo": "https://media.api-sports.io/football/leagues/39.png",
+        "flag": "https://media.api-sports.io/flags/gb-eng.svg"
+      }
+    },
+    {
+      "player": {
+        "id": 18784,
+        "name": "J. Maddison",
+        "photo": "https://media.api-sports.io/football/players/18784.png",
+        "type": "Missing Fixture",
+        "reason": "Knock"
+      },
+      "team": {
+        "id": 47,
+        "name": "Tottenham",
+        "logo": "https://media.api-sports.io/football/teams/47.png"
+      },
+      "fixture": {
+        "id": 1557386,
+        "timezone": "UTC",
+        "date": "2026-08-29T16:30:00+00:00",
+        "timestamp": 1788021000
+      },
+      "league": {
+        "id": 39,
+        "season": 2026,
+        "name": "Premier League",
+        "country": "England",
+        "logo": "https://media.api-sports.io/football/leagues/39.png",
+        "flag": "https://media.api-sports.io/flags/gb-eng.svg"
+      }
+    }
+  ]
+}
