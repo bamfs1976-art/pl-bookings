@@ -40,6 +40,18 @@ on:
         description: "Probe every endpoint into data/probes/ and stop (~12 calls)"
         type: boolean
         default: false
+      probe_only:
+        description: "Probe ONE endpoint by name (one call, not twelve)"
+        required: false
+        default: ""
+      probe_fixture:
+        description: "Probe the per-fixture endpoints against this fixture id"
+        required: false
+        default: ""
+      probe_league:
+        description: "Division to probe (PL, EFLC, LL)"
+        required: false
+        default: "PL"
       what:
         description: "Comma-separated feeds, or 'all'"
         required: false
@@ -90,7 +102,11 @@ jobs:
       # not change nightly.
       - name: Probe every endpoint (shapes, not data)
         if: ${{ inputs.probe }}
-        run: python3 data/harvest_extra.py --probe --league PL
+        run: |
+          ARGS="--probe --league ${{ inputs.probe_league || 'PL' }}"
+          [ -n "${{ inputs.probe_only }}" ] && ARGS="$ARGS --probe-only ${{ inputs.probe_only }}"
+          [ -n "${{ inputs.probe_fixture }}" ] && ARGS="$ARGS --probe-fixture ${{ inputs.probe_fixture }}"
+          python3 data/harvest_extra.py $ARGS
 
       # ---- the daily half: things that change once a day at most -----------
       - name: Standings, team card profiles and transfer proposals
