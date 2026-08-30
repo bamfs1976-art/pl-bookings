@@ -738,7 +738,10 @@ def harvest_sidelined(host, key, players):
 # Rows kept per endpoint. Bigger only where the rows DIFFER from each other:
 # an events response is goals, cards, subs and VAR in one list, and the card
 # branch is the whole reason this endpoint is here.
-SAMPLE = {"fixtures_events": 40}
+SAMPLE = {"fixtures_events": 40,
+          # Enough rows to SEE whether `events` is present, since that single
+          # key is the whole question this probe exists to answer.
+          "fixtures_live": 3}
 
 PROBE_CALLS = [
     ("injuries", "injuries", lambda L, s, ctx: {"league": str(L.af_league), "season": s}),
@@ -753,7 +756,58 @@ PROBE_CALLS = [
     ("headtohead", "fixtures/headtohead", lambda L, s, ctx: {"h2h": ctx["h2h"], "last": 5}),
     ("odds", "odds", lambda L, s, ctx: {"fixture": ctx["upcoming"]}),
     ("sidelined", "sidelined", lambda L, s, ctx: {"player": ctx["player"]}),
+    # THE ONE CALL THE NETLIFY FUNCTION MAKES, in the shape it makes it.
+    #
+    # netlify/functions/live-cards.js asks /fixtures?live=<dash-joined ids> and
+    # then, for every fixture whose row does NOT carry an `events` array, spends
+    # a second call on /fixtures/events. Whether that fallback ever runs is the
+    # single largest unknown in the app's bill: at a 60s TTL it is the
+    # difference between 360 calls across a Saturday and 7,200, against an
+    # allowance of 7,500. Both branches are live code because the answer was
+    # never checked.
+    #
+    # The dash-join is deliberate — one call covers all three divisions, which
+    # is both what production does and the best chance of catching a match in
+    # play. See probe_live_verdict for why an empty answer settles nothing.
+    ("fixtures_live", "fixtures",
+     lambda L, s, ctx: {"live": ctx["live_ids"]}),
 ]
+
+
+def probe_live_verdict(payload):
+    """What a /fixtures?live= probe actually proves about the fan-out.
+
+    AN EMPTY RESPONSE IS NOT AN ANSWER. If no match is in play the endpoint
+    returns nothing, which looks exactly like a payload that carries no events
+    — and concluding "no events, so the function will fan out" from a probe run
+    on a quiet Tuesday would be reading a state as a shape. So this reports
+    three outcomes and only two of them are findings.
+    """
+    rows = (payload or {}).get("response") or []
+    if not rows:
+        return {"verdict": "nothing in play", "live": 0, "with_events": 0,
+                "settled": False,
+                "note": "No fixture was live, so this says nothing about "
+                        "whether the payload inlines events. Re-run it while "
+                        "a match is on."}
+    with_events = sum(1 for r in rows if isinstance(r.get("events"), list))
+    if with_events == len(rows):
+        return {"verdict": "events ARE inlined", "live": len(rows),
+                "with_events": with_events, "settled": True,
+                "note": "Every live fixture carried its own events array, so "
+                        "live-cards.js takes the cheap branch: one call a "
+                        "refresh however many matches are on."}
+    if with_events == 0:
+        return {"verdict": "events are NOT inlined", "live": len(rows),
+                "with_events": 0, "settled": True,
+                "note": "No live fixture carried an events array, so the "
+                        "function fans out one call per match. This is the "
+                        "expensive branch FANOUT_TTL exists for."}
+    return {"verdict": "events are inlined for SOME fixtures", "live": len(rows),
+            "with_events": with_events, "settled": True,
+            "note": "A mixed payload: the fan-out runs for the remainder, so "
+                    "the cost sits between the two branches and moves with "
+                    "whatever decides which rows carry events."}
 
 
 def probe(host, key, league, season, ctx, only=None):
@@ -792,8 +846,16 @@ def probe(host, key, league, season, ctx, only=None):
             "response_sample": (payload.get("response") or [])[:SAMPLE.get(name, 2)]
             if isinstance(payload.get("response"), list) else payload.get("response"),
         }, indent=2, ensure_ascii=False), encoding="utf-8")
-        (failed if err else ok).append(f"{name} -> {out.name}"
-                                       + (f"  ({err})" if err else ""))
+        line = f"{name} -> {out.name}" + (f"  ({err})" if err else "")
+        # THE LIVE PROBE IS THE ONE WITH A QUESTION ATTACHED, so it answers it
+        # in the log rather than leaving a file for somebody to open. Its whole
+        # purpose is settling which branch live-cards.js takes, and a probe
+        # whose finding has to be excavated is a probe nobody reads.
+        if name == "fixtures_live" and not err:
+            v = probe_live_verdict(payload)
+            line += (f"\n    {v['live']} fixture(s) live, {v['with_events']} "
+                     f"carrying events -> {v['verdict']}\n    {v['note']}")
+        (failed if err else ok).append(line)
     return ok, failed
 
 
@@ -1000,6 +1062,14 @@ def run_one(host, key, L, season, want, args):
             ctx["fixture"] = fin[0]
         if up:
             ctx["upcoming"] = up[0]
+        # ALL THREE DIVISIONS AT ONCE, because that is the call production
+        # makes and because one league alone is three times less likely to
+        # have anything in play — and a probe that catches no live match
+        # settles nothing (see probe_live_verdict). The ids come from the
+        # league registry that netlify/functions/live-cards.js's LEAGUES map
+        # mirrors, rather than from a fourth copy of them.
+        ctx["live_ids"] = "-".join(
+            str(leagues.LEAGUES[c].af_league) for c in ("PL", "EFLC", "LL"))
         ok, failed = probe(host, key, L, season, ctx, only=args.probe_only)
         for line in ok:
             print(f"  probed {line}")
