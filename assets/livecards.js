@@ -61,6 +61,64 @@
     return out;
   }
 
+  /* ---- pure: index an API-Football live payload -------------------------
+   *
+   * THE SECOND SOURCE, AND DELIBERATELY NOT A SECOND TICKER. FPL covers the
+   * Premier League and nothing else, so the Championship and La Liga desks
+   * had no live layer at all. /api/live-cards fills that, and everything
+   * below this line — clubTally, fixtureTicker, playerState — is reused
+   * unchanged. Only the INDEXING differs, because the two feeds answer
+   * different questions: FPL gives a gameweek total per player, the events
+   * feed gives the cards themselves.
+   *
+   * That difference is why this is the better feed for a card desk. A
+   * gameweek total cannot be split between a club's two fixtures (see the
+   * DOUBLE GAMEWEEKS note above); a card event belongs to one match by
+   * construction, so there is no gameweek-scope caveat here.
+   *
+   * `row` is one fixture from the function: {h, a, minute, status, cards[]}.
+   * `resolve(feedName)` turns the feed's club spelling into the desk's short
+   * code — passed in because each desk holds its own map and this file holds
+   * none. Returns {idx, elClub} in exactly the shape clubTally consumes.
+   *
+   * MINUTES PLAYED ARE NOT AVAILABLE and are not invented. Every carded
+   * player is recorded with the FIXTURE's elapsed minute, which is what makes
+   * clubTally's `played` count "has been involved" rather than a minutes
+   * total — and the fixture's own minute is passed to fixtureTicker directly
+   * rather than derived from a maximum. */
+  function indexApiLive(row, resolve) {
+    if (!row) return { idx: {}, elClub: {} };
+    var idx = {}, elClub = {};
+    var minute = Number(row.minute) || 0;
+    var cards = row.cards || [];
+    for (var i = 0; i < cards.length; i++) {
+      var e = cards[i];
+      if (!e || !e.n) continue;
+      var club = resolve ? resolve(e.c) : e.c;
+      if (!club) continue;
+      var key = club + '|' + e.n;
+      if (!idx[key]) { idx[key] = { yc: 0, rc: 0, min: minute }; elClub[key] = club; }
+      /* A SECOND YELLOW IS ONE DISMISSAL AND TWO CARDS — the convention the
+         ledger, the match record and the outcome totals all already use. The
+         events feed states it as its own kind, so unlike everywhere else in
+         this repository it does not have to be inferred from yc=2, rc=1.
+
+         AND IT MUST NOT BE COUNTED TWICE. fixtureTicker totals yc + rc, so
+         recording a second yellow as BOTH a yellow and a red made a booking
+         and a dismissal read as three cards — the exact arithmetic
+         data/build_bookings.py's cards_in() exists to prevent, arriving on the
+         live page where it would be watched happening. The dismissal is
+         therefore a separate `off` flag: the two yellows ARE the two cards,
+         and `off` is what playerState reads. FPL sets no `off`, so that source
+         is untouched. */
+      if (e.k === 'Y') idx[key].yc += 1;
+      else if (e.k === 'Y2') { idx[key].yc += 1; idx[key].off = true; }
+      else if (e.k === 'R') { idx[key].rc += 1; idx[key].off = true; }
+      else idx[key].yc += 1;   /* an unrecognised label is still a card shown */
+    }
+    return { idx: idx, elClub: elClub };
+  }
+
   /* ---- pure: one club's cards this gameweek -----------------------------
      `elClub` maps FPL element id -> club short code. Complete by construction
      because it is built from the bootstrap. */
@@ -85,8 +143,12 @@
     if (!idx) return null;
     var o = opts || {};
     var H = clubTally(idx, elClub, h), A = clubTally(idx, elClub, a);
-    /* Nobody has kicked a ball in this fixture yet. */
-    if (!H.played && !A.played) return null;
+    /* Nobody has kicked a ball in this fixture yet.
+       `o.started` is the events-feed case: a live 0-0 with no cards yet has an
+       empty index, and for a BOOKINGS desk "37 minutes gone, no cards" is the
+       most useful thing the ticker can say — not silence. The FPL source
+       passes no `started` and keeps its original behaviour exactly. */
+    if (!H.played && !A.played && !o.started) return null;
     var multi = (o.fixturesFor ? (o.fixturesFor(h) > 1 || o.fixturesFor(a) > 1) : false);
     return {
       home: H,
@@ -94,7 +156,11 @@
       cards: H.yc + A.yc + H.rc + A.rc,
       yellows: H.yc + A.yc,
       reds: H.rc + A.rc,
-      minute: Math.max(H.min, A.min),
+      /* THE FIXTURE'S OWN CLOCK when the source has one. FPL has no minute
+         field on the live feed, so that source derives it from the largest
+         `minutes` played; the events feed carries the elapsed minute itself,
+         which is right rather than inferred. */
+      minute: o.minute != null ? Number(o.minute) : Math.max(H.min, A.min),
       finished: !!o.finished,
       /* 'match' means every card counted belongs to this fixture. 'gameweek'
          means at least one of these clubs plays twice and the total cannot be
@@ -112,7 +178,7 @@
     if (!idx || elementId == null) return null;
     var s = idx[elementId];
     if (!s) return null;
-    if (s.rc > 0) return 'sent-off';
+    if (s.rc > 0 || s.off) return 'sent-off';
     if (s.yc > 0) return 'booked';
     if (s.min > 0) return 'clean';
     return null;
@@ -191,7 +257,8 @@
     };
   }
 
-  var api = { create: create, indexLive: indexLive, clubTally: clubTally,
+  var api = { create: create, indexLive: indexLive, indexApiLive: indexApiLive,
+    clubTally: clubTally,
     fixtureTicker: fixtureTicker, playerState: playerState, anyLive: anyLive,
     WINDOW_MS: WINDOW_MS };
 

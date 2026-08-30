@@ -446,6 +446,7 @@
 <script src="assets/suspension.js"></script>
 <script src="assets/a11y.js"></script>
 <script src="assets/price.js"></script>
+<script src="assets/livecards.js"></script>
 <script src="assets/profile.js"></script>
 <script>
 (function () {
@@ -1217,6 +1218,109 @@
     }).join('');
   })();
 
+
+  /* ═══════════════════════════════════════════════════════════════════
+   * THE LIVE TICKER — the half of assets/livecards.js this desk never had.
+   *
+   * That file has said since it was written that "a bookings desk saying a
+   * carded player is a 52% chance of being carded is the worst sentence this
+   * product can produce". It was loaded on index.html and nowhere else,
+   * because its source is the Fantasy Premier League live feed and FPL is the
+   * Premier League and nothing else. So at 4.30pm on a Saturday this desk
+   * still showed a booked player as a 52% chance of being booked.
+   *
+   * /api/live-cards fills that from API-Football's events feed. The TICKER is
+   * the same one — clubTally, fixtureTicker, playerState all reused; only the
+   * indexing differs, because FPL gives a gameweek total per player and this
+   * gives the cards themselves.
+   *
+   * IT COSTS QUOTA, which the FPL feed does not, so the function is cached at
+   * the edge for 60 seconds: however many people are watching, the upstream
+   * sees one refresh a minute. A card reaches a reader inside a minute.
+   *
+   * ABSENT IS THE ORDINARY STATE. No key, no live fixtures, a failed poll —
+   * all of them render as the desk's normal forecast view, which is what it
+   * has always shown.
+   * ═══════════════════════════════════════════════════════════════════ */
+  var LIVE = { fixtures: null, at: 0, timer: null };
+
+  /* The feed's club spelling as this desk's short code. On the desk's OWN
+     club list, because that is the map this page already holds and the
+     function deliberately does not resolve names — a club-name join inside a
+     serverless function is a fourth copy nobody would think to look in.
+     Exact, then accent-folded: three feeds spell a Spanish club three ways,
+     which is the problem data/test_laliga.py exists for. Unique or nothing. */
+  function liveResolve(feedName) {
+    if (!feedName) return null;
+    var want = String(feedName).trim();
+    var hit = CLUBS.filter(function (c) { return c.name === want; });
+    if (hit.length === 1) return hit[0].short;
+    var flat = function (v) {
+      return String(v || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+        .toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim();
+    };
+    var f = flat(want);
+    hit = CLUBS.filter(function (c) { return flat(c.name) === f; });
+    if (hit.length === 1) return hit[0].short;
+    hit = CLUBS.filter(function (c) {
+      return flat(c.name).indexOf(f) === 0 || f.indexOf(flat(c.name)) === 0; });
+    return hit.length === 1 ? hit[0].short : null;
+  }
+
+  function liveFor(f) {
+    if (!LIVE.fixtures || !f) return null;
+    var row = LIVE.fixtures[String(f.id)];
+    if (!row) return null;
+    var got = LiveCards.indexApiLive(row, liveResolve);
+    return LiveCards.fixtureTicker(got.idx, got.elClub, f.h, f.a, {
+      minute: row.minute,
+      started: true,
+      /* C.isPlayed, not a local list of statuses. Written out here first and
+         caught by check-matchday: the same three strings feed the suspension
+         ladder, where two copies disagreeing bans the wrong player. */
+      finished: C.isPlayed({ st: row.status })
+    });
+  }
+
+  function liveChip(f) {
+    var t = liveFor(f);
+    if (!t) return '';
+    var label = t.cards + ' card' + (t.cards === 1 ? '' : 's');
+    var clock = t.minute ? t.minute + "'" : 'LIVE';
+    return '<span class="fx-live" title="Live: ' + t.yellows + ' yellow, '
+      + t.reds + ' red, ' + esc(clock)
+      + ' — from the match events feed, refreshed about once a minute">'
+      + '<span class="fx-live-dot"></span>' + esc(clock) + ' · ' + esc(label)
+      + '</span>';
+  }
+
+  async function livePoll() {
+    try {
+      var r = await fetch('/api/live-cards?leagues=EFLC', { cache: 'no-store' });
+      var d = await r.json();
+      /* A FAILED POLL IS NOT NEWS THAT THE CARDS WERE RESCINDED — the previous
+         state is kept. Only an explicit "not live" clears it. */
+      if (d && d.live === false) { LIVE.fixtures = null; }
+      else if (d && d.fixtures) { LIVE.fixtures = d.fixtures; LIVE.at = Date.now(); }
+      renderFixtures();
+    } catch (e) { /* keep what we had */ }
+  }
+
+  function liveStart() {
+    if (LIVE.timer) return;
+    /* Polled from the SCHEDULE, like the Premier League ticker: the fixture
+       list already on the page says whether anything is on, and asking the
+       function that would spend a call to find out nothing is happening. */
+    var on = (FIXTURES || []).some(function (f) {
+      if (!f.d || C.isPlayed(f)) return false;
+      var ko = Date.parse(f.d);
+      return isFinite(ko) && Date.now() >= ko && Date.now() < ko + LiveCards.WINDOW_MS;
+    });
+    if (!on) return;
+    livePoll();
+    LIVE.timer = setInterval(livePoll, 60000);
+  }
+
   function renderFixtures() {
     var host = $('#fxList'), empty = $('#fxEmpty');
     if (!FIXTURES.length) {
@@ -1390,6 +1494,7 @@
         + '</div>'
         + '<div class="fx-topr">'
         + '<div class="fx-refline">' + refLine + '</div>'
+        + liveChip(f)
         + '<span class="fx-heat' + (x.m.expected >= 4.2 ? ' hot' : '') + '" '
         + 'title="Booking heat: expected cards in the match, both sides added together">'
         + n1(x.m.expected) + '</span>'
@@ -1856,6 +1961,7 @@
   renderSuspension();
   renderPlayers();
   renderFixtures();
+  liveStart();
   renderClubs();
   renderRefs();
 

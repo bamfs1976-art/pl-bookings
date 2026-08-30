@@ -1648,3 +1648,16 @@ tr[data-club]:focus-visible{outline:3px solid var(--ring);outline-offset:-3px}
   cursor:help}
 .avail-out{background:var(--danger-bg,#fee2e2);color:var(--danger-ink,#b91c1c)}
 .avail-doubt{background:var(--warn-bg,#fef3c7);color:var(--warn-ink,#92400e)}
+
+/* The live chip. Deliberately not the loudest thing on the card: it reports
+   what has happened beside a forecast that is still worth reading, and a
+   ticker that shouted would make the page look like a scoreboard. */
+.fx-live{display:inline-flex;align-items:center;gap:.3rem;font-size:10.5px;
+  font-weight:800;letter-spacing:.02em;padding:.1rem .38rem;border-radius:5px;
+  background:var(--danger-bg,#fee2e2);color:var(--danger-ink,#b91c1c);cursor:help}
+.fx-live-dot{width:6px;height:6px;border-radius:50%;background:currentColor;
+  animation:fx-live-pulse 2s ease-in-out infinite}
+@keyframes fx-live-pulse{0%,100%{opacity:1}50%{opacity:.25}}
+/* A reader who has asked for less motion gets a steady dot, not a pulsing
+   one — the chip still reads as live because of where it is and what it says. */
+@media (prefers-reduced-motion:reduce){.fx-live-dot{animation:none}}

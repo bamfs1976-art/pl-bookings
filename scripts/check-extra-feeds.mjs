@@ -162,6 +162,117 @@ for (const f of OUTPUTS) {
   }
 }
 
+/* ---- 3b. the live ticker for the divisions FPL does not cover ---------- */
+/* assets/livecards.js has said since it was written that "a bookings desk
+   saying a carded player is a 52% chance of being carded is the worst sentence
+   this product can produce" — and it was loaded on index.html alone, because
+   its source is the FPL live feed and FPL is the Premier League and nothing
+   else. /api/live-cards fills that for the other two.
+   IT IS METERED, WHICH THE FPL FEED IS NOT, and that is the whole difference:
+   this function is called by BROWSERS, so an uncached one spends a call per
+   reader per poll. */
+{
+  const fn = read('netlify/functions/live-cards.js');
+
+  /* THE CACHE IS THE COST CONTROL. Without it a hundred readers polling once a
+     minute is a hundred calls a minute, which empties a 7,500 allowance inside
+     an hour of one busy Saturday. */
+  assert.ok(/max-age=\$\{TTL\}/.test(fn),
+    'netlify/functions/live-cards.js serves the live payload without an edge ' +
+    'cache. It is called by browsers and every call is metered: uncached, one ' +
+    'popular Saturday afternoon costs the week\'s quota.');
+  const ttl = /const TTL = (\d+)/.exec(fn);
+  assert.ok(ttl && Number(ttl[1]) >= 30 && Number(ttl[1]) <= 120,
+    `the live TTL is ${ttl ? ttl[1] : 'missing'}s. Too short spends the ` +
+    'allowance; too long and the page says "not booked" about a man who was ' +
+    'booked, which is the sentence this whole layer exists to prevent.');
+  assert.ok(/const MAX_FIXTURES = \d+/.test(fn),
+    'the live function fans out over in-play fixtures with no ceiling. An ' +
+    'unbounded fan-out on a metered endpoint behind a public URL is a bill.');
+
+  /* AN ALLOWLIST, NOT A PASSTHROUGH. The league arrives in a query string a
+     reader controls; without one this is an open, authenticated proxy to
+     somebody else's metered API. */
+  assert.ok(/const LEAGUES = \{/.test(fn),
+    'live-cards.js takes a league id straight from the query string — that is ' +
+    'an open proxy to a metered API that anyone can point anywhere');
+
+  /* AND THE KEY STAYS ON THE SERVER. */
+  assert.ok(/process\.env\.API_FOOTBALL_KEY/.test(fn),
+    'live-cards.js does not read the key from the environment');
+  for (const page of ['index.html', 'today.html', 'eflc.html', 'laliga.html',
+                      'assets/livecards.js']) {
+    assert.ok(!/API_FOOTBALL_KEY|x-apisports-key/.test(read(page)),
+      `${page} mentions the API-Football key. It is a metered credential and ` +
+      'belongs only in the function.');
+  }
+  /* A DESK WITH NO KEY IS NOT A BROKEN DESK — it is where the other two have
+     been all along, and the forecast view is still correct. */
+  assert.ok(/if \(!KEY\)[\s\S]{0,500}statusCode: 200/.test(fn),
+    'live-cards.js errors when no key is configured. A missing key must render ' +
+    'as the ordinary forecast view, not as a broken page.');
+  /* WHAT IT SPENT, in the response rather than a log, so "what is the live
+     layer costing" is answerable from the page. */
+  assert.ok(/upstream,/.test(fn), 'the live function does not report what it spent');
+
+  assert.ok(/\/api\/live-cards/.test(read('_redirects')),
+    '/api/live-cards has no route, so the function is unreachable');
+
+  /* ONE TICKER, TWO SOURCES. A second implementation of the tally is exactly
+     the failure this repository keeps meeting. */
+  const lc = read('assets/livecards.js');
+  assert.ok(/function indexApiLive\(/.test(lc),
+    'assets/livecards.js has no indexer for the events feed');
+  assert.equal((lc.match(/function fixtureTicker\(/g) || []).length, 1,
+    'there is more than one fixture-ticker builder');
+  for (const page of ['eflc.html', 'laliga.html']) {
+    const src2 = read(page);
+    assert.ok(/LiveCards\.fixtureTicker\(/.test(src2),
+      `${page} does not go through the shared LiveCards.fixtureTicker`);
+    assert.ok(/assets\/livecards\.js/.test(src2),
+      `${page} does not load assets/livecards.js`);
+    assert.ok(!/\['FT', 'AET', 'PEN'\]/.test(src2),
+      `${page} carries its own finished-status list in the live path`);
+  }
+
+  /* THE SECOND YELLOW, COUNTED ONCE. This was wrong first time: recording it
+     as both a yellow and a red made a booking and a dismissal read as THREE
+     cards on a live page — the arithmetic data/build_bookings.py's cards_in()
+     exists to prevent, arriving where a reader would watch it happen. */
+  const ctx = {};
+  vm.createContext(ctx);
+  vm.runInContext(lc, ctx);
+  const LC = vm.runInContext('LiveCards', ctx);
+  const R = (n) => ({ Home: 'HOM', Away: 'AWY' }[n] || null);
+  const got = LC.indexApiLive({
+    h: 'Home', a: 'Away', minute: 40,
+    cards: [{ c: 'Home', n: 'P', k: 'Y' }, { c: 'Home', n: 'P', k: 'Y2' },
+            { c: 'Away', n: 'Q', k: 'R' }],
+  }, R);
+  const t = LC.fixtureTicker(got.idx, got.elClub, 'HOM', 'AWY',
+                             { minute: 40, started: true });
+  assert.equal(t.cards, 3,
+    `a booking, a second yellow and a straight red total ${t.cards} cards on ` +
+    'the live ticker. The convention everywhere else here — the ledger, the ' +
+    'match record, outcomeTotals — is that the two yellows ARE the two cards: ' +
+    'the answer is 3, and 4 means the dismissal is being counted as a card of ' +
+    'its own.');
+  assert.equal(LC.playerState(got.idx, 'HOM|P'), 'sent-off',
+    'a player dismissed for a second yellow does not read as sent off');
+  assert.equal(t.minute, 40,
+    'the ticker does not take the fixture\'s own clock from the events feed');
+  /* A LIVE 0-0 WITH NO CARDS IS THE MOST USEFUL THING A CARD DESK CAN SAY. */
+  const clean = LC.indexApiLive({ h: 'Home', a: 'Away', minute: 22, cards: [] }, R);
+  assert.ok(LC.fixtureTicker(clean.idx, clean.elClub, 'HOM', 'AWY',
+                             { minute: 22, started: true }),
+    'a live fixture with no cards yet shows nothing. "22 minutes gone, no ' +
+    'cards" is exactly what this desk is for.');
+  /* AND THE FPL SOURCE IS UNTOUCHED. */
+  assert.equal(LC.playerState(LC.indexLive({ elements: [
+    { id: 1, stats: { yellow_cards: 1, red_cards: 0, minutes: 90 } }] }), 1), 'booked',
+    'the Premier League ticker changed behaviour when the second source landed');
+}
+
 /* ---- 4. one owner, and it checks before it pushes ---------------------- */
 const wf = join(root, '.github', 'workflows');
 const flows = readdirSync(wf).filter((f) => /\.ya?ml$/.test(f));
