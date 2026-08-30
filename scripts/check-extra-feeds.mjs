@@ -296,6 +296,41 @@ for (const f of OUTPUTS) {
     'the Premier League ticker changed behaviour when the second source landed');
 }
 
+/* ---- 3c. the per-fixture walks are INCREMENTAL, or the quota is gone ---- */
+/* /fixtures/events and /fixtures/statistics are one call per fixture, and this
+   harvest first walked every finished fixture on every run. Four runs a day
+   over 76 finished fixtures is 608 calls; by May, over 1,312 across the three
+   divisions, it is 10,496 a day against an allowance of 7,500. It would not
+   have degraded — it would have STOPPED, somewhere around March, and the first
+   symptom would have been a feed quietly going stale.
+   This is the lesson the bookings ledger already taught (--only-new), arriving
+   again in a module written months later. */
+{
+  assert.ok(/def already_recorded\(/.test(src) && /def merge_by_fixture\(/.test(src),
+    'the per-fixture feeds have no incremental walk. One call per fixture over ' +
+    'a whole season, four times a day, exceeds the daily allowance before the ' +
+    'season ends — and the failure is a stale feed, not an error.');
+  for (const feed of ['events', 'fxstats']) {
+    const blk = new RegExp(`if "${feed}" in want:[\\s\\S]*?\\n\\n`, 'm').exec(src);
+    assert.ok(blk, `the ${feed} branch is gone`);
+    assert.ok(/skip=seen/.test(blk[0]),
+      `the ${feed} walk does not skip what is already recorded, so it re-fetches ` +
+      'the whole season on every run');
+    /* AND IT MERGES. Skipping without merging rewrites the file with only the
+       newest round each time, and looks entirely plausible doing it — which is
+       precisely how the ledger would have thrown away a season. */
+    assert.ok(/merge_by_fixture\(/.test(blk[0]),
+      `the ${feed} walk skips recorded fixtures but does not merge them back ` +
+      'in, so each run would replace the season with whatever it just fetched');
+  }
+  /* A CORRUPT FILE IS NOT "NOTHING RECORDED YET". Read as empty it triggers a
+     full re-walk of the season, silently, at one call per fixture. */
+  const fn2 = /def already_recorded\([\s\S]*?\n\ndef /.exec(src);
+  assert.ok(fn2 && /SystemExit/.test(fn2[0]),
+    'already_recorded reads an unparseable file as nothing recorded, which is a ' +
+    'full-season re-walk spent without anyone asking for it');
+}
+
 /* ---- 4. one owner, and it checks before it pushes ---------------------- */
 const wf = join(root, '.github', 'workflows');
 const flows = readdirSync(wf).filter((f) => /\.ya?ml$/.test(f));

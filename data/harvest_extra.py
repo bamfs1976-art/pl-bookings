@@ -836,7 +836,8 @@ def finished_ids(league, limit=None, skip=()):
     for ln in path.read_text(encoding="utf-8").splitlines():
         m = re.search(r"\bid:(\d+)", ln)
         st = re.search(r'\bst:"([^"]*)"', ln)
-        if m and st and st.group(1) in af.FINISHED and int(m.group(1)) not in skip:
+        if (m and st and st.group(1) in af.FINISHED
+                and m.group(1) not in skip and int(m.group(1)) not in skip):
             out.append(int(m.group(1)))
     return out[:limit] if limit else out
 
@@ -868,6 +869,58 @@ def upcoming_ids(league, hours=72, limit=None):
         if now <= when <= horizon:
             out.append(int(m.group(1)))
     return out[:limit] if limit else out
+
+
+
+def already_recorded(path, const):
+    """Fixture ids already in a shipped per-fixture file.
+
+    THE LESSON THE BOOKINGS LEDGER ALREADY TAUGHT, arriving again. /events and
+    /fixtures/statistics are ONE CALL PER FIXTURE, and this harvest walked
+    every finished fixture on every run. Four runs a day over 76 finished
+    fixtures is 608 calls; by May, over 1,312, it is 10,496 a day against an
+    allowance of 7,500. It would not have degraded — it would have stopped,
+    somewhere around March, and the first symptom would have been a feed
+    quietly going stale.
+
+    So the walk is incremental, exactly as data/harvest_apifootball.py's
+    --only-new is: what is already recorded is skipped, and the new rows are
+    MERGED into the old rather than replacing them. The merge is the half that
+    matters. Skipping without merging would rewrite the file with only the
+    newest round each time and look entirely plausible.
+    """
+    if not path.exists():
+        return set()
+    src = path.read_text(encoding="utf-8")
+    start, end = src.find("{"), src.rfind("}")
+    if start < 0 or end < 0:
+        return set()
+    try:
+        doc = json.loads(src[start:end + 1])
+    except ValueError:
+        # A corrupt file must not read as "nothing recorded yet" — that is a
+        # full re-walk of the season, silently, at one call per fixture.
+        raise SystemExit(f"ERROR: {path.name} is present but will not parse. "
+                         "Delete it deliberately to force a re-walk; do not "
+                         "let a bad file spend the day's allowance.")
+    return set(doc) if isinstance(doc, dict) else set()
+
+
+def merge_by_fixture(path, const, fresh):
+    """Old rows plus new ones, keyed by fixture id."""
+    out = {}
+    if path.exists():
+        src = path.read_text(encoding="utf-8")
+        start, end = src.find("{"), src.rfind("}")
+        if start >= 0 and end >= 0:
+            try:
+                got = json.loads(src[start:end + 1])
+                if isinstance(got, dict):
+                    out = got
+            except ValueError:
+                pass
+    out.update(fresh or {})
+    return out
 
 
 def main():
@@ -998,20 +1051,27 @@ def run_one(host, key, L, season, want, args):
                 encoding="utf-8")
 
     if "events" in want:
-        fin = finished_ids(L, limit=args.limit)
-        print(f"  events: {len(fin)} finished fixture(s), one call each")
-        rows = harvest_events(host, key, L, fin)
-        if not args.dry_run:
-            write_js(out_path(L, "cardevents.js"), OUT_FOR[L.code].upper() + "_CARDEVENTS",
-                     rows, f"{L.name}: the minute each card arrived.")
+        path = out_path(L, "cardevents.js")
+        const = OUT_FOR[L.code].upper() + "_CARDEVENTS"
+        seen = already_recorded(path, const)
+        fin = finished_ids(L, limit=args.limit, skip=seen)
+        print(f"  events: {len(fin)} new finished fixture(s), one call each "
+              f"({len(seen)} already recorded)")
+        rows = merge_by_fixture(path, const, harvest_events(host, key, L, fin))
+        if not args.dry_run and (fin or not path.exists()):
+            write_js(path, const, rows, f"{L.name}: the minute each card arrived.")
 
     if "fxstats" in want:
-        fin = finished_ids(L, limit=args.limit)
-        rows = harvest_fixture_stats(host, key, L, fin)
-        print(f"  fixture stats: {len(rows)} fixture(s)")
-        if not args.dry_run:
-            write_js(out_path(L, "fxstats.js"), OUT_FOR[L.code].upper() + "_FXSTATS",
-                     rows, f"{L.name}: the feed's fouls and cards, per fixture.")
+        path = out_path(L, "fxstats.js")
+        const = OUT_FOR[L.code].upper() + "_FXSTATS"
+        seen = already_recorded(path, const)
+        fin = finished_ids(L, limit=args.limit, skip=seen)
+        print(f"  fixture stats: {len(fin)} new fixture(s) "
+              f"({len(seen)} already recorded)")
+        rows = merge_by_fixture(path, const, harvest_fixture_stats(host, key, L, fin))
+        if not args.dry_run and (fin or not path.exists()):
+            write_js(path, const, rows,
+                     f"{L.name}: the feed's fouls and cards, per fixture.")
 
     if "predictions" in want:
         up = upcoming_ids(L, hours=args.within_hours, limit=args.limit)
