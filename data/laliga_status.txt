@@ -3,6 +3,6 @@ club rates from mirror (380 matches)
 players: 665  by basis: LL=455, NEW=135, SEG=75
 clubs with players: 20 of 20
 club rates from match records: 17 of 20
-season cautions (2026-27): 475 players
+season cautions (2026-27): 474 players
 referees: 20
 RESULT: WRITTEN laliga_data.js
