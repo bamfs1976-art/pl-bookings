@@ -665,7 +665,7 @@ const REFS = [
   {n:"Andrew Kitchen",region:"",matches:4,ypg:3.75,red:0.0,pen:null,fpg:23.25,cpf:0.1613},
   {n:"Samuel Barrott",region:"",matches:24,ypg:3.71,red:0.04,pen:0.29,fpg:19.33,cpf:0.1918},
   {n:"John Brooks",region:"",matches:12,ypg:3.67,red:0.25,pen:null,fpg:20.92,cpf:0.1753},
-  {n:"Jarred Gillett",region:"",matches:22,ypg:3.59,red:0.05,pen:null,fpg:19.77,cpf:0.1816},
+  {n:"Jarred Gillett",region:"",matches:22,ypg:3.59,red:0.05,pen:0.27,fpg:19.77,cpf:0.1816},
   {n:"Josh Smith",region:"",matches:27,ypg:3.4,red:0.22,pen:null,fpg:20.44,cpf:0.1649,borrowed:"EFLC"},
   {n:"Paul Tierney",region:"",matches:12,ypg:3.33,red:0.17,pen:null,fpg:20.17,cpf:0.1653},
   {n:"Andy Madley",region:"",matches:21,ypg:3.24,red:0.19,pen:0.29,fpg:22.86,cpf:0.1417},
