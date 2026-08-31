@@ -151,8 +151,49 @@ def const_name(out):
     return stem.upper().replace("-", "_")
 
 
+def drop_placeholder_dates(rows):
+    """Remove fixtures whose date is the round's placeholder, not a kick-off.
+
+    A CLUB CANNOT PLAY TWICE IN THE SAME COMPETITION ON THE SAME DAY. That is
+    not a heuristic, it is the calendar, and it is the only signal available
+    here that a date is a placeholder rather than a fixture.
+
+    WHAT THIS CAUGHT. The 2026-27 European league phase was drawn in late
+    August and the fixture list published shortly after. Between the two, the
+    feed carried every Europa League and Conference League tie stamped with
+    matchday one's date — so this harvest wrote eight Bournemouth matches on
+    16 September, eight for Crystal Palace, eight for Sunderland and six
+    Brighton ties on 15 October. The Champions League, whose calendar was
+    already confirmed, came through correctly.
+
+    Nothing about the bad rows looked wrong. The count was right (three clubs
+    times eight), the venues were right and split four home and four away, and
+    the competition codes were right. Only the dates were fiction — and dates
+    are the entire point of this file, which exists so that rest days are days
+    since the last COMPETITIVE match. Eight European nights collapsed onto one
+    would credit a club with seven weeks of rest it never had, and put it in
+    the wrong congestion bucket in every direction.
+
+    So they are dropped rather than written. A missing European date makes a
+    club look better rested than it was, which is wrong in one direction and
+    obvious when the calendar lands; a fabricated one is wrong in both
+    directions and looks exactly like data. Verified against the full 2025-26
+    season: 314 fixtures, not one collision.
+    """
+    seen = {}
+    for r in rows:
+        seen.setdefault((r["c"], r["comp"], r["d"][:10]), []).append(r)
+    keep, dropped = [], {}
+    for (club, comp, day), group in seen.items():
+        if len(group) == 1:
+            keep.append(group[0])
+        else:
+            dropped[comp] = dropped.get(comp, 0) + len(group)
+    return sorted(keep, key=lambda r: (r["d"], r["c"])), dropped
+
+
 def emit(rows, season, out, club_names=None):
-    rows = sorted(rows, key=lambda r: (r["d"], r["c"]))
+    rows, dropped = drop_placeholder_dates(rows)
     by_comp = {}
     for r in rows:
         by_comp[r["comp"]] = by_comp.get(r["comp"], 0) + 1
@@ -171,8 +212,21 @@ def emit(rows, season, out, club_names=None):
         "//   v     H or A — the away leg is what the 72-hour European flag needs",
         "//",
         "// " + ", ".join(f"{k} {v}" for k, v in sorted(by_comp.items())),
-        "const %s = [" % const_name(out),
     ]
+    # AN INCOMPLETE FILE MUST SAY SO, IN THE FILE. A reader counting rows would
+    # otherwise see a plausible European calendar and no reason to doubt it —
+    # and the whole reason those rows are gone is that they looked plausible.
+    if dropped:
+        head += [
+            "//",
+            "// NOT YET PUBLISHED, so deliberately absent rather than guessed:",
+            "// " + ", ".join(f"{k} {v} fixture(s)" for k, v in sorted(dropped.items()))
+            + ". The feed carried these with the round's placeholder date rather",
+            "// than a kick-off — a club cannot play twice in one competition on",
+            "// one day. They return of their own accord once UEFA confirms the",
+            "// calendar and the next harvest reads real dates.",
+        ]
+    head += ["const %s = [" % const_name(out)]
     body = [
         '  {c:"%s",d:"%s",comp:"%s",v:"%s"},' % (r["c"], r["d"], r["comp"], r["v"])
         for r in rows
@@ -189,7 +243,7 @@ def emit(rows, season, out, club_names=None):
                                                  ensure_ascii=False)),
             ""]
     (DATA / out).write_text("\n".join(head + body + tail), encoding="utf-8")
-    return by_comp
+    return by_comp, dropped
 
 
 def main():
@@ -229,10 +283,20 @@ def main():
                  "played midweek', which is a stronger claim than 'we could "
                  "not ask'.")
 
-    by_comp = emit(rows, args.season, args.out, club_names)
+    by_comp, dropped = emit(rows, args.season, args.out, club_names)
     clubs = len({r["c"] for r in rows})
-    print(f"{args.out} written: {len(rows)} club-ties across {clubs} clubs — "
+    print(f"{args.out} written: {sum(by_comp.values())} club-ties across "
+          f"{clubs} clubs — "
           + ", ".join(f"{k} {v}" for k, v in sorted(by_comp.items())))
+    # SAID OUT LOUD, not left in the file for somebody to notice. A harvest
+    # that quietly writes fewer rows than it fetched is the failure this
+    # project keeps finding; the number it did not write is the interesting one.
+    if dropped:
+        print("  placeholder dates refused (a club cannot play twice in one "
+              "competition on one day): "
+              + ", ".join(f"{k} {v}" for k, v in sorted(dropped.items())))
+        print("  those competitions' calendars are not published yet; the next "
+              "harvest picks them up when they are.")
     if refused:
         print("INCOMPLETE: " + str(len(refused)) + " competition(s) refused above.")
 
