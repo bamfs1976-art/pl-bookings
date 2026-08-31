@@ -57,6 +57,33 @@ assert.ok(shortOf && Object.keys(shortOf).length >= 20,
   'the bridge every club is unmapped, which reads exactly like a season in ' +
   'which nobody played midweek');
 
+/* A CLUB CANNOT PLAY TWICE IN THE SAME COMPETITION ON THE SAME DAY, and a file
+   that says otherwise is not carrying dates, it is carrying a placeholder.
+   That is exactly what shipped for the 2026-27 European league phase: between
+   the draw and the calendar being published, the feed answered every Europa
+   League tie with matchday one's date, and the harvest wrote 24 fixtures on
+   16 September — eight each for three clubs, with the right count, the right
+   venues and a correct four-home-four-away split. Only the dates were
+   invented, and dates are the whole reason this file exists.
+   data/harvest_other_fixtures.py now refuses them at the point of writing;
+   this is the same rule asserted on the ARTEFACT, because a file can arrive
+   by routes a harvest does not control. Verified clean across the full
+   2025-26 season: 314 fixtures, not one collision. */
+{
+  const slots = new Map();
+  for (const f of other) {
+    const key = `${f.c}|${f.comp}|${String(f.d).slice(0, 10)}`;
+    slots.set(key, (slots.get(key) || 0) + 1);
+  }
+  const impossible = [...slots].filter(([, n]) => n > 1);
+  assert.ok(impossible.length === 0,
+    `${impossible.length} club/competition/day slot(s) hold more than one ` +
+    `match — e.g. ${impossible.slice(0, 3).map(([k, n]) => `${k} x${n}`).join(', ')}. ` +
+    'No calendar does that, so these are a round\'s placeholder date rather ' +
+    'than kick-offs, and rest days computed from them are fiction that looks ' +
+    'like data.');
+}
+
 const r = B.fatigue({ core: C, data: record, other, shortOf });
 assert.ok(r, 'the fatigue analysis returned nothing');
 
