@@ -96,6 +96,14 @@ jobs:
       - name: One player, written two ways
         run: python3 data/test_names.py
 
+      # Cup and European dates. The draw-pending placeholder — eight ties per
+      # club stamped with one kick-off — has shipped twice, both times reaching
+      # production before anyone spotted it. A club cannot play two matches at
+      # the same instant, and that is now asserted here rather than left for a
+      # downstream consumer to notice.
+      - name: The draw-pending placeholder never leaves the harvest
+        run: python3 data/test_other_fixtures.py
+
       # Transfers. The squads follow the FPL feed and the card rates follow the
       # player, because a club is a fact about today and a rate is a property
       # of the man. The dangerous direction is the FIX, not the bug: a

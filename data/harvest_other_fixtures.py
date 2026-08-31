@@ -42,6 +42,7 @@ DATA = Path(__file__).resolve().parent
 sys.path.insert(0, str(DATA))
 import build_pl_data  # noqa: E402
 import harvest_apifootball as af  # noqa: E402
+import uefa_league_phase  # noqa: E402
 
 # API-Football league ids. Europe first, then the two domestic cups.
 #
@@ -136,6 +137,65 @@ def rows_for(host, key, comp_id, comp_code, season):
                           {"league": str(comp_id), "season": season, "page": page})
         pages = max(pages, af.pages_needed(payload))
     return (rows, names), f"{comp_code}: {len(rows)} ties, {len(seen_clubs)} English club(s)"
+
+
+def placeholder_keys(rows):
+    """The (club, kick-off) slots that are a draw-pending placeholder.
+
+    A club cannot play two matches at the same instant. When API-Football
+    has the pairings but not the calendar it stamps every league-phase tie
+    with one slot, so a club comes back with six or eight rows on a single
+    kick-off, split home and away. Every date in that block is wrong, and
+    rest days computed from it read as one pile-up and an empty autumn.
+
+    Detected on the impossibility rather than on a date heuristic, so a
+    genuine matchday where several English clubs kick off together is
+    never mistaken for one.
+
+    KEYED ON THE SLOT, NOT THE CLUB, which is the correction that matters.
+    Brighton's Conference League rows are two real play-off legs in August
+    followed by a six-row league-phase block in October; condemning the
+    whole club would throw away two ties that were never in doubt.
+    """
+    seen, bad = {}, set()
+    for r in rows:
+        key = (r["c"], r["d"])
+        if key in seen:
+            bad.add(key)
+        seen[key] = True
+    return bad
+
+
+def apply_league_phase_override(rows, comp_code, season):
+    """Replace a placeholder block with UEFA's published calendar.
+
+    Returns (rows, note). Three outcomes, and the note says which:
+      - no placeholder            → rows unchanged
+      - placeholder, curated      → the affected clubs' rows are replaced
+      - placeholder, not curated  → the affected clubs' rows are DROPPED
+
+    Dropping is the right answer for the third case and worth stating
+    plainly: the block carries no information beyond "this club is in this
+    competition", and leaving it in means every downstream consumer has to
+    recognise and strip it. One of them did not, and shipped fabricated
+    congestion to production.
+    """
+    bad = placeholder_keys(rows)
+    if not bad:
+        return rows, None
+    kept = [r for r in rows if (r["c"], r["d"]) not in bad]
+    clubs = {c for c, _ in bad}
+    curated = [r for r in uefa_league_phase.rows_for(season, comp_code)
+               if r["c"] in clubs]
+    who = ", ".join(sorted(clubs))
+    if curated:
+        return kept + curated, (
+            f"{comp_code}: placeholder block for {who} replaced with "
+            f"{len(curated)} UEFA league-phase rows")
+    return kept, (
+        f"{comp_code}: placeholder block for {who} DROPPED — "
+        f"API-Football has the draw but not the calendar, and nothing is "
+        f"curated in uefa_league_phase.py for {season} {comp_code}")
 
 
 def const_name(out):
@@ -264,7 +324,15 @@ def main():
         if got is None:
             refused.append(note)
         else:
-            rows.extend(got[0])
+            # BEFORE the rows join the pile, because a placeholder block is
+            # only recognisable within its own competition: pooled with the
+            # cups, one club's eight identical UCL stamps sit beside real
+            # ties and the impossibility is no longer local.
+            fixed, fix_note = apply_league_phase_override(
+                got[0], comp_code, args.season)
+            if fix_note:
+                notes.append("  " + fix_note)
+            rows.extend(fixed)
             club_names.update(got[1])
 
     for n in notes:
