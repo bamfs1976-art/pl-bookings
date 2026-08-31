@@ -11,7 +11,7 @@
 //   comp  UCL, UEL, UECL, FAC (FA Cup), LCUP (League Cup)
 //   v     H or A — the away leg is what the 72-hour European flag needs
 //
-// LCUP 78, UCL 40, UECL 2, UEL 24
+// LCUP 78, UCL 40, UECL 8, UEL 24
 const PL_OTHER_FIXTURES = [
   {c:"BRC",d:"2026-08-06T18:45:00+00:00",comp:"LCUP",v:"H"},
   {c:"WOL",d:"2026-08-07T18:45:00+00:00",comp:"LCUP",v:"H"},
@@ -108,12 +108,14 @@ const PL_OTHER_FIXTURES = [
   {c:"MCI",d:"2026-10-14T19:00:00+00:00",comp:"UCL",v:"H"},
   {c:"CRY",d:"2026-10-15T16:45:00+00:00",comp:"UEL",v:"A"},
   {c:"SUN",d:"2026-10-15T16:45:00+00:00",comp:"UEL",v:"A"},
+  {c:"BHA",d:"2026-10-15T19:00:00+00:00",comp:"UECL",v:"H"},
   {c:"BOU",d:"2026-10-15T19:00:00+00:00",comp:"UEL",v:"H"},
   {c:"LIV",d:"2026-10-20T19:00:00+00:00",comp:"UCL",v:"H"},
   {c:"MCI",d:"2026-10-20T19:00:00+00:00",comp:"UCL",v:"H"},
   {c:"MUN",d:"2026-10-21T16:45:00+00:00",comp:"UCL",v:"A"},
   {c:"ARS",d:"2026-10-21T19:00:00+00:00",comp:"UCL",v:"A"},
   {c:"AVL",d:"2026-10-21T19:00:00+00:00",comp:"UCL",v:"H"},
+  {c:"BHA",d:"2026-10-22T16:45:00+00:00",comp:"UECL",v:"A"},
   {c:"SUN",d:"2026-10-22T16:45:00+00:00",comp:"UEL",v:"A"},
   {c:"BOU",d:"2026-10-22T19:00:00+00:00",comp:"UEL",v:"H"},
   {c:"CRY",d:"2026-10-22T19:00:00+00:00",comp:"UEL",v:"A"},
@@ -124,12 +126,14 @@ const PL_OTHER_FIXTURES = [
   {c:"MCI",d:"2026-11-04T20:00:00+00:00",comp:"UCL",v:"A"},
   {c:"BOU",d:"2026-11-05T17:45:00+00:00",comp:"UEL",v:"A"},
   {c:"CRY",d:"2026-11-05T17:45:00+00:00",comp:"UEL",v:"H"},
+  {c:"BHA",d:"2026-11-05T20:00:00+00:00",comp:"UECL",v:"A"},
   {c:"SUN",d:"2026-11-05T20:00:00+00:00",comp:"UEL",v:"H"},
   {c:"AVL",d:"2026-11-24T17:45:00+00:00",comp:"UCL",v:"A"},
   {c:"ARS",d:"2026-11-24T20:00:00+00:00",comp:"UCL",v:"H"},
   {c:"MCI",d:"2026-11-24T20:00:00+00:00",comp:"UCL",v:"H"},
   {c:"LIV",d:"2026-11-25T20:00:00+00:00",comp:"UCL",v:"A"},
   {c:"MUN",d:"2026-11-25T20:00:00+00:00",comp:"UCL",v:"A"},
+  {c:"BHA",d:"2026-11-26T17:45:00+00:00",comp:"UECL",v:"H"},
   {c:"BOU",d:"2026-11-26T17:45:00+00:00",comp:"UEL",v:"A"},
   {c:"CRY",d:"2026-11-26T20:00:00+00:00",comp:"UEL",v:"H"},
   {c:"SUN",d:"2026-11-26T20:00:00+00:00",comp:"UEL",v:"H"},
@@ -139,8 +143,10 @@ const PL_OTHER_FIXTURES = [
   {c:"ARS",d:"2026-12-09T20:00:00+00:00",comp:"UCL",v:"H"},
   {c:"LIV",d:"2026-12-09T20:00:00+00:00",comp:"UCL",v:"H"},
   {c:"CRY",d:"2026-12-10T17:45:00+00:00",comp:"UEL",v:"A"},
+  {c:"BHA",d:"2026-12-10T20:00:00+00:00",comp:"UECL",v:"H"},
   {c:"BOU",d:"2026-12-10T20:00:00+00:00",comp:"UEL",v:"H"},
   {c:"SUN",d:"2026-12-10T20:00:00+00:00",comp:"UEL",v:"A"},
+  {c:"BHA",d:"2026-12-17T20:00:00+00:00",comp:"UECL",v:"A"},
   {c:"AVL",d:"2027-01-19T20:00:00+00:00",comp:"UCL",v:"H"},
   {c:"LIV",d:"2027-01-19T20:00:00+00:00",comp:"UCL",v:"A"},
   {c:"ARS",d:"2027-01-20T20:00:00+00:00",comp:"UCL",v:"A"},

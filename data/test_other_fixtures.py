@@ -61,6 +61,12 @@ ok(sorted({r["c"] for r in uel}) == ["BOU", "CRY", "SUN"],
    "and covers exactly the three English clubs in it")
 ok(len({(r["c"], r["d"]) for r in uel}) == 24,
    "no club holds two curated ties at one instant")
+uecl = ulp.rows_for(2026, "UECL")
+ok(len(uecl) == 6, f"the Conference League league phase is six matchdays, got {len(uecl)}")
+ok(sorted({r["c"] for r in uecl}) == ["BHA"],
+   "and Brighton is the only English club in it")
+ok(sum(1 for r in uecl if r["v"] == "H") == 3,
+   "six matchdays split three home and three away, not four and four")
 ok(ulp.rows_for(2026, "UCL") == [],
    "a competition with nothing curated returns nothing, rather than guessing")
 ok(ulp.rows_for(1999, "UEL") == [], "and so does a season with nothing curated")
@@ -122,21 +128,24 @@ ok(note and "replaced" in note, f"the run says what it did: {note}")
 
 # The case that matters most, because it is the one that shipped: a
 # placeholder with nothing curated must not survive the harvest.
-rows, note = hof.apply_league_phase_override(list(block), "UECL", 2026)
+rows, note = hof.apply_league_phase_override(list(block), "UCL", 2026)
 ok(rows == [], "a placeholder with no curated calendar is dropped, not emitted")
 ok(note and "DROPPED" in note, f"and the run says so loudly: {note}")
 
 mixed = list(block) + list(REAL)
-rows, note = hof.apply_league_phase_override(mixed, "UECL", 2026)
+rows, note = hof.apply_league_phase_override(mixed, "UCL", 2026)
 ok(rows == REAL,
    "dropping takes the placeholder slots only, leaving real rows in the same competition")
 
 # The regression that matters: a club with BOTH real ties and a block keeps
 # the real ones.
 rows, note = hof.apply_league_phase_override(list(BHA), "UECL", 2026)
-ok(len(rows) == 2, f"the play-off legs survive the drop, got {len(rows)} rows")
-ok(sorted(r["d"][:10] for r in rows) == ["2026-08-20", "2026-08-27"],
-   "and they are the two August dates, untouched")
+ok(len(rows) == 8, f"two play-off legs plus six curated league-phase ties, got {len(rows)}")
+ok(sorted(r["d"][:10] for r in rows)[:2] == ["2026-08-20", "2026-08-27"],
+   "the play-off legs survive alongside the substitution, untouched")
+ok(len({(r["c"], r["d"]) for r in rows}) == 8,
+   "and Brighton still never plays twice at one instant")
+ok(note and "replaced" in note, f"the run reports a replacement, not a drop: {note}")
 
 
 if FAILED:

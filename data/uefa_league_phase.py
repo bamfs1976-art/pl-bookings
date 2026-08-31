@@ -4,19 +4,19 @@ UEFA's published league-phase calendar, for the weeks API-Football has not
 got dates for yet.
 
 WHY THIS EXISTS. The league-phase draw is made in late August and UEFA
-publishes the full eight-matchday calendar the same week. API-Football
+publishes the full calendar the same week — eight matchdays in the
+Champions and Europa Leagues, six in the Conference League. API-Football
 creates the fixtures as soon as the pairings are known but, until it
 ingests the calendar, stamps every one of them with a single provisional
-kick-off — the matchday-one slot. The harvest then emits eight rows per
-club all at the same instant, four home and four away.
+kick-off. The harvest then emits a club's whole league phase at one
+instant, split evenly home and away.
 
 That is not a small inaccuracy. A club cannot play eight matches at one
 moment, so every row in the block is wrong, and the block is indis-
 tinguishable from real data downstream: rest days computed from it read
-one enormous pile-up in September and nothing at all for the rest of the
-autumn. It has now shipped twice — the 2026-27 Champions League block in
-August, and the Europa League block still in the file at the time of
-writing.
+one enormous pile-up and nothing at all for the rest of the autumn. It
+has shipped twice — the 2026-27 Champions League block in August, and the
+Europa League block still in the file at the time of writing.
 
 WHAT THIS IS. The calendar as UEFA published it, transcribed for English
 clubs only, in UEFA's own local time. It is deliberately NOT a full copy
@@ -31,8 +31,9 @@ is ignored, so it ages out on its own rather than needing to be removed.
 SOURCE. editorial.uefa.com, 2026/27 league-phase fixture lists, read from
 the per-club (pot) listings and cross-checked row by row against the
 by-matchday listings — two independent renderings of the same draw. Every
-club is asserted to hold exactly four home and four away ties, which is
-the format's own invariant and catches a mis-transcribed venue.
+club is asserted to hold its competition's full complement of ties, split
+evenly home and away: the format's own invariant, and what catches a
+venue read off the wrong line.
 """
 from datetime import date
 
@@ -67,6 +68,12 @@ def to_utc_iso(day, local_hhmm):
 
 
 D = date
+
+# How many ties a club plays in each league phase. The Conference League
+# runs six matchdays where the other two run eight, so a single hard-coded
+# 8 in the self-check would have rejected correct Conference League data —
+# and a check that cries wolf gets removed rather than fixed.
+TIES_PER_CLUB = {"UCL": 8, "UEL": 8, "UECL": 6}
 
 # (season start year, competition) -> {club short code: [(date, local time, venue)]}
 #
@@ -108,6 +115,18 @@ LEAGUE_PHASE = {
             (D(2027, 1, 28), "21:00", "H"),   # PFC Levski Sofia
         ],
     },
+    (2026, "UECL"): {
+        # Brighton & Hove Albion — the only English club in it. Six
+        # matchdays, so three home and three away.
+        "BHA": [
+            (D(2026, 10, 15), "21:00", "H"),  # FK Kauno Zalgiris
+            (D(2026, 10, 22), "18:45", "A"),  # FK Jablonec
+            (D(2026, 11, 5), "21:00", "A"),   # Getafe CF
+            (D(2026, 11, 26), "18:45", "H"),  # Universitatea Craiova
+            (D(2026, 12, 10), "21:00", "H"),  # AS Monaco
+            (D(2026, 12, 17), "21:00", "A"),  # Panathinaikos FC
+        ],
+    },
 }
 
 
@@ -137,13 +156,19 @@ def self_check():
     """
     problems = []
     for (season, comp), table in sorted(LEAGUE_PHASE.items()):
+        want = TIES_PER_CLUB.get(comp)
+        if want is None:
+            problems.append(f"{season} {comp}: no tie count known for this competition")
+            continue
+        half = want // 2
         for club, ties in sorted(table.items()):
-            if len(ties) != 8:
-                problems.append(f"{season} {comp} {club}: {len(ties)} ties, expected 8")
+            if len(ties) != want:
+                problems.append(f"{season} {comp} {club}: {len(ties)} ties, expected {want}")
             homes = sum(1 for _, _, v in ties if v == "H")
             aways = sum(1 for _, _, v in ties if v == "A")
-            if homes != 4 or aways != 4:
-                problems.append(f"{season} {comp} {club}: {homes}H/{aways}A, expected 4/4")
+            if homes != half or aways != half:
+                problems.append(f"{season} {comp} {club}: {homes}H/{aways}A, "
+                                f"expected {half}/{half}")
             days = [d for d, _, _ in ties]
             if len(set(days)) != len(days):
                 problems.append(f"{season} {comp} {club}: two ties on one day")
