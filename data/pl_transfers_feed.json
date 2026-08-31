@@ -1,7 +1,52 @@
 {
   "note": "PROPOSALS from API-Football /transfers, for a person to read. data/transfers.json is the hand-curated overlay that is actually applied; this is not.",
-  "since": "2026-05-02",
+  "since": "2026-05-03",
   "moves": [
+    {
+      "n": "J. Scanlon",
+      "from": "Manchester United",
+      "to": "Arsenal U21",
+      "fromCode": "MUN",
+      "toCode": null,
+      "date": "2026-08-28",
+      "type": "-"
+    },
+    {
+      "n": "Omar Marmoush",
+      "from": "Manchester City",
+      "to": "Tottenham",
+      "fromCode": "MCI",
+      "toCode": "TOT",
+      "date": "2026-08-26",
+      "type": "Loan"
+    },
+    {
+      "n": "I. Kaboré",
+      "from": "Manchester City",
+      "to": "Wrexham",
+      "fromCode": "MCI",
+      "toCode": "WRE",
+      "date": "2026-08-26",
+      "type": "Transfer"
+    },
+    {
+      "n": "Nico González",
+      "from": "Manchester City",
+      "to": "Newcastle",
+      "fromCode": "MCI",
+      "toCode": "NEW",
+      "date": "2026-08-25",
+      "type": "Transfer"
+    },
+    {
+      "n": "I. Kaboré",
+      "from": "Manchester City",
+      "to": "Wrexham",
+      "fromCode": "MCI",
+      "toCode": "WRE",
+      "date": "2026-08-25",
+      "type": "Transfer"
+    },
     {
       "n": "D. Bakwa",
       "from": "Nottingham Forest",
@@ -10,6 +55,15 @@
       "toCode": null,
       "date": "2026-08-25",
       "type": "Loan"
+    },
+    {
+      "n": "A. Bouaddi",
+      "from": "Lille",
+      "to": "Manchester City",
+      "fromCode": null,
+      "toCode": "MCI",
+      "date": "2026-08-25",
+      "type": "Transfer"
     },
     {
       "n": "Sávio",
@@ -75,6 +129,15 @@
       "type": "Transfer"
     },
     {
+      "n": "A. Bouaddi",
+      "from": "Lille",
+      "to": "Manchester City",
+      "fromCode": null,
+      "toCode": "MCI",
+      "date": "2026-08-24",
+      "type": "Transfer"
+    },
+    {
       "n": "Sávio",
       "from": "Manchester City",
       "to": "Tottenham",
@@ -102,6 +165,15 @@
       "type": "Transfer"
     },
     {
+      "n": "E. Wheatley",
+      "from": "Manchester United",
+      "to": "Lincoln",
+      "fromCode": "MUN",
+      "toCode": "LIN",
+      "date": "2026-08-23",
+      "type": "Loan"
+    },
+    {
       "n": "C. Baleba",
       "from": "Brighton",
       "to": "Manchester United",
@@ -109,6 +181,15 @@
       "toCode": "MUN",
       "date": "2026-08-23",
       "type": "Transfer"
+    },
+    {
+      "n": "J. Devaney",
+      "from": "Manchester United",
+      "to": "Hibernian",
+      "fromCode": "MUN",
+      "toCode": null,
+      "date": "2026-08-22",
+      "type": "Loan"
     },
     {
       "n": "IfeanyiIfeanyi Ndukwe",
@@ -244,6 +325,15 @@
       "toCode": "ARS",
       "date": "2026-08-19",
       "type": "Transfer"
+    },
+    {
+      "n": "Charlie Gray",
+      "from": "Manchester City",
+      "to": "Wigan",
+      "fromCode": "MCI",
+      "toCode": null,
+      "date": "2026-08-19",
+      "type": "Loan"
     },
     {
       "n": "C. Jones",
@@ -729,7 +819,7 @@
       "fromCode": "MCI",
       "toCode": null,
       "date": "2026-08-13",
-      "type": "Free agent"
+      "type": "Transfer"
     },
     {
       "n": "Emilio Lawrence",
@@ -837,7 +927,7 @@
       "fromCode": "MUN",
       "toCode": null,
       "date": "2026-08-12",
-      "type": "-"
+      "type": "Transfer"
     },
     {
       "n": "E. Ünal",
@@ -4629,6 +4719,15 @@
       "type": "Transfer"
     },
     {
+      "n": "Joshua Nichols",
+      "from": "Arsenal",
+      "to": "Kustosija",
+      "fromCode": "ARS",
+      "toCode": null,
+      "date": "2026-06-30",
+      "type": "Free agent"
+    },
+    {
       "n": "Jannik Schuster",
       "from": "Red Bull Salzburg",
       "to": "Brentford",
@@ -4636,6 +4735,15 @@
       "toCode": "BRE",
       "date": "2026-06-30",
       "type": "Transfer"
+    },
+    {
+      "n": "James Bailey",
+      "from": "Manchester United",
+      "to": "Stockport County",
+      "fromCode": "MUN",
+      "toCode": null,
+      "date": "2026-06-30",
+      "type": "Free agent"
     },
     {
       "n": "Jahmai Simpson-Pusey",
@@ -6205,21 +6313,21 @@
     },
     {
       "n": "K. Hein",
-      "from": "Werder Bremen",
-      "to": "Arsenal",
-      "fromCode": null,
-      "toCode": "ARS",
-      "date": "2026-06-29",
-      "type": "Return from loan"
-    },
-    {
-      "n": "K. Hein",
       "from": "Arsenal",
       "to": "Werder Bremen",
       "fromCode": "ARS",
       "toCode": null,
       "date": "2026-06-29",
       "type": "Transfer"
+    },
+    {
+      "n": "K. Hein",
+      "from": "Werder Bremen",
+      "to": "Arsenal",
+      "fromCode": null,
+      "toCode": "ARS",
+      "date": "2026-06-29",
+      "type": "Return from loan"
     },
     {
       "n": "K. Darlow",
@@ -6247,6 +6355,15 @@
       "toCode": "NFO",
       "date": "2026-06-29",
       "type": "Return from loan"
+    },
+    {
+      "n": "Joshua Nichols",
+      "from": "Arsenal",
+      "to": "Kustosija",
+      "fromCode": "ARS",
+      "toCode": null,
+      "date": "2026-06-29",
+      "type": "Free agent"
     },
     {
       "n": "Joshua Feeney",
@@ -8740,24 +8857,6 @@
       "toCode": "LEE",
       "date": "2026-05-09",
       "type": "Raise"
-    },
-    {
-      "n": "Iwan Morgan",
-      "from": "Shrewsbury",
-      "to": "Brentford",
-      "fromCode": null,
-      "toCode": "BRE",
-      "date": "2026-05-02",
-      "type": "Return from loan"
-    },
-    {
-      "n": "Daniel Gore",
-      "from": "Rotherham",
-      "to": "Manchester United",
-      "fromCode": null,
-      "toCode": "MUN",
-      "date": "2026-05-02",
-      "type": "Return from loan"
     }
   ]
 }
