@@ -70,6 +70,33 @@ def _aliases():
     assert L.canonical_club("Sheffield Wednesday", known) is None, "relegated, not ours"
     assert L.canonical_club(None, known) is None
     assert L.canonical_club("  Coventry  ", known) == "Coventry City", "trimmed"
+
+    # ── A FOREIGN CLUB THAT CONTAINS AN ENGLISH ONE'S NAME ─────────────────
+    #
+    # harvest_other_fixtures walks the Champions, Europa and Conference League
+    # fixture lists looking for English clubs, and those lists are mostly full
+    # of clubs this project has no opinion about. Nearly all of them resolve to
+    # None on sight. These do not look like they should.
+    #
+    # Lincoln Red Imps are from Gibraltar and are in the 2026-27 Conference
+    # League; Lincoln City are in the Championship and in this project's
+    # registry as LIN. A matcher loose enough to take "Lincoln" out of "Lincoln
+    # Red Imps FC" would give Lincoln City six European nights they never
+    # played — and it would do it to the rest-day record, where a phantom
+    # midweek fixture does not read as an error, it reads as a congested week.
+    # Nothing downstream could tell the difference.
+    #
+    # It is right today. It is pinned here because the failure would be silent
+    # and the next person to loosen this matcher will be trying to fix a real
+    # missed join.
+    for foreign in ("Lincoln Red Imps FC",      # Gibraltar, not Lincoln City
+                    "Heart of Midlothian FC",   # Scotland
+                    "Celtic FC",                # Scotland
+                    "Real Club Celta"):         # Spain
+        assert L.canonical_club(foreign, known) is None, foreign
+        assert A.short_in("EFLC", L.canonical_club(foreign, known)) is None, foreign
+    # And the club it could be confused with still resolves.
+    assert L.canonical_club("Lincoln City", known) == "Lincoln City"
     # Every alias must land on a name SOME desk keys on, or the row is dropped
     # later for a reason nobody will connect back to this table.
     everything = set(B.SHORT) | set(L.EFLC_CLUBS)
