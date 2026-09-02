@@ -1,5 +1,5 @@
 EFL Championship 2026-27 — build_eflc_data.py
-players: 755  by basis: EFLC=459, L1=65, NEW=163, PL=68
+players: 763  by basis: EFLC=456, L1=66, NEW=174, PL=67
 clubs with players: 24 of 24
 club rates from match records: 18 of 24
 referees: 30
