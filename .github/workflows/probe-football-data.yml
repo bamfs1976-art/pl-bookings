@@ -1,0 +1,43 @@
+name: Probe football-data.org
+
+# A diagnostic, not a data job. It fetches nothing into the repo, commits
+# nothing, and gates nothing — it prints what our football-data.org key is
+# actually entitled to so docs/referee-sourcing.md can stop saying "reportedly".
+#
+# MANUAL ONLY, deliberately. The free tier is 10 requests/minute and this run
+# spends about twenty of them; there is no reason to burn that on a schedule
+# when the answer only changes if the plan does. Run it when deciding whether
+# to build on this API, and re-run it inside a referee publication window if
+# the first run lands in an international break or the close season — a league
+# that has not appointed anyone yet reads identically to one we cannot see.
+
+on:
+  workflow_dispatch:
+
+# No `contents: write`. This job has nothing to push and should not be able to.
+permissions:
+  contents: read
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    env:
+      FOOTBALL_DATA_TOKEN: ${{ secrets.FOOTBALL_DATA_TOKEN }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      # Same reasoning as the fixtures job: a green tick on a run that fetched
+      # nothing is how a data gap survives unnoticed.
+      - name: Refuse to run blind
+        if: ${{ env.FOOTBALL_DATA_TOKEN == '' }}
+        run: |
+          echo "::error::FOOTBALL_DATA_TOKEN is not set in this repository's Actions secrets."
+          echo "Add it under Settings → Secrets and variables → Actions. Note that Netlify"
+          echo "environment variables are a SEPARATE store — see docs/referee-sourcing.md §4."
+          exit 1
+
+      - name: What can this key see
+        run: node scripts/probe-football-data.mjs

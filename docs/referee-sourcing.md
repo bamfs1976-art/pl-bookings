@@ -124,7 +124,7 @@ single point of failure. Options, best first:
 | **football-data.co.uk** (in use) | Yes, and free/public domain | No — historical only | Free | Keep. It is the statistics backbone and owes us nothing. |
 | **API-Football** (in use) | Derivable from events | Yes, once published | Paid, key held | Keep. Make it the primary allocation source. |
 | **premierleague.com / pulselive** | Some | Yes, PL only, with assistants + VAR | Free, undocumented | ⚠️ Worth probing as a PL cross-check. Undocumented endpoints can vanish; never make it primary. |
-| **football-data.org v4** | `referees` array on matches | Partial | Free tier: 12 comps, 10 calls/min | ⚠️ Free tier reportedly thin on match detail. Probe before committing. |
+| **football-data.org v4** | `referees` array on matches | Partial | Free tier: 12 comps, 10 calls/min | ⚠️ Free tier reportedly thin on match detail. **The probe now exists** — `scripts/probe-football-data.mjs`, dispatched via the *Probe football-data.org* workflow. Read its verdict before building anything on this API. |
 | **Sportmonks** | Rich, dedicated referee endpoints | Yes | Paid, ~€40+/mo | Only if the referee layer becomes the product. Overkill now. |
 | Aggregators (FootyStats, OddAlerts, RefOdds, PlayerStats) | Yes | Some | Mixed | Several are themselves built on API-Football. Paying a reseller for our own supplier's data is the wrong direction. |
 | Scraping Transfermarkt / FBref | Yes | Some | "Free" | **No.** Both restrict automated access; FBref has tightened hard. Not worth the legal and breakage risk for a number we can get properly. |
@@ -264,6 +264,17 @@ load. `eflc.html` and `laliga.html` contain **no `fetch` call at all** — every
 number is a committed `.js` file. `today.html` fetches only Supabase, for the
 acca tracker; its three datasets come from static frames.
 
+> **PARTLY OVERTAKEN, 3 September 2026.** The paragraph above is kept because
+> the table it explains is still right about availability, but the sentence
+> "no `fetch` call at all" is no longer true of either desk. Both now load
+> `assets/livecards.js` and poll `/api/live-cards` via `LiveCards.pollLoop`,
+> giving them a live in-play card ticker; `today.html` polls the same function
+> for the combined view. What remains frozen — and what the rest of this
+> section is actually about — is **availability, cautions and squads**, which
+> are still baked into the shipped frames and moved only by the daily cron. So
+> the staleness argument below stands unchanged; only the "not a single fetch"
+> evidence for it has expired.
+
 Nothing changes those files except `data-refresh.yml`, which is
 `workflow_dispatch` — **no `cron:`**. So for two of the three desks, "the latest
 data" means "whenever someone last clicked Run workflow".
@@ -342,6 +353,21 @@ row unscored.
 - **The observed lead times are still assumptions.** `ref-coverage.mjs` prints
   them on every harvest; in a fortnight the table in §1 can be replaced with
   measurements.
+- **football-data.org is still unprobed, but no longer unprobeable.** A key now
+  exists, and `scripts/probe-football-data.mjs` asks it the three questions that
+  matter: whether it sees all three of our leagues, whether `referees` populate
+  *before* kick-off or only after, and which fields come back as silent empty
+  arrays rather than errors. Only the second decides whether this API is worth
+  anything to the referee layer — a post-match record is what
+  football-data.co.uk already gives us free. If it turns out to be post-match
+  only, judge the API on the frozen desks instead: its free tier is supposed to
+  cover PL, Championship *and* La Liga, which would make it the first free
+  source spanning all three, and `eflc.html` and `laliga.html` are still
+  photographs fed entirely by the paid API-Football cron.
+
+  Run it inside a publication window. Dispatched in the close season it will
+  report zero pre-match appointments everywhere, which is what a *working* feed
+  looks like in August and would be filed as a negative result by mistake.
 
 ---
 
