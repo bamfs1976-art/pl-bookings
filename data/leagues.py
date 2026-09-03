@@ -192,8 +192,13 @@ LEAGUES = {
         code="LL", name="La Liga", fd_div="SP1", clubs=20, matches=380,
         data_file="laliga_data.js", refs_file="laliga_refs.json",
         # The mirror DOES carry Spain — it is one of the top five. What it does
-        # not carry, in any of 33 seasons, is a referee: the Referee column is
-        # present and always empty. Hence referee_source below.
+        # not carry is a referee. Probed against the ORIGIN on 2026-09-03 by
+        # data/probe_fd_division.py: in 2023-24, 2024-25 and 2025-26 the
+        # Referee column is not present at all, while every card and foul
+        # column is filled on 100% of rows. (This comment used to say the
+        # column was present and always empty; for the three seasons actually
+        # measured it is absent. The conclusion is the same and the reason for
+        # referee_source below is unchanged.)
         mirror_slug="la-liga", af_league=140,
         players_file="laliga_players.json", clubs_file="laliga_clubs.json",
         # THE ONE LEAGUE HERE THAT PAYS FOR ITS REFEREES. Every card and every

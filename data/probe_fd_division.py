@@ -23,6 +23,22 @@ Premiership (SC0) and had no answer in the repository.
 It writes nothing and needs no key. It does need to reach
 www.football-data.co.uk, which several of the environments this project is
 worked in cannot — hence a workflow step rather than a local run.
+
+WHAT IT FOUND, 2026-09-03, seasons 2023-24 / 2024-25 / 2025-26:
+
+  SC0  Scottish Premiership   Referee 100%, HY/AY/HR/AR 100%, HF/AF 100%,
+                              228 rows a season (12 clubs x 38 — the right
+                              shape). Everything a referee model needs, free.
+  E0   Premier League         the same, and it is the control: it proves the
+                              probe reads a file it is known to read.
+  SP1  La Liga                Referee ABSENT in all three; every card and foul
+                              column filled on 100% of rows. This is why La
+                              Liga buys its referee names from API-Football.
+
+So a Scottish desk would cost NOTHING in referees or card rates — the same
+free archive the Premier League and Championship already run on. What it
+would still need is the parts football-data does not carry: squads, fixtures,
+appointments, and a suspension scheme.
 """
 
 import argparse
