@@ -1,6 +1,6 @@
 La Liga 2026-27 — build_laliga_data.py
 club rates from mirror (380 matches)
-players: 643  by basis: LL=433, NEW=139, SEG=71
+players: 642  by basis: LL=432, NEW=141, SEG=69
 clubs with players: 20 of 20
 club rates from match records: 17 of 20
 season cautions (2026-27): 479 players
