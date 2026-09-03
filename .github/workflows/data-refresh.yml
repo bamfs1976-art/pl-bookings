@@ -40,6 +40,10 @@ on:
         description: "Probe which columns a football-data division carries (e.g. SC0 for the Scottish Premiership). Blank = skip. Reports fill rates, writes nothing."
         required: false
         default: ""
+      scottish_derbies:
+        description: "Rebuild docs/scottish-derbies.md from the free SC0 archive (comma-separated season codes, e.g. 2526,2425,2324). Blank = skip."
+        required: false
+        default: ""
       season_pl:
         description: "ScoutingStats season id for the Premier League (blank = current)"
         required: false
@@ -209,6 +213,19 @@ jobs:
       - name: Probe a football-data division's columns
         if: ${{ inputs.probe_fd != '' }}
         run: python3 data/probe_fd_division.py --div "${{ inputs.probe_fd }}"
+
+      # FREE, AND THE ONLY DIVISION OUTSIDE THE DESKS WHERE THAT IS TRUE.
+      # probe_fd_division measured SC0 carrying the referee and every card
+      # column on 100% of rows, so Scottish derby card history costs no key
+      # and no quota. Manual only: it is a historical record rather than
+      # something that changes daily, and re-fetching a decade of CSVs every
+      # morning would be work for nobody.
+      - name: Scottish Premiership derby card history
+        if: ${{ inputs.scottish_derbies != '' }}
+        run: |
+          python3 data/scottish_derbies.py \
+            --seasons "${{ inputs.scottish_derbies }}" \
+            --out docs/scottish-derbies.md
 
       - name: Check the API-Football key
         if: ${{ env.API_FOOTBALL_KEY != '' }}
@@ -647,6 +664,7 @@ jobs:
                    data/laliga_clubs.json data/laliga_refs.json data/laliga_data.js \
                    data/laliga_status.txt data/laliga_fixtures.js data/laliga_ref_fixtures.js \
                    data/player_matches_status.txt data/fit_report.txt \
+                   docs/scottish-derbies.md \
                    backtest_report.md; do
             [ -f "$f" ] && git add "$f"
           done
