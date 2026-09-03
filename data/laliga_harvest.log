@@ -1,4 +1,4 @@
-La Liga harvest — run 137
+La Liga harvest — run 138
 == discover ==
 La Liga: API-Football league 140, season 2026
 
@@ -24,7 +24,7 @@ laliga_clubs.json written (20 clubs)
     VAL  Valencia
     VIL  Villarreal
 
-API-Football: 1 call(s) this run; 657 of 7500 used today (9%), 6843 left
+API-Football: 1 call(s) this run; 956 of 7500 used today (13%), 6544 left
 == squads ==
 La Liga: API-Football league 140, season 2025
   not in this desk's club list (3): Girona, Mallorca, Oviedo
@@ -49,7 +49,7 @@ La Liga: API-Football league 140, season 2025
 
 laliga_players.json written (672 players from 17 clubs, API-Football, LL season 2025)
 
-API-Football: 43 call(s) this run; 700 of 7500 used today (9%), 6800 left
+API-Football: 43 call(s) this run; 999 of 7500 used today (13%), 6501 left
 == rosters ==
 La Liga: API-Football league 140, season 2026
     Athletic Club               32 players
@@ -75,7 +75,7 @@ La Liga: API-Football league 140, season 2026
 
 ll_squads.json written (638 players from 20 clubs, API-Football current rosters)
 
-API-Football: 21 call(s) this run; 859 of 7500 used today (11%), 6641 left
+API-Football: 21 call(s) this run; 1167 of 7500 used today (16%), 6333 left
 == season-cards ==
 La Liga: API-Football league 140, season 2026
   fetching 20 squads
@@ -102,7 +102,7 @@ La Liga: API-Football league 140, season 2026
 
 laliga_season_cards.json written (509 players from 20 clubs, API-Football, LL season 2026)
 
-API-Football: 41 call(s) this run; 900 of 7500 used today (12%), 6600 left
+API-Football: 41 call(s) this run; 1208 of 7500 used today (16%), 6292 left
 == segunda ==
 Segunda División: API-Football league 141, season 2025
   not in this desk's club list (19): AD Ceuta FC, Albacete, Almeria, Burgos, Cadiz, Castellón, Cordoba, Cultural Leonesa, Eibar, FC Andorra, Granada CF, Huesca, Las Palmas, Leganes, Mirandes, Real Sociedad II, Sporting Gijon, Valladolid, Zaragoza
@@ -113,13 +113,13 @@ Segunda División: API-Football league 141, season 2025
 
 segunda_players.json written (110 players from 3 clubs, API-Football, SEG season 2025)
 
-API-Football: 7 call(s) this run; 907 of 7500 used today (12%), 6593 left
+API-Football: 7 call(s) this run; 1215 of 7500 used today (16%), 6285 left
 == ref-fixtures ==
 La Liga: API-Football league 140, season 2025
 
 laliga_ref_fixtures.js written (380 matches over 20 clubs, 380 with an official named)
 
-API-Football: 1 call(s) this run; 908 of 7500 used today (12%), 6592 left
+API-Football: 1 call(s) this run; 1216 of 7500 used today (16%), 6284 left
 == fixtures ==
 La Liga: API-Football league 140, season 2026
   LL appointments overlay: 1 applied, 0 already harvested
@@ -160,17 +160,17 @@ La Liga: API-Football league 140, season 2026
 
 laliga_fixtures.js written (380 fixtures over 38 matchdays, 32 with a referee appointed)
 
-API-Football: 1 call(s) this run; 909 of 7500 used today (12%), 6591 left
+API-Football: 1 call(s) this run; 1217 of 7500 used today (16%), 6283 left
 == build ==
 Division: 17 clubs were in it last season, 3 came up
   promoted: Deportivo La Coruna, Malaga, Racing Santander
   LL    672 players from the La Liga feed
   SEG   110 players from the Segunda feed
-  NEW   141 players from the squad fill feed
+  NEW   142 players from the squad fill feed
 Reusing the previous build for sources that did not harvest:
-  - laliga_squads.json (141 players kept from the previous build)
+  - laliga_squads.json (142 players kept from the previous build)
     29 duplicate row(s) collapsed after the moves, keeping the row with a rate on it
-Squads reconciled against the FPL feed: 55 moved, 1 joined, 253 left the division, 21 left alone as ambiguous (923 rows in, 642 out).
+Squads reconciled against the FPL feed: 55 moved, 0 joined, 253 left the division, 21 left alone as ambiguous (924 rows in, 642 out).
     A. Gonzalez RMA -> SEV
     A. Sánchez SEV -> ELC
     Adrià Alti VIL -> DEP
@@ -238,7 +238,7 @@ club rates from mirror (380 matches)
 players: 642  by basis: LL=431, NEW=142, SEG=69
 clubs with players: 20 of 20
 club rates from match records: 17 of 20
-season cautions (2026-27): 482 players
+season cautions (2026-27): 478 players
 referees: 20
 RESULT: WRITTEN laliga_data.js
 == referee-join ==
