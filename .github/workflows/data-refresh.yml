@@ -36,6 +36,10 @@ on:
         description: "football-data season code for referees (e.g. 2526)"
         required: false
         default: "2526"
+      probe_fd:
+        description: "Probe which columns a football-data division carries (e.g. SC0 for the Scottish Premiership). Blank = skip. Reports fill rates, writes nothing."
+        required: false
+        default: ""
       season_pl:
         description: "ScoutingStats season id for the Premier League (blank = current)"
         required: false
@@ -195,6 +199,17 @@ jobs:
       # Says what the key IS before anything tries to use it. "Missing
       # application key" and "your plan does not cover this season" both arrive
       # as a refused request, and they need opposite fixes.
+      # ASKED BEFORE ANYTHING IS BUILT FOR A DIVISION. A desk that can read the
+      # free archive costs nothing to keep in referees; one that cannot costs a
+      # call per fixture. The question is not whether the column EXISTS —
+      # Spain's Referee column exists in all 33 seasons and is empty in every
+      # one — so the probe reports fill rates over several seasons, and it
+      # exits non-zero rather than green if it could not read the file at all.
+      # Manual only, writes nothing, needs no key.
+      - name: Probe a football-data division's columns
+        if: ${{ inputs.probe_fd != '' }}
+        run: python3 data/probe_fd_division.py --div "${{ inputs.probe_fd }}"
+
       - name: Check the API-Football key
         if: ${{ env.API_FOOTBALL_KEY != '' }}
         continue-on-error: true
