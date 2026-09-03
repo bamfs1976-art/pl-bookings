@@ -15,6 +15,35 @@ football-data.co.uk, and that constrains what was measured rather than assumed.
 
 ---
 
+## 0. What has been measured since this note was written
+
+**Added 3 September 2026, on merging.** The note above was written on 8 August
+against a partial 2013-14 snapshot, because that session could not reach
+football-data.co.uk. Two things have run since, both against the live files,
+and they change what the reader should believe:
+
+- **`data/probe_fd_division.py --div SC0,E0,SP1`** measured three CURRENT
+  seasons: `SC0` carries `Referee` on **100%** of rows, every card and foul
+  column with it, at **228 rows a season** — the right shape for 12 clubs
+  playing 38. `E0` returns the same and is the control. `SP1`'s `Referee`
+  column is **absent**, which is why La Liga buys its names from API-Football.
+  So §1's central claim is no longer inferred from a five-month fragment of a
+  season played thirteen years ago. It is measured, on the files a desk would
+  actually read.
+- **`data/scottish_derbies.py`** then read 2,231 SC0 matches over ten seasons
+  and wrote `docs/scottish-derbies.md`. That is a working referee-and-card
+  record for Scotland built end to end from the free archive, with no key and
+  no quota — the practical demonstration of §1 rather than an argument for it.
+
+**What this does NOT upgrade.** `SC1`–`SC3` are still unverified — §1's
+correction stands. The Scottish FA suspension thresholds in §5.2 are still
+taken from search summaries, not the authoritative PDF. Every cost and
+timescale in §4 is still an estimate. Where §2 says a figure was taken from
+the 2013-14 snapshot or from search, that is still true unless it appears in
+the two bullets above.
+
+---
+
 ## 1. The headline: the referee layer survives
 
 This is the whole argument. `data/leagues.py` already records why the
