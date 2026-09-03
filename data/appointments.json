@@ -12,6 +12,7 @@
   "rfef.es — CTA designation sheet, Primera División, Jornada 2, 24 August, issued Las Rozas 18-08-2026 (supplied as a screenshot; exact PDF URL not captured)",
   "rfef.es — CTA designation sheet, Primera División, Jornada 2, issued Las Rozas 18-08-2026 (supplied as a screenshot; exact PDF URL not captured)",
   "rfef.es — CTA designation sheet, Primera División, Jornada 3, 31 August 2026 (supplied as a screenshot; exact PDF URL not captured)",
+  "rfef.es — CTA designation sheet, Primera División, Jornada 4, 4 September 2026 (supplied as a screenshot; exact PDF URL not captured)",
   "rfef.es — CTA designation sheet, Primera División, Jornada 6, 3 September 2026 (supplied as a screenshot; exact PDF URL not captured)",
   "rfef.es — CTA designation sheets, Primera División, Jornada 2, 22 and 23 August, issued Las Rozas 18-08-2026 (supplied as screenshots; exact PDF URLs not captured)",
   "rfef.es — CTA designation sheets, Primera División, Jornada 3, 28 and 29 August, issued Las Rozas 27-08-2026 (supplied as screenshots; exact PDF URLs not captured)",
@@ -732,6 +733,17 @@
    "refResolved": "Victor Garcia Verdura",
    "resolvedBy": "run",
    "source": "rfef.es — CTA designation sheet, Primera División, Jornada 6, 3 September 2026 (supplied as a screenshot; exact PDF URL not captured)"
+  },
+  {
+   "league": "LL",
+   "date": "2026-09-04",
+   "h": "BET",
+   "a": "RMA",
+   "ko": "21:00",
+   "ref": "Alejandro José Hernández",
+   "refResolved": "Alejandro Hernandez",
+   "resolvedBy": "run",
+   "source": "rfef.es — CTA designation sheet, Primera División, Jornada 4, 4 September 2026 (supplied as a screenshot; exact PDF URL not captured)"
   }
  ]
 }
