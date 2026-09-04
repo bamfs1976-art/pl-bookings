@@ -13,6 +13,7 @@
   "rfef.es — CTA designation sheet, Primera División, Jornada 2, issued Las Rozas 18-08-2026 (supplied as a screenshot; exact PDF URL not captured)",
   "rfef.es — CTA designation sheet, Primera División, Jornada 3, 31 August 2026 (supplied as a screenshot; exact PDF URL not captured)",
   "rfef.es — CTA designation sheet, Primera División, Jornada 4, 4 September 2026 (supplied as a screenshot; exact PDF URL not captured)",
+  "rfef.es — CTA designation sheet, Primera División, Jornada 4, 5 September 2026, issued Las Rozas 02-09-2026 (supplied as a screenshot; exact PDF URL not captured)",
   "rfef.es — CTA designation sheet, Primera División, Jornada 6, 3 September 2026 (supplied as a screenshot; exact PDF URL not captured)",
   "rfef.es — CTA designation sheets, Primera División, Jornada 2, 22 and 23 August, issued Las Rozas 18-08-2026 (supplied as screenshots; exact PDF URLs not captured)",
   "rfef.es — CTA designation sheets, Primera División, Jornada 3, 28 and 29 August, issued Las Rozas 27-08-2026 (supplied as screenshots; exact PDF URLs not captured)",
@@ -744,6 +745,39 @@
    "refResolved": "Alejandro Hernandez",
    "resolvedBy": "run",
    "source": "rfef.es — CTA designation sheet, Primera División, Jornada 4, 4 September 2026 (supplied as a screenshot; exact PDF URL not captured)"
+  },
+  {
+   "league": "LL",
+   "date": "2026-09-05",
+   "h": "ATH",
+   "a": "ATM",
+   "ko": "16:15",
+   "ref": "José Luis Munuera",
+   "refResolved": "José Luis Munuera Montero",
+   "resolvedBy": "run",
+   "source": "rfef.es — CTA designation sheet, Primera División, Jornada 4, 5 September 2026, issued Las Rozas 02-09-2026 (supplied as a screenshot; exact PDF URL not captured)"
+  },
+  {
+   "league": "LL",
+   "date": "2026-09-05",
+   "h": "RAY",
+   "a": "RAC",
+   "ko": "18:30",
+   "ref": "Alejandro Quintero",
+   "refResolved": "Alejandro Quintero Gonzalez",
+   "resolvedBy": "run",
+   "source": "rfef.es — CTA designation sheet, Primera División, Jornada 4, 5 September 2026, issued Las Rozas 02-09-2026 (supplied as a screenshot; exact PDF URL not captured)"
+  },
+  {
+   "league": "LL",
+   "date": "2026-09-05",
+   "h": "VIL",
+   "a": "DEP",
+   "ko": "21:00",
+   "ref": "Jesús Gil",
+   "refResolved": "Jesus Gil Manzano",
+   "resolvedBy": "run",
+   "source": "rfef.es — CTA designation sheet, Primera División, Jornada 4, 5 September 2026, issued Las Rozas 02-09-2026 (supplied as a screenshot; exact PDF URL not captured)"
   }
  ]
 }
