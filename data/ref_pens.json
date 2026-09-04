@@ -1,8 +1,8 @@
 {
   "note": "Penalties a game, per official, HAND-SEEDED. The free football-data.co.uk match records this repository builds referee rates from carry yellows, reds and fouls but NOT penalties, so data/build_refs.py has always written pen:null and carried the previous value forward. A regex in previous_details once stopped matching, every carried value was dropped, and the column has been empty on all three desks since. There is no free feed that would refill it, so these are read off published referee-stat graphics and entered by hand.",
   "caveats": [
-    "A THIRD-PARTY GRAPHIC IS NOT A PRIMARY SOURCE. Every figure here was read off a Betting Village Stats fixture card, which states its own scope ('all data taken from 2025/26 Premier League only') but shows no working. Where the same cards quote figures this repository computes independently, they agree closely: across the four cards carrying full numbers, reds match exactly every time, yellows to within 0.14 and fouls to within 0.21. Two of the four — Craig Pawson and Jarred Gillett — matched all three of ours to the second decimal. That is corroboration, not verification: it says the two are counting the same season, not that either is right.",
-    "FIVE OF SEVENTY-TWO. The three divisions carry 72 officials between them and this file names five. The column stays null for the rest, which is the honest state: pen:null means nobody knows, and a zero would mean he has never given one.",
+    "A THIRD-PARTY GRAPHIC IS NOT A PRIMARY SOURCE. Every figure here was read off a Betting Village Stats fixture card, which states its own scope ('all data taken from 2025/26 Premier League only') but shows no working. Where the same cards quote figures this repository computes independently, they agree closely: across the five cards carrying full numbers, reds match exactly every time, yellows to within 0.14 and fouls to within 0.21. Three of the five — Craig Pawson, Jarred Gillett and Darren England — matched all three of ours to the second decimal. That is corroboration, not verification: it says the two are counting the same season, not that either is right.",
+    "SIX OF SEVENTY-TWO. The three divisions carry 72 officials between them and this file names six. The column stays null for the rest, which is the honest state: pen:null means nobody knows, and a zero would mean he has never given one.",
     "NOTHING IS PRICED OFF IT. The pen column is displayed in the three referee tables and read by no model, so a wrong figure here misinforms a reader and moves no probability. That is the only reason hand-seeded third-party data is admissible at all."
   ],
   "entries": [
@@ -40,6 +40,14 @@
       "pen": 0.27,
       "source": "Betting Village Stats fixture card — Aston Villa v Arsenal, Premier League Gameweek 2, 2026-27 (card states 2025/26 Premier League only). The same card's other three figures — 19.77 fouls, 3.59 yellows, 0.05 reds — match this repository's own count exactly, the second card in a row to do so.",
       "seen": "2026-08-31"
+    },
+    {
+      "league": "PL",
+      "ref": "Darren England",
+      "pen": 0.13,
+      "source": "Betting Village Stats fixture card — Ipswich Town v Liverpool, Premier League Gameweek 3, 2026-27 (card states 2025/26 Premier League only). The same card's other three figures — 22.04 fouls, 4.30 yellows, 0.13 reds — match this repository's own count exactly, the third card in a row to do so. The card's kick-off, 20:00 UK, also matches the harvested fixture (2026-09-04T19:00Z = 20:00 BST), and the appointment itself was already in data/pl_fixtures.js as \"D. England\" from API-Football — so this card is corroborated on the appointment as well as on the rates.",
+      "caution": "PENS AND REDS BOTH READ 0.13 ON THIS CARD. Over his 23 matches that is exactly what three penalties and three dismissals would each produce (3/23 = 0.130), and our independently computed red rate IS 0.13 — so the pair is self-consistent and plausible. It is still a repeated value in adjacent cells, which is also what a duplication slip looks like, and nothing here can tell the two apart. Recorded because the pen column is displayed and never priced; if it is ever read by a model, verify this one first.",
+      "seen": "2026-09-04"
     }
   ]
 }
