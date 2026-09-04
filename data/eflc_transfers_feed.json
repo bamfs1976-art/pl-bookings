@@ -1,6 +1,6 @@
 {
   "note": "PROPOSALS from API-Football /transfers, for a person to read. data/transfers.json is the hand-curated overlay that is actually applied; this is not.",
-  "since": "2026-05-06",
+  "since": "2026-05-07",
   "moves": [
     {
       "n": "Tyler Bindon",
