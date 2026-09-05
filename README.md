@@ -101,6 +101,34 @@ Each fixture card also shows **tight** — the fitted `P(margin ≤ 1)`. Cards f
 
 Connect the `pl-bookings` repo (preferred — the `/api/fpl/*` proxy needs the Netlify Function, which a drag-and-drop deploy of the root also carries in `netlify/functions/`). Publish directory is the root, no build command. Only the raw harvest JSON in `data/` is gitignored — the generated `data/pl_data.js` is committed and deployed, and `index.html` loads it directly. No environment variables are required — optionally set `ANTHROPIC_API_KEY` to switch on the AI review of tracker picks (plus `SUPABASE_SERVICE_ROLE_KEY` for the daily cap, `AI_DAILY_CAP` to change it, and `SUPABASE_URL`/`SUPABASE_PUBLISHABLE_KEY` if not using the defaults). The same `SUPABASE_URL` + `SUPABASE_SERVICE_ROLE_KEY` also switch on the **Live prediction accuracy** calibration loop (run `supabase/plb_predictions.sql` once); the hourly logger and its schedule are declared in `netlify.toml`.
 
+### One brand
+
+The desk ships under **one name and one address**: **Bookings Desk**, at
+`bookingsdesk.netlify.app`. `BAProTips` is retired — its one worthwhile
+feature, the AI review of tracker picks, was ported here and the name is gone
+from this repository.
+
+The old site is a **separate Netlify site** with its own repository, so the
+redirect cannot be made from here. It is four steps in the Netlify dashboard,
+on the `playerbookings` site (not this one):
+
+1. **Site configuration → Domain management** on the `playerbookings` site.
+2. **Add a `_redirects` file** to that site's publish directory containing the
+   single line `/*  https://bookingsdesk.netlify.app/:splat  301!` — the bang
+   is what makes it apply to paths that resolve to a real file, which is the
+   same trap `/` hit on this site.
+3. Redeploy that site so the rule takes effect, and confirm with
+   `curl -sI https://playerbookings.netlify.app/` that the response is `301`
+   and the `location` header points at `bookingsdesk.netlify.app`.
+4. Only once that returns 301, **unlink its repository** so nothing redeploys
+   over the rule. Do not delete the site: deleting it frees the subdomain for
+   anyone to claim, and every old link would then point at a stranger's page
+   rather than at a redirect.
+
+A permanent redirect rather than a 302 because the move is permanent and the
+old address should stop being indexed. Nothing in this repository can verify
+any of it, which is why it is written down here rather than assumed done.
+
 ## Getting between the desks
 
 There is a **league switcher** on every page — Premier League · Championship · La Liga · Today — sticky under the topbar, marking the desk you are on.

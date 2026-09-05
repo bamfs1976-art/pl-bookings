@@ -459,8 +459,6 @@ lands on an empty card.
 
 ## Deliberately not taken
 
-- **`BAProTips`** is being retired into this app and its one worthwhile
-  feature (AI review of tracker picks) is already ported.
 - **`card-bookings-bot`'s prediction method** is H2H historical averages with
   no model. The H2H *data* is worth having (item 3); the method is not an
   upgrade on what is here.
