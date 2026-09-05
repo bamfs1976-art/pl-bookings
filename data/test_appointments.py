@@ -236,6 +236,67 @@ def _the_efls_other_publication_format_parses():
     assert rows3[0]["date"] == "2025-08-15", rows3
 
 
+def _a_kickoff_on_its_own_line_parses():
+    """A THIRD layout, and it cost a full round before it was noticed.
+
+    The EFL also publishes the kick-off on its own line under the fixture,
+    with no parentheses anywhere:
+
+        Lincoln City v Southampton
+        12:30
+        Referee: Andrew Kitchen
+
+    Twenty-one Championship fixtures for 5-9 September 2026 read as ZERO. The
+    ingest refused the article rather than storing an empty week, which is the
+    only reason this surfaced at all — but the layout belongs in the parser,
+    because which one arrives is the EFL's choice and not ours.
+    """
+    text = ("Sky Bet Championship\n"
+            "Saturday 5 September 2026\n"
+            "Lincoln City v Southampton\n"
+            "12:30\n"
+            "Referee: Andrew Kitchen\n"
+            "Assistant Referees: Darren Williams & Callum Gough\n"
+            "Fourth Official: Ben Toner\n"
+            "\n"
+            "Queens Park Rangers v Middlesbrough\n"
+            "15:00\n"
+            "Referee: Andy Madley\n"
+            "Tuesday 8 September 2026\n"
+            "Blackburn Rovers v Sheffield United\n"
+            "19:45\n"
+            "Referee: Matt Donohue\n")
+    rows, unknown, undated = I.parse(text)
+    assert len(rows) == 3, rows
+    assert not unknown and not undated, (unknown, undated)
+    assert [r["ko"] for r in rows] == ["12:30", "15:00", "19:45"], rows
+    assert [r["home"] for r in rows] == [
+        "Lincoln City", "Queens Park Rangers", "Blackburn Rovers"], rows
+    assert [r["away"] for r in rows] == [
+        "Southampton", "Middlesbrough", "Sheffield United"], rows
+
+    # THE LABELLED LINES MUST NOT BECOME FIXTURES. Without parentheses to
+    # anchor on, the bare form matches any line holding " v " — so a line
+    # carrying a colon is excluded. "Assistant Referees: Darren Williams &
+    # Callum Gough" is the one that would otherwise land, and it would knock
+    # out the real fixture that preceded it.
+    assert all(r["ref"] for r in rows), rows
+
+    # AND A STRAY "X v Y" WITH NO REFEREE UNDER IT IS NEVER EMITTED, which is
+    # what makes the loose pattern safe: a fixture only becomes an appointment
+    # when a "Referee:" line follows it.
+    stray, _, _ = I.parse("Sky Bet Championship\nSaturday 5 September 2026\n"
+                          "Some Heading v Another Thing\n"
+                          "Lincoln City v Southampton\n12:30\n"
+                          "Referee: Andrew Kitchen\n")
+    assert len(stray) == 1 and stray[0]["home"] == "Lincoln City", stray
+
+    # Both older layouts still parse — this added a shape, it did not swap one.
+    old, _, _ = I.parse("Saturday, 15th August 2026\nSky Bet Championship\n"
+                        "Millwall v Norwich City (15:00)\nReferee: Sam Allison\n")
+    assert len(old) == 1 and old[0]["ko"] == "15:00", old
+
+
 def _twelve_hour_kickoffs_convert():
     assert I._ko24("12", "30", "pm") == "12:30"   # midday is not 24:30
     assert I._ko24("12", None, "am") == "00:00"   # ...nor is midnight 12:00
@@ -251,6 +312,8 @@ def _twelve_hour_kickoffs_convert():
 
 t("the EFL's other publication format parses, and refuses to guess a year",
   _the_efls_other_publication_format_parses)
+t("a kick-off on its own line parses, and labelled lines never become fixtures",
+  _a_kickoff_on_its_own_line_parses)
 t("twelve-hour kick-offs convert, midday and midnight included",
   _twelve_hour_kickoffs_convert)
 

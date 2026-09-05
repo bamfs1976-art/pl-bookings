@@ -150,6 +150,25 @@ DATE_RE = re.compile(
 # that looks like it starts in the morning.
 FIXTURE_RE = re.compile(
     r"^(.+?)\s+v\s+(.+?)\s*\((\d{1,2})(?::(\d{2}))?\s*(am|pm)?\)\s*$", re.I)
+# THE SAME ARTICLE, PUBLISHED THE OTHER WAY. The EFL also lays these out with
+# the kick-off on its own line under the fixture:
+#
+#     Lincoln City v Southampton
+#     12:30
+#     Referee: Andrew Kitchen
+#
+# A parser that knew only the parenthesised form read a full round of 21
+# Championship fixtures as nothing at all. It said so loudly rather than
+# storing an empty week, which is the only reason this was a five-minute fix
+# instead of a silently missing matchday — but the shape belongs in the parser
+# now, because the next paste will be whichever one the EFL felt like.
+#
+# The bare form cannot be as strict: with no parentheses to anchor on, any
+# line reading "X v Y" matches. That is safe HERE and nowhere else, because a
+# fixture is only ever emitted when a "Referee:" line follows it — a false
+# match simply never becomes an appointment.
+BARE_FIXTURE_RE = re.compile(r"^(.+?)\s+v\s+(.+?)\s*$", re.I)
+BARE_KO_RE = re.compile(r"^(\d{1,2}):(\d{2})\s*(am|pm)?\s*$", re.I)
 REFEREE_RE = re.compile(r"^referee:\s*(.+?)\s*$", re.I)
 
 
@@ -225,6 +244,23 @@ def parse(text, default_year=None):
             pending = {"competition": comp, "date": date,
                        "home": m.group(1).strip(), "away": m.group(2).strip(),
                        "ko": _ko24(m.group(3), m.group(4), m.group(5)), "ref": None}
+            continue
+
+        # A bare kick-off under a fixture that did not carry one. Checked
+        # BEFORE the bare fixture form, because "12:30" is unambiguous and a
+        # fixture line never looks like it.
+        m = BARE_KO_RE.match(line)
+        if m and pending is not None and pending["ko"] is None:
+            pending["ko"] = _ko24(m.group(1), m.group(2), m.group(3))
+            continue
+
+        m = BARE_FIXTURE_RE.match(line)
+        if m and ":" not in line:
+            # ":" excludes "Assistant Referees: A & B" and every other labelled
+            # line, which would otherwise match whenever a name contained " v ".
+            pending = {"competition": comp, "date": date,
+                       "home": m.group(1).strip(), "away": m.group(2).strip(),
+                       "ko": None, "ref": None}
             continue
 
         m = REFEREE_RE.match(line)
