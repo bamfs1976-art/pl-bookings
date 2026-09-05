@@ -39,6 +39,39 @@ carries. data/probe_fd_division.py made exactly that mistake in its first
 draft and reported a blocked proxy as a negative finding about Scotland.
 
 It writes nothing except an optional recorded payload, and needs API_FOOTBALL_KEY.
+
+WHAT IT FOUND, 2026-09-05, La Liga (140), season 2025, 40 finished fixtures,
+5 calls:
+
+  Referee name        on 40 of 40 fixtures (100%)
+  /fixtures?ids=      20 asked, 20 returned, all 20 with events inlined —
+                      a 380-fixture season would cost about 19 calls
+  cross-check         0 of 3 fixtures gave an IDENTICAL event list via
+                      /fixtures/events. The cheap path is not the same data.
+  penalty labels      Goal / Penalty          6
+                      Var  / Penalty confirmed 2
+
+  VERDICT: UNUSABLE AS IT STANDS, for two independent reasons.
+
+  1. NO LABEL RECORDS A PENALTY THAT DID NOT SCORE. There is no "Missed
+     Penalty" and no "Penalty Saved" in the sample. A count off these labels
+     is penalties SCORED. A referee is judged on what he AWARDS, so the column
+     would run low by every saved and missed penalty, invisibly and forever.
+     "Var / Penalty confirmed" does NOT close the gap — it fires only where a
+     penalty was reviewed, two against six scored, so it documents a minority
+     of incidents and is silent on the rest.
+  2. THE TWO LABELS OVERLAP. A VAR-confirmed penalty that is then scored
+     raises both rows, so they cannot be added. The first draft of this file
+     printed their sum as "0.400 a game", which is exactly the sort of number
+     that gets quoted.
+
+  The per-referee tallies it prints are a SAMPLE-SIZE CHECK, not rates: 20
+  fixtures spread over 20 officials is about one match each, and the busiest
+  had two. A rate off that is noise with a name on it.
+
+  So data/ref_pens.json stays hand-seeded. What would change the answer is a
+  label for penalties that did not score — worth re-running against another
+  league or season before concluding the feed never carries one.
 """
 
 import argparse
@@ -220,6 +253,7 @@ def main():
         return v
 
     inlined_vocab = Counter()
+    cross_ok = None          # None = never tested (the dear path was taken)
     if batch_ok:
         source = "inlined in /fixtures?ids= (the cheap path)"
         for r in batch["payload"].get("response") or []:
@@ -239,9 +273,10 @@ def main():
                     next(r["events"] for r in batch["payload"]["response"]
                          if ((r.get("fixture") or {}).get("id")) == fid)):
                 agreed += 1
+        cross_ok = bool(checked) and agreed == checked
         print(f"    cross-check: {agreed} of {checked} fixture(s) gave an "
               f"identical event list either way"
-              + ("" if checked and agreed == checked else
+              + ("" if cross_ok else
                  "   <-- THEY DIFFER; do not build on the inlined form"))
     else:
         source = "one /fixtures/events per fixture (the dear path)"
@@ -267,16 +302,30 @@ def main():
 
     pen_kinds = {(t, d): c for (t, d), c in vocab.items() if looks_like_penalty(t, d)}
     total_pens = sum(pen_kinds.values())
-    print(f"\n    penalty-ish events: {total_pens} over {read} fixture(s) "
-          f"= {total_pens / read:.3f} a game")
-    print(f"    fixtures with at least one: {sum(1 for v in per_fixture_pens.values() if v)}")
+
+    # THESE LABELS ARE NOT DISJOINT, so their sum is not a count of penalties.
+    # A VAR-confirmed penalty that is then scored raises BOTH a Var row and a
+    # Goal row, and adding them counts one award twice. The kinds are reported
+    # separately for that reason, and the single "a game" figure the first
+    # draft printed is gone: it was the kind of number that gets quoted.
+    print(f"\n    penalty-labelled events by kind, over {read} fixture(s):")
+    for (t, d), c in sorted(pen_kinds.items(), key=lambda kv: -kv[1]):
+        print(f"      {t:<6} {d:<22} {c:>4}   ({c / read:.3f} a game if taken alone)")
+    print("    THESE OVERLAP. A VAR-confirmed penalty that is scored appears "
+          "in both rows, so the kinds must not be added together.")
+    print(f"    fixtures with at least one penalty-labelled event: "
+          f"{sum(1 for v in per_fixture_pens.values() if v)} of {read}")
 
     if by_ref:
-        print(f"\n    per referee, over this sample:")
+        print(f"\n    per referee, over this sample — NOT a rate, a sample size "
+              f"check:")
         for name, r in sorted(by_ref.items(), key=lambda kv: -kv[1]["matches"])[:10]:
-            rate = r["pens"] / r["matches"] if r["matches"] else 0
-            print(f"      {name:<32} {r['matches']:>3} match(es)  "
-                  f"{r['pens']:>3} pen(s)  {rate:.2f}/game")
+            print(f"      {name:<34} {r['matches']:>3} match(es)  "
+                  f"{r['pens']:>3} penalty-labelled event(s)")
+        most = max(r["matches"] for r in by_ref.values())
+        print(f"    The busiest official here has {most} match(es). A penalty "
+              "rate off that is noise with a name on it; the column would need "
+              "the whole season, not this sample.")
 
     # ---- the verdict -------------------------------------------------------
     print("\n" + "=" * 62)
@@ -288,13 +337,57 @@ def main():
               "finding to check before concluding anything.")
         verdict = "unusable"
     else:
-        print("  The feed DOES label penalties. Before this column is built, "
-              "read the vocabulary above and answer one question:")
-        print("    does it distinguish a penalty AWARDED from one SCORED?")
-        print("  A referee is judged on what he gives. If the only labels are "
-              "goal-shaped, every saved and missed penalty is invisible and "
-              "the column will run low in a way nothing on the page reveals.")
-        verdict = "usable"
+        # THE LABELS DECIDE THIS, NOT THEIR PRESENCE. A referee is judged on
+        # what he AWARDS. If every penalty label is goal-shaped then a saved or
+        # missed penalty leaves no trace, and a column counted from these runs
+        # systematically low while looking entirely reasonable.
+        # A VAR ROW IS NOT AN AWARD RECORD, and counting it as one is how this
+        # check would wave through the very feed it exists to reject. "Var /
+        # Penalty confirmed" fires only when a penalty was REVIEWED — two of
+        # them against six scored penalties in the first real sample — so it
+        # documents a minority of incidents and says nothing about the ones
+        # VAR never looked at. Only a label for a penalty that did NOT become
+        # a goal makes awarded-versus-scored separable.
+        awarded = [f"{t}/{d}" for (t, d) in pen_kinds
+                   if any(w in d.lower() for w in ("miss", "saved", "awarded"))]
+        var_rows = [f"{t}/{d}" for (t, d) in pen_kinds if t.lower() == "var"]
+        goal_only = [f"{t}/{d}" for (t, d) in pen_kinds if t.lower() == "goal"]
+        print("  The feed labels penalties: " + ", ".join(sorted(pen_kinds and
+              [f"{t}/{d}" for (t, d) in pen_kinds])))
+        if not awarded:
+            print("  BUT NO LABEL RECORDS A PENALTY THAT DID NOT SCORE. "
+                  "Nothing here marks one saved or missed, so a count off this "
+                  "is penalties SCORED, not penalties AWARDED — the quantity a "
+                  "referee is actually judged on. Building the column on it "
+                  "would undercount every official by his saved and missed "
+                  "penalties, invisibly.")
+            if var_rows:
+                print(f"  ({', '.join(var_rows)} is present but does NOT close "
+                      "the gap: a VAR row fires only where a penalty was "
+                      "reviewed, so it covers a minority of incidents and is "
+                      "silent on the rest.)")
+            verdict = "unusable"
+        else:
+            print(f"  Goal-shaped labels: {', '.join(goal_only) or 'none'}")
+            print(f"  Award-shaped labels: {', '.join(awarded)}")
+            print("  Both shapes are present, so awarded-versus-scored can be "
+                  "separated — but check the overlap above before summing "
+                  "anything.")
+            verdict = "usable"
+
+    # A CROSS-CHECK THAT FAILED IS A BLOCKING FINDING, NOT A FOOTNOTE. The
+    # first version of this file printed "do not build on the inlined form"
+    # and then exited 0, which is a probe reporting green on the one thing it
+    # found wrong — the exact failure this repository keeps catching.
+    if cross_ok is False:
+        print("\n  AND THE CHEAP PATH IS NOT THE SAME DATA. The events inlined "
+              "in /fixtures?ids= did not match /fixtures/events for the same "
+              "fixtures. The batch form is what makes a season affordable, so "
+              "this has to be understood before either path is built on.")
+        verdict = "unusable"
+    elif cross_ok is None and batch_ok:
+        print("\n  (the inlined form was not cross-checked this run)")
+
     print(f"\n  {A.usage_line()}")
     print("  NOTE: nothing was written to any dataset. This probe answers "
           "whether the column CAN be counted; building it is a separate "
