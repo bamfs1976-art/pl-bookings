@@ -426,6 +426,16 @@ jobs:
       - name: The calibration caveat is one string, on every desk, on no card
         run: node scripts/check-calibration-notice.mjs
 
+      # The per-player leg has never been scored, and plb_predictions is now
+      # collecting the rows that would score it. The report that reads them
+      # must not draw a conclusion from forty rows: a reliability table that
+      # small has bins swinging on one booking and looks exactly like a
+      # finding. The floor is exercised by RUNNING the script against a stub
+      # PostgREST rather than by grepping it for the number, which would only
+      # prove the number is in the file.
+      - name: The refit report refuses to conclude on too little
+        run: node scripts/check-refit-report.mjs
+
       # "Booking heat" named two different quantities: the chip showed the two
       # clubs' cards-against rates while the Model detail panel two lines below
       # showed the model's expected cards, and /today showed the model's. One

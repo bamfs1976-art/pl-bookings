@@ -418,6 +418,43 @@ Two limits, stated in the view as well as here:
 
 This is a *different* backtest from `scripts/backtest.mjs` / `backtest_report.md`, which walk-forward the per-player GLM against `data/match_history.json` (gitignored, harvested from FPL). That one has not been able to run; this one runs on every page load, on data that ships.
 
+## November refit
+
+The desk prices **per player**, and that leg has never been scored. The in-page
+backtest runs at team level because per-player, per-match outcomes for a
+completed season are not licensable here — and it says so.
+
+What *is* accruing is this desk's own record. `plb_predictions` has been
+storing one row per player per gameweek since the season started: `pcard`, the
+forecast, against `carded`, what happened. That is the per-player leg, from a
+permitted source, arriving a row at a time.
+
+**The plan, and the commitment.**
+
+- **The first refit happens when there are at least 200 scored rows**, not on a
+  date. `node scripts/refit-report.mjs` reads the table through PostgREST and
+  prints sample size by gameweek, the observed booking rate, Brier against a
+  base-rate baseline with a paired 95% interval, a ten-bin reliability table
+  and the top-20 hit rate. It **refuses to give a verdict below the floor** —
+  it prints the figures so collection can be watched and exits non-zero — for
+  the same reason the rest of this project reports intervals: a reliability
+  table on forty rows has bins holding single figures, every one swinging on
+  one booking, and it looks exactly like a finding to anyone who wants one.
+- **The result is published either way.** If the model beats the base rate,
+  that goes in `docs/modelling-review.md` with the interval. If it does not,
+  that goes in the same place, in the same detail. The team-level backtest has
+  said "no difference" since it was written and still does; there is no reason
+  to expect the per-player leg to be treated differently.
+- **The script fits nothing.** It reads, scores and prints. Refitting is a
+  separate, deliberate step, so that the decision to change the model is made
+  on the evidence rather than by a script that has already made it.
+
+It needs `SUPABASE_SERVICE_ROLE_KEY` in the environment. That credential
+bypasses row-level security and is full read/write on the database: it belongs
+in a shell or in Actions secrets, never in this repository and never in a page.
+`scripts/check-refit-report.mjs` exercises the floor against a stub server —
+including that the key never reaches the output.
+
 ## Vendored libraries
 
 Four MIT libraries are inlined into `index.html` so the page fetches nothing third-party to render: **Tabulator 6.3.1** (the screener grid), **jStat 1.9.6** (the Poisson behind every card probability), **simple-statistics 7.8.8** (the backtest's statistics) and **PapaParse 5.4.1** (the CSV import). 574 KB in total, of which Tabulator is 432 KB; roughly 130 KB gzipped on the wire.
