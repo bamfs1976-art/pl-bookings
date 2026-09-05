@@ -715,6 +715,26 @@
       .map(function (p) { return p.n; }));
   }
 
+  /* The fixture's team-sheet state — confirmed, pending, or unresolved. The
+     third is not a slower second: a sheet that arrived and would not join to a
+     squad is a fault in the name match, and this page says so in different
+     words and a different colour rather than letting it hide behind the word
+     "pending" for the rest of the season. See PLDCore.lineupState. Squads come
+     from the league the fixture belongs to, so a name is never joined against
+     another division's players. */
+  function lineupStateFor(L, fx) {
+    if (!XI_SHEETS || !fx || fx.id == null) return null;
+    if (typeof C.lineupState !== 'function') return null;
+    var names = function (short) {
+      return L.players.filter(function (p) { return p.c === short; })
+                      .map(function (p) { return p.n; });
+    };
+    var squads = {};
+    squads[fx.h] = names(fx.h);
+    squads[fx.a] = names(fx.a);
+    return C.lineupState(XI_SHEETS, fx.id, squads);
+  }
+
   function sideProbs(L, short, factor, roles) {
     var squad = L.players.filter(function (p) {
       return p.c === short && p._y90 != null;
@@ -757,7 +777,7 @@
         roles: rh ? { home: rh, away: ra } : null,
         home: { ps: [], top: cands.filter(function (c) { return c.p.c === fx.h; }).slice(0, 4) },
         away: { ps: [], top: cands.filter(function (c) { return c.p.c === fx.a; }).slice(0, 4) },
-        m: b
+        m: b, xiState: lineupStateFor(L, fx)
       };
     }
     var ref = L.refFor(fx.ref);
@@ -771,7 +791,7 @@
     m.xi = !!(rh && ra);
     return {
       L: L, fx: fx, ref: { ref: ref, name: fx.ref || null, appointed: !!fx.ref },
-      factor: factor, home: home, away: away, m: m
+      factor: factor, home: home, away: away, m: m, xiState: lineupStateFor(L, fx)
     };
   }
 
@@ -942,6 +962,26 @@
       + '" title="' + esc(lab.title) + '">' + esc(lab.text) + '</span>';
   }
 
+  /* THE TEAM-SHEET LINE. Three states, three sentences — and the third is why
+     this is not a boolean. "Unread" means a sheet was published and this page
+     could not join it to a squad: a fault to fix today, not a clock to watch,
+     so it takes the warning colour rather than sitting quietly beside every
+     other fixture waiting on the hour. */
+  function xiNoteHtml(p) {
+    var st = p && p.xiState;
+    if (!st) return '';
+    if (st.state === 'confirmed') {
+      return '<div class="xi-note xi-ok" title="Both team sheets published and matched to the squads.'
+        + ' Players named on the bench are shown below the eleven, without a percentage.">'
+        + '<span aria-hidden="true">\u2713</span> Starting elevens confirmed</div>';
+    }
+    var n = C.lineupNotice(st);
+    if (!n) return '';
+    return '<div class="xi-note xi-' + n.tone + '" title="' + esc(n.title) + '">'
+      + '<span aria-hidden="true">' + (n.tone === 'unresolved' ? '\u26a0' : '\u23f3') + '</span> '
+      + esc(n.text) + '</div>';
+  }
+
   function rowHTML(p) {
     var ch = p.L.clubBy[p.fx.h] || { short: p.fx.h }, ca = p.L.clubBy[p.fx.a] || { short: p.fx.a };
     var all = [];
@@ -949,20 +989,44 @@
       (p[k].top || []).forEach(function (t) { all.push(t); });
     });
     all.sort(function (a, b) { return b.prob - a.prob; });
+    /* STARTERS FIRST ONCE BOTH SHEETS ARE IN, and nothing moves before that.
+       rankByLineup is the identity on a pending or unresolved fixture — same
+       order, xi null on every row — so most of a day renders exactly as it
+       did. On a confirmed one the eleven keep the ranking they earned and the
+       bench drops below them. */
+    var ranked = C.rankByLineup(p.xiState, all, function (t) {
+      return { club: t.p.c, name: t.p.n };
+    });
 
-    var cands = all.length
-      ? all.slice(0, 5).map(function (t) {
-          var b = band(t.prob), club = p.L.clubBy[t.p.c] || { short: t.p.c };
+    var cands = ranked.length
+      ? ranked.slice(0, 5).map(function (o) {
+          var t = o.row, club = p.L.clubBy[t.p.c] || { short: t.p.c };
+          /* THE TEAM SHEET OUTRANKS THE FORECAST. A named substitute cannot be
+             booked in a match he does not enter, so once both sheets are
+             confirmed and read he shows no percentage — the figure was
+             computed for ninety minutes he is not going to play. Only `false`
+             drops the number: null means no sheet, or one that would not read,
+             and the price stands exactly where it was. */
+          var cell = C.candLineup(p.xiState, t.p.c, t.p.n, t.prob);
+          var b = band(t.prob);
+          var right = cell.benched
+            ? '<span class="pc-wrap"><span class="cand-bench"'
+              + ' title="Named on the bench in the confirmed team sheet. The percentage was a full-match forecast, so it is not shown for a player who is not starting one.">Bench</span>'
+              + '<span class="sev">not starting</span></span>'
+            : '<span class="pc-wrap"><span class="pc band ' + b[0] + '">' + pct(t.prob) + '</span>'
+              + (b[1] ? '<span class="sev">' + esc(b[1]) + '</span>' : '') + '</span>';
           /* A BUTTON, not a div. Every other page in this app opens a player
              card when you tap a player; this one listed them and did nothing,
              which only became obvious once it was the home page. role and
              tabindex rather than a real <button> because the row carries a
              crest, a meter and a percentage, and a button element would flatten
              all of it into one label for a screen reader. */
-          return '<div class="cand cand-open" role="button" tabindex="0"'
+          return '<div class="cand cand-open' + (cell.benched ? ' cand-benched' : '') + '"'
+            + ' role="button" tabindex="0"'
             + ' data-pk="' + esc(t.p.c) + '|' + esc(t.p.n) + '"'
-            + ' data-prob="' + (t.prob || 0) + '"'
-            + ' aria-label="' + esc(t.p.n) + ', ' + pct(t.prob) + ' to be booked'
+            + ' data-prob="' + (cell.benched ? 0 : (t.prob || 0)) + '"'
+            + ' aria-label="' + esc(t.p.n) + ', '
+            + (cell.benched ? 'named on the bench' : pct(t.prob) + ' to be booked')
             + ' — open player card">'
             + PLDProfile.crest({ short: t.p.c, name: club.name, img: t.p.ph || null })
             + '<span class="cbadge">' + esc(t.p.c) + '</span>'
@@ -976,8 +1040,7 @@
                desk making the selection call the reader came here to make. */
             + availFlag(p.L, t.p)
             + pipMeter(t.p) + '</span>'
-            + '<span class="pc-wrap"><span class="pc band ' + b[0] + '">' + pct(t.prob) + '</span>'
-            + (b[1] ? '<span class="sev">' + esc(b[1]) + '</span>' : '') + '</span>'
+            + right
             + '</div>';
         }).join('')
       : '<div class="faint" style="font-size:12.5px">No rated players.</div>';
@@ -1039,6 +1102,7 @@
       + n1(p.m.expected) + '</span>'
       + '</div>'
       + '</div>'
+      + xiNoteHtml(p)
       + '<div class="fx-cands">' + cands + '</div>'
       + '<div class="mkts">'
       + '<span class="mkt">Over 3.5 <b>' + pct(p.m.over[3.5]) + '</b></span>'

@@ -409,6 +409,91 @@
     return r[playerName] === 'start';
   }
 
+  /* WHAT THE CARD SAYS WHILE IT WAITS. One wording, four desks, and — the
+   * point of it — "pending" and "unresolved" are DIFFERENT SENTENCES.
+   *
+   * They describe opposite situations. Pending is the ordinary state of most
+   * of a round most of the time: no sheet has been published, the clock has
+   * not got there yet, and there is nothing to do. Unresolved means a sheet
+   * DID arrive and this desk could not join a starter's name to the squad —
+   * a bug in the join, sitting on a specific fixture, fixable today.
+   *
+   * Printing both as "lineups pending" would be the cheap thing to do and it
+   * would cost the whole feature: a broken name-match would look exactly like
+   * a fixture nobody has announced and would sit there for the rest of the
+   * season, because nothing on any page would ever say otherwise. So the
+   * unresolved wording names the fixture as a fault and names the side whose
+   * sheet would not read, which is the first thing anybody fixing it needs.
+   *
+   * Returns null when confirmed — there is nothing to caveat once the sheet
+   * has landed and read, and the greyed-out bench says the rest.
+   */
+  function lineupNotice(st) {
+    var s = st && st.state;
+    if (!s || s === 'confirmed') return null;
+    if (s === 'unresolved') {
+      return {
+        tone: 'unresolved',
+        text: 'Team sheet unread',
+        title: 'A team sheet was published for this fixture and the desk could '
+          + 'not match ' + (st.failed ? st.failed + "'s" : 'a') + ' starting eleven to its squad. '
+          + 'That is a fault in the name join, not a wait — the prices below '
+          + 'are still the pre-lineup ones.'
+      };
+    }
+    return {
+      tone: 'pending',
+      text: 'Lineups pending',
+      title: 'No team sheet published yet. Sheets land about an hour before '
+        + 'kick-off; until then every player is priced on his share of the '
+        + "squad's minutes rather than on a confirmed eleven."
+    };
+  }
+
+  /* THE CANDIDATE ROW'S RIGHT-HAND CELL, decided in one place.
+   *
+   * A NAMED SUBSTITUTE CANNOT BE BOOKED IN A MATCH HE DOES NOT ENTER, so once
+   * a sheet is confirmed a benched candidate must not carry a percentage. The
+   * figure was computed for ninety minutes he is not going to play, and a
+   * reader comparing "52%" against the starter above it is comparing a
+   * forecast with a fiction.
+   *
+   * showProb is false for EXACTLY ONE of the three answers isStarting gives.
+   * false means benched on a confirmed sheet — drop the number. null means the
+   * sheet has not landed or would not read, and the price stands untouched,
+   * which is the state most of a round is in most of the time. Writing this as
+   * `if (!xi)` is the mistake this function exists to make impossible: it
+   * would strip the price off every player in every unconfirmed fixture.
+   */
+  function candLineup(state, club, playerName, prob) {
+    var xi = isStarting(state, club, playerName);
+    var benched = xi === false;
+    return { xi: xi, benched: benched, showProb: !benched, prob: benched ? null : prob };
+  }
+
+  /* Starters first, bench below, and NOTHING MOVES until a sheet is confirmed.
+   *
+   * `rows` arrives in probability order and stays in it inside each group —
+   * this is a partition, not a re-sort, so the desk's own ranking survives.
+   * Before confirmation it is the identity: same array order, xi null on every
+   * row, so a fixture the desk knows nothing new about renders exactly as it
+   * did yesterday. That negative is the one worth guarding.
+   */
+  function rankByLineup(state, rows, pick) {
+    var list = rows || [], out = [], i, id;
+    for (i = 0; i < list.length; i++) {
+      id = pick ? pick(list[i]) : list[i];
+      out.push({
+        row: list[i],
+        xi: isStarting(state, id && id.club, id && id.name)
+      });
+    }
+    if (!state || state.state !== 'confirmed') return out;
+    var start = [], rest = [];
+    for (i = 0; i < out.length; i++) (out[i].xi ? start : rest).push(out[i]);
+    return start.concat(rest);
+  }
+
   function lineupRoles(sheet, squadNames) {
     if (!sheet || !Array.isArray(sheet.start)) return null;
     const squad = Array.isArray(squadNames) ? squadNames : [];
@@ -2306,6 +2391,7 @@
     brier, logLoss, reliability, glmProb,
     gammaln, expectedFouls, nbTailProb, udTailProb, udBinomFit, YELLOW_DISPERSION,
     CALIBRATION_NOTICE, mountCalibrationNotice, lineupState, isStarting,
+    lineupNotice, candLineup, rankByLineup,
     cardProbFromFouls, recencyWeight, refCardFactor,
     leagueRate90, twoStageHazard, sumNegBin,
     matchLegOptions, simLegOptions, accaAllocate, accaPrice,

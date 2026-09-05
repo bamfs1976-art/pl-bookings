@@ -426,6 +426,10 @@
      the names still in play, which is the only question left on the card. */
   .cand-settled{opacity:.62}
   .cand-settled .cand-name{text-decoration:line-through;text-decoration-thickness:1px;text-decoration-color:var(--text-3)}
+  /* .cand-benched, .cand-bench and the .xi-note family live in assets/tw.css,
+     because all four desks render them and the whole point of the state is
+     that it looks the same wherever it appears. */
+  .xi-note{padding-left:.85rem;padding-right:.85rem;border-bottom:1px solid var(--border)}
   .fx-refrow{display:flex;align-items:center;gap:.5rem;padding:.4rem .85rem;border-bottom:1px solid var(--border)}
   /* Team-card market strip: total cards and both-teams-carded per fixture */
   .mk-strip{display:flex;align-items:center;gap:1.15rem;flex-wrap:wrap;padding:.45rem .85rem;
@@ -2505,6 +2509,18 @@ function modelRecordHtml(){
     <a href="#p=guide" class="mrec-l">How we calculate ›</a>
   </div>`;
 }
+/* THE MARK ON A PICK MADE BEFORE THE TEAM SHEET. Only "pending" and
+   "unresolved" earn it: a pick made against a confirmed eleven gets no tag
+   because that is the rule being followed, and a pick this desk could not
+   match to a fixture at all gets none either — an absent tag means "not
+   known", and claiming otherwise in either direction would be worse than
+   saying nothing. */
+function preLineupTag(p){
+  if(p.xi!=="pending"&&p.xi!=="unresolved") return "";
+  return ' <span class="pk-prelineup" title="Logged before the starting elevens were confirmed'
+    +(p.xi==="unresolved"?", because the published sheet would not match the squads":"")
+    +'. The standing rule on this desk is no pick before the lineup is out, so these are kept apart from the rest when the record is read.">pre-lineup</span>';
+}
 function renderTracker(){
   const picks=state.picks;
   const mr=$("trackerRecord"); if(mr) mr.innerHTML=modelRecordHtml();
@@ -2523,7 +2539,7 @@ function renderTracker(){
     const col=p.status==="won"?"var(--good)":p.status==="lost"?"var(--danger)":"var(--text-2)";
     const sel=STATUSES.map(s=>`<option value="${s}"${p.status===s?" selected":""}>${s}</option>`).join("");
     tr.innerHTML=
-      `<td style="padding:.45rem .7rem">${esc(p.fixture)}</td><td style="padding:.45rem .5rem">${esc(p.selection)}</td>`+
+      `<td style="padding:.45rem .7rem">${esc(p.fixture)}${preLineupTag(p)}</td><td style="padding:.45rem .5rem">${esc(p.selection)}</td>`+
       `<td style="padding:.45rem .5rem" class="muted">${esc(p.market||"")}</td>`+
       `<td style="text-align:right" class="num">${p.odds?Number(p.odds).toFixed(2):"—"}</td>`+
       `<td style="text-align:right" class="num">${p.stake?Number(p.stake).toFixed(2):"—"}</td>`+
@@ -2724,7 +2740,13 @@ async function exportFixturePNG(fid){
   const f=LIVE.fixtures.find(x=>x.id===fid), M=f&&fixtureMeta(f);
   if(!M){ toast("Couldn't build that match card"); return; }
   const {h,a,ref,rf,derby,heat,lbl}=M;
-  const cands=gwCandidates(h,a,ref,derby).slice(0,8);
+  /* A BENCHED PLAYER IS DROPPED, not greyed. The card is the one artefact
+     that leaves the site and cannot be corrected after it does, so a
+     percentage against a name we now know is not starting must not be on it —
+     and there is no room on an image to explain why a row is dimmed. Before
+     the sheets land this filter removes nobody, which is the state the card
+     is usually exported in. */
+  const cands=startingCands(M,gwCandidates(h,a,ref,derby)).slice(0,8);
   try{ if(document.fonts&&document.fonts.ready) await document.fonts.ready; }catch(e){}
   const W=1080,H=1350,P=64, c=document.createElement("canvas"); c.width=W;c.height=H;
   const x=c.getContext("2d");
@@ -2820,7 +2842,7 @@ async function exportGameweekPNG(gw){
     x.fillStyle="#c2c8d4"; x.font=`800 26px ${disp}`; x.textAlign="right"; x.fillText(String(i+1),P+12,mid+8); x.textAlign="left";
     badge(x,P+30,mid,h); x.fillStyle="#586275"; x.font=`600 18px ${body}`; x.fillText("v",P+84,mid+6); badge(x,P+102,mid,a);
     if(derby){ x.fillStyle="#e90052"; x.font=`700 14px ${body}`; x.fillText("derby",P+158,mid+6); }
-    const t1=gwCandidates(h,a,ref,derby)[0];
+    const t1=startingCands(M,gwCandidates(h,a,ref,derby))[0];
     if(t1){ x.fillStyle="#0c1322"; x.font=`700 22px ${disp}`; let nm=t1.p.n; while(x.measureText(nm).width>250&&nm.length>3) nm=nm.slice(0,-1); x.fillText(nm+(nm!==t1.p.n?"…":""),P+430,mid-2);
       x.fillStyle=probHex(t1.prob); x.font=`700 17px ${body}`; x.fillText((t1.prob*100).toFixed(0)+"% card",P+430,mid+22);
     }else{ x.fillStyle="#8b94a5"; x.font=`600 18px ${body}`; x.fillText("—",P+430,mid+6); }
@@ -2831,7 +2853,7 @@ async function exportGameweekPNG(gw){
   // ── ACCA BUILDER: best cross-match double & treble, one leg per fixture ──
   // Each leg is a different match's most likely booking, so the legs are
   // uncorrelated; combined chance = product, fair odds = 1 / combined chance.
-  const legPool=fx.map(f=>{ const M=fixtureMeta(f); if(!M) return null; const t=gwCandidates(M.h,M.a,M.ref,M.derby)[0]; return (t&&t.prob>0)?{p:t.p,prob:t.prob}:null; }).filter(Boolean).sort((p,q)=>q.prob-p.prob);
+  const legPool=fx.map(f=>{ const M=fixtureMeta(f); if(!M) return null; const t=startingCands(M,gwCandidates(M.h,M.a,M.ref,M.derby))[0]; return (t&&t.prob>0)?{p:t.p,prob:t.prob}:null; }).filter(Boolean).sort((p,q)=>q.prob-p.prob);
   const ay=1034;
   x.fillStyle="#8b94a5"; x.font=`700 16px ${body}`;
   x.fillText("ACCA BUILDER · CROSS-MATCH",P,ay-18);
@@ -3374,8 +3396,44 @@ document.querySelectorAll("th [data-sort]").forEach(b=>b.addEventListener("click
    risk, so the initial state is announced as well as each change. */
 function syncSortA11y(){ if(typeof PLDA11y!=="undefined") PLDA11y.syncSorted(document.querySelector("th [data-sort]")?.closest("table"),sortKey,sortDir); }
 syncSortA11y();
+/* WAS THE TEAM SHEET OUT WHEN THIS PICK WAS LOGGED?
+ *
+ * The standing rule on this desk is no pick before the lineup is confirmed,
+ * and the tracker is where that rule is either kept or quietly not. A pick
+ * placed on a Thursday was made without knowing whether the player starts;
+ * one placed an hour before kick-off was not. Settled side by side with no
+ * mark, they read as the same kind of decision and the hit rates get averaged
+ * together — which is the one comparison this desk most wants to be able to
+ * make about itself.
+ *
+ * SO IT IS RECORDED AT LOG TIME, NOT LOOKED UP LATER. By Saturday evening
+ * every sheet is confirmed, so a live lookup would tell you every pick ever
+ * made was a post-lineup one. The flag is a fact about the moment, and it is
+ * stored on the pick.
+ *
+ * The fixture field is free text, so this matches on club names and short
+ * codes and gives up quietly when it cannot tell — an unmarked pick says "not
+ * known", which is honest, rather than "confirmed", which would not be.
+ */
+function pickXiState(text){
+  if(!LIVE||!LIVE.fixtures) return null;
+  const t=" "+String(text||"").toLowerCase().replace(/[^a-z0-9]+/g," ")+" ";
+  const has=(short)=>{
+    if(!short) return false;
+    const full=String(clubName(short)||"").toLowerCase().replace(/[^a-z0-9]+/g," ").trim();
+    return (full&&t.indexOf(" "+full+" ")>=0)||t.indexOf(" "+short.toLowerCase()+" ")>=0;
+  };
+  const hit=LIVE.fixtures.find(f=>{
+    const h=LIVE.teamMap[f.team_h], a=LIVE.teamMap[f.team_a];
+    return h&&a&&has(h)&&has(a);
+  });
+  if(!hit) return null;
+  const st=lineupStateFor(hit.id,LIVE.teamMap[hit.team_h],LIVE.teamMap[hit.team_a]);
+  return st?st.state:null;
+}
 $("pickForm").addEventListener("submit",e=>{ e.preventDefault();
-  const p={id:"p"+Date.now().toString(36)+Math.random().toString(36).slice(2,6),ts:Date.now(),uat:Date.now(),fixture:$("pkFixture").value.trim(),selection:$("pkSelection").value.trim(),market:$("pkMarket").value.trim(),odds:$("pkOdds").value,stake:$("pkStake").value,status:"pending"};
+  const fixture=$("pkFixture").value.trim();
+  const p={id:"p"+Date.now().toString(36)+Math.random().toString(36).slice(2,6),ts:Date.now(),uat:Date.now(),fixture,selection:$("pkSelection").value.trim(),market:$("pkMarket").value.trim(),odds:$("pkOdds").value,stake:$("pkStake").value,status:"pending",xi:pickXiState(fixture)};
   if(!p.fixture||!p.selection) return; state.picks.push(p); saveState(); cloudPickUpsert(p); renderTracker(); e.target.reset(); $("pkFixture").focus();
 });
 $("pickRows").addEventListener("change",e=>{ const s=e.target.closest(".pk-status"); if(!s) return; const p=state.picks.find(x=>x.id===s.dataset.id); if(p){ p.status=s.value; touchPick(p); saveState(); cloudPickUpsert(p); renderTracker(); } });
@@ -4100,21 +4158,43 @@ function refByName(n){
    so that is the join.
 
    Built lazily and cached, because LIVE does not exist at parse time. */
-let APPOINTED=null;
+let APPOINTED=null, AF_ID=null;
+function buildFixtureJoin(){
+  if(APPOINTED) return;
+  const byPairRef={}, byPairId={};
+  PL_FIXTURES.forEach(f=>{
+    if(f.ref) byPairRef[f.h+"|"+f.a]=f.ref;
+    byPairId[f.h+"|"+f.a]=f.id;
+  });
+  APPOINTED={}; AF_ID={};
+  (LIVE.fixtures||[]).forEach(f=>{
+    const h=LIVE.teamMap[f.team_h], a=LIVE.teamMap[f.team_a];
+    if(!h||!a) return;
+    const n=byPairRef[h+"|"+a];
+    if(n) APPOINTED[f.id]=n;
+    const af=byPairId[h+"|"+a];
+    if(af!=null) AF_ID[f.id]=af;
+  });
+}
 function appointedRefName(fid){
   if(typeof PL_FIXTURES==="undefined"||!LIVE) return null;
-  if(!APPOINTED){
-    const byPair={};
-    PL_FIXTURES.forEach(f=>{ if(f.ref) byPair[f.h+"|"+f.a]=f.ref; });
-    APPOINTED={};
-    (LIVE.fixtures||[]).forEach(f=>{
-      const h=LIVE.teamMap[f.team_h], a=LIVE.teamMap[f.team_a];
-      if(!h||!a) return;
-      const n=byPair[h+"|"+a];
-      if(n) APPOINTED[f.id]=n;
-    });
-  }
+  buildFixtureJoin();
   return APPOINTED[fid]||null;
+}
+/* THE SAME JOIN, FOR THE SAME REASON, AND IT WAS MISSING.
+   data/lineups.js is keyed by API-Football fixture id — the ids in
+   PL_FIXTURES, not the ids in the FPL feed this desk renders from. So
+   XI_SHEETS[String(f.id)] on a live fixture looked up 42 in a file whose keys
+   start 1557367, matched nothing, every time, and the confirmed-XI pricing
+   built for this desk had never once fired on it. The sibling desks run on
+   the API-Football list directly, which is why it worked there and only
+   there. One translation, through the pairing that already carries the
+   referee across the same gap. */
+function afFixtureId(fid){
+  if(typeof PL_FIXTURES==="undefined"||!LIVE) return null;
+  buildFixtureJoin();
+  const af=AF_ID[fid];
+  return af==null?null:af;
 }
 
 /* A HAND PICK ALWAYS WINS. An appointment can be changed after publication,
@@ -4377,6 +4457,22 @@ function gwCandidates(h,a,ref,derby,sim){
     .filter(c=>c.prob!=null)
     .sort((x,y)=>y.prob-x.prob);
 }
+/* CANDIDATES WITH THE CONFIRMED BENCH REMOVED.
+ *
+ * The fixture card greys a benched candidate and keeps him in view, because
+ * it has room to say why. Nowhere else does: a share card, an acca leg, a row
+ * in the gameweek table and a headline count are all just a name and a
+ * percentage, and a percentage against a player we now know is not starting is
+ * a forecast for ninety minutes he will not play.
+ *
+ * Before both sheets land this removes nobody — `confirmed` is the only state
+ * it acts on — so the ordinary view of a round is byte-identical to what it
+ * was, which is the property that matters most about the whole feature.
+ */
+function startingCands(M,cands){
+  if(!M||!M.xi||M.xi.state!=="confirmed") return cands;
+  return cands.filter(c=>PLDCore.isStarting(M.xi,c.p.c,c.p.n)!==false);
+}
 /* Team-card markets for a fixture. The desk prices players; the liquid
    markets are team-level (total cards over/under, both teams carded), so
    fold the per-player chances into a Poisson-binomial — see PLDCore. Uses
@@ -4390,9 +4486,35 @@ const XI_SHEETS=(typeof window!=="undefined"&&window.LINEUP_SHEETS)||null;
    not fully resolve against the squad — the answer to all three is the same. */
 function rolesFor(fid,club){
   if(!XI_SHEETS||fid==null||typeof PLDCore.lineupRoles!=="function") return null;
-  const sheet=XI_SHEETS[String(fid)];
+  const af=afFixtureId(fid);
+  const sheet=af==null?null:XI_SHEETS[String(af)];
   if(!sheet||!sheet[club]) return null;
-  return PLDCore.lineupRoles(sheet[club],PL_PLAYERS.filter(p=>p.c===club).map(p=>p.n));
+  return PLDCore.lineupRoles(sheet[club],squadNames(club));
+}
+/* One club's squad names, memoised. lineupState asks for both sides of every
+   fixture on the page and this used to be a full scan of PL_PLAYERS per
+   call. */
+const SQUAD_NAMES=new Map();
+function squadNames(club){
+  let s=SQUAD_NAMES.get(club);
+  if(!s){ s=PL_PLAYERS.filter(p=>p.c===club).map(p=>p.n); SQUAD_NAMES.set(club,s); }
+  return s;
+}
+/* The fixture's team-sheet state — confirmed, pending, or unresolved. Three
+   answers, because a sheet that arrived and would not join is a bug to fix
+   and not a clock to watch; see PLDCore.lineupState. Cached per fixture: the
+   card, the candidate ordering and the notice all ask. */
+const XI_STATE=new Map();
+function lineupStateFor(fid,h,a){
+  if(fid==null) return null;
+  if(XI_STATE.has(fid)) return XI_STATE.get(fid);
+  let st=null;
+  if(XI_SHEETS&&typeof PLDCore.lineupState==="function"){
+    const af=afFixtureId(fid);
+    st=PLDCore.lineupState(XI_SHEETS,af,{[h]:squadNames(h),[a]:squadNames(a)});
+  }
+  XI_STATE.set(fid,st);
+  return st;
 }
 function teamCardBoard(h,a,ref,derby,fid){
   const cands=gwCandidates(h,a,ref,derby);
@@ -4823,7 +4945,7 @@ function pipMeter(p){
   const note=`${y.toFixed(2)} yellows per 90`+(mins?`, over ${Math.round(mins/90)} matches of football`:"");
   return PLDMetric.confidence(n,5,note,"Card rate");
 }
-function candRowHtml(c,ref,isNew){
+function candRowHtml(c,ref,isNew,xi){
   const p=c.p, prob=c.prob, sev=severity(prob), conf=confidence(p);
   const live=(p.liveRate||p.liveFouls)?' <span title="'+rateBasis(p)+'" style="color:var(--good)">●</span>':'';
   /* ONCE IT HAS HAPPENED IT IS NOT A CHANCE ANY MORE. This desk spent every
@@ -4834,8 +4956,25 @@ function candRowHtml(c,ref,isNew){
      rather than annotating it — an outcome shown beside a probability invites
      the reader to keep reading the probability. */
   const st=LIVECARDS?LIVECARDS.state(p.el):null;
-  let right,rowCls="";
-  if(st==="booked"||st==="sent-off"){
+  /* THE TEAM SHEET OUTRANKS THE FORECAST. A named substitute cannot be booked
+     in a match he does not enter, so once both sheets are confirmed and read
+     a benched candidate shows no percentage at all — the figure was computed
+     for ninety minutes he is not going to play. PLDCore.candLineup makes the
+     three-way answer explicit: only `false` drops the number, and null (no
+     sheet, or one that would not read) leaves the price exactly where it was,
+     which is the state most of a round is in most of the time. */
+  const xiCell=PLDCore.candLineup(xi,p.c,p.n,prob);
+  let right,rowCls=xiCell.benched?" cand-benched":"";
+  const settled=st==="booked"||st==="sent-off";
+  /* A SETTLED OUTCOME STILL OUTRANKS THE BENCH — a substitute who came on and
+     was booked was named on the bench at kick-off and is booked now, and the
+     card he was actually shown is not a forecast to suppress. */
+  if(xiCell.benched&&!settled){
+    right=`<span style="text-align:right">
+        <span class="cand-bench" title="Named on the bench in the confirmed team sheet. The percentage was a full-match forecast, so it is not shown for a player who is not starting one.">Bench</span>
+        <div class="sev faint">not starting</div>
+      </span>`;
+  }else if(settled){
     const done=st==="sent-off"?{t:"SENT OFF",col:"var(--danger)",ic:"🟥"}:{t:"BOOKED",col:"var(--warn)",ic:"🟨"};
     rowCls=" cand-settled";
     right=`<span style="text-align:right">
@@ -4905,7 +5044,9 @@ const HEAT_HOT=4.0, HEAT_WARM=3.5;
    fixture; cleared when the live feed lands, which is the only other input
    that moves underneath it. */
 const FX_META=new Map();
-function invalidateFixtureMeta(){ FX_META.clear(); }
+/* The team-sheet caches go with it: both are keyed on the FPL fixture id and
+   both are built from LIVE, which is the thing that just moved. */
+function invalidateFixtureMeta(){ FX_META.clear(); XI_STATE.clear(); APPOINTED=null; AF_ID=null; }
 function fixtureMeta(f){
   if(!LIVE) return null;
   const h=LIVE.teamMap[f.team_h], a=LIVE.teamMap[f.team_a];
@@ -4929,7 +5070,10 @@ function fixtureMeta(f){
      replace it, but that swap is a decision for scripts/backtest.mjs. It
      reaches the per-player numbers through the game-state factor. */
   const sim=simFor(h,a);
-  const meta={f,h,a,ref,rf,derby,base,board,modelled:!!board,heat,cls,lbl,sim};
+  /* Confirmed, pending, or unresolved — computed here so the card, the
+     candidate ordering and the share export all read the same answer. */
+  const xi=lineupStateFor(f.id,h,a);
+  const meta={f,h,a,ref,rf,derby,base,board,modelled:!!board,heat,cls,lbl,sim,xi};
   FX_META.set(key,meta);
   return meta;
 }
@@ -4941,6 +5085,29 @@ function sortFixturesByHeat(fx){
     if(hq!==hp) return hq-hp;
     return String(p.kickoff_time||"").localeCompare(String(q.kickoff_time||""));
   });
+}
+/* THE TEAM-SHEET LINE. Three states and three sentences, because two of them
+   would hide the third.
+
+   Pending is the ordinary state and says so plainly. Unresolved is a FAULT —
+   a sheet was published and this desk could not read it — and it is styled as
+   one, in the warning colour with the word "unread", so it cannot be skimmed
+   as another fixture waiting on the clock. Confirmed says so too: without it
+   a reader sees greyed rows at the bottom of the list with nothing on the
+   card explaining why they went grey. */
+function lineupNoticeHtml(M){
+  const st=M&&M.xi;
+  if(!st) return "";
+  if(st.state==='confirmed'){
+    const n=(st.clubs||[]).length;
+    return `<div class="xi-note xi-ok" title="Both team sheets published and matched to the squads. Players named on the bench are shown below the eleven, without a percentage.">`
+      +`<span aria-hidden="true">✓</span> Starting elevens confirmed`
+      +(n?` <span class="faint mono">${n} sides</span>`:"")+`</div>`;
+  }
+  const note=PLDCore.lineupNotice(st);
+  if(!note) return "";
+  return `<div class="xi-note xi-${note.tone}" title="${esc(note.title)}">`
+    +`<span aria-hidden="true">${note.tone==='unresolved'?'⚠':'⏳'}</span> ${esc(note.text)}</div>`;
 }
 /* The live ticker strip: what has happened against what was forecast.
    Renders nothing at all before a ball is kicked — an empty "0 cards" on a
@@ -5001,7 +5168,14 @@ function fixtureCardHtml(f,opts){
     +`<span class="heatbar-n" data-num="heat-${f.id}">${heat.toFixed(1)}</span></span>`;
   const refDelta=(ref&&Math.abs(rf-1)>=0.02)?` <span class="mono" style="font-size:.64rem;color:${rf>1?"var(--warn)":"var(--fade)"}" title="Every player's chance scaled ×${rf.toFixed(2)} by ${esc(ref.n)}">×${rf.toFixed(2)} on every player</span>`:"";
   // Candidates, ranked by fixture-aware probability, position-filtered.
-  let cands=gwFilterCands(gwCandidates(h,a,ref,derby));
+  /* STARTERS FIRST ONCE THE SHEETS HAVE LANDED, and nothing moves before
+     that. rankByLineup is the identity on a pending or unresolved fixture —
+     same order, xi null on every row — so most of a round renders exactly as
+     it did. On a confirmed one it partitions: the eleven keep the ranking
+     they earned, the bench drops below them and loses its percentages. */
+  const xi=M.xi;
+  let cands=PLDCore.rankByLineup(xi,gwFilterCands(gwCandidates(h,a,ref,derby)),
+    r=>({club:r.p.c,name:r.p.n})).map(o=>o.row);
   let body;
   if(!cands.length){
     /* A filtered fixture with nothing in it is dropped from the grid entirely
@@ -5013,16 +5187,23 @@ function fixtureCardHtml(f,opts){
     /* A REAL LIST. Four to forty sibling buttons with nothing grouping them is
        four to forty separate controls to a screen reader, with no "list of 12"
        to say how far this goes or where it ends. */
+    /* A BENCHED PLAYER HAS NO PRICE TO CHECK. The block compares the desk's
+       number against a bookmaker's, and the desk has withdrawn its number for
+       anyone not starting — so he comes out of the shortlist rather than
+       being quoted a probability the row above him no longer prints. */
+    const priceable=shown.filter(c=>PLDCore.isStarting(xi,c.p.c,c.p.n)!==false);
     body='<ul class="cand-list" aria-label="Booking candidates, highest chance first">'
-      +shown.map((c,i)=>'<li>'+candRowHtml(c,ref,opts.expanded&&i>=DEF_SHOW)+'</li>').join("")
+      +shown.map((c,i)=>'<li>'+candRowHtml(c,ref,opts.expanded&&i>=DEF_SHOW,xi)+'</li>').join("")
       +'</ul>'
       /* The price check covers the candidates ON SCREEN, so it answers a
          question about what is shown rather than a private shortlist. */
-      +(PRICES?PRICES.block(shown.slice(0,5).map((c,i)=>({key:f.id+"-"+i,label:c.p.n,prob:c.prob}))):"");
+      +(PRICES?PRICES.block(priceable.slice(0,5).map((c,i)=>({key:f.id+"-"+i,label:c.p.n,prob:c.prob}))):"");
     /* HOW MANY ARE WORTH IT. "Show 35 more candidates" says nothing about
        whether any of the 35 clears the Watch band, so the honest answer to
-       "is this worth expanding" was to expand it and find out. */
-    const above=cands.slice(DEF_SHOW).filter(c=>c.prob>=0.3).length;
+       "is this worth expanding" was to expand it and find out. Benched
+       candidates do not count: their percentage is not on the page. */
+    const above=cands.slice(DEF_SHOW)
+      .filter(c=>c.prob>=0.3&&PLDCore.isStarting(xi,c.p.c,c.p.n)!==false).length;
     if(opts.expanded&&cands.length>DEF_SHOW) body+=`<button class="fx-more" data-expand="${f.id}" type="button">Show fewer ‹</button>`;
     else if(hidden>0) body+=`<button class="fx-more" data-expand="${f.id}" type="button">Show ${hidden} more candidate${hidden===1?"":"s"} ›${above?` <span class="faint">· ${above} above Watch</span>`:` <span class="faint">· none above Watch</span>`}</button>`;
   }
@@ -5067,6 +5248,7 @@ function fixtureCardHtml(f,opts){
       <div class="fx-refrow">${refSelect(f.id)}${refDelta}</div>
       ${simStripHtml(M)}
       ${marketStripHtml(teamCardBoard(h,a,ref,derby,f.id),h2hFor(h,a),teamFoulBoard(h,a))}
+      ${lineupNoticeHtml(M)}
       ${body}
     </div>
   </section>`;
@@ -5378,7 +5560,7 @@ function renderGwStats(fx){
   fx.forEach(f=>{
     const m=fixtureMeta(f); if(!m) return;
     heat+=m.heat;
-    gwCandidates(m.h,m.a,m.ref,m.derby).forEach(c=>{ cands++; if(c.prob>=0.5) high++; });
+    startingCands(m,gwCandidates(m.h,m.a,m.ref,m.derby)).forEach(c=>{ cands++; if(c.prob>=0.5) high++; });
   });
   const tile=(n,label,title)=>`<div class="stat"${title?` title="${esc(title)}"`:""}><b class="num">${n}</b><span>${label}</span></div>`;
   el.innerHTML=
@@ -5619,7 +5801,7 @@ function gwTableRows(fx){
   const rows=[];
   fx.forEach(f=>{
     const m=fixtureMeta(f); if(!m) return;
-    gwFilterCands(gwCandidates(m.h,m.a,m.ref,m.derby)).forEach(c=>{
+    startingCands(m,gwFilterCands(gwCandidates(m.h,m.a,m.ref,m.derby))).forEach(c=>{
       rows.push({p:c.p,prob:c.prob,fx:m.h+" v "+m.a,ko:f.kickoff_time||"",
         ref:m.ref,home:c.p.c===m.h});
     });
@@ -5802,6 +5984,9 @@ function pickRow(p){
   const num=v=>{ const n=Number(v); return v===""||v==null||!isFinite(n)?null:n; };
   const row={user_id:uid(),id:p.id,fixture:p.fixture||"",selection:p.selection||"",market:p.market||"",odds:num(p.odds),stake:num(p.stake),status:p.status||"pending",
              updated_at:new Date(p.uat||p.ts||Date.now()).toISOString()};
+  /* Only ever the three states the column allows, and null for "not known" —
+     a pick logged on one device keeps its pre-lineup mark on the next. */
+  row.xi=(p.xi==="pending"||p.xi==="unresolved"||p.xi==="confirmed")?p.xi:null;
   if(HAS_SCHEMA_COL) row.schema_v=SCHEMA_V;
   return row;
 }
@@ -5847,6 +6032,10 @@ async function syncOnLogin(){
       if(cU>lU){
         l.fixture=c.fixture; l.selection=c.selection; l.market=c.market;
         l.odds=c.odds; l.stake=c.stake; l.status=c.status; l.uat=cU;
+        /* NOT overwritten with null. The flag is a fact about the moment the
+           pick was logged, so a newer edit from a client that never knew the
+           column must not erase what an older, better-informed one recorded. */
+        if(c.xi) l.xi=c.xi;
       }else if(!lU&&!cU&&l.status==="pending"&&c.status!=="pending"){
         l.status=c.status;
       }
@@ -5861,6 +6050,10 @@ function cloudToPick(r){
   return {id:r.id,fixture:r.fixture||"",selection:r.selection||"",market:r.market||"",
           odds:r.odds==null?"":String(r.odds),stake:r.stake==null?"":String(r.stake),
           status:r.status||"pending",
+          /* Recorded at log time and never recomputed — see pickXiState. A row
+             written before the column existed comes back undefined, which
+             reads as "not known" and is the honest answer for it. */
+          xi:r.xi||null,
           ts:r.created_at?Date.parse(r.created_at):0,
           uat:r.updated_at?Date.parse(r.updated_at):0};
 }
@@ -6672,7 +6865,7 @@ function refAnnounce(fid,name){
   const f=(LIVE&&LIVE.fixtures)?LIVE.fixtures.find(x=>String(x.id)===String(fid)):null;
   const m=f?fixtureMeta(f):null;
   if(!m){ announce(name?("Simulated referee "+name):"Referee cleared"); return; }
-  const cands=gwFilterCands(gwCandidates(m.h,m.a,m.ref,m.derby));
+  const cands=startingCands(m,gwFilterCands(gwCandidates(m.h,m.a,m.ref,m.derby)));
   const top=cands.length?`, ${cands[0].p.n} now ${(cands[0].prob*100).toFixed(0)} percent`:"";
   announce((name?`Simulated ${name} on `:"Referee cleared on ")
     +`${m.h} versus ${m.a}. Expected cards ${m.heat.toFixed(1)}, referee factor times ${m.rf.toFixed(2)}${top}.`);

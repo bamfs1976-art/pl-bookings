@@ -1890,5 +1890,63 @@ t('a benched player and an unconfirmed one are told apart', () => {
   /* An unknown club is unknown, not benched. */
   assert.equal(core.isStarting(confirmed, 'ZZZ', 'A One'), null);
 });
+t('pending and unresolved are different sentences, and confirmed is silent', () => {
+  /* If these two ever read the same, a broken name join hides behind the word
+     "pending" for the rest of the season and looks exactly like a fixture
+     nobody has announced. */
+  const pending = core.lineupNotice(core.lineupState({}, 100, SQUAD));
+  const bad = { 100: { ARS: XI(ELEVEN, BENCH), CHE: XI(['Nobody At All'].concat(ELEVEN.slice(1)), BENCH) } };
+  const unread = core.lineupNotice(core.lineupState(bad, 100, SQUAD));
+  assert.equal(pending.tone, 'pending');
+  assert.equal(unread.tone, 'unresolved');
+  assert.notEqual(pending.text, unread.text);
+  assert.notEqual(pending.tone, unread.tone);
+  /* And it names the side, because that is the first thing anybody fixing the
+     join needs and the card is where they will be looking. */
+  assert.ok(unread.title.includes('CHE'), `unresolved notice does not name the side: ${unread.title}`);
+  assert.equal(core.lineupNotice(core.lineupState(BOTH, 100, SQUAD)), null);
+  assert.equal(core.lineupNotice(null), null);
+});
+t('a benched candidate loses his percentage, an unconfirmed one keeps it', () => {
+  const confirmed = core.lineupState(BOTH, 100, SQUAD);
+  const starter = core.candLineup(confirmed, 'ARS', 'A One', 0.52);
+  assert.equal(starter.showProb, true);
+  assert.equal(starter.prob, 0.52);
+  const sub = core.candLineup(confirmed, 'ARS', 'L Twelve', 0.52);
+  assert.equal(sub.benched, true);
+  assert.equal(sub.showProb, false, 'a named substitute cannot be booked in a match he does not enter');
+  assert.equal(sub.prob, null);
+  /* THE NEGATIVE. `if (!xi)` would strip the price off every player in every
+     fixture with no sheet, which is most of them, most of the time. */
+  const pending = core.candLineup(core.lineupState({}, 100, SQUAD), 'ARS', 'L Twelve', 0.52);
+  assert.equal(pending.xi, null);
+  assert.equal(pending.showProb, true);
+  assert.equal(pending.prob, 0.52);
+  /* An unreadable sheet is not a bench either — the join is broken, the
+     player is not dropped. */
+  const badState = core.lineupState(
+    { 100: { ARS: XI(ELEVEN, BENCH), CHE: XI(['Nobody At All'].concat(ELEVEN.slice(1)), BENCH) } },
+    100, SQUAD);
+  assert.equal(core.candLineup(badState, 'ARS', 'L Twelve', 0.4).showProb, true);
+});
+t('rankByLineup partitions on a confirmed sheet and is the identity before one', () => {
+  const rows = [
+    { c: 'ARS', n: 'L Twelve', prob: 0.9 },   // benched, and top of the ranking
+    { c: 'ARS', n: 'A One', prob: 0.5 },
+    { c: 'CHE', n: 'B Two', prob: 0.4 },
+    { c: 'ARS', n: 'M Thirteen', prob: 0.3 }  // benched
+  ];
+  const pick = (r) => ({ club: r.c, name: r.n });
+  const confirmed = core.lineupState(BOTH, 100, SQUAD);
+  const out = core.rankByLineup(confirmed, rows, pick);
+  assert.deepEqual(out.map((o) => o.row.n), ['A One', 'B Two', 'L Twelve', 'M Thirteen'],
+    'starters first, and probability order preserved INSIDE each group');
+  assert.deepEqual(out.map((o) => o.xi), [true, true, false, false]);
+  /* THE NEGATIVE, again: nothing moves for a fixture with no sheet. */
+  const before = core.rankByLineup(core.lineupState({}, 100, SQUAD), rows, pick);
+  assert.deepEqual(before.map((o) => o.row.n), rows.map((r) => r.n));
+  assert.deepEqual(before.map((o) => o.xi), [null, null, null, null]);
+  assert.deepEqual(core.rankByLineup(null, [], pick), []);
+});
 
 console.log(`\n${passed} tests passed`);

@@ -572,6 +572,38 @@ a.fx-teams:focus-visible{outline:2px solid var(--ring);outline-offset:3px;border
 .cand .pip.on{background:var(--warn-ink)}
 .cand .nm{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .cand .pc{font-family:var(--mono);font-weight:700}
+/* ---- confirmed team sheets ----------------------------------------------
+   All four desks render these, and the point of the state is that it looks
+   the same wherever it appears, so the rules are here rather than four times.
+
+   A BENCHED ROW IS DIMMED BUT NOT STRUCK THROUGH. Nothing has happened to
+   him; he is simply not starting. A line through the name is how this desk
+   marks a settled outcome, and reusing it here would say a benched player had
+   already been booked. He sits below the eleven and carries no percentage. */
+.cand-benched{opacity:.55}
+.cand-bench{font-family:var(--mono);font-size:11px;font-weight:800;letter-spacing:.06em;
+  text-transform:uppercase;color:var(--text-3);line-height:1.15}
+/* THE TEAM-SHEET LINE. Three states and three appearances, and "unread" must
+   not be able to pass as "pending" at a glance — it takes the warning colour
+   and a rule down its left edge, while pending stays flat and quiet. Pending
+   is the ordinary state of most of a round most of the time and deserves no
+   emphasis at all. Unread is a fault sitting on one fixture: a sheet was
+   published and the desk could not join it to a squad. Styling them alike
+   would let a broken name-match sit behind the word "pending" for the rest of
+   the season, which is the exact failure the three-way state exists to stop. */
+.xi-note{display:flex;align-items:center;gap:6px;padding:5px 0;
+  font-family:var(--mono);font-size:10.5px;letter-spacing:.05em;
+  text-transform:uppercase;font-weight:700}
+.xi-pending{color:var(--text-3);background:var(--surface-2)}
+.xi-ok{color:var(--good-ink);background:color-mix(in srgb,var(--good) 9%,transparent)}
+.xi-unresolved{color:var(--warn-ink);background:color-mix(in srgb,var(--warn) 14%,transparent);
+  border-left:3px solid var(--warn)}
+/* The pre-lineup mark in the tracker: quiet, because it is a note about how a
+   pick was made and not a warning about the pick. */
+.pk-prelineup{display:inline-block;font-family:var(--mono);font-size:9.5px;font-weight:800;
+  letter-spacing:.06em;text-transform:uppercase;vertical-align:middle;margin-left:5px;
+  padding:1px 5px;border-radius:4px;color:var(--text-3);background:var(--surface-2);
+  border:1px solid var(--border-2)}
 .mkts{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px;padding-top:9px;border-top:1px dashed var(--border)}
 .mkt{font-size:11.5px;background:var(--surface-2);border-radius:8px;padding:4px 9px}
 .mkt b{font-family:var(--mono)}

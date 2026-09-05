@@ -44,7 +44,7 @@ function slice(from, to) {
   return index.slice(a, b);
 }
 
-const src = slice('let APPOINTED=null;', '// Heat multiplier');
+const src = slice('let APPOINTED=null, AF_ID=null;', '// Heat multiplier');
 const selSrc = slice('function refSelect(fid){', '\n// Next unfinished fixture');
 
 const ctx = {
@@ -96,6 +96,26 @@ assert.equal(ctx.appointedRefName(12), null, 'invented an appointment that was n
 assert.equal(ctx.appointedRefName(1557367), null,
   'the join is keyed on the API-Football fixture id, which the FPL-driven ' +
   'desk never sees');
+
+/* ---- THE SAME GAP, THE OTHER FEED ---------------------------------------
+ * data/lineups.js is keyed by API-Football fixture id too, and the desk was
+ * looking sheets up by the FPL id — so XI_SHEETS[String(f.id)] asked for 11
+ * in a file whose keys start 1557367, matched nothing, every time, and the
+ * confirmed-XI pricing built for this desk had never once fired on it. It
+ * failed silently, and looked exactly like "no sheet published yet", which is
+ * the ordinary state. One translation now, through the pairing that already
+ * carried the referee across the same gap — and it is asserted here because
+ * this is where both id spaces are already on the table.
+ */
+assert.equal(ctx.afFixtureId(11), 1557367,
+  'the FPL fixture id no longer translates to the API-Football one, so every ' +
+  'team-sheet lookup on this desk misses');
+assert.equal(ctx.afFixtureId(13), 1557369, 'the translation is not built for every fixture');
+/* An id the join has never seen answers null rather than itself: returning
+   the input would send an FPL id straight into a file keyed the other way,
+   which is the bug this function exists to end. */
+assert.equal(ctx.afFixtureId(999), null, 'an unjoined fixture returns something other than null');
+assert.notEqual(ctx.afFixtureId(11), 11, 'afFixtureId is handing back the id it was given');
 
 /* refFor turns it into an actual referee record, so the factor applies. */
 const ref = ctx.refFor(11);

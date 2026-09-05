@@ -27,6 +27,17 @@ create table if not exists public.plb_picks (
 alter table public.plb_picks
   add column if not exists schema_v integer not null default 1;
 
+-- Was the starting eleven out when this pick was logged? (added 2026-09-05)
+-- The standing rule on the desk is no pick before the lineup is confirmed, and
+-- the tracker is where that rule is either kept or quietly not. It has to be
+-- recorded AT LOG TIME: by Saturday evening every sheet is confirmed, so a
+-- later lookup would report every pick ever made as a post-lineup one. Null
+-- means "not known" — the desk could not match the free-text fixture — and is
+-- deliberately distinct from 'confirmed'. Safe to run on an existing table.
+alter table public.plb_picks
+  add column if not exists xi text
+  check (xi is null or xi in ('pending', 'unresolved', 'confirmed'));
+
 alter table public.plb_picks enable row level security;
 
 -- Policies are dropped first so the whole file stays re-runnable.

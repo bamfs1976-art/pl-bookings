@@ -289,6 +289,21 @@ jobs:
       - name: A fixture with no lineup prices exactly as it did
         run: node scripts/check-lineup-pricing.mjs
 
+      # And what the reader SEES once the sheet is in. A player named on the
+      # bench is not going to play ninety minutes, so the number computed for
+      # him is a forecast of something that will not happen — printed beside a
+      # starter's it invites a comparison between a forecast and a fiction, at
+      # exactly the moment the desk's own rule says a pick becomes reasonable.
+      # The harder half is again the NEGATIVE: isStarting answers true, false
+      # or NULL, and `if (!xi)` — which is the shape anybody reaches for —
+      # withdraws the price from every player in every fixture with no sheet,
+      # which is most of them, most of the time. Also pins that "unresolved"
+      # never renders as "pending": a sheet that arrived and would not join a
+      # squad is a broken name-match on a named fixture, and hidden behind the
+      # word "pending" it would sit there for the rest of the season.
+      - name: A benched player shows no percentage, and only a benched player
+        run: node scripts/check-lineup-ui.mjs
+
       # The sibling desks each had TWO answers to "which matchday is it": the
       # This Matchday tab rolled over at midnight after the last fixture's date,
       # the Fixtures dropdown rolled over at the last KICK-OFF. So for several

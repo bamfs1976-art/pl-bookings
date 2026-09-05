@@ -604,7 +604,12 @@ for (const d of CLUB_ROWS) {
   assert.ok(/function openCand\s*\(/.test(code),
     'today.html has no openCand() — a candidate row is a button that calls a ' +
     'function that does not exist, and throws on the first tap');
-  assert.ok(/class="cand cand-open"[\s\S]{0,120}role="button"/.test(code),
+  /* The class list gained a conditional modifier (cand-benched, once a team
+     sheet is confirmed), so the literal `class="cand cand-open"` is now
+     followed by a ternary rather than a closing quote. The claim is unchanged
+     — the row is still the two base classes and still a role="button" — the
+     bound simply has to reach past the interpolation. */
+  assert.ok(/class="cand cand-open[\s\S]{0,160}role="button"/.test(code),
     'candidate rows are no longer buttons, so nothing on the home page can be ' +
     'tapped to open a player');
   assert.ok(/tabindex="0"/.test(code),
