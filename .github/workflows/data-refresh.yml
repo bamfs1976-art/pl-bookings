@@ -44,6 +44,10 @@ on:
         description: "Rebuild docs/scottish-derbies.md from the free SC0 archive (comma-separated season codes, e.g. 2526,2425,2324). Blank = skip."
         required: false
         default: ""
+      probe_penalties:
+        description: "Probe whether penalties per referee can be COUNTED from API-Football events (league id, e.g. 140 for La Liga, 39 Premier League). Blank = skip. Spends about 25 calls, writes nothing."
+        required: false
+        default: ""
       season_pl:
         description: "ScoutingStats season id for the Premier League (blank = current)"
         required: false
@@ -226,6 +230,29 @@ jobs:
           python3 data/scottish_derbies.py \
             --seasons "${{ inputs.scottish_derbies }}" \
             --out docs/scottish-derbies.md
+
+      # THE ONE REFEREE FIGURE THIS REPOSITORY DOES NOT COUNT. Every other
+      # number on a referee row comes from the free match archive; `pen` is
+      # typed in by hand from published fixture graphics into
+      # data/ref_pens.json, because football-data carries no penalties. Six
+      # officials of seventy-two have a figure and nothing prices off it.
+      # This asks whether API-Football's events can replace the screenshots
+      # with a count. It answers a yes/no question on a BOUNDED sample and
+      # builds nothing — the column stays hand-seeded until a separate change
+      # lands. Manual only; needs the key; exits non-zero rather than green if
+      # it could not read the feed, so a blocked run cannot be filed as a
+      # negative finding.
+      #
+      # The key is deliberately NOT part of the `if`. A step that skips
+      # silently when the secret is missing looks identical to one that ran
+      # and found nothing, and the probe's whole discipline is that those are
+      # different answers — so it runs, says UNKNOWN, and exits non-zero.
+      - name: Probe API-Football events for penalties
+        if: ${{ inputs.probe_penalties != '' }}
+        run: |
+          python3 data/probe_penalties.py \
+            --league "${{ inputs.probe_penalties }}" \
+            --season "${API_FOOTBALL_SEASON:-2025}"
 
       - name: Check the API-Football key
         if: ${{ env.API_FOOTBALL_KEY != '' }}
