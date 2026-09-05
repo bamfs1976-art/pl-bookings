@@ -1779,4 +1779,54 @@ t('an unknown club falls back to the league mean rather than returning nothing',
   assert.ok(r && r.baseline === ROT.leagueMean);
 });
 
+/* ---- the under-dispersed tail ------------------------------------------- */
+t('the binomial fit matches the mean exactly and the dispersion closely', () => {
+  /* THE MEAN IS THE ONE THAT MUST BE EXACT. n is a whole number of trials, so
+     the moment match cannot honour both; p is re-solved as mu/n afterwards,
+     which puts the mean back to the digit and leaves the dispersion within a
+     couple of thousandths. Calibration lives on the mean. */
+  const f = core.udBinomFit(1.874, 0.888);
+  assert.ok(f, 'a mean of 1.874 at dispersion 0.888 must be representable');
+  assert.ok(Math.abs(f.n * f.p - 1.874) < 1e-12, 'mean is exact');
+  const disp = (f.n * f.p * (1 - f.p)) / (f.n * f.p);
+  assert.ok(Math.abs(disp - 0.888) < 0.005, `dispersion ${disp}`);
+  assert.ok(f.n > 1 && Number.isInteger(f.n) && f.p > 0 && f.p < 1);
+});
+t('an under-dispersed tail prices ABOVE Poisson in the body, which is the whole point', () => {
+  /* Poisson over-weights nought and one when the counts are tighter than
+     Poisson, so P(2 or more) comes out low. That is the calibration bias this
+     replaces, and its direction is the assertion. */
+  const mu = 1.874, line = 1;               // line 1 => "2 or more"
+  const poisson = core.udTailProb(mu, 1.5, line);   // >=1 dispersion => Poisson
+  const binom = core.udTailProb(mu, 0.888, line);
+  assert.ok(binom > poisson, `${binom} should exceed ${poisson}`);
+  assert.ok(binom - poisson > 0.005 && binom - poisson < 0.05, 'a nudge, not a lurch');
+});
+t('dispersion at or above one falls through to Poisson rather than pretending', () => {
+  /* A binomial cannot represent variance >= mean. Clamping would be a lie
+     about the input, so the function hands back the Poisson tail and says so
+     by construction — the same three-outcome discipline the probes use. */
+  const mu = 2.0;
+  const viaPoisson = 1 - Math.exp(-mu) * (1 + mu);
+  for (const phi of [1, 1.4, 0, -1, null]) {
+    const got = core.udTailProb(mu, phi, 1);
+    assert.ok(Math.abs(got - viaPoisson) < 1e-12 || phi === null,
+      `dispersion ${phi} should give the Poisson tail, got ${got}`);
+  }
+  assert.equal(core.udBinomFit(mu, 1.2), null, 'no fit exists above dispersion 1');
+});
+t('the tail is a real probability, monotone in the line and in the mean', () => {
+  const p = (mu, line) => core.udTailProb(mu, 0.888, line);
+  for (const mu of [0.4, 1.2, 1.874, 3.5]) {
+    for (let line = 0; line < 5; line++) {
+      const v = p(mu, line);
+      assert.ok(v >= 0 && v <= 1, `out of range at mu=${mu} line=${line}: ${v}`);
+      if (line) assert.ok(v <= p(mu, line - 1) + 1e-12, 'falls as the line rises');
+    }
+    assert.ok(p(mu, 1) < p(mu + 0.5, 1), 'rises with the mean');
+  }
+  assert.equal(core.udTailProb(0, 0.888, 1), null, 'no mean, no answer');
+  assert.equal(core.udTailProb(null, 0.888, 1), null);
+});
+
 console.log(`\n${passed} tests passed`);

@@ -399,13 +399,17 @@ What is tested is the **adjustment stack**: a base card rate multiplied by a ven
 
 | Event | Base rate | Model Brier | Baseline Brier | Difference | 95% interval | Verdict |
 | --- | --- | --- | --- | --- | --- | --- |
-| 1+ yellows | 84.5% | 0.1360 | 0.1310 | +0.0050 | −0.0005 to +0.0105 | no difference |
-| **2+ yellows** | **59.1%** | **0.2454** | **0.2440** | **+0.0014** | **−0.0096 to +0.0124** | **no difference** |
-| 3+ yellows | 29.2% | 0.2006 | 0.2071 | −0.0065 | −0.0157 to +0.0026 | no difference |
+| 1+ yellows | 84.5% | 0.1351 | 0.1312 | +0.0039 | −0.0014 to +0.0092 | no difference |
+| **2+ yellows** | **59.1%** | **0.2451** | **0.2430** | **+0.0021** | **−0.0093 to +0.0134** | **no difference** |
+| 3+ yellows | 29.2% | 0.2013 | 0.2072 | −0.0059 | −0.0156 to +0.0038 | no difference |
 
 640 scored team-match forecasts. A positive difference means the model's Brier is *higher*, which is worse. At the headline threshold it is nominally worse by 0.0014 and the interval spans zero — over 640 forecasts that is not a difference, it is noise. It is not a win at any of the three thresholds, so there is no threshold to pick that flatters it.
 
-The calibration table shows *where* that comes from, which the Brier score hides. The model **discriminates**: its top decile came in 35.9 points above its bottom one, while the baseline's spread is −14.1 points, i.e. noise. But it is **biased low** — predicting 53.5% on average against an observed 59.1% — and on Brier the discrimination it gains and the calibration it loses cancel out. The bias is the Poisson link, not the adjustments: team yellow counts in 2025/26 have variance 1.66 against a mean 1.87, so they are *under*-dispersed, and a Poisson on the right mean puts too much weight on nought and one.
+The calibration table shows *where* that comes from, which the Brier score hides. The model **discriminates**: its top decile came in 35.9 points above its bottom one, while the baseline's spread is −14.1 points, i.e. noise. It is still **biased low** — predicting 54.8% on average against an observed 59.1% — and on Brier the discrimination it gains and the calibration it loses cancel out.
+
+**The distribution has been fixed; it was a quarter of the bias, not all of it.** Team yellow counts in 2025/26 have variance 1.663 against mean 1.874 — a dispersion of 0.888, so they are *under*-dispersed, and a Poisson on the right mean puts too much weight on nought and one. The tail is now a binomial moment-matched to that dispersion (`PLDCore.udTailProb`), which is under-dispersed by construction. That moved mean predicted at the headline threshold from **53.5% to 54.8%** against 59.1% observed, and at 1+ from 82.1% to 83.8% against 84.5%. Discrimination is untouched, as a monotone change of tail must leave it.
+
+So the Poisson link accounted for about **1.3 of the 5.6 points**. The remaining gap is not the link function — it is the mean itself running low, which is a separate finding and a separate fix. The full working, including why the dispersion is treated as a season constant rather than refitted per fold, is in `docs/modelling-review.md`.
 
 Two limits, stated in the view as well as here:
 

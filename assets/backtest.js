@@ -82,13 +82,31 @@
     return (sum + k * prior) / (n + k);
   }
 
-  /* P(at least `t` events) for a Poisson with mean `lam`, through jStat's
-     cdf. Guarded to a real probability: jStat returns NaN on a negative mean
-     and 1 on an enormous one, and an NaN here would poison every summary
-     statistic downstream without throwing. */
-  function pAtLeast(jStat, lam, t) {
+  /* P(at least `t` events) with mean `lam`, guarded to a real probability:
+     the Poisson fallback returns NaN on a negative mean and 1 on an enormous
+     one, and an NaN here would poison every summary statistic downstream
+     without throwing.
+
+     UNDER-DISPERSED, SO NOT POISSON. Team yellow counts run variance 1.663 on
+     mean 1.874 across 2025/26's 760 team-matches. A Poisson on the right mean
+     therefore over-weights nought and one and prices the "2 or more" tail low
+     — 53.5% predicted against 59.1% observed, with the ranking intact.
+     PLDCore.udTailProb moment-matches a binomial to that dispersion and keeps
+     the mean exact; it falls back to Poisson itself if the dispersion is ever
+     not below one, so this stays correct if the data changes.
+
+     CORE IS PASSED IN, NOT REACHED FOR. This module is require()d by
+     tests/test-libs.mjs, where no browser global exists — a `root.PLDCore`
+     lookup would find nothing, fall through to Poisson, and the test would
+     green-tick the very bias this change removes while the browser used the
+     new tail. Same reason ss and jStat are arguments. */
+  function pAtLeast(jStat, lam, t, core) {
     var l = num(lam);
     if (l == null || l < 0) return null;
+    if (core && typeof core.udTailProb === 'function') {
+      var pu = core.udTailProb(l, core.YELLOW_DISPERSION, t - 1);
+      if (pu != null && isFinite(pu)) return clamp(pu, 1e-6, 1 - 1e-6);
+    }
     if (!(jStat && jStat.poisson && typeof jStat.poisson.cdf === 'function')) return null;
     var below = jStat.poisson.cdf(t - 1, l);
     if (!isFinite(below)) return null;
@@ -278,6 +296,18 @@
     var ss = o.ss || root.ss;
     var jStat = o.jStat || root.jStat;
     var data = o.data || root.PL_BACKTEST_2526;
+    /* The under-dispersed tail. Passed in by the caller (the page hands it
+       PLDCore; the test require()s it).
+
+       ONLY AN ABSENT KEY FALLS BACK TO THE GLOBAL. A caller passing null or
+       false is asking for the plain Poisson, and must get it — requiring
+       core.js anywhere in the process sets root.PLDCore, so an `||` chain
+       would quietly hand the new tail to a caller who explicitly declined it
+       and make the two paths impossible to compare. That is not academic: it
+       silently defeated the first version of the test that pins this change. */
+    var core = Object.prototype.hasOwnProperty.call(o, 'core')
+      ? (o.core || null)
+      : ((typeof root !== 'undefined' ? root.PLDCore : null) || null);
     if (!ss || !jStat || !data || !Array.isArray(data.matches)) return null;
     var threshold = o.threshold == null ? THRESHOLD : o.threshold;
 
@@ -303,8 +333,8 @@
         if (!warm) { skipped++; continue; }
         var mod = modelLambda(state, side.name, side.opp, side.isHome, m.ref);
         var base = baselineLambda(state);
-        var pm = pAtLeast(jStat, mod && mod.lambda, threshold);
-        var pb = pAtLeast(jStat, base, threshold);
+        var pm = pAtLeast(jStat, mod && mod.lambda, threshold, core);
+        var pb = pAtLeast(jStat, base, threshold, core);
         if (pm == null || pb == null) { skipped++; continue; }
         rows.push({
           date: m.d,

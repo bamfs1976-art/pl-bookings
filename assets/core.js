@@ -1264,6 +1264,81 @@
     }
     return Math.min(1, Math.max(0, 1 - cdf));
   }
+  /* THE COUNTS ARE UNDER-DISPERSED AND POISSON CANNOT SAY SO.
+   *
+   * nbTailProb above widens a Poisson; it has no setting that narrows one.
+   * Its own fallback says as much — an under-dispersed moment match hands
+   * back size = Infinity, which IS Poisson. So every tail on this desk was
+   * computed by a distribution that assumes variance = mean, against team
+   * yellow counts whose variance is 1.663 on a mean of 1.874: a ratio of
+   * 0.888, measured over all 760 team-matches of 2025/26.
+   *
+   * That is the whole calibration bias. A Poisson on the right mean puts too
+   * much weight on nought and one, so P(2 or more) comes out low — 53.5%
+   * predicted against 59.1% observed, while the model's ranking was fine
+   * (top decile 35.9 points above the bottom). Ranking well and pricing low
+   * is exactly the signature of a right mean through a too-wide distribution.
+   *
+   * THE FIX IS THE DISTRIBUTION THAT IS UNDER-DISPERSED BY CONSTRUCTION. A
+   * binomial has variance n·p·(1−p) against mean n·p, so its dispersion is
+   * (1 − p): always below one, and settable. Moment-matching to (mu, phi):
+   *
+   *     phi = variance / mean   ->   p = 1 − phi,   n = mu / p
+   *
+   * n must be a whole number of trials, and rounding it moves the mean. The
+   * MEAN is what calibration lives or dies on, so p is then re-solved as
+   * mu / n to put the mean back exactly, and the dispersion lands within
+   * ~0.002 of the target instead of the mean landing within 5% of its own.
+   *
+   * WHY A FIXED phi RATHER THAN A REFIT PER MATCH. Ten walk-forward folds of
+   * 76 team-matches give in-fold ratios from 0.67 to 1.21 — one fold reads
+   * over-dispersed — but that scatter is what a STABLE 0.888 produces at this
+   * sample size: simulating 4,000 seasons from a fixed 0.888 puts a fold at
+   * or above 1.21 in 12% of them and an in-fold sd at or above the observed
+   * 0.170 in 13%. Neither is unusual. The expanding window a walk-forward fit
+   * actually sees never leaves 0.84-0.95 (sd 0.037) and is never above one.
+   * So the dispersion is treated as a season constant, fitted once on
+   * 2025/26 team-match records, and NOT re-estimated per fixture off a
+   * handful of matches — which would fit noise and occasionally invert the
+   * correction.
+   *
+   * phi >= 1 falls through to Poisson, because a binomial cannot represent it
+   * and silently clamping would be a lie about the input.
+   */
+  var YELLOW_DISPERSION = 0.888;   // variance/mean, 2025/26, 760 team-matches
+
+  /* The moment-matched binomial for a mean and a dispersion below one.
+     Exposed so a test can assert the match rather than infer it. */
+  function udBinomFit(mu, phi) {
+    if (mu == null || !(mu > 0)) return null;
+    var f = phi == null ? YELLOW_DISPERSION : Number(phi);
+    if (!isFinite(f) || f >= 1 || f <= 0) return null;   // Poisson's job
+    var n = Math.max(1, Math.round(mu / (1 - f)));
+    if (mu >= n) return null;             // p would be >= 1; not representable
+    return { n: n, p: mu / n };           // mean exactly mu, by construction
+  }
+
+  /* P(count > line) for an under-dispersed count with mean mu. Same signature
+     shape as nbTailProb: pass the integer line, so 1 for "over 1.5" and
+     2 for "2 or more" via line = 1. */
+  function udTailProb(mu, phi, line) {
+    if (mu == null || !(mu > 0)) return null;
+    var fit = udBinomFit(mu, phi);
+    if (!fit) {                            // not under-dispersed: Poisson
+      var cdfP = 0, term = Math.exp(-mu);
+      for (var j = 0; j <= line; j++) { cdfP += term; term *= mu / (j + 1); }
+      return Math.min(1, Math.max(0, 1 - cdfP));
+    }
+    var n = fit.n, p = fit.p, cdf = 0;
+    /* Binomial pmf by the same recurrence style as the Poisson above:
+       pmf(0) = (1-p)^n, then pmf(k) = pmf(k-1) · (n-k+1)/k · p/(1-p). */
+    var pm = Math.pow(1 - p, n);
+    for (var k = 0; k <= line && k <= n; k++) {
+      cdf += pm;
+      pm *= ((n - k) / (k + 1)) * (p / (1 - p));
+    }
+    return Math.min(1, Math.max(0, 1 - cdf));
+  }
   /* Mechanistic card chance: bookings ~ Poisson(expFouls × perFoulHazard),
      so P(≥1 caution) = 1 − exp(−expFouls × hazard). The hazard is the
      league cards-per-foul, scaled by the referee. */
@@ -2157,7 +2232,8 @@
     shrinkRate, logit, invLogit, scaleOdds, contextProb,
     pCardsAtLeast, suspensionCycle, nextSuspension,
     brier, logLoss, reliability, glmProb,
-    gammaln, expectedFouls, nbTailProb, cardProbFromFouls, recencyWeight, refCardFactor,
+    gammaln, expectedFouls, nbTailProb, udTailProb, udBinomFit, YELLOW_DISPERSION,
+    cardProbFromFouls, recencyWeight, refCardFactor,
     leagueRate90, twoStageHazard, sumNegBin,
     matchLegOptions, simLegOptions, accaAllocate, accaPrice,
   };

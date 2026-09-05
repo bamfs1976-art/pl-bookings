@@ -103,6 +103,11 @@ const RECORD = require('../data/pl_backtest_2526.js');
 
 const PLCardModel = require('../assets/cardmodel.js');
 const PLBacktest = require('../assets/backtest.js');
+/* THE TAIL THE PAGE ACTUALLY USES. backtest.js takes its distribution as an
+   argument rather than off a global precisely so this file cannot drift from
+   the browser: without passing core it would score the old Poisson tail and
+   pin a verdict for a model nobody ships. */
+const PLDCore = require('../assets/core.js');
 const PLAdminImport = require('../assets/adminimport.js');
 const model = PLCardModel.create({ jStat, players: PL_PLAYERS, clubs: CLUBS, refs: REFS, record: RECORD });
 
@@ -255,7 +260,7 @@ t('the split is the venue factor and nothing else', () => {
 
 /* ---- the backtest ------------------------------------------------------- */
 console.log('\nbacktest');
-const bt = PLBacktest.run({ ss, jStat, data: RECORD, threshold: 2 });
+const bt = PLBacktest.run({ ss, jStat, data: RECORD, threshold: 2, core: PLDCore });
 t('it runs over the shipped 2025/26 record', () => {
   assert.equal(RECORD.matches.length, 380);
   assert.ok(bt.n > 500, `only ${bt.n} scored forecasts`);
@@ -270,7 +275,7 @@ t('nothing about a match reaches its own forecast', () => {
     ...RECORD,
     matches: RECORD.matches.map((m) => (m.d > cut ? { ...m, hy: m.hy * 2, ay: m.ay * 2 } : m)),
   };
-  const other = PLBacktest.run({ ss, jStat, data: tampered, threshold: 2 });
+  const other = PLBacktest.run({ ss, jStat, data: tampered, threshold: 2, core: PLDCore });
   const before = bt.rows.filter((r) => r.date <= cut);
   const otherBefore = other.rows.filter((r) => r.date <= cut);
   assert.equal(before.length, otherBefore.length);
@@ -307,7 +312,17 @@ t('the baseline knows nothing about the two sides, only the season so far', () =
   const spread = (xs) => ss.max(xs) - ss.min(xs);
   assert.ok(spread(bt.rows.map((r) => r.model)) > 8 * spread(bt.rows.map((r) => r.baseline)));
   const first = bt.rows[0];
-  assert.ok(Math.abs(first.baseline - (1 - Math.exp(-first.baseLambda) * (1 + first.baseLambda))) < 1e-9);
+  /* The baseline is a plain tail on the league mean and nothing else — no
+     venue, no referee, no opponent. It used to be asserted as the POISSON
+     tail, spelled out longhand: 1 - e^-L(1+L). That is no longer what either
+     side of this comparison uses, and leaving it would have quietly pinned
+     the baseline to a distribution the model had moved off — which would make
+     the two Briers answer different questions. It is asserted against the
+     SAME tail the model gets, so the only difference between them stays the
+     adjustment stack, which is the whole point of the test. */
+  assert.ok(Math.abs(first.baseline -
+    PLDCore.udTailProb(first.baseLambda, PLDCore.YELLOW_DISPERSION, 1)) < 1e-9,
+    'the baseline must use the model\'s own distribution on the league mean');
 });
 t('the deciles hold every scored row exactly once', () => {
   const n = bt.model.calibration.reduce((s, b) => s + b.n, 0);
@@ -329,10 +344,38 @@ t('the shipped record does not let the model claim a win', () => {
      thresholds — and if a change to the model ever flips it, that is a finding
      that deserves a failing test and a fresh look, not a quiet green tick. */
   for (const th of [1, 2, 3]) {
-    const r = PLBacktest.run({ ss, jStat, data: RECORD, threshold: th });
+    const r = PLBacktest.run({ ss, jStat, data: RECORD, threshold: th, core: PLDCore });
     assert.equal(r.verdict, 'indistinguishable',
       `threshold ${th} now reports "${r.verdict}" — re-read the Methodology view`);
   }
+});
+t('the under-dispersed tail is the one being scored, and it prices higher', () => {
+  /* THE FIX, PINNED AS A NUMBER. Team yellow counts are under-dispersed —
+     variance 1.663 on mean 1.874 over 2025/26's 760 team-matches, a ratio of
+     0.888 — and a Poisson on the right mean therefore over-weights nought and
+     one and prices the "2 or more" tail low. Swapping to a moment-matched
+     binomial moves mean predicted from 53.5% to 54.8% against 59.1% observed.
+     Asserted BOTH ways: the new tail must beat the old one, and it must still
+     fall short of observed, because it closes about a quarter of the gap and
+     saying otherwise on this page would be the same over-claim the backtest
+     exists to prevent. */
+  const mean = (cal, k) => cal.reduce((s, b) => s + b[k] * b.n, 0) /
+                           cal.reduce((s, b) => s + b.n, 0);
+  const withCore = PLBacktest.run({ ss, jStat, data: RECORD, threshold: 2, core: PLDCore });
+  const poisson = PLBacktest.run({ ss, jStat, data: RECORD, threshold: 2, core: null,
+    /* explicitly no core: assert the OLD path, not merely a missing global */ });
+  const pNew = mean(withCore.model.calibration, 'predicted');
+  const pOld = mean(poisson.model.calibration, 'predicted');
+  const obs = mean(withCore.model.calibration, 'observed');
+  assert.ok(pNew > pOld, `the under-dispersed tail must price above Poisson (${pNew} vs ${pOld})`);
+  assert.ok(pNew < obs, 'it does NOT close the gap — do not let this test claim it does');
+  assert.ok(Math.abs(pNew - 0.548) < 0.01, `mean predicted moved to ${pNew.toFixed(4)}`);
+  assert.ok(Math.abs(obs - 0.591) < 0.01, `observed moved to ${obs.toFixed(4)}`);
+  /* Discrimination is a ranking property and a monotone change of tail cannot
+     touch it. If this ever moves, the change was not the one described. */
+  const spread = (c) => c[9].observed - c[0].observed;
+  assert.ok(Math.abs(spread(withCore.model.calibration) - spread(poisson.model.calibration)) < 1e-9,
+    'the decile spread must be untouched — a tail swap is monotone in lambda');
 });
 t('a model given the answer would be caught', () => {
   /* The leak test above proves this test can fail. Fed perfect foresight the

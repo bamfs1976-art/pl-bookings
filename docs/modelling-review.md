@@ -190,6 +190,68 @@ Both talk to Supabase over PostgREST with the service-role key (the same
 dependency-free pattern as `insights.js`). The feature is optional: with no
 `SUPABASE_SERVICE_ROLE_KEY` the logger no-ops and the card stays hidden.
 
+## The under-dispersion fix, September 2026
+
+**What was wrong.** The in-page backtest ranked well and priced low: at the
+headline threshold (a side taking 2+ yellows) it predicted **53.5%** on average
+against **59.1%** observed, while discriminating properly — top decile 35.9
+points above the bottom. Ranking well and pricing low is the signature of a
+right mean pushed through a distribution of the wrong shape.
+
+**The measurement.** Team yellow counts over 2025/26's 760 team-matches run
+**variance 1.663 on mean 1.874** — a dispersion of **0.888**. They are
+*under*-dispersed, and a Poisson assumes variance equals mean, so it puts too
+much weight on nought and one and prices the "2 or more" tail low. The desk had
+no way to say this: `nbTailProb` only ever *widens* a Poisson, and its own
+under-dispersed branch hands back `size = Infinity`, which is Poisson again.
+
+**The fix.** A binomial is under-dispersed by construction — variance
+`n·p·(1−p)` against mean `n·p`, so dispersion is `(1−p)`. Moment-matching gives
+`p = 1 − phi` and `n = mu / p`. `n` must be whole, and rounding it moves the
+mean, so `p` is re-solved as `mu / n` afterwards: the mean lands exact and the
+dispersion within ~0.002. Calibration lives on the mean. Shipped as
+`PLDCore.udTailProb`, which falls through to Poisson if the dispersion is ever
+not below one rather than clamping and lying about the input.
+
+**Why a season constant rather than a per-fold refit.** Ten walk-forward folds
+of 76 team-matches give in-fold dispersions from 0.67 to 1.21 — one fold reads
+*over*-dispersed — which looks unstable. It is not. Simulating 4,000 seasons
+from a **fixed** 0.888 puts a fold at or above 1.21 in **12%** of them and an
+in-fold standard deviation at or above the observed 0.170 in **13%**. Neither
+is unusual; the scatter is what this sample size does. The expanding window a
+walk-forward fit actually sees never leaves **0.84–0.95** (sd 0.037) and is
+never above one. So the dispersion is fitted once and held, rather than
+re-estimated off a handful of matches — which would fit noise and occasionally
+invert the correction.
+
+**What it bought, and what it did not.**
+
+| Threshold | predicted before | after | observed |
+|---|--:|--:|--:|
+| 1+ yellows | 82.1% | **83.8%** | 84.5% |
+| 2+ yellows | 53.5% | **54.8%** | 59.1% |
+| 3+ yellows | 28.6% | 28.4% | 29.2% |
+
+Discrimination is unchanged to the last digit, as a monotone change of tail
+must leave it. Brier is materially unmoved and the verdict is still
+**indistinguishable from the baseline at all three thresholds** — the interval
+spans zero everywhere, exactly as before.
+
+**So the Poisson link was about a quarter of the bias, not all of it.** The
+README previously attributed the whole 5.6-point gap to it; the measurement
+says 1.3 points. The remaining ~4.3 points at the headline threshold is the
+**mean itself running low**, not the shape around it, and that is a different
+fix. A one-parameter walk-forward logit shift was evaluated on top and is
+**not** shipped: it improves the headline threshold (Brier 0.2451 → 0.2436,
+predicted 54.8% → 57.7%) and makes both others worse (1+ 0.1351 → 0.1357, 3+
+0.2013 → 0.2029). Buying the threshold you quote by degrading the two you also
+publish is the kind of trade this file exists to refuse.
+
+**Scope.** This is the team-level tail the backtest scores. The per-player card
+model is untouched and was already calibrated — `check-models.mjs` reports the
+Premier League pricing 15.8% against 15.8% observed, with no player above 43%
+against the 55% ceiling.
+
 ## Honesty boundary
 
 Tier 1 and Tier 3 are **fully data-grounded** from the shipped season data. The
