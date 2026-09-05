@@ -1,6 +1,6 @@
 {
   "note": "PROPOSALS from API-Football /transfers, for a person to read. data/transfers.json is the hand-curated overlay that is actually applied; this is not.",
-  "since": "2026-05-07",
+  "since": "2026-05-08",
   "moves": [
     {
       "n": "Tyler Bindon",
@@ -271,15 +271,6 @@
       "toCode": "LIN",
       "date": "2026-08-23",
       "type": "Loan"
-    },
-    {
-      "n": "E. Adebayo",
-      "from": "Luton",
-      "to": "Bristol City",
-      "fromCode": null,
-      "toCode": "BRC",
-      "date": "2026-08-23",
-      "type": "Free agent"
     },
     {
       "n": "C. McLeod",
@@ -903,15 +894,6 @@
       "type": "Loan"
     },
     {
-      "n": "S. Walker",
-      "from": "Bradford",
-      "to": "Watford",
-      "fromCode": null,
-      "toCode": "WAT",
-      "date": "2026-08-10",
-      "type": "Transfer"
-    },
-    {
       "n": "S. Charles",
       "from": "Southampton",
       "to": "Fulham",
@@ -1214,15 +1196,6 @@
       "to": "Swansea",
       "fromCode": "SOU",
       "toCode": "SWA",
-      "date": "2026-08-05",
-      "type": "Free agent"
-    },
-    {
-      "n": "N. Chalobah",
-      "from": "Sheffield Wednesday",
-      "to": "Charlton",
-      "fromCode": null,
-      "toCode": "CHA",
       "date": "2026-08-05",
       "type": "Free agent"
     },
@@ -1540,15 +1513,6 @@
       "toCode": null,
       "date": "2026-08-02",
       "type": "-"
-    },
-    {
-      "n": "D. Ballard",
-      "from": "Leyton Orient",
-      "to": "Bristol City",
-      "fromCode": null,
-      "toCode": "BRC",
-      "date": "2026-08-02",
-      "type": "Transfer"
     },
     {
       "n": "C. Congreve",
@@ -2091,15 +2055,6 @@
       "type": "Free agent"
     },
     {
-      "n": "J. Fevrier",
-      "from": "Stockport County",
-      "to": "Blackburn",
-      "fromCode": null,
-      "toCode": "BLB",
-      "date": "2026-07-26",
-      "type": "Transfer"
-    },
-    {
       "n": "J. Ashton",
       "from": "Burnley",
       "to": "Waterford",
@@ -2163,15 +2118,6 @@
       "type": "Transfer"
     },
     {
-      "n": "M. Alli",
-      "from": "Luton",
-      "to": "Charlton",
-      "fromCode": null,
-      "toCode": "CHA",
-      "date": "2026-07-24",
-      "type": "Transfer"
-    },
-    {
       "n": "L. Duru",
       "from": "Blackburn",
       "to": "Carlisle",
@@ -2179,15 +2125,6 @@
       "toCode": null,
       "date": "2026-07-24",
       "type": "Free agent"
-    },
-    {
-      "n": "K. Lisbie",
-      "from": "Peterborough",
-      "to": "Millwall",
-      "fromCode": null,
-      "toCode": "MIL",
-      "date": "2026-07-24",
-      "type": "Transfer"
     },
     {
       "n": "A. Doherty",
@@ -2511,15 +2448,6 @@
       "fromCode": "WOL",
       "toCode": null,
       "date": "2026-07-19",
-      "type": "Transfer"
-    },
-    {
-      "n": "L. Tolaj",
-      "from": "Plymouth",
-      "to": "Bristol City",
-      "fromCode": null,
-      "toCode": "BRC",
-      "date": "2026-07-18",
       "type": "Transfer"
     },
     {
@@ -4314,15 +4242,6 @@
       "type": "Free agent"
     },
     {
-      "n": "S. Tickle",
-      "from": "Wigan",
-      "to": "Bristol City",
-      "fromCode": null,
-      "toCode": "BRC",
-      "date": "2026-06-29",
-      "type": "Transfer"
-    },
-    {
       "n": "S. Szmodics",
       "from": "Derby",
       "to": "Ipswich",
@@ -4402,15 +4321,6 @@
       "toCode": "WOL",
       "date": "2026-06-29",
       "type": "Return from loan"
-    },
-    {
-      "n": "S. Ingelsson",
-      "from": "Sheffield Wednesday",
-      "to": "Stoke City",
-      "fromCode": null,
-      "toCode": "STK",
-      "date": "2026-06-29",
-      "type": "Transfer"
     },
     {
       "n": "S. Goglichidze",
@@ -4593,15 +4503,6 @@
       "type": "Return from loan"
     },
     {
-      "n": "O. Bailey",
-      "from": "Stockport County",
-      "to": "Portsmouth",
-      "fromCode": null,
-      "toCode": "POR",
-      "date": "2026-06-29",
-      "type": "Free agent"
-    },
-    {
       "n": "O. Adewumi",
       "from": "Cercle Brugge",
       "to": "Burnley",
@@ -4764,15 +4665,6 @@
       "type": "Return from loan"
     },
     {
-      "n": "M. Peart-Harris",
-      "from": "Oxford United",
-      "to": "Middlesbrough",
-      "fromCode": null,
-      "toCode": "MID",
-      "date": "2026-06-29",
-      "type": "Free agent"
-    },
-    {
       "n": "M. Munetsi",
       "from": "Paris FC",
       "to": "Wolves",
@@ -4897,15 +4789,6 @@
       "toCode": "CAR",
       "date": "2026-06-29",
       "type": "Return from loan"
-    },
-    {
-      "n": "L. Nicholls",
-      "from": "Huddersfield",
-      "to": "Preston",
-      "fromCode": null,
-      "toCode": "PRE",
-      "date": "2026-06-29",
-      "type": "Transfer"
     },
     {
       "n": "L. Krejčí",
@@ -5194,15 +5077,6 @@
       "toCode": "MIL",
       "date": "2026-06-29",
       "type": "Free agent"
-    },
-    {
-      "n": "J. Metcalfe",
-      "from": "Bradford",
-      "to": "Millwall",
-      "fromCode": null,
-      "toCode": "MIL",
-      "date": "2026-06-29",
-      "type": "Transfer"
     },
     {
       "n": "J. McLaughlin",

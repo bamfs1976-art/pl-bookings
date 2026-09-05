@@ -1,6 +1,6 @@
 {
   "note": "PROPOSALS from API-Football /transfers, for a person to read. data/transfers.json is the hand-curated overlay that is actually applied; this is not.",
-  "since": "2026-05-07",
+  "since": "2026-05-08",
   "moves": [
     {
       "n": "B. Barcola",
@@ -386,15 +386,6 @@
       "to": "Strasbourg",
       "fromCode": "CHE",
       "toCode": null,
-      "date": "2026-08-24",
-      "type": "Transfer"
-    },
-    {
-      "n": "Nico González",
-      "from": "Manchester City",
-      "to": "Newcastle",
-      "fromCode": "MCI",
-      "toCode": "NEW",
       "date": "2026-08-24",
       "type": "Transfer"
     },
@@ -1110,15 +1101,6 @@
       "type": "Free agent"
     },
     {
-      "n": "E. Destan",
-      "from": "Hull City",
-      "to": "Konyaspor",
-      "fromCode": "HUL",
-      "toCode": null,
-      "date": "2026-08-12",
-      "type": "Free agent"
-    },
-    {
       "n": "A. Harrison",
       "from": "Newcastle",
       "to": "Wolves U21",
@@ -1243,15 +1225,6 @@
       "toCode": null,
       "date": "2026-08-11",
       "type": "Free agent"
-    },
-    {
-      "n": "A. Harrison",
-      "from": "Newcastle",
-      "to": "Wolves U21",
-      "fromCode": "NEW",
-      "toCode": null,
-      "date": "2026-08-11",
-      "type": "-"
     },
     {
       "n": "S. Charles",
@@ -1650,15 +1623,6 @@
       "type": "Transfer"
     },
     {
-      "n": "Bruno Guimarães",
-      "from": "Newcastle",
-      "to": "Arsenal",
-      "fromCode": "NEW",
-      "toCode": "ARS",
-      "date": "2026-08-06",
-      "type": "Transfer"
-    },
-    {
       "n": "Alfie Merritt",
       "from": "Bournemouth",
       "to": "Newport County",
@@ -1758,15 +1722,6 @@
       "type": "Transfer"
     },
     {
-      "n": "R. Welch",
-      "from": "Everton",
-      "to": "Bradford",
-      "fromCode": "EVE",
-      "toCode": null,
-      "date": "2026-08-04",
-      "type": "Transfer"
-    },
-    {
       "n": "R. Coyle",
       "from": "Hull City",
       "to": "Hull City U21",
@@ -1810,15 +1765,6 @@
       "toCode": null,
       "date": "2026-08-04",
       "type": "Free agent"
-    },
-    {
-      "n": "R. Welch",
-      "from": "Everton",
-      "to": "Bradford",
-      "fromCode": "EVE",
-      "toCode": null,
-      "date": "2026-08-03",
-      "type": "Transfer"
     },
     {
       "n": "Mohamed Salah",
@@ -2442,15 +2388,6 @@
       "type": "Free agent"
     },
     {
-      "n": "M. Targett",
-      "from": "Newcastle",
-      "to": "Hull City",
-      "fromCode": "NEW",
-      "toCode": "HUL",
-      "date": "2026-07-21",
-      "type": "Free agent"
-    },
-    {
       "n": "I. Diop",
       "from": "Fulham",
       "to": "Ipswich",
@@ -2638,15 +2575,6 @@
       "toCode": "SUN",
       "date": "2026-07-19",
       "type": "-"
-    },
-    {
-      "n": "A. Fatawu",
-      "from": "Leicester",
-      "to": "Ipswich",
-      "fromCode": null,
-      "toCode": "IPS",
-      "date": "2026-07-19",
-      "type": "Transfer"
     },
     {
       "n": "Rodrigo Miguel Ferreira Rêgo",
@@ -2897,15 +2825,6 @@
       "to": "Southampton",
       "fromCode": "AVL",
       "toCode": "SOU",
-      "date": "2026-07-14",
-      "type": "Transfer"
-    },
-    {
-      "n": "J. White",
-      "from": "Newcastle",
-      "to": "Crewe",
-      "fromCode": "NEW",
-      "toCode": null,
       "date": "2026-07-14",
       "type": "Transfer"
     },
@@ -3349,15 +3268,6 @@
       "toCode": null,
       "date": "2026-07-04",
       "type": "Loan"
-    },
-    {
-      "n": "S. Tonali",
-      "from": "Newcastle",
-      "to": "Tottenham",
-      "fromCode": "NEW",
-      "toCode": "TOT",
-      "date": "2026-07-04",
-      "type": "Transfer"
     },
     {
       "n": "Jimi Weikko Tauriainen",
@@ -4582,15 +4492,6 @@
       "toCode": "NEW",
       "date": "2026-06-29",
       "type": "Return from loan"
-    },
-    {
-      "n": "T. Hernes",
-      "from": "Newcastle",
-      "to": "Groningen",
-      "fromCode": "NEW",
-      "toCode": null,
-      "date": "2026-06-29",
-      "type": "Transfer"
     },
     {
       "n": "S. Szmodics",
@@ -5844,15 +5745,6 @@
       "type": "Return from loan"
     },
     {
-      "n": "C. McArthur",
-      "from": "Newcastle",
-      "to": "York",
-      "fromCode": "NEW",
-      "toCode": null,
-      "date": "2026-06-29",
-      "type": "Free agent"
-    },
-    {
       "n": "C. Mandas",
       "from": "Bournemouth",
       "to": "Lazio",
@@ -6157,15 +6049,6 @@
       "toCode": null,
       "date": "2026-06-29",
       "type": "Free agent"
-    },
-    {
-      "n": "A. Gordon",
-      "from": "Newcastle",
-      "to": "Barcelona",
-      "fromCode": "NEW",
-      "toCode": null,
-      "date": "2026-06-29",
-      "type": "Transfer"
     },
     {
       "n": "A. Disasi",
