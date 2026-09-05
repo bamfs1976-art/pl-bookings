@@ -360,6 +360,55 @@
     return !!fx && PLAYED_STATUS.indexOf(String(fx.st)) >= 0;
   }
 
+  /* IS THIS FIXTURE'S LINEUP CONFIRMED? Three answers, and the third is the
+   * one that stops this being a boolean.
+   *
+   *   "confirmed" — both sides' sheets landed AND both resolved to eleven
+   *                 distinct squad members.
+   *   "pending"   — no sheet yet. The normal state until about an hour before
+   *                 kick-off, not a failure.
+   *   "unresolved"— a sheet EXISTS and could not be joined to the squad.
+   *
+   * The third is why this is not a boolean. lineupRoles returns null both when
+   * there is no sheet and when a sheet is there but a starter's name would not
+   * resolve — and those demand opposite handling. "Pending" means wait.
+   * "Unresolved" means the sheet arrived and this desk could not read it,
+   * which is a join to fix, not a clock to watch. Collapsing them would let a
+   * broken name-match sit behind the word "pending" for the rest of the
+   * season, looking exactly like a fixture whose teams have not been announced.
+   *
+   * THE STANDING RULE IS NO PICK BEFORE THE LINEUP IS CONFIRMED, so this is
+   * deliberately hard to satisfy: BOTH sides, fully resolved. One confirmed
+   * side is not a confirmed fixture, because the candidates shown on a card
+   * come from both of them.
+   */
+  function lineupState(sheets, fixtureId, squadsByClub) {
+    var sheet = sheets && fixtureId != null ? sheets[String(fixtureId)] : null;
+    if (!sheet) return { state: 'pending', roles: null, clubs: [] };
+    var clubs = Object.keys(sheet), roles = {}, i, club, r;
+    if (!clubs.length) return { state: 'pending', roles: null, clubs: [] };
+    for (i = 0; i < clubs.length; i++) {
+      club = clubs[i];
+      r = lineupRoles(sheet[club], (squadsByClub && squadsByClub[club]) || []);
+      if (!r) return { state: 'unresolved', roles: null, clubs: clubs, failed: club };
+      roles[club] = r;
+    }
+    /* Both sides, or it is not a confirmed fixture. */
+    if (clubs.length < 2) return { state: 'pending', roles: roles, clubs: clubs };
+    return { state: 'confirmed', roles: roles, clubs: clubs };
+  }
+
+  /* Is this player in the starting eleven? Returns true, false, or null for
+     "not confirmed yet" — and null is NOT false. A benched player and a player
+     whose sheet has not landed look identical to a caller that treats this as
+     a boolean, and one of them must keep his price while the other loses it. */
+  function isStarting(state, club, playerName) {
+    if (!state || state.state !== 'confirmed') return null;
+    var r = state.roles && state.roles[club];
+    if (!r) return null;
+    return r[playerName] === 'start';
+  }
+
   function lineupRoles(sheet, squadNames) {
     if (!sheet || !Array.isArray(sheet.start)) return null;
     const squad = Array.isArray(squadNames) ? squadNames : [];
@@ -2256,7 +2305,7 @@
     pCardsAtLeast, suspensionCycle, nextSuspension,
     brier, logLoss, reliability, glmProb,
     gammaln, expectedFouls, nbTailProb, udTailProb, udBinomFit, YELLOW_DISPERSION,
-    CALIBRATION_NOTICE, mountCalibrationNotice,
+    CALIBRATION_NOTICE, mountCalibrationNotice, lineupState, isStarting,
     cardProbFromFouls, recencyWeight, refCardFactor,
     leagueRate90, twoStageHazard, sumNegBin,
     matchLegOptions, simLegOptions, accaAllocate, accaPrice,

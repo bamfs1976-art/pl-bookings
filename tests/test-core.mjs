@@ -1829,4 +1829,66 @@ t('the tail is a real probability, monotone in the line and in the mean', () => 
   assert.equal(core.udTailProb(null, 0.888, 1), null);
 });
 
+/* ---- lineup confirmation ------------------------------------------------- */
+const XI = (start, sub = []) => ({ start, sub });
+const ELEVEN = ['A One', 'B Two', 'C Three', 'D Four', 'E Five', 'F Six',
+                'G Seven', 'H Eight', 'I Nine', 'J Ten', 'K Eleven'];
+const BENCH = ['L Twelve', 'M Thirteen'];
+const SQUAD = { ARS: ELEVEN.concat(BENCH), CHE: ELEVEN.concat(BENCH) };
+const BOTH = { 100: { ARS: XI(ELEVEN, BENCH), CHE: XI(ELEVEN, BENCH) } };
+
+t('no sheet is "pending", which is not a failure', () => {
+  const s = core.lineupState({}, 100, SQUAD);
+  assert.equal(s.state, 'pending');
+  assert.equal(s.roles, null);
+  /* The normal state until about an hour before kick-off. */
+  assert.equal(core.lineupState(null, 100, SQUAD).state, 'pending');
+  assert.equal(core.lineupState(BOTH, null, SQUAD).state, 'pending');
+});
+t('both sides resolved is "confirmed"', () => {
+  const s = core.lineupState(BOTH, 100, SQUAD);
+  assert.equal(s.state, 'confirmed');
+  assert.equal(s.roles.ARS['A One'], 'start');
+  assert.equal(s.roles.ARS['L Twelve'], 'sub');
+});
+t('ONE side confirmed is not a confirmed fixture', () => {
+  /* The candidates on a card come from both sides, so half a team sheet is
+     not a lineup. Confirming on one would grey out an opponent nobody has
+     announced. */
+  const half = { 100: { ARS: XI(ELEVEN, BENCH) } };
+  assert.equal(core.lineupState(half, 100, SQUAD).state, 'pending');
+});
+t('a sheet that will not resolve is "unresolved", never "pending"', () => {
+  /* THE ONE THAT MATTERS. lineupRoles returns null both for "no sheet" and
+     for "a sheet I cannot read", and those need opposite handling: pending
+     means wait, unresolved means fix the join. Collapsed into a boolean, a
+     broken name-match hides behind "pending" for the rest of the season and
+     looks exactly like a fixture nobody has announced. */
+  const bad = { 100: { ARS: XI(ELEVEN, BENCH), CHE: XI(['Nobody At All'].concat(ELEVEN.slice(1)), BENCH) } };
+  const s = core.lineupState(bad, 100, SQUAD);
+  assert.equal(s.state, 'unresolved');
+  assert.equal(s.failed, 'CHE', 'it must name the side whose sheet would not read');
+  assert.notEqual(s.state, 'pending');
+});
+t('ten distinct starters is not eleven, however many names were sent', () => {
+  /* Two feed names collapsing onto one squad member leaves the side ten
+     strong while eleven names each resolved to something. */
+  const dup = ELEVEN.slice(0, 10).concat([ELEVEN[0]]);
+  const s = core.lineupState({ 100: { ARS: XI(dup, BENCH), CHE: XI(ELEVEN, BENCH) } }, 100, SQUAD);
+  assert.equal(s.state, 'unresolved');
+});
+t('a benched player and an unconfirmed one are told apart', () => {
+  /* isStarting returns null for "not confirmed", NOT false. A caller treating
+     it as a boolean would strip the price off every player in every fixture
+     whose sheet has not landed — which is most of them, most of the time. */
+  const confirmed = core.lineupState(BOTH, 100, SQUAD);
+  assert.equal(core.isStarting(confirmed, 'ARS', 'A One'), true);
+  assert.equal(core.isStarting(confirmed, 'ARS', 'L Twelve'), false, 'benched is false');
+  const pending = core.lineupState({}, 100, SQUAD);
+  assert.equal(core.isStarting(pending, 'ARS', 'A One'), null, 'unconfirmed is null, not false');
+  assert.notStrictEqual(core.isStarting(pending, 'ARS', 'L Twelve'), false);
+  /* An unknown club is unknown, not benched. */
+  assert.equal(core.isStarting(confirmed, 'ZZZ', 'A One'), null);
+});
+
 console.log(`\n${passed} tests passed`);
