@@ -5,7 +5,7 @@
 // through PLDCore.matchSquadName. A fixture absent from here prices off
 // squad minute-weights exactly as it always has — that is the normal
 // state until about an hour before kick-off, not a failure.
-// Fetched 2026-09-05T16:40Z.
+// Fetched 2026-09-05T18:54Z.
 //
 // THE GLOBAL IS NOT CALLED `LINEUPS`, and that is deliberate. index.html
 // already declares a top-level `const LINEUPS` for assets/lineup.js (the
@@ -14,8 +14,8 @@
 // a parse error, not a shadow: the whole inline script fails and the desk
 // renders blank. Read `window.LINEUP_SHEETS`.
 var __LINEUP_SHEETS = {
-  "1557392":{"AVL":{start:["Z. Suzuki", "M. Cash", "V. Lindelöf", "T. Mings", "I. Maatsen", "B. Kamara", "R. Barkley", "J.  McGinn", "E. Buendía", "George Hemmings", "N. Jackson"],sub:["T. Abraham", "Alysson Edward", "A. Garnacho", "M. Bizot", "M. Ruggeri", "Pau Torres", "A. Wan-Bissaka", "I. Mbaye", "L. Bogarde"]},"HUL":{start:["K. Tzolakis", "L. Coyle", "S. Ajayi", "J. Egan", "N. Mendy", "R. Giles", "M. Belloumi", "R. Slater", "L. Gourna-Douath", "E. Stroud", "O. McBurnie"],sub:["M. Cho", "R. Vaz", "C. Mouzakitis", "B. Norton-Cuffy", "S. Thomas", "J. Hjertø-Dahl", "M. Targett", "L. Herrington", "D. Phillips"]}},
-  "1570370":{"RAC":{start:["Julen Agirrezabala", "Álvaro Mantilla", "Manu Hernando", "Facundo González", "Jorge Salinas", "Iván Martín", "M. Prati", "Pablo García", "Sergio Canales", "Iñigo Vicente", "M. Zabiri"],sub:["J. Belocian", "M. Gueye", "G. Guliashvili", "Aarón Martín", "Pedro Felipe", "H. Perez", "Pablo Ramón", "Íñigo Sainz-Maza", "Asier Villalibre", "André Almeida", "Juan Carlos Arana", "S. Eriksson"]},"RAY":{start:["Dani Cárdenas", "A. Rațiu", "F. Lejeune", "P. Ciss", "Adrià Pedrosa", "Pedro Díaz", "Óscar Valentín", "Unai López", "Jorge de Frutos", "Sergio Camello", "Álvaro García"],sub:["Alemão", "E. Audero", "I. Balliu", "G. Bouare", "Marco de las Sías", "Pelayo Fernández", "R. Nteka", "Fran Pérez", "Mujaid Sadick", "G. Tsitaishvili", "Rayane Belid"]}},
+  "1563140":{"SWA":{start:["L. Vigouroux", "J. Key", "F. Lissah", "S. Welsh", "J. Tymon", "M. Widell", "J. Fulton", "S. Eustáquio", "M. Yeo", "A. Idah", "Eom Ji-Sung"],sub:["Z. Vipotnik", "A. Fisher", "B. Cabango", "Joseph Okopu", "Tiago Parente", "E. Just", "Ronald", "J. Seelt", "M. Stamenić"]},"WRE":{start:["A. Patterson", "M. Cleworth", "D. Hyam", "C. Doyle", "Daniel Edward Peter Imray", "M. James", "B. Whiteman", "R. Longman", "O. Rathbone", "C. O&apos;Hare", "S. Smith"],sub:["J. Ekomié", "I. Kaboré", "K. Moore", "L. O&apos;Brien", "Z. Vyner", "D. Ward", "J. Windass", "B. Cadamarteri", "J. Worrall"]}},
+  "1570372":{"DEP":{start:["Leo Román", "Ximo Navarro", "L. Noubi", "J. Giménez", "G. Quagliata", "Luismi Cruz", "Mario Soriano", "L. Amatucci", "Riki Rodríguez", "B. Nsongo", "P. Aubameyang"],sub:["Jonathan Asp Jensen", "Marc Casadó", "Z. Eddahchouri", "B. Ede", "Álvaro Fernández", "T. Gijselhart", "Peke", "Miguel Loureiro", "David Mella", "Adama Traoré", "Angeliño", "Diego Villares"]},"VIL":{start:["Luíz Júnior", "A. Freeman", "Logan Costa", "Renato Veiga", "Sergi Cardona", "N. Pépé", "N. Saliba", "P. Gueye", "Alberto Moleiro", "Gerard Moreno", "Ayoze Pérez"],sub:["Ilias Akhomach", "T. Buchanan", "Santi Comesaña", "A. Diatta", "Rubén Gómez", "P. Gulácsi", "C. Macia", "G. Mikautadze", "S. Mouriño", "Pau Navarro", "T. Oluwaseyi"]}},
 };
 if (typeof module !== "undefined" && module.exports) module.exports = __LINEUP_SHEETS;
 if (typeof window !== "undefined") window.LINEUP_SHEETS = __LINEUP_SHEETS;
