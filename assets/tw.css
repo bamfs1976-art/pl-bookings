@@ -1661,3 +1661,11 @@ tr[data-club]:focus-visible{outline:3px solid var(--ring);outline-offset:-3px}
 /* A reader who has asked for less motion gets a steady dot, not a pulsing
    one — the chip still reads as live because of where it is and what it says. */
 @media (prefers-reduced-motion:reduce){.fx-live-dot{animation:none}}
+
+/* The standing calibration caveat. Deliberately quiet: it is a statement about
+   the model's known bias, not a warning, and it sits above prices a reader is
+   about to look at. Text is set from PLDCore.CALIBRATION_NOTICE — the element
+   ships empty, so styling it to look like a banner would leave a coloured bar
+   with nothing in it if the script ever failed to run. */
+.calib-note{margin:.5rem 0 0;font-size:.78rem;line-height:1.45;color:var(--text-3)}
+.calib-note:empty{display:none}

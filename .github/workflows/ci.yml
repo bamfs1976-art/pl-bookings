@@ -415,6 +415,17 @@ jobs:
       - name: Every clock reads 24-hour, from one rule
         run: node scripts/check-clock.mjs
 
+      # The model ranks well and prices low, and the desks say so beside the
+      # prices rather than only in the Methodology view. The caveat is
+      # TEMPORARY — it comes out when the mean is fixed — so the text lives in
+      # PLDCore and the four pages carry an empty element for it. A page that
+      # hard-codes the sentence looks identical in the browser and would
+      # survive the removal, leaving a desk apologising for a bias it no
+      # longer has. It must also never reach a share card: a stale caveat on a
+      # shared image cannot be corrected after it leaves.
+      - name: The calibration caveat is one string, on every desk, on no card
+        run: node scripts/check-calibration-notice.mjs
+
       # "Booking heat" named two different quantities: the chip showed the two
       # clubs' cards-against rates while the Model detail panel two lines below
       # showed the model's expected cards, and /today showed the model's. One

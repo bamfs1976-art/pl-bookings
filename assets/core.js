@@ -1307,6 +1307,29 @@
    */
   var YELLOW_DISPERSION = 0.888;   // variance/mean, 2025/26, 760 team-matches
 
+  /* THE STANDING CAVEAT, IN ONE PLACE. The backtest says the model ranks well
+     — top decile 35.9 points above the bottom — and still prices low: 54.8%
+     predicted against 59.1% observed at the headline threshold, after the
+     under-dispersion fix closed about a quarter of that gap. A reader looking
+     at a percentage deserves to know which way it is wrong, so the sentence
+     sits beside the prices rather than only in the Methodology view.
+
+     ONE STRING, MOUNTED IN FOUR PLACES. Four desks with four copies of a
+     sentence is four things to forget when it stops being true, and this one
+     is explicitly temporary. It comes out when the mean is fixed, and it comes
+     out of one file. */
+  var CALIBRATION_NOTICE = 'The model ranks well and prices low. Fix in progress.';
+
+  /* Fill every [data-calib] on the page. Idempotent, and silent where there is
+     no such element, so a page that has not opted in is not broken by it. */
+  function mountCalibrationNotice(doc) {
+    var d = doc || (typeof document !== 'undefined' ? document : null);
+    if (!d || !d.querySelectorAll) return 0;
+    var nodes = d.querySelectorAll('[data-calib]'), i = 0;
+    for (; i < nodes.length; i++) nodes[i].textContent = CALIBRATION_NOTICE;
+    return nodes.length;
+  }
+
   /* The moment-matched binomial for a mean and a dispersion below one.
      Exposed so a test can assert the match rather than infer it. */
   function udBinomFit(mu, phi) {
@@ -2233,6 +2256,7 @@
     pCardsAtLeast, suspensionCycle, nextSuspension,
     brier, logLoss, reliability, glmProb,
     gammaln, expectedFouls, nbTailProb, udTailProb, udBinomFit, YELLOW_DISPERSION,
+    CALIBRATION_NOTICE, mountCalibrationNotice,
     cardProbFromFouls, recencyWeight, refCardFactor,
     leagueRate90, twoStageHazard, sumNegBin,
     matchLegOptions, simLegOptions, accaAllocate, accaPrice,
@@ -2240,4 +2264,22 @@
 
   if (typeof module !== 'undefined' && module.exports) module.exports = PLDCore;
   global.PLDCore = PLDCore;
+
+  /* THE CAVEAT MOUNTS ITSELF. The four desks bind core at four different
+     points and three of them have no DOMContentLoaded hook at all, so wiring
+     this per page would be four edits and four chances to miss one — for a
+     line whose whole job is to appear everywhere a price does. It is mounted
+     here instead, from the one file every desk already loads.
+
+     Guarded on `document` because this module is require()d by the Node tests,
+     where touching the DOM would throw and take the suite down. */
+  if (typeof document !== 'undefined' && document.querySelectorAll) {
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', function () {
+        PLDCore.mountCalibrationNotice(document);
+      });
+    } else {
+      PLDCore.mountCalibrationNotice(document);
+    }
+  }
 })(typeof window !== 'undefined' ? window : globalThis);
