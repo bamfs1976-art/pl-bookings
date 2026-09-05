@@ -5,7 +5,7 @@
 // through PLDCore.matchSquadName. A fixture absent from here prices off
 // squad minute-weights exactly as it always has — that is the normal
 // state until about an hour before kick-off, not a failure.
-// Fetched 2026-09-04T18:12Z.
+// Fetched 2026-09-05T13:19Z.
 //
 // THE GLOBAL IS NOT CALLED `LINEUPS`, and that is deliberate. index.html
 // already declares a top-level `const LINEUPS` for assets/lineup.js (the
@@ -14,6 +14,10 @@
 // a parse error, not a shadow: the whole inline script fails and the desk
 // renders blank. Read `window.LINEUP_SHEETS`.
 var __LINEUP_SHEETS = {
+  "1557395":{"BOU":{start:["Đ. Petrović", "A. Smith", "J. Hill", "António Silva", "A. Truffert", "T. Adams", "A. Scott", "Rayan", "J. Kluivert", "M. Tavernier", "Evanilson"],sub:["Juanlu Sánchez", "B. Doak", "R. Christie", "D. Brooks", "B. Diakité", "J. Soler", "M. Di Gregorio", "D. Jebbison", "L. Cook"]},"NEW":{start:["L. Horníček", "A. Dedić", "M. Thiaw", "S. Botman", "L. Hall", "Nico González", "L. Miley", "A. Elanga", "J. Willock", "H. Barnes", "Y. Wissa"],sub:["M. Fernandez-Pardo", "J. Murphy", "N. Pope", "T. Livramento", "F. Schär", "A. Bamba", "Sean Steur", "B. Touré", "J. Ramsey"]}},
+  "1563133":{"LIN":{start:["G. Wickens", "D. Elerewe", "S. Bradley", "R. Towler", "A. Coubiș", "I. Varfolomeev", "C. McGrandles", "A. Reach", "B. House", "R. Street", "F. Draper"],sub:["T. Bayliss", "C. Elder", "J. Gauci", "R. Hackett", "D. Jefferies", "Y. Konak", "M. Ladefoged", "C. Ogbene", "I. Olaofe"]},"SOU":{start:["Daniel Peretz", "J. Bree", "J. Stephens", "K. Schlotterbeck", "Welington", "F. Downes", "J. Ward-Prowse", "K. Matsuki", "F. Azaz", "Léo Scienza", "C. Larin"],sub:["Z. Abbott", "Cameron Bragg", "L. Dobbin", "S. Edozie", "T. Fellows", "G. Long", "R. Manning", "D. Mubama", "N. Wood-Gordon"]}},
+  "1563136":{"BLB":{start:["A. Pears", "R. Alebiosu", "Kristi Montgomery", "S. McLoughlin", "Yuri Ribeiro", "A. Forshaw", "Sam Morsy", "R. Morishita", "T. Cantwell", "O. Afolayan", "A. Guðjohnsen"],sub:["H. Carter", "F. Vare", "Michael Decandia", "J. Fevrier", "J. Garrett", "Felix Goddard", "Harvey Higgins", "L. Houghton", "H. Pates"]},"PRE":{start:["D. Iversen", "H. Clarke", "J. Storey", "L. Gibson", "C. Wiley", "S. Mills", "L. Leroy", "J. Thompson", "A. Devine", "C. Lang", "D. Burgzorg"],sub:["T. Small", "A. Vukčević", "J. Erabi", "L. Gibbs", "Johnny Kenny", "L. Lindsay", "A. Moran", "L. Nicholls", "O. Offiah"]}},
+  "1563139":{"CHA":{start:["A. Okonkwo", "I. Mesík", "L. Jones", "Tyler Bindon", "A. Bell", "T. Ouma", "O. Skipp", "K. Ahearne-Grant", "J. Rankin-Costello", "T. Campbell", "M. Leaburn"],sub:["M. Alli", "R. Apter", "T. Brooks", "S. Carey", "C. Coventry", "H. Knibbs", "Micah Mbick", "D. McNamara", "A. Mwamba"]},"STK":{start:["V. Johansson", "B. Wilmot", "B. Lawal", "L. Graham", "B. Johnson", "J. Devenny", "El Hadji Djibril Soumaré", "E. Galbraith", "E. Bocat", "S. Gallagher", "G. Hirst"],sub:["L. Bombino", "Bae Jun-Ho", "R. Boženík", "L. Cissé", "J. Griffiths", "J. McGlynn", "B. Pearson", "T. Rigo", "M. Talovierov"]}},
 };
 if (typeof module !== "undefined" && module.exports) module.exports = __LINEUP_SHEETS;
 if (typeof window !== "undefined") window.LINEUP_SHEETS = __LINEUP_SHEETS;
