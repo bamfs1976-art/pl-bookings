@@ -1018,6 +1018,31 @@
       + esc(n.text) + '</div>';
   }
 
+  /* THE FACTS BEHIND ONE CANDIDATE'S PRICE, in the shape PLDCore.whyLine reads.
+     Every figure is an INPUT to the price beside it. `L.prior(pos)` is the
+     number this league's own shrinkRate pulls a thin rate towards, so the
+     comparison is against what the model actually used — and it is computed
+     per league, which matters on this page more than anywhere else: a
+     Championship midfielder and a La Liga midfielder are not measured against
+     the same average, and one shared constant would have told one of them
+     something false.
+
+     THE DERBY FIGURE DIFFERS BY DIVISION (×1.15 on the Premier League, ×1.08
+     on the other two, as the methodology note on this page already says), and
+     the price is the league desk's own — so it is read off the priced fixture
+     rather than assumed here. */
+  function whyFacts(p, t) {
+    var pl = t.p;
+    return {
+      y90: pl._y90,
+      posMean: (typeof p.L.prior === 'function') ? p.L.prior(pl.p) : null,
+      pos: pl.p,
+      minutes: Number(pl.min) || 0,
+      ref: (p.ref && p.ref.ref) ? { name: refAbbr(p.ref.ref.n), factor: p.factor } : null,
+      derbyFactor: p.derby ? (p.L.pl ? 1.15 : 1.08) : 1
+    };
+  }
+
   function rowHTML(p) {
     var ch = p.L.clubBy[p.fx.h] || { short: p.fx.h }, ca = p.L.clubBy[p.fx.a] || { short: p.fx.a };
     var all = [];
@@ -1044,6 +1069,9 @@
              drops the number: null means no sheet, or one that would not read,
              and the price stands exactly where it was. */
           var cell = C.candLineup(p.xiState, t.p.c, t.p.n, t.prob);
+          /* WHERE HIS PERCENTAGE CAME FROM, in one line. Null when there is
+             nothing true to say. */
+          var why = C.whyLine(whyFacts(p, t));
           var b = band(t.prob);
           var right = cell.benched
             ? '<span class="pc-wrap"><span class="cand-bench"'
@@ -1075,7 +1103,9 @@
                "Missing Fixture", and dropping a doubtful player would be the
                desk making the selection call the reader came here to make. */
             + availFlag(p.L, t.p)
-            + pipMeter(t.p) + '</span>'
+            + pipMeter(t.p)
+            + (why ? '<span class="cand-why">' + esc(why) + '</span>' : '')
+            + '</span>'
             + right
             + '</div>';
         }).join('')

@@ -637,6 +637,15 @@ a.fx-teams:focus-visible{outline:2px solid var(--ring);outline-offset:3px;border
 .xi-ok{color:var(--good-ink);background:color-mix(in srgb,var(--good) 9%,transparent)}
 .xi-unresolved{color:var(--warn-ink);background:color-mix(in srgb,var(--warn) 14%,transparent);
   border-left:3px solid var(--warn)}
+/* THE WHY LINE. One sentence under a candidate's name saying where his
+   percentage came from — his own card rate against his position's, and the
+   single biggest thing the fixture does to it. Sized and coloured to sit
+   BELOW the name in the reading order: it is the answer to a question the
+   percentage raises, not a competitor for the eye. Wrapped rather than
+   truncated, because a half-sentence explaining a number is worse than none;
+   it is at most two lines on a 390px phone. */
+.cand-why{display:block;margin-top:4px;font-size:11px;line-height:1.35;
+  color:var(--text-3);white-space:normal;font-weight:500}
 /* The pre-lineup mark in the tracker: quiet, because it is a note about how a
    pick was made and not a warning about the pick. */
 .pk-prelineup{display:inline-block;font-family:var(--mono);font-size:9.5px;font-weight:800;

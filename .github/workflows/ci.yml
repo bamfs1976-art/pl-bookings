@@ -304,6 +304,20 @@ jobs:
       - name: A benched player shows no percentage, and only a benched player
         run: node scripts/check-lineup-ui.mjs
 
+      # Every candidate carries a percentage; now one line says where it came
+      # from. The failure this guards is NOT a missing sentence — it is a
+      # present, plausible, well-written one quoting a figure the model did not
+      # use, which looks like an explanation and is a second, quieter model
+      # disagreeing with the first. So each desk's whyFacts() is required to
+      # read the same factor SOURCES its own pricing function reads. This desk
+      # carries two derby figures (x1.15 for a match total, x1.08 for one
+      # player) and quoting the wrong one is exactly that failure. The other
+      # half is the template: a line that says the same thing about everyone
+      # is read three times and then never again, so the guard varies one
+      # input at a time and checks that the CLAUSES change with it.
+      - name: The Why line explains the price that is beside it
+        run: node scripts/check-why.mjs
+
       # The sibling desks each had TWO answers to "which matchday is it": the
       # This Matchday tab rolled over at midnight after the last fixture's date,
       # the Fixtures dropdown rolled over at the last KICK-OFF. So for several

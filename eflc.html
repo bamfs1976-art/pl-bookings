@@ -1476,6 +1476,27 @@
     }));
   }
 
+  /* THE FACTS BEHIND ONE CANDIDATE'S PRICE, in the shape PLDCore.whyLine reads.
+     Every figure is an INPUT to the price beside it, not a re-derivation of it:
+     the referee factor is the same refFactor() call sideProbs priced through,
+     and the position mean is priorFor(pos).y, which is the number shrunkY90
+     pulls a thin rate towards — so the comparison is against what the model
+     actually used. This desk applies no venue or game-state factor, so the
+     line simply does not mention them; a Why line naming a multiplier the
+     model never applied would be a second, quieter model disagreeing with the
+     first. */
+  function whyFacts(x, t) {
+    var p = t.p;
+    return {
+      y90: p._y90,
+      posMean: priorFor(p.p).y,
+      pos: p.p,
+      minutes: Number(p.min) || 0,
+      ref: x.ref && x.ref.ref ? { name: refAbbr(x.ref.ref.n), factor: x.factor } : null,
+      derbyFactor: x.derby ? DERBY_BOOST : 1
+    };
+  }
+
   function candidateList(x, ch, ca) {
     var all = rankedCands(x);
     if (!all.length) return '<div class="faint" style="font-size:12.5px">No rated players.</div>';
@@ -1489,6 +1510,10 @@
          (no sheet, or one that would not read) leaves it exactly where it
          was, which is the state most of a matchday is in most of the time. */
       var cell = C.candLineup(x.xiState, t.p.c, t.p.n, t.prob);
+      /* WHERE HIS PERCENTAGE CAME FROM, in one line. Null when there is
+         nothing true to say — no card rate means no explanation, and
+         inventing one is exactly what this is meant to prevent. */
+      var why = C.whyLine(whyFacts(x, t));
       var right;
       if (cell.benched) {
         right = '<span class="pc-wrap"><span class="cand-bench"'
@@ -1506,7 +1531,9 @@
         + '<span class="cbadge">' + esc(t.p.c) + '</span>'
         + '<span class="nm">' + esc(t.p.n)
         + ' <span class="faint">' + esc(t.p.p) + '</span>'
-        + pipMeter(t.p) + '</span>'
+        + pipMeter(t.p)
+        + (why ? '<span class="cand-why">' + esc(why) + '</span>' : '')
+        + '</span>'
         + right
         + '</button>';
     }).join('');

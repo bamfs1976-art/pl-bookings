@@ -494,6 +494,123 @@
     return start.concat(rest);
   }
 
+  /* ═══ WHY THIS PLAYER, IN ONE LINE ═══════════════════════════════════════
+   *
+   * Every candidate on a fixture card carries a percentage and, until now,
+   * nothing that said where it came from. A reader could see that Rice was
+   * 46% and Caicedo 41% and had no way to tell whether that gap was the
+   * players, the referee, the venue or the fixture — which is the difference
+   * between a number to act on and a number to take on trust.
+   *
+   * IT IS NOT A TEMPLATE WITH BLANKS, and that distinction is the whole
+   * design. A template says the same sentence about everyone with different
+   * nouns in it, and after three cards a reader stops reading it. What
+   * decides this line is the DATA:
+   *
+   *   - Which clauses appear at all. A fixture with an average referee gets
+   *     no referee clause, because the referee is not why. A player on 3,000
+   *     minutes gets no sample caveat; a player on 200 gets one.
+   *   - Which comparison word is used — "well above", "around", "below" —
+   *     comes from the ratio against his own position's mean, not the
+   *     league's, because 0.19 a 90 is ordinary for a midfielder and high
+   *     for a forward.
+   *   - Which single multiplier is named. The referee, the derby, the venue
+   *     and the game state all move the price; only the LARGEST of them is
+   *     mentioned, because a line listing four small effects explains
+   *     nothing and does not fit on a phone.
+   *
+   * So two players priced the same for different reasons get different
+   * sentences, which is the only thing that makes the line worth reading.
+   *
+   * THE NUMBERS IN IT ARE THE NUMBERS THE MODEL USED. Every figure printed
+   * here is an input to contextProb, not a re-derivation — a Why line that
+   * quotes a rate the price did not use would be worse than no Why line.
+   *
+   * Returns null rather than a sentence when there is nothing true to say:
+   * no card rate means no explanation, and inventing one would be the exact
+   * failure this is meant to prevent.
+   */
+  var POS_WORD = { GK: 'goalkeeper', DF: 'defender', MF: 'midfielder', FW: 'forward' };
+
+  function pctMove(factor) { return Math.round(Math.abs(factor - 1) * 100); }
+
+  function whyLine(f) {
+    if (!f) return null;
+    var y90 = Number(f.y90);
+    if (!isFinite(y90) || y90 <= 0) return null;
+
+    /* ---- the lead clause: his rate, against his own position ------------
+       Against the POSITION mean, not the league's. 0.19 a 90 is ordinary for
+       a midfielder and high for a forward, and a line that called both of
+       them "above average" would be telling one of the two something false. */
+    var ref90 = Number(f.posMean);
+    if (!isFinite(ref90) || ref90 <= 0) ref90 = Number(f.leagueY90);
+    var word = POS_WORD[f.pos] || 'player';
+    var lead;
+    if (isFinite(ref90) && ref90 > 0) {
+      var ratio = y90 / ref90;
+      var how = ratio >= 1.6 ? 'well above the'
+        : ratio >= 1.2 ? 'above the'
+        : ratio >= 0.85 ? 'in line with the'
+        : 'below the';
+      lead = y90.toFixed(2) + ' yellows a 90, ' + how + ' '
+        + ref90.toFixed(2) + ' a ' + word + ' averages';
+    } else {
+      lead = y90.toFixed(2) + ' yellows a 90';
+    }
+
+    /* ---- the one multiplier that is actually doing the work -------------
+       All four are collected with their size, and only the biggest is
+       printed. A line naming every small effect reads as noise and pushes
+       the one that matters off the end of a phone. */
+    var moves = [];
+    if (f.ref && isFinite(f.ref.factor) && pctMove(f.ref.factor) >= 3) {
+      moves.push({
+        size: Math.abs(f.ref.factor - 1),
+        text: (f.ref.name ? f.ref.name : 'the referee') + ' '
+          + (f.ref.factor > 1 ? 'adds ' : 'takes ') + pctMove(f.ref.factor) + '%'
+          + (f.ref.factor > 1 ? '' : ' off')
+      });
+    }
+    if (isFinite(f.derbyFactor) && pctMove(f.derbyFactor) >= 2) {
+      moves.push({
+        size: Math.abs(f.derbyFactor - 1),
+        text: 'a derby adds ' + pctMove(f.derbyFactor) + '%'
+      });
+    }
+    if (isFinite(f.venueFactor) && pctMove(f.venueFactor) >= 2) {
+      moves.push({
+        size: Math.abs(f.venueFactor - 1),
+        text: (f.isHome ? 'at home ' : 'away ')
+          + (f.venueFactor > 1 ? 'adds ' + pctMove(f.venueFactor) + '%'
+                               : 'takes ' + pctMove(f.venueFactor) + '% off')
+      });
+    }
+    if (isFinite(f.chaseFactor) && pctMove(f.chaseFactor) >= 3) {
+      moves.push({
+        size: Math.abs(f.chaseFactor - 1),
+        text: 'a tight match ' + (f.chaseFactor > 1
+          ? 'adds ' + pctMove(f.chaseFactor) + '%'
+          : 'takes ' + pctMove(f.chaseFactor) + '% off')
+      });
+    }
+    moves.sort(function (a, b) { return b.size - a.size; });
+
+    var parts = [lead];
+    if (moves.length) parts.push(moves[0].text);
+
+    /* ---- and the caveat, which is not a clause competing with the rest ---
+       A rate off 200 minutes is a different kind of claim from a rate off
+       3,000, and the percentage beside it does not say so. This is appended
+       rather than ranked, because a thin sample qualifies whatever else the
+       line said rather than replacing it. */
+    var mins = Number(f.minutes);
+    if (isFinite(mins) && mins > 0 && mins < 450) {
+      parts.push('on ' + Math.round(mins) + ' minutes, so the rate is provisional');
+    }
+    return parts.join('; ') + '.';
+  }
+
   function lineupRoles(sheet, squadNames) {
     if (!sheet || !Array.isArray(sheet.start)) return null;
     const squad = Array.isArray(squadNames) ? squadNames : [];
@@ -2391,7 +2508,7 @@
     brier, logLoss, reliability, glmProb,
     gammaln, expectedFouls, nbTailProb, udTailProb, udBinomFit, YELLOW_DISPERSION,
     CALIBRATION_NOTICE, mountCalibrationNotice, lineupState, isStarting,
-    lineupNotice, candLineup, rankByLineup,
+    lineupNotice, candLineup, rankByLineup, whyLine,
     cardProbFromFouls, recencyWeight, refCardFactor,
     leagueRate90, twoStageHazard, sumNegBin,
     matchLegOptions, simLegOptions, accaAllocate, accaPrice,

@@ -4325,6 +4325,16 @@ function isDerby(h,a){ return DERBY_SET.has([h,a].sort().join("|")); }
 // for every fixture until the names stopped being comments.
 function derbyName(h,a){ return (window.PLDCore&&PLDCore.derbyName(h,a,"PL"))||""; }
 const DERBY_BOOST=1.15;
+/* THE PER-PLAYER DERBY FACTOR IS NOT DERBY_BOOST, and that is not a typo.
+   DERBY_BOOST scales a fixture's expected CARD TOTAL; this scales one
+   player's chance of being carded at all, and a derby that adds 15% to a
+   match total does not add 15% to every individual's odds — most of the extra
+   falls on players already likely to be booked. It was written as a bare
+   1.08 inside fixtureProb, which was fine while nothing else needed to know
+   it; the Why line has to quote the figure the PRICE used, and a Why line
+   citing a multiplier the model did not apply would be a second, quieter
+   model disagreeing with the first. So it has a name now. */
+const PLAYER_DERBY_BOOST=1.08;
 
 // ---- the match model (data/sim_model.js) ----
 // Plsimulator's weekly fit, vendored and rekeyed to club short codes. It
@@ -4477,7 +4487,7 @@ function confidence(p){
    inside chaseFactor, so it moves the number without re-rating anyone. */
 function fixtureProb(p,ref,derby,isHome,sim){
   const base=pImp(p); if(base==null) return null;
-  const rf=ref?refFactor(ref):1, df=derby?1.08:1;
+  const rf=ref?refFactor(ref):1, df=derby?PLAYER_DERBY_BOOST:1;
   const vf=(typeof PLDCore.venueFactor==="function")?PLDCore.venueFactor(isHome):1;
   const cf=chaseFor(sim,isHome);
   if(MODEL_OK&&typeof PLDCore.contextProb==="function") return PLDCore.contextProb(base,rf,df,vf,cf);
@@ -4987,7 +4997,35 @@ function pipMeter(p){
   const note=`${y.toFixed(2)} yellows per 90`+(mins?`, over ${Math.round(mins/90)} matches of football`:"");
   return PLDMetric.confidence(n,5,note,"Card rate");
 }
-function candRowHtml(c,ref,isNew,xi){
+/* THE FACTS BEHIND ONE CANDIDATE'S PRICE, in the shape PLDCore.whyLine reads.
+ *
+ * Every figure here is an INPUT TO fixtureProb, not a re-derivation of it. A
+ * Why line that quoted a rate the price had not used would be worse than no
+ * Why line at all: it would look like an explanation and be a second, quieter
+ * model disagreeing with the first. So the referee factor is refFactor(ref),
+ * the venue factor is PLDCore.venueFactor, the game state is chaseFor — the
+ * same three calls, with the same arguments, that produced the percentage
+ * sitting beside the sentence.
+ *
+ * The position mean comes from the fitted model rather than a constant,
+ * because it is the number shrunkY90 pulls a thin rate towards, so it is the
+ * one the comparison is actually against. */
+function whyFacts(c,ref,derby,isHome,sim){
+  const p=c.p, S=MODEL_OK?MODEL.shrink:null;
+  return {
+    y90:shrunkY90(p),
+    posMean:S?mpick(S.ycMean,p.p,S.ycLeague):null,
+    leagueY90:S?S.ycLeague:null,
+    pos:p.p,
+    minutes:effMin(p),
+    ref:ref?{name:refAbbr(ref.n),factor:refFactor(ref)}:null,
+    derbyFactor:derby?PLAYER_DERBY_BOOST:1,
+    venueFactor:(typeof PLDCore.venueFactor==="function")?PLDCore.venueFactor(isHome):1,
+    chaseFactor:chaseFor(sim,isHome),
+    isHome
+  };
+}
+function candRowHtml(c,ref,isNew,xi,why){
   const p=c.p, prob=c.prob, sev=severity(prob), conf=confidence(p);
   const live=(p.liveRate||p.liveFouls)?' <span title="'+rateBasis(p)+'" style="color:var(--good)">●</span>':'';
   /* ONCE IT HAS HAPPENED IT IS NOT A CHANCE ANY MORE. This desk spent every
@@ -5042,6 +5080,7 @@ function candRowHtml(c,ref,isNew,xi){
     <span style="flex:1;min-width:0">
       <span class="cand-name">${esc(p.n)} <span class="mono" style="color:var(--text-3);font-size:.66rem;font-weight:600">${esc(p.p||"")}</span>${live}${suspFlagInline(p)}</span>
       ${pipMeter(p)}
+      ${why?`<span class="cand-why">${esc(why)}</span>`:""}
     </span>
     <span style="display:flex;align-items:center;gap:.55rem;flex:none">
       ${right}
@@ -5235,7 +5274,8 @@ function fixtureCardHtml(f,opts){
        being quoted a probability the row above him no longer prints. */
     const priceable=shown.filter(c=>PLDCore.isStarting(xi,c.p.c,c.p.n)!==false);
     body='<ul class="cand-list" aria-label="Booking candidates, highest chance first">'
-      +shown.map((c,i)=>'<li>'+candRowHtml(c,ref,opts.expanded&&i>=DEF_SHOW,xi)+'</li>').join("")
+      +shown.map((c,i)=>'<li>'+candRowHtml(c,ref,opts.expanded&&i>=DEF_SHOW,xi,
+        PLDCore.whyLine(whyFacts(c,ref,derby,c.p.c===h,M.sim)))+'</li>').join("")
       +'</ul>'
       /* The price check covers the candidates ON SCREEN, so it answers a
          question about what is shown rather than a private shortlist. */

@@ -20,6 +20,9 @@ const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 /* A 2d context that measures plausibly and remembers what it was told to
    draw. measureText has to return something monotonic in length or the
    fit()/truncation paths never exercise. */
+/* Everything every card in this run drew, in order, never cleared. */
+const ALL_DRAWN = [];
+
 function stubCtx(drawn, placed) {
   const noop = () => {};
   return {
@@ -39,6 +42,10 @@ function stubCtx(drawn, placed) {
     measureText: (t) => ({ width: String(t).length * 11 }),
     fillText(t, x, y) {
       drawn.push(String(t));
+      /* NEVER CLEARED, unlike `drawn`, which is reset between cards. Some
+         assertions are about what NO card ever draws, and those cannot be
+         made against a buffer that is emptied nine times on the way past. */
+      ALL_DRAWN.push(String(t));
       if (placed) {
         const w = String(t).length * 11;
         const a = this._align || 'left';
@@ -1210,6 +1217,43 @@ console.log('check-share: both fixture grids and the matchday button are wired o
     'assets/share.js has no monogram branch for a player with no photograph');
   assert.ok(/function crestOn\([\s\S]{0,200}if \(!img\) return badge\(/.test(s),
     'assets/share.js has no badge branch for a club whose crest did not load');
+}
+
+/* ---- the Why line stays on the page ------------------------------------
+ *
+ * Every candidate on a fixture card now carries a one-line explanation of
+ * where his percentage came from — his rate against his position's, and the
+ * biggest thing the fixture does to it. It belongs on the desk and NOT on a
+ * share card, for three reasons that all point the same way.
+ *
+ * It is the longest string on the row, and a card is a fixed-width image: a
+ * sentence that fits a scrolling column becomes a truncated one on a PNG, and
+ * half an explanation of a number is worse than none.
+ *
+ * It is a REASON, and a reason is the thing a reader should be able to check
+ * against the live page. A percentage on a card is stale the moment it is
+ * posted and everybody knows it; "Oliver adds 18%" reads as a standing fact
+ * and travels as one, long after the appointment has changed.
+ *
+ * And it is exactly the kind of clause that would quietly grow: once one
+ * sentence is on a card, so is the next. The card carries numbers and the 18+
+ * line, which is what it has always carried.
+ */
+{
+  const share = readFileSync(join(root, 'assets', 'share.js'), 'utf8');
+  assert.ok(!/whyLine/.test(share),
+    'assets/share.js calls PLDCore.whyLine. The Why line explains a price on the ' +
+    'desk, where it can be re-read against live data; on a card it is a truncated ' +
+    'sentence asserting a reason that may already have changed.');
+  assert.ok(!/cand-why/.test(share),
+    'assets/share.js renders the Why line class');
+  /* Not merely absent from the code — absent from what the cards DRAW. The
+     text above is collected from every rendered card in this run, so this is
+     the assertion a future adapter cannot sidestep by building the sentence
+     itself. */
+  const leaked = ALL_DRAWN.filter((t) => /yellows a 90|a midfielder averages|a defender averages|a forward averages|a goalkeeper averages|the rate is provisional/.test(t));
+  assert.deepStrictEqual(leaked, [],
+    `a Why line was drawn onto a share card: ${JSON.stringify(leaked.slice(0, 3))}`);
 }
 
 console.log(

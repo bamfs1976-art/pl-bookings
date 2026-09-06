@@ -1949,4 +1949,54 @@ t('rankByLineup partitions on a confirmed sheet and is the identity before one',
   assert.deepEqual(core.rankByLineup(null, [], pick), []);
 });
 
+t('the why line is decided by the data, not filled into a template', () => {
+  /* THE POINT OF THE FEATURE. A template says the same sentence about
+     everyone with different nouns in it, and a reader stops reading it after
+     three cards. What must vary is WHICH CLAUSES APPEAR. */
+  const base = { y90: 0.31, posMean: 0.199, pos: 'MF', minutes: 2400,
+                 derbyFactor: 1, venueFactor: 1, isHome: true };
+
+  /* An average referee is not why, so he is not mentioned. */
+  const neutral = core.whyLine({ ...base, ref: { name: 'Oliver', factor: 1.01 } });
+  assert.ok(!/Oliver/.test(neutral),
+    `an average referee is named in the why line: "${neutral}"`);
+  /* A strict one is, with the size of what he does. */
+  const strict = core.whyLine({ ...base, ref: { name: 'Oliver', factor: 1.18 } });
+  assert.ok(/Oliver adds 18%/.test(strict), `strict referee not explained: "${strict}"`);
+  const lenient = core.whyLine({ ...base, ref: { name: 'Sesma', factor: 0.86 } });
+  assert.ok(/Sesma takes 14% off/.test(lenient), `lenient referee not explained: "${lenient}"`);
+  assert.notEqual(strict, lenient);
+
+  /* Only the BIGGEST multiplier is named. A line listing four small effects
+     explains nothing and pushes the one that matters off a phone. */
+  const many = core.whyLine({ ...base, ref: { name: 'Oliver', factor: 1.04 },
+                              derbyFactor: 1.08, venueFactor: 1.05, chaseFactor: 1.03 });
+  assert.ok(/a derby adds 8%/.test(many), `the largest effect is not the one named: "${many}"`);
+  assert.ok(!/Oliver/.test(many) && !/away|at home/.test(many),
+    `more than one multiplier reached the line: "${many}"`);
+
+  /* The comparison is against HIS OWN POSITION. 0.19 a 90 is ordinary for a
+     midfielder and high for a forward; one shared average tells one of them
+     something false. */
+  const mid = core.whyLine({ ...base, y90: 0.19, posMean: 0.199, pos: 'MF' });
+  const fwd = core.whyLine({ ...base, y90: 0.19, posMean: 0.1488, pos: 'FW' });
+  assert.ok(/in line with/.test(mid), `midfielder at the positional mean: "${mid}"`);
+  assert.ok(/above/.test(fwd), `the same rate is not above a forward's mean: "${fwd}"`);
+  assert.ok(/midfielder/.test(mid) && /forward/.test(fwd));
+
+  /* A thin sample qualifies whatever else was said rather than replacing it. */
+  const thin = core.whyLine({ ...base, minutes: 210 });
+  assert.ok(/210 minutes/.test(thin) && /provisional/.test(thin), `thin sample unflagged: "${thin}"`);
+  assert.ok(!/provisional/.test(core.whyLine(base)), 'a full season is called provisional');
+
+  /* And nothing is invented. No rate means no sentence. */
+  assert.equal(core.whyLine({ ...base, y90: null }), null);
+  assert.equal(core.whyLine({ ...base, y90: 0 }), null);
+  assert.equal(core.whyLine(null), null);
+
+  /* Every figure printed is one that was handed in. */
+  assert.ok(strict.includes('0.31') && strict.includes('0.20'),
+    `the why line quotes figures the caller did not supply: "${strict}"`);
+});
+
 console.log(`\n${passed} tests passed`);
