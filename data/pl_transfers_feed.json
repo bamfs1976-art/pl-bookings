@@ -1,6 +1,6 @@
 {
   "note": "PROPOSALS from API-Football /transfers, for a person to read. data/transfers.json is the hand-curated overlay that is actually applied; this is not.",
-  "since": "2026-05-08",
+  "since": "2026-05-09",
   "moves": [
     {
       "n": "B. Barcola",
@@ -273,6 +273,15 @@
       "type": "Transfer"
     },
     {
+      "n": "W. Dennis",
+      "from": "Bournemouth",
+      "to": "Milton Keynes Dons",
+      "fromCode": "BOU",
+      "toCode": null,
+      "date": "2026-08-25",
+      "type": "Transfer"
+    },
+    {
       "n": "T. O&apos;Reilly",
       "from": "Aston Villa",
       "to": "Doncaster",
@@ -360,15 +369,6 @@
       "fromCode": null,
       "toCode": "MCI",
       "date": "2026-08-25",
-      "type": "Transfer"
-    },
-    {
-      "n": "W. Dennis",
-      "from": "Bournemouth",
-      "to": "Milton Keynes Dons",
-      "fromCode": "BOU",
-      "toCode": null,
-      "date": "2026-08-24",
       "type": "Transfer"
     },
     {
