@@ -1757,6 +1757,13 @@ License: MIT
      scripts/build-backtest-2526.mjs. -->
 <script src="data/pl_backtest_2526.js"></script>
 <script src="assets/accas.js"></script>
+<!-- THE SHARED CARD BUILDER. It was on the other three decks and not on this
+     one, which is how the Premier League desk ended up with its own inline
+     drawing code — and how its nine-fold share button came to be dead: the
+     button is gated on SHARE_OK, SHARE_OK asks for window.PLDShare, and
+     nothing on this page had ever defined it. Loading it here revives that
+     button and is what lets the stat sheet reach this desk at all. -->
+<script src="assets/share.js"></script>
 <script src="assets/rotation.js"></script>
 <script src="assets/core.js"></script>
 <script src="assets/save.js"></script>
@@ -4750,6 +4757,104 @@ function renderRoundAccas(fx){
     +"and a weekend's officiating, and that residual correlation is positive, so the joint figure "
     +"is if anything a slight overstatement. Research, not a tip.";
 }
+/* ---- THE STAT SHEET, on the PL desk at last ----------------------------
+ *
+ * The landscape dossier the other three decks have shipped for months: the two
+ * clubs down the sides in their own colours with their badges, the referee and
+ * the expected-cards number down the middle, four ranked player panels a side.
+ * Every figure on it is one this desk already computes — nothing here reads a
+ * new feed or invents a market.
+ *
+ * IT GOES THROUGH assets/share.js RATHER THAN A FOURTH DRAWING ROUTINE. The PL
+ * desk still exports its own portrait card inline (exportFixturePNG, above),
+ * which is why the sheet had never reached it: the shared module's adapter
+ * wants a `priced` row and this desk speaks fixtureMeta/gwCandidates. So the
+ * adapter is fed a `priced` SHAPE assembled from exactly those two calls —
+ * the same board the market strip on the page prints and the same candidate
+ * list the portrait card ranks — instead of the sheet re-deriving anything.
+ * One pricing, three renderings of it.
+ */
+const SHEET_OK=typeof window!=="undefined"&&!!window.PLDShare
+  &&typeof window.PLDShare.statSheetCard==="function"
+  &&typeof window.PLDShare.deskStatSheetSpec==="function";
+
+/* THE PORTRAIT LADDER for this desk: the official FPL cutout first, the baked
+   vendor portrait behind it. The CDN genuinely has no cutout for some players
+   — the same gaps gameweekedge.co.uk hits with the same URL — and the baked
+   photo covers a good share of them, so trying both is the difference between
+   a panel of faces and a panel of monograms. */
+function sharePhotoUrls(p){
+  const out=[]; const fpl=photoUrl(p,250); if(fpl) out.push(fpl);
+  if(p&&p.ph&&out.indexOf(p.ph)<0) out.push(p.ph);
+  return out;
+}
+function shareCrestUrls(c){
+  const out=[], code=TEAM_CODE[c];
+  if(code) out.push("https://resources.premierleague.com/premierleague/badges/50/t"+code+".png");
+  const club=CLUBMAP[c];
+  if(club&&club.img&&out.indexOf(club.img)<0) out.push(club.img);
+  return out;
+}
+
+function exportFixtureSheet(fid,btn){
+  if(!SHEET_OK) return;
+  if(!LIVE){ toast("Live data needed to build a stat sheet"); return; }
+  const S=window.PLDShare;
+  const f=LIVE.fixtures.find(x=>x.id===fid), M=f&&fixtureMeta(f);
+  if(!M){ toast("Couldn't build that stat sheet"); return; }
+  const {h,a,ref,derby,board,heat,sim}=M;
+  const cands=gwCandidates(h,a,ref,derby,sim);
+  /* The `priced` row the shared adapter reads. `board` is null for a fixture
+     with no rated players — early season, or a squad the join missed — and the
+     sheet then prints the cards-against heat with dashes in the market cells
+     rather than refusing to build. */
+  const priced={
+    fx:{ id:f.id, h:h, a:a, r:f.event, d:f.kickoff_time },
+    m:board||{ expected:heat, over:{}, bothCarded:null, bothTwo:null },
+    ref:{ ref:ref||null, name:ref?ref.n:null },
+    home:{ top:cands.filter(c=>c.p.c===h) },
+    away:{ top:cands.filter(c=>c.p.c===a) }
+  };
+  const p=h2hFor(h,a);
+  const spec=S.deskStatSheetSpec(priced,{
+    league:"PL",
+    seasonLabel:"Premier League "+SEASON,
+    roundWord:"Gameweek",
+    clubBy:CLUBMAP,
+    squadOf:short=>PL_PLAYERS.filter(q=>q.c===short),
+    whenText:iso=>iso?fmtKO(iso):"",
+    photoUrl:sharePhotoUrls,
+    crestUrl:shareCrestUrls,
+    /* THE TWO CLUBS' OWN COLOURS, which is the point of the layout: without a
+       palette every side of every sheet draws in the league's ink and the two
+       halves of the card are the same purple. This desk is the only one of the
+       four with a club colour table, so it is the only one that can. */
+    palette:CLUB_COLOURS,
+    heatMid:HEAT_WARM, heatHot:HEAT_HOT,
+    /* In CARDS, which is the whole difference between this and a general
+       stats graphic: the reference layout lists the last three scorelines,
+       and a scoreline is the one thing on it this desk has no opinion about.
+       So the panel answers the same question in the currency the desk deals
+       in — how many cards these two actually produce, how often that ran hot,
+       and the individual counts behind the average, most recent first.
+       Omitted below three meetings, which is h2hFor's own floor: under three
+       it is anecdote, and the card drops the panel rather than drawing one. */
+    h2hRows:p?[
+      { left:"Last "+p.n+" meetings", right:p.avg.toFixed(1)+" cards avg" },
+      { left:"5 or more cards", right:Math.round(p.o45*100)+"%" },
+      p.last&&p.last.length
+        ? { left:"Most recent first", right:p.last.slice(0,6).join("  ·  ") } : null
+    ].filter(Boolean):[]
+  });
+  const label=btn?btn.getAttribute("aria-label"):null;
+  if(btn) btn.disabled=true;
+  S.statSheetCard(spec)
+    .then(b=>saveFile(b,spec.filename,"image/png",
+      r=>toast(r==="cancelled"?"Sheet not saved":r==="share"?"Sheet ready to share":"Stat sheet downloaded")))
+    .catch(e=>{ console.error(e); toast("Couldn't build that stat sheet"); })
+    .then(()=>{ if(btn){ btn.disabled=false; if(label) btn.setAttribute("aria-label",label); } });
+}
+
 /* THE SHARE CARD for a nine-fold. Draws the acca currently rendered, not a
    fresh one: PLDShare.nineFoldSpec takes the built object, so the PNG and the
    page cannot print different legs. */
@@ -5051,6 +5156,7 @@ function fixtureCardHtml(f,opts){
            primary one ten times over. -->
       <div class="fxh2-act">
         <button class="fx-shareico" data-share-fid="${f.id}" type="button" title="Download a shareable card of this match" aria-label="Share ${esc(h)} versus ${esc(a)}">⬇</button>
+        ${SHEET_OK?`<button class="fx-shareico" data-sheet-fid="${f.id}" type="button" title="Download the stat sheet for this match" aria-label="Stat sheet for ${esc(h)} versus ${esc(a)}">▤</button>`:""}
         <span class="fx-fold" aria-hidden="true">⌄</span>
       </div>
       <div class="fxh2-ko">${f.kickoff_time?fmtKOShort(f.kickoff_time):"TBC"}</div>
@@ -5553,6 +5659,8 @@ function wireFixtureGrid(id,rerender){
   el.addEventListener("click",e=>{
     const share=e.target.closest("[data-share-fid]");
     if(share){ exportFixturePNG(Number(share.dataset.shareFid)); return; }
+    const sheet=e.target.closest("[data-sheet-fid]");
+    if(sheet){ exportFixtureSheet(Number(sheet.dataset.sheetFid),sheet); return; }
     const more=e.target.closest(".fx-more");
     if(more){ const fid=Number(more.dataset.expand); GW_EXPANDED.has(fid)?GW_EXPANDED.delete(fid):GW_EXPANDED.add(fid);
       const y=window.scrollY; rerender(); window.scrollTo({top:y}); return; }

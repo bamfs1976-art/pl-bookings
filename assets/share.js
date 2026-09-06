@@ -106,6 +106,23 @@
     return t + '…';
   }
 
+  /* SHRINK BEFORE TRUNCATING. fit() above cuts a string that will not fit, and
+     for a stat line that is right: the label is short and the alternative is a
+     column of different sizes. For a CLUB NAME it is wrong — "WOLVERHAMPTON
+     WANDERERS" came out as "WOLVERHAMPTON W…" beside a "MANCHESTER UNITED"
+     that fitted whole, which reads as a card that could not be bothered with
+     one of the two teams. Steps down through the sizes given and only then
+     falls back to fit(), so a name long enough to be unreadable at the floor
+     is still cut rather than drawn at four points. */
+  function fitFont(x, text, max, weight, sizes, family) {
+    var t = String(text == null ? '' : text);
+    for (var i = 0; i < sizes.length; i++) {
+      x.font = weight + ' ' + sizes[i] + 'px ' + family;
+      if (x.measureText(t).width <= max) return t;
+    }
+    return fit(x, t, max);
+  }
+
   /* The brand mark: a fanned red and yellow card. Drawn rather than loaded,
      so a card never waits on an image that may not arrive. */
   function drawMark(x, cx, cy, h) {
@@ -266,6 +283,20 @@
       want.forEach(function (u, i) { by[u] = imgs[i]; });
       return by;
     });
+  }
+
+  /* A spec field naming ONE picture or a LADDER of them. Two of the three
+     desks have a choice of feed for the same player — the official cutout the
+     page prefers and the baked vendor portrait behind it — and each has gaps
+     the other covers. A single URL would make the card pick one feed's gaps
+     and draw initials over the picture the other feed has; a ladder tries them
+     in order and only falls back to the monogram when every rung is empty.
+     Cheap, because loadImage caches and races each URL anyway. */
+  function urlsOf(v) { return v == null ? [] : (Array.isArray(v) ? v.filter(Boolean) : [v]); }
+  function pickImg(pics, v) {
+    var us = urlsOf(v);
+    for (var i = 0; i < us.length; i++) if (pics[us[i]]) return pics[us[i]];
+    return null;
   }
 
   /* A round portrait, or the initials in a coloured disc. The monogram is the
@@ -491,20 +522,42 @@
    *
    * spec = {
    *   league, title, subtitle, note, palette, filename,
-   *   home / away: { short, name, panels: [{label, unit, rows: [{n, v}]}] },
+   *   home / away: { short, name, img, panels: [{label, unit, rows: [{n, v, ph}]}] },
    *   ref:   { line, stats: [{label, value}] },
    *   match: { expected, heatLabel, cells: [{label, value, tone}] },
    *   h2h:   { label, rows: [{left, right}] }
    * }
+   *
+   * `side.img` is the club badge and `row.ph` a player portrait. Both are
+   * OPTIONAL and both degrade to the mark the page itself draws when the
+   * picture is missing — the club's code on its own colour, the player's
+   * initials in a disc — because these two feeds have real gaps (a promoted
+   * club with no baked crest, a player the photo feed has no portrait for)
+   * and a hole where a face should be reads as a broken card.
    */
   var SW = 1600, SH = 1000;
 
-  function panelStack(x, th, side, cx, cy, cw, palette, avail) {
+  function panelStack(x, th, side, cx, cy, cw, palette, avail, pics) {
+    pics = pics || {};
     var col = clubColour(side.short, palette, th);
     x.fillStyle = col; roundRect(x, cx, cy, cw, 62, 14); x.fill();
-    x.fillStyle = textOn(col); x.font = '800 30px ' + DISP;
+
+    /* THE BADGE SITS IN THE COLOUR BAR, not above it. The bar is already the
+       club's own colour, so a crest anywhere else would name the club twice in
+       two places; here the two say it once. The name then centres in what the
+       badge leaves rather than in the whole bar, so a long one ("WOLVERHAMPTON
+       WANDERERS") shrinks toward the middle of its own space instead of
+       sliding under the crest. */
+    var bd = 46, nx = cx, nw = cw;
+    crestOn(x, pickImg(pics, side.img), side.short || '', palette, th,
+            cx + 10, cy + (62 - bd) / 2, bd);
+    nx = cx + 10 + bd; nw = cw - (10 + bd) - 12;
+
+    x.fillStyle = textOn(col);
     x.textAlign = 'center';
-    x.fillText(fit(x, (side.name || side.short || '').toUpperCase(), cw - 32), cx + cw / 2, cy + 42);
+    var nm = fitFont(x, (side.name || side.short || '').toUpperCase(), nw - 16,
+                     '800', [30, 27, 24, 21], DISP);
+    x.fillText(nm, nx + nw / 2, cy + 42);
     x.textAlign = 'left';
 
     var panels = (side.panels || []).slice(0, 4);
@@ -514,11 +567,29 @@
     panels.forEach(function (pn, i) {
       var py = top + i * (ph + gap);
       x.fillStyle = '#f4f6fa'; roundRect(x, cx, py, cw, ph, 12); x.fill();
-      x.fillStyle = '#8b94a5'; x.font = '700 15px ' + BODY;
-      x.fillText(pn.label.toUpperCase(), cx + 14, py + 24);
+      /* THE HEADING WEARS THE CLUB'S COLOUR. It was grey on grey, which left
+         four panels a side reading as one undifferentiated column and made the
+         only coloured thing on each half the name bar at the top — so at a
+         glance a reader had to work out which side of the card they were on
+         from the club names alone. The strip is square along its bottom edge
+         so it meets the rows rather than floating above them. */
+      var hh = 30;
+      x.fillStyle = col;
+      x.beginPath();
+      x.moveTo(cx, py + hh); x.lineTo(cx, py + 12);
+      x.arcTo(cx, py, cx + 12, py, 12);
+      x.lineTo(cx + cw - 12, py);
+      x.arcTo(cx + cw, py, cx + cw, py + 12, 12);
+      x.lineTo(cx + cw, py + hh); x.closePath(); x.fill();
+      x.fillStyle = textOn(col); x.font = '700 15px ' + BODY;
+      x.fillText(pn.label.toUpperCase(), cx + 14, py + 21);
       if (pn.unit) {
         x.textAlign = 'right';
-        x.fillText(pn.unit.toUpperCase(), cx + cw - 14, py + 24);
+        /* The unit is a qualifier, not a heading — held back so "PER 90" does
+           not read with the same weight as "FOULS COMMITTED". */
+        x.globalAlpha = 0.72;
+        x.fillText(pn.unit.toUpperCase(), cx + cw - 14, py + 21);
+        x.globalAlpha = 1;
         x.textAlign = 'left';
       }
       var rows = (pn.rows || []).slice(0, 5);
@@ -531,12 +602,28 @@
         return;
       }
       var rh = Math.min(30, (ph - 34) / rows.length);
+      /* THE FACE IS SIZED OFF THE ROW, and dropped entirely when the row is
+         too short to hold one. Four panels of five in a 450px column give
+         rows around 21px, so the portrait comes out a shade taller than the
+         name beside it — which is what a compact list wants. The floor is
+         there for the other direction: a panel squeezed by a taller header
+         reaches a size where a face is a smudge, and a smudge beside a name
+         is worse than the name alone. */
+      var fd = Math.min(24, Math.floor(rh) - 2);
+      var withFace = fd >= 14 && rows.some(function (r) { return r.ph; });
       rows.forEach(function (r, j) {
         var ry = py + 32 + j * rh + rh - 8;
+        var tx = cx + 14;
         x.fillStyle = '#c2c8d4'; x.font = '700 15px ' + DISP;
-        x.fillText(String(j + 1) + '.', cx + 14, ry);
+        x.fillText(String(j + 1) + '.', tx, ry);
+        tx += 26;
+        if (withFace) {
+          face(x, pickImg(pics, r.ph), r.n, r.c || side.short,
+               tx, ry - fd + Math.round(fd * 0.22), fd);
+          tx += fd + 8;
+        }
         x.fillStyle = '#0c1322'; x.font = '600 19px ' + BODY;
-        x.fillText(fit(x, r.n, cw - 130), cx + 44, ry);
+        x.fillText(fit(x, r.n, cx + cw - 74 - tx), tx, ry);
         x.fillStyle = th.ink; x.font = '800 19px ' + DISP;
         x.textAlign = 'right'; x.fillText(String(r.v), cx + cw - 14, ry);
         x.textAlign = 'left';
@@ -545,7 +632,22 @@
   }
 
   function statSheetCard(spec) {
-    return ready().then(function () {
+    /* Every picture the sheet asks for, gathered before a pixel is drawn — the
+       two badges and one portrait per ranked row. loadImage races each one
+       against a deadline and caches per session, so a slow feed costs the card
+       its faces rather than its render. */
+    var wanted = [];
+    ['home', 'away'].forEach(function (key) {
+      var side = spec[key] || {};
+      urlsOf(side.img).forEach(function (u) { wanted.push(u); });
+      (side.panels || []).forEach(function (pn) {
+        (pn.rows || []).forEach(function (r) {
+          if (r) urlsOf(r.ph).forEach(function (u) { wanted.push(u); });
+        });
+      });
+    });
+    return Promise.all([ready(), loadAll(wanted)]).then(function (got) {
+      var pics = got[1];
       var th = theme(spec.league), k = canvas(SW, SH), x = k.x;
       brandBand(x, th, spec.title, spec.subtitle, SW);
 
@@ -554,8 +656,8 @@
       var centreW = SW - 2 * P2 - 2 * sideW - 2 * gap;
       var top = 232, bottom = SH - 96;
 
-      panelStack(x, th, spec.home || {}, P2, top, sideW, spec.palette, bottom);
-      panelStack(x, th, spec.away || {}, SW - P2 - sideW, top, sideW, spec.palette, bottom);
+      panelStack(x, th, spec.home || {}, P2, top, sideW, spec.palette, bottom, pics);
+      panelStack(x, th, spec.away || {}, SW - P2 - sideW, top, sideW, spec.palette, bottom, pics);
 
       /* ---- the middle column ---- */
       var cy = top;
@@ -1065,7 +1167,12 @@
       (side.top || []).forEach(function (t) {
         var club = (clubBy && clubBy[short]) || {};
         out.push({
-          name: t.p.n, club: short, prob: t.prob,
+          /* THE PLAYER ROW ITSELF travels with the candidate. Adapters need
+             more than a name and a price — the stat sheet builds a portrait
+             URL off whatever id field the desk's feed uses — and rebuilding
+             the lookup from the name is how two cards come to disagree about
+             which Rodrigo this is. */
+          name: t.p.n, club: short, prob: t.prob, p: t.p,
           sub: (t.p.p || '') + ' · ' + (club.name || short)
              + (t.p.f != null ? ' · ' + t.p.f.toFixed(1) + ' fls/90' : '')
         });
@@ -1142,6 +1249,15 @@
     var f = priced.fx, m = priced.m || {}, over = m.over || {};
     var ch = (ctx.clubBy && ctx.clubBy[f.h]) || {}, ca = (ctx.clubBy && ctx.clubBy[f.a]) || {};
     var squadOf = ctx.squadOf || function () { return []; };
+    /* THE URLS ARE THE DESK'S TO BUILD, not this module's. Each division names
+       its players and clubs in a different feed — the PL desk has an FPL photo
+       reference and an official badge code, the EFL and La Liga decks a baked
+       crest on the club row — so the adapter asks the caller for a URL and
+       draws the fallback mark when there is no hook or no picture. */
+    var photoUrl = ctx.photoUrl || function () { return null; };
+    var crestUrl = ctx.crestUrl || function (short, club) {
+      return (club && club.img) || null;
+    };
 
     /* Top five by one field, dropping anyone the desk has no number for.
        A null is not a zero: a player with no minutes has no rate, and ranking
@@ -1152,7 +1268,8 @@
         .sort(function (a, b) { return b[key] - a[key]; })
         .slice(0, 5)
         .map(function (p) {
-          return { n: p.n, v: dp === 0 ? String(p[key]) : Number(p[key]).toFixed(dp) };
+          return { n: p.n, c: p.c || short, ph: photoUrl(p) || null,
+                   v: dp === 0 ? String(p[key]) : Number(p[key]).toFixed(dp) };
         });
     }
     /* The desk's own read on THIS fixture, which is the panel a stats graphic
@@ -1162,11 +1279,14 @@
       return cands
         .filter(function (c) { return c.club === short; })
         .slice(0, 5)
-        .map(function (c) { return { n: c.name, v: (c.prob * 100).toFixed(0) + '%' }; });
+        .map(function (c) {
+          return { n: c.name, c: short, ph: (c.p && photoUrl(c.p)) || null,
+                   v: (c.prob * 100).toFixed(0) + '%' };
+        });
     }
     function side(short, club) {
       return {
-        short: short, name: club.name || short,
+        short: short, name: club.name || short, img: crestUrl(short, club) || null,
         panels: [
           { label: 'Booked tonight', unit: 'p(card)', rows: risk(short) },
           { label: 'Yellows', unit: 'per 90', rows: top(short, 'y', 2) },

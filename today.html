@@ -2425,7 +2425,10 @@
          one belonging to the fixture's OWN division — not a global. */
       squadOf: function (short) {
         return (p.L.players || []).filter(function (q) { return q.c === short; });
-      }
+      },
+      /* Same portrait and same badge the row on this page draws — see the note
+         on SHARE_CTX in the single-division decks. */
+      photoUrl: function (q) { return (q && q.ph) || null; }
     });
     var label = btn ? btn.getAttribute('aria-label') : null;
     if (btn) { btn.disabled = true; }

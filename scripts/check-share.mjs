@@ -35,6 +35,15 @@ function stubCtx(drawn, placed) {
     set textBaseline(v) {}, get textBaseline() { return 'alphabetic'; },
     fillRect: noop, beginPath: noop, moveTo: noop, arcTo: noop, closePath: noop,
     fill: noop, stroke: noop, save: noop, restore: noop, translate: noop, rotate: noop,
+    /* The circle-clip a portrait is drawn inside, and the draw itself. These
+       were absent while nothing in the guard reached face() or crestOn(); the
+       stat sheet does now, and a stub missing them fails as a TypeError deep
+       in a promise rather than as an assertion. `drew` records what actually
+       reached the canvas so the tests below can tell a real picture from the
+       monogram that stands in for a missing one. */
+    arc: noop, clip: noop, rect: noop, lineTo: noop,
+    set globalAlpha(v) {}, get globalAlpha() { return 1; },
+    drawImage(img) { if (drawn.__pics) drawn.__pics.push(img && img.src); },
     createLinearGradient: () => ({ addColorStop: noop }),
     measureText: (t) => ({ width: String(t).length * 11 }),
     fillText(t, x, y) {
@@ -62,6 +71,25 @@ function makeSandbox(drawn, placed) {
       fonts: { ready: Promise.resolve() }
     },
     URL: { createObjectURL: () => 'blob:x', revokeObjectURL: () => {} },
+    /* A PHOTO HOST THAT ANSWERS, and one that does not. Neither image CDN is
+       reachable from the sandbox this runs in, so without a stub every card
+       here renders its no-picture branch and the drawing code that runs in a
+       browser is never executed at all. A URL under /ok/ loads; anything else
+       fails the way a 404 does, which is the case both feeds actually hit —
+       the PL cutout CDN has no portrait for a good share of the league. */
+    Image: class {
+      constructor() { this.naturalWidth = 0; this.naturalHeight = 0; }
+      set src(u) {
+        this._src = u;
+        const good = /\/ok\//.test(u);
+        setTimeout(() => {
+          if (good) { this.naturalWidth = 110; this.naturalHeight = 140; }
+          const cb = good ? this.onload : this.onerror;
+          if (cb) cb.call(this);
+        }, 0);
+      }
+      get src() { return this._src; }
+    },
     setTimeout, console, Promise
   };
   ctx.globalThis = ctx;
@@ -304,6 +332,90 @@ for (const [what, rows] of [['with a head to head', withH2H], ['without one', no
     `the stat sheet ${what} drew its expected-cards figure at ` +
     `${figureSize(rows)}px — it is meant to grow into the panel it is given, ` +
     'and at the old fixed size it reads as one small number adrift in white');
+}
+
+/* ---- crests and faces ----------------------------------------------------
+ *
+ * THE BADGE EACH SIDE AND A PORTRAIT PER RANKED ROW, which is what separates
+ * this from the plain table it started as. Two things have to hold and they
+ * pull against each other:
+ *
+ *   the pictures are DRAWN when the host answers, and
+ *   the card is UNCHANGED when it does not.
+ *
+ * The second is the one that matters in practice. Neither feed is complete —
+ * the PL cutout CDN has no portrait for a large minority of the league, the
+ * baked crest is missing for newly promoted clubs — so the missing case is
+ * not an edge, it is most rows on most cards. A layout that only holds
+ * together when every picture arrives is a layout that breaks in production.
+ *
+ * The URLs are per-scenario because loadImage caches by URL for the session:
+ * reusing one across both would test the cache rather than the branch.
+ */
+{
+  const withPics = (host) => ({
+    ...sheetSpec,
+    home: { ...sheetSpec.home, img: host + '/cha.png',
+      panels: sheetSpec.home.panels.map((p) => ({ ...p,
+        rows: p.rows.map((r) => ({ ...r, ph: host + '/' + r.n.replace(/\W/g, '') + '.png' })) })) },
+    away: { ...sheetSpec.away, img: host + '/der.png' },
+  });
+
+  drawn.length = 0; drawn.__pics = [];
+  await S.statSheetCard(withPics('https://pics.test/ok'));
+  const okText = drawn.join('\n'), okPics = drawn.__pics.filter(Boolean);
+  assert.ok(okPics.some((u) => /cha\.png$/.test(u)) && okPics.some((u) => /der\.png$/.test(u)),
+    'the stat sheet was given both club badges and drew neither — the colour ' +
+    'bar is the only thing naming the club, and the reference layout this ' +
+    'follows carries the crest');
+  assert.ok(okPics.some((u) => /HOne\.png$/.test(u)),
+    'the stat sheet was given player portraits and drew none');
+  /* THE PICTURES DO NOT COST THE CARD ITS WORDS. A face is drawn to the left
+     of the name and the name is fitted to what is left; get that arithmetic
+     wrong and the panels quietly lose the players they are ranking. */
+  for (const need of ['CHARLTON ATHLETIC', 'DERBY COUNTY', 'H One', 'A One',
+                      'BOOKED TONIGHT', 'FOULS WON', 'EXPECTED CARDS']) {
+    assert.ok(okText.includes(need),
+      `the stat sheet lost ${JSON.stringify(need)} once it had pictures to draw`);
+  }
+  assert.ok(/18\+/.test(okText) && /begambleaware/.test(okText),
+    'the illustrated stat sheet went out without the 18+ / BeGambleAware line');
+
+  drawn.length = 0; drawn.__pics = [];
+  await S.statSheetCard(withPics('https://pics.test/gone'));
+  const goneText = drawn.join('\n');
+  assert.equal(drawn.__pics.filter(Boolean).length, 0,
+    'the stat sheet drew an image the host never returned');
+  /* The club falls back to its code on its own colour and the player to his
+     initials — the same marks the page itself draws, so a card with no
+     pictures reads as designed rather than as one that failed to load. */
+  for (const need of ['CHARLTON ATHLETIC', 'DERBY COUNTY', 'H One', 'A One',
+                      'BOOKED TONIGHT', 'FOULS WON']) {
+    assert.ok(goneText.includes(need),
+      `the stat sheet lost ${JSON.stringify(need)} when its pictures 404'd — ` +
+      'this is the ordinary case, not the edge one');
+  }
+  assert.ok(goneText.includes('CHA') && goneText.includes('DER'),
+    'a club whose badge did not load lost its fallback mark as well');
+
+  /* AND THE ADAPTER ASKS THE DESK FOR THE URLS rather than building them.
+     Each division names its players and clubs in a different feed, and a
+     module that hardcoded one CDN would draw the PL desk's portraits onto a
+     La Liga card. A ladder is allowed — the PL desk passes two hosts per
+     player because each covers the other's gaps. */
+  const wired = S.deskStatSheetSpec(priced, {
+    ...ctx,
+    squadOf: (short) => [{ c: short, n: 'H One', y: 0.4, f: 1.2, fw: 0.9, ls: false }],
+    photoUrl: (p) => ['https://a.test/ok/' + p.n.replace(/\W/g, '') + '.png',
+                      'https://b.test/ok/' + p.n.replace(/\W/g, '') + '.png'],
+    crestUrl: (short) => 'https://a.test/ok/' + short + '.png',
+  });
+  assert.equal(wired.home.img, 'https://a.test/ok/CHA.png',
+    'deskStatSheetSpec ignored the desk\'s own crest lookup');
+  const yellows = wired.home.panels.find((p) => /yellows/i.test(p.label));
+  assert.ok(Array.isArray(yellows.rows[0].ph) && yellows.rows[0].ph.length === 2,
+    'deskStatSheetSpec dropped the desk\'s portrait ladder — the PL desk ' +
+    'offers two hosts per player because each covers the other\'s gaps');
 }
 
 drawn.length = 0;
@@ -1166,6 +1278,54 @@ for (const page of ['eflc.html', 'laliga.html']) {
 }
 
 console.log('check-share: both fixture grids and the matchday button are wired on eflc.html and laliga.html');
+
+/* ---- every desk that USES the module actually LOADS it -------------------
+ *
+ * The Premier League desk referenced window.PLDShare from two places — the
+ * nine-fold acca card and, later, the stat sheet — and never had the script
+ * tag. Both are gated on the module being present, so neither threw and
+ * neither worked: the acca share button had been quietly absent for as long
+ * as it had existed, because a guard that only reads share.js cannot see a
+ * page that forgot to include it. Asserted from the page's own text rather
+ * than from a list kept here, so adding a fourth caller cannot go stale.
+ */
+for (const page of ['index.html', 'eflc.html', 'laliga.html', 'today.html']) {
+  const html = readFileSync(join(root, page), 'utf8');
+  if (!/window\.PLDShare|PLDShare\./.test(html)) continue;
+  assert.ok(/<script src="assets\/share\.js"><\/script>/.test(html),
+    `${page} calls window.PLDShare but never loads assets/share.js — every ` +
+    'card on that page is gated on the module being defined, so the buttons ' +
+    'are not broken, they are silently absent');
+  /* AND IN THE SHELL, or the page works online and loses its share buttons
+     the first time someone opens it from the home screen offline. */
+  const sw = readFileSync(join(root, 'sw.js'), 'utf8');
+  assert.ok(sw.includes("'/assets/share.js'"),
+    'assets/share.js is not precached by sw.js');
+}
+
+/* THE TWO SIDES MUST BE THE TWO CLUBS' COLOURS.
+ *
+ * clubColour() falls back to the league's ink when the spec carries no
+ * palette, and no desk passed one — so every stat sheet ever exported drew
+ * both halves in the same purple and the layout's whole organising idea, that
+ * you can tell at a glance which side you are reading, did nothing. Only the
+ * Premier League desk has a club colour table, so it is the only one this can
+ * be asserted of; the other three are named in the message so that whoever
+ * adds a table there knows to wire it through as well.
+ */
+{
+  const html = readFileSync(join(root, 'index.html'), 'utf8');
+  const call = /deskStatSheetSpec\(priced,\s*\{[\s\S]*?\n  \}\);/.exec(html);
+  assert.ok(call, 'index.html no longer builds a stat sheet spec');
+  assert.ok(/palette\s*:\s*CLUB_COLOURS/.test(call[0]),
+    'index.html builds a stat sheet without a club palette — both sides then ' +
+    'draw in the league ink and the card is one colour end to end');
+  for (const hook of ['photoUrl', 'crestUrl']) {
+    assert.ok(new RegExp(hook + '\\s*:').test(call[0]),
+      `index.html builds a stat sheet without a ${hook} — the panels then ` +
+      'draw monograms for players and clubs this desk has pictures of');
+  }
+}
 
 /* ---- an image on the canvas must not be able to destroy the card ---------
  *

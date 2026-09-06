@@ -1610,6 +1610,11 @@
     seasonLabel: 'La Liga 2026-27',
     roundWord: 'Matchday',
     clubBy: clubBy,
+    /* THE PORTRAIT AND THE BADGE the page already draws for this player and
+       this club. Both feeds have gaps, so a card asks for the same URL the
+       row on screen asks for and falls back to the same monogram when it is
+       missing — a face on the sheet and a face on the page are one lookup. */
+    photoUrl: function (p) { return (p && p.ph) || null; },
     whenText: whenText
   };
 
