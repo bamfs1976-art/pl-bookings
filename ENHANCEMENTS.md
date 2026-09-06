@@ -459,6 +459,24 @@ lands on an empty card.
 
 ## Deliberately not taken
 
+- **Gating the Championship and La Liga desks behind a paid tier.** Proposed
+  in the September 2026 readiness pass and declined, twice: it was withheld
+  from the pass as unauthorised, and declined again when it was put to the
+  owner at the end of it. Both desks stay free.
+
+  Worth recording the reasoning rather than just the answer, because this will
+  be proposed again. The two desks are free today, so gating them does not
+  create value — it takes something away from whoever is already using them,
+  and it does it before anyone knows who that is or what they use it for. The
+  channel attribution shipped in that same pass (`plb_channel_weekly`) is the
+  thing that starts producing that evidence. Revisit when there is both a paid
+  tier to gate them behind and some idea of what would actually be lost.
+
+  If a paywall does eventually go somewhere, a *feature* is a better boundary
+  than a *competition*: the screener, the share cards or the tracker sync can
+  be withheld without a reader who came for the Championship finding the door
+  shut. `/today` also reads all three datasets, so gating a league leaves a
+  combined view that has to explain itself.
 - **`card-bookings-bot`'s prediction method** is H2H historical averages with
   no model. The H2H *data* is worth having (item 3); the method is not an
   upgrade on what is here.
