@@ -1242,9 +1242,37 @@
       var lam = C.cardLambda(p._y90, expMin, { ref: factor });
       return { p: p, prob: C.pCardFromLambda(lam) || 0 };
     });
+    var top = rows.slice().sort(function (a, b) { return b.prob - a.prob; }).slice(0, 4);
+
+    /* THE MAN WHO WAS ON THIS LIST YESTERDAY AND IS NOT STARTING TODAY.
+     *
+     * xiWeights gives a named substitute almost no expected minutes, so his
+     * price collapses and he drops out of the top four before the card is
+     * built. He then simply VANISHES the moment a team sheet lands — which is
+     * the silent disappearance this whole feature exists to stop. A reader who
+     * had an eye on him sees the list quietly reshuffle and is told nothing.
+     *
+     * So the four who WOULD have been shown without the sheet are recomputed
+     * on the old squad weighting, and any of them now on the bench is carried
+     * through to the card. He is greyed, sorted below the eleven and shows no
+     * percentage at all — the number is not the point, his absence is.
+     *
+     * Only when a sheet exists. Without one this is not computed and nothing
+     * about the card moves. */
+    var benched = [];
+    if (roles) {
+      var w0 = C.minuteWeights(squad.map(function (p) { return p.min; }), 11);
+      squad.map(function (p, i) {
+        var lam0 = C.cardLambda(p._y90, Math.max(0, w0[i]) * 90, { ref: factor });
+        return { p: p, prob: C.pCardFromLambda(lam0) || 0 };
+      }).sort(function (a, b) { return b.prob - a.prob; }).slice(0, 4)
+        .forEach(function (r) {
+          if (roles[r.p.n] !== 'start') benched.push(r);
+        });
+    }
     return {
       ps: rows.map(function (r) { return r.prob; }),
-      top: rows.slice().sort(function (a, b) { return b.prob - a.prob; }).slice(0, 4)
+      top: top, benched: benched
     };
   }
 
@@ -1492,6 +1520,7 @@
      fixture with no team sheet renders in exactly the order it always did. */
   function rankedCands(x) {
     var all = (x.home.top || []).concat(x.away.top || [])
+      .concat(x.home.benched || []).concat(x.away.benched || [])
       .sort(function (a, b) { return b.prob - a.prob; });
     return C.rankByLineup(x.xiState, all, function (t) {
       return { club: t.p.c, name: t.p.n };
@@ -1534,7 +1563,15 @@
   function candidateList(x, ch, ca) {
     var all = rankedCands(x);
     if (!all.length) return '<div class="faint" style="font-size:12.5px">No rated players.</div>';
-    return all.slice(0, 5).map(function (o) {
+    /* FIVE STARTERS, THEN EVERY BENCHED NAME BELOW THEM.
+       A flat slice of five would put the eleven in it and cut the bench off
+       the bottom, which reintroduces exactly the silent disappearance the
+       bench rows exist to prevent — the reader watching that player sees the
+       list reshuffle and is told nothing. Before a sheet lands nothing is
+       flagged, so this is the same five it always was. */
+    var show = all.filter(function (o) { return o.xi !== false; }).slice(0, 5)
+      .concat(all.filter(function (o) { return o.xi === false; }));
+    return show.map(function (o) {
       var t = o.row, club = clubBy[t.p.c] || { short: t.p.c };
       /* THE TEAM SHEET OUTRANKS THE FORECAST. A named substitute cannot be
          booked in a match he does not enter, so once both sheets are

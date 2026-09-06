@@ -159,6 +159,40 @@ for (const f of DESKS) {
     `${f} never renders the bench cell that stands in for the percentage`);
 }
 
+/* ---- 4b. the bench is not sliced off the bottom ------------------------
+ *
+ * The sibling desks price a named substitute at almost no expected minutes, so
+ * his probability collapses and he drops out of the top four before the card
+ * is built — and then a flat "top five" slice cuts whatever is left. Either
+ * way he VANISHES the moment a team sheet lands, which is the silent
+ * disappearance this whole feature exists to stop: a reader with an eye on
+ * that player watches the list reshuffle and is told nothing.
+ *
+ * So those desks recompute who would have been shown WITHOUT the sheet, carry
+ * any of them now on the bench through to the card, and slice the starters
+ * rather than the whole list.
+ */
+for (const f of ['eflc.html', 'laliga.html']) {
+  const page = read(f);
+  ok(/benched:\s*benched/.test(page) || /benched: benched/.test(page),
+    `${f}'s sideProbs no longer returns the players who would have been shown without ` +
+    'the sheet, so a benched candidate disappears from the card instead of greying');
+  ok(/\.concat\(x\.home\.benched/.test(page),
+    `${f} does not merge the benched candidates into its list`);
+  /* The slice must be over the STARTERS, not over the merged list — slicing
+     the merged list puts the eleven in it and cuts the bench off the bottom,
+     which is the same disappearance by a different route. */
+  /* ANCHORED ON `var show`, because priceBlock a few lines above filters and
+     slices identically — and an unanchored pattern was satisfied by THAT while
+     the candidate list had been changed back to a flat slice. Caught by
+     mutation, not by reading: the same "assertion satisfied by the wrong text"
+     this repo has been bitten by repeatedly. */
+  ok(/var show = all\s*\.filter\(function \(o\) \{ return o\.xi !== false; \}\)\s*\.slice\(0, 5\)/
+       .test(page.replace(/\n\s*/g, ' ').replace(/ +/g, ' ')),
+    `${f} slices its whole candidate list to five, so the benched rows are cut off the ` +
+    'bottom and the player disappears anyway');
+}
+
 /* ---- 5. and the stylesheet tells them apart ----------------------------- */
 const css = read('assets/tw.css');
 for (const cls of ['.cand-benched', '.cand-bench', '.xi-note', '.xi-pending',
