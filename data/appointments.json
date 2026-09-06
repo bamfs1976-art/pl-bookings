@@ -1,6 +1,7 @@
 {
  "note": "Referee appointments as published by the competition, laid over the harvested fixture list by data/appointments.py. The harvest wins where it has a value; this fills the nulls.",
  "sources": [
+  "RFEF Comité Técnico de Árbitros — designaciones Primera División, jornada 4, 6 September 2026 (supplied as the published sheet; exact PDF URL not captured)",
   "efl.com — Championship referee appointments, 22-23 August 2026 (supplied as text; exact article URL not captured)",
   "efl.com — Championship referee appointments, 28 August - 2 September 2026 (supplied as text; exact article URL not captured)",
   "efl.com — Sky Bet Championship referee appointments, 5-9 September 2026 (supplied as text; exact article URL not captured)",
@@ -1010,6 +1011,50 @@
    "refResolved": "Jesus Gil Manzano",
    "resolvedBy": "run",
    "source": "rfef.es — CTA designation sheet, Primera División, Jornada 4, 5 September 2026, issued Las Rozas 02-09-2026 (supplied as a screenshot; exact PDF URL not captured)"
+  },
+  {
+   "league": "LL",
+   "date": "2026-09-06",
+   "h": "ALA",
+   "a": "OSA",
+   "ko": "18:30",
+   "ref": "José María Sánchez",
+   "refResolved": "José María Sánchez Martínez",
+   "resolvedBy": "run",
+   "source": "RFEF Comité Técnico de Árbitros — designaciones Primera División, jornada 4, 6 September 2026 (supplied as the published sheet; exact PDF URL not captured)"
+  },
+  {
+   "league": "LL",
+   "date": "2026-09-06",
+   "h": "ESP",
+   "a": "SEV",
+   "ko": "21:00",
+   "ref": "Miguel Sesma",
+   "refResolved": "Miguel Sesma Espinosa",
+   "resolvedBy": "run",
+   "source": "RFEF Comité Técnico de Árbitros — designaciones Primera División, jornada 4, 6 September 2026 (supplied as the published sheet; exact PDF URL not captured)"
+  },
+  {
+   "league": "LL",
+   "date": "2026-09-06",
+   "h": "MAL",
+   "a": "LEV",
+   "ko": "18:30",
+   "ref": "Luis Bestard",
+   "refResolved": null,
+   "resolvedBy": null,
+   "source": "RFEF Comité Técnico de Árbitros — designaciones Primera División, jornada 4, 6 September 2026 (supplied as the published sheet; exact PDF URL not captured)"
+  },
+  {
+   "league": "LL",
+   "date": "2026-09-06",
+   "h": "VAL",
+   "a": "BAR",
+   "ko": "16:15",
+   "ref": "Isidro Díaz De Mera",
+   "refResolved": "Isidro Diaz de Mera Escuderos",
+   "resolvedBy": "run",
+   "source": "RFEF Comité Técnico de Árbitros — designaciones Primera División, jornada 4, 6 September 2026 (supplied as the published sheet; exact PDF URL not captured)"
   }
  ]
 }
