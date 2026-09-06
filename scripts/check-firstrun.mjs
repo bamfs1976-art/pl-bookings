@@ -117,6 +117,75 @@ for (const page of DESKS_WITH_A_TOUR) {
     'and does nothing when pressed');
 }
 
+/* ---- 3b. four steps, and the four that were asked for ------------------
+ *
+ * The tour is the only thing a first-time reader is guaranteed to see, and
+ * every step in it is a step somebody sits through. The old one spent one on
+ * the help menu — teaching a visitor where to find the tour they are already
+ * taking — and one describing fixture cards without pointing at the number
+ * that makes them useful.
+ *
+ * THE SCREENER MUST NOT OPEN. It is the fourth reading of the players table,
+ * it builds a virtual grid over 600-odd rows on first view, and it is the
+ * wrong thing to put in front of somebody who has not yet been told what a
+ * booking probability is. It stays behind its pill. That is easy to break by
+ * accident — a step targeting a screener element, or a `before` that selects
+ * the view — and impossible to notice, because the tour is shown once.
+ */
+{
+  const src = read('index.html');
+  const at = src.indexOf('const TOUR=[');
+  assert.notStrictEqual(at, -1, 'index.html no longer defines TOUR');
+  const block = src.slice(at, src.indexOf('\n];', at));
+
+  const steps = [...block.matchAll(/\{sel:/g)].length;
+  assert.strictEqual(steps, 4,
+    `the first-run tour has ${steps} steps. Four is the brief, and every extra ` +
+    'one is a step a first-time visitor sits through to reach the end.');
+
+  /* The four things, by the element each points at. Selectors rather than
+     titles: a title can be reworded, and what a step actually teaches is
+     whatever it draws a ring around. */
+  for (const [sel, what] of [
+    ['.gw-hero', 'where the reader has landed'],
+    ['.cand-why', "the line explaining a candidate's percentage"],
+    ['.watch-btn', 'the watchlist star'],
+    ['.leaguebar', 'the league switcher']
+  ]) {
+    assert.ok(block.includes('"' + sel + '"'),
+      `the tour no longer spotlights ${sel} — ${what}`);
+  }
+
+  /* THE ONE WITH TEETH. Nothing in the tour may reach the screener. */
+  assert.ok(!/screener/i.test(block),
+    'a first-run tour step mentions the screener. It stays behind the Players ' +
+    "area's own pill: it builds a virtual grid over the whole division and is " +
+    'the wrong first thing to show somebody who has not been told what a ' +
+    'booking probability is.');
+  /* And the panel a step opens must be one whose default view is not the
+     screener. openPanel("panel-players") selects the season table through
+     PANEL_VIEW; a `before` calling dkSetView would go round that. */
+  assert.ok(!/dkSetView|dkRender/.test(block),
+    "a tour step sets the Players area's view directly, going round " +
+    'openPanel — which is the one route that guarantees the season table ' +
+    'rather than the screener');
+
+  /* A step that changes panel must do it BEFORE the element is measured, or
+     querySelector returns something with a zero rect on a hidden panel and
+     the spotlight is a dot in the corner. */
+  assert.ok(/if\(step\.before\)[\s\S]{0,200}document\.querySelector\(step\.sel\)/.test(src),
+    'index.html runs a step\'s before() after looking the element up, so a step ' +
+    'on another panel rings an element that is not laid out yet');
+
+  /* Bumped, or the people the new steps are for never see them. */
+  const key = /const TOUR_KEY="([^"]+)"/.exec(src);
+  assert.ok(key, 'index.html no longer defines TOUR_KEY');
+  assert.ok(!/_v2$/.test(key[1]),
+    `TOUR_KEY is still ${key[1]}. The steps changed, so anyone who dismissed ` +
+    'the old tour would never be shown what the new one teaches — and they are ' +
+    'exactly the people it is for.');
+}
+
 /* ---- 4. the first-run copy stays bounded -------------------------------- */
 /* Two stacked explainer blocks pushed the gameweek hero below the fold on a
    390px screen. One card replaced them, and the height is the whole point of

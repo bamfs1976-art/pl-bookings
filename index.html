@@ -6424,21 +6424,62 @@ function flashEl(el,dir){
    dismissed the tour would otherwise never be told the other two divisions
    exist — which is the entire reason the step was written. A one-off re-show
    of a four-step dismissible overlay is the cheaper side of that trade. */
-const TOUR_KEY="pl_desk_tour_seen_v2";
+/* BUMPED to v3. The steps changed — two of the four are new — and anyone who
+   dismissed the old tour would otherwise never be shown the things it now
+   teaches, which is exactly the people the tour is for. A one-off re-show of a
+   four-step dismissible overlay is the cheaper side of that trade. */
+const TOUR_KEY="pl_desk_tour_seen_v3";
 // Separate from TOUR_KEY: dismissing a one-line hint is not the same
 // statement as having sat through four steps, and one key for both meant
 // either dismissal silently suppressed the other.
 const HINT_KEY="pl_desk_hint_seen_v1";
+/* FOUR STEPS, AND THEY ARE THE FOUR THINGS SOMEBODY HAS TO KNOW.
+ *
+ * The old tour spent a step on the help menu, which teaches a visitor where to
+ * find the tour they are already taking, and a step describing fixture cards
+ * in the abstract without pointing at the number that makes them useful. What
+ * a first-time reader actually needs is: where they have landed, how to tell
+ * whether a percentage is worth anything, how to keep a player, and that there
+ * are three more desks behind this one.
+ *
+ * `before` runs before the step is measured, because two of these live on
+ * another panel and a spotlight ringing an element that is display:none draws
+ * a box around nothing. The last step returns to This Gameweek so the tour
+ * ends where it started rather than abandoning the reader in a table.
+ *
+ * NOTHING HERE OPENS THE SCREENER. It is the fourth reading of the players
+ * table, it builds a virtual grid over 600-odd rows on first view, and it is
+ * the wrong thing to put in front of somebody who has not yet been told what a
+ * booking probability is. openPanel("panel-players") selects the season view
+ * by way of PANEL_VIEW, so the screener stays behind its pill — asserted in
+ * check-firstrun rather than left to that being remembered.
+ */
 const TOUR=[
-  {sel:".gw-hero",title:"This Gameweek",body:"Your landing view. Fixtures are ranked hottest to coolest by booking heat, and the hero carries the gameweek, a deadline countdown and the model's live track record."},
-  {sel:".leaguebar",title:"Three leagues, and a combined view",body:"This desk is the Premier League. The same thing exists for the Championship and La Liga — same model, same numbers, so the percentages compare directly across all three. Today pulls every league playing on one date into a single list, with a share card across the lot and a whole-season calendar behind it."},
-  {sel:".fx-card",title:"Fixture cards",body:"Each match lists both sides' highest-risk players, banded High (50%+) and Watch (30–50%) by a fixture-aware booking probability. Assign the referee once appointments drop and every number scales to his whistle."},
-  {sel:"#helpBtn",title:"Help whenever you need it",body:"Reopen this tour or the glossary here. New to card markets? The Beginner toggle adds a plain-English line to each view — flip to Expert once you know your way around."}
+  {sel:".gw-hero",title:"This Gameweek",
+   before:()=>openPanel("panel-gameweek"),
+   body:"Where you land. Every match in the round, ranked hottest to coolest by the cards the model expects, with the gameweek, a deadline countdown and how the model has actually been doing across the top."},
+  {sel:".cand-why",
+   before:()=>openPanel("panel-gameweek"),
+   title:"Why this player",
+   body:"Under each name is one line saying where his percentage came from: his own card rate against what his position averages, and the single biggest thing this fixture does to it. An ordinary referee is not mentioned, because he is not the reason."},
+  {sel:".watch-btn",
+   before:()=>openPanel("panel-players"),
+   title:"Keep a player",
+   body:"Tap the star on any row to pin him. Starred players get their own card at the top of This Gameweek with their next fixture, the appointed referee and the chance, and you can have the desk notify you when a strict official is given one of their matches."},
+  {sel:".leaguebar",
+   before:()=>openPanel("panel-gameweek"),
+   title:"Three leagues, and a combined view",
+   body:"This desk is the Premier League. The Championship and La Liga run the same model on the same scale, so the percentages compare directly across all three. Today pulls every league playing on one date into one list."}
 ];
 let _tourI=0;
 function tourAt(i){
   _tourI=i;
   const step=TOUR[i], back=$("tour"), ring=$("tourRing"), pop=$("tourPop");
+  /* BEFORE the element is looked up, not after. Two of these steps live on
+     another panel, and querySelector on a hidden panel returns an element with
+     a zero rect — so the ring would be drawn as a dot in the top-left corner
+     rather than around anything. */
+  if(step.before){ try{ step.before(); }catch(e){} }
   const el=step.sel?document.querySelector(step.sel):null;
   $("tourStep").textContent="Step "+(i+1)+" of "+TOUR.length;
   $("tourHeading").textContent=step.title;
@@ -6467,7 +6508,9 @@ function tourAt(i){
   requestAnimationFrame(place);
   setTimeout(()=>$("tourNext").focus(),60);
 }
-function tourStart(){ openPanel("panel-gameweek"); tourAt(0); }
+/* The first step carries its own `before`, so the panel is opened once by the
+   step rather than twice by the step and its starter. */
+function tourStart(){ tourAt(0); }
 function tourEnd(){
   $("tour").classList.remove("show");
   try{ localStorage.setItem(TOUR_KEY,"1"); }catch(e){}
