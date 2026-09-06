@@ -5258,7 +5258,18 @@ function fixtureCardHtml(f,opts){
      cards-against figure this replaced; left alone it would have pinned every
      bar between a seventh and two thirds and never filled one. */
   const heatPct=Math.max(0,Math.min(1,(heat-2.5)/2));
-  const heatBadge=`<span class="heatbar${heat>=HEAT_HOT?" hot":""}" title="${M.modelled?`Booking heat: the model's expected cards, adding up every rated player's own chance — referee ×${rf.toFixed(2)}${derby?", derby ×"+DERBY_BOOST:""} already applied. These two clubs' own cards-against record reads ${base.toFixed(1)}.`:`Booking heat: too few rated players to model this fixture, so this is the two clubs' cards-against record — ×${rf.toFixed(2)} referee${derby?", ×"+DERBY_BOOST+" derby":""}.`}">`
+  /* THE DERBY FIGURE IN THIS TOOLTIP HAS TO BE THE ONE THAT WAS APPLIED, and
+     for a while it was not. The modelled branch describes a number built by
+     adding up every player's own chance, and each of those chances was scaled
+     by PLAYER_DERBY_BOOST (×1.08) inside fixtureProb — while the sentence
+     said ×1.15, which is DERBY_BOOST, the factor that scales a match TOTAL
+     and is used by the cards-against fallback below.
+     Both figures are right about their own quantity; the tooltip was quoting
+     one at a number built from the other. That is the same "two numbers, one
+     name" defect this chip was already fixed for once (see check-heat), and
+     the branch a reader sees most is the one that was wrong. Only one branch
+     renders at a time, so nobody sees both figures at once. */
+  const heatBadge=`<span class="heatbar${heat>=HEAT_HOT?" hot":""}" title="${M.modelled?`Booking heat: the model's expected cards, adding up every rated player's own chance — referee ×${rf.toFixed(2)}${derby?", derby ×"+PLAYER_DERBY_BOOST+" on each player":""} already applied. These two clubs' own cards-against record reads ${base.toFixed(1)}.`:`Booking heat: too few rated players to model this fixture, so this is the two clubs' cards-against record — ×${rf.toFixed(2)} referee${derby?", ×"+DERBY_BOOST+" derby":""}.`}">`
     +`<span class="heatbar-t" aria-hidden="true"><i style="width:${(heatPct*100).toFixed(0)}%"></i></span>`
     +`<span class="heatbar-n" data-num="heat-${f.id}">${heat.toFixed(1)}</span></span>`;
   const refDelta=(ref&&Math.abs(rf-1)>=0.02)?` <span class="mono" style="font-size:.64rem;color:${rf>1?"var(--warn)":"var(--fade)"}" title="Every player's chance scaled ×${rf.toFixed(2)} by ${esc(ref.n)}">×${rf.toFixed(2)} on every player</span>`:"";

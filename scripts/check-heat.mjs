@@ -159,6 +159,62 @@ assert.ok(!/gwF\.sort==="exp"/.test(index),
 assert.ok(!/<option value="exp">/.test(index),
   'index.html still offers an "Expected cards" sort option');
 
+/* ---- TWO DERBY FACTORS, AND THE TOOLTIP MUST QUOTE THE RIGHT ONE -------
+ *
+ * This desk carries two, and both are correct about their own quantity:
+ *
+ *   DERBY_BOOST        x1.15  scales a fixture's expected CARD TOTAL, and is
+ *                             what the cards-against fallback multiplies by.
+ *   PLAYER_DERBY_BOOST x1.08  scales ONE PLAYER's chance of being carded, and
+ *                             is what fixtureProb applies inside the model.
+ *
+ * They are not interchangeable: a derby that adds 15% to a match total does
+ * not add 15% to every individual's odds, because most of the extra falls on
+ * players already likely to be booked.
+ *
+ * The chip's tooltip described the modelled figure — built by adding up every
+ * player's own chance, each scaled by 1.08 — while stating that 1.15 had been
+ * applied. One quantity, quoting the other quantity's factor. That is the same
+ * "two numbers, one name" defect this whole guard was written for, arriving on
+ * the one part of the chip nobody had thought to check, and it was the branch
+ * a reader sees most often.
+ *
+ * Asserted on the two branches separately, because the fallback's 1.15 IS
+ * right and a guard that simply banned the constant would have broken it.
+ */
+{
+  const PLAYER_DERBY_BOOST = Number(/const PLAYER_DERBY_BOOST=([\d.]+);/.exec(index)[1]);
+  assert.ok(PLAYER_DERBY_BOOST !== DERBY_BOOST,
+    `PLAYER_DERBY_BOOST and DERBY_BOOST are both ${DERBY_BOOST}. If they have been ` +
+    'deliberately reconciled, say so where they are defined and simplify this check; ' +
+    'if one was edited to match the other by accident, a match total and a single ' +
+    "player's odds are now scaled by the same figure and one of them is wrong.");
+
+  /* The model applies the per-player one. */
+  const price = index.slice(index.indexOf('function fixtureProb('),
+                            index.indexOf('function fixtureProb(') + 600);
+  assert.ok(/PLAYER_DERBY_BOOST/.test(price) && !/[^_]DERBY_BOOST/.test(
+    price.replace(/PLAYER_DERBY_BOOST/g, '')),
+    'fixtureProb no longer applies the per-player derby factor');
+
+  /* And the tooltip says so. Split on the ternary: the modelled branch quotes
+     the per-player figure, the cards-against branch quotes the team one. */
+  const chip = index.slice(index.indexOf('const heatBadge='),
+                           index.indexOf('const heatBadge=') + 1400);
+  const modelled = chip.slice(chip.indexOf('Booking heat: the model'),
+                              chip.indexOf('Booking heat: too few'));
+  const fallback = chip.slice(chip.indexOf('Booking heat: too few'));
+  assert.ok(/PLAYER_DERBY_BOOST/.test(modelled),
+    'the booking-heat tooltip describes the MODEL\'s expected cards — every player\'s ' +
+    'own chance added up, each scaled by PLAYER_DERBY_BOOST — while quoting a different ' +
+    'derby factor. One quantity, the other quantity\'s number.');
+  assert.ok(!/[^_]DERBY_BOOST/.test(modelled.replace(/PLAYER_DERBY_BOOST/g, '')),
+    'the modelled booking-heat tooltip still quotes the team-level DERBY_BOOST');
+  assert.ok(/[^_]DERBY_BOOST/.test(fallback.replace(/PLAYER_DERBY_BOOST/g, '')),
+    'the cards-against fallback tooltip no longer quotes DERBY_BOOST — that branch ' +
+    'genuinely does scale a match total by it, so this one is right and must stay');
+}
+
 console.log(`check-heat OK: booking heat is the model board's expected cards; `
   + `${heats.length} fixtures, mean ${mean(heats).toFixed(2)} against the clubs' `
   + `own ${mean(bases).toFixed(2)}, differing on ${differ}; bands ${HOT}/${WARM} `

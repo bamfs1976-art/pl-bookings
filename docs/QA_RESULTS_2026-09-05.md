@@ -197,6 +197,19 @@ identify, and replaced by a scroll-snapping row that keeps every label. The
 reasoning is in the second `@media (max-width:560px)` block in `assets/tw.css`;
 the README paragraph now matches it.
 
+**The booking-heat tooltip quoted the wrong derby factor.** Found while
+writing up the open question about the two constants. The chip's modelled
+branch describes a figure built by adding up every player's own chance — each
+scaled by ×1.08 — and stated that ×1.15 had been applied, which is the factor
+that scales a match *total* and is used only by the cards-against fallback
+below it. Both numbers are right about their own quantity; the sentence
+attached one to the other. It is the same "two numbers, one name" defect this
+chip was already fixed for once, and it landed on the one part of it nobody
+had thought to check. The label now names the per-player figure and says "on
+each player"; the fallback branch keeps ×1.15, because there it is correct.
+`check-heat` asserts each branch against its own constant and fails if the two
+are ever collapsed — mutation-tested in all three directions.
+
 ## Left for the owner
 
 - The **301 from `playerbookings.netlify.app`** cannot be made from this
@@ -205,6 +218,9 @@ the README paragraph now matches it.
 - The **repository description** cannot be set from a commit. The one line to
   paste is in the pass report.
 - **Item 10 was not implemented**, as instructed. It is not authorised.
+- **Whether the two derby factors should be reconciled** (×1.08 per player,
+  ×1.15 per match total) is a modelling question, not a tidying one: changing
+  either moves published prices. It belongs with the November refit.
 - The **Premier League desk's Why lines, team-sheet notices and bench rows
   remain visually unverified** — see the environment note at the top. Worth
   five minutes on the deployed site once this merges.

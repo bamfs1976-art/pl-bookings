@@ -101,6 +101,32 @@ Each fixture card also shows **tight** — the fitted `P(margin ≤ 1)`. Cards f
 
 Connect the `pl-bookings` repo (preferred — the `/api/fpl/*` proxy needs the Netlify Function, which a drag-and-drop deploy of the root also carries in `netlify/functions/`). Publish directory is the root, no build command. Only the raw harvest JSON in `data/` is gitignored — the generated `data/pl_data.js` is committed and deployed, and `index.html` loads it directly. No environment variables are required — optionally set `ANTHROPIC_API_KEY` to switch on the AI review of tracker picks (plus `SUPABASE_SERVICE_ROLE_KEY` for the daily cap, `AI_DAILY_CAP` to change it, and `SUPABASE_URL`/`SUPABASE_PUBLISHABLE_KEY` if not using the defaults). The same `SUPABASE_URL` + `SUPABASE_SERVICE_ROLE_KEY` also switch on the **Live prediction accuracy** calibration loop (run `supabase/plb_predictions.sql` once); the hourly logger and its schedule are declared in `netlify.toml`.
 
+### Two derby factors, and why
+
+The desk applies a derby boost twice, at different sizes, and both are right
+about their own quantity:
+
+| Constant | Value | Scales |
+|---|---|---|
+| `PLAYER_DERBY_BOOST` | ×1.08 | one player's chance of being carded, inside `fixtureProb` |
+| `DERBY_BOOST` | ×1.15 | a fixture's expected card **total**, used by the cards-against fallback |
+
+They are not interchangeable. A derby that adds 15% to a match total does not
+add 15% to every individual's odds, because most of the extra falls on players
+who were already likely to be booked. The Championship and La Liga desks apply
+×1.08 per player for the same reason.
+
+The per-player figure was a bare `1.08` written inline until 2026-09-05, which
+had one visible consequence: the booking-heat tooltip described the model's
+number — every player's own chance added up, each scaled by 1.08 — while
+saying ×1.15 had been applied. One quantity quoting the other quantity's
+factor. `scripts/check-heat.mjs` now pins each branch to its own constant, and
+fails if the two are ever collapsed into one without that being said out loud.
+
+**Whether they should be reconciled is an open question**, and a modelling one
+rather than a tidying one: it would move published prices, so it belongs with
+the November refit rather than with a rename.
+
 ### One brand
 
 The desk ships under **one name and one address**: **Bookings Desk**, at
