@@ -36,6 +36,21 @@
     return h;
   }
 
+  /* THE CLUB'S OWN COLOUR WHERE THERE IS ONE, the hashed hue where there is
+     not. The hash was the whole answer, so a crest that failed to load — a
+     newly promoted club with no baked badge, or a crest host having a bad
+     minute — fell back to a colour derived from the letters of its code:
+     stable and distinct, but Millwall's chip came out teal. This module cannot
+     know which division it is drawing, so the page registers its table once at
+     start-up and every chip on it is right thereafter; a page that registers
+     nothing keeps exactly the behaviour it had. */
+  var COLOURS = null;
+  function colours(table) { COLOURS = table || null; return api; }
+  function chipStyle(short, sat, light) {
+    var c = COLOURS && COLOURS[short];
+    return 'background:' + (c || ('hsl(' + clubHue(short) + ' ' + sat + '% ' + light + '%)'));
+  }
+
   function monogram(short) {
     return String(short || '?').slice(0, 3).toUpperCase();
   }
@@ -47,7 +62,7 @@
   function crest(club, cls) {
     var short = (club && club.short) || '';
     var name = (club && club.name) || short;
-    var style = 'background:hsl(' + clubHue(short) + ' 55% 42%)';
+    var style = chipStyle(short, 55, 42);
     var mono = monogram(short);
     if (!club || !club.img) {
       return '<span class="crest crest-chip ' + (cls || '') + '" style="' + style + '" '
@@ -152,7 +167,11 @@
      draw a monogram in a case the player card draws a photograph. */
   function avatar(rec, cls) {
     var mono = initials(rec.name);
-    var style = 'background:hsl(' + clubHue((rec.club && rec.club.short) || rec.name) + ' 45% 38%)';
+    /* A PLAYER keeps the hashed hue when his club has a colour but he does
+       not: a wall of avatars all in one club colour is a wall in which no two
+       faces are told apart, which is the opposite of what a monogram is for. */
+    var style = 'background:hsl('
+      + clubHue((rec.club && rec.club.short) || rec.name) + ' 45% 38%)';
     if (!rec.photo) {
       return '<span class="crest crest-chip pp-avatar ' + (cls || '') + '" style="' + style
         + '" title="' + esc(rec.name || '') + '" aria-hidden="true">' + esc(mono) + '</span>';
@@ -372,6 +391,7 @@
     if (x) x.focus();
   }
 
-  root.PLDProfile = { crest: crest, face: avatar, wire: wireCrests, open: open,
-                      clubHue: clubHue };
+  var api = { crest: crest, face: avatar, wire: wireCrests, open: open,
+              clubHue: clubHue, colours: colours };
+  root.PLDProfile = api;
 })(typeof window !== 'undefined' ? window : this);

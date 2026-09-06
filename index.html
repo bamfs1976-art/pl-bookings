@@ -1756,6 +1756,7 @@ License: MIT
      referee table, so no new dependency and no new licence. Built by
      scripts/build-backtest-2526.mjs. -->
 <script src="data/pl_backtest_2526.js"></script>
+<script src="assets/clubcolours.js"></script>
 <script src="assets/accas.js"></script>
 <!-- THE SHARED CARD BUILDER. It was on the other three decks and not on this
      one, which is how the Premier League desk ended up with its own inline
@@ -2538,7 +2539,11 @@ function renderTracker(){
 }
 
 // ---- social PNG export ----
-const CLUB_COLOURS={ARS:"#EF0107",AVL:"#670E36",BOU:"#DA291C",BRE:"#E30613",BHA:"#0057B8",CHE:"#034694",CRY:"#1B458F",EVE:"#003399",FUL:"#1A1A1A",LEE:"#FFCD00",LIV:"#C8102E",MCI:"#6CABDD",MUN:"#DA291C",NEW:"#241F20",NFO:"#DD0000",SUN:"#EB172B",TOT:"#132257",COV:"#4B92DB",IPS:"#3A64A3",HUL:"#F7A800"};
+/* The twenty clubs' colours now live in assets/clubcolours.js with the other
+   two divisions' — this table was inline here, and the three other desks had
+   none at all, which is why their share cards drew both halves of a fixture in
+   the league's ink. The name is kept because the rest of this page reads it. */
+const CLUB_COLOURS=(window.PLDClubColours&&window.PLDClubColours.of("PL"))||{};
 function clubColour(c){ return CLUB_COLOURS[c]||"#3d195b"; }
 function textOn(hex){ const r=parseInt(hex.slice(1,3),16),g=parseInt(hex.slice(3,5),16),b=parseInt(hex.slice(5,7),16); return (0.299*r+0.587*g+0.114*b)>150?"#0c1322":"#ffffff"; }
 function riskHexAbs(r){ if(r==null)return"#94a3b8"; return r>=2.5?"#dc2626":r>=1.8?"#d97706":r>=1.2?"#16a34a":"#64748b"; }

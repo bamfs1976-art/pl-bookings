@@ -548,9 +548,25 @@
        badge leaves rather than in the whole bar, so a long one ("WOLVERHAMPTON
        WANDERERS") shrinks toward the middle of its own space instead of
        sliding under the crest. */
-    var bd = 46, nx = cx, nw = cw;
-    crestOn(x, pickImg(pics, side.img), side.short || '', palette, th,
-            cx + 10, cy + (62 - bd) / 2, bd);
+    var bd = 46, nx = cx, nw = cw, bx = cx + 10, by = cy + (62 - 46) / 2;
+    var badgeImg = pickImg(pics, side.img);
+    if (badgeImg) {
+      crestOn(x, badgeImg, side.short || '', palette, th, bx, by, bd);
+    } else {
+      /* NOT crestOn's usual fallback here. That one draws the club's code on
+         the club's own colour, which is right everywhere else on this canvas
+         and invisible in this one place: the bar behind it is already that
+         colour, so Swansea's chip came out black on black. A tinted plate in
+         the bar's own ink reads against any club colour, light or dark. */
+      x.save();
+      x.globalAlpha = 0.2; x.fillStyle = textOn(col);
+      roundRect(x, bx, by, bd, bd, 10); x.fill();
+      x.restore();
+      x.fillStyle = textOn(col); x.font = '800 15px ' + DISP;
+      x.textAlign = 'center';
+      x.fillText(fit(x, side.short || '', bd - 6), bx + bd / 2, by + bd / 2 + 5);
+      x.textAlign = 'left';
+    }
     nx = cx + 10 + bd; nw = cw - (10 + bd) - 12;
 
     x.fillStyle = textOn(col);

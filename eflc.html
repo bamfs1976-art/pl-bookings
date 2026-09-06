@@ -442,6 +442,7 @@
 <script src="assets/palette.js"></script>
 <script src="assets/save.js"></script>
 <script src="assets/leaguebar.js"></script>
+<script src="assets/clubcolours.js"></script>
 <script src="assets/share.js"></script>
 <script src="assets/suspension.js"></script>
 <script src="assets/a11y.js"></script>
@@ -888,6 +889,9 @@
     if (c) openPlayer(c.getAttribute('data-pk'));
   });
 
+  /* The division's own colours, so a crest that does not load falls back to
+     the club's colour rather than a hue hashed from its three letters. */
+  if (window.PLDClubColours) PLDProfile.colours(window.PLDClubColours.of('EFLC'));
   PLDProfile.wire();
 
   /* Candidate rows inside a fixture card open the same record the players
@@ -1584,6 +1588,11 @@
     seasonLabel: 'EFL Championship 2026-27',
     roundWord: 'Matchday',
     clubBy: clubBy,
+    /* THE TWO CLUBS' OWN COLOURS. Without a palette assets/share.js falls back
+       to the league's ink for every club, so both halves of a stat sheet came
+       out the same colour and the layout's organising idea — that you can see
+       at a glance which side you are reading — did nothing. */
+    palette: (window.PLDClubColours && window.PLDClubColours.of('EFLC')) || {},
     /* THE PORTRAIT AND THE BADGE the page already draws for this player and
        this club. Both feeds have gaps, so a card asks for the same URL the
        row on screen asks for and falls back to the same monogram when it is

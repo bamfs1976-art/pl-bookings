@@ -487,6 +487,7 @@
 <script src="assets/core.js"></script>
 <script src="assets/save.js"></script>
 <script src="assets/leaguebar.js"></script>
+<script src="assets/clubcolours.js"></script>
 <script src="assets/share.js"></script>
 <script src="assets/plmodel.js"></script>
 <!-- Confirmed team sheets. Absent until a harvest lands one, which is the
@@ -2401,6 +2402,15 @@
     LL:   { seasonLabel: 'La Liga 2026-27', roundWord: 'Matchday' }
   };
 
+  /* THE FIXTURE'S OWN DIVISION'S COLOURS. This page holds three datasets at
+     once, so the palette is chosen per card rather than declared once: handing
+     a La Liga fixture the Championship's table would draw Elche in Charlton's
+     red. Empty when the module is absent, which costs a card its club colours
+     and nothing else. */
+  function paletteFor(code) {
+    return (window.PLDClubColours && window.PLDClubColours.of(code)) || {};
+  }
+
   /* The priced row for one fixture on one desk. Both share paths need it and
      the id alone is not unique — three divisions, three id spaces. */
   function pricedFor(fid, code) {
@@ -2428,7 +2438,8 @@
       },
       /* Same portrait and same badge the row on this page draws — see the note
          on SHARE_CTX in the single-division decks. */
-      photoUrl: function (q) { return (q && q.ph) || null; }
+      photoUrl: function (q) { return (q && q.ph) || null; },
+      palette: paletteFor(code)
     });
     var label = btn ? btn.getAttribute('aria-label') : null;
     if (btn) { btn.disabled = true; }
@@ -2451,7 +2462,8 @@
       whenText: fmtWhen,
       /* The basis the price was computed on, from the pricing rather than from
          a reader's mark — see the note in share.js. */
-      pricedOffXI: !!(p.m && p.m.xi)
+      pricedOffXI: !!(p.m && p.m.xi),
+      palette: paletteFor(code)
     });
     var label = btn ? btn.getAttribute('aria-label') : null;
     if (btn) { btn.disabled = true; }
@@ -2797,6 +2809,12 @@
      same screen. That is what this page had been doing, because it never
      called wire() at all — the two league desks did, and the guard that
      enforces it looped over those two pages. */
+  /* All three divisions' colours at once: this page lists clubs from every
+     one of them together, so there is no single league whose table would do.
+     The cards still ask for their own fixture's league — see paletteFor. */
+  if (typeof PLDProfile !== 'undefined' && PLDProfile.colours && window.PLDClubColours) {
+    PLDProfile.colours(window.PLDClubColours.merged());
+  }
   if (typeof PLDProfile !== 'undefined' && PLDProfile.wire) PLDProfile.wire();
   LEAGUES = readFrames();
   LEAGUES.forEach(prepare);

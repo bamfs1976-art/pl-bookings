@@ -1303,6 +1303,98 @@ for (const page of ['index.html', 'eflc.html', 'laliga.html', 'today.html']) {
     'assets/share.js is not precached by sw.js');
 }
 
+/* ---- one colour table, and it covers the clubs that actually ship ---------
+ *
+ * The colours are DATA, not tokens, so they live in assets/clubcolours.js
+ * rather than the stylesheet — assets/share.js draws to a canvas and cannot
+ * read a stylesheet at all. That puts them outside check-palette.mjs's remit,
+ * so their equivalent guarantees are asserted here:
+ *
+ *   every club in every shipped dataset has a colour, which is what makes a
+ *   promotion or relegation a build failure rather than a chip that quietly
+ *   comes out teal in August; and
+ *
+ *   no two DIFFERENT clubs share a short code across the three divisions,
+ *   because /today merges all three into one lookup and a collision there
+ *   would hand one club another's colour with nothing to show for it.
+ */
+{
+  const src = readFileSync(join(root, 'assets', 'clubcolours.js'), 'utf8');
+  const sb2 = { module: { exports: {} } };
+  sb2.globalThis = sb2;
+  vm.createContext(sb2);
+  vm.runInContext(src, sb2);
+  const CC = sb2.PLDClubColours;
+  assert.ok(CC && CC.of && CC.merged, 'assets/clubcolours.js exports no table');
+
+  const DATASETS = [
+    ['PL', 'pl_data.js'], ['EFLC', 'eflc_data.js'], ['LL', 'laliga_data.js']
+  ];
+  const shorts = {};
+  for (const [code, file] of DATASETS) {
+    const data = readFileSync(join(root, 'data', file), 'utf8');
+    const open = data.indexOf('const CLUBS');
+    assert.ok(open >= 0, `data/${file} declares no CLUBS`);
+    const block = data.slice(open, data.indexOf('\n];', open));
+    const codes = [...block.matchAll(/short:"([A-Z0-9]+)"/g)].map((m) => m[1]);
+    assert.ok(codes.length >= 20, `data/${file} lists only ${codes.length} clubs`);
+    shorts[code] = codes;
+    const table = CC.of(code);
+    const missing = codes.filter((s) => !table[s]);
+    assert.deepEqual(missing, [],
+      `assets/clubcolours.js has no colour for ${missing.join(', ')} in ${code} — ` +
+      'a club that ships without one draws a hue hashed from its three letters ' +
+      'on the page and the league ink on a share card');
+    /* And nothing the other way: an entry for a club that no longer plays in
+       the division is a colour nobody will ever see, kept for a club that has
+       gone up or down and whose new division's table is the one that matters. */
+    const stale = Object.keys(table).filter((s) => codes.indexOf(s) < 0);
+    assert.deepEqual(stale, [],
+      `assets/clubcolours.js keeps ${stale.join(', ')} under ${code}, which no ` +
+      'longer appears in that division\'s dataset');
+  }
+
+  /* The merge /today relies on. Asserted against the tables rather than the
+     merged result, because the merged result is where the evidence is lost. */
+  const seen = {};
+  for (const [code] of DATASETS) {
+    const table = CC.of(code);
+    for (const s of Object.keys(table)) {
+      if (seen[s] && seen[s].colour !== table[s]) {
+        assert.fail(`club code ${s} means one thing in ${seen[s].code} (${seen[s].colour}) ` +
+          `and another in ${code} (${table[s]}) — /today merges all three ` +
+          'into one lookup and one of the two would wear the other\'s colour');
+      }
+      seen[s] = { code, colour: table[s] };
+    }
+  }
+
+  /* Every value a colour a canvas and a style attribute can both take. */
+  for (const [code] of DATASETS) {
+    const table = CC.of(code);
+    for (const s of Object.keys(table)) {
+      assert.ok(/^#[0-9A-Fa-f]{6}$/.test(table[s]),
+        `${code}/${s} is "${table[s]}", which is not a six-digit hex — the ` +
+        'canvas and the chip both take it verbatim');
+    }
+  }
+}
+
+/* AND EVERY DESK PASSES ITS OWN DIVISION'S TABLE. Wiring the module in and
+   then not handing it to the card is the state the desks were already in. */
+for (const [page, needle] of [
+  ['eflc.html', /palette:[\s\S]{0,90}?PLDClubColours\.of\('EFLC'\)/],
+  ['laliga.html', /palette:[\s\S]{0,90}?PLDClubColours\.of\('LL'\)/],
+  ['today.html', /palette:\s*paletteFor\(code\)/]
+]) {
+  const html = readFileSync(join(root, page), 'utf8');
+  assert.ok(/<script src="assets\/clubcolours\.js"><\/script>/.test(html),
+    `${page} never loads assets/clubcolours.js`);
+  assert.ok(needle.test(html),
+    `${page} loads the colour table but does not pass it to its share cards — ` +
+    'both halves of every stat sheet then draw in the league ink');
+}
+
 /* THE TWO SIDES MUST BE THE TWO CLUBS' COLOURS.
  *
  * clubColour() falls back to the league's ink when the spec carries no
