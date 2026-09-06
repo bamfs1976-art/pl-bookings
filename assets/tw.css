@@ -35,6 +35,7 @@
   --target:#16a34a; --mid:#d97706; --fade:#64748b;
   --shadow-sm:0 1px 2px rgba(13,19,34,.06);
   --shadow:0 4px 16px -4px rgba(13,19,34,.12),0 1px 3px rgba(13,19,34,.06);
+  --shadow-lg:0 4px 12px rgba(13,19,34,.10),0 16px 40px rgba(13,19,34,.08);
   --mono:ui-monospace,"SF Mono",SFMono-Regular,Menlo,Consolas,"Liberation Mono",monospace;
   --sidebar-w:248px; --topbar-h:60px; --bottomnav-h:66px;
   /* League marks. Every desk carries all four, because every desk SHOWS all
@@ -58,6 +59,43 @@
      accent already clears 4.5:1 on every ground here, which check-contrast
      asserts independently. */
   --ring:var(--accent);
+
+  /* ---- ONE VOCABULARY WITH GAMEWEEK EDGE --------------------------------
+     These two products share an account, a Supabase project, an app shell and
+     a person maintaining them, and until now they did not share a single
+     colour name. `--good` here was `--green` there; `--danger` was `--red`;
+     `--warn` was `--amber`. Nothing was broken by that, which is why it
+     lasted — the cost is paid every time a component or a pair of eyes moves
+     between the two repositories and has to translate.
+
+     THEY ARE ALIASES, NOT COPIES. A colour is still written down exactly once
+     on this desk, and each alias resolves through the token it points at, so
+     it follows the theme automatically and cannot drift from the value it
+     names. That also satisfies check-palette's rule that every light token be
+     redefined dark: an indirection is followed rather than whitelisted.
+
+     The values stay this desk's own. Gameweek Edge's hues are tuned against
+     its one green brand; these are tuned against four league accents in two
+     themes and re-measured by check-contrast on every run. Adopting its
+     palette wholesale would throw that away to gain nothing on screen.
+     docs/DESIGN_NOTES.md records every name that did not map cleanly. */
+  --green:var(--good); --red:var(--danger); --amber:var(--warn); --blue:var(--info);
+  --green-ink:var(--good-ink); --red-ink:var(--danger-ink); --amber-ink:var(--warn-ink);
+
+  /* Type, by role rather than by name. The display face is already Gameweek
+     Edge's; the body and mono faces are not, and that is recorded rather than
+     changed — see DESIGN_NOTES. Naming them is the point: a rule that says
+     var(--font-display) survives a face being swapped, and 23 rules in
+     index.html spelling out 'Bricolage Grotesque' do not. */
+  --font-display:'Bricolage Grotesque',system-ui,sans-serif;
+  --font-body:'Hanken Grotesk',system-ui,sans-serif;
+  --font-mono:var(--mono);
+
+  /* Geometry and motion, Gameweek Edge's scale exactly. Radii were hardcoded
+     in about a hundred places across four pages at eleven different values;
+     these are the five the sibling app uses, so a card is a card on both. */
+  --r-sm:6px; --r-md:8px; --r-lg:12px; --r-xl:16px; --r-pill:999px;
+  --t-state:150ms; --t-layout:250ms; --ease:cubic-bezier(.2,.8,.2,1);
 }
 html.lg-pl  {--accent:#3d195b;--accent-2:var(--pl);  --accent-ink:var(--pl-ink);  --ring:var(--accent)}
 html.lg-eflc{--accent:#4b2e83;--accent-2:var(--eflc);--accent-ink:var(--eflc-ink);--ring:var(--accent)}
@@ -77,6 +115,7 @@ html[data-theme="dark"]{
   --target:#34d399; --mid:#fbbf24; --fade:#94a3b8;
   --shadow-sm:0 1px 2px rgba(0,0,0,.4);
   --shadow:0 10px 30px -8px rgba(0,0,0,.55),0 2px 6px rgba(0,0,0,.4);
+  --shadow-lg:0 6px 18px rgba(0,0,0,.40),0 20px 48px rgba(0,0,0,.32);
   --pl:#ff2d7e; --eflc:#a78bfa; --ll:#fb923c; --all:#67e8f9;
   /* The dark marks are already pastels clearing AA on #0b0f1a, so ink == mark. */
   --pl-ink:#ff418a; --eflc-ink:#a78bfa; --ll-ink:#fb923c; --all-ink:#67e8f9;

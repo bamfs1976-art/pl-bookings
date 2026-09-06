@@ -1,6 +1,43 @@
 <!DOCTYPE html>
-<html lang="en-GB" class="lg-pl" data-theme="light">
+<html lang="en-GB" class="lg-pl" data-theme="dark">
 <head>
+<!-- THE THEME, BEFORE ANYTHING PAINTS AND BEFORE ANY STYLESHEET LOADS.
+
+     Two changes here, and the second is the one that was actually broken.
+
+     DARK IS THE DEFAULT NOW. This desk is read in the evening, on a phone, in
+     the hours before a kick-off, and it was opening white every time.
+     (Gameweek Edge defaults to light because light is that brand; this one is
+     not that brand, and the brief for this pass says dark.) The light toggle
+     stays exactly where it was.
+
+     ONE KEY, FOUR DESKS. Each page had its own — pl_desk_theme,
+     eflc_desk_theme, laliga_desk_theme, today_desk_theme — so choosing light
+     and then using the league switcher put you straight back into the dark
+     one, and you had to make the same choice four times to make it stick. The
+     switcher is one product; the theme follows you across it now. An old
+     per-desk key is read once and migrated, so nobody's existing choice is
+     thrown away by the change that unified them.
+
+     IT IS INLINE AND IT IS FIRST because the attribute has to be on <html>
+     before the first paint. Applied from the main script — which is where it
+     was on all four pages — every load flashed the default theme first, and
+     for anyone who had chosen light that flash was now a full white-to-dark
+     blink on a page they had told to be dark. -->
+<script>
+(function(){
+  var KEY='bd_theme', OLD=['pl_desk_theme','eflc_desk_theme','laliga_desk_theme','today_desk_theme'];
+  var t=null;
+  try{
+    t=localStorage.getItem(KEY);
+    if(!t){
+      for(var i=0;i<OLD.length&&!t;i++) t=localStorage.getItem(OLD[i]);
+      if(t) localStorage.setItem(KEY,t);
+    }
+  }catch(e){}
+  document.documentElement.setAttribute('data-theme',t==='light'?'light':'dark');
+})();
+</script>
 <meta charset="UTF-8">
 <!-- viewport-fit=cover to match the other desks: the page already pads the
      bottom nav out of the home indicator with env(safe-area-inset-bottom),
@@ -1787,7 +1824,9 @@ License: MIT
 <script src="assets/backtest.js"></script>
 <script src="assets/adminimport.js"></script>
 <script>
-const STORE_KEY="pl_desk_v1", THEME_KEY="pl_desk_theme";
+/* THEME_KEY is the shared one — see the boot script in <head>. The theme
+   follows you across the league switcher instead of being chosen four times. */
+const STORE_KEY="pl_desk_v1", THEME_KEY="bd_theme";
 const $=(id)=>document.getElementById(id);
 const CLUBMAP={}; CLUBS.forEach(c=>CLUBMAP[c.short]=c);
 // Safety net against duplicate rows (the data guard already blocks them at
@@ -3470,7 +3509,10 @@ $("insightsBtn").addEventListener("click",runInsights);
 const themeToggle=$("themeToggle");
 function applyTheme(t){ document.documentElement.setAttribute("data-theme",t); themeToggle.setAttribute("aria-pressed",t==="light"); $("themeLabel").textContent=t==="light"?"Light":"Dark"; themeToggle.querySelector("span[aria-hidden]").textContent=t==="light"?"☀️":"🌙"; }
 themeToggle.addEventListener("click",()=>{ const next=document.documentElement.getAttribute("data-theme")==="light"?"dark":"light"; try{ localStorage.setItem(THEME_KEY,next); }catch(e){} applyTheme(next); });
-applyTheme((()=>{ try{ return localStorage.getItem(THEME_KEY)||"light"; }catch(e){ return "light"; } })());
+/* The head boot already put the attribute on <html> before first paint;
+   this only syncs the button's label and pressed state to it. Re-reading
+   storage here would be a second answer to a question already settled. */
+applyTheme(document.documentElement.getAttribute("data-theme")==="light"?"light":"dark");
 
 // ═══════════════════════════════════════════════════════════
 // LIVE FPL DATA

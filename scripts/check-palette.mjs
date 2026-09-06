@@ -89,7 +89,18 @@ const DARK = tokensIn(block('html[data-theme="dark"]'));
    #141b2c, which is unreadable and which nothing else would report. Layout and
    type tokens are theme-independent by nature and named here explicitly rather
    than inferred, so a genuinely missing colour cannot hide behind a heuristic. */
-const THEME_FREE = new Set(['--mono', '--sidebar-w', '--topbar-h', '--bottomnav-h']);
+const THEME_FREE = new Set([
+  '--mono', '--sidebar-w', '--topbar-h', '--bottomnav-h',
+  /* Type, geometry and motion, adopted from Gameweek Edge's names so the two
+     products describe a card the same way. None of them carries a colour, so
+     none of them can be unreadable on the wrong ground — which is the failure
+     this list exempts things from. Named individually rather than matched by
+     prefix: a heuristic like "anything starting --r-" would one day let a
+     genuinely light-only colour through under a name that happened to fit. */
+  '--font-display', '--font-body', '--font-mono',
+  '--r-sm', '--r-md', '--r-lg', '--r-xl', '--r-pill',
+  '--t-state', '--t-layout', '--ease'
+]);
 {
   /* A token defined as a bare var(--other) does not need a dark value of its
      own: it is an indirection, and it resolves through whatever --other holds
@@ -253,8 +264,56 @@ assert.deepStrictEqual(missing, [],
   'with no colour at all. This is what happens when a component is carried ' +
   'from the Premier League desk to another one and its token is left behind.');
 
+/* ---- 5: one theme, chosen once, applied before anything paints ---------
+ *
+ * Three claims, and each of them was false on all four desks until this pass.
+ *
+ * DARK IS THE DEFAULT. Asserted on the markup rather than on the script,
+ * because the attribute is what the stylesheet reads and it has to be right
+ * even with JavaScript disabled.
+ *
+ * ONE KEY. Every desk had its own — pl_desk_theme, eflc_desk_theme and so on
+ * — so choosing light and then using the league switcher put you back into
+ * dark, and the choice had to be made four times to make it stick. The
+ * switcher is one product.
+ *
+ * BEFORE FIRST PAINT. The theme was applied from the main script on all four
+ * pages, so every load flashed the default first; for anyone who had chosen
+ * light that was a full white-to-dark blink on a page they had told to be
+ * dark. The boot has to be inline, in <head>, and BEFORE the stylesheet — the
+ * position is the whole mechanism, so the position is what is checked.
+ */
+{
+  const KEY = 'bd_theme';
+  for (const page of Object.keys(PAGES)) {
+    const src = read(page);
+    const html = src.match(/<html[^>]*>/)[0];
+    assert.ok(/data-theme="dark"/.test(html),
+      `${page} does not ship data-theme="dark" on <html>. Dark is the default ` +
+      'now, and the attribute — not the script — is what the stylesheet reads, ' +
+      'so it has to be right with JavaScript off.');
+
+    const head = src.slice(src.indexOf('<head>'), src.indexOf('</head>'));
+    const boot = head.indexOf(KEY);
+    assert.notStrictEqual(boot, -1,
+      `${page} has no ${KEY} boot in <head>, so either the theme is not shared ` +
+      'across the desks or it is applied too late to prevent a flash');
+    const sheet = head.indexOf('assets/tw.css');
+    assert.ok(sheet === -1 || boot < sheet,
+      `${page} loads assets/tw.css before the theme boot runs, so the default ` +
+      'theme paints first and then blinks to the chosen one');
+    /* The OLD keys must be read for migration and never written as the
+       primary — an existing choice is not thrown away by the change that
+       unified them, but nothing new lands under a per-desk name either. */
+    assert.ok(/pl_desk_theme/.test(head),
+      `${page}'s boot does not migrate the old per-desk theme key, so everyone ` +
+      'who had already chosen a theme silently loses it');
+  }
+}
+
 console.log(
   `check-palette OK: ${LIGHT.size} tokens shared, ${DARK.size} themed dark, ` +
   `${Object.keys(PAGES).length} desks each declaring one league and no palette, ` +
   `${Object.keys(DESKS).length} share themes matching the stylesheet, ` +
-  `${refs} var() references all resolvable`);
+  `${refs} var() references all resolvable, and one theme keyed on bd_theme ` +
+  'defaulting to dark, applied before first paint on every desk\'s <head>');

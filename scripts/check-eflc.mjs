@@ -115,7 +115,21 @@ for (const need of ['data/eflc_data.js', 'assets/core.js', 'EFLC_PLAYERS', 'card
    eflc.html explaining why the key is not shared. */
 const keys = [...page.matchAll(/KEY\s*=\s*'([^']+)'/g)].map((m) => m[1]);
 assert.ok(keys.length >= 2, `expected localStorage key constants, found ${keys.length}`);
+/* THE THEME IS THE ONE KEY THAT SHOULD BE SHARED, and it is named here so
+   the exemption cannot quietly widen. Everything else in this list is state
+   ABOUT PLAYERS — a watchlist, a referee assignment — and the same name in
+   two divisions is two different people, which is what the rule protects.
+   A colour scheme is a preference about the product: it used to be stored
+   per desk, so choosing light and then using the league switcher put you
+   straight back into dark, and the choice had to be made four times to
+   stick. Asserted as an equality rather than skipped, so a desk drifting
+   back to its own theme key fails here rather than silently. */
+const THEME = 'bd_theme';
+assert.ok(keys.includes(THEME),
+  `eflc.html no longer uses the shared theme key ${THEME}, so the theme stops ` +
+  'following the reader across the league switcher');
 for (const k of keys) {
+  if (k === THEME) continue;
   assert.ok(k.startsWith('eflc_'),
     `localStorage key ${k} is not eflc-scoped — the two desks would share state ` +
     'across players who are different people with the same names');

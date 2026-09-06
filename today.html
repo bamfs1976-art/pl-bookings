@@ -1,6 +1,43 @@
 <!doctype html>
-<html lang="en" class="lg-all" data-theme="light">
+<html lang="en" class="lg-all" data-theme="dark">
 <head>
+<!-- THE THEME, BEFORE ANYTHING PAINTS AND BEFORE ANY STYLESHEET LOADS.
+
+     Two changes here, and the second is the one that was actually broken.
+
+     DARK IS THE DEFAULT NOW. This desk is read in the evening, on a phone, in
+     the hours before a kick-off, and it was opening white every time.
+     (Gameweek Edge defaults to light because light is that brand; this one is
+     not that brand, and the brief for this pass says dark.) The light toggle
+     stays exactly where it was.
+
+     ONE KEY, FOUR DESKS. Each page had its own — pl_desk_theme,
+     eflc_desk_theme, laliga_desk_theme, today_desk_theme — so choosing light
+     and then using the league switcher put you straight back into the dark
+     one, and you had to make the same choice four times to make it stick. The
+     switcher is one product; the theme follows you across it now. An old
+     per-desk key is read once and migrated, so nobody's existing choice is
+     thrown away by the change that unified them.
+
+     IT IS INLINE AND IT IS FIRST because the attribute has to be on <html>
+     before the first paint. Applied from the main script — which is where it
+     was on all four pages — every load flashed the default theme first, and
+     for anyone who had chosen light that flash was now a full white-to-dark
+     blink on a page they had told to be dark. -->
+<script>
+(function(){
+  var KEY='bd_theme', OLD=['pl_desk_theme','eflc_desk_theme','laliga_desk_theme','today_desk_theme'];
+  var t=null;
+  try{
+    t=localStorage.getItem(KEY);
+    if(!t){
+      for(var i=0;i<OLD.length&&!t;i++) t=localStorage.getItem(OLD[i]);
+      if(t) localStorage.setItem(KEY,t);
+    }
+  }catch(e){}
+  document.documentElement.setAttribute('data-theme',t==='light'?'light':'dark');
+})();
+</script>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data: https://cdn.sportmonks.com https://media.api-sports.io; connect-src 'self' https://knodunjnsxelmpziupwk.supabase.co">
@@ -513,11 +550,10 @@
   var C = window.PLDCore, S = window.PLDShare;
 
   /* ---- theme ----------------------------------------------------------- */
-  var THEME_KEY = 'today_desk_theme';
-  try {
-    var t = localStorage.getItem(THEME_KEY);
-    if (t) document.documentElement.dataset.theme = t;
-  } catch (e) { /* private mode */ }
+  /* The shared key — see the boot script in <head>, which has already applied
+     the theme before first paint. Each desk used to carry its own, so the
+     choice had to be made four times to survive the league switcher. */
+  var THEME_KEY = 'bd_theme';
   $('#themeBtn').addEventListener('click', function () {
     var d = document.documentElement.dataset.theme === 'dark';
     document.documentElement.dataset.theme = d ? 'light' : 'dark';
