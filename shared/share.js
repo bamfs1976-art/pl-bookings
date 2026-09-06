@@ -1336,7 +1336,7 @@
   }
 
   /* ---- download --------------------------------------------------------- */
-  /* Delegates to assets/save.js, which routes a phone to the native share
+  /* Delegates to shared/save.js, which routes a phone to the native share
      sheet — iOS Safari ignores `download` on a blob: URL, so the anchor below
      is a dead button on an iPhone and every card on every desk went out
      through it. The inline anchor is KEPT as a fallback rather than made a

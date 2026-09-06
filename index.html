@@ -1808,10 +1808,20 @@ License: MIT
 <script src="assets/accas.js"></script>
 <script src="assets/rotation.js"></script>
 <script src="assets/core.js"></script>
-<script src="assets/save.js"></script>
+<script src="shared/save.js"></script>
+<!-- THE SHARED CARD RENDERER, and this desk had never loaded it.
+     index.html draws its own match, gameweek and player cards inline — it was
+     the first desk built and the shared renderer was extracted from the three
+     that came after it. That was survivable while the two sets of cards did
+     not overlap. Referee Thursday goes through PLDShare.rankCard on all four
+     desks, so without this the button on THIS page would have found no module
+     and said so in a toast: a control that renders, is pressed, and reports
+     its own absence. Loaded after accas.js, which share.js's combo strip
+     calls rather than carrying its own copy of the double/treble rule. -->
+<script src="shared/share.js"></script>
 <script src="assets/leaguebar.js"></script>
 <script src="assets/plmodel.js"></script>
-<script src="assets/suspension.js"></script>
+<script src="shared/suspension.js"></script>
 <script src="assets/metric.js"></script>
 <script src="assets/a11y.js"></script>
 <script src="assets/livecards.js"></script>
@@ -2662,7 +2672,7 @@ async function exportPNG(){
 
 // ---- suspension watch ----
 // The rule ships in pl_data.js as SUSPENSION, generated from data/leagues.py,
-// and the maths is assets/suspension.js — shared with the Championship desk,
+// and the maths is shared/suspension.js — shared with the Championship desk,
 // which runs the same ladder with different gates (19/37 against this desk's
 // 19/32 because its season is 46 games), and with La Liga, which runs a
 // completely different scheme. No page here defines a threshold.
@@ -2741,17 +2751,17 @@ function renderSuspension(){
 /* Every file this page hands the user — cards, CSVs, the calendar invite —
    goes out through here. On an iPhone the desktop idiom (an <a download> on a
    blob: or data: URL) is silently inert: Safari ignores the attribute, so the
-   button appears to work and nothing is ever saved. assets/save.js routes a
+   button appears to work and nothing is ever saved. shared/save.js routes a
    phone to the native share sheet instead, which is also the better home for a
    card meant to be posted. The `then` reports 'share' | 'download' |
    'cancelled' so the toast can tell the truth about what happened. */
 function saveFile(blob,name,mime,done){
-  /* No inline anchor fallback here on purpose. assets/save.js already owns
+  /* No inline anchor fallback here on purpose. shared/save.js already owns
      both routes — share sheet and anchor — and a second copy of the anchor in
      this file is exactly how the iOS bug survived: the broken idiom spread
      across five call sites, so fixing one fixed nothing. scripts/check-mobile
      fails the build if any page grows one back. */
-  if(!window.PLDSave){ console.warn("[Bookings Desk] assets/save.js did not load"); return; }
+  if(!window.PLDSave){ console.warn("[Bookings Desk] shared/save.js did not load"); return; }
   window.PLDSave.file(blob,name,mime)
     .then(r=>{ if(done) done(r); })
     .catch(e=>{ console.warn("[Bookings Desk] save:",e); if(done) done("download"); });
@@ -2838,7 +2848,7 @@ async function exportFixturePNG(fid){
   x.fillText("ACCA BUILDER · SAME MATCH",P,ay-18);
   x.textAlign="right"; x.fillText("ALL BOOKED",W-P,ay-18); x.textAlign="left";
   // The combo rule lives in assets/accas.js — one implementation for the two
-  // builders on this card, the one in assets/share.js and the /accas page.
+  // builders on this card, the one in shared/share.js and the /accas page.
   const accaRows=PLDAccas.comboRows(top3);
   if(!accaRows.length){ x.fillStyle="#586275"; x.font=`600 22px ${body}`; x.fillText("Not enough rated players for a combo.",P,ay+34); }
   const arh=120;

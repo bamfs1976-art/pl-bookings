@@ -318,6 +318,20 @@ jobs:
       - name: The Why line explains the price that is beside it
         run: node scripts/check-why.mjs
 
+      # shared/ holds the three modules that are not this product's opinions:
+      # the share-card renderer, the file handover, and the suspension ladder.
+      # The failure this guards is the COPY, and this repository has had it
+      # twice — La Liga shipped in the Championship's purple because a page was
+      # duplicated with its <style>, and the acca arithmetic existed three
+      # times. Both were invisible: every page passed its own checks, because
+      # nothing had ever asked whether two files said the same thing. So a
+      # second copy fails the build, matched on CONTENT rather than filename,
+      # since share-v2.js and a paste into an inline <script> are the copies
+      # that actually happen. Also runs the byte pinning, so the version in
+      # shared/package.json cannot stand still while the contents move.
+      - name: One of each shared module, and its bytes are pinned
+        run: node scripts/check-shared.mjs
+
       # The sibling desks each had TWO answers to "which matchday is it": the
       # This Matchday tab rolled over at midnight after the last fixture's date,
       # the Fixtures dropdown rolled over at the last KICK-OFF. So for several

@@ -8,7 +8,7 @@ Spain invents bans nobody serves.
 
 So the rules live in `data/leagues.py` as structured schemes, ship with each
 dataset as `const SUSPENSION`, and are computed by one shared module
-(`assets/suspension.js` over `PLDCore.nextSuspension`). No page implements a
+(`shared/suspension.js` over `PLDCore.nextSuspension`). No page implements a
 threshold.
 
 ## The two shapes

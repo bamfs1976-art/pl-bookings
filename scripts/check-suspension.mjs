@@ -33,9 +33,9 @@ const ctx = { window: undefined, console };
 ctx.globalThis = ctx;
 vm.createContext(ctx);
 vm.runInContext(readFileSync(join(root, 'assets', 'core.js'), 'utf8'), ctx);
-vm.runInContext(readFileSync(join(root, 'assets', 'suspension.js'), 'utf8'), ctx);
+vm.runInContext(readFileSync(join(root, 'shared', 'suspension.js'), 'utf8'), ctx);
 const SU = ctx.PLDSuspension;
-assert.ok(SU && typeof SU.render === 'function', 'assets/suspension.js did not export PLDSuspension');
+assert.ok(SU && typeof SU.render === 'function', 'shared/suspension.js did not export PLDSuspension');
 assert.ok(typeof SU.header === 'function', 'the strip has no column header');
 
 /* An English-style ladder, as the Premier League and Championship use. */
@@ -194,7 +194,7 @@ assert.ok(!/flex-wrap:\s*wrap/.test(rule[1]),
   '.susp-row wraps again, which is what pushed the third percentage onto its ' +
   'own line');
 
-assert.ok(existsSync(join(root, 'assets', 'suspension.js')));
+assert.ok(existsSync(join(root, 'shared', 'suspension.js')));
 console.log('check-suspension OK: figures stay in one cell under labelled ' +
   'columns, the name keeps its own row, the styling is shared, and the ' +
   'Premier League strip counts this season only');

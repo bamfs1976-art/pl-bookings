@@ -485,10 +485,10 @@
 <script src="assets/shell.js"></script>
 <script src="assets/tour.js"></script>
 <script src="assets/palette.js"></script>
-<script src="assets/save.js"></script>
+<script src="shared/save.js"></script>
 <script src="assets/leaguebar.js"></script>
-<script src="assets/share.js"></script>
-<script src="assets/suspension.js"></script>
+<script src="shared/share.js"></script>
+<script src="shared/suspension.js"></script>
 <script src="assets/a11y.js"></script>
 <script src="assets/price.js"></script>
 <script src="assets/livecards.js"></script>
@@ -1663,7 +1663,7 @@
 
   /* ---- suspension watch -------------------------------------------------
    * The rule ships with the data (const SUSPENSION, generated from
-   * data/leagues.py) and the maths lives in assets/suspension.js, shared with
+   * data/leagues.py) and the maths lives in shared/suspension.js, shared with
    * the La Liga desk — which needs a completely different scheme, which is
    * exactly why neither page implements one. */
   var SUSP = (typeof SUSPENSION !== 'undefined' && SUSPENSION) || null;
@@ -1718,7 +1718,7 @@
   }
 
   /* ---- share cards ------------------------------------------------------ */
-  /* The drawing lives in assets/share.js, shared with the other two desks, so
+  /* The drawing lives in shared/share.js, shared with the other two desks, so
      three cards cannot drift apart the first time a colour changes. This end
      only says which league is asking and hands over fixtures already priced by
      priceFixture() — the same objects the cards on screen are built from, so
@@ -1950,7 +1950,7 @@
 
   /* PLDSave routes a phone to the share sheet; an <a download> is inert on iOS. */
   function saveFile(blob, name, mime, done) {
-    if (!window.PLDSave) { console.warn('assets/save.js did not load'); return; }
+    if (!window.PLDSave) { console.warn('shared/save.js did not load'); return; }
     window.PLDSave.file(blob, name, mime).then(function (r) { if (done) done(r); })
       .catch(function (e) { console.warn(e); });
   }

@@ -24,3 +24,10 @@
 
 /assets/*
   Cache-Control: public, max-age=300, must-revalidate
+
+# The three shared modules moved out of /assets on 2026-09-05 and would
+# otherwise have quietly dropped to the default policy on the way — the share
+# renderer, the file handover and the suspension ladder, cached differently
+# from everything they sit beside for no reason anybody would have noticed.
+/shared/*
+  Cache-Control: public, max-age=300, must-revalidate

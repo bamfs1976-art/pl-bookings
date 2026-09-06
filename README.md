@@ -161,7 +161,7 @@ a.href = URL.createObjectURL(blob); a.download = name; a.click();
 
 — is silently inert on an iPhone: the card renders, the tap does nothing, and there is no error in the console. The site's headline feature was dead on the device most people would open it on, on all four desks plus the CSV exports and the calendar invite, and nothing in the test suite or the browser could see it.
 
-`assets/save.js` now owns every file the site hands over. Where the Web Share API can take files it opens the **native share sheet** — Save Image, Messages, WhatsApp, Instagram — which for a card meant to be posted is not a workaround for the download but a better destination than it. Everywhere else it falls back to the anchor, because Web Share with files is still missing on most desktop browsers. Dismissing the sheet returns `cancelled` and does **not** fall through to a download: the user just declined that file, and handing it over anyway is the kind of thing that makes a share button feel broken in the other direction.
+`shared/save.js` now owns every file the site hands over. Where the Web Share API can take files it opens the **native share sheet** — Save Image, Messages, WhatsApp, Instagram — which for a card meant to be posted is not a workaround for the download but a better destination than it. Everywhere else it falls back to the anchor, because Web Share with files is still missing on most desktop browsers. Dismissing the sheet returns `cancelled` and does **not** fall through to a download: the user just declined that file, and handing it over anyway is the kind of thing that makes a share button feel broken in the other direction.
 
 Two details that are easy to get wrong and are pinned by tests: the dedupe of `AbortError` from a genuine failure (the first is a decision, the second needs the fallback), and the fact that the fix has to be in *one* place — the broken idiom was spread across five call sites in `index.html` alone, so fixing any one of them fixed nothing.
 
@@ -266,14 +266,14 @@ The trap on this desk specifically is that there are now two card counts in scop
 | Gate | match 19 / 32 | match **19 / 37** | none |
 | After a ban | keeps running | keeps running | resets |
 
-Getting those the wrong way round is silent both ways, so no page implements a threshold: the rules live in `data/leagues.py`, ship with each dataset as `const SUSPENSION`, and are computed by one shared module (`assets/suspension.js` over `PLDCore.nextSuspension`). `check-data`, `check-eflc` and `check-laliga` each reject the *other* leagues' schemes: the Championship guard rejects the Premier League's match-32 gate, and the Premier League guard rejects the Championship's match-37 one — the pair that differ by five matches and by nothing visible on screen.
+Getting those the wrong way round is silent both ways, so no page implements a threshold: the rules live in `data/leagues.py`, ship with each dataset as `const SUSPENSION`, and are computed by one shared module (`shared/suspension.js` over `PLDCore.nextSuspension`). `check-data`, `check-eflc` and `check-laliga` each reject the *other* leagues' schemes: the Championship guard rejects the Premier League's match-32 gate, and the Premier League guard rejects the Championship's match-37 one — the pair that differ by five matches and by nothing visible on screen.
 
 The gating is load-bearing and was wrong at first: a Championship player on four cautions after his club's 19th match can no longer reach that rung, so pricing his ban over a 23-match horizon showed **99%** for something already impossible. The horizon is capped at the gate. `docs/suspension-rules.md` covers all three schemes and — as with Spain — exactly how far each was verified, which is not all the way: the regulations themselves are unreachable from this environment.
 
 ### Share cards, and the combined view
 
 All three desks now export the same two cards, from one implementation in
-`assets/share.js`: **⬇ Share match** on every fixture and **⬇ Share matchday**
+`shared/share.js`: **⬇ Share match** on every fixture and **⬇ Share matchday**
 for the whole round, ranked by booking heat, each with an acca strip showing the
 best double and treble and their fair odds. The desks differ only by a *theme*
 (two gradient stops, a strap, a wordmark) and an *adapter* that turns whatever

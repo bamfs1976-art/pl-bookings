@@ -35,14 +35,14 @@ function codeOnly(src) {
 }
 
 /* ---- 1. nothing saves a file through a bare anchor ----------------------- */
-assert.ok(existsSync(join(root, 'assets', 'save.js')),
-  'assets/save.js is missing — nothing routes a phone to the share sheet');
+assert.ok(existsSync(join(root, 'shared', 'save.js')),
+  'shared/save.js is missing — nothing routes a phone to the share sheet');
 /* codeOnly, NOT the raw source. save.js explains AbortError at length in a
    comment, so the assertion below passed with the actual check renamed away —
    the guard was reading the prose about the behaviour instead of the
    behaviour. Third time this file's own comments have satisfied one of its
    assertions. */
-const save = codeOnly(read('assets/save.js'));
+const save = codeOnly(read('shared/save.js'));
 assert.ok(/navigator\.canShare/.test(save) && /navigator\.share\(/.test(save),
   'save.js does not use the Web Share API, which is the only way an iPhone ' +
   'can save a generated file');
@@ -58,12 +58,12 @@ for (const p of PAGES) {
   assert.equal(anchors.length, 0,
     `${p} sets a.download directly (${anchors.length} site(s)) instead of going ` +
     'through PLDSave — that button does nothing on an iPhone, with no error');
-  assert.ok(/assets\/save\.js/.test(read(p)),
-    `${p} does not load assets/save.js`);
+  assert.ok(/shared\/save\.js/.test(read(p)),
+    `${p} does not load shared/save.js`);
 }
 /* share.js keeps an inline anchor as its fallback, because the guard's VM
    loads it with no DOM modules — but it must PREFER PLDSave. */
-const shareSrc = codeOnly(read('assets/share.js'));
+const shareSrc = codeOnly(read('shared/share.js'));
 assert.ok(/PLDSave/.test(shareSrc),
   'share.js does not delegate to PLDSave, so every desk card is inert on iOS');
 

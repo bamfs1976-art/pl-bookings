@@ -2,7 +2,7 @@
  *
  * A STANDALONE FILE, AND A SMALL ONE, because it is the rule three renderers
  * needed and each had written its own. Before this existed the same handful of
- * lines lived in assets/share.js (accaStrip) and TWICE inline in index.html —
+ * lines lived in shared/share.js (accaStrip) and TWICE inline in index.html —
  * the same-match builder and the cross-match builder — and only one of the
  * three carried the de-duplication that keeps a player out of his own combo.
  * The other two were correct only because their inputs happened to hold one

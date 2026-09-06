@@ -77,7 +77,7 @@ kick-off as it does on a Tuesday, and nothing on screen says which.
   never had.
 - *Acceptance:* a guard asserts an unconfirmed fixture cannot render as
   confirmed, and that the state survives a redraw of the grid.
-- *Effort:* small. *Risk:* low. *Touches:* three desks, `assets/share.js`.
+- *Effort:* small. *Risk:* low. *Touches:* three desks, `shared/share.js`.
 
 **1.2 Manual odds entry and edge.** `assets/core.js` already has
 `impliedProb`, `marketProbDeVig`, `fairOdds`, `edgePct`, `valuePoint` and

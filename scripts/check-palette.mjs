@@ -19,7 +19,7 @@
  *
  *   1. No page declares colour tokens. tw.css is the only source.
  *   2. Each page wears exactly one lg-* class, and the right one.
- *   3. assets/share.js — which draws to a canvas and so CANNOT read a
+ *   3. shared/share.js — which draws to a canvas and so CANNOT read a
  *      stylesheet — carries the same colours the stylesheet does.
  *   4. Every --token any page REFERENCES is defined in tw.css, in both
  *      themes. This is what catches a Premier League component being
@@ -162,10 +162,10 @@ for (const [page, cls] of Object.entries(PAGES)) {
 /* Read the THEMES literal out of the source. Importing it would need a DOM,
    and the file is a browser IIFE — but the object is a plain literal, so the
    fields can be pulled directly and the values compared. */
-const share = read('assets/share.js');
+const share = read('shared/share.js');
 function shareTheme(code) {
   const at = share.indexOf('\n    ' + code + ': {');
-  assert.notStrictEqual(at, -1, `assets/share.js has no THEMES.${code}`);
+  assert.notStrictEqual(at, -1, `shared/share.js has no THEMES.${code}`);
   const body = share.slice(at, share.indexOf('\n    }', at));
   const field = (k) => {
     const m = body.match(new RegExp(k + ":\\s*'([^']*)'"));

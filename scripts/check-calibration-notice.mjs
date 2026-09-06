@@ -66,9 +66,9 @@ ok(/typeof document !== 'undefined'/.test(core),
   'the mount is not guarded on document — the Node test suites require() this file');
 
 /* ---- 4. never on a share card ------------------------------------------- */
-const share = read('assets/share.js');
+const share = read('shared/share.js');
 ok(!share.includes(NOTICE) && !/CALIBRATION_NOTICE/.test(share),
-  'assets/share.js carries the calibration caveat. Cards stay uncluttered, and ' +
+  'shared/share.js carries the calibration caveat. Cards stay uncluttered, and ' +
   'a stale caveat on a shared image cannot be corrected after it leaves.');
 
 console.log(`check-calibration-notice OK: "${NOTICE}" defined once in core, ` +

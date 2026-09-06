@@ -5,7 +5,7 @@
 // things worth pinning are that it says the same numbers as the desk, and that
 // it cannot silently lose a league's identity.
 //
-// This runs assets/share.js in a VM with a stub canvas that RECORDS every draw
+// This runs shared/share.js in a VM with a stub canvas that RECORDS every draw
 // call instead of rasterising. That is deliberate: rendering a PNG in CI and
 // diffing pixels would fail on a font substitution and pass on a wrong number,
 // which is exactly backwards. What matters is the text drawn.
@@ -85,7 +85,7 @@ function makeSandbox(drawn, placed) {
      A stub here would defeat the point — the assertions below about what a
      combo strip draws have to run against the real rule. */
   vm.runInContext(readFileSync(join(root, 'assets', 'accas.js'), 'utf8'), ctx);
-  vm.runInContext(readFileSync(join(root, 'assets', 'share.js'), 'utf8'), ctx);
+  vm.runInContext(readFileSync(join(root, 'shared', 'share.js'), 'utf8'), ctx);
   return ctx;
 }
 
@@ -93,7 +93,7 @@ const drawn = [];
 const placed = [];
 const sb = makeSandbox(drawn, placed);
 const S = sb.PLDShare;
-assert.ok(S, 'assets/share.js did not export PLDShare');
+assert.ok(S, 'shared/share.js did not export PLDShare');
 
 /* ---- every desk has an identity ---------------------------------------- */
 for (const code of ['PL', 'EFLC', 'LL', 'ALL']) {
@@ -702,9 +702,15 @@ assert.equal(drawn.filter((t) => t === 'PL').length, 0,
 
 /* ---- the pages are wired to it ------------------------------------------ */
 for (const [page, needs] of [
-  ['eflc.html', ['assets/share.js', 'PLDShare', 'deskMatchSpec', 'fxShareBtn', 'data-share']],
-  ['laliga.html', ['assets/share.js', 'PLDShare', 'deskMatchSpec', 'fxShareBtn', 'data-share']],
-  ['today.html', ['assets/share.js', 'PLDShare', 'roundCard', 'data-frame.html']]
+  /* index.html draws its own match and gameweek cards inline — it was the
+     first desk built and the shared renderer was extracted from the three
+     that followed. It loads share.js now regardless, because Referee Thursday
+     goes through PLDShare.rankCard on all four desks and without the module
+     that button reports its own absence in a toast. */
+  ['index.html', ['shared/share.js', 'PLDShare', 'refThursdaySpec', 'refShareBtn']],
+  ['eflc.html', ['shared/share.js', 'PLDShare', 'deskMatchSpec', 'fxShareBtn', 'data-share']],
+  ['laliga.html', ['shared/share.js', 'PLDShare', 'deskMatchSpec', 'fxShareBtn', 'data-share']],
+  ['today.html', ['shared/share.js', 'PLDShare', 'roundCard', 'data-frame.html']]
 ]) {
   if (!existsSync(join(root, page))) continue;
   const src = readFileSync(join(root, page), 'utf8');
@@ -1198,32 +1204,32 @@ console.log('check-share: both fixture grids and the matchday button are wired o
  * is pinned here is the property it depends on.
  */
 {
-  const s = readFileSync(join(root, 'assets', 'share.js'), 'utf8');
+  const s = readFileSync(join(root, 'shared', 'share.js'), 'utf8');
   const m = /function loadImage\([\s\S]*?\n  \}/.exec(s);
-  assert.ok(m, 'assets/share.js no longer loads images for the canvas');
+  assert.ok(m, 'shared/share.js no longer loads images for the canvas');
   assert.ok(/crossOrigin\s*=\s*'anonymous'/.test(m[0]),
-    'assets/share.js draws remote images onto the share canvas without ' +
+    'shared/share.js draws remote images onto the share canvas without ' +
     "crossOrigin = 'anonymous'. A host that sends no Access-Control-Allow-Origin " +
     'then taints the canvas and toBlob throws SecurityError — the card is not ' +
     'degraded, it is gone.');
   /* AND BEFORE src. Assigning src starts the fetch; a crossOrigin set after it
      is a request the browser has already made without CORS. */
   assert.ok(m[0].indexOf('crossOrigin') < m[0].indexOf('img.src'),
-    'assets/share.js sets img.src before img.crossOrigin — the fetch has already ' +
+    'shared/share.js sets img.src before img.crossOrigin — the fetch has already ' +
     'started by then, so the CORS request is never made and the canvas taints');
   /* NEVER BLOCKING. The file's first promise is that a card renders from what
      is already on the page; a deadline is what keeps that true once it asks
      the network for a face. */
   assert.ok(/setTimeout\(function \(\) \{ settle\(null\); \}/.test(m[0]),
-    'assets/share.js waits on an image with no deadline — a share card that ' +
+    'shared/share.js waits on an image with no deadline — a share card that ' +
     'hangs on a dead image host fails exactly when someone wants it');
   /* AND A MISSING IMAGE IS STILL A CARD. Both draw paths must survive null:
      this is the branch that runs today, since neither image host answers from
      the sandbox this was built in. */
   assert.ok(/function face\(x, img, name/.test(s) && /if \(img\) \{/.test(s),
-    'assets/share.js has no monogram branch for a player with no photograph');
+    'shared/share.js has no monogram branch for a player with no photograph');
   assert.ok(/function crestOn\([\s\S]{0,200}if \(!img\) return badge\(/.test(s),
-    'assets/share.js has no badge branch for a club whose crest did not load');
+    'shared/share.js has no badge branch for a club whose crest did not load');
 }
 
 /* ---- REFEREE THURSDAY --------------------------------------------------
@@ -1255,7 +1261,7 @@ console.log('check-share: both fixture grids and the matchday button are wired o
   const sbr = makeSandbox(drawnRef, placedRef);
   const SR = sbr.PLDShare;
   assert.ok(typeof SR.refThursdaySpec === 'function',
-    'assets/share.js exports no refThursdaySpec — the Referee Thursday card has no adapter');
+    'shared/share.js exports no refThursdaySpec — the Referee Thursday card has no adapter');
 
   const PL = { title: 'Premier League', avgYpg: 3.696, refs: [
     { name: 'Michael Oliver', ypg: 3.40, cpf: 0.198, factor: 0.95, fixture: 'ARS v CHE' },
@@ -1342,13 +1348,13 @@ console.log('check-share: both fixture grids and the matchday button are wired o
  * line, which is what it has always carried.
  */
 {
-  const share = readFileSync(join(root, 'assets', 'share.js'), 'utf8');
+  const share = readFileSync(join(root, 'shared', 'share.js'), 'utf8');
   assert.ok(!/whyLine/.test(share),
-    'assets/share.js calls PLDCore.whyLine. The Why line explains a price on the ' +
+    'shared/share.js calls PLDCore.whyLine. The Why line explains a price on the ' +
     'desk, where it can be re-read against live data; on a card it is a truncated ' +
     'sentence asserting a reason that may already have changed.');
   assert.ok(!/cand-why/.test(share),
-    'assets/share.js renders the Why line class');
+    'shared/share.js renders the Why line class');
   /* Not merely absent from the code — absent from what the cards DRAW. The
      text above is collected from every rendered card in this run, so this is
      the assertion a future adapter cannot sidestep by building the sentence

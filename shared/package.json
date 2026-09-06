@@ -1,0 +1,16 @@
+{
+  "name": "@bookings-desk/shared",
+  "version": "1.0.0",
+  "description": "The three browser modules every Bookings Desk page loads: the share-card renderer, the file handover, and the suspension ladder.",
+  "license": "MIT",
+  "private": true,
+  "type": "commonjs",
+  "files": [
+    "share.js",
+    "save.js",
+    "suspension.js"
+  ],
+  "scripts": {
+    "check": "node ../scripts/vendor-shared.mjs --check"
+  }
+}

@@ -161,8 +161,8 @@ assert.ok(/bookedTable\(rows, 10, \{ rounds: heads \}\)/.test(today),
   'the last-five table is drawn without its round columns');
 assert.ok(/cells: r\.cells/.test(today),
   'the last-five share card is built without the per-round cells the table shows');
-assert.ok(/r\.cells\.forEach/.test(read('assets/share.js')),
-  'assets/share.js no longer draws the per-round cells, so the card and the ' +
+assert.ok(/r\.cells\.forEach/.test(read('shared/share.js')),
+  'shared/share.js no longer draws the per-round cells, so the card and the ' +
   'page show different things');
 
 /* ---- 4b. the faces, and the join that must not be done twice ------------ */
@@ -241,8 +241,8 @@ for (const kind of ['league', 'recent', 'clubs']) {
     `the ${kind} section has no share button`);
 }
 assert.ok(/S\.rankCard\(/.test(today), 'today.html never builds a rank card');
-const share = read('assets/share.js');
-assert.ok(/rankCard: rankCard/.test(share), 'assets/share.js does not export rankCard');
+const share = read('shared/share.js');
+assert.ok(/rankCard: rankCard/.test(share), 'shared/share.js does not export rankCard');
 /* One builder for all three cards, for the same reason the page has one row
    builder: three card functions is three places for the count to differ. */
 assert.equal((share.match(/function rankCard\(/g) || []).length, 1,
