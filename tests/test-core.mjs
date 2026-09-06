@@ -1999,4 +1999,53 @@ t('the why line is decided by the data, not filled into a template', () => {
     `the why line quotes figures the caller did not supply: "${strict}"`);
 });
 
+t('the channel source is a closed list, captured once, first touch wins', () => {
+  const store = () => {
+    const m = {};
+    return { getItem: (k) => (k in m ? m[k] : null), setItem: (k, v) => { m[k] = v; }, _m: m };
+  };
+  /* The list is closed. A ?src= anybody can type is a free text field on a
+     public URL: storing what it says would put an arbitrary string into the
+     analytics and a guaranteed mess of near-duplicates into the charts. */
+  for (const v of core.SRC_VALUES) assert.equal(core.parseSource('?src=' + v), v);
+  assert.equal(core.parseSource('?src=Reddit'), 'reddit', 'case is folded');
+  assert.equal(core.parseSource('?gw=4&src=seo&x=1'), 'seo', 'reads it from anywhere in the query');
+  assert.equal(core.parseSource('?src=facebook'), null, 'an unlisted channel is not stored');
+  assert.equal(core.parseSource('?src=<script>'), null, 'arbitrary text is not stored');
+  assert.equal(core.parseSource('?src='), null);
+  assert.equal(core.parseSource('?gw=4'), null);
+  assert.equal(core.parseSource(''), null);
+  assert.equal(core.parseSource(null), null);
+
+  /* FIRST TOUCH, AND IT IS THE WHOLE POINT. Somebody arrives from Reddit,
+     comes back a fortnight later through a search, and signs up. Last-touch
+     would credit SEO for a reader Reddit brought — systematically, because a
+     returning visitor is likelier to arrive by search whatever brought them. */
+  const s = store();
+  assert.equal(core.attribution(s, '?src=reddit'), 'reddit');
+  assert.equal(core.attribution(s, '?src=seo'), 'reddit', 'a later visit overwrote the first');
+  assert.equal(core.attribution(s, '?src=x'), 'reddit');
+  assert.equal(core.currentSource(s), 'reddit');
+  assert.ok(JSON.parse(s._m[core.SRC_KEY]).at, 'the stamp records when it was captured');
+
+  /* An untagged first visit leaves the reader unattributed AND still open to
+     attribution later — nothing was written, so there is nothing to win. */
+  const u = store();
+  assert.equal(core.attribution(u, '?gw=4'), null);
+  assert.equal(u._m[core.SRC_KEY], undefined, 'an untagged visit wrote a row anyway');
+  assert.equal(core.attribution(u, '?src=telegram'), 'telegram');
+
+  /* Private mode throws on setItem. An analytics nicety must never be the
+     thing that stops a fixture list rendering. */
+  const throwing = {
+    getItem() { return null; },
+    setItem() { throw new Error('QuotaExceededError'); }
+  };
+  assert.equal(core.attribution(throwing, '?src=x'), 'x');
+  const blind = { getItem() { throw new Error('blocked'); }, setItem() {} };
+  assert.equal(core.attribution(blind, '?src=x'), 'x');
+  assert.equal(core.currentSource(blind), null);
+  assert.equal(core.attribution(null, '?src=x'), null);
+});
+
 console.log(`\n${passed} tests passed`);

@@ -129,6 +129,32 @@ A permanent redirect rather than a 302 because the move is permanent and the
 old address should stop being indexed. Nothing in this repository can verify
 any of it, which is why it is written down here rather than assumed done.
 
+### Where readers come from
+
+Add `?src=` to a link and the desk records it, once, in that browser: `x`,
+`reddit`, `telegram`, `threads`, `bluesky`, `email`, `creator`, `seo`. The list
+is closed, and a value that is not on it is dropped rather than stored — a
+query parameter anybody can type is a free text field on a public URL, and
+storing what it says would put an arbitrary string into a column, a chart and
+a guaranteed mess of near-duplicates.
+
+**First touch wins.** Somebody finds the desk through a Reddit thread, comes
+back a fortnight later through a search, and signs up. Last-touch attribution
+credits SEO for a reader Reddit brought, and it does so *systematically*: a
+returning visitor is likelier to arrive by search whatever brought them first.
+The value is written once and never overwritten.
+
+The channel rides on each logged pick and on each sign-in, and
+`supabase/plb_channel.sql` creates `plb_channel_weekly`: sign-ins and **first**
+picks by source by week. First picks and not total picks, because total picks
+measures how much a handful of heavy users log, while the first measures how
+many people crossed from reading the desk to using it — which is the thing a
+channel can be credited with. The view is `security_invoker`, so it is read
+with the service-role key rather than being a public leaderboard.
+
+Nothing here identifies anybody: it is one of eight words in the reader's own
+browser storage, and it says which link was followed, not who followed it.
+
 ## Getting between the desks
 
 There is a **league switcher** on every page — Premier League · Championship · La Liga · Today — sticky under the topbar, marking the desk you are on.

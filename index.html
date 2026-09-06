@@ -3486,7 +3486,7 @@ function pickXiState(text){
 }
 $("pickForm").addEventListener("submit",e=>{ e.preventDefault();
   const fixture=$("pkFixture").value.trim();
-  const p={id:"p"+Date.now().toString(36)+Math.random().toString(36).slice(2,6),ts:Date.now(),uat:Date.now(),fixture,selection:$("pkSelection").value.trim(),market:$("pkMarket").value.trim(),odds:$("pkOdds").value,stake:$("pkStake").value,status:"pending",xi:pickXiState(fixture)};
+  const p={id:"p"+Date.now().toString(36)+Math.random().toString(36).slice(2,6),ts:Date.now(),uat:Date.now(),fixture,selection:$("pkSelection").value.trim(),market:$("pkMarket").value.trim(),odds:$("pkOdds").value,stake:$("pkStake").value,status:"pending",xi:pickXiState(fixture),src:PLDCore.currentSource(window.localStorage)};
   if(!p.fixture||!p.selection) return; state.picks.push(p); saveState(); cloudPickUpsert(p); renderTracker(); e.target.reset(); $("pkFixture").focus();
 });
 $("pickRows").addEventListener("change",e=>{ const s=e.target.closest(".pk-status"); if(!s) return; const p=state.picks.find(x=>x.id===s.dataset.id); if(p){ p.status=s.value; touchPick(p); saveState(); cloudPickUpsert(p); renderTracker(); } });
@@ -6102,8 +6102,36 @@ function initAuth(){
   sb.auth.getSession().then(({data})=>onAuthChange(data&&data.session)).catch(()=>{});
   sb.auth.onAuthStateChange((_e,s)=>onAuthChange(s));
 }
+/* A SIGN-IN, WITH THE CHANNEL THAT BROUGHT THEM.
+ *
+ * One row per sign-in rather than a counter, because the question this table
+ * exists to answer is "which channel brings people who come back", and a
+ * counter cannot be grouped by week.
+ *
+ * FIRE AND FORGET, AND SILENT ON FAILURE. Every other cloud write on this desk
+ * follows the same rule: local storage is the working copy and the network is
+ * an optimisation. An analytics insert is the LAST thing that should be able
+ * to interrupt somebody signing in, so a failure here does nothing visible at
+ * all.
+ *
+ * It writes on every sign-in, not only the first. The view in
+ * supabase/plb_channel.sql does the first-touch reduction, so the raw rows
+ * stay a record of what happened rather than an interpretation of it. */
+function logSignIn(){
+  if(!sb||!uid()||CLOUD_RO) return;
+  sb.from("plb_signins").insert({
+    user_id:uid(),
+    src:PLDCore.currentSource(window.localStorage)
+  }).then(()=>{},()=>{});
+}
 function onAuthChange(session){
+  const was=SESSION&&SESSION.user?SESSION.user.id:null;
   SESSION=session||null; updateAcctUI();
+  /* Only on a genuine change of user. onAuthStateChange also fires on a token
+     refresh, roughly hourly on an open tab, and counting those as sign-ins
+     would make a desk left open overnight look like the best-converting
+     channel on the board. */
+  if(uid()&&uid()!==was) logSignIn();
   if(uid()&&uid()!==SYNCED_UID) syncOnLogin();
   if(!uid()) SYNCED_UID=null;
 }
@@ -6125,6 +6153,10 @@ function pickRow(p){
   /* Only ever the three states the column allows, and null for "not known" —
      a pick logged on one device keeps its pre-lineup mark on the next. */
   row.xi=(p.xi==="pending"||p.xi==="unresolved"||p.xi==="confirmed")?p.xi:null;
+  /* The channel that brought this reader, off the closed list — see
+     PLDCore.attribution. Null where nothing tagged the link they followed,
+     which is the honest answer rather than a guess. */
+  row.src=(PLDCore.SRC_VALUES.indexOf(p.src)>=0)?p.src:null;
   if(HAS_SCHEMA_COL) row.schema_v=SCHEMA_V;
   return row;
 }
@@ -6174,6 +6206,7 @@ async function syncOnLogin(){
            pick was logged, so a newer edit from a client that never knew the
            column must not erase what an older, better-informed one recorded. */
         if(c.xi) l.xi=c.xi;
+        if(c.src) l.src=c.src;
       }else if(!lU&&!cU&&l.status==="pending"&&c.status!=="pending"){
         l.status=c.status;
       }
@@ -6192,6 +6225,7 @@ function cloudToPick(r){
              written before the column existed comes back undefined, which
              reads as "not known" and is the honest answer for it. */
           xi:r.xi||null,
+          src:r.src||null,
           ts:r.created_at?Date.parse(r.created_at):0,
           uat:r.updated_at?Date.parse(r.updated_at):0};
 }

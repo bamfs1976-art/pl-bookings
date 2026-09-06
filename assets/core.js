@@ -1581,6 +1581,82 @@
     return nodes.length;
   }
 
+  /* ═══ WHERE THIS READER CAME FROM ════════════════════════════════════════
+   *
+   * A `?src=` on the link, stored once, so the desk can eventually answer
+   * "which channel actually brings people who log a pick" rather than "which
+   * channel brings clicks". Those are different questions and only the second
+   * one is easy.
+   *
+   * FIRST VISIT WINS, AND THAT IS THE WHOLE DESIGN. Somebody finds the desk
+   * through a Reddit thread, comes back a fortnight later through a Google
+   * search, and signs up. Last-touch attribution credits SEO for a reader
+   * Reddit brought — and it does it systematically, because a returning
+   * visitor is more likely to arrive by search whatever brought them first.
+   * So the value is written once and never overwritten, and the stored stamp
+   * records when, not the most recent time it was seen.
+   *
+   * AN UNKNOWN VALUE IS DROPPED, NOT STORED. The list is closed. A `?src=`
+   * anybody can type is a free text field on a public URL, and storing what it
+   * says would put an arbitrary string into the analytics, into a pick row and
+   * eventually into a chart — a small injection surface and a guaranteed mess
+   * of near-duplicates (x, X, twitter, Twitter). An unrecognised value leaves
+   * the reader unattributed, which is the honest answer for a link nobody on
+   * this side tagged.
+   *
+   * NOTHING HERE IDENTIFIES ANYBODY. It is one of eight words in this
+   * browser's own storage, and it says which link was followed, not who
+   * followed it.
+   */
+  var SRC_VALUES = ['x', 'reddit', 'telegram', 'threads', 'bluesky', 'email',
+                    'creator', 'seo'];
+  var SRC_KEY = 'bd_src';
+
+  /* The valid source in a query string, or null. Pure, so the closed list is
+     testable without a browser and without a URL. */
+  function parseSource(search) {
+    var q = String(search || '');
+    var m = /[?&]src=([^&#]*)/.exec(q);
+    if (!m) return null;
+    var v;
+    try { v = decodeURIComponent(m[1]); } catch (e) { v = m[1]; }
+    v = String(v).trim().toLowerCase();
+    return SRC_VALUES.indexOf(v) >= 0 ? v : null;
+  }
+
+  /* Read once, write once. `store` is anything with getItem/setItem, so the
+     first-write-wins rule can be exercised directly rather than inferred from
+     a browser. Returns the source now in force, or null.
+
+     EVERY PATH IS WRAPPED. Private mode throws on setItem rather than
+     returning false, and an analytics nicety must never be the thing that
+     stops a fixture list rendering. */
+  function attribution(store, search, now) {
+    if (!store) return null;
+    var had = null;
+    try { had = store.getItem(SRC_KEY); } catch (e) { return parseSource(search); }
+    if (had) {
+      try { return JSON.parse(had).src || null; } catch (e) { return null; }
+    }
+    var src = parseSource(search);
+    if (!src) return null;
+    try {
+      store.setItem(SRC_KEY, JSON.stringify({
+        src: src, at: new Date(now == null ? Date.now() : now).toISOString()
+      }));
+    } catch (e) { /* private mode: this visit is simply not attributed */ }
+    return src;
+  }
+
+  /* What the desk currently believes, without recording anything. */
+  function currentSource(store) {
+    if (!store) return null;
+    try {
+      var raw = store.getItem(SRC_KEY);
+      return raw ? (JSON.parse(raw).src || null) : null;
+    } catch (e) { return null; }
+  }
+
   /* The moment-matched binomial for a mean and a dispersion below one.
      Exposed so a test can assert the match rather than infer it. */
   function udBinomFit(mu, phi) {
@@ -2509,6 +2585,7 @@
     gammaln, expectedFouls, nbTailProb, udTailProb, udBinomFit, YELLOW_DISPERSION,
     CALIBRATION_NOTICE, mountCalibrationNotice, lineupState, isStarting,
     lineupNotice, candLineup, rankByLineup, whyLine,
+    SRC_VALUES, SRC_KEY, parseSource, attribution, currentSource,
     cardProbFromFouls, recencyWeight, refCardFactor,
     leagueRate90, twoStageHazard, sumNegBin,
     matchLegOptions, simLegOptions, accaAllocate, accaPrice,
@@ -2533,5 +2610,18 @@
     } else {
       PLDCore.mountCalibrationNotice(document);
     }
+  }
+
+  /* THE SOURCE IS RECORDED HERE FOR THE SAME REASON THE NOTICE IS MOUNTED
+     HERE: a link tagged ?src=reddit can point at any of the four desks, and
+     wiring this per page would be four edits and four chances to miss one.
+     It runs immediately rather than on DOMContentLoaded — the reader may
+     leave before that fires, and a first visit is the only visit this can be
+     captured on. */
+  if (typeof window !== 'undefined' && typeof localStorage !== 'undefined') {
+    try {
+      PLDCore.attribution(localStorage,
+        (window.location && window.location.search) || '');
+    } catch (e) { /* never let an analytics nicety break a page */ }
   }
 })(typeof window !== 'undefined' ? window : globalThis);
