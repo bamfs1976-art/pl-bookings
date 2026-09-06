@@ -38,6 +38,13 @@ function stubCtx(drawn, placed) {
     set textBaseline(v) {}, get textBaseline() { return 'alphabetic'; },
     fillRect: noop, beginPath: noop, moveTo: noop, arcTo: noop, closePath: noop,
     fill: noop, stroke: noop, save: noop, restore: noop, translate: noop, rotate: noop,
+    /* arc and clip are what face() uses to round a portrait off. They were
+       missing, which meant rankCard — the renderer behind the booked
+       leaderboards and now the referee card — threw the moment anything
+       actually drew a row, so it had never once been rendered in this guard.
+       A stub that is missing a method does not fail a test that never calls
+       it; it fails the first test that does. */
+    arc: noop, clip: noop, arcTo2: noop, ellipse: noop, lineTo: noop, rect: noop,
     createLinearGradient: () => ({ addColorStop: noop }),
     measureText: (t) => ({ width: String(t).length * 11 }),
     fillText(t, x, y) {
@@ -1219,6 +1226,101 @@ console.log('check-share: both fixture grids and the matchday button are wired o
     'assets/share.js has no badge branch for a club whose crest did not load');
 }
 
+/* ---- REFEREE THURSDAY --------------------------------------------------
+ *
+ * Appointments publish about a week before a round, which makes them the
+ * earliest hard information a bookings desk gets and the only thing on it
+ * worth posting on a Thursday. The referee is also the largest single
+ * multiplier these desks apply, so an appointment sheet ranked strictest first
+ * is the week's card in one image.
+ *
+ * WHAT IS ASSERTED HERE is not that the card renders. It is that the ORDERING
+ * is the claim it appears to be, and that the two ways it could quietly become
+ * a lie are closed:
+ *
+ *   1. The pivot. 3.7 yellows a game is an ordinary Premier League referee and
+ *      a lenient Spanish one. A combined card that ranked three divisions
+ *      against one average would put nine La Liga officials at the top of it
+ *      and say nothing at all — so each panel is separately pivoted and names
+ *      the average it is measured against.
+ *   2. The official with no card record. He is APPOINTED, which is a fact
+ *      about the round. Dropping him makes a published appointment look like
+ *      an unassigned fixture, which is precisely how this desk's referee layer
+ *      went missing for a season. He is on the card, at the bottom, saying so
+ *      in words rather than carrying a number he has not earned.
+ */
+{
+  const drawnRef = [];
+  const placedRef = [];
+  const sbr = makeSandbox(drawnRef, placedRef);
+  const SR = sbr.PLDShare;
+  assert.ok(typeof SR.refThursdaySpec === 'function',
+    'assets/share.js exports no refThursdaySpec — the Referee Thursday card has no adapter');
+
+  const PL = { title: 'Premier League', avgYpg: 3.696, refs: [
+    { name: 'Michael Oliver', ypg: 3.40, cpf: 0.198, factor: 0.95, fixture: 'ARS v CHE' },
+    { name: 'Anthony Taylor', ypg: 4.42, cpf: 0.231, factor: 1.19, fixture: 'MUN v LIV' },
+    { name: 'A Promoted Official', ypg: null, cpf: null, factor: null, fixture: 'HUL v TOT' }
+  ] };
+  const LL = { title: 'La Liga', avgYpg: 5.12, refs: [
+    { name: 'Jesus Gil Manzano', ypg: 5.60, cpf: 0.24, factor: 1.09, fixture: 'BAR v RAY' }
+  ] };
+
+  /* ---- strictest first, and the unrated man is last but present -------- */
+  const one = SR.refThursdaySpec([PL], { league: 'PL', round: 4, roundWord: 'gameweek' });
+  const rows = one.panels[0].rows;
+  assert.deepStrictEqual(rows.map((r) => r.n),
+    ['Anthony Taylor', 'Michael Oliver', 'A Promoted Official'],
+    'the Referee Thursday card is not ranked strictest first, or has dropped the ' +
+    'appointed official with no card record');
+  assert.ok(/^\u00d71\.19$/.test(rows[0].v), `the strictest referee's factor is ${rows[0].v}`);
+  assert.strictEqual(rows[2].v, 'no record',
+    'an official with no card record carries a number he has not earned');
+  /* Both evidence figures, under the name, and the fixture he has. */
+  assert.ok(/4\.42 y\/g/.test(rows[0].c) && /0\.231 c\/f/.test(rows[0].c),
+    `yellows a game and cards per foul are not both on the row: "${rows[0].c}"`);
+  assert.ok(/MUN v LIV/.test(rows[0].c), 'the row does not say which fixture he has');
+  /* A missing figure is OMITTED, not printed as a dash beside two real ones —
+     a row reading "— y/g · 0.21 c/f" invites averaging a blank. */
+  assert.ok(!/y\/g|c\/f/.test(rows[2].c),
+    `an official with no record has an empty rate printed: "${rows[2].c}"`);
+
+  /* ---- the pivot is named, and it is the league's own ------------------ */
+  assert.ok(/3\.70/.test(one.panels[0].sub),
+    `the panel does not name the average it ranks against: "${one.panels[0].sub}"`);
+  const combined = SR.refThursdaySpec([PL, LL], { league: 'ALL' });
+  assert.strictEqual(combined.panels.length, 2, 'the combined card merged the divisions');
+  assert.ok(/3\.70/.test(combined.panels[0].sub) && /5\.12/.test(combined.panels[1].sub),
+    'the combined card ranks two divisions against the same average, which would put ' +
+    'the higher-carding league at the top of it and say nothing');
+  /* Stacked, not side by side: three panels across a 1080 card leaves about
+     300px a column, and the NAME is what would truncate. */
+  assert.strictEqual(combined.cols, 1,
+    'the referee card sets its panels side by side; the names would truncate');
+
+  /* ---- it renders, and it carries the 18+ line ------------------------- */
+  drawnRef.length = 0;
+  await SR.rankCard(combined);
+  assert.ok(drawnRef.some((t) => /Anthony Taylor/.test(t)), 'the referee card drew no officials');
+  assert.ok(drawnRef.some((t) => /4\.42 y\/g/.test(t)), 'the referee card drew no card rates');
+  assert.ok(drawnRef.some((t) => /no record/.test(t)),
+    'the unrated official was dropped between the spec and the canvas');
+  assert.ok(drawnRef.some((t) => /18\+/.test(t) && /begambleaware/i.test(t)),
+    'the Referee Thursday card does not carry the 18+ / BeGambleAware line');
+
+  /* ---- and all four desks offer it ------------------------------------- */
+  for (const [page, hook] of [
+    ['index.html', 'refShareBtn'], ['eflc.html', 'mdRefShareBtn'],
+    ['laliga.html', 'mdRefShareBtn'], ['today.html', 'data-share-refs']
+  ]) {
+    const src = readFileSync(join(root, page), 'utf8');
+    assert.ok(src.includes(hook),
+      `${page} has no Referee Thursday control (${hook})`);
+    assert.ok(/refThursdaySpec/.test(src),
+      `${page} never calls refThursdaySpec, so its control cannot build the card`);
+  }
+}
+
 /* ---- the Why line stays on the page ------------------------------------
  *
  * Every candidate on a fixture card now carries a one-line explanation of
@@ -1260,5 +1362,7 @@ console.log(
   `check-share OK: ${['PL', 'EFLC', 'LL', 'ALL'].length} themes, match + round + ` +
   'combined cards render, adapters agree with the desks, every card carries 18+, ' +
   '/today renders one date and the whole calendar from one row builder and one card builder, ' +
-  'and every logged acca — won, lost and open — has a card that states its result'
+  'every logged acca — won, lost and open — has a card that states its result, ' +
+  'and Referee Thursday ranks each division against its own pivot with the ' +
+  'unrated official kept and labelled'
 );

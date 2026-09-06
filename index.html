@@ -1354,6 +1354,10 @@
       </label>
       <span id="gwDeadline" class="faint" style="font-size:.8rem"></span>
       <button class="btn btn-primary" id="fxShareBtn" style="padding:.4rem .8rem;font-size:.82rem;margin-left:auto" type="button" title="Download a shareable card of this gameweek's fixtures by booking heat">⬇ Share gameweek</button>
+      <!-- REFEREE THURSDAY. Appointments publish about a week out, which makes
+           them the earliest hard information this desk gets and the only thing
+           on it worth posting on a Thursday. -->
+      <button class="btn" id="refShareBtn" style="padding:.4rem .8rem;font-size:.82rem" type="button" title="Download a card of every appointed official this gameweek, strictest first">⬇ Share referees</button>
     </div>
     <div id="fixtureList"></div>
     <p class="faint" style="font-size:.78rem;margin-top:.6rem">Booking heat is the model's <strong>expected cards</strong> for the match — every rated available player's own chance of a booking, added up, with the referee's card rate and the derby boost already applied. It is the same number the card's Model detail panel shows, and the same one the combined <a href="/">Today's matches</a> view prices with. Hot is 4.0 plus, warm 3.5 plus. Each club's home/away cards-against split (2025-26 form; promoted clubs use the league median) is still shown in the heat tooltip as the two sides' own record. The flame marks a combustible side; recognised derbies get a ×1.15 heat boost and a derby chip. Each card also carries the match model's read: win probabilities, the fitted chance the game finishes within one goal (“tight”), and the game-state factor each side's players are scaled by. Top risks are each fixture's highest-risk available players. Referee appointments are not published in the FPL feed — once the PGMOL announcement is out, assign the official with each fixture's Ref control (saved in this browser) and the booking heat scales to his card rate, clamped. Schedule via the official FPL API.</p>
@@ -6002,6 +6006,48 @@ $("gwPosSeg").addEventListener("click",e=>{
 // Gameweek share cards: the current GW from the landing view, the selected GW from the Fixtures tab.
 $("gwShareBtn").addEventListener("click",()=>{ if(LIVE) exportGameweekPNG(LIVE.currentGW); });
 $("fxShareBtn").addEventListener("click",()=>{ const gw=Number($("gwSelect").value); if(LIVE&&gw) exportGameweekPNG(gw); });
+/* REFEREE THURSDAY — every appointed official this gameweek, strictest first.
+ *
+ * Against REF_AVG_YPG, which is the same figure refFactor divides by, so the
+ * ordering on the card and the multipliers on the fixtures agree by
+ * construction rather than by coincidence.
+ *
+ * AN APPOINTED OFFICIAL WITH NO CARD RECORD IS STILL LISTED. He is appointed,
+ * and that is a fact about the round; dropping him would make a published
+ * appointment look like an unassigned fixture, which is exactly how this desk
+ * lost its referee layer for a season. He shows "no record" rather than a
+ * number he has not earned. */
+function refThursdayGroup(gw){
+  if(!LIVE) return null;
+  const refs=[];
+  (LIVE.fixtures||[]).filter(f=>f.event===gw).forEach(f=>{
+    const name=appointedRefName(f.id);
+    if(!name) return;
+    const rec=refByName(name);
+    const h=LIVE.teamMap[f.team_h], a=LIVE.teamMap[f.team_a];
+    refs.push({
+      name:rec?rec.n:name,
+      ypg:rec?rec.ypg:null,
+      cpf:(rec&&typeof rec.cpf==="number")?rec.cpf:null,
+      factor:rec?refFactor(rec):null,
+      fixture:(h&&a)?(h+" v "+a):null
+    });
+  });
+  return {title:"Premier League",avgYpg:REF_AVG_YPG,refs};
+}
+async function exportRefereesPNG(gw){
+  const S=window.PLDShare;
+  if(!S||!S.refThursdaySpec||!S.rankCard){ toast("Share module unavailable"); return; }
+  const group=refThursdayGroup(gw);
+  if(!group||!group.refs.length){ toast("No officials appointed for this gameweek yet"); return; }
+  const spec=S.refThursdaySpec([group],{
+    league:"PL",seasonLabel:"Premier League 2026-27",
+    round:gw,roundLabel:"Gameweek "+gw,roundWord:"gameweek"
+  });
+  const blob=await S.rankCard(spec);
+  dlBlob(blob,spec.filename);
+}
+$("refShareBtn").addEventListener("click",()=>{ const gw=Number($("gwSelect").value); if(LIVE&&gw) exportRefereesPNG(gw); });
 
 // ═══════════════════════════════════════════════════════════
 // ACCOUNTS (Supabase)

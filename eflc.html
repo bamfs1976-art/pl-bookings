@@ -201,6 +201,10 @@
         <span class="faint" id="mdWhen" style="font-size:12.5px"></span>
         <span class="spacer"></span>
         <button class="btn primary" id="mdShareBtn" type="button">&#8681; Share matchday</button>
+        <!-- REFEREE THURSDAY. Appointments publish about a week before a round,
+             which makes them the earliest hard information this desk gets and
+             the only thing on it worth posting on a Thursday. -->
+        <button class="btn" id="mdRefShareBtn" type="button" title="Download a card of every appointed official this matchday, strictest first">&#8681; Share referees</button>
       </div>
       <div id="mdList"></div>
       <p class="note" id="mdNote"></p>
@@ -1803,6 +1807,50 @@
       .then(function () { shareBusy(btn, false); });
   }
 
+  /* REFEREE THURSDAY — every appointed official for the round, strictest
+     first, against THIS division's own average.
+     
+     The pivot is the point. 3.7 yellows a game is an ordinary Premier League
+     referee and a lenient Spanish one, so the ranking is meaningless without
+     saying which average it is measured against — C.leagueRates over this
+     desk's own list, which is the same figure refFactor divides by, so the
+     card and the prices agree by construction rather than by coincidence.
+
+     AN APPOINTED OFFICIAL WITH NO CARD RECORD IS STILL ON IT. He is appointed;
+     that is a fact about the round. Dropping him would make a published
+     appointment look like an unassigned fixture, which is the failure this
+     desk's referee layer has already had once. */
+  function refGroupFor(round) {
+    var refs = [];
+    FIXTURES.filter(function (f) { return f.r === round; }).forEach(function (fx) {
+      var r = refFor(fx);
+      if (!r || !r.appointed) return;
+      var rec = r.ref;
+      refs.push({
+        name: rec ? rec.n : r.name,
+        ypg: rec ? rec.ypg : null,
+        cpf: rec ? (rec.cpf == null ? null : rec.cpf) : null,
+        factor: rec ? refFactor(rec) : null,
+        fixture: fx.h + ' v ' + fx.a
+      });
+    });
+    return { title: 'EFL Championship', avgYpg: LEAGUE.avgYpg, refs: refs };
+  }
+
+  function shareRefs(round, btn) {
+    if (!S || !S.refThursdaySpec || !S.rankCard) return;
+    var group = refGroupFor(round);
+    if (!group.refs.length) return;
+    var spec = S.refThursdaySpec([group], Object.assign({}, SHARE_CTX, {
+      round: round, roundLabel: 'Matchday ' + round, roundWord: 'matchday'
+    }));
+    shareBusy(btn, true);
+    S.rankCard(spec)
+      .then(function (b) { S.download(b, spec.filename); })
+      .catch(function (e) { console.error(e); })
+      .then(function () { shareBusy(btn, false); });
+  }
+
   /* TWO GRIDS DRAW THE SAME CARD, SO BOTH NEED THE SAME WIRING. fixtureCard()
      renders a "Share match" button, and it is drawn into #fxList (Fixtures)
      AND #mdList (This Matchday). The delegation used to be bound to #fxList
@@ -1842,6 +1890,11 @@
        round is the one SELECTED here, which is why it is read at click time
        rather than captured: #mdShareBtn shares a different round. */
     rb.addEventListener('click', function () { shareRound(Number($('#fxRound').value), rb); });
+    var rr = $('#mdRefShareBtn');
+    if (rr) {
+      rr.dataset.label = rr.textContent;
+      rr.addEventListener('click', function () { shareRefs(C.currentRound(FIXTURES), rr); });
+    }
   }
 
   /* ---- provenance ------------------------------------------------------- */

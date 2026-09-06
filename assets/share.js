@@ -1238,6 +1238,103 @@
     };
   }
 
+  /* ═══ REFEREE THURSDAY ═══════════════════════════════════════════════════
+   *
+   * Appointments are published about a week before a round, which makes them
+   * the earliest hard information a bookings desk gets and the only thing on
+   * it worth posting on a Thursday. The referee is also the largest single
+   * multiplier these desks apply — the spread between the strictest whistle
+   * and the most lenient moves every player's price by about a third — so an
+   * appointment sheet ranked strictest first is the week's card in one image.
+   *
+   * IT IS AN ADAPTER, NOT A RENDERER. rankCard already draws ranked panels
+   * with a value at the right edge, and every card on this site goes through
+   * one of four renderers on purpose: a fifth would be a fifth place for the
+   * 18+ line to be forgotten, a fifth footer, a fifth set of truncation bugs.
+   * This turns officials into panels and hands them over.
+   *
+   * THREE NUMBERS, AND THE THIRD IS THE ONE THAT MATTERS. Yellows a game says
+   * how many cards he gives; cards per foul says how readily he reaches for
+   * one, which divides out how foul-heavy his fixtures happened to be; and the
+   * ×factor is what the desk actually multiplies every player's chance by. The
+   * first two are evidence and the third is the claim, so the ×factor is the
+   * value at the right edge and the other two sit under the name.
+   *
+   * AGAINST THE LEAGUE'S OWN PIVOT, which is why one card per league exists at
+   * all. 3.7 yellows a game is an ordinary Premier League referee and a
+   * lenient Spanish one; ranking all three divisions in one list against one
+   * average would put nine La Liga officials at the top of it and say nothing.
+   * The combined card stacks three separately-pivoted panels rather than
+   * merging them, and each panel's subtitle names the average it is measured
+   * against.
+   *
+   * AN OFFICIAL WITH NO CARD RECORD IS STILL LISTED. He is appointed, that is
+   * a fact about the round, and dropping him would make a published
+   * appointment look like an unassigned fixture — the failure this desk's
+   * referee layer has already had once. He prices at ×1.00 and the card says
+   * so in words rather than printing a number he has not earned.
+   */
+  function refPanel(group) {
+    var pivot = Number(group.avgYpg);
+    var rows = (group.refs || []).map(function (r) {
+      var ypg = (r.ypg == null) ? null : Number(r.ypg);
+      var cpf = (r.cpf == null) ? null : Number(r.cpf);
+      var factor = (r.factor == null) ? null : Number(r.factor);
+      /* The evidence under the name. A missing figure is omitted rather than
+         printed as a dash beside two real ones: a row reading "— y/g · 0.21
+         c/f" invites the reader to average a blank. */
+      var bits = [];
+      if (ypg != null && isFinite(ypg)) bits.push(ypg.toFixed(2) + ' y/g');
+      if (cpf != null && isFinite(cpf)) bits.push(cpf.toFixed(3) + ' c/f');
+      if (r.fixture) bits.push(r.fixture);
+      return {
+        n: r.name,
+        c: bits.join(' \u00b7 '),
+        v: (factor != null && isFinite(factor)) ? '\u00d7' + factor.toFixed(2) : 'no record',
+        _sort: (factor != null && isFinite(factor)) ? factor : -1
+      };
+    });
+    /* STRICTEST FIRST, and an official with no record sorts last rather than
+       first: -1 keeps him off the top of a card whose entire claim is an
+       ordering. He is still on it. */
+    rows.sort(function (a, b) { return b._sort - a._sort; });
+    return {
+      title: group.title,
+      sub: (isFinite(pivot) && pivot > 0)
+        ? 'yellows a game \u00b7 cards per foul \u00b7 against this division\u2019s ' + pivot.toFixed(2)
+        : 'yellows a game \u00b7 cards per foul',
+      rows: rows
+    };
+  }
+
+  /* groups = [{title, avgYpg, refs:[{name, ypg, cpf, factor, fixture}]}]
+     One group makes a league card; three make the combined one from /today. */
+  function refThursdaySpec(groups, ctx) {
+    ctx = ctx || {};
+    var panels = (groups || [])
+      .filter(function (g) { return g && (g.refs || []).length; })
+      .map(refPanel);
+    return {
+      league: ctx.league,
+      title: ctx.title || 'Referees this ' + (ctx.roundWord || 'gameweek'),
+      subtitle: [ctx.seasonLabel, ctx.roundLabel, 'Strictest first']
+        .filter(Boolean).join(' \u00b7 '),
+      panels: panels,
+      /* STACKED, NOT SIDE BY SIDE, whenever there is more than one division on
+         the card. Three panels across a 1080 card leaves about 300px a column,
+         and "M. Oliver  4.42 y/g · 0.213 c/f" does not fit it — the name would
+         be the part that truncated, which is the one thing on the row nobody
+         can reconstruct. */
+      cols: 1,
+      limit: ctx.limit || 12,
+      palette: ctx.palette,
+      note: ctx.note || 'Referee card rates \u00b7 appointments can change',
+      filename: theme(ctx.league).slug + '-referees'
+        + (ctx.round != null ? '-' + slug(String(ctx.roundWord || 'gw') + '-' + ctx.round) : '')
+        + '.png'
+    };
+  }
+
   /* ---- download --------------------------------------------------------- */
   /* Delegates to assets/save.js, which routes a phone to the native share
      sheet — iOS Safari ignores `download` on a blob: URL, so the anchor below
@@ -1639,7 +1736,7 @@
     rankCard: rankCard,
     accaCard: accaCard, accaRowSpec: accaRowSpec, nineFoldSpec: nineFoldSpec,
     deskMatchSpec: deskMatchSpec, deskRoundSpec: deskRoundSpec,
-    deskStatSheetSpec: deskStatSheetSpec,
+    deskStatSheetSpec: deskStatSheetSpec, refThursdaySpec: refThursdaySpec,
     download: download, slug: slug,
     heatHex: heatHex, probHex: probHex, textOn: textOn,
     roundRect: roundRect, fit: fit, drawMark: drawMark

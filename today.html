@@ -1281,6 +1281,13 @@
       + ' · ' + n1(cards) + ' cards expected</span>'
       + '<span class="spacer"></span>'
       + '<button class="btn" type="button" data-share="' + k + '">⬇ Share</button>'
+      /* REFEREE THURSDAY, ACROSS THE DIVISIONS. Appointments publish about a
+         week out, so on a Thursday this is the only thing on the page that is
+         already settled. One panel per league, because 3.7 yellows a game is
+         an ordinary Premier League referee and a lenient Spanish one — ranking
+         all three against one average would put La Liga at the top of the list
+         and say nothing. */
+      + '<button class="btn" type="button" data-share-refs="' + k + '">⬇ Referees</button>'
       + '</div>'
       + '<div class="fx-grid">' + rows.map(rowHTML).join('') + '</div>'
       + '</section>';
@@ -2606,6 +2613,63 @@
      there is no selected date — every group has its own button and they must
      all produce exactly the card the single-date view would. One function, one
      card, whichever view you asked from. */
+  /* REFEREE THURSDAY, ACROSS THE DIVISIONS.
+   *
+   * ONE PANEL PER LEAGUE, EACH AGAINST ITS OWN PIVOT. 3.7 yellows a game is an
+   * ordinary Premier League referee and a lenient Spanish one, so a single
+   * ranked list across three divisions would put nine La Liga officials at the
+   * top of it and tell the reader nothing except which league books more. Each
+   * panel names the average it is measured against, and L.leagueYpg is the
+   * same figure that league's refFactor divides by — so the card and the
+   * prices on the page agree by construction rather than by coincidence.
+   *
+   * An appointed official with no card record is still listed, at the bottom,
+   * reading "no record" rather than a number he has not earned. Dropping him
+   * would make a published appointment look like an unassigned fixture. */
+  function refGroupsOn(key) {
+    var seen = {}, groups = [];
+    rowsFor(key).forEach(function (p) {
+      if (!p.ref || !p.ref.appointed) return;
+      var code = p.L.code;
+      var g = seen[code];
+      if (!g) {
+        g = seen[code] = { title: p.L.name, avgYpg: p.L.leagueYpg, refs: [] };
+        groups.push(g);
+      }
+      var rec = p.ref.ref;
+      g.refs.push({
+        name: rec ? rec.n : p.ref.name,
+        ypg: rec ? rec.ypg : null,
+        cpf: (rec && typeof rec.cpf === 'number') ? rec.cpf : null,
+        factor: rec ? p.factor : null,
+        fixture: p.fx.h + ' v ' + p.fx.a
+      });
+    });
+    return groups;
+  }
+
+  function shareRefs(key, btn) {
+    if (!S || !S.refThursdaySpec || !S.rankCard) return;
+    var groups = refGroupsOn(key);
+    if (!groups.length) return;
+    var spec = S.refThursdaySpec(groups, {
+      league: 'ALL',
+      title: 'Referees on ' + fmtDay(key),
+      seasonLabel: groups.length + ' division' + (groups.length === 1 ? '' : 's'),
+      roundLabel: null, roundWord: 'day'
+    });
+    spec.filename = 'bookings-desk-referees-' + key + '.png';
+    if (btn) { btn.disabled = true; btn.dataset.label = btn.dataset.label || btn.textContent;
+               btn.textContent = 'Building…'; }
+    S.rankCard(spec).then(function (b) {
+      S.download(b, spec.filename);
+    }).catch(function (e) {
+      console.warn('[Bookings Desk] referee card:', e);
+    }).then(function () {
+      if (btn) { btn.disabled = false; btn.textContent = btn.dataset.label; }
+    });
+  }
+
   function shareDay(key, btn) {
     var rows = rowsFor(key);
     if (!rows.length || !S) return;
@@ -3048,6 +3112,8 @@
        and per-node listeners would leak one set per redraw. */
     $('#list').addEventListener('click', function (ev) {
       if (!ev.target.closest) return;
+      var rb = ev.target.closest('[data-share-refs]');
+      if (rb) { shareRefs(rb.getAttribute('data-share-refs'), rb); return; }
       var b = ev.target.closest('[data-share]');
       if (b) { shareDay(b.getAttribute('data-share'), b); return; }
       var shb = ev.target.closest('[data-sheet-fx]');
