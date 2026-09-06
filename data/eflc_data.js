@@ -805,7 +805,7 @@ const REFS = [
   {n:"L Doughty",region:"",matches:20,ypg:4.65,red:0.1,pen:null,fpg:21.75,cpf:0.2138},
   {n:"A Backhouse",region:"",matches:25,ypg:4.64,red:0.0,pen:null,fpg:21.6,cpf:0.2148},
   {n:"E Bell",region:"",matches:11,ypg:4.27,red:0.09,pen:null,fpg:22.91,cpf:0.1865},
-  {n:"Robert Jones",region:"",matches:18,ypg:4.13,red:0.0,pen:null,fpg:21.06,cpf:0.1979,borrowed:"PL"},
+  {n:"Robert Jones",region:"",matches:18,ypg:4.13,red:0.0,pen:0.28,fpg:21.06,cpf:0.1979,borrowed:"PL"},
   {n:"J Busby",region:"",matches:20,ypg:4.1,red:0.15,pen:null,fpg:21.15,cpf:0.1939},
   {n:"Thomas Kirk",region:"",matches:23,ypg:4.04,red:0.04,pen:null,fpg:21.26,cpf:0.1902},
   {n:"Matthew Donohue",region:"",matches:25,ypg:3.96,red:0.12,pen:null,fpg:23.16,cpf:0.171},

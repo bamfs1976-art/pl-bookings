@@ -1,4 +1,4 @@
-La Liga harvest — run 141
+La Liga harvest — run 142
 == discover ==
 La Liga: API-Football league 140, season 2026
 
@@ -24,7 +24,7 @@ laliga_clubs.json written (20 clubs)
     VAL  Valencia
     VIL  Villarreal
 
-API-Football: 1 call(s) this run; 514 of 7500 used today (7%), 6986 left
+API-Football: 1 call(s) this run; 109 of 7500 used today (1%), 7391 left
 == squads ==
 La Liga: API-Football league 140, season 2025
   not in this desk's club list (3): Girona, Mallorca, Oviedo
@@ -49,7 +49,7 @@ La Liga: API-Football league 140, season 2025
 
 laliga_players.json written (672 players from 17 clubs, API-Football, LL season 2025)
 
-API-Football: 43 call(s) this run; 557 of 7500 used today (7%), 6943 left
+API-Football: 43 call(s) this run; 152 of 7500 used today (2%), 7348 left
 == rosters ==
 La Liga: API-Football league 140, season 2026
     Athletic Club               32 players
@@ -75,12 +75,12 @@ La Liga: API-Football league 140, season 2026
 
 ll_squads.json written (638 players from 20 clubs, API-Football current rosters)
 
-API-Football: 21 call(s) this run; 347 of 7500 used today (5%), 7153 left
+API-Football: 21 call(s) this run; 173 of 7500 used today (2%), 7327 left
 == season-cards ==
 La Liga: API-Football league 140, season 2026
   fetching 20 squads
-    Athletic Club               24 players
-    Atletico Madrid             25 players
+    Athletic Club               26 players
+    Atletico Madrid             27 players
     Barcelona                   25 players
     Celta Vigo                  26 players
     Deportivo Alaves            26 players
@@ -91,18 +91,18 @@ La Liga: API-Football league 140, season 2026
     Levante                     27 players
     Malaga                      23 players
     Osasuna                     25 players
-    Racing Santander            27 players
-    Rayo Vallecano              26 players
+    Racing Santander            31 players
+    Rayo Vallecano              29 players
     Real Betis                  25 players
-    Real Madrid                 24 players
+    Real Madrid                 25 players
     Real Sociedad               28 players
     Sevilla                     27 players
     Valencia                    29 players
-    Villarreal                  26 players
+    Villarreal                  27 players
 
-laliga_season_cards.json written (512 players from 20 clubs, API-Football, LL season 2026)
+laliga_season_cards.json written (525 players from 20 clubs, API-Football, LL season 2026)
 
-API-Football: 41 call(s) this run; 388 of 7500 used today (5%), 7112 left
+API-Football: 41 call(s) this run; 295 of 7500 used today (4%), 7205 left
 == segunda ==
 Segunda División: API-Football league 141, season 2025
   not in this desk's club list (19): AD Ceuta FC, Albacete, Almeria, Burgos, Cadiz, Castellón, Cordoba, Cultural Leonesa, Eibar, FC Andorra, Granada CF, Huesca, Las Palmas, Leganes, Mirandes, Real Sociedad II, Sporting Gijon, Valladolid, Zaragoza
@@ -113,13 +113,13 @@ Segunda División: API-Football league 141, season 2025
 
 segunda_players.json written (110 players from 3 clubs, API-Football, SEG season 2025)
 
-API-Football: 7 call(s) this run; 395 of 7500 used today (5%), 7105 left
+API-Football: 7 call(s) this run; 302 of 7500 used today (4%), 7198 left
 == ref-fixtures ==
 La Liga: API-Football league 140, season 2025
 
 laliga_ref_fixtures.js written (380 matches over 20 clubs, 380 with an official named)
 
-API-Football: 1 call(s) this run; 396 of 7500 used today (5%), 7104 left
+API-Football: 1 call(s) this run; 303 of 7500 used today (4%), 7197 left
 == fixtures ==
 La Liga: API-Football league 140, season 2026
   LL appointments overlay: 4 applied, 0 already harvested
@@ -160,7 +160,7 @@ La Liga: API-Football league 140, season 2026
 
 laliga_fixtures.js written (380 fixtures over 38 matchdays, 35 with a referee appointed)
 
-API-Football: 1 call(s) this run; 397 of 7500 used today (5%), 7103 left
+API-Football: 1 call(s) this run; 304 of 7500 used today (4%), 7196 left
 == build ==
 Division: 17 clubs were in it last season, 3 came up
   promoted: Deportivo La Coruna, Malaga, Racing Santander
@@ -238,7 +238,7 @@ club rates from mirror (380 matches)
 players: 642  by basis: LL=431, NEW=142, SEG=69
 clubs with players: 20 of 20
 club rates from match records: 17 of 20
-season cautions (2026-27): 483 players
+season cautions (2026-27): 484 players
 referees: 20
 RESULT: WRITTEN laliga_data.js
 == referee-join ==
