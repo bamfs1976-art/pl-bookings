@@ -1,7 +1,52 @@
 {
   "note": "PROPOSALS from API-Football /transfers, for a person to read. data/transfers.json is the hand-curated overlay that is actually applied; this is not.",
-  "since": "2026-05-09",
+  "since": "2026-05-10",
   "moves": [
+    {
+      "n": "Marc Casadó",
+      "from": "Barcelona",
+      "to": "Deportivo La Coruna",
+      "fromCode": "BAR",
+      "toCode": "DEP",
+      "date": "2026-08-31",
+      "type": "Loan"
+    },
+    {
+      "n": "J. Giménez",
+      "from": "Atletico Madrid",
+      "to": "Deportivo La Coruna",
+      "fromCode": "ATM",
+      "toCode": "DEP",
+      "date": "2026-08-31",
+      "type": "Loan"
+    },
+    {
+      "n": "Eric Puerto",
+      "from": "Deportivo La Coruna",
+      "to": "Penafiel",
+      "fromCode": "DEP",
+      "toCode": null,
+      "date": "2026-08-31",
+      "type": "Loan"
+    },
+    {
+      "n": "José Jurado",
+      "from": "Deportivo La Coruna",
+      "to": "Jurado Jose",
+      "fromCode": "DEP",
+      "toCode": null,
+      "date": "2026-08-30",
+      "type": "Free agent"
+    },
+    {
+      "n": "C. Patino",
+      "from": "Deportivo La Coruna",
+      "to": "VfL Bochum",
+      "fromCode": "DEP",
+      "toCode": null,
+      "date": "2026-08-30",
+      "type": "Loan"
+    },
     {
       "n": "S. Martinez",
       "from": "Racing Santander",
@@ -79,6 +124,15 @@
       "from": "Getafe",
       "to": "Almeria",
       "fromCode": "GET",
+      "toCode": null,
+      "date": "2026-08-27",
+      "type": "Free agent"
+    },
+    {
+      "n": "Cristian Herrera",
+      "from": "Deportivo La Coruna",
+      "to": "Huesca",
+      "fromCode": "DEP",
       "toCode": null,
       "date": "2026-08-27",
       "type": "Free agent"
@@ -1128,6 +1182,15 @@
       "type": "Loan"
     },
     {
+      "n": "M. Bouldini",
+      "from": "Deportivo La Coruna",
+      "to": "Academico Viseu",
+      "fromCode": "DEP",
+      "toCode": null,
+      "date": "2026-08-03",
+      "type": "Free agent"
+    },
+    {
       "n": "H. Cuenca",
       "from": "Genoa",
       "to": "Celta Vigo",
@@ -1287,6 +1350,15 @@
       "fromCode": "RMA",
       "toCode": null,
       "date": "2026-07-30",
+      "type": "Free agent"
+    },
+    {
+      "n": "Mario Nájera",
+      "from": "Deportivo La Coruna",
+      "to": "Lugo",
+      "fromCode": "DEP",
+      "toCode": null,
+      "date": "2026-07-29",
       "type": "Free agent"
     },
     {
@@ -1704,6 +1776,15 @@
       "type": "Free agent"
     },
     {
+      "n": "P. Aubameyang",
+      "from": "Marseille",
+      "to": "Deportivo La Coruna",
+      "fromCode": null,
+      "toCode": "DEP",
+      "date": "2026-07-15",
+      "type": "Transfer"
+    },
+    {
       "n": "Mikel Rodríguez",
       "from": "Real Sociedad",
       "to": "Alaves",
@@ -1866,6 +1947,15 @@
       "type": "Transfer"
     },
     {
+      "n": "Jonathan Asp Jensen",
+      "from": "Bayern München",
+      "to": "Deportivo La Coruna",
+      "fromCode": null,
+      "toCode": "DEP",
+      "date": "2026-07-11",
+      "type": "Transfer"
+    },
+    {
       "n": "A. Werner",
       "from": "Elche",
       "to": "Rosario Central",
@@ -1972,6 +2062,15 @@
       "toCode": null,
       "date": "2026-07-08",
       "type": "Loan"
+    },
+    {
+      "n": "Alex Petxarroman",
+      "from": "Deportivo La Coruna",
+      "to": "AD Ceuta FC",
+      "fromCode": "DEP",
+      "toCode": null,
+      "date": "2026-07-08",
+      "type": "Free agent"
     },
     {
       "n": "Víctor Fernández",
@@ -2172,6 +2271,15 @@
       "type": "Loan"
     },
     {
+      "n": "F. Urzain",
+      "from": "Deportivo La Coruna",
+      "to": "Zamora",
+      "fromCode": "DEP",
+      "toCode": null,
+      "date": "2026-07-06",
+      "type": "Free agent"
+    },
+    {
       "n": "B. Ede",
       "from": "Motor Lublin",
       "to": "Deportivo La Coruna",
@@ -2197,6 +2305,15 @@
       "toCode": null,
       "date": "2026-07-05",
       "type": "Free agent"
+    },
+    {
+      "n": "Luis Chacón",
+      "from": "Deportivo La Coruna",
+      "to": "Valladolid",
+      "fromCode": "DEP",
+      "toCode": null,
+      "date": "2026-07-05",
+      "type": "Transfer"
     },
     {
       "n": "Javi Castro",
@@ -2350,6 +2467,15 @@
       "toCode": "RMA",
       "date": "2026-07-01",
       "type": "€ 55M"
+    },
+    {
+      "n": "Leo Román",
+      "from": "Mallorca",
+      "to": "Deportivo La Coruna",
+      "fromCode": null,
+      "toCode": "DEP",
+      "date": "2026-07-01",
+      "type": "Transfer"
     },
     {
       "n": "L. Pétrot",
@@ -3394,6 +3520,15 @@
       "toCode": "ATM",
       "date": "2026-06-29",
       "type": "Return from loan"
+    },
+    {
+      "n": "T. Gijselhart",
+      "from": "De Graafschap",
+      "to": "Deportivo La Coruna",
+      "fromCode": null,
+      "toCode": "DEP",
+      "date": "2026-06-29",
+      "type": "Transfer"
     },
     {
       "n": "T. Fernández",
@@ -5746,21 +5881,21 @@
     },
     {
       "n": "A. Guerrero",
-      "from": "Ourense CF",
-      "to": "Deportivo La Coruna",
-      "fromCode": null,
-      "toCode": "DEP",
-      "date": "2026-06-29",
-      "type": "Return from loan"
-    },
-    {
-      "n": "A. Guerrero",
       "from": "Deportivo La Coruna",
       "to": "Guerrero Adrian",
       "fromCode": "DEP",
       "toCode": null,
       "date": "2026-06-29",
       "type": "Free agent"
+    },
+    {
+      "n": "A. Guerrero",
+      "from": "Ourense CF",
+      "to": "Deportivo La Coruna",
+      "fromCode": null,
+      "toCode": "DEP",
+      "date": "2026-06-29",
+      "type": "Return from loan"
     },
     {
       "n": "A. Griezmann",
