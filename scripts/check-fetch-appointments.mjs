@@ -131,6 +131,38 @@ for (const league of ['LL', 'EFLC']) {
     'script or style content survived into the article text');
 }
 
+/* ---- 3b. the article URL is found however the page names it ------------- */
+{
+  /* The first live run found no article at all: the news index returned bytes
+     and not one matching link, which is what a listing rendered in the browser
+     looks like to a fetch. So the sitemap went into the candidates and the
+     matcher stopped being about href. It has to find the same URL in all three
+     places a site can put one — an anchor, a sitemap <loc>, and a quoted
+     string in a JSON island — because which of the three it will be is not
+     something this repository gets to decide. */
+  const url = '/news/2026/september/08/referee-appointments--11-13-september/';
+  const abs = 'https://www.efl.com' + url;
+  const got = JSON.parse(py(
+    'import sys, json; sys.path.insert(0,"data")\n' +
+    'import fetch_appointments as F\n' +
+    'docs = {\n'
+    + `  "href": ${JSON.stringify(`<a href="${url}">x</a>`)},\n`
+    + `  "sitemap": ${JSON.stringify(`<url><loc>${abs}</loc></url>`)},\n`
+    + `  "json": ${JSON.stringify(`{"url":"${abs}"}`)},\n`
+    + '}\n'
+    + 'print(json.dumps({k: F.EFL_SLUG.findall(v) for k, v in docs.items()}))\n'));
+  for (const [shape, expect] of [['href', url], ['sitemap', abs], ['json', abs]]) {
+    assert.deepEqual(got[shape], [expect],
+      `the article matcher misses a URL published as ${shape} — it found ` +
+      `${JSON.stringify(got[shape])}`);
+  }
+  const wf = readFileSync(join(root, 'data', 'fetch_appointments.py'), 'utf8');
+  assert.ok(/sitemap\.xml/.test(wf),
+    'the EFL sitemap is no longer among the candidates — it is the one source ' +
+    'that cannot be a page rendered in the browser, which is what the first ' +
+    'live run appears to have hit');
+}
+
 /* ---- 4. and the workflow actually runs it ------------------------------- */
 {
   const wf = readFileSync(join(root, '.github', 'workflows', 'fixtures.yml'), 'utf8');

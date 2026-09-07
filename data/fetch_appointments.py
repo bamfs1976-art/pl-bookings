@@ -98,11 +98,22 @@ ES_WEEKDAYS = ["lunes", "martes", "miercoles", "jueves",
 RFEF_BASE = "https://rfef.es/sites/default/files/"
 RFEF_STEM = "designaciones_1a_division_masculina_-_temp_{season}_-_jornada_{r}_"
 
+# THE SITEMAP IS IN THE LIST ON PURPOSE, and first among equals. The news
+# index came back on the first live run with no matching href at all, which
+# most likely means it is rendered in the browser rather than served as
+# markup — a listing built by JavaScript is an empty page to a fetch. A
+# sitemap is XML by definition and cannot be, so it is the candidate least
+# able to fail quietly.
 EFL_INDEX = [
+    "https://www.efl.com/sitemap.xml",
     "https://www.efl.com/news/",
     "https://www.efl.com/news/?category=referee-appointments",
 ]
-EFL_SLUG = re.compile(r'href="([^"]*referee-appointments[^"]*)"', re.I)
+# ANY URL CARRYING THE STEM, not only an href: a sitemap gives them in <loc>
+# and a JSON island in a quoted string, and all three are the same fact. The
+# expression is deliberately about the URL and nothing about the markup around
+# it, which is what keeps a redesign from silently emptying this.
+EFL_SLUG = re.compile(r'["\'>(]([^"\'<>()\s]*referee-appointments[^"\'<>()\s]*)', re.I)
 
 
 def fetch(url, binary=False):
@@ -193,13 +204,15 @@ def pdf_text(blob):
 
 
 def find_laliga(rounds, season, verbose):
-    found = []
+    found, probed, answered = [], 0, 0
     for url in rfef_candidates(rounds, season):
         if verbose:
             print(f"  probing {url}")
+        probed += 1
         blob = fetch(url, binary=True)
         if not blob:
             continue
+        answered += 1
         if not blob.startswith(b"%PDF"):
             print(f"    {url} answered but is not a PDF — skipped")
             continue
@@ -213,6 +226,18 @@ def find_laliga(rounds, season, verbose):
         print(f"  {url}\n    {len(rows)} appointment(s) parsed")
         if rows:
             found.append((url, text))
+    # WHICH SILENCE IT WAS. Nothing answering and something answering that
+    # would not parse are different problems — a sheet not published yet
+    # against a pattern or a layout that has moved — and the first run of this
+    # could not tell them apart from the log. The CTA publishes the day BEFORE
+    # a match, so probing a round four days out and finding nothing is the
+    # ordinary case and should read like one.
+    print(f"  {probed} candidate URL(s) probed, {answered} answered")
+    if probed and not answered:
+        print("  nothing answered — the sheets for these rounds are most "
+              "likely not published yet (the CTA publishes the day before a "
+              "match); a run on the eve of a matchday is the one that tells "
+              "you whether the filename is right")
     return found
 
 
@@ -240,20 +265,28 @@ def to_text(markup):
 def find_eflc(verbose):
     seen, found = [], []
     for index in EFL_INDEX:
-        if verbose:
-            print(f"  index {index}")
         page = fetch(index)
-        if not page:
+        # SIZE AND HIT COUNT, every time. "The index listed no article" was
+        # true of the first live run and did not say whether the page had not
+        # arrived, had arrived empty, or had arrived full of markup with no
+        # such link in it. Those are three different fixes.
+        if page is None:
+            print(f"  {index} -> no response")
             continue
-        for href in EFL_SLUG.findall(page):
+        hits = EFL_SLUG.findall(page)
+        print(f"  {index} -> {len(page)} bytes, {len(hits)} matching URL(s)")
+        for href in hits:
             url = urllib.parse.urljoin(index, html.unescape(href))
             if url not in seen:
                 seen.append(url)
     if not seen:
-        print("  the EFL news index listed no referee-appointments article — "
-              "either none is published or the site no longer puts that stem "
-              "in its URLs")
+        print("  no source listed a referee-appointments URL. If the pages "
+              "above returned plenty of bytes and no matches, the listing is "
+              "rendered in the browser rather than served as markup, and the "
+              "sitemap is the route that will work; if they returned nothing, "
+              "the fetch itself is being refused.")
         return found
+    print(f"  {len(seen)} candidate article(s) found")
     # Newest first is what the index gives; two is enough to cover a week that
     # spans a publication, and stops a redesign turning this into a crawl.
     for url in seen[:3]:
