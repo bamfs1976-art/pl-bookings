@@ -481,6 +481,19 @@ jobs:
       - name: Published appointments reach the desk
         run: node scripts/check-appointments.mjs
 
+      # And the step before that one: FINDING the published sheet, which used
+      # to be a person noticing. The fetch itself can only be proved on a
+      # runner with a network, so what is proved here is everything around it —
+      # that it asks only for the rounds the desk is missing, that the Spanish
+      # filename it probes is the one the RFEF has actually published, that an
+      # EFL article survives being stripped of its markup in all three layouts
+      # the EFL uses, and that the workflow runs it before it guards and
+      # commits. A fetcher that quietly finds nothing is the failure this
+      # guards against: a week with no appointments must not look like a week
+      # nobody ingested.
+      - name: The appointment fetcher asks for the right thing
+        run: node scripts/check-fetch-appointments.mjs
+
       # The suspension watch. Two silent failures: the Premier League strip
       # counted last season's cautions during the rollover — showing players
       # one booking from a ban having played no matches — and the row was a

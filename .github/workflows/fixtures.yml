@@ -120,6 +120,45 @@ jobs:
               || echo "::warning::$L bookings ledger unavailable this run"
           done
 
+      # THE PUBLISHED SHEETS, for the two divisions API-Football does not carry
+      # in time. La Liga arrives as short forms and often late; the Championship
+      # not at all until close to kick-off — the file has read "0 with a referee
+      # appointed" for a round starting in three days. Both publishers put the
+      # appointments out days earlier than the feed does, and until now somebody
+      # had to notice and paste them in.
+      #
+      # ONLY LAYOUT-PRESERVING EXTRACTION WILL DO for the Spanish sheet:
+      # parse_rfef splits the two clubs on a run of spaces, so the PDF's columns
+      # have to survive. Installed here rather than assumed.
+      - name: Tools for the Spanish designation sheets
+        continue-on-error: true
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq poppler-utils
+
+      # continue-on-error on the LEG, and non-zero INSIDE it. The fetcher exits
+      # non-zero when it finds nothing, which is what keeps a silent failure
+      # impossible; the leg absorbs that so a publisher having a bad day cannot
+      # take the fixture harvest down with it. Either way the committed overlay
+      # is left exactly as it was, which is where the desk already was.
+      #
+      # The fetcher only ever produces TEXT. Every name still has to get past
+      # ingest_appointments.py, which resolves it against the card table and
+      # refuses to guess — so the worst a bad scrape can do is waste a run.
+      - name: Published referee appointments
+        continue-on-error: true
+        run: |
+          for L in LL EFLC; do
+            case $L in LL) FMT=rfef ;; EFLC) FMT=efl ;; esac
+            if python3 data/fetch_appointments.py --league $L \
+                 --out /tmp/$L.txt --source-out /tmp/$L.src --days 8; then
+              python3 data/ingest_appointments.py --format $FMT \
+                --source "$(cat /tmp/$L.src)" --file /tmp/$L.txt \
+                || echo "::warning::$L appointments were fetched but would not ingest"
+            else
+              echo "::warning::$L published appointments not found this run — " \
+                   "the committed overlay is unchanged"
+            fi
+          done
+
       # The measurement the sourcing note asked for: how many appointments are
       # known, and how far ahead. Printed every run so the lead time by league
       # becomes an observed fact rather than an assumption.
