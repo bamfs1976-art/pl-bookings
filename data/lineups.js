@@ -5,7 +5,7 @@
 // through PLDCore.matchSquadName. A fixture absent from here prices off
 // squad minute-weights exactly as it always has — that is the normal
 // state until about an hour before kick-off, not a failure.
-// Fetched 2026-09-06T18:58Z.
+// Fetched 2026-09-07T19:44Z.
 //
 // THE GLOBAL IS NOT CALLED `LINEUPS`, and that is deliberate. index.html
 // already declares a top-level `const LINEUPS` for assets/lineup.js (the
@@ -14,7 +14,7 @@
 // a parse error, not a shadow: the whole inline script fails and the desk
 // renders blank. Read `window.LINEUP_SHEETS`.
 var __LINEUP_SHEETS = {
-  "1570367":{"ESP":{start:["M. Dmitrović", "O. El Hilali", "Unai Núñez", "L. Cabrera", "Roger Hinojo", "Álex Calatrava", "Gabriel Moscardo", "Edu Expósito", "T. Dolan", "Javier Hernandez", "Roberto Fernández"],sub:["Jofre Carreras", "Rafel Bauzà", "V. Drkušić", "Marcos Fernández", "Ángel Fortuño", "Urko González", "Q. Hartman", "Pol Lozano", "José Ángel", "Pere Milla", "C. Riedel", "Bryan Zaragoza"]},"SEV":{start:["O. Vlachodimos", "Juan Iglesias", "A. Sangante", "Kike Salas", "G. Suazo", "G. Kochorashvili", "L. Agoumé", "Jon Guridi", "Miguel Ángel", "R. Ure", "C. Ejuke"],sub:["Manu Bueno", "José Ángel Carmona", "Julio Díaz del Romo", "Peque Fernández", "Y. Fofana", "Alfon González", "Fran González", "Andrés Castrín", "Iker Ortín Muñoz", "Isaac", "L. Stassin", "Félix Correia"]}},
+  "1570366":{"ELC":{start:["M. Dituro", "Buba Sangaré", "Víctor Chust", "Bigas", "Tete Morente", "F. Buonanotte", "J. Morcillo", "Gonzalo Villar", "Germán Valera", "Fer Niño", "E. Ponce"],sub:["Matia Barzic Gutiérrez", "Martim Neto", "L. Cepeda", "Josan", "Ali Houary", "Alejandro Iturbe", "T. Lemar", "A. Osorio", "F. Redondo", "R. Revivo", "Rubén Sánchez", "Marc Aguado"]},"RSO":{start:["Unai Marrero", "J. Aramburu", "Zubeldia", "M. Sarr", "Sergio Gómez", "J. Ochieng", "Y. Herrera", "Carlos Soler", "Gonçalo Guedes", "L. Sučić", "Mikel Oyarzabal"],sub:["Aihen Muñoz", "Jon Martín", "Alex Garcia", "T. Kubo", "Jon Gorrotxategi", "Héctor Fort", "Barrenetxea", "Jon Pacheco", "Álex Remiro", "Beñat Turrientes", "A. Zakharyan", "O. Óskarsson"]}},
 };
 if (typeof module !== "undefined" && module.exports) module.exports = __LINEUP_SHEETS;
 if (typeof window !== "undefined") window.LINEUP_SHEETS = __LINEUP_SHEETS;
