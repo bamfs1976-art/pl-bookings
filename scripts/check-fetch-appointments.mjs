@@ -161,6 +161,38 @@ for (const league of ['LL', 'EFLC']) {
     'the EFL sitemap is no longer among the candidates — it is the one source ' +
     'that cannot be a page rendered in the browser, which is what the first ' +
     'live run appears to have hit');
+
+  /* AND THE NEWEST ARTICLE IS READ FIRST. A news index is in order and a
+     SITEMAP IS NOT: the first run off the sitemap found 172 articles and read
+     the three at the top of the file, which were from the previous January.
+     The slug carries the publication date, so the ordering is in the URL. The
+     cup rounds sort behind the league article for the same reason — the EFL
+     publishes Carabao and Vertu sheets under the same stem and the ingester
+     skips them by competition, but only after they have used up a slot. */
+  const order = JSON.parse(py(
+    'import sys, json, datetime as dt; sys.path.insert(0,"data")\n' +
+    'import fetch_appointments as F\n' +
+    'urls = [\n'
+    + '  "https://efl.com/news/2026/january/05/vertu-trophy-referee-appointments--2-september/",\n'
+    + '  "https://efl.com/news/2026/january/05/carabao-cup-quarter-final-referee-appointments/",\n'
+    + '  "https://efl.com/news/2026/january/05/referee-appointments--4---5-january/",\n'
+    + '  "https://efl.com/news/2026/september/08/referee-appointments--11-13-september/",\n'
+    + '  "https://efl.com/news/2026/september/01/referee-appointments--5-9-september/",\n'
+    + ']\n'
+    + 'out = []\n'
+    + 'for u in urls:\n'
+    + '    m = F.URL_DATE.search(u)\n'
+    + '    d = dt.date(int(m.group(1)), F.MONTHS[m.group(2).lower()], int(m.group(3)))\n'
+    + '    out.append((bool(F.CUP_SLUG.search(u)), -d.toordinal(), u))\n'
+    + 'out.sort()\n'
+    + 'print(json.dumps([u for _, _, u in out]))\n'));
+  assert.match(order[0], /september\/08/,
+    `the newest league article is not read first — got ${order[0]}`);
+  assert.match(order[1], /september\/01/,
+    `the second article read is not the next newest — got ${order[1]}`);
+  assert.ok(/carabao|vertu/.test(order[3]) && /carabao|vertu/.test(order[4]),
+    'a cup round is being read before a league article, and the ingester ' +
+    'skips cup competitions — the slot is spent for nothing');
 }
 
 /* ---- 4. and the workflow actually runs it ------------------------------- */

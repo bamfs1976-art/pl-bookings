@@ -113,6 +113,13 @@ EFL_INDEX = [
 # and a JSON island in a quoted string, and all three are the same fact. The
 # expression is deliberately about the URL and nothing about the markup around
 # it, which is what keeps a redesign from silently emptying this.
+# The date the EFL puts in its own article URLs: /news/2026/september/08/...
+URL_DATE = re.compile(r"/news/(\d{4})/([a-z]+)/(\d{1,2})/", re.I)
+MONTHS = {m.lower(): i for i, m in enumerate(
+    ["January", "February", "March", "April", "May", "June", "July",
+     "August", "September", "October", "November", "December"], 1)}
+CUP_SLUG = re.compile(r"carabao|vertu|papa|trophy|cup", re.I)
+
 EFL_SLUG = re.compile(r'["\'>(]([^"\'<>()\s]*referee-appointments[^"\'<>()\s]*)', re.I)
 
 
@@ -286,18 +293,55 @@ def find_eflc(verbose):
               "sitemap is the route that will work; if they returned nothing, "
               "the fetch itself is being refused.")
         return found
-    print(f"  {len(seen)} candidate article(s) found")
-    # Newest first is what the index gives; two is enough to cover a week that
-    # spans a publication, and stops a redesign turning this into a crawl.
-    for url in seen[:3]:
+
+    # NEWEST FIRST, BY THE DATE IN THE URL. A news index gives its articles in
+    # order and a SITEMAP DOES NOT: the first run off the sitemap found 172
+    # articles and read the three at the top of the file, which were from the
+    # previous January. The slug carries /news/YYYY/month/DD/, so the ordering
+    # is in the URL and does not need the page.
+    dated = []
+    for url in seen:
+        m = URL_DATE.search(url)
+        if not m:
+            continue
+        month = MONTHS.get(m.group(2).lower())
+        if not month:
+            continue
+        try:
+            d = dt.date(int(m.group(1)), month, int(m.group(3)))
+        except ValueError:
+            continue
+        # A CUP ROUND IS NOT THE LEAGUE. The EFL publishes separate sheets for
+        # the Carabao Cup and the Vertu Trophy under the same stem, and the
+        # ingester skips them by competition heading — correctly, but only
+        # after they have used up a slot. Sorted behind the league article
+        # rather than dropped, because a week where only the cup is published
+        # is still a week worth reading.
+        cup = bool(CUP_SLUG.search(url))
+        dated.append((cup, -d.toordinal(), d, url))
+    dated.sort()
+    print(f"  {len(seen)} candidate article(s), {len(dated)} with a date in the URL")
+
+    for cup, _, d, url in dated[:5]:
         page = fetch(url)
-        if not page:
+        if page is None:
+            print(f"  {url} -> no response")
             continue
         text = to_text(page)
-        rows, _, _ = I.parse(text, default_year=dt.date.today().year)
-        print(f"  {url}\n    {len(rows)} appointment(s) parsed")
+        rows, _, _ = I.parse(text, default_year=d.year)
+        print(f"  {url}\n    published {d}, {len(page)} bytes, "
+              f"{len(text)} chars of text, {len(rows)} appointment(s) parsed")
         if rows:
             found.append((url, text))
+            # ONE ARTICLE IS A WEEK. Reading further back would re-ingest a
+            # round already covered, and every entry it wrote would supersede
+            # a newer one for the same fixture.
+            break
+    if not found and dated:
+        print("  articles were found and none parsed. Compare the byte count "
+              "with the text length above: a page that is large and yields "
+              "little text is rendered in the browser, and the article body "
+              "will have to come from the CMS rather than the HTML.")
     return found
 
 
