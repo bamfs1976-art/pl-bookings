@@ -113,14 +113,19 @@ EFL_INDEX = [
 # and a JSON island in a quoted string, and all three are the same fact. The
 # expression is deliberately about the URL and nothing about the markup around
 # it, which is what keeps a redesign from silently emptying this.
+EFL_SLUG = re.compile(r'["\'>(]([^"\'<>()\s]*referee-appointments[^"\'<>()\s]*)', re.I)
+
 # The date the EFL puts in its own article URLs: /news/2026/september/08/...
+# A sitemap is not in publication order, so this is what puts the newest
+# article first — see find_eflc, which sorts on it.
 URL_DATE = re.compile(r"/news/(\d{4})/([a-z]+)/(\d{1,2})/", re.I)
 MONTHS = {m.lower(): i for i, m in enumerate(
     ["January", "February", "March", "April", "May", "June", "July",
      "August", "September", "October", "November", "December"], 1)}
+# The EFL publishes cup sheets under the same stem and the ingester skips them
+# by competition, so they sort behind the league article rather than ahead of
+# it — see find_eflc.
 CUP_SLUG = re.compile(r"carabao|vertu|papa|trophy|cup", re.I)
-
-EFL_SLUG = re.compile(r'["\'>(]([^"\'<>()\s]*referee-appointments[^"\'<>()\s]*)', re.I)
 
 
 def fetch(url, binary=False):
