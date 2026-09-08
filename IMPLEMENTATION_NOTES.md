@@ -6,6 +6,31 @@ work, newest first: what changed, what was deferred and why. Everything before
 in [docs/decisions.md](docs/decisions.md); the audit itself is
 [docs/audit-2026-07.md](docs/audit-2026-07.md).
 
+## Review follow-up, task 5: Tabulator is loaded on demand (2026-09-08)
+
+Tabulator was 432 KB of the 574 KB vendored into `index.html`, and only the
+Screener view uses it. Its script block is now `assets/vendor/tabulator.js`,
+hash-pinned by `scripts/vendor-libs.mjs` exactly as before (same recorded
+SHA-256, the bytes did not move), and `mountScreener()` in `index.html` loads
+it the first time the Screener opens. While it arrives the table area reads
+"Loading the grid"; if the load fails it says so and points at the Season
+risk table, and the next opening tries again. One in-flight promise, so
+tapping the tab twice cannot append two script tags. The other views never
+wait on it. The stylesheet block stays inline at 28 KB.
+
+`index.html` on the wire, measured with `gzip -9`: 289,828 bytes gzipped
+(1,053,876 raw) before, 190,645 gzipped (613,314 raw) after. The Screener pays
+100,078 gzipped bytes once, cached separately across deploys.
+
+The service worker precaches the file (cache `plb-v21`), so the installed app
+still opens the Screener offline; `scripts/check-mobile.mjs` still passes on
+the atomic precache. `tests/test-libs.mjs` now compiles the file rather than
+the block, and a new test pins the loader, the two states, the shell entry and
+that the block is not inlined again. Driven in headless Chromium: no request
+for the file on page load, the loading state on opening the Screener, then a
+grid of 40 virtual rows over 652 players; with the request blocked, the
+failure message and no script tag left behind.
+
 ## Review follow-up, task 4: the Supabase client is vendored (2026-09-08)
 
 **Decision: vendor it.** `index.html` loaded `@supabase/supabase-js` from

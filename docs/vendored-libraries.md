@@ -28,3 +28,21 @@ service worker precaches it with the other modules.
 
 What still leaves the origin: the two Google Fonts stylesheets, which the CSP
 allows for `style-src` and `font-src`. Nothing else.
+
+## Addendum, 8 September 2026: Tabulator is loaded on demand
+
+Tabulator was 432 KB of the 574 KB inlined into `index.html`, and one view of
+one panel uses it. Its script block is now `assets/vendor/tabulator.js`, still
+hash-pinned by `scripts/vendor-libs.mjs`, and `index.html` fetches it the first
+time the Screener opens: a "Loading the grid" state while it arrives, a message
+naming the Season risk table if the load fails, and one in-flight request
+however many times the tab is tapped. The other views never wait on it. The
+service worker precaches the file, so the installed app still opens the
+Screener offline; `scripts/check-mobile.mjs` covers the shell. The stylesheet
+block stays inline at 28 KB, because a grid that arrives before its stylesheet
+paints unstyled for a frame.
+
+Measured with `gzip -9`: `index.html` went from 289,828 bytes gzipped
+(1,053,876 raw) to 190,645 bytes gzipped (613,314 raw) on the wire for every
+visit, and the Screener pays its 100,078 gzipped bytes once, cached
+separately across deploys.

@@ -58,12 +58,18 @@ const LIBS = [
     home: 'https://github.com/olifolkerd/tabulator',
     sha256: '',
   },
+  /* 432 KB of the page's 574 KB of vendored code, and only the Screener view
+     uses it. A file, loaded on the first opening of that view (see
+     mountScreener in index.html), so the other views never wait on it. The
+     CSS block above stays inline: 28 KB, and a grid that arrives before its
+     stylesheet paints unstyled for a frame. */
   {
     id: 'tabulator-js',
     pkg: 'tabulator-tables', version: '6.3.1',
     file: 'dist/js/tabulator.min.js', kind: 'js',
     licence: 'MIT', author: 'Oliver Folkerd',
     home: 'https://github.com/olifolkerd/tabulator',
+    target: 'assets/vendor/tabulator.js',
     sha256: '',
   },
   {

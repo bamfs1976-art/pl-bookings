@@ -3,7 +3,7 @@
    cache-first. Live FPL data (/api/fpl/*) and Supabase calls are never
    touched here — the app's own data layer decides what is fresh vs cached. */
 
-const VERSION = 'plb-v20';
+const VERSION = 'plb-v21';
 /* Every desk, not just the Premier League one. The shell decides what opens
    with no connection: installed on a phone, a page missing from here is a
    blank screen on the Underground even though it works perfectly on wifi.
@@ -68,6 +68,10 @@ const SHELL = [
      the project anyway, but a 404 here would throw at the script tag rather
      than fail quietly in initAuth. */
   '/assets/vendor/supabase.js',
+  /* Tabulator, loaded by index.html the first time the Screener opens. Not a
+     <script src> in the markup, so nothing else lists it: without this entry
+     the installed app opens the Screener offline to "could not be loaded". */
+  '/assets/vendor/tabulator.js',
   '/icons/icon-16.png',
   '/icons/icon-32.png',
   '/assets/palette.js',

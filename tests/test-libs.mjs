@@ -40,6 +40,16 @@ function vendored(id) {
   assert.ok(open > -1 && close > open, `VENDOR:${id} carries no <script>`);
   return chunk.slice(open + 8, close);
 }
+/* A file under assets/vendor/: the licence header, then the payload. Two
+   libraries live there because they are loaded on demand rather than to
+   render: Tabulator on the first opening of the Screener, supabase-js at
+   sign-in. */
+function vendoredFile(path) {
+  const src = read(path);
+  const end = src.indexOf('\n */\n');
+  assert.ok(end > -1, `${path} carries no licence header`);
+  return { header: src.slice(0, end + 5), payload: src.slice(end + 5) };
+}
 
 /* One sandbox, loaded in the page's own order, because that is the thing being
    tested: these files are siblings in one global and they must not collide. */
@@ -63,22 +73,47 @@ t('every vendored block evaluates and defines its global', () => {
      Compiling it proves it is whole JavaScript, and the UMD tail proves the
      bytes that install the constructor are still on the end of it. A file cut
      short throws nothing at build time and empties a view at runtime. */
-  const tab = vendored('tabulator-js');
+  const tab = vendoredFile('assets/vendor/tabulator.js').payload;
   new vm.Script(tab, { filename: 'vendor:tabulator' });
   assert.match(tab, /\.Tabulator=/, 'the UMD global assignment is missing');
-  assert.match(tab.trimEnd(), /\)\);$/, 'the block does not end on a closed call');
+  assert.match(tab.trimEnd(), /\)\);$/, 'the file does not end on a closed call');
+});
+t('Tabulator is loaded on demand by the Screener, and only there', () => {
+  /* The block is out of the page: 432 KB that one view used, paid by every
+     view. What replaces it is a loader that fetches the file the first time
+     the Screener opens, with a visible loading state and a message when the
+     load fails, and a shell entry so the installed app has it offline. */
+  assert.ok(!page.includes('<!-- VENDOR:tabulator-js START -->'), 'Tabulator is inlined again');
+  assert.ok(page.includes('<!-- VENDOR:tabulator-css START -->'), 'the Tabulator stylesheet should stay inline');
+  assert.ok(!/<script src="assets\/vendor\/tabulator\.js"/.test(page),
+    'Tabulator is a static script tag, so every view waits on it again');
+  const loader = /function loadTabulator\(\)\{([\s\S]*?)\n\}/.exec(page);
+  assert.ok(loader, 'loadTabulator() is gone');
+  assert.match(loader[1], /s\.src="assets\/vendor\/tabulator\.js"/);
+  assert.match(loader[1], /onerror/, 'a failed load has no handler');
+  const mount = /function mountScreener\(\)\{([\s\S]*?)\n\}/.exec(page);
+  assert.ok(mount, 'mountScreener() is gone');
+  assert.match(mount[1], /Loading the grid/, 'no loading state');
+  assert.match(mount[1], /could not be loaded/, 'no failure message');
+  assert.match(mount[1], /loadTabulator\(\)/, 'the Screener does not load the grid library');
+  assert.ok(read('sw.js').includes("'/assets/vendor/tabulator.js'"), 'not in the offline shell');
+  const h = vendoredFile('assets/vendor/tabulator.js').header;
+  assert.ok(h.startsWith('/*! tabulator-tables v6.3.1'), 'the licence header is missing');
 });
 t('no vendored block points at a source map', () => {
   /* A map reference is a request to a file this page does not ship, on a page
      whose whole claim is that it makes none. Checked on the PAYLOAD, past the
      licence header — the header is allowed to mention the removal, and an
      earlier version of this test was satisfied by its own comment. */
-  for (const id of ['tabulator-css', 'tabulator-js', 'jstat', 'simple-statistics', 'papaparse']) {
+  for (const id of ['tabulator-css', 'jstat', 'simple-statistics', 'papaparse']) {
     const a = page.indexOf(`<!-- VENDOR:${id} START -->`);
     const b = page.indexOf(`<!-- VENDOR:${id} END -->`);
     const block = page.slice(a, b);
     const payload = block.slice(block.indexOf('\n */\n') + 5);
     assert.ok(!/sourceMappingURL/.test(payload), `${id} still points at a source map`);
+  }
+  for (const f of ['assets/vendor/tabulator.js', 'assets/vendor/supabase.js']) {
+    assert.ok(!/sourceMappingURL/.test(vendoredFile(f).payload), `${f} still points at a source map`);
   }
 });
 t('the file-vendored Supabase client evaluates and defines createClient', () => {
@@ -108,7 +143,7 @@ t('the file-vendored Supabase client evaluates and defines createClient', () => 
 });
 t('every vendored block names its package, version and licence', () => {
   for (const [id, needle] of [
-    ['tabulator-js', 'tabulator-tables v6.3.1'],
+    ['tabulator-css', 'tabulator-tables v6.3.1'],
     ['jstat', 'jstat v1.9.6'],
     ['simple-statistics', 'simple-statistics v7.8.8'],
     ['papaparse', 'papaparse v5.4.1'],
