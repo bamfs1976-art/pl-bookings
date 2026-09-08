@@ -56,6 +56,42 @@ Numbers below are measured from this repository unless marked *unverified*.
 >    in those three matches rather than that the field does not exist. Not
 >    worth chasing until a backfill runs over a season.
 >
+> ### Step 2 has been run too, and §1 was wrong
+>
+> Same probe, still 8 calls. The league phase is **144 fixtures, 36 clubs**:
+>
+> | | |
+> |---|---|
+> | Clubs a desk already holds | **10** |
+> | Clubs held by nobody | **26** |
+> | Season form for those 26 | **146 calls a day** (at the measured 5.6/club) |
+>
+> The §3 estimate — "~26 clubs, ~150 calls a day" — was right to the club.
+>
+> **But §1's claim that nothing is priceable today is false, and the reasoning
+> under it was bad.** It argued from UEFA not pairing clubs of the same
+> country. That rule forbids England v England; it does not forbid England v
+> Spain, and both of those sides are held. Counted rather than deduced,
+> **8 of the 144 league-phase ties already have both squads**:
+>
+> | | |
+> |---|---|
+> | League Stage 1 | Liverpool v Atletico Madrid |
+> | League Stage 2 | Atletico Madrid v Manchester United |
+> | League Stage 3 | Liverpool v Villarreal |
+> | League Stage 4 | Barcelona v Aston Villa |
+> | League Stage 6 | Barcelona v Manchester City |
+> | League Stage 6 | **Arsenal v Real Madrid** |
+> | League Stage 7 | Real Betis v Arsenal |
+> | League Stage 8 | Villarreal v Manchester United |
+>
+> That changes the sequencing in §6. There **is** an honest first version, it
+> needs no new squad data at all, and it is eight of the competition's most
+> watched fixtures. It would need the European referee record (§4, now known to
+> be buildable) and nothing else — and it would be a real test of every §5
+> assumption on a handful of matches before committing to twenty-six squads a
+> day, for ever.
+>
 > The remaining unknown is not data. It is §5.
 
 ## 1. What the desk could price today: nothing
@@ -77,11 +113,17 @@ this case deliberately:
 > pricing one off its real XI and the other off last season's minutes would
 > make them answer different questions.
 
-The rule is right and should not be weakened for Europe. It also means there is
-no "partial" first version: **until both squads are held, a fixture is not a
-fixture.** And because UEFA does not pair clubs from the same country in the
-league phase, the number of ties the desk could price today is not small — it
-is zero.
+The rule is right and should not be weakened for Europe: **until both squads
+are held, a fixture is not a fixture.**
+
+> **Corrected by measurement — see the update above.** This section originally
+> concluded that the number of priceable ties was *zero*, arguing that UEFA
+> does not pair clubs from the same country. That was wrong twice over: the
+> rule forbids England v England, not England v Spain, and the desk holds both
+> — and the three cards that prompted this note were simply an unlucky sample.
+> The real figure is **8 of 144**, including Arsenal v Real Madrid and
+> Barcelona v Manchester City. A deduction stood in for a count, and the count
+> was free.
 
 ## 2. What the desk holds
 
