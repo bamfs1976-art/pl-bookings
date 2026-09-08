@@ -2,7 +2,7 @@
 
 *Compiled 13 August 2026, one day before the season opens. Scope: free APIs,
 open datasets, public repositories and competitor features that could improve
-the **Premier League Bookings Desk** and **Gameweek Edge**. A twin of this file
+the **Bookings Desk** and **Gameweek Edge**. A twin of this file
 lives in `gameweek-edge/docs/SEASON_RESEARCH_2026-08.md` with the same findings
 and an FPL-specific action list.*
 

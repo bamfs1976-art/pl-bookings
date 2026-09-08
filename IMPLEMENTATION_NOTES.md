@@ -6,6 +6,27 @@ work, newest first: what changed, what was deferred and why. Everything before
 in [docs/decisions.md](docs/decisions.md); the audit itself is
 [docs/audit-2026-07.md](docs/audit-2026-07.md).
 
+## Review follow-up, task 3: branding sweep (2026-09-08)
+
+BAProTips is retired; Bookings Desk is the product name. Searched every file
+for `BAProTips`, `playerbookings.netlify.app`, `Premier League Bookings Desk`
+and the old app's long name. Outside `docs/decisions.md`, where the historical
+mentions stay with a dated retirement note added, nothing now carries any of
+them. What changed: the sibling-desk intro on the Championship and La Liga
+pages, the calendar export's note and `PRODID`, the AI-review comments in
+`index.html` and `netlify/functions/insights.js`, the `netlify.toml` and
+`build_pl_data.py` headers, and three research documents. The manifest, `og.png`,
+the share-card straps and wordmarks and the first-run tour already said
+Bookings Desk and were left as they were; `scripts/check-share.mjs` still
+proves every card carries the 18+ line.
+
+Two small extras in the same sweep: the Championship, La Liga and Today page
+titles now follow the Premier League desk's `Bookings Desk · <league>` shape,
+and `og:image` and `twitter:image` on the Premier League desk are absolute
+(`https://bookingsdesk.netlify.app/og.png`), which closes the item the July
+notes deferred until the domain was settled. The Netlify project name was
+checked before that URL was written.
+
 ## Review follow-up, task 2: documentation reset (2026-09-08)
 
 The README had grown to 71 KB and read as a changelog. It is now an orientation

@@ -705,3 +705,16 @@ lands on an empty card.
   site and should stay one.
 - **Capacitor / native iOS** from `gameweek-edge`. The PWA covers it until
   there is a reason to pay Apple.
+
+---
+
+## Branding (2026-09-08)
+
+**BAProTips is retired.** Its one worthwhile feature, the AI review of tracker
+picks, was ported into this app on 12 July 2026 (see "Deliberately not taken"
+above) and the name was retired on 8 September 2026. Bookings Desk is the
+product name and `bookingsdesk.netlify.app` is its address; the old app's
+`playerbookings.netlify.app` address is not referenced anywhere in this
+repository. The mentions of the old name in this file are historical and stay.
+The absolute `og:image` URL the July notes deferred "until the domain is
+settled" was set the same day.

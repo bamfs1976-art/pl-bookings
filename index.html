@@ -27,14 +27,14 @@
 <meta property="og:title" content="Bookings Desk · Premier League">
 <meta property="og:description" content="Stats-based Premier League player-bookings analysis for 2026-27.">
 <meta property="og:type" content="website">
-<meta property="og:image" content="/og.png">
+<meta property="og:image" content="https://bookingsdesk.netlify.app/og.png">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
 <meta property="og:image:alt" content="Bookings Desk — player bookings research for the Premier League">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="Bookings Desk · Premier League">
 <meta name="twitter:description" content="Player bookings research for the Premier League — card risk, referees, fixtures and value checks.">
-<meta name="twitter:image" content="/og.png">
+<meta name="twitter:image" content="https://bookingsdesk.netlify.app/og.png">
 <!-- Purged Tailwind build (preflight + used utilities), self-hosted: no CDN, no render-blocking third-party script. Rebuild with: npx tailwindcss@3 -i <input with @tailwind directives> -o assets/tw.css --content index.html --minify -->
 <link rel="stylesheet" href="assets/tw.css">
 <!-- Supabase client for optional account sync. Deferred, so the app never
@@ -3325,8 +3325,8 @@ function fixtureICS(fx,player){
   const bits=[`Booking heat ${(fmCal?fmCal.heat:clubCAH(hS)+clubCAA(aS)).toFixed(1)}`];
   if(ref) bits.push(`Referee ${ref.n}${ref.ypg!=null?` (${ref.ypg.toFixed(2)} cards/game)`:""}`);
   if(player) bits.push(`Watching: ${player}`);
-  bits.push("Via Premier League Bookings Desk — 18+, research not betting advice.");
-  return ["BEGIN:VCALENDAR","VERSION:2.0","PRODID:-//PL Bookings Desk//EN","CALSCALE:GREGORIAN","BEGIN:VEVENT",
+  bits.push("Via Bookings Desk. 18+, research not betting advice.");
+  return ["BEGIN:VCALENDAR","VERSION:2.0","PRODID:-//Bookings Desk//EN","CALSCALE:GREGORIAN","BEGIN:VEVENT",
     `UID:plb-${fx.id}-${player?"p":"m"}@bookings-desk`,
     `DTSTAMP:${icsStamp(Date.now())}`,`DTSTART:${icsStamp(start)}`,`DTEND:${icsStamp(end)}`,
     `SUMMARY:${icsEscape(title)}`,`DESCRIPTION:${icsEscape(bits.join(" · "))}`,
@@ -3390,7 +3390,7 @@ $("pickRows").addEventListener("change",e=>{ const s=e.target.closest(".pk-statu
 $("pickRows").addEventListener("click",e=>{ const b=e.target.closest(".pk-del"); if(!b) return; state.picks=state.picks.filter(x=>x.id!==b.dataset.id); saveState(); cloudPickDel(b.dataset.id); renderTracker(); });
 
 // ---- AI review of picks ----
-// Ported from Booking Analytics Pro. The Anthropic key never reaches the
+// Ported from a retired sibling app (docs/decisions.md records it). The Anthropic key never reaches the
 // browser: /api/insights is this site's own Netlify Function, which holds
 // the key in its environment and answers 501 when it isn't configured.
 // The function requires a signed-in Supabase session (and rate-limits per

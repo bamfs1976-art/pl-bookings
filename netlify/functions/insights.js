@@ -1,5 +1,5 @@
 /* Bookings Desk — optional AI review of tracker picks (Netlify Function)
-   Ported from Booking Analytics Pro, redone with the key server-side: the
+   Ported from a retired sibling app (docs/decisions.md records it), redone with the key server-side: the
    client posts its settled picks to /api/insights and this function calls
    the Anthropic API with ANTHROPIC_API_KEY from the Netlify environment.
    No key in the browser, no key in localStorage, no open proxy — the
