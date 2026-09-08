@@ -334,6 +334,66 @@ for (const [what, rows] of [['with a head to head', withH2H], ['without one', no
     'and at the old fixed size it reads as one small number adrift in white');
 }
 
+/* ---- the form grid -------------------------------------------------------
+ *
+ * The reference layout this borrows from carries a trends grid of goals,
+ * corners and both-teams-to-score. This desk models none of those, so the grid
+ * asks the same question in the only currency here — was this club carded, and
+ * how heavily — off the feed's own per-fixture counts rather than off the
+ * model. Two properties make it honest and both are asserted:
+ *
+ *   A CLUB WITH FEWER THAN FIVE PLAYED MATCHES GETS DASHES, NOT NOES. Every
+ *   club in August is in that state. Padding with `false` would state that a
+ *   club kept a clean sheet in a match it has not played.
+ *
+ *   THE ROWS MIRROR THE MARKET CELLS ABOVE THEM. Over 3.5 is four or more, so
+ *   the row reads "4+ in match" — a reader holds the forecast against the
+ *   record without doing arithmetic, and the two cannot drift into asking
+ *   different questions.
+ */
+{
+  const rows = S.trendRows(
+    [{ tc: 2, mc: 5, both: true }, { tc: 0, mc: 1, both: false },
+     { tc: 3, mc: 4, both: true }],
+    []);
+  assert.deepEqual(rows.map((r) => r.label),
+    ['2+ team cards', '4+ in match', 'Both carded'],
+    `the form grid's questions changed: ${rows.map((r) => r.label).join(', ')}`);
+  assert.deepEqual(rows[0].home, [true, false, true, null, null],
+    'a club with three played matches is not being padded with nulls — two ' +
+    'unplayed games are being reported as games in which it was not carded');
+  assert.deepEqual(rows[1].home, [true, false, true, null, null],
+    '"4+ in match" is not reading match cards (5, 1, 4)');
+  assert.deepEqual(rows[2].home, [true, false, true, null, null],
+    '"Both carded" is not reading the both flag');
+  assert.deepEqual(rows[0].away, [null, null, null, null, null],
+    'a club with no played matches should be five dashes, not five noes');
+
+  /* AND IT DRAWS, with the labels and the club codes, and does not cost the
+     card the things that were already on it. */
+  drawn.length = 0;
+  await S.statSheetCard({
+    ...sheetSpec,
+    trends: { label: 'Last 5 · cards', rows },
+    basis: 'EFL Championship 2026-27 only',
+  });
+  const tText = drawn.join('\n');
+  for (const need of ['LAST 5 · CARDS', '2+ TEAM CARDS', '4+ IN MATCH',
+                      'BOTH CARDED', 'CHA', 'DER',
+                      'EXPECTED CARDS', 'BOOKED TONIGHT']) {
+    assert.ok(tText.includes(need),
+      `the card with a form grid never drew ${JSON.stringify(need)}`);
+  }
+  assert.ok(tText.includes('–'),
+    'no dash was drawn for an unplayed match — a null is being rendered as a ' +
+    'result');
+  /* The provenance line the reference carries along its bottom edge. */
+  assert.ok(/EFL Championship 2026-27 only/.test(tText),
+    'the card does not say what season its numbers are drawn from');
+  assert.ok(/18\+/.test(tText) && /begambleaware/.test(tText),
+    'the basis line displaced the 18+ / BeGambleAware line');
+}
+
 /* ---- crests and faces ----------------------------------------------------
  *
  * THE BADGE EACH SIDE AND A PORTRAIT PER RANKED ROW, which is what separates

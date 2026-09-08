@@ -35,9 +35,12 @@ const SHELL = [
   '/data/core_insights.js',
   '/data/eflc_data.js',
   '/data/eflc_fixtures.js',
+  '/data/eflc_fxstats.js',
   '/data/laliga_data.js',
   '/data/laliga_fixtures.js',
+  '/data/laliga_fxstats.js',
   '/data/pl_fixtures.js',
+  '/data/pl_fxstats.js',
   /* The 2025/26 match record the Methodology view scores the model against.
      Offline it is the difference between a backtest and an apology. */
   '/data/pl_backtest_2526.js',

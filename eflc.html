@@ -429,6 +429,7 @@
 <!-- Optional. Absent until the fixture harvest has run, and a 404 on a script
      tag is harmless — the Fixtures tab says so rather than breaking. -->
 <script src="data/eflc_fixtures.js"></script>
+<script src="data/eflc_fxstats.js" onerror="void 0"></script>
 <script src="assets/accas.js"></script>
 <script src="assets/rotation.js"></script>
 <script src="assets/core.js"></script>
@@ -1621,7 +1622,9 @@
       squadOf: function (short) {
         return EFLC_PLAYERS.filter(function (p) { return p.c === short; });
       },
-      h2hRows: h2hRowsFor(fx)
+      h2hRows: h2hRowsFor(fx),
+      recentFor: function (short) { return recentCards(short, 5); },
+      basis: 'EFL Championship 2026-27 only'
     });
     var spec = S.deskStatSheetSpec(priced, ctx);
     shareBusy(btn, true);
@@ -1635,6 +1638,28 @@
      difference between this desk and a general stats graphic. Empty when the
      pair has no recorded meetings, and the card then omits the panel rather
      than drawing an empty box. */
+  /* A club's last five COMPLETED matches, as the share card's form grid reads
+     them — team cards, match cards, and whether both sides were carded. From
+     EFLC_FXSTATS, the feed's own count per fixture: the grid is a record of what
+     happened and has to be sourced like one, not from the model. Newest
+     first, and finished only — a scheduled match has no cards, and counting
+     it as none would state that a clean game was played. */
+  function recentCards(short, n) {
+    if (typeof EFLC_FXSTATS === 'undefined' || !EFLC_FXSTATS) return [];
+    var out = [];
+    var done = FIXTURES.filter(function (f) { return f.st === 'FT'; })
+      .sort(function (a, b) { return String(b.d).localeCompare(String(a.d)); });
+    for (var i = 0; i < done.length && out.length < (n || 5); i++) {
+      var f = done[i], st = EFLC_FXSTATS[String(f.id)];
+      if (!st || (f.h !== short && f.a !== short)) continue;
+      var mine = st[short], other = st[f.h === short ? f.a : f.h];
+      if (!mine || !other) continue;
+      var tc = Number(mine.yc || 0), oc = Number(other.yc || 0);
+      out.push({ tc: tc, mc: tc + oc, both: tc > 0 && oc > 0 });
+    }
+    return out;
+  }
+
   function h2hRowsFor(fx) {
     var p = typeof h2hFor === 'function' ? h2hFor(fx.h, fx.a) : null;
     if (!p || p.n == null || p.n < 3) return [];

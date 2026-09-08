@@ -525,7 +525,9 @@
    *   home / away: { short, name, img, panels: [{label, unit, rows: [{n, v, ph}]}] },
    *   ref:   { line, stats: [{label, value}] },
    *   match: { expected, heatLabel, cells: [{label, value, tone}] },
-   *   h2h:   { label, rows: [{left, right}] }
+   *   h2h:   { label, rows: [{left, right}] },
+   *   trends:{ label, rows: [{label, home: [true|false|null], away: [...]}] },
+   *   basis: 'a line saying what the numbers are drawn from'
    * }
    *
    * `side.img` is the club badge and `row.ph` a player portrait. Both are
@@ -536,6 +538,42 @@
    * and a hole where a face should be reads as a broken card.
    */
   var SW = 1600, SH = 1000;
+
+  /* A MARK PER PANEL, in the heading's own ink. The reference layouts this
+     borrows its shape from put a glyph on every heading, and it does more than
+     decorate: four headings in a column of identical type read as one block,
+     and the eye has to parse words to find the one it wants. Drawn rather than
+     loaded — a card must never wait on an icon font — and keyed off the label
+     so a panel that is renamed keeps its meaning or falls back to nothing
+     rather than to the wrong picture. */
+  function panelIcon(x, label, cx, cy, s) {
+    var l = String(label || '').toLowerCase();
+    x.save();
+    x.translate(cx, cy);
+    if (/booked|card|yellow|red/.test(l)) {
+      /* A card, angled — the desk's own mark, in miniature. */
+      x.rotate(-0.18);
+      roundRect(x, -s * 0.32, -s * 0.5, s * 0.64, s, s * 0.14);
+      x.fill();
+    } else if (/foul(s)? committed|committed/.test(l)) {
+      /* A whistle: body and spout. */
+      x.beginPath(); x.arc(-s * 0.1, 0, s * 0.42, 0, Math.PI * 2); x.fill();
+      roundRect(x, s * 0.2, -s * 0.2, s * 0.5, s * 0.34, s * 0.1); x.fill();
+    } else if (/won|win/.test(l)) {
+      /* An open hand — the foul is being taken, not given. */
+      roundRect(x, -s * 0.34, -s * 0.18, s * 0.68, s * 0.6, s * 0.12); x.fill();
+      for (var i = 0; i < 3; i++) {
+        roundRect(x, -s * 0.34 + i * s * 0.25, -s * 0.52, s * 0.16, s * 0.4,
+                  s * 0.08);
+        x.fill();
+      }
+    } else {
+      /* Unknown heading: a dot, which reads as deliberate where a wrong
+         pictogram would read as a mistake. */
+      x.beginPath(); x.arc(0, 0, s * 0.22, 0, Math.PI * 2); x.fill();
+    }
+    x.restore();
+  }
 
   function panelStack(x, th, side, cx, cy, cw, palette, avail, pics) {
     pics = pics || {};
@@ -597,8 +635,10 @@
       x.lineTo(cx + cw - 12, py);
       x.arcTo(cx + cw, py, cx + cw, py + 12, 12);
       x.lineTo(cx + cw, py + hh); x.closePath(); x.fill();
-      x.fillStyle = textOn(col); x.font = '700 15px ' + BODY;
-      x.fillText(pn.label.toUpperCase(), cx + 14, py + 21);
+      x.fillStyle = textOn(col);
+      panelIcon(x, pn.label, cx + 14, py + hh / 2, 15);
+      x.font = '700 15px ' + BODY;
+      x.fillText(pn.label.toUpperCase(), cx + 36, py + 21);
       if (pn.unit) {
         x.textAlign = 'right';
         /* The unit is a qualifier, not a heading — held back so "PER 90" does
@@ -716,7 +756,16 @@
       var hRows = ((spec.h2h && spec.h2h.rows) || []).slice(0, 5);
       var hasH2H = !!hRows.length;
       var hh = hasH2H ? 46 + hRows.length * 34 : 0;
-      var mh = bottom - cy - (hasH2H ? hh + 18 : 0);
+      /* THE FORM GRID takes a fixed height and the match panel gives it up.
+         Same reasoning as the head to head above: size the fixed thing first
+         and let the elastic one absorb what is left. The expected-cards figure
+         had grown to fill a box three hundred pixels tall and was reading as
+         one number adrift in white, so this costs nothing it was using. */
+      var tRows = ((spec.trends && spec.trends.rows) || []).slice(0, 4);
+      var hasTrends = !!tRows.length;
+      var tSt = 46 + 22;                       // heading + the two club names
+      var th2 = hasTrends ? tSt + tRows.length * 30 + 10 : 0;
+      var mh = bottom - cy - (hasH2H ? hh + 18 : 0) - (hasTrends ? th2 + 18 : 0);
       x.fillStyle = '#f4f6fa'; roundRect(x, centreX, cy, centreW, mh, 14); x.fill();
       x.textAlign = 'center';
       /* CENTRED IN WHATEVER HEIGHT THE BOX HAS. Anchored to the top it sat
@@ -749,6 +798,75 @@
       x.textAlign = 'left';
       cy += mh + 18;
 
+      /* ---- what each side has actually been doing ----
+         The reference layout carries a "betting trends" grid of goals, corners
+         and both-teams-to-score. This desk models none of those and must not
+         imply it does, so the grid asks the same QUESTION in the only currency
+         here: was this club carded, and how heavily, in each of its last five.
+         A tick is a fact about a played match, not a forecast. */
+      if (hasTrends) {
+        var tr = spec.trends;
+        x.fillStyle = '#f4f6fa'; roundRect(x, centreX, cy, centreW, th2, 14); x.fill();
+        x.textAlign = 'center';
+        x.fillStyle = '#8b94a5'; x.font = '700 15px ' + BODY;
+        x.fillText((tr.label || 'LAST 5 · CARDS').toUpperCase(),
+                   centreX + centreW / 2, cy + 26);
+
+        /* Each half wears its own club's colour, which is what lets a reader
+           tell the two columns apart at a glance rather than by position. */
+        var halfW = (centreW - 36) / 2;
+        [['home', centreX + 12], ['away', centreX + 24 + halfW]]
+          .forEach(function (pair) {
+            var side = spec[pair[0]] || {};
+            var col2 = clubColour(side.short, spec.palette, th);
+            x.fillStyle = col2;
+            roundRect(x, pair[1], cy + 36, halfW, 22, 6); x.fill();
+            x.fillStyle = textOn(col2); x.font = '800 13px ' + DISP;
+            x.fillText(fit(x, (side.short || '').toUpperCase(), halfW - 8),
+                       pair[1] + halfW / 2, cy + 52);
+          });
+
+        /* SIZED FROM THE BOX, not from a constant. The label allowance was a
+           hard 96px and every row came out as "2+ TEAM CAR…" — the pills take
+           a known width, so what is left is arithmetic and there is no reason
+           to guess at it. */
+        var d2 = 18, gap2 = 4, nMarks = 5;
+        var pillsW = nMarks * (d2 + gap2);
+        var labW = halfW - pillsW - 10;
+        tRows.forEach(function (row, i) {
+          var ry = cy + tSt + i * 30;
+          x.textAlign = 'left';
+          x.fillStyle = '#586275'; x.font = '600 12px ' + BODY;
+          var lab = fit(x, String(row.label || '').toUpperCase(), labW);
+          [['home', centreX + 12], ['away', centreX + 24 + halfW]]
+            .forEach(function (pair) {
+              x.textAlign = 'left';
+              x.fillStyle = '#586275'; x.font = '600 12px ' + BODY;
+              x.fillText(lab, pair[1] + 4, ry + 18);
+              var marks = (row[pair[0]] || []).slice(0, nMarks);
+              var startX = pair[1] + halfW - (marks.length * (d2 + gap2)) + gap2;
+              marks.forEach(function (v, j) {
+                var mx = startX + j * (d2 + gap2);
+                /* THREE STATES, not two. null is "not applicable" — a club
+                   with fewer than five completed matches, which is every club
+                   in August — and drawing it as a No would state that it kept
+                   a clean sheet in a game it has not played. The reference
+                   layout makes the same distinction and it is the honest one. */
+                x.fillStyle = v === null || v === undefined ? '#c2c8d4'
+                  : v ? '#16a34a' : '#dc2626';
+                x.beginPath(); x.arc(mx + d2 / 2, ry + 12, d2 / 2, 0, Math.PI * 2);
+                x.fill();
+                x.fillStyle = '#ffffff'; x.font = '800 12px ' + DISP;
+                x.textAlign = 'center';
+                x.fillText(v === null || v === undefined ? '–' : (v ? 'Y' : 'N'),
+                           mx + d2 / 2, ry + 16);
+              });
+            });
+        });
+        x.textAlign = 'left';
+        cy += th2 + 18;
+      }
+
       /* ---- head to head, in CARDS ---- */
       var h = spec.h2h;
       if (hasH2H) {
@@ -769,8 +887,14 @@
         });
       }
 
-      footer(x, th, spec.note ||
-        'Every figure is this desk’s own model · research, not a guarantee',
+      /* WHAT THE NUMBERS ARE DRAWN FROM, on the card. The reference layouts
+         carry it along the bottom — "ALL DATA FROM 2026-27 DOMESTIC SEASON" —
+         and they are right to: a card outlives the page it came from, and a
+         rate with no stated season is a rate a reader cannot check or date. */
+      footer(x, th, spec.basis
+        ? spec.basis + ' · research, not a guarantee'
+        : (spec.note
+           || 'Every figure is this desk’s own model · research, not a guarantee'),
         SW, SH);
       return toBlob(k.c);
     });
@@ -1258,6 +1382,35 @@
    * cannot reach into three different globals, so the caller passes the lookup
    * it already has.
    */
+  /* THE FORM GRID'S RULE, in one place. Each desk knows its own fixture stats
+     and hands over a club's last five as {tc, mc} — team cards and match cards
+     — and the QUESTIONS asked of them are decided here, so three desks cannot
+     come to disagree about what "both carded" means.
+     
+     THEY MIRROR THE MARKET CELLS ABOVE THEM ON THE CARD, deliberately. Those
+     say what the model expects of this fixture; these say what actually
+     happened in the last five. Over 3.5 is four or more, so the row is "4+ in
+     match" rather than a second way of writing the same line. A reader can
+     hold the forecast against the record without doing arithmetic. */
+  function trendRows(home, away) {
+    function marks(list, f) {
+      var out = (list || []).slice(0, 5).map(f);
+      /* PADDED WITH NULL, NOT WITH NO. A club with three completed matches has
+         not kept two clean sheets; it has not played them. The draw shows a
+         null as a dash for exactly this reason. */
+      while (out.length < 5) out.push(null);
+      return out;
+    }
+    var q = [
+      ['2+ team cards', function (g) { return g.tc >= 2; }],
+      ['4+ in match', function (g) { return g.mc >= 4; }],
+      ['Both carded', function (g) { return !!g.both; }]
+    ];
+    return q.map(function (pair) {
+      return { label: pair[0], home: marks(home, pair[1]), away: marks(away, pair[1]) };
+    });
+  }
+
   function deskStatSheetSpec(priced, ctx) {
     var n1 = function (v) { return v == null ? '—' : Number(v).toFixed(1); };
     var n2 = function (v) { return v == null ? '—' : Number(v).toFixed(2); };
@@ -1343,6 +1496,16 @@
       },
       h2h: ctx.h2hRows && ctx.h2hRows.length
         ? { label: 'Head to head · cards', rows: ctx.h2hRows } : null,
+      /* Absent unless the desk offers the history — a grid of five dashes says
+         nothing and takes the room the expected-cards figure was using. */
+      trends: ctx.recentFor
+        ? (function () {
+            var hh2 = ctx.recentFor(f.h) || [], aa = ctx.recentFor(f.a) || [];
+            return (hh2.length || aa.length)
+              ? { label: 'Last 5 · cards', rows: trendRows(hh2, aa) } : null;
+          }())
+        : null,
+      basis: ctx.basis || null,
       heatMid: ctx.heatMid, heatHot: ctx.heatHot,
       palette: ctx.palette,
       filename: (theme(ctx.league).slug + '-sheet-' + slug(f.h) + '-' + slug(f.a) + '.png')
@@ -1772,6 +1935,7 @@
     THEMES: THEMES, theme: theme,
     matchCard: matchCard, roundCard: roundCard, calendarCard: calendarCard,
     statSheetCard: statSheetCard, SHEET_W: SW, SHEET_H: SH,
+    trendRows: trendRows,
     rankCard: rankCard,
     accaCard: accaCard, accaRowSpec: accaRowSpec, nineFoldSpec: nineFoldSpec,
     deskMatchSpec: deskMatchSpec, deskRoundSpec: deskRoundSpec,

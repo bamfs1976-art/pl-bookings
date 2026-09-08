@@ -1738,6 +1738,9 @@ License: MIT
      not, so every fixture here was priced at refFactor = 1 unless somebody
      picked a referee by hand from the dropdown. See docs/referee-sourcing.md. -->
 <script src="data/pl_fixtures.js"></script>
+<!-- The feed's fouls and cards per fixture. 3KB, and nothing loaded it
+     until the share card needed a club's last five. -->
+<script src="data/pl_fxstats.js" onerror="void 0"></script>
 <script src="data/ref_history.js"></script>
 <script src="data/h2h.js"></script>
 <script src="data/model.js"></script>
@@ -4802,6 +4805,33 @@ function shareCrestUrls(c){
   return out;
 }
 
+/* A CLUB'S LAST FIVE COMPLETED MATCHES, as the share card's form grid reads
+   them: {tc} team cards, {mc} cards in the match, {both} whether both sides
+   were carded. Straight off PL_FXSTATS, which is the feed's own count per
+   fixture — not the model, and not this desk's opinion. The grid is a record
+   of what happened, and it has to be sourced like one.
+
+   Newest first, and only FINISHED fixtures: a scheduled match has no cards,
+   and counting it as none would state that a clean game was played. */
+function recentCards(short,n){
+  if(typeof PL_FXSTATS==="undefined"||!LIVE) return [];
+  const out=[];
+  const done=LIVE.fixtures
+    .filter(f=>f.finished||f.finished_provisional)
+    .sort((a,b)=>String(b.kickoff_time||"").localeCompare(String(a.kickoff_time||"")));
+  for(const f of done){
+    const st=PL_FXSTATS[String(f.id)]; if(!st) continue;
+    const h=LIVE.teamMap[f.team_h], a=LIVE.teamMap[f.team_a];
+    if(short!==h&&short!==a) continue;
+    const mine=st[short], other=st[short===h?a:h];
+    if(!mine||!other) continue;
+    const tc=Number(mine.yc||0), oc=Number(other.yc||0);
+    out.push({ tc:tc, mc:tc+oc, both:tc>0&&oc>0 });
+    if(out.length>=(n||5)) break;
+  }
+  return out;
+}
+
 function exportFixtureSheet(fid,btn){
   if(!SHEET_OK) return;
   if(!LIVE){ toast("Live data needed to build a stat sheet"); return; }
@@ -4837,6 +4867,11 @@ function exportFixtureSheet(fid,btn){
        four with a club colour table, so it is the only one that can. */
     palette:CLUB_COLOURS,
     heatMid:HEAT_WARM, heatHot:HEAT_HOT,
+    recentFor:short=>recentCards(short,5),
+    /* WHAT THE NUMBERS ARE DRAWN FROM, printed along the bottom. A card
+       outlives the page it came from, and a rate with no season on it is a
+       rate the reader cannot date or check. */
+    basis:"Premier League "+SEASON+" only",
     /* In CARDS, which is the whole difference between this and a general
        stats graphic: the reference layout lists the last three scorelines,
        and a scoreline is the one thing on it this desk has no opinion about.
