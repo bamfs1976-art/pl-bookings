@@ -1,0 +1,45 @@
+name: Probe a source
+
+# A diagnostic, not a data job — the same shape as probe-football-data.yml.
+# It fetches nothing into the repository, commits nothing and gates nothing:
+# it prints what is actually at a URL so a decision about building on it can be
+# made from a measurement instead of a guess.
+#
+# WHY IT IS NEEDED AT ALL. The agent proxy this repository is worked through
+# denies almost every external host, so a source can otherwise only be judged
+# from its documentation. That has already cost real work twice: the EFL
+# scraper was written against a news index that turns out to be assembled in
+# the browser, and it found nothing on two live runs before the byte counts
+# explained why. CI is not restricted.
+#
+# MANUAL ONLY. There is nothing here worth a schedule — the answer changes only
+# when a site is rebuilt, and a probe on a timer is a crawl.
+
+on:
+  workflow_dispatch:
+    inputs:
+      urls:
+        description: "URL(s) to probe, space-separated."
+        required: true
+
+# No `contents: write`. This job has nothing to push and must not be able to.
+permissions:
+  contents: read
+
+concurrency:
+  group: probe-source
+  cancel-in-progress: true
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      # No secret to guard: every request is an unauthenticated GET for a page
+      # a reader could open in a browser.
+      - name: Look
+        run: node scripts/probe-source.mjs ${{ inputs.urls }}

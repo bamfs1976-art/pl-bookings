@@ -1,0 +1,171 @@
+#!/usr/bin/env node
+// What is actually AT a URL? A read-only look, run from CI.
+//
+//   node scripts/probe-source.mjs <url> [<url> ...]
+//
+// WHY THIS EXISTS. The agent proxy this repository is worked through denies
+// almost every external host — rfef.es, efl.com, api.football-data.org and
+// myfootballfacts.com among them — so a source can only be judged from its
+// documentation, or from a guess about its markup. Both have now cost real
+// work: the EFL scraper was written against a news index that turns out to be
+// assembled in the browser, and found nothing twice before the byte counts
+// said why. CI is not restricted. So this is the same move
+// scripts/probe-football-data.mjs makes for one API, generalised: go and look,
+// print what is there, then decide what to build.
+//
+// IT WRITES NOTHING AND COMMITS NOTHING. Every request is a GET and the only
+// output is the log.
+//
+// WHAT IT REPORTS, and why each one earns its place:
+//
+//   THE TEXT YIELD — bytes in, characters of prose out. This is the number
+//   that diagnosed the EFL: 138,745 bytes yielding 582 characters is not a
+//   thin article, it is an empty shell whose content arrives by JavaScript.
+//   Anything under a few per cent means the HTML is not where the data is.
+//
+//   THE JSON ISLANDS. When a page IS rendered in the browser, its content is
+//   usually still in the response — sitting in a <script> tag as JSON, which
+//   the text yield above deliberately strips. Naming those scripts and their
+//   sizes is what turns "we cannot scrape this" into "parse this object".
+//
+//   THE TABLES. For a statistics page the question is simply whether the
+//   numbers are in plain <table> markup, and if so under what headings. A
+//   dozen tables of real rows is a source that can be read with no library at
+//   all; zero tables and a large JSON island is a different job.
+//
+// Nothing here is specific to one site, and nothing here parses for keeps.
+// This tells you which of the two jobs you have.
+
+const urls = process.argv.slice(2);
+if (!urls.length) {
+  console.error('usage: node scripts/probe-source.mjs <url> [<url> ...]');
+  process.exit(2);
+}
+
+const UA = 'Mozilla/5.0 (compatible; BookingsDesk/1.0; '
+  + '+https://bookingsdesk.netlify.app) source-probe';
+
+/* The same stripper assets/../data/fetch_appointments.py uses, so the yield
+   reported here is the yield that script would actually get. */
+function toText(html) {
+  return html
+    .replace(/<(script|style)[^>]*>[\s\S]*?<\/\1>/gi, ' ')
+    .replace(/<\/(p|div|li|h\d|tr|br)\s*>|<br\s*\/?>/gi, '\n')
+    .replace(/<[^>]+>/g, ' ')
+    .replace(/&[a-z]+;|&#\d+;/gi, ' ')
+    .split('\n').map((l) => l.replace(/[ \t ]+/g, ' ').trim())
+    .filter(Boolean).join('\n');
+}
+
+function scripts(html) {
+  const out = [];
+  const re = /<script([^>]*)>([\s\S]*?)<\/script>/gi;
+  let m;
+  while ((m = re.exec(html))) {
+    const attrs = m[1] || '', body = m[2] || '';
+    if (/\bsrc=/i.test(attrs)) continue;          // external file, not a payload
+    if (body.trim().length < 200) continue;       // a tag manager snippet
+    const id = (/\bid="([^"]+)"/i.exec(attrs) || [])[1] || '';
+    const type = (/\btype="([^"]+)"/i.exec(attrs) || [])[1] || '';
+    /* Does it LOOK like data? A payload starts as an object or an array, or is
+       assigned to one of the handful of globals frameworks use. */
+    const t = body.trim();
+    const json = t.startsWith('{') || t.startsWith('[')
+      || /window\.__(INITIAL_STATE|NUXT|APOLLO_STATE|DATA)__|__NEXT_DATA__|self\.__next_f/.test(t);
+    out.push({ id, type, bytes: body.length, json });
+  }
+  return out.sort((a, b) => b.bytes - a.bytes);
+}
+
+function tables(html) {
+  const out = [];
+  const re = /<table[\s\S]*?<\/table>/gi;
+  let m;
+  while ((m = re.exec(html))) {
+    const t = m[0];
+    const heads = [...t.matchAll(/<th[^>]*>([\s\S]*?)<\/th>/gi)]
+      .map((h) => toText(h[1]).replace(/\n/g, ' ').trim()).filter(Boolean);
+    const rows = (t.match(/<tr[\s>]/gi) || []).length;
+    /* The first body row, as a reader would see it: what the columns actually
+       contain matters more than what they are called. */
+    const firstBody = /<tbody[^>]*>[\s\S]*?<tr[^>]*>([\s\S]*?)<\/tr>/i.exec(t)
+      || /<tr[^>]*>([\s\S]*?)<\/tr>[\s\S]*?<tr/i.exec(t);
+    const cells = firstBody
+      ? [...firstBody[1].matchAll(/<t[dh][^>]*>([\s\S]*?)<\/t[dh]>/gi)]
+        .map((c) => toText(c[1]).replace(/\n/g, ' ').trim())
+      : [];
+    out.push({ rows, heads, cells });
+  }
+  return out;
+}
+
+function links(html, base) {
+  const seen = new Set();
+  for (const m of html.matchAll(/href="([^"]+)"/gi)) {
+    try { seen.add(new URL(m[1], base).href); } catch { /* not a URL */ }
+  }
+  return [...seen];
+}
+
+let failed = 0;
+for (const url of urls) {
+  console.log('\n' + '='.repeat(72));
+  console.log(url);
+  console.log('='.repeat(72));
+  let res, html;
+  try {
+    res = await fetch(url, { headers: { 'User-Agent': UA }, redirect: 'follow' });
+    html = await res.text();
+  } catch (e) {
+    console.log(`  FETCH FAILED: ${e.name}: ${e.message}`);
+    failed++;
+    continue;
+  }
+  console.log(`  HTTP ${res.status}  ${res.headers.get('content-type') || '?'}`);
+  if (res.url !== url) console.log(`  redirected to ${res.url}`);
+  if (!res.ok) { failed++; continue; }
+
+  const text = toText(html);
+  const yieldPct = html.length ? (text.length / html.length) * 100 : 0;
+  console.log(`  ${html.length} bytes -> ${text.length} chars of text `
+    + `(${yieldPct.toFixed(1)}% yield)`);
+  if (yieldPct < 3) {
+    console.log('  LOW YIELD: the content is not in the HTML. Look at the '
+      + 'inline scripts below — a page rendered in the browser usually still '
+      + 'ships its data as JSON in the response.');
+  }
+
+  const sc = scripts(html).slice(0, 6);
+  if (sc.length) {
+    console.log(`  inline script payloads (largest first):`);
+    for (const s of sc) {
+      console.log(`    ${String(s.bytes).padStart(8)} bytes  `
+        + `${s.json ? 'JSON-ish' : 'code    '}  `
+        + `${s.id ? 'id=' + s.id : ''} ${s.type ? 'type=' + s.type : ''}`.trim());
+    }
+  } else {
+    console.log('  no inline script payloads over 200 bytes');
+  }
+
+  const tb = tables(html);
+  console.log(`  ${tb.length} <table>(s)`);
+  for (const t of tb.slice(0, 8)) {
+    console.log(`    ${String(t.rows).padStart(5)} rows  `
+      + `headings: ${t.heads.slice(0, 12).join(' | ') || '(none)'}`);
+    if (t.cells.length) {
+      console.log(`           first row: ${t.cells.slice(0, 12).join(' | ')}`);
+    }
+  }
+  if (tb.length > 8) console.log(`    ... and ${tb.length - 8} more`);
+
+  /* Sibling pages, which is how a statistics site says what else it has. */
+  const all = links(html, res.url);
+  const same = all.filter((h) => { try { return new URL(h).host === new URL(res.url).host; } catch { return false; } });
+  console.log(`  ${all.length} link(s), ${same.length} on the same host`);
+  const interesting = same.filter((h) => /referee|discipline|card|foul|booking/i.test(h));
+  for (const h of interesting.slice(0, 20)) console.log(`    ${h}`);
+  if (interesting.length > 20) console.log(`    ... and ${interesting.length - 20} more`);
+}
+
+console.log('\nprobe complete — nothing was written or committed.');
+process.exit(failed && failed === urls.length ? 1 : 0);
