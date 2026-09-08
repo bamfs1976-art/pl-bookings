@@ -126,36 +126,97 @@ def main():
               "for the appointment itself.")
 
     # ---- 3. cards AND fouls on a played match -----------------------------
+    #
+    # THE MATCH SAMPLED MATTERS, and the first run of this got it wrong. It
+    # took played[0] — the chronologically FIRST finished fixture, which in a
+    # competition whose id covers the qualifying rounds is a July tie between
+    # clubs like Atert Bissen and Ararat-Armenia. Statistical coverage on a
+    # minor qualifier says nothing about coverage in the league phase, and
+    # reading "ABSENT" off one of those is a false negative that would have
+    # ended the feasibility note on a wrong answer.
+    #
+    # So: the LATEST finished fixtures, several of them, with the round printed
+    # so the log says what was actually asked about.
     print("\n3. statistics on a finished match")
     played = [r for r in rows
               if (((r.get("fixture") or {}).get("status") or {}).get("short")
                   in ("FT", "AET", "PEN"))]
+    played.sort(key=lambda r: str((r.get("fixture") or {}).get("date") or ""),
+                reverse=True)
     if not played:
         print("    no finished fixture in this season yet — re-run once the "
               "competition has kicked off, or with an earlier season.")
     else:
-        fid = (played[0].get("fixture") or {}).get("id")
-        st = ask(host, key, "fixtures/statistics", {"fixture": fid})
-        if st:
+        got_fouls = got_cards = False
+        for r in played[:3]:
+            fid = (r.get("fixture") or {}).get("id")
+            rnd = (r.get("league") or {}).get("round") or "?"
+            when = str((r.get("fixture") or {}).get("date") or "")[:10]
+            tm = r.get("teams") or {}
+            label = (f"{(tm.get('home') or {}).get('name')} v "
+                     f"{(tm.get('away') or {}).get('name')}")
+            print(f"    {when}  {rnd}  —  {label}")
+
+            st = ask(host, key, "fixtures/statistics", {"fixture": fid})
             wanted = {"yellow cards": None, "red cards": None, "fouls": None}
-            for team in (st.get("response") or []):
-                for s in (team.get("statistics") or []):
-                    t = str(s.get("type") or "").lower()
-                    if t in wanted and s.get("value") is not None:
-                        wanted[t] = s.get("value")
+            if st:
+                for team in (st.get("response") or []):
+                    for s in (team.get("statistics") or []):
+                        t = str(s.get("type") or "").lower()
+                        if t in wanted and s.get("value") is not None:
+                            wanted[t] = s.get("value")
             for k, v in wanted.items():
-                print(f"    {k:14} {'present' if v is not None else 'ABSENT'}"
-                      + (f"  (e.g. {v})" if v is not None else ""))
-            if wanted["fouls"] is None:
-                print("    NO FOULS — cards-per-foul cannot be computed, and "
-                      "that is the signal the desk ranks referees on.")
+                print(f"      statistics {k:14} "
+                      + (f"present (e.g. {v})" if v is not None else "ABSENT"))
+            if wanted["fouls"] is not None:
+                got_fouls = True
+            if wanted["yellow cards"] is not None:
+                got_cards = True
+
+            # AND THE OTHER ROUTE TO A CARD. extra-feeds.yml already buys
+            # /events per finished match, and a card is an EVENT before it is a
+            # statistic — so statistics being thin does not by itself mean the
+            # cards are unavailable. Fouls have no such second source, which is
+            # why they are the binding constraint.
+            ev = ask(host, key, "fixtures/events", {"fixture": fid})
+            if ev is not None:
+                cards = [e for e in (ev.get("response") or [])
+                         if str(e.get("type") or "").lower() == "card"]
+                print(f"      events     {len(cards)} card event(s)")
+                if cards:
+                    got_cards = True
+
+        print()
+        if got_fouls:
+            print("    FOULS ARE AVAILABLE — cards-per-foul can be computed, "
+                  "which is the signal the desk ranks referees on.")
+        else:
+            print("    NO FOULS on any of the sampled matches. Cards-per-foul "
+                  "cannot be computed from this feed, so a European referee "
+                  "record could rank on yellows per game only — a weaker "
+                  "signal, and one the desk deliberately moved away from "
+                  "because it does not separate a strict referee from a busy "
+                  "match. See docs/champions-league-feasibility.md §4.")
+        if not got_cards:
+            print("    AND NO CARDS EITHER, from statistics or events — there "
+                  "is no referee record to build here at all.")
 
     # ---- 4. a squad no desk holds -----------------------------------------
+    #
+    # MATCHED PROPERLY. The first run asked for "Inter" and was answered about
+    # Inter Club d'Escaldes, an Andorran side in the qualifying rounds — a
+    # substring match across 81 clubs spanning the whole of UEFA. The names are
+    # spelled out, and every candidate that matches is printed so a wrong one
+    # is visible rather than reported as a finding.
     print("\n4. a squad the desk does not hold")
-    for name in ("Porto", "Inter"):
-        hit = [c for c in clubs if name.lower() in c.lower()]
+    for name in ("FC Porto", "Inter Milan"):
+        hit = [c for c in clubs if c.lower() == name.lower()]
         if not hit:
-            print(f"    {name}: not in this season's fixtures — skipped")
+            near = [c for c in clubs
+                    if name.split()[-1].lower() in c.lower()]
+            print(f"    {name}: no exact match in this season's fixtures"
+                  + (f" (near: {', '.join(sorted(near)[:4])})" if near else "")
+                  + " — skipped")
             continue
         tid = None
         for r in rows:
