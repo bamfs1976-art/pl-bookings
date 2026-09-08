@@ -1,0 +1,45 @@
+name: Probe the Champions League
+
+# A diagnostic, not a data job — the same shape as probe-football-data.yml and
+# probe-source.yml. It fetches nothing into the repository, commits nothing and
+# gates nothing.
+#
+# It answers the one question docs/champions-league-feasibility.md is gated on:
+# does this API-Football subscription see competition id 2 at all? That note
+# costs a European desk at ~150 calls a day for squads plus a ~2,000-call
+# one-off backfill for referee rates, and every line of it assumes the answer
+# is yes. If it is no, nothing should be built.
+#
+# MANUAL ONLY. The answer changes when the subscription does, and about six
+# calls is not worth a schedule.
+
+on:
+  workflow_dispatch:
+    inputs:
+      season:
+        description: "Season start year to ask about (2026 = 2026-27)."
+        required: false
+        default: "2026"
+
+# No `contents: write`. This job has nothing to push and must not be able to.
+permissions:
+  contents: read
+
+concurrency:
+  group: probe-ucl
+  cancel-in-progress: true
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    env:
+      API_FOOTBALL_KEY: ${{ secrets.API_FOOTBALL_KEY }}
+      API_FOOTBALL_SEASON: ${{ inputs.season || '2026' }}
+    steps:
+      - uses: actions/checkout@v4
+
+      # Reported, not failed. Without the key the probe says so and stops, and
+      # that IS the run's answer — the same reasoning as the exit code inside
+      # the script.
+      - name: Ask
+        run: python3 scripts/probe-ucl.py
