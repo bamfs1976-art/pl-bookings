@@ -302,6 +302,26 @@ def main():
     if len(missing) > 40:
         print(f"      ... and {len(missing) - 40} more")
 
+    # AND HOW MANY TIES ARE ALREADY PRICEABLE. The note asserted zero, reasoning
+    # that UEFA does not pair clubs from the same country. That reasoning does
+    # not hold: it forbids ENGLAND v ENGLAND, not England v Spain, and both of
+    # those sides are held. Counted rather than argued.
+    cov = set(covered)
+    both = [r for r in phase
+            if ((r.get("teams") or {}).get("home") or {}).get("name") in cov
+            and ((r.get("teams") or {}).get("away") or {}).get("name") in cov]
+    print(f"\n    league-phase ties with BOTH sides held: {len(both)}"
+          f" of {len(phase)}")
+    for r in both[:10]:
+        tm = r.get("teams") or {}
+        print(f"      {(tm.get('home') or {}).get('name')} v "
+              f"{(tm.get('away') or {}).get('name')}"
+              f"   ({(r.get('league') or {}).get('round')})")
+    if len(both) > 10:
+        print(f"      ... and {len(both) - 10} more")
+    if not both:
+        print("      none — so nothing is priceable until the squads land")
+
     # The cost, in the same unit data/api_budget.py reports: season form is
     # 360 calls a day for 64 clubs across three desks, ~5.6 a club.
     per_club = 360 / 64
