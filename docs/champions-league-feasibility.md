@@ -18,6 +18,46 @@ Numbers below are measured from this repository unless marked *unverified*.
 
 ---
 
+> ## Update: step 1 has been run, and the answer is yes
+>
+> `scripts/probe-ucl.py`, 8 calls, 2026-09-08. Every *unverified* claim in §4
+> and §6.1 is now measured:
+>
+> | Question | Answer |
+> |---|---|
+> | Does the plan serve competition id 2? | **Yes** — 232 fixtures, 81 clubs |
+> | Referee on a **finished** match | **90 of 90 (100%)** |
+> | Referee on an **upcoming** match | 10 of 142 (7%) |
+> | Fouls per match | **Present** — 17, 9, 12 on the three sampled |
+> | Yellow cards | **Present**, and 3–6 card *events* per match as well |
+> | Squad for a club no desk holds | **Yes** — FC Porto, 20 on page 1 of 2 |
+>
+> **The referee wall does not exist here.** Fouls and cards both arrive, so
+> `cards per foul` — the pillar La Liga lost — is computable for Europe. That
+> was the single biggest risk in this note and it has cleared.
+>
+> Three cautions on the numbers above:
+>
+> 1. **The first run of the probe reported fouls and cards ABSENT, and it was
+>    wrong.** It sampled the chronologically first finished fixture, and
+>    competition id 2 includes the qualifying rounds — so it asked about a July
+>    tie between Atert Bissen and Ararat-Armenia. The probe now takes the three
+>    *latest* finished fixtures and prints the round it asked about. Any future
+>    reading off this feed should do the same.
+> 2. **7% of upcoming fixtures carrying a referee is not yet evidence of
+>    "record, not appointment".** The league phase had not begun on the probe
+>    date; the ten that do carry one are plausibly the imminent matches, which
+>    is the same short-lead behaviour the Spanish CTA has. Settling it needs a
+>    run during the league phase, checking whether those ten are the next few
+>    days' fixtures. Until then, assume appointments arrive late rather than
+>    never — and note the desk already has the overlay machinery for exactly
+>    that case.
+> 3. **"red cards ABSENT" is unexplained** and probably means no red was shown
+>    in those three matches rather than that the field does not exist. Not
+>    worth chasing until a backfill runs over a season.
+>
+> The remaining unknown is not data. It is §5.
+
 ## 1. What the desk could price today: nothing
 
 Three cards were the prompt for this note. Here is what the desk can do with
@@ -117,9 +157,8 @@ and `--only-new` means a recorded fixture is never fetched twice. A European
 season is ~189 league-phase matches plus knockouts, call it ~200. Backfilling
 five seasons is ~1,000 matches ≈ **2,000 one-off calls** — a single day's spare
 capacity — and yields exactly the columns `build_refs.py` needs: cards, fouls
-and the official's name. *Unverified*: whether this plan's subscription serves
-UCL (league id 2) fixtures, referees and statistics at all. **This is the first
-thing to measure and it gates everything else.**
+and the official's name. **Measured 2026-09-08 and confirmed** — see the update at the top:
+fixtures, referees and per-match fouls and cards all arrive.
 
 **Not helpful.** A referee's card rate is competition-specific. Michael Oliver
 appears on one of the three cards; the desk holds his Premier League rate, and
