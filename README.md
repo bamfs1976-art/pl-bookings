@@ -122,8 +122,9 @@ over every script and inline block. The guards are the important half: each
 one re-derives something a reader acts on and fails the build if it drifts.
 `scripts/check-ci-wiring.mjs` fails if a guard or test exists that CI does not
 run, or if a committing workflow stops running the guards before it pushes.
-What each guard protects against is in the comments above each step in
-`ci.yml`, and in `docs/guards.md` once that review is written. More in
+What each guard protects against, one line each with its kind and whether
+it would be cheaper as a unit test, is in [docs/guards.md](docs/guards.md);
+the comments above each step in `ci.yml` carry the longer story. More in
 [docs/tests-and-ci.md](docs/tests-and-ci.md).
 
 ## The model, in one paragraph
@@ -203,6 +204,7 @@ Written for a subject rather than moved:
 - [docs/referees.md](docs/referees.md): the referee path end to end, and its guards.
 - [docs/decisions.md](docs/decisions.md): the dated record of what was built and what was left, July and August 2026.
 - [docs/audit-2026-07.md](docs/audit-2026-07.md): the July 2026 audit with every finding's closure status.
+- [docs/guards.md](docs/guards.md): every guard CI runs, what it protects against, and which would be cheaper as unit tests.
 - [IMPLEMENTATION_NOTES.md](IMPLEMENTATION_NOTES.md): the running log from September 2026 on.
 
 Research and plans:

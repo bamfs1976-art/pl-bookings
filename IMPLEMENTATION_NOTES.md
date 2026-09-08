@@ -6,6 +6,53 @@ work, newest first: what changed, what was deferred and why. Everything before
 in [docs/decisions.md](docs/decisions.md); the audit itself is
 [docs/audit-2026-07.md](docs/audit-2026-07.md).
 
+## Review follow-up: closing entry (2026-09-08)
+
+Six commits on `claude/bookings-desk-review-followup-b8yztv`, one per task,
+in order. Every step in `.github/workflows/ci.yml` was run locally before each
+commit and again at the end: 36 guards, three node test files, fifteen Python
+test files and the syntax checks, all green. No model constant, shrinkage,
+card line, derby boost or referee pivot changed. No guard was added or
+deleted.
+
+What changed:
+
+1. **The per-player backtest runs.** A flag-parsing bug in `scripts/backtest.mjs`
+   and a `|| true` in the workflow had hidden two months of silent failure.
+   Fixed and pinned with three child-process tests.
+2. **Documentation reset.** `README.md` is a 222-line orientation page; the
+   old prose is under `docs/`, one file per subject, unchanged; the audit,
+   the enhancements record and the old notes are `docs/audit-2026-07.md` (with
+   closure status) and `docs/decisions.md`.
+3. **Branding sweep.** Nothing outside `docs/decisions.md` names the retired
+   app. Page titles aligned; `og:image` absolute on the confirmed domain.
+4. **Supabase client vendored** as `assets/vendor/supabase.js` (55 KB
+   gzipped), pinned at 2.116.0; no CDN in `script-src`.
+5. **Tabulator loaded on demand** from `assets/vendor/tabulator.js`;
+   `index.html` on the wire from 289,828 to 190,645 gzipped bytes.
+6. **Guard review** in `docs/guards.md`: 38 scripts, one line each, four
+   flagged as cheaper unit tests and seven as splittable. A report, not a
+   change.
+
+Deferred, and why:
+
+- **The first backtest report with numbers in it.** The fix cannot run here
+  (the FPL endpoint is unreachable from this environment) and, with three
+  gameweeks played, the first scored run needs gameweek 5 anyway. The next
+  scheduled Data refresh writes the dated "no scoring run yet" report; the
+  first scored report follows gameweek 5. Reading it is a person's job before
+  anyone touches the model.
+- **Sign-in on the deployed preview** with a real account, then pick sync and
+  the AI review. Neither the preview nor `supabase.co` is reachable from
+  here. The sign-in flow was driven in headless Chromium against a local
+  server with the Supabase call intercepted, and only the library's source
+  changed, but the review asked for the deployed check and it has not been
+  done.
+- **Moving any guard to a unit test.** Flagged in `docs/guards.md`, not
+  moved: the brief asked for a report for a human decision.
+- **`harvest_history.py --season-past`** reads per-season rows and cannot
+  build a walk-forward table. Unused by the workflow; noted under task 1.
+
 ## Review follow-up, task 5: Tabulator is loaded on demand (2026-09-08)
 
 Tabulator was 432 KB of the 574 KB vendored into `index.html`, and only the
