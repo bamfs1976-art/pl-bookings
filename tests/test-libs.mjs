@@ -10,9 +10,11 @@
 // takes a view down at runtime.
 import assert from 'node:assert/strict';
 import { createRequire } from 'node:module';
-import { readFileSync } from 'node:fs';
+import { readFileSync, writeFileSync, mkdtempSync, existsSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
+import { tmpdir } from 'node:os';
+import { spawnSync } from 'node:child_process';
 import vm from 'node:vm';
 
 const require = createRequire(import.meta.url);
@@ -417,6 +419,80 @@ t('the emitted risk score is the standing formula, not a new one', () => {
   assert.equal(ctx.p.y, 0.3);
   assert.equal(ctx.p.f, 1.5);
   assert.equal(ctx.p.r, require('../assets/core.js').riskScore(0.3, 1.5));
+});
+
+/* ---- the written backtest report ---------------------------------------
+ *
+ * scripts/backtest.mjs is run by the Data refresh workflow as
+ * `node scripts/backtest.mjs --report backtest_report.md`, and for two months
+ * that produced nothing: the script read the report name as the history path,
+ * failed to find match history inside it, and the workflow swallowed the exit.
+ * These tests run the script as a child process with the workflow's own
+ * argument shapes, because the bug was in argument handling and a test that
+ * imported the functions would have stepped around it.
+ */
+console.log('\nbacktest report');
+const btDir = mkdtempSync(join(tmpdir(), 'plb-backtest-'));
+const btScript = join(root, 'scripts', 'backtest.mjs');
+/* Deterministic synthetic history: 80 rows a round, a fifth of them booked,
+   in the shape data/harvest_history.py writes. */
+function history(roundCount) {
+  const rows = [];
+  const pos = ['GK', 'DF', 'MF', 'FW'];
+  for (let round = 1; round <= roundCount; round++) {
+    for (let i = 0; i < 80; i++) {
+      rows.push({
+        round, name: `P${i}`, pos: pos[i % 4],
+        yc90: Number(((i % 7) * 0.1).toFixed(2)),
+        foul90: Number((1 + (i % 5) * 0.3).toFixed(2)),
+        y: ((i * 7 + round * 3) % 10) < 2 ? 1 : 0
+      });
+    }
+  }
+  return rows;
+}
+const run = (args) => spawnSync(process.execPath, [btScript, ...args], { cwd: root, encoding: 'utf8' });
+
+t('--report is a destination, not the history path', () => {
+  const hist = join(btDir, 'history.json');
+  const report = join(btDir, 'report.md');
+  writeFileSync(hist, JSON.stringify(history(10)));
+  const r = run([hist, '--report', report, '--label', 'Synthetic']);
+  assert.equal(r.status, 0, r.stderr);
+  assert.ok(existsSync(report), 'no report written');
+  const md = readFileSync(report, 'utf8');
+  assert.match(md, /## Headline/);
+  assert.match(md, /\| base \|/);
+  assert.match(md, /history\.json/, 'the report does not name its source');
+  assert.match(md, /\*\*Synthetic\*\*/);
+});
+t('a missing history is reported at the history path, never at the report', () => {
+  /* The workflow's exact shape: no positional argument, so the default
+     data/match_history.json applies. That file is gitignored and absent here,
+     which is the case the old parser got wrong. */
+  const report = join(btDir, 'never.md');
+  const r = run(['--report', report]);
+  assert.equal(r.status, 1);
+  assert.match(r.stderr, /match_history\.json/);
+  assert.ok(!r.stderr.includes('never.md'), 'the report path was read as the history path');
+  assert.ok(!existsSync(report), 'a report was written with no history behind it');
+});
+t('too few rounds writes a dated report saying so, and exits clean', () => {
+  const hist = join(btDir, 'thin.json');
+  const report = join(btDir, 'thin.md');
+  writeFileSync(hist, JSON.stringify(history(3)));
+  const r = run([hist, '--report', report]);
+  assert.equal(r.status, 0, r.stderr);
+  const md = readFileSync(report, 'utf8');
+  assert.match(md, /No scoring run yet/);
+  assert.match(md, /240 match rows over 3 round\(s\)/);
+  assert.match(md, /first round it could score is \*\*round 4\*\*/);
+  assert.match(md, /generated \d{4}-\d{2}-\d{2}T/);
+  /* Without --report the same history is a hard failure, as it always was:
+     somebody at a terminal asked for numbers and there are none. */
+  const bare = run([hist]);
+  assert.equal(bare.status, 1);
+  assert.match(bare.stderr, /Not enough rounds/);
 });
 
 console.log(`\n${passed} tests passed`);

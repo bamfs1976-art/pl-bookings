@@ -1,3 +1,45 @@
+# Implementation notes
+
+## Review follow-up, task 1: the per-player backtest (2026-09-08)
+
+`backtest_report.md` read "No run yet" for two months while the Data refresh
+workflow ran every morning. What the log of run 144 (8 September 2026) shows:
+
+- The harvest step works on the GitHub runner. `data/harvest_history.py`
+  fetched 387 players and wrote 929 match rows over 3 gameweeks, 115 booked.
+  The FPL endpoint is reachable from `ubuntu-latest`, so no `workflow_dispatch`
+  input for a hand-produced report is needed and none was added.
+- `build-model.mjs --fit` kept the season prior, correctly: its gate is 1500
+  rows over 5 gameweeks and the history had 929 over 3.
+- `scripts/backtest.mjs --report backtest_report.md` then failed with "No
+  match history at backtest_report.md". The positional-argument parser knew
+  that `--label` and `--out` take a value and did not know that `--report`
+  does, so the report name was read as the history path. The workflow line
+  ended in `|| true`, so the failure was swallowed and the step stayed green.
+
+Fixed by naming every valued flag in one list in `scripts/backtest.mjs`, and by
+removing the `|| true` so a real failure shows as a yellow step under
+`continue-on-error`. Too few rounds is no longer a failure in report mode: the
+script writes a dated "no scoring run yet" report stating the rows and rounds
+it had and the first round it could score, then exits clean. Three tests in
+`tests/test-libs.mjs` run the script as a child process with the workflow's own
+argument shapes.
+
+Why the committed report still carries no run: this sandbox cannot reach
+`fantasy.premierleague.com` (the egress proxy refuses the CONNECT), so the
+history cannot be harvested here, and the fix has not yet run on the runner.
+The next scheduled Data refresh after this lands writes and commits the report.
+On 8 September the 2026-27 season has three completed gameweeks, so that first
+report will say "no scoring run yet" with the counts, and the first scored run
+lands once gameweek 5 is complete: the walk-forward warms up to round 5 and
+needs 200 training rows behind it. The model is untouched by any of this.
+
+Noted for later, not changed: `harvest_history.py --season-past` reads FPL's
+`history_past`, which is one row per season rather than per match, so that
+flag cannot build a walk-forward table. It is not used by the workflow.
+
+---
+
 # Implementation notes — audit follow-up (2026-07-12)
 
 What was implemented from `AUDIT.md`, and what was deliberately deferred.
