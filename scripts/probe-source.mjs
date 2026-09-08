@@ -107,6 +107,57 @@ function links(html, base) {
   return [...seen];
 }
 
+/* THE HEADERS AN ORDINARY BROWSER SENDS. A bare User-Agent is a common
+   crude filter, and a refusal aimed at it is not an access control — there is
+   no login, no paywall and no rate limit involved. Sent only as the SECOND
+   attempt and always reported as such, so a page that needs it is recorded as
+   a page that needs it rather than quietly worked around. */
+const BROWSER = {
+  'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 '
+    + '(KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36',
+  'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+  'Accept-Language': 'en-GB,en;q=0.9',
+  'Upgrade-Insecure-Requests': '1',
+};
+
+/* WHAT THE SITE ITSELF SAYS. Asked before any retry: a refusal that robots.txt
+   also states is a policy, not a filter, and the answer there is to stop
+   rather than to send different headers. */
+async function robots(base) {
+  try {
+    const u = new URL('/robots.txt', base).href;
+    const r = await fetch(u, { headers: { 'User-Agent': UA } });
+    if (!r.ok) return `  robots.txt -> HTTP ${r.status} (none published)`;
+    const body = (await r.text()).slice(0, 4000);
+    const path = new URL(base).pathname;
+    const rules = body.split(/\r?\n/)
+      .filter((l) => /^\s*(user-agent|disallow|allow|crawl-delay)/i.test(l));
+    const dis = rules.filter((l) => /^\s*disallow:\s*\S/i.test(l))
+      .map((l) => l.split(':').slice(1).join(':').trim());
+    const hits = dis.filter((d) => d !== '/' ? path.startsWith(d) : true);
+    return `  robots.txt -> ${rules.length} rule line(s); `
+      + (hits.length
+        ? `THIS PATH IS DISALLOWED by ${JSON.stringify(hits.slice(0, 3))} — stop here`
+        : 'this path is not disallowed');
+  } catch (e) {
+    return `  robots.txt -> ${e.name}: ${e.message}`;
+  }
+}
+
+/* A refusal usually says who refused. Server, the Cloudflare markers, and the
+   first line of the body name the mechanism — which is the difference between
+   a filter worth a second attempt and a challenge that is not. */
+function whoRefused(res, body) {
+  const bits = [];
+  for (const h of ['server', 'cf-ray', 'cf-mitigated', 'x-served-by', 'retry-after']) {
+    const v = res.headers.get(h);
+    if (v) bits.push(`${h}: ${v}`);
+  }
+  const snippet = toText(body || '').split('\n').slice(0, 3).join(' / ').slice(0, 240);
+  if (snippet) bits.push(`body: ${snippet}`);
+  return bits;
+}
+
 let failed = 0;
 for (const url of urls) {
   console.log('\n' + '='.repeat(72));
@@ -123,7 +174,37 @@ for (const url of urls) {
   }
   console.log(`  HTTP ${res.status}  ${res.headers.get('content-type') || '?'}`);
   if (res.url !== url) console.log(`  redirected to ${res.url}`);
-  if (!res.ok) { failed++; continue; }
+
+  if (!res.ok) {
+    for (const b of whoRefused(res, html)) console.log(`    ${b}`);
+    console.log(await robots(url));
+    /* THE SECOND ATTEMPT, reported as one. If ordinary browser headers are
+       enough then the block was a user-agent filter and the page is readable;
+       if it refuses these too, it is a real challenge and a fetch will not
+       get past it whatever headers it sends. */
+    try {
+      const r2 = await fetch(url, { headers: BROWSER, redirect: 'follow' });
+      const b2 = await r2.text();
+      console.log(`  retry with ordinary browser headers -> HTTP ${r2.status} `
+        + `(${b2.length} bytes)`);
+      if (r2.ok) {
+        console.log('  READABLE with browser headers: the refusal was a '
+          + 'user-agent filter, not a challenge.');
+        res = r2; html = b2;
+      } else {
+        for (const b of whoRefused(r2, b2)) console.log(`    ${b}`);
+        console.log('  STILL REFUSED: this is a challenge or an IP-based '
+          + 'block, and no set of headers will get a plain fetch past it. A '
+          + 'real browser, or another source, or a paste.');
+        failed++;
+        continue;
+      }
+    } catch (e) {
+      console.log(`  retry failed: ${e.name}: ${e.message}`);
+      failed++;
+      continue;
+    }
+  }
 
   const text = toText(html);
   const yieldPct = html.length ? (text.length / html.length) * 100 : 0;
