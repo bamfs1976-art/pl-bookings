@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Build the Premier League Bookings Desk dataset for 2026-27.
+Build the Bookings Desk Premier League dataset for 2026-27.
 
 Inputs (harvested from ScoutingStats, logged in):
   pl_players.json     2025-26 Premier League players (league 8, season 25583)

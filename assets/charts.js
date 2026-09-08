@@ -7,7 +7,7 @@
  * share cards are already hand-drawn on a canvas in this repo's own visual
  * language; these are the same decision in SVG.
  *
- * WHAT IS AND IS NOT DRAWN. ENHANCEMENTS.md item 5 asked for three charts.
+ * WHAT IS AND IS NOT DRAWN. docs/decisions.md (2026-08-01 review) item 5 asked for three charts.
  * Two are here. The third — a club by referee card heatmap — is not, and the
  * reason is arithmetic rather than effort: 23 officials worked the 2025-26
  * Premier League and a club plays 38 matches, so a club meets a given referee

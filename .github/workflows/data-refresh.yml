@@ -634,9 +634,17 @@ jobs:
       # Tier 2: harvest per-match booking history from the public FPL
       # element-summary endpoint and refit the logistic GLM by IRLS. Runs on
       # GitHub's runners, which can reach the FPL API. build-model.mjs keeps the
-      # season prior automatically until >=200 real match rows exist, so this is
-      # a no-op early in the season and quietly flips the model to "match-fit"
-      # once games accumulate. Never fails the refresh.
+      # season prior automatically until enough real match rows exist over
+      # enough gameweeks, so this is a no-op early in the season and quietly
+      # flips the model to "match-fit" once games accumulate.
+      #
+      # continue-on-error, so a harvest that cannot reach the feed does not take
+      # the refresh down. What it must NOT do is hide a failure inside the step:
+      # the backtest line carried `|| true` from July to September, during which
+      # every scheduled run harvested the history correctly and the report was
+      # never written, because scripts/backtest.mjs read `--report` as the
+      # history path and exited non-zero. A step that is yellow in the Actions
+      # log is a step somebody can see; a green one that did nothing is not.
       - name: Fit the card model on match history (Tier 2)
         if: ${{ (github.event_name != 'workflow_dispatch' || inputs.fit_model) }}
         continue-on-error: true
@@ -646,9 +654,10 @@ jobs:
           # WRITTEN HERE BECAUSE THIS IS WHERE THE DATA IS. The FPL history is
           # harvested a few lines up and is not in the repository, so
           # backtest_report.md cannot be produced on a developer machine that
-          # cannot reach the feed — it would have to be hand-written, and a
-          # hand-written report is a claim about a run nobody can check.
-          node scripts/backtest.mjs --report backtest_report.md || true
+          # cannot reach the feed. Too few rounds is not a failure: the script
+          # writes a dated "no scoring run yet" report saying how many rounds
+          # it had and which round it can score first, and exits clean.
+          node scripts/backtest.mjs --report backtest_report.md
 
       # EVERY GUARD, not a chosen six. This step used to name the checks that
       # felt related to the files this workflow writes, which is the wrong

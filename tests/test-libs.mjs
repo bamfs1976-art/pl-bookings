@@ -10,9 +10,11 @@
 // takes a view down at runtime.
 import assert from 'node:assert/strict';
 import { createRequire } from 'node:module';
-import { readFileSync } from 'node:fs';
+import { readFileSync, writeFileSync, mkdtempSync, existsSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
+import { tmpdir } from 'node:os';
+import { spawnSync } from 'node:child_process';
 import vm from 'node:vm';
 
 const require = createRequire(import.meta.url);
@@ -38,6 +40,16 @@ function vendored(id) {
   assert.ok(open > -1 && close > open, `VENDOR:${id} carries no <script>`);
   return chunk.slice(open + 8, close);
 }
+/* A file under assets/vendor/: the licence header, then the payload. Two
+   libraries live there because they are loaded on demand rather than to
+   render: Tabulator on the first opening of the Screener, supabase-js at
+   sign-in. */
+function vendoredFile(path) {
+  const src = read(path);
+  const end = src.indexOf('\n */\n');
+  assert.ok(end > -1, `${path} carries no licence header`);
+  return { header: src.slice(0, end + 5), payload: src.slice(end + 5) };
+}
 
 /* One sandbox, loaded in the page's own order, because that is the thing being
    tested: these files are siblings in one global and they must not collide. */
@@ -61,27 +73,77 @@ t('every vendored block evaluates and defines its global', () => {
      Compiling it proves it is whole JavaScript, and the UMD tail proves the
      bytes that install the constructor are still on the end of it. A file cut
      short throws nothing at build time and empties a view at runtime. */
-  const tab = vendored('tabulator-js');
+  const tab = vendoredFile('assets/vendor/tabulator.js').payload;
   new vm.Script(tab, { filename: 'vendor:tabulator' });
   assert.match(tab, /\.Tabulator=/, 'the UMD global assignment is missing');
-  assert.match(tab.trimEnd(), /\)\);$/, 'the block does not end on a closed call');
+  assert.match(tab.trimEnd(), /\)\);$/, 'the file does not end on a closed call');
+});
+t('Tabulator is loaded on demand by the Screener, and only there', () => {
+  /* The block is out of the page: 432 KB that one view used, paid by every
+     view. What replaces it is a loader that fetches the file the first time
+     the Screener opens, with a visible loading state and a message when the
+     load fails, and a shell entry so the installed app has it offline. */
+  assert.ok(!page.includes('<!-- VENDOR:tabulator-js START -->'), 'Tabulator is inlined again');
+  assert.ok(page.includes('<!-- VENDOR:tabulator-css START -->'), 'the Tabulator stylesheet should stay inline');
+  assert.ok(!/<script src="assets\/vendor\/tabulator\.js"/.test(page),
+    'Tabulator is a static script tag, so every view waits on it again');
+  const loader = /function loadTabulator\(\)\{([\s\S]*?)\n\}/.exec(page);
+  assert.ok(loader, 'loadTabulator() is gone');
+  assert.match(loader[1], /s\.src="assets\/vendor\/tabulator\.js"/);
+  assert.match(loader[1], /onerror/, 'a failed load has no handler');
+  const mount = /function mountScreener\(\)\{([\s\S]*?)\n\}/.exec(page);
+  assert.ok(mount, 'mountScreener() is gone');
+  assert.match(mount[1], /Loading the grid/, 'no loading state');
+  assert.match(mount[1], /could not be loaded/, 'no failure message');
+  assert.match(mount[1], /loadTabulator\(\)/, 'the Screener does not load the grid library');
+  assert.ok(read('sw.js').includes("'/assets/vendor/tabulator.js'"), 'not in the offline shell');
+  const h = vendoredFile('assets/vendor/tabulator.js').header;
+  assert.ok(h.startsWith('/*! tabulator-tables v6.3.1'), 'the licence header is missing');
 });
 t('no vendored block points at a source map', () => {
   /* A map reference is a request to a file this page does not ship, on a page
      whose whole claim is that it makes none. Checked on the PAYLOAD, past the
      licence header — the header is allowed to mention the removal, and an
      earlier version of this test was satisfied by its own comment. */
-  for (const id of ['tabulator-css', 'tabulator-js', 'jstat', 'simple-statistics', 'papaparse']) {
+  for (const id of ['tabulator-css', 'jstat', 'simple-statistics', 'papaparse']) {
     const a = page.indexOf(`<!-- VENDOR:${id} START -->`);
     const b = page.indexOf(`<!-- VENDOR:${id} END -->`);
     const block = page.slice(a, b);
     const payload = block.slice(block.indexOf('\n */\n') + 5);
     assert.ok(!/sourceMappingURL/.test(payload), `${id} still points at a source map`);
   }
+  for (const f of ['assets/vendor/tabulator.js', 'assets/vendor/supabase.js']) {
+    assert.ok(!/sourceMappingURL/.test(vendoredFile(f).payload), `${f} still points at a source map`);
+  }
+});
+t('the file-vendored Supabase client evaluates and defines createClient', () => {
+  /* Not inlined: it is deferred and only needed once somebody signs in, so it
+     lives under assets/vendor/ and the page loads it by src. Same header, same
+     hash discipline; what is checked here is that the committed file is whole
+     JavaScript that installs the global index.html reaches for. Building a
+     client is not attempted: the constructor wants a WebSocket, which is the
+     browser's to provide. */
+  const src = read('assets/vendor/supabase.js');
+  assert.ok(src.startsWith('/*! @supabase/supabase-js v2.116.0'), 'the licence header is missing');
+  assert.ok(src.includes('MIT licence'));
+  const payload = src.slice(src.indexOf('\n */\n') + 5);
+  assert.ok(!/sourceMappingURL/.test(payload), 'the payload points at a source map');
+  const box = { console, setTimeout, clearTimeout, URL, TextEncoder, TextDecoder,
+    module: undefined, exports: undefined, define: undefined };
+  box.window = box; box.self = box; box.globalThis = box;
+  vm.createContext(box);
+  vm.runInContext(payload, box, { filename: 'vendor:supabase-js' });
+  assert.equal(typeof box.supabase, 'object', 'no `supabase` global');
+  assert.equal(typeof box.supabase.createClient, 'function', 'no createClient');
+  /* And the page loads it from where the service worker precaches it. */
+  assert.match(page, /<script src="assets\/vendor\/supabase\.js" defer><\/script>/);
+  assert.ok(read('sw.js').includes("'/assets/vendor/supabase.js'"), 'not in the offline shell');
+  assert.ok(!/cdn\.jsdelivr\.net/.test(page), 'index.html still names the CDN');
+  assert.ok(!/cdn\.jsdelivr\.net/.test(read('_headers')), '_headers still allows the CDN in script-src');
 });
 t('every vendored block names its package, version and licence', () => {
   for (const [id, needle] of [
-    ['tabulator-js', 'tabulator-tables v6.3.1'],
+    ['tabulator-css', 'tabulator-tables v6.3.1'],
     ['jstat', 'jstat v1.9.6'],
     ['simple-statistics', 'simple-statistics v7.8.8'],
     ['papaparse', 'papaparse v5.4.1'],
@@ -417,6 +479,80 @@ t('the emitted risk score is the standing formula, not a new one', () => {
   assert.equal(ctx.p.y, 0.3);
   assert.equal(ctx.p.f, 1.5);
   assert.equal(ctx.p.r, require('../assets/core.js').riskScore(0.3, 1.5));
+});
+
+/* ---- the written backtest report ---------------------------------------
+ *
+ * scripts/backtest.mjs is run by the Data refresh workflow as
+ * `node scripts/backtest.mjs --report backtest_report.md`, and for two months
+ * that produced nothing: the script read the report name as the history path,
+ * failed to find match history inside it, and the workflow swallowed the exit.
+ * These tests run the script as a child process with the workflow's own
+ * argument shapes, because the bug was in argument handling and a test that
+ * imported the functions would have stepped around it.
+ */
+console.log('\nbacktest report');
+const btDir = mkdtempSync(join(tmpdir(), 'plb-backtest-'));
+const btScript = join(root, 'scripts', 'backtest.mjs');
+/* Deterministic synthetic history: 80 rows a round, a fifth of them booked,
+   in the shape data/harvest_history.py writes. */
+function history(roundCount) {
+  const rows = [];
+  const pos = ['GK', 'DF', 'MF', 'FW'];
+  for (let round = 1; round <= roundCount; round++) {
+    for (let i = 0; i < 80; i++) {
+      rows.push({
+        round, name: `P${i}`, pos: pos[i % 4],
+        yc90: Number(((i % 7) * 0.1).toFixed(2)),
+        foul90: Number((1 + (i % 5) * 0.3).toFixed(2)),
+        y: ((i * 7 + round * 3) % 10) < 2 ? 1 : 0
+      });
+    }
+  }
+  return rows;
+}
+const run = (args) => spawnSync(process.execPath, [btScript, ...args], { cwd: root, encoding: 'utf8' });
+
+t('--report is a destination, not the history path', () => {
+  const hist = join(btDir, 'history.json');
+  const report = join(btDir, 'report.md');
+  writeFileSync(hist, JSON.stringify(history(10)));
+  const r = run([hist, '--report', report, '--label', 'Synthetic']);
+  assert.equal(r.status, 0, r.stderr);
+  assert.ok(existsSync(report), 'no report written');
+  const md = readFileSync(report, 'utf8');
+  assert.match(md, /## Headline/);
+  assert.match(md, /\| base \|/);
+  assert.match(md, /history\.json/, 'the report does not name its source');
+  assert.match(md, /\*\*Synthetic\*\*/);
+});
+t('a missing history is reported at the history path, never at the report', () => {
+  /* The workflow's exact shape: no positional argument, so the default
+     data/match_history.json applies. That file is gitignored and absent here,
+     which is the case the old parser got wrong. */
+  const report = join(btDir, 'never.md');
+  const r = run(['--report', report]);
+  assert.equal(r.status, 1);
+  assert.match(r.stderr, /match_history\.json/);
+  assert.ok(!r.stderr.includes('never.md'), 'the report path was read as the history path');
+  assert.ok(!existsSync(report), 'a report was written with no history behind it');
+});
+t('too few rounds writes a dated report saying so, and exits clean', () => {
+  const hist = join(btDir, 'thin.json');
+  const report = join(btDir, 'thin.md');
+  writeFileSync(hist, JSON.stringify(history(3)));
+  const r = run([hist, '--report', report]);
+  assert.equal(r.status, 0, r.stderr);
+  const md = readFileSync(report, 'utf8');
+  assert.match(md, /No scoring run yet/);
+  assert.match(md, /240 match rows over 3 round\(s\)/);
+  assert.match(md, /first round it could score is \*\*round 4\*\*/);
+  assert.match(md, /generated \d{4}-\d{2}-\d{2}T/);
+  /* Without --report the same history is a hard failure, as it always was:
+     somebody at a terminal asked for numbers and there are none. */
+  const bare = run([hist]);
+  assert.equal(bare.status, 1);
+  assert.match(bare.stderr, /Not enough rounds/);
 });
 
 console.log(`\n${passed} tests passed`);

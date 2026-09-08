@@ -1,6 +1,6 @@
 # A La Liga bookings desk: what it would cost to build
 
-Research note. The question was whether the Premier League Bookings Desk can be
+Research note. The question was whether the Bookings Desk can be
 rebuilt for the Spanish top division, and if not, which league should be next.
 
 **Short answer: yes, and La Liga is the best league in Europe to point this
@@ -271,7 +271,7 @@ acceptable, **~$19/month** for the Pro tier, which is what I would budget.
 
 ## 7. If not La Liga: the other leagues, ranked
 
-The audit above reduces to one selection rule. **The Premier League Bookings Desk
+The audit above reduces to one selection rule. **The Bookings Desk
 is cheap to clone into any league where referees are free, and a rebuild
 everywhere else.** Free referees means British football.
 

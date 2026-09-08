@@ -2,12 +2,12 @@
 
 *Compiled 13 August 2026, one day before the season opens. Scope: free APIs,
 open datasets, public repositories and competitor features that could improve
-the **Premier League Bookings Desk** and **Gameweek Edge**. A twin of this file
+the **Bookings Desk** and **Gameweek Edge**. A twin of this file
 lives in `gameweek-edge/docs/SEASON_RESEARCH_2026-08.md` with the same findings
 and an FPL-specific action list.*
 
 This file answers, among other things, the two largest items left open in
-[`ENHANCEMENTS.md`](../ENHANCEMENTS.md) — the promoted-club squad hole (item 1)
+[`docs/decisions.md`](decisions.md) — the promoted-club squad hole (item 1)
 and "FPL carries no fouls, so that half of the risk score is frozen on 2025-26
 form all season" (item 8). Both have a free answer, and one of them is a
 dataset the sibling repo already proxies.
@@ -54,7 +54,7 @@ Shipped on this branch, and one thing the research got wrong.
 
 ## 1. The fouls gap has a free answer, and it is already in the portfolio
 
-`ENHANCEMENTS.md` item 8 states the structural weakness precisely:
+`docs/decisions.md` (2026-08-01 review) item 8 states the structural weakness precisely:
 
 > FPL carries no fouls, so that half of the risk score is frozen on 2025-26
 > form all season.
@@ -200,7 +200,7 @@ there at 71% closer on attack and 84% closer on defence than the generic prior.
 
 **The Odds API** closes a real gap in two places. The desk maps risk to a
 model-implied probability and reports `(odds × p − 1)` as an edge — with the
-odds typed in by hand. And `ENHANCEMENTS.md` item 4 says the walk-forward
+odds typed in by hand. And `docs/decisions.md` (2026-08-01 review) item 4 says the walk-forward
 backtest should score against **market closing odds** (the desk's RPS is 0.2068
 against the market's 0.1994) but currently scores against a base rate, "a much
 easier benchmark". 500 requests a month is roughly 16 a day: enough for one
@@ -242,7 +242,7 @@ everything else here.
    odds *at pick time* against the closing price is how serious punters judge a
    tipster, and it is a stronger public claim than a hit rate — it survives a bad
    run of variance in a way a P/L curve does not. It also feeds §3's backtest.
-4. **Referee appointment push** (`ENHANCEMENTS.md` item 3). I would raise this
+4. **Referee appointment push** (`docs/decisions.md` (2026-08-01 review) item 3). I would raise this
    above where it sits. The appointment is the most time-critical fact in the
    product, it lands about a week out, `data/appointments.py` documents how much
    manual work it currently costs, and every piece of push infrastructure exists

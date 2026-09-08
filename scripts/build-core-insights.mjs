@@ -10,7 +10,7 @@
 // his live yellow rate once he has 450 minutes. It carries no fouls at all.
 // So `p.f` — half the score, and the whole of the volume signal — stayed on
 // the 2025-26 rate for the entire season, and a player whose game changed in
-// August was still being priced on last spring in May. ENHANCEMENTS.md item 8
+// August was still being priced on last spring in May. docs/decisions.md (2026-08-01 review) item 8
 // records this as the structural gap; this is the fix.
 //
 // ── THE SOURCE ─────────────────────────────────────────────────────────
