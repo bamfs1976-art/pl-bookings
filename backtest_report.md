@@ -15,7 +15,7 @@
 > outcomes for a completed season are not licensable here. Its answer today:
 > **the model does not beat the baseline** (+0.0014 Brier at the headline
 > threshold, 95% interval −0.0096 to +0.0124, and no win at any of the three
-> thresholds). See the Backtest section of README.md.
+> thresholds). See docs/backtest.md.
 >
 > That does not replace this file. This one scores the **per-player** GLM,
 > which is the model the desk actually prices with, and that leg remains

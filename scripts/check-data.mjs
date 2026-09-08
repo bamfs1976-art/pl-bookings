@@ -15,7 +15,7 @@ vm.runInContext(dataSrc + '\n;({CLUBS, PL_PLAYERS, REFS})', ctx);
 const { CLUBS, PL_PLAYERS, REFS } = vm.runInContext('({CLUBS, PL_PLAYERS, REFS})', ctx);
 
 // Tightened 2026-08-01. The old ">=400 players, >=1 EFL row" was loose enough
-// to hide a real hole. Note the "528 players / 72 EFL" figure in AUDIT.md was
+// to hide a real hole. Note the "528 players / 72 EFL" figure in docs/audit-2026-07.md was
 // never real: those 72 rows were 6 unique forwards repeated 12x each, and the
 // de-dup in 6ffde1e correctly collapsed them to 6. So the promoted clubs have
 // never had a defender or midfielder in this dataset — a count assert alone

@@ -33,7 +33,7 @@ on the list is one this repository already downloads and reads three columns of.
 ## 1. The gaps, as this repository measures them
 
 Not a wishlist — these are the holes recorded in `docs/referee-sourcing.md`,
-`ENHANCEMENTS.md` and `AUDIT.md`, and they decide what a new source is worth.
+`docs/decisions.md` and `docs/audit-2026-07.md`, and they decide what a new source is worth.
 
 | Gap | State |
 |---|---|
@@ -217,7 +217,7 @@ is itself a result worth having before any weather integration is designed.
 
 Repository evidence: `data/leagues.py`, `data/build_refs.py`,
 `Plsimulator/tools/build_odds.py`, `Plsimulator/tools/build_xg.py`,
-`docs/referee-sourcing.md`, `ENHANCEMENTS.md`.
+`docs/referee-sourcing.md`, `docs/decisions.md`.
 
 External (not reachable from the authoring session; see the caveat at the top):
 [Open-Meteo historical weather API](https://open-meteo.com/en/docs/historical-weather-api) ·
