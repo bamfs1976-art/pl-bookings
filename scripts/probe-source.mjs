@@ -248,5 +248,14 @@ for (const url of urls) {
   if (interesting.length > 20) console.log(`    ... and ${interesting.length - 20} more`);
 }
 
-console.log('\nprobe complete — nothing was written or committed.');
-process.exit(failed && failed === urls.length ? 1 : 0);
+/* ALWAYS ZERO, and that is not the same rule the appointment fetcher follows.
+   There, an empty result must fail loudly: nobody is watching, and a week with
+   no appointments has to be distinguishable from a week nobody ingested.
+   Here a person asked a question and is reading the answer, and the answer
+   "that host refuses us" is a SUCCESSFUL probe — the tool did exactly its job.
+   Exiting non-zero for it marked the run red and sent the repository owner a
+   "Run failed: Probe a source / All jobs have failed" email about a diagnostic
+   that had worked perfectly, which is how a useful alert becomes noise people
+   learn to ignore. The finding is in the log, where it was asked for. */
+console.log(`\nprobe complete — ${urls.length - failed} of ${urls.length} `
+  + `readable, nothing was written or committed.`);
