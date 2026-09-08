@@ -10,7 +10,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Bookings Desk">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data: https://cdn.sportmonks.com https://resources.premierleague.com https://media.api-sports.io; connect-src 'self' https://knodunjnsxelmpziupwk.supabase.co">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data: https://cdn.sportmonks.com https://resources.premierleague.com https://media.api-sports.io; connect-src 'self' https://knodunjnsxelmpziupwk.supabase.co">
 <title>Bookings Desk · Premier League</title>
 <meta name="description" content="Premier League 2026-27 player-bookings analysis. Player card risk, club discipline, referees, fixtures and a suspension watch, on live FPL data.">
 <link rel="icon" href="favicon.svg" type="image/svg+xml">
@@ -38,17 +38,22 @@
 <!-- Purged Tailwind build (preflight + used utilities), self-hosted: no CDN, no render-blocking third-party script. Rebuild with: npx tailwindcss@3 -i <input with @tailwind directives> -o assets/tw.css --content index.html --minify -->
 <link rel="stylesheet" href="assets/tw.css">
 <!-- Supabase client for optional account sync. Deferred, so the app never
-     waits on it; if it fails to load, sign-in is simply unavailable. -->
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js" defer></script>
+     waits on it; if it fails to load, sign-in is simply unavailable. Vendored
+     and hash-pinned by scripts/vendor-libs.mjs (it used to come from jsDelivr
+     at a floating @2, the one third-party script on a page whose claim was
+     that it fetched none). -->
+<script src="assets/vendor/supabase.js" defer></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400..800&family=Hanken+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
 <!-- ═══ VENDORED LIBRARIES ═══════════════════════════════════════════════
      Four MIT libraries, inlined so this page makes no third-party request to
-     render. Generated and hash-pinned by scripts/vendor-libs.mjs — do not edit
-     the blocks between the VENDOR markers by hand; `node scripts/vendor-libs.mjs
-     --check` fails the build if a byte moves. Licence text and attribution are
-     in the Sources & licences view. -->
+     render (a fifth, the Supabase client, is a hash-pinned file under
+     assets/vendor/ because it is deferred). Generated and hash-pinned by
+     scripts/vendor-libs.mjs — do not edit the blocks between the VENDOR
+     markers by hand; `node scripts/vendor-libs.mjs --check` fails the build if
+     a byte moves. Licence text and attribution are in the Sources & licences
+     view. -->
 <!-- VENDOR:tabulator-css START -->
 <style>
 /*! tabulator-tables v6.3.1 — dist/css/tabulator.min.css
@@ -1484,7 +1489,7 @@
         </li>
       </ul>
       <h2>Libraries</h2>
-      <p>Four libraries, each vendored into this page as its published minified release so nothing is fetched from a third party to render it. Every block carries its version and a SHA-256 of the exact bytes; <code>node scripts/vendor-libs.mjs --check</code> fails the build if one moves.</p>
+      <p>Five libraries, vendored as their published releases so nothing is fetched from a third party: four inlined into this page, and the Supabase client as a file under <code>assets/vendor/</code> because it is only needed once you sign in. Every block carries its version and a SHA-256 of the exact bytes; <code>node scripts/vendor-libs.mjs --check</code> fails the build if one moves.</p>
       <ul class="src-list">
         <li class="src-item">
           <h4>Tabulator 6.3.1<span class="src-lic">MIT</span></h4>
@@ -1501,6 +1506,10 @@
         <li class="src-item">
           <h4>PapaParse 5.4.1<span class="src-lic">MIT</span></h4>
           <p class="src-note">CSV parsing in the import view. Runs in the page with no worker — this site&rsquo;s Content-Security-Policy carries no <code>worker-src</code>, and a blob worker would be blocked. &copy; Matthew Holt. <a href="https://github.com/mholt/PapaParse" target="_blank" rel="noopener noreferrer">mholt/PapaParse</a></p>
+        </li>
+        <li class="src-item">
+          <h4>supabase-js 2.116.0<span class="src-lic">MIT</span></h4>
+          <p class="src-note">The client behind the optional sign-in and pick sync. Loaded deferred from <code>assets/vendor/supabase.js</code>, the package&rsquo;s own UMD build byte for byte, so the page no longer reaches a CDN for it. &copy; Supabase. <a href="https://github.com/supabase/supabase-js" target="_blank" rel="noopener noreferrer">supabase/supabase-js</a></p>
         </li>
       </ul>
       <p class="src-note">The MIT licence requires its notice to travel with the software. Each vendored block carries the copyright line and licence name inline in this page&rsquo;s source, and the full licence texts ship with the packages named above.</p>
@@ -6695,8 +6704,8 @@ initCmdk();
 initKeys();
 loadLive();
 loadLiveCalibration();   // server-verified accuracy on the Guide (best-effort, hidden until graded)
-// The Supabase client loads deferred from the CDN, so wire auth up once
-// the DOM (and deferred scripts) are ready.
+// The Supabase client loads deferred from assets/vendor/supabase.js, so wire
+// auth up once the DOM (and deferred scripts) are ready.
 if(document.readyState==="loading") document.addEventListener("DOMContentLoaded",initAuth);
 else initAuth();
 

@@ -151,7 +151,7 @@ Netlify, from this repository, publish directory the root, no build command.
 `_headers` and `netlify.toml` both set the security headers and must agree
 (`scripts/check-headers.mjs` checks). The Content-Security-Policy allows
 `'self'`, the Supabase project for `connect-src`, Google Fonts, and the crest
-hosts for images. Framing is `SAMEORIGIN`, not `DENY`, because `/today` reads
+hosts for images; no script comes from anywhere but this origin. Framing is `SAMEORIGIN`, not `DENY`, because `/today` reads
 the other desks through same-origin frames. Datasets and assets carry a short
 revalidating cache. The service worker precaches every desk and module for
 the offline shell, one entry at a time so a single missing file cannot take
@@ -170,8 +170,9 @@ the whole app offline. Detail: [docs/deploy.md](docs/deploy.md),
   fetched, scraped or derived from FBref, WhoScored, FootyStats, Understat or
   any bookmaker. The full position, and the app's own Sources & licences view,
   are in [docs/sources.md](docs/sources.md).
-- **Libraries.** Tabulator, jStat, simple-statistics and PapaParse, all MIT,
-  vendored and hash-pinned by `scripts/vendor-libs.mjs`. See
+- **Libraries.** Tabulator, jStat, simple-statistics, PapaParse and the
+  Supabase client, all MIT, vendored and hash-pinned by
+  `scripts/vendor-libs.mjs`. Nothing is fetched from a CDN. See
   [docs/vendored-libraries.md](docs/vendored-libraries.md).
 - **This repository** carries no licence file of its own.
 

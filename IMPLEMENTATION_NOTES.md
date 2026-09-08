@@ -6,6 +6,41 @@ work, newest first: what changed, what was deferred and why. Everything before
 in [docs/decisions.md](docs/decisions.md); the audit itself is
 [docs/audit-2026-07.md](docs/audit-2026-07.md).
 
+## Review follow-up, task 4: the Supabase client is vendored (2026-09-08)
+
+**Decision: vendor it.** `index.html` loaded `@supabase/supabase-js` from
+jsDelivr at a floating `@2`: the one third-party script on a page whose
+documentation said it fetched none, and a version nobody had pinned. The
+package publishes only an unminified UMD build. Measured from the npm tarball
+for 2.116.0: 218 KB on disk, 55 KB gzipped, inside the 150 KB gzipped budget
+the review set for this route. It is vendored as published rather than
+minified here, because a file minified by our script would no longer be bytes
+anyone can check against upstream.
+
+It lives as a file, `assets/vendor/supabase.js`, not inline. The script is
+deferred and only needed once somebody signs in; inlining would have added its
+weight to every render. `scripts/vendor-libs.mjs` gained a `target` field for
+file-vendored libraries and an `--only <id>` flag; `--check` hashes a file the
+same way it hashes a block, and the CI step is unchanged. `script-src` in both
+the meta tag and `_headers` no longer names a CDN. The service worker precaches
+the file (cache `plb-v20`). The Sources and licences view lists it.
+
+Tested here: `tests/test-libs.mjs` evaluates the committed file in a VM and
+asserts it defines `supabase.createClient`, that the page loads it by that
+path, that the shell precaches it and that nothing names jsDelivr. In headless
+Chromium against a local server, with requests to the Supabase project
+intercepted because this sandbox cannot reach it: the client is created on
+load, the account button opens the form, a sign-in posts to
+`/auth/v1/token?grant_type=password` with the publishable key in the `apikey`
+header, and the auth error is shown in the form. The only requests leaving
+the origin were Google Fonts and that Supabase call.
+
+Not tested here, and still to do before merging: sign-in on the deployed
+preview with a real account, and pick sync and the AI review after it. The
+deploy preview and `supabase.co` are both unreachable from this environment.
+Nothing in the sign-in, sync or review code paths changed; only where the
+client library is loaded from.
+
 ## Review follow-up, task 3: branding sweep (2026-09-08)
 
 BAProTips is retired; Bookings Desk is the product name. Searched every file

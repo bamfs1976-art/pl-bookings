@@ -81,6 +81,31 @@ t('no vendored block points at a source map', () => {
     assert.ok(!/sourceMappingURL/.test(payload), `${id} still points at a source map`);
   }
 });
+t('the file-vendored Supabase client evaluates and defines createClient', () => {
+  /* Not inlined: it is deferred and only needed once somebody signs in, so it
+     lives under assets/vendor/ and the page loads it by src. Same header, same
+     hash discipline; what is checked here is that the committed file is whole
+     JavaScript that installs the global index.html reaches for. Building a
+     client is not attempted: the constructor wants a WebSocket, which is the
+     browser's to provide. */
+  const src = read('assets/vendor/supabase.js');
+  assert.ok(src.startsWith('/*! @supabase/supabase-js v2.116.0'), 'the licence header is missing');
+  assert.ok(src.includes('MIT licence'));
+  const payload = src.slice(src.indexOf('\n */\n') + 5);
+  assert.ok(!/sourceMappingURL/.test(payload), 'the payload points at a source map');
+  const box = { console, setTimeout, clearTimeout, URL, TextEncoder, TextDecoder,
+    module: undefined, exports: undefined, define: undefined };
+  box.window = box; box.self = box; box.globalThis = box;
+  vm.createContext(box);
+  vm.runInContext(payload, box, { filename: 'vendor:supabase-js' });
+  assert.equal(typeof box.supabase, 'object', 'no `supabase` global');
+  assert.equal(typeof box.supabase.createClient, 'function', 'no createClient');
+  /* And the page loads it from where the service worker precaches it. */
+  assert.match(page, /<script src="assets\/vendor\/supabase\.js" defer><\/script>/);
+  assert.ok(read('sw.js').includes("'/assets/vendor/supabase.js'"), 'not in the offline shell');
+  assert.ok(!/cdn\.jsdelivr\.net/.test(page), 'index.html still names the CDN');
+  assert.ok(!/cdn\.jsdelivr\.net/.test(read('_headers')), '_headers still allows the CDN in script-src');
+});
 t('every vendored block names its package, version and licence', () => {
   for (const [id, needle] of [
     ['tabulator-js', 'tabulator-tables v6.3.1'],

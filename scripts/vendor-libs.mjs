@@ -1,8 +1,16 @@
 #!/usr/bin/env node
-/* Vendor the four MIT libraries into index.html — and prove the bytes.
+/* Vendor the MIT libraries the desk uses — and prove the bytes.
  *
  *   node scripts/vendor-libs.mjs            # fetch from npm and re-embed
+ *   node scripts/vendor-libs.mjs --only ID  # one library, leaving the rest as committed
  *   node scripts/vendor-libs.mjs --check    # verify what is committed (offline)
+ *
+ * TWO PLACES A LIBRARY CAN LIVE. A block between VENDOR markers inside
+ * index.html, for the ones the page needs to render; or a file under
+ * assets/vendor/ named by `target`, for the ones that are deferred or loaded
+ * on demand (supabase-js is only needed once somebody signs in). The header,
+ * the hash and the --check are the same for both: the licence header says
+ * what the code is, and the hash proves the code is what the header says.
  *
  * WHY VENDOR AT ALL. A CDN <script> is a third party on the critical path of
  * a page that has to work on a phone at a ground with no signal, and it is an
@@ -25,7 +33,7 @@
  * that is roughly 130 KB, paid once per deploy. It is a real cost and it buys
  * a page with no third-party requests at all.
  */
-import { readFileSync, writeFileSync, mkdtempSync, rmSync } from 'node:fs';
+import { readFileSync, writeFileSync, mkdtempSync, rmSync, mkdirSync } from 'node:fs';
 import { createHash } from 'node:crypto';
 import { execFileSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
@@ -35,6 +43,8 @@ import { tmpdir } from 'node:os';
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const PAGE = join(root, 'index.html');
 const check = process.argv.includes('--check');
+const onlyAt = process.argv.indexOf('--only');
+const only = onlyAt > -1 ? process.argv[onlyAt + 1] : null;
 
 /* Pinned. A range here would mean the committed bytes and the recorded hash
    could disagree the next time anybody ran this, which is the whole point of
@@ -80,7 +90,29 @@ const LIBS = [
     home: 'https://github.com/mholt/PapaParse',
     sha256: '',
   },
+  /* The Supabase client, for the optional sign-in. It used to load from
+     jsDelivr at a floating `@2`, which was the one third-party script on a
+     page whose claim was that it fetched none, and a version nobody had
+     pinned. The package publishes only an unminified UMD build (218 KB, 55 KB
+     gzipped): vendored as published rather than minified here, because a
+     file minified by this script would no longer be the bytes the hash can be
+     checked against upstream. A separate file, not inlined: it is deferred and
+     only needed once somebody signs in. */
+  {
+    id: 'supabase-js',
+    pkg: '@supabase/supabase-js', version: '2.116.0',
+    file: 'dist/umd/supabase.js', kind: 'js',
+    licence: 'MIT', author: 'Supabase',
+    home: 'https://github.com/supabase/supabase-js',
+    target: 'assets/vendor/supabase.js',
+    sha256: '',
+  },
 ];
+const chosen = only ? LIBS.filter((l) => l.id === only) : LIBS;
+if (only && !chosen.length) {
+  console.error(`--only ${only}: no such library. Known: ${LIBS.map((l) => l.id).join(', ')}`);
+  process.exit(1);
+}
 
 /* Recorded on the last successful fetch. `--check` compares against these. */
 const HASHES = JSON.parse(readFileSync(join(root, 'scripts', 'vendor-libs.sha256.json'), 'utf8'));
@@ -131,8 +163,17 @@ function slice(html, id) {
   return { a, b: b + END(id).length, body: html.slice(a, b + END(id).length) };
 }
 
+/* A file-vendored library: the header, then the payload. */
+function fileParts(lib) {
+  const src = readFileSync(join(root, lib.target), 'utf8');
+  const end = src.indexOf('\n */\n');
+  if (end === -1) throw new Error(`${lib.target} carries no licence header`);
+  return { header: src.slice(0, end + 5), payload: src.slice(end + 5) };
+}
+
 /* The embedded payload, without the wrapper — what the hash is taken over. */
 function embedded(html, lib) {
+  if (lib.target) return fileParts(lib).payload;
   const s = slice(html, lib.id);
   const tag = lib.kind === 'css' ? 'style' : 'script';
   const open = s.body.indexOf(`<${tag}>`);
@@ -165,7 +206,7 @@ function doCheck() {
     }
     /* The header must name the thing the hash covers, or the provenance is
        a comment rather than a claim. */
-    const s = slice(html, lib.id).body;
+    const s = lib.target ? fileParts(lib).header : slice(html, lib.id).body;
     for (const need of [`${lib.pkg} v${lib.version}`, `${lib.licence} licence`, want]) {
       if (!s.includes(need)) {
         console.error(`${lib.id} licence header does not carry "${need}"`);
@@ -175,8 +216,9 @@ function doCheck() {
   }
   if (bad) process.exit(1);
   const bytes = LIBS.reduce((n, l) => n + embedded(html, l).length, 0);
-  console.log(`vendor-libs --check OK: ${LIBS.length} MIT libraries, `
-    + `${(bytes / 1024).toFixed(0)} KB, every sha256 matching`);
+  const inline = LIBS.filter((l) => !l.target).length;
+  console.log(`vendor-libs --check OK: ${LIBS.length} MIT libraries (${inline} inline, `
+    + `${LIBS.length - inline} under assets/vendor/), ${(bytes / 1024).toFixed(0)} KB, every sha256 matching`);
 }
 
 function fetchLib(lib, dir) {
@@ -190,23 +232,32 @@ function doVendor() {
   const dir = mkdtempSync(join(tmpdir(), 'plb-vendor-'));
   try {
     let html = readFileSync(PAGE, 'utf8');
-    const hashes = {};
-    for (const lib of LIBS) {
+    /* Start from the recorded hashes so `--only` leaves the others' records
+       exactly as they were. */
+    const hashes = { ...HASHES };
+    let touchedPage = false;
+    for (const lib of chosen) {
       const body = fetchLib(lib, dir);
-      if (/<\/script/i.test(body) || /<!--/.test(body)) {
+      if (!lib.target && (/<\/script/i.test(body) || /<!--/.test(body))) {
         throw new Error(`${lib.id} contains a sequence that would break the HTML it is `
           + 'embedded in. It cannot be inlined as-is.');
       }
       const hash = sha256(body);
       hashes[lib.id] = hash;
-      const s = slice(html, lib.id);
-      html = html.slice(0, s.a) + block(lib, body, hash) + html.slice(s.b);
-      console.log(`  ${lib.id.padEnd(18)} ${(body.length / 1024).toFixed(0).padStart(4)} KB  ${hash.slice(0, 16)}…`);
+      if (lib.target) {
+        mkdirSync(dirname(join(root, lib.target)), { recursive: true });
+        writeFileSync(join(root, lib.target), header(lib, hash) + '\n' + body);
+      } else {
+        const s = slice(html, lib.id);
+        html = html.slice(0, s.a) + block(lib, body, hash) + html.slice(s.b);
+        touchedPage = true;
+      }
+      console.log(`  ${lib.id.padEnd(18)} ${(body.length / 1024).toFixed(0).padStart(4)} KB  ${hash.slice(0, 16)}…  ${lib.target || 'index.html'}`);
     }
-    writeFileSync(PAGE, html);
+    if (touchedPage) writeFileSync(PAGE, html);
     writeFileSync(join(root, 'scripts', 'vendor-libs.sha256.json'),
       JSON.stringify(hashes, null, 2) + '\n');
-    console.log('index.html re-vendored; scripts/vendor-libs.sha256.json updated');
+    console.log(`${chosen.length} librar${chosen.length === 1 ? 'y' : 'ies'} re-vendored; scripts/vendor-libs.sha256.json updated`);
   } finally {
     rmSync(dir, { recursive: true, force: true });
   }
