@@ -46,6 +46,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "data"))
 
 import harvest_apifootball as H     # noqa: E402
+import leagues                      # noqa: E402
 
 UCL = 2                             # API-Football's competition id
 SEASON = int(os.environ.get("API_FOOTBALL_SEASON", "2026"))
@@ -231,6 +232,83 @@ def main():
             n = len(pl.get("response") or [])
             pages = ((pl.get("paging") or {}).get("total")) or 1
             print(f"    {hit[0]}: {n} player(s) on page 1 of {pages}")
+
+    # ---- 5. what the desk already covers, and what it would cost ----------
+    #
+    # STEP 2 OF THE NOTE, and it spends nothing: the fixture list is already in
+    # hand, so this is arithmetic on a response that has been paid for.
+    #
+    # Matched accent-insensitively against the names each league's BUILDER keys
+    # on — leagues.known_names, not a fresh list — because that is the set a
+    # squad has to land in to be usable. The La Liga note learned this the hard
+    # way: two canonicalisers gave two answers and a club ended up with no
+    # squad and no error.
+    print("\n5. coverage against the desks, and the cost of the gap")
+
+    rounds = {}
+    for r in rows:
+        rounds[(r.get("league") or {}).get("round") or "?"] = \
+            rounds.get((r.get("league") or {}).get("round") or "?", 0) + 1
+    print("    rounds in this season:")
+    for rnd, n in sorted(rounds.items(), key=lambda kv: -kv[1]):
+        print(f"      {n:>4}  {rnd}")
+
+    # The LEAGUE PHASE is the part a desk would price. The qualifiers are 60-odd
+    # clubs that mostly go out in July and are not what anyone previews.
+    phase = [r for r in rows
+             if any(w in str((r.get("league") or {}).get("round") or "").lower()
+                    for w in ("league", "group"))]
+    phase_clubs = set()
+    for r in phase:
+        for side in ("home", "away"):
+            t = ((r.get("teams") or {}).get(side) or {})
+            if t.get("name"):
+                phase_clubs.add(t["name"])
+    scope = phase_clubs or clubs
+    print(f"\n    {len(phase)} league-phase fixture(s), {len(phase_clubs)} club(s)"
+          if phase else
+          f"\n    no league-phase fixture yet — costing against all "
+          f"{len(clubs)} clubs in the season, which OVERSTATES it")
+
+    held = set()
+    for code in ("PL", "EFLC", "LL"):
+        try:
+            held |= set(H.known_names(code) or [])
+        except Exception as e:                                  # noqa: BLE001
+            print(f"    (could not read {code}'s club list: {e})")
+    flat = {leagues.strip_accents(n).lower() for n in held}
+
+    covered, missing = [], []
+    for c in sorted(scope):
+        key = leagues.strip_accents(c).lower()
+        # The feed's spelling is not the builder's. Try the alias tables the
+        # repo already keeps before calling a club missing.
+        alt = {key}
+        for code in ("PL", "EFLC", "LL"):
+            try:
+                canon = H.canonical_for(code, c)
+                if canon:
+                    alt.add(leagues.strip_accents(canon).lower())
+            except Exception:                                   # noqa: BLE001
+                pass
+        (covered if alt & flat else missing).append(c)
+
+    print(f"    covered by a desk : {len(covered)}"
+          + (f"  ({', '.join(covered[:8])}{'...' if len(covered) > 8 else ''})"
+             if covered else ""))
+    print(f"    NOT held          : {len(missing)}")
+    for c in missing[:40]:
+        print(f"      {c}")
+    if len(missing) > 40:
+        print(f"      ... and {len(missing) - 40} more")
+
+    # The cost, in the same unit data/api_budget.py reports: season form is
+    # 360 calls a day for 64 clubs across three desks, ~5.6 a club.
+    per_club = 360 / 64
+    print(f"\n    season form for {len(missing)} missing club(s) "
+          f"= {round(len(missing) * per_club)} calls a day "
+          f"(at the measured {per_club:.1f} a club)")
+    print(f"    today's usage so far: {H.usage_line() or 'unknown'}")
 
     print("\n" + (H.usage_line() or "the allowance headers said nothing"))
     print("\nprobe complete — nothing was written or committed.")
