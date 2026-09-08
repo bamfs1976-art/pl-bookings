@@ -1455,6 +1455,45 @@ for (const [page, needle] of [
     'both halves of every stat sheet then draw in the league ink');
 }
 
+/* THE FORM GRID NEEDS ITS FEED, and /today needs it through a frame.
+ *
+ * Three of the four desks load data/<league>_fxstats.js directly. /today
+ * cannot: it holds three datasets at once and reads each through a hidden
+ * same-origin frame, because the data files declare `const`, which is lexical
+ * and never becomes a window property. So the frame has to LOAD the file and
+ * PUBLISH it, and a desk that asks for a grid it is never given draws nothing
+ * and says nothing — which is the failure this asserts away.
+ */
+{
+  const frame = readFileSync(join(root, 'data-frame.html'), 'utf8');
+  for (const f of ['pl_fxstats.js', 'eflc_fxstats.js', 'laliga_fxstats.js']) {
+    assert.ok(frame.includes('data/' + f),
+      `data-frame.html does not load data/${f}, so /today can never draw a ` +
+      'form grid for that division');
+  }
+  assert.ok(/fxstats:\s*typeof PL_FXSTATS/.test(frame),
+    'data-frame.html loads the fixture stats but does not publish them on ' +
+    '__data — a top-level const is lexical, so the parent frame reads ' +
+    'undefined however long it waits');
+
+  const today = readFileSync(join(root, 'today.html'), 'utf8');
+  assert.ok(/fxstats:\s*d\.fxstats/.test(today),
+    'today.html does not read fxstats off the frame');
+  assert.ok(/recentFor:[\s\S]{0,80}recentCards\(p\.L,/.test(today),
+    "today.html's stat sheet does not pass a form history, or passes one that " +
+    'is not scoped to the fixture\'s own division — this page holds three ' +
+    'datasets and a global would be whichever loaded last');
+
+  /* AND EVERY DESK SAYS WHAT SEASON ITS NUMBERS ARE FROM. A card outlives the
+     page it came from. */
+  for (const page of ['index.html', 'eflc.html', 'laliga.html', 'today.html']) {
+    const html = readFileSync(join(root, page), 'utf8');
+    assert.ok(/basis:/.test(html),
+      `${page} builds a stat sheet without a basis line — the card would not ` +
+      'say which season its rates are drawn from');
+  }
+}
+
 /* THE TWO SIDES MUST BE THE TWO CLUBS' COLOURS.
  *
  * clubColour() falls back to the league's ink when the spec carries no

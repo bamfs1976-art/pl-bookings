@@ -569,6 +569,7 @@
       var L = {
         code: s.code, name: s.name, href: s.href,
         clubs: d.CLUBS, refs: d.REFS, players: d.players, fixtures: d.fixtures,
+        fxstats: d.fxstats || null,
         model: d.model, sim: d.sim,
         /* Optional: the ledger only exists once a harvest has run, and a
            league without one is a league with no leaderboard yet rather than
@@ -2420,6 +2421,28 @@
     return null;
   }
 
+  /* A club's last five COMPLETED matches, in the currency the share card's
+     form grid reads: team cards, match cards, and whether both sides were
+     carded. From the division's OWN fixture stats — this page holds three at
+     once, so the league is passed in rather than looked up from a global that
+     would be whichever loaded last. Empty when the feed has not landed, which
+     costs the card its grid and nothing else. */
+  function recentCards(L, short, n) {
+    if (!L || !L.fxstats || !L.fixtures) return [];
+    var out = [];
+    var done = L.fixtures.filter(function (f) { return f.st === 'FT'; })
+      .sort(function (a, b) { return String(b.d).localeCompare(String(a.d)); });
+    for (var i = 0; i < done.length && out.length < (n || 5); i++) {
+      var f = done[i], st = L.fxstats[String(f.id)];
+      if (!st || (f.h !== short && f.a !== short)) continue;
+      var mine = st[short], other = st[f.h === short ? f.a : f.h];
+      if (!mine || !other) continue;
+      var tc = Number(mine.yc || 0), oc = Number(other.yc || 0);
+      out.push({ tc: tc, mc: tc + oc, both: tc > 0 && oc > 0 });
+    }
+    return out;
+  }
+
   function shareSheet(fid, code, btn) {
     if (!S || !S.statSheetCard) return;
     var p = pricedFor(fid, code);
@@ -2439,7 +2462,9 @@
       /* Same portrait and same badge the row on this page draws — see the note
          on SHARE_CTX in the single-division decks. */
       photoUrl: function (q) { return (q && q.ph) || null; },
-      palette: paletteFor(code)
+      palette: paletteFor(code),
+      recentFor: function (short) { return recentCards(p.L, short, 5); },
+      basis: (meta.seasonLabel || p.L.name) + ' only'
     });
     var label = btn ? btn.getAttribute('aria-label') : null;
     if (btn) { btn.disabled = true; }
