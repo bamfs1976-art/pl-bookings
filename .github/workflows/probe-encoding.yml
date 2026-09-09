@@ -1,0 +1,29 @@
+name: Probe the player-name encoding
+
+# WHY A PUSH TRIGGER. workflow_dispatch only reaches a workflow that is already
+# on the default branch, so a diagnostic written on a feature branch cannot be
+# run from the Actions tab. Scoping a push trigger to this workflow and its own
+# script gives it a way to run without putting it on main first: editing the
+# probe exercises it, which is exactly when the answer is wanted.
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'scripts/probe-encoding.py'
+      - '.github/workflows/probe-encoding.yml'
+
+# READ-ONLY. This asks the feed two questions and prints the bytes. It writes
+# no file and commits nothing, and the token it holds could not push if it did.
+permissions:
+  contents: read
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Ask
+        env:
+          API_FOOTBALL_KEY: ${{ secrets.API_FOOTBALL_KEY }}
+        run: python3 scripts/probe-encoding.py
