@@ -58,6 +58,9 @@ STEPS = [
          leagues={"LL"}, needs="API_FOOTBALL_KEY"),
     dict(name="La Liga squads", cmd=["python3", "data/harvest_apifootball.py", "--league", "LL"],
          leagues={"LL"}, needs="API_FOOTBALL_KEY"),
+    dict(name="Serie A club registry",
+         cmd=["python3", "data/harvest_apifootball.py", "--league", "SA", "--clubs"],
+         leagues={"SA"}, needs="API_FOOTBALL_KEY"),
     dict(name="Fixtures and referee appointments",
          cmd=["python3", "data/harvest_apifootball.py", "--fixtures", "--league", "{L}"],
          leagues={"PL", "EFLC", "LL"}, needs="API_FOOTBALL_KEY", per_league=True),
@@ -103,7 +106,7 @@ def expand(step, league):
 
 def plan(args):
     """Which steps this invocation would run, and which it would skip."""
-    want = set(args.league) if args.league else {"PL", "EFLC", "LL"}
+    want = set(args.league) if args.league else {"PL", "EFLC", "LL", "SA"}
     out = []
     for s in STEPS:
         if not (s["leagues"] & want):
@@ -139,7 +142,7 @@ def run(cmd, season):
 def main():
     ap = argparse.ArgumentParser(description=__doc__,
                                  formatter_class=argparse.RawDescriptionHelpFormatter)
-    ap.add_argument("--league", action="append", choices=["PL", "EFLC", "LL"],
+    ap.add_argument("--league", action="append", choices=["PL", "EFLC", "LL", "SA"],
                     help="limit to one desk (repeatable). Default: all three.")
     ap.add_argument("--season", help="football-data season code, e.g. 2526")
     ap.add_argument("--with-keyed", action="store_true",

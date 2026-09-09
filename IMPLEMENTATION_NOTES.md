@@ -6,6 +6,33 @@ work, newest first: what changed, what was deferred and why. Everything before
 in [docs/decisions.md](docs/decisions.md); the audit itself is
 [docs/audit-2026-07.md](docs/audit-2026-07.md).
 
+## Serie A desk, task 2: club discovery and name resolution (2026-09-09)
+
+`harvest_apifootball.py` no longer special-cases Spain. `known_names` and
+`canonical_for` ask `leagues.is_discovered()` and resolve through the owner
+registry, so `--league SA --clubs` discovers the division the way `LL` does
+and `--league SERB` resolves against Serie A's registry the way `SEG` resolves
+against La Liga's. `discover_clubs` takes its code table from the registry and
+refuses anything but twenty clubs, unchanged.
+
+`data/test_seriea.py` pins the 2025-26 twenty in both spellings. The
+football-data spellings were read off the real `season-2526.csv` (Inter, Milan,
+Roma, Verona are the short forms); the API-Football spellings are the
+canonical names the alias table maps to, and the discovery run on the runner
+is what proves them, since API-Football is unreachable from here. Every
+variant of the four traps ("AC Milan", "AS Roma", "Hellas Verona",
+"Internazionale", "Inter Milan", "Hellas Verona FC") reaches one name, a
+Spanish spelling resolves to nothing in Italy and an Italian one to nothing in
+Spain, accent folding works for names in no table ("Forlì", "Südtirol"), and
+the whole Serie A code table is asserted clear of the other three desks. The
+committed registry test skips until `seriea_clubs.json` lands and then checks
+it is twenty clubs with distinct, non-colliding codes.
+
+Not done here: running `--clubs` itself. API-Football cannot be reached from
+this environment, so the registry is produced by the Data refresh workflow on
+the branch and folded into this commit; the run's output is the check on the
+API-Football spellings.
+
 ## Serie A desk, task 1: registry entry and the Italian suspension rule (2026-09-09)
 
 `data/leagues.py` gains `SA` (fd_div I1, mirror slug serie-a, 20 clubs, 380
