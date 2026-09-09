@@ -316,9 +316,26 @@ jobs:
         if: ${{ env.API_FOOTBALL_KEY != '' && (github.event_name != 'workflow_dispatch' || inputs.refresh_eflc) }}
         continue-on-error: true
         env:
-          # FORM (the relegated three's own record), so it transitions with the
-          # Championship harvest it feeds.
-          API_FOOTBALL_SEASON: ${{ inputs.season_af || steps.form.outputs.form_eflc || '2025' }}
+          # THE PREMIER LEAGUE'S OWN FORM SEASON, not the Championship's. This
+          # said form_eflc, reasoning that the file "transitions with the
+          # Championship harvest it feeds" — and that is backwards. The file
+          # exists for Burnley, West Ham and Wolves, whose PL record is by
+          # definition the season they were IN the Premier League. When the
+          # Championship's form flips to the current season those clubs are in
+          # the CHAMPIONSHIP, and their 2026-27 form arrives in the EFLC
+          # harvest; a 2026-27 PL harvest does not contain them at all.
+          #
+          # It broke the moment the two leagues' form seasons diverged, which
+          # they did when the Championship reached round six and the Premier
+          # League had played three: the file was harvested at 2026 and
+          # build_pl_data.py refused it, correctly — "filling from it would put
+          # one season's fouls won on another season's players, and every
+          # number would look right."
+          #
+          # form_pl is the automatic form of exactly the quantity
+          # build_pl_data.FORM_SEASON names, so the harvest and the build that
+          # guards it now move together.
+          API_FOOTBALL_SEASON: ${{ inputs.season_af || steps.form.outputs.form_pl || '2025' }}
         run: python3 data/harvest_apifootball.py --league PL --out pl_af_players.json
 
       # The Championship fixture list. Separate from the squads because it
