@@ -13,11 +13,20 @@ name: Probe the Codice di Giustizia Sportiva
 # runner reaches sites that environment cannot: the AIA's designation articles
 # were unreachable there and were read here on the first run.
 #
-# MANUAL ONLY. The Codice changes when the FIGC amends it, which is not often
-# and never on a schedule worth polling.
+# MANUAL, or when the probe itself changes. The Codice changes when the FIGC
+# amends it, which is not often and never on a schedule worth polling. The push
+# trigger is scoped to this workflow and the script it runs, for one reason: a
+# diagnostic nobody can run is not a diagnostic, and workflow_dispatch only
+# reaches a workflow already on the default branch. Editing the probe on a
+# branch therefore exercises it there, which is exactly when you want the
+# answer.
 
 on:
   workflow_dispatch:
+  push:
+    paths:
+      - 'scripts/probe-codice.py'
+      - '.github/workflows/probe-codice.yml'
 
 # No `contents: write`. This job has nothing to push and must not be able to.
 permissions:
