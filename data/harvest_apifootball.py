@@ -794,6 +794,7 @@ FIXTURE_FILES = {
 # Conflating them gives a desk that prices every fixture off no referee data.
 REF_FIXTURE_FILES = {
     "LL": ("LALIGA_REF_FIXTURES", "laliga_ref_fixtures.js"),
+    "SA": ("SERIEA_REF_FIXTURES", "seriea_ref_fixtures.js"),
 }
 
 

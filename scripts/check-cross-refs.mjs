@@ -42,6 +42,7 @@ const LEAGUES = [
   ['PL', 'data/pl_data.js', 'Premier League'],
   ['EFLC', 'data/eflc_data.js', 'EFL Championship'],
   ['LL', 'data/laliga_data.js', 'La Liga'],
+  ['SA', 'data/seriea_data.js', 'Serie A'],
 ];
 
 /* ---- 1. the average is over what the division actually refereed --------- */

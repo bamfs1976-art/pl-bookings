@@ -6,6 +6,38 @@ work, newest first: what changed, what was deferred and why. Everything before
 in [docs/decisions.md](docs/decisions.md); the audit itself is
 [docs/audit-2026-07.md](docs/audit-2026-07.md).
 
+## Serie A desk, task 4: the referee join (2026-09-09)
+
+The free I1 records carry every card and every foul but name the official on
+0 of 380 rows, so Serie A takes the La Liga route: one `/fixtures` call for
+the completed season buys the NAMES, and `build_refs.py --league SA` joins
+them onto the free rows by date and both canonical club names before
+computing every rate off the free columns.
+
+What changed: `harvest_apifootball.py` gained
+`REF_FIXTURE_FILES["SA"] = ("SERIEA_REF_FIXTURES", "seriea_ref_fixtures.js")`,
+which is the only thing `--ref-fixtures --league SA` and `build_refs.py` need
+to agree on; everything else in the join reads the registry
+(`referee_source`, `min_ref_matches`, `canon_name`). `cross_refs.py` now walks
+four divisions, so an official appointed in Serie A with no Italian record
+is looked for in the other tables, and the cross-refs guard reads the Serie A
+table when it exists.
+
+Tests (`data/test_seriea.py`, now 23): the file pair is configured and
+distinct from Spain's; a feed row in API-Football spelling ("AC Milan",
+"Hellas Verona", "D. Doveri, Italy") becomes a join row in canonical names
+and joins a football-data row ("Milan", "Verona"); an emitted fixture list
+reads back row for row through `build_refs.load_fixture_list`; and, once the
+runner has committed `seriea_ref_fixtures.js`, the same test insists on 380
+rows with 380 officials named, which is the brief's blocker condition
+expressed as a test.
+
+The join count itself is not in this entry. API-Football is unreachable from
+the build environment, so the harvest and the join run on the runner once
+task 7 has wired the workflow; the count from that log goes into this task's
+commit message and the 380-of-380 condition is enforced by the test above and
+by `check-seriea.mjs` in task 7. Below 380 is a stop, not a warning.
+
 ## Serie A desk, task 3: squads, cautions and the season file (2026-09-09)
 
 `data/build_seriea_data.py` exists and produces `data/seriea_data.js` in the

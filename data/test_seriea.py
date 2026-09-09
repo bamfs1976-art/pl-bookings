@@ -359,6 +359,101 @@ t("the committed registry, when present, is a twenty-club division",
   _the_committed_registry_if_present_is_the_division)
 
 
+# ---- the referee join, end to end ---------------------------------------------
+#
+# The free I1 records name no official on any of their 380 rows, so the NAME
+# is bought once a season (harvest_apifootball.py --ref-fixtures --league SA)
+# and joined on by build_refs.py --league SA. These tests pin the file the two
+# scripts agree on, the mapping from a feed row to a join row, and the read
+# back of the shipped file.
+
+import cross_refs as X  # noqa: E402
+
+
+def _the_ref_fixture_file_is_configured():
+    assert A.REF_FIXTURE_FILES["SA"] == ("SERIEA_REF_FIXTURES", "seriea_ref_fixtures.js")
+    assert A.REF_FIXTURE_FILES["SA"] != A.REF_FIXTURE_FILES["LL"]
+    assert L.get("SA").referee_source == "api-football"
+    assert not L.get("SA").has_free_referees
+    assert L.get("SA").min_ref_matches == 3
+
+
+t("the referee-join fixture file is configured for Serie A",
+  _the_ref_fixture_file_is_configured)
+
+
+def _a_feed_row_becomes_a_join_row_in_canonical_names():
+    """API-Football spells the clubs one way and the free records another; a
+    join row carries the canonical name so both sides meet."""
+    entry = {"fixture": {"date": "2026-03-01T19:45:00+00:00",
+                         "referee": "D. Doveri, Italy"},
+             "teams": {"home": {"name": "AC Milan"}, "away": {"name": "Hellas Verona"}}}
+    row = A.map_ref_fixture(entry, "SA")
+    assert row == {"d": "2026-03-01", "hn": "AC Milan", "an": "Hellas Verona",
+                   "ref": "D. Doveri"}, row
+    fd = {"Date": "2026-03-01", "HomeTeam": "Milan", "AwayTeam": "Verona",
+          "HY": 3, "AY": 1, "HR": 0, "AR": 0, "HF": 10, "AF": 14, "Referee": ""}
+    out, stats = R.attach_referees([fd], [row], "SA")
+    assert stats["matched"] == 1, stats
+    assert out[0]["Referee"] == "D. Doveri", out
+    # A row without an official is kept, so the count of matches is honest
+    # and the miss shows up in the join report rather than vanishing.
+    entry["fixture"]["referee"] = None
+    assert A.map_ref_fixture(entry, "SA")["ref"] is None
+
+
+t("a feed fixture becomes a join row in canonical names, and joins",
+  _a_feed_row_becomes_a_join_row_in_canonical_names)
+
+
+def _the_shipped_fixture_list_reads_back_whole():
+    """Before the runner has harvested: a written list reads back row for row
+    and the temporary file is removed. After: the committed list is the whole
+    season, or build_refs would be building a partial table."""
+    league = L.get("SA")
+    const, filename = A.REF_FIXTURE_FILES["SA"]
+    path = league.path(filename)
+    if path.exists():
+        fixtures, why = R.load_fixture_list(league)
+        assert fixtures is not None, why
+        assert len(fixtures) == 380, f"{filename} holds {len(fixtures)} rows, not 380"
+        named = sum(1 for f in fixtures if f.get("ref"))
+        assert named == 380, f"only {named} of 380 fixtures name an official"
+        print(f"    (committed {filename}: {named} of {len(fixtures)} named)")
+        return
+    fixtures, why = R.load_fixture_list(league)
+    assert fixtures is None and "--ref-fixtures --league SA" in why, why
+    _, fx = rows_and_fixtures(6)
+    rows = [{"d": f["d"][:10], "hn": f["hn"], "an": f["an"], "ref": f["ref"]} for f in fx]
+    try:
+        A.emit_ref_fixtures(rows, league, "2025")
+        src = path.read_text(encoding="utf-8")
+        assert f"const {const} = [" in src and "Serie A 2025-26" in src, src[:300]
+        back, why = R.load_fixture_list(league)
+    finally:
+        path.unlink(missing_ok=True)
+    assert why is None and back == rows, (why, back)
+
+
+t("the referee-join fixture list reads back whole, and the committed one is the season",
+  _the_shipped_fixture_list_reads_back_whole)
+
+
+def _serie_a_can_lend_and_borrow_officials():
+    """cross_refs walks every modelled division; Serie A must be one of them,
+    reading the files the registry names, and must cope before they exist."""
+    assert "SA" in X.CODES
+    assert X.DATA_FILE["SA"] == L.get("SA").data_file
+    assert X.FIXTURE_CONST["SA"] == ("SERIEA_FIXTURES", "seriea_fixtures.js")
+    refs = X.read_refs("SA")
+    assert refs is None or isinstance(refs, list)
+    assert isinstance(X.appointed_names("SA"), list)
+
+
+t("Serie A is a division cross_refs can lend to and borrow from",
+  _serie_a_can_lend_and_borrow_officials)
+
+
 # ---- the season file ---------------------------------------------------------
 #
 # build_seriea_data.py is the La Liga builder configured for Italy. These
