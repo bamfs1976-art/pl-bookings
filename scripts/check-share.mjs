@@ -210,8 +210,24 @@ assert.ok(/not yet appointed/i.test(noRef.refLine), noRef.refLine);
   /* 1. THE BASIS. Eight matches is not a sample, so each side is priced off
         its own domestic season and the card must say so where the reader
         cannot miss it. */
-  assert.ok(/domestic[- ]season/i.test(u.subtitle),
+  assert.ok(/domestic/i.test(u.subtitle),
     `a European card does not state its domestic basis: ${u.subtitle}`);
+  /* AND THE BASIS MUST NAME ITS OWN SEASON. This card carries TWO seasons and
+     they are different: the tie is 2026-27, the player rates behind it are
+     2025-26 form, which is what all three desks are built on. The first
+     version printed only the fixture's season and then the words "rates", so
+     a reader with a rival card for the same tie in front of them, carrying
+     genuine 2026-27 numbers, would have compared two different years and been
+     told they were the same one. Asserted as a season stamped on the basis
+     clause itself rather than merely present in the line, because the line
+     already had a season in it and that was the whole problem. */
+  const basis = u.subtitle.split(' · ').pop();
+  assert.ok(/\b\d{4}-\d{2}\b/.test(basis),
+    `the European card's basis clause names no season, so its rates read as ` +
+    `the fixture's year: ${u.subtitle}`);
+  assert.notEqual(basis.match(/\b\d{4}-\d{2}\b/)[0], '2026-27',
+    'the European card says its rates are the fixture\'s own season. They are ' +
+    'last season\'s form, which is what the desks are built on.');
   /* AND IT MUST FIT. brandBand draws the subtitle in 22px at x=40 on a
      1080-wide card, so about 78 characters reach the right edge. The first
      version ran to 110 and the clause that fell off was the basis: the one
@@ -248,7 +264,7 @@ assert.ok(/not yet appointed/i.test(noRef.refLine), noRef.refLine);
   await S.matchCard(u);
   const t = drawn.join('\n');
   for (const need of ['Liverpool v Atletico Madrid', 'CHAMPIONS LEAGUE',
-                      'domestic-season rates', 'no European card record']) {
+                      '2025-26 domestic form', 'no European card record']) {
     assert.ok(t.includes(need), `the European card never drew ${JSON.stringify(need)}`);
   }
   assert.ok(!t.includes('4.86'),

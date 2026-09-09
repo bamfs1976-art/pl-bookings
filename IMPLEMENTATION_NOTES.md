@@ -6,6 +6,65 @@ work, newest first: what changed, what was deferred and why. Everything before
 in [docs/decisions.md](docs/decisions.md); the audit itself is
 [docs/audit-2026-07.md](docs/audit-2026-07.md).
 
+## The European card named the wrong season, and a rival card showed it (2026-09-09)
+
+Two Betting Village Stats cards arrived for Napoli v Arsenal and Liverpool v
+Atletico Madrid, which are two of the eighteen ties `/europe` prices. Held
+against ours, three things came out.
+
+**Two independent confirmations.** Both referee names match the harvest
+exactly, Glenn Nyberg on Napoli v Arsenal and Davide Massa on Liverpool v
+Atletico, as do both kick-offs at 19:00 UTC. That is the API-Football
+appointment field checked against a source that never saw it.
+
+**One real inaccuracy, now fixed.** The card's subtitle read
+`2026-27 · League Stage - 1 · Wed, Sep 9, 19:00 · domestic-season rates`. The
+season in that line is the FIXTURE's, and putting it beside the word "rates"
+tells a reader the rates are this season's. They are not. All three desks are
+built on 2025-26 form and say so in their own file headers, and the rival card
+for the same tie carries genuine 2026-27 numbers, so the two would have been
+compared as though they were the same year. The clause now names its own
+season: `2025-26 domestic form`. The Premier League desk's own share card has
+named its form season since it was written, so this was the odd one out rather
+than a new idea.
+
+`check-share.mjs` asserts it on the basis clause specifically, not on the line,
+because the line already had a season in it and that was the whole problem: the
+last clause must carry a four-digit season and it must not be the fixture's.
+Verified by putting the old wording back and watching the guard fail.
+
+**The measured gap between the two cards.** Ours prices bookings and theirs is
+a general stat sheet, so most of the difference is intended. The part that is
+not is squad coverage, because a player with no card record cannot be priced
+at all:
+
+| Club | Squad | Rated | No record |
+|---|---|---|---|
+| Napoli | 27 | 23 | 4 |
+| Arsenal | 29 | 25 | 4 |
+| Atletico Madrid | 32 | 21 | 11 |
+| Liverpool | 36 | 22 | 14 |
+
+The unrated are summer signings with no 2025-26 minutes in a league a desk
+holds, and the rival card ranks several of them at the top of its own tables:
+Victor Munoz first for Liverpool fouls and shots, Jeremy Jacquet second for
+tackles, Alex Grimaldo first for Atletico tackles, Lee Kang-In first for
+shots. This is the known NEW-basis limitation with a European example on it,
+and it resolves itself as this season's minutes accrue. Listing them with
+dashes rather than invented numbers is still the right answer.
+
+**One thing I got wrong while checking.** I first reported Julian Alvarez as
+absent from the La Liga dataset. He is in it, as "J. Alvarez" with 1,902
+minutes; my lookup matched on the full first name and the feed abbreviates it.
+
+**One new bug, not fixed here.** Two player names are mojibake: "Dani
+MartÃ­nez" in `laliga_data.js` and "C. Inao OulaÃ¯" in `seriea_data.js`, both
+UTF-8 read as Latin-1. Two names out of roughly nineteen hundred, and the
+Premier League and Championship files are clean, so it is narrow. The raw
+harvest JSON is gitignored and the refresh runs on a runner, so the root cause
+cannot be located from this checkout and guessing at the fix would be worse
+than leaving it named.
+
 ## Champions League share cards, and three bugs found on the way (2026-09-09)
 
 Eighteen of the 234 Champions League ties this season have both clubs on a

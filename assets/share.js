@@ -1435,12 +1435,21 @@
     base.league = 'UCL';
     /* SHORT ENOUGH TO FIT WHOLE. The strap above already says CHAMPIONS
        LEAGUE, so repeating the competition here cost the line the one clause
-       that cannot be dropped: the basis. */
+       that cannot be dropped: the basis.
+
+       AND THE BASIS NAMES ITS SEASON. This read "2026-27 · ... ·
+       domestic-season rates", which puts the FIXTURE's season next to the word
+       rates and so states, to anyone reading the card on its own, that the
+       rates are this season's. They are not: all three desks are built on
+       2025-26 form and say so in their own file headers, and a rival card for
+       the same tie carrying genuine 2026-27 numbers is exactly what a reader
+       would compare it against. The Premier League desk's own share card has
+       named its form season since it was written; this now does too. */
     base.subtitle = [
       ctx.seasonLabel || null,
       f.r || null,
       when || 'kick-off not published yet',
-      (ctx.basisWord || 'domestic') + '-season rates'
+      (ctx.formSeason || '2025-26') + ' domestic form'
     ].filter(Boolean).join(' · ');
     base.refLine = r.name
       ? 'Referee: ' + r.name + ' · no European card record, priced neutral'

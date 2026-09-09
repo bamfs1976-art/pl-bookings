@@ -431,8 +431,8 @@
       players for them. The match total is the sum of two halves, so pricing one side off its
       real squad and the other off nothing would make them answer different questions.
       With the Premier League, La Liga and Serie A desks built, that is a real list.
-      Each side is priced off its <b>own domestic season</b>, which is what the share card says:
-      eight European matches is not a sample. There is no referee rate, because a referee's
+      Each side is priced off its <b>own domestic league, on 2025-26 form</b>, which is what the
+      share card says: eight European matches is not a sample, and neither is four. There is no referee rate, because a referee's
       cards per foul is competition-specific and these desks hold domestic records. There is no
       suspension strip, because UEFA's accumulation rules are not evidenced here.
     </p>
@@ -2016,8 +2016,9 @@
     $('#uclSub').innerHTML = TIES.length + ' tie' + (TIES.length === 1 ? '' : 's')
       + ' &nbsp;' + Object.keys(pairs).sort().map(function (k) {
           return '<span class="lg UCL">' + esc(k) + '</span>'; }).join(' ');
-    $('#uclNote').textContent = 'Each side is priced off its own domestic season, '
-      + 'because eight European matches is not a sample, and the share card says so. '
+    $('#uclNote').textContent = 'Each side is priced off its own domestic league, '
+      + 'on 2025-26 form, because eight European matches is not a sample and this '
+      + 'season is four games old. The share card says so on its face. '
       + 'No referee rate: a referee’s cards per foul is competition-specific and these '
       + 'desks hold domestic records. No suspension strip: UEFA runs its own accumulation '
       + 'rules and none of them is evidenced here. '
@@ -2799,6 +2800,11 @@
     });
     var spec = S.uclMatchSpec(r, {
       league: 'UCL', seasonLabel: '2026-27', roundWord: 'Matchday',
+      /* THE FIXTURE'S SEASON AND THE RATES' SEASON ARE DIFFERENT THINGS, and
+         the card says both. The tie is 2026-27; the player rates behind it are
+         2025-26 form, which is what all three desks are built on and what
+         their file headers say. */
+      formSeason: '2025-26',
       clubBy: clubBy, whenText: fmtWhen, palette: palette
     });
     var label = btn ? btn.getAttribute('aria-label') : null;
