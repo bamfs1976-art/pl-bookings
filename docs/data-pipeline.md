@@ -62,3 +62,31 @@ keeps the two lists in step.
   resolving surname-only officials through `appointments.resolve_surname_only`.
   Until that route is confirmed from a runner, the feed's own referee field is
   what the desk shows.
+
+### The Champions League tie list (added 9 September 2026)
+
+`data/harvest_ucl.py` writes `data/ucl_ties.js`, the European ties this app can
+honestly price. It runs once a day in `data-refresh.yml`, costs **one**
+`/fixtures` call for the whole competition and buys no players: the squads are
+already harvested for the three domestic desks.
+
+- **Both sides or neither.** A row is only written when both clubs resolve to
+  a desk that holds players for them, through each desk's own resolver rather
+  than a second spelling table. Every row carries both short codes and both
+  desk codes, because the two halves of the price come from different files.
+  A tie with one side unheld is dropped and counted in the log, never
+  half-built. `scripts/check-ucl.mjs` re-derives that rule from the desks'
+  data files, so the harvest cannot assert it alone.
+- **No fabricated kick-offs.** API-Football creates the league-phase fixtures
+  as soon as the draw is made and, until it ingests UEFA's calendar, stamps
+  every one of them with a single provisional instant. The harvest detects the
+  block on the impossibility that a club cannot play twice at one moment,
+  reading every tie in the competition rather than the priceable few, and
+  writes those ties with a null date. The round is real; the kick-off is not
+  known, so nothing claims one. `data/uefa_league_phase.py` records what this
+  cost the repository the last time it went unnoticed.
+- **No referee rate and no suspension ladder.** The official's name is carried
+  so a card can say who it is. The rate is not: a referee's cards-per-foul is
+  competition-specific, and these desks hold domestic records. UEFA's
+  accumulation rules are not encoded because they are not evidenced. See
+  `docs/champions-league-feasibility.md` §4 and §5.

@@ -216,6 +216,7 @@ def budget(shapes, day):
         + (1 + 1) * 2                            # --clubs and --ref-fixtures, LL and SA
         + divisions                              # --fixtures, one a division
         + 2                                      # cup/European dates, 2 seasons
+        + 1                                      # the Champions League tie list
     )
     rows.append(("data-refresh.yml", n, daily,
                  "season form: /players is per club and paged 20", None, None))
