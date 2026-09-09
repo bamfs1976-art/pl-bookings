@@ -278,6 +278,26 @@ assert.ok(!/glmProb/.test(deskBase[1]),
     const atTen = firstKick(fixtures, 10) + 3600000;      // an hour into round 10
     const byRound = (t) => F.decide(t).find((r) => r.code === L.code);
 
+    /* DECIDE() MUST BE A FUNCTION OF TIME, and for a while it was not.
+       `elapsed` filtered its rounds by the timestamp asked about and `played`
+       did not — it counted every finished fixture in the FILE — so asking what
+       the form season was an hour before the opening round got a `played`
+       count from today. Live that is invisible, because a finished match is
+       always in the past; it surfaced only when the Championship reached six
+       rounds and the assertion below flipped, taking the fixture harvest's
+       commit step down with it for half a day.
+
+       So the property is asserted directly rather than only through its
+       consequence: before a ball is kicked, nothing has been played. */
+    const preP = F.progressOf(fixtures, beforeAny);
+    assert.equal(preP.played, 0,
+      `${L.name}: progressOf reports ${preP.played} round(s) played an hour ` +
+      'before the season opened. decide() is reading the file rather than the ' +
+      'timestamp it was asked about, and every counterfactual below is junk.');
+    assert.equal(preP.elapsed, 0,
+      `${L.name}: progressOf reports ${preP.elapsed} round(s) elapsed before ` +
+      'the opening fixture kicked off');
+
     const pre = byRound(beforeAny);
     assert.equal(pre.form, pre.current - 1,
       `${L.name} is priced off ${pre.form}-form before a ball is kicked in ` +

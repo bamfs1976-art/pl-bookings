@@ -105,7 +105,16 @@ export function progressOf(fixtures, now) {
     if (f.r == null || !f.d) continue;
     const t = new Date(f.d).getTime();
     if (!isFinite(t)) continue;
-    if (FINISHED.has(f.st)) played.add(f.r);
+    /* AND ONLY IF IT HAD BEEN PLAYED BY `now`. This counted every finished
+       fixture in the FILE regardless of the timestamp asked about, which made
+       decide() not a function of time at all: asked what the form season was
+       an hour before the opening round, it answered with a `played` count from
+       today. Live that is invisible — a finished match is always in the past —
+       so it survived until the Championship reached six rounds and the
+       counterfactual in check-models.mjs flipped, taking the fixture harvest's
+       commit step down with it. `elapsed` had the check all along; this is the
+       same one. */
+    if (FINISHED.has(f.st) && t <= now) played.add(f.r);
     if (!firstOf.has(f.r) || t < firstOf.get(f.r)) firstOf.set(f.r, t);
   }
   for (const [r, t] of firstOf) if (t <= now) elapsed.add(r);
