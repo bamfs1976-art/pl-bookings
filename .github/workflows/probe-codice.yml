@@ -1,0 +1,46 @@
+name: Probe the Codice di Giustizia Sportiva
+
+# A diagnostic, not a data job — the same shape as probe-ucl.yml. It fetches
+# nothing into the repository, commits nothing and gates nothing.
+#
+# It answers the one question docs/italy-suspensions.md is left open on. The
+# Serie A desk prices bans at the 5th, 10th, 14th, 17th and 19th caution and at
+# every caution after that, on three secondary quotations of art. 19 that agree
+# word for word. The commissioning brief said 5, 10, 15 then every second
+# caution, and no source found supports it. figc.it is refused by the network
+# the desk is built on, and so is every legal database reprinting the article,
+# and so is Wikipedia — it is the environment, not the publisher. A GitHub
+# runner reaches sites that environment cannot: the AIA's designation articles
+# were unreachable there and were read here on the first run.
+#
+# MANUAL ONLY. The Codice changes when the FIGC amends it, which is not often
+# and never on a schedule worth polling.
+
+on:
+  workflow_dispatch:
+
+# No `contents: write`. This job has nothing to push and must not be able to.
+permissions:
+  contents: read
+
+concurrency:
+  group: probe-codice
+  cancel-in-progress: true
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # The Codice ships as a PDF, and reading it needs a text extractor. Same
+      # package the Spanish designation sheets need, installed for the same
+      # reason: absence should be reported as a missing dependency, not as an
+      # empty document.
+      - name: Tools for the PDF
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq poppler-utils
+
+      # Reported, not failed. A document that cannot be fetched is the run's
+      # answer, and the script exits 0 for it deliberately.
+      - name: Ask
+        run: python3 scripts/probe-codice.py
