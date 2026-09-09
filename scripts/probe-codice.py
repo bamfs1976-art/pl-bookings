@@ -109,37 +109,88 @@ def to_text(markup):
 
 
 def article_19(text):
-    """Everything from the article 19 heading to the next article heading."""
-    m = re.search(r"(?im)^\s*art(?:icolo)?\.?\s*19\b.*$", text)
-    if not m:
-        return None
-    tail = text[m.start():]
-    nxt = re.search(r"(?im)^\s*art(?:icolo)?\.?\s*20\b", tail)
-    return tail[:nxt.start()] if nxt else tail[:6000]
+    """The body of art. 19, or None.
+
+    EVERY heading is tried, not the first. A code this size carries its own
+    table of contents, so "Art. 19" appears at least twice and the first hit is
+    a one-line index entry with nothing under it. The block with the most text
+    before art. 20 is the article; the index entry loses by construction.
+    """
+    best = None
+    for m in re.finditer(r"(?im)^\s*art(?:icolo)?\.?\s*19\b.*$", text):
+        tail = text[m.start():]
+        nxt = re.search(r"(?im)^\s*art(?:icolo)?\.?\s*20\b", tail)
+        block = tail[:nxt.start()] if nxt else tail[:8000]
+        if best is None or len(block) > len(best):
+            best = block
+    return best
+
+
+# The progression as the article states it, in words. The Italian ordinals are
+# what to look for: a code writes "alla quinta ammonizione", never "at 5".
+PROGRESSION = ["quinta", "quarta", "terza", "seconda"]
+TAIL_PHRASES = ["ogni ulteriore ammonizione", "ogni successiva ammonizione",
+                "ogni ulteriore sanzione"]
+
+
+def contexts(text, needle, span=260, limit=3):
+    """Every occurrence of `needle` with the text around it, so the reader
+    judges the sentence rather than the match."""
+    out, low = [], text.lower()
+    start = 0
+    while len(out) < limit:
+        i = low.find(needle.lower(), start)
+        if i < 0:
+            break
+        out.append(" ".join(text[max(0, i - span):i + span].split()))
+        start = i + len(needle)
+    return out
 
 
 def report(text, label):
-    """Print what the text says about accumulated cautions, and judge it."""
+    """Print what the document says about accumulated cautions, and judge it.
+
+    THE WHOLE ARTICLE IS PRINTED, not the lines matching a keyword. The first
+    version of this probe filtered art. 19 down to lines containing
+    "ammonizion" and reported nothing for the FIGC's own PDF, which it had
+    successfully fetched and read: the progression is stated in commas that
+    name the ordinals without repeating the noun on every line. A probe that
+    filters before a human has seen the text answers a question nobody asked.
+    """
     art = article_19(text)
-    where = "art. 19" if art else "the whole document (no art. 19 heading found)"
-    body = art or text
-    lines = [ln for ln in body.splitlines() if "ammonizion" in ln.lower()]
-    print(f"    {len(lines)} line(s) mentioning ammonizioni in {where}")
-    for ln in lines[:25]:
-        print(f"      | {ln.strip()[:200]}")
-    low = " ".join(lines).lower()
-    # The progression in words, which is how the article states it.
-    ordinals = ["quinta", "quarta", "terza", "seconda"]
-    seen = [o for o in ordinals if o in low]
-    every = "ogni ulteriore ammonizione" in low or "ogni successiva ammonizione" in low
-    print(f"    ordinals present: {seen or 'none'}; "
-          f"'ogni ulteriore ammonizione': {every}")
-    if seen == ordinals and every:
-        print(f"    => matches the shipped ladder {ITALY_LADDER} then every caution")
-    elif "quindicesima" in low or re.search(r"\b15\b", low):
-        print(f"    => mentions a fifteenth; check against the brief's {BRIEF_LADDER}")
+    if art:
+        body = " ".join(art.split())
+        print(f"    art. 19, {len(art)} chars. Verbatim, wrapped:")
+        for i in range(0, min(len(body), 4200), 160):
+            print(f"      | {body[i:i + 160]}")
+        if len(body) > 4200:
+            print(f"      | ... ({len(body) - 4200} more chars)")
     else:
-        print("    => inconclusive from this source; read the lines above by hand")
+        print("    no art. 19 heading found in this document")
+
+    # THE WHOLE DOCUMENT, not only art. 19. Which article carries the
+    # accumulation rule is itself in question: the desk's note cites art. 19
+    # from secondary sources, and if the primary text puts it elsewhere that
+    # is worth knowing rather than reporting as absent.
+    low = text.lower()
+    hits = {o: low.count(o + " ammonizione") for o in PROGRESSION}
+    tail = [t for t in TAIL_PHRASES if t in low]
+    print(f"    whole document: " + ", ".join(f"'{o} ammonizione' x{n}"
+                                              for o, n in hits.items()))
+    print(f"    tail phrase: {tail or 'none'}")
+    for phrase in ["quinta ammonizione"] + TAIL_PHRASES:
+        for ctx in contexts(text, phrase, limit=2):
+            print(f"      ~ ...{ctx}...")
+
+    ordered = all(hits[o] for o in PROGRESSION)
+    if ordered and tail:
+        print(f"    => the text states the 5/4/3/2 progression and a tail, "
+              f"which is the shipped ladder {ITALY_LADDER} then every caution")
+    elif "quindicesima ammonizione" in low:
+        print(f"    => the text names a fifteenth caution; compare the brief's "
+              f"{BRIEF_LADDER}")
+    else:
+        print("    => not settled by this source; read the article above by hand")
 
 
 def main():
