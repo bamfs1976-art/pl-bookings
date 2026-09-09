@@ -56,6 +56,7 @@ DATA = Path(__file__).resolve().parent
 DIVISIONS = {
     "sky bet championship": "EFLC",
     "primera división": "LL",
+    "serie a enilive": "SA",
 }
 
 # ---------------------------------------------------------------------------
@@ -127,6 +128,111 @@ def parse_rfef(text, competition="primera división"):
             out.append(pending)
             pending = None
     return out
+
+
+# ---------------------------------------------------------------------------
+# The AIA's designation articles (--format aia)
+# ---------------------------------------------------------------------------
+# Italy's referees' association publishes a matchday at a time, as an article
+# on aia-figc.it, one block per fixture:
+#
+#   VENEZIA – FIORENTINA   Venerdì 11/09 h. 20.45
+#   FOURNEAU
+#   ALASSIO – BARONE
+#   IV: AYROLDI
+#   VAR: DIONISI
+#   AVAR: MAGGIONI
+#
+# THE REFEREE IS THE FIRST LINE AFTER THE FIXTURE AND CARRIES NO LABEL. The
+# assistants are the second line, joined by a dash; the fourth official and
+# the video officials are labelled. So the one line that must never be read
+# as the referee is the assistants' pair, which is why a line containing the
+# pair separator is refused as a referee rather than taken as the first name
+# on it, and a labelled line is never a referee at all.
+#
+# NO FORENAMES. Officials are surname only, in capitals, with an initial after
+# the surname only when two on the list share one ("ROSSI C."). Resolution
+# against the card table is therefore appointments.resolve_surname_only, and
+# only for this format.
+#
+# NO YEAR. The date is "11/09"; the season year comes from the caller, and a
+# month before July belongs to the year after the season started.
+#
+# This layout was read from published excerpts of the articles, not from the
+# page itself, which is unreachable from the environment this was written in;
+# see docs/leagues.md. A block that does not parse is reported, never
+# half-read.
+IT_WEEKDAY = r"(?:luned[iì]|marted[iì]|mercoled[iì]|gioved[iì]|venerd[iì]|sabato|domenica)"
+AIA_DASH = r"\s+[\u2013\u2014-]\s+"
+AIA_FIXTURE_RE = re.compile(
+    r"^(?P<home>[^:\u2013\u2014]+?)" + AIA_DASH + r"(?P<away>[^:\u2013\u2014]+?)\s+" + IT_WEEKDAY
+    + r"\s+(?P<day>\d{1,2})/(?P<month>\d{1,2})(?:/(?P<year>\d{2,4}))?"
+    + r"(?:\s*(?:h\.?\s*|ore\s+)?(?P<hh>\d{1,2})[.:](?P<mm>\d{2}))?\s*$", re.I)
+AIA_LABEL_RE = re.compile(r"^(?:IV|4[°º]?|VAR|AVAR|ASSISTENTI?|GUARDALINEE|ARBITRO)\b\s*:?", re.I)
+AIA_ARBITRO_RE = re.compile(r"^ARBITRO\s*:\s*(.+?)\s*$", re.I)
+AIA_PAIR_RE = re.compile(AIA_DASH)
+AIA_NAME_RE = re.compile(r"^[A-Za-zÀ-ÿ'’.\- ]+$")
+
+
+def aia_year(month, season_year):
+    """The calendar year of a Serie A date, from the season's start year."""
+    return season_year if int(month) >= 7 else season_year + 1
+
+
+def parse_aia(text, season_year, competition="serie a enilive"):
+    """An AIA designation article as the rows parse() returns.
+
+    Returns (rows, problems). A fixture whose next line is not a bare name is
+    reported by fixture and skipped; nothing is guessed from a block that
+    has moved.
+    """
+    out, problems = [], []
+    pending = None
+    for raw in text.splitlines():
+        line = raw.strip()
+        if not line:
+            continue
+        m = AIA_FIXTURE_RE.match(line)
+        if m:
+            if pending is not None:
+                problems.append(f"no referee line under {pending['home']} v {pending['away']}")
+            year = m.group("year")
+            if year:
+                year = int(year) if len(year) == 4 else 2000 + int(year)
+            else:
+                year = aia_year(m.group("month"), season_year)
+            ko = f"{int(m.group('hh')):02d}:{m.group('mm')}" if m.group("hh") else None
+            pending = {
+                "competition": competition,
+                "date": f"{year:04d}-{int(m.group('month')):02d}-{int(m.group('day')):02d}",
+                "home": m.group("home").strip(), "away": m.group("away").strip(),
+                "ko": ko, "ref": None,
+            }
+            continue
+        if pending is None:
+            continue
+        # The first line under the fixture. A labelled "Arbitro:" is taken;
+        # any other label, or the assistants' pair, means the referee line
+        # is missing and the block is refused rather than mis-read.
+        lab = AIA_ARBITRO_RE.match(line)
+        if lab:
+            name = lab.group(1).strip()
+        elif AIA_LABEL_RE.match(line) or AIA_PAIR_RE.search(line) or ":" in line \
+                or not AIA_NAME_RE.match(line):
+            problems.append(f"no referee line under {pending['home']} v {pending['away']}"
+                            f" (found {line[:40]!r})")
+            pending = None
+            continue
+        else:
+            name = line
+        pending["ref"] = name
+        out.append(pending)
+        pending = None
+    if pending is not None:
+        problems.append(f"no referee line under {pending['home']} v {pending['away']}")
+    return out, problems
+
+
 KNOWN_HEADINGS = {
     "sky bet championship", "sky bet league one", "sky bet league two",
     "efl trophy", "efl cup", "carabao cup", "papa johns trophy",
@@ -275,8 +381,13 @@ def parse(text, default_year=None):
     return out, unknown_headings, undated
 
 
-def to_entries(parsed, source):
-    """Parsed fixtures as overlay entries, plus everything that did not map."""
+def to_entries(parsed, source, resolver=None):
+    """Parsed fixtures as overlay entries, plus everything that did not map.
+
+    `resolver` is the name rule for the publisher: resolve_ref_name for the
+    EFL and the RFEF, which print forenames; resolve_surname_only for the
+    AIA, which never does. Chosen by the format, never by the name."""
+    resolve = resolver or A.resolve_ref_name
     entries, skipped, problems = [], {}, []
     for row in parsed:
         code = DIVISIONS.get(row["competition"] or "")
@@ -295,7 +406,7 @@ def to_entries(parsed, source):
             problems.append(f"club not recognised: {missing}")
             continue
 
-        resolved, how = A.resolve_ref_name(row["ref"], A.ref_names(code))
+        resolved, how = resolve(row["ref"], A.ref_names(code))
         entries.append({
             "league": code, "date": row["date"], "h": home, "a": away,
             "ko": row["ko"],
@@ -340,6 +451,19 @@ def read_fixture_file(path):
     return rows, season, name
 
 
+def fixture_season(code):
+    """The season start year in the committed fixture file's heading, or None."""
+    import harvest_apifootball as H
+    entry = H.FIXTURE_FILES.get(code)
+    if not entry:
+        return None
+    path = DATA / entry[1]
+    if not path.exists():
+        return None
+    _, season, _ = read_fixture_file(path)
+    return season
+
+
 def main():
     ap = argparse.ArgumentParser(description=__doc__,
                                  formatter_class=argparse.RawDescriptionHelpFormatter)
@@ -351,19 +475,36 @@ def main():
                     help="Season year for date headings that carry none "
                          "(\"Saturday 22 August\"). Only used where the "
                          "article omits it; a heading with a year keeps it.")
-    ap.add_argument("--format", choices=["efl", "rfef"], default="efl",
+    ap.add_argument("--format", choices=["efl", "rfef", "aia"], default="efl",
                     help="efl: the EFL's weekly prose (default). "
-                         "rfef: a Comité Técnico de Árbitros designation sheet.")
+                         "rfef: a Comité Técnico de Árbitros designation sheet. "
+                         "aia: an AIA Serie A designations article; --year is "
+                         "the season's START year, defaulting to the committed "
+                         "fixture file's heading.")
     args = ap.parse_args()
 
     text = Path(args.file).read_text(encoding="utf-8") if args.file else sys.stdin.read()
     if not text.strip():
         sys.exit("ERROR: no article text on stdin (or --file was empty).")
 
+    resolver = None
     if args.format == "rfef":
         parsed, unknown, undated = parse_rfef(text), [], []
         expected = ("a 'DD-MM-YYYY  Home  Away  HH:MM' row followed by "
                     "'Árbitro: Name'")
+    elif args.format == "aia":
+        season_year = args.year or fixture_season("SA")
+        if not season_year:
+            sys.exit("ERROR: the AIA article carries no year and neither --year "
+                     "nor the committed seriea_fixtures.js heading supplies "
+                     "the season's start year.")
+        parsed, block_problems = parse_aia(text, season_year)
+        unknown, undated = [], []
+        for pr in block_problems:
+            print(f"  WARNING: {pr}")
+        expected = ("'HOME – AWAY  Venerdì 11/09 h. 20.45' followed by the "
+                    "referee's surname on its own line")
+        resolver = A.resolve_surname_only
     else:
         parsed, unknown, undated = parse(text, default_year=args.year)
         expected = "'Home v Away (15:00)' followed by 'Referee: Name'"
@@ -377,7 +518,7 @@ def main():
     for h in dict.fromkeys(unknown):
         print(f"  NOTE: unrecognised competition heading {h!r} — its fixtures were skipped")
 
-    entries, skipped, problems = to_entries(parsed, args.source)
+    entries, skipped, problems = to_entries(parsed, args.source, resolver)
     for label, n in sorted(skipped.items()):
         print(f"  skipped {n:>2} — {label} (no desk models it)")
     for p in problems:

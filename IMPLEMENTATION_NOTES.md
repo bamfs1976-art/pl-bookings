@@ -6,6 +6,63 @@ work, newest first: what changed, what was deferred and why. Everything before
 in [docs/decisions.md](docs/decisions.md); the audit itself is
 [docs/audit-2026-07.md](docs/audit-2026-07.md).
 
+## Serie A desk, task 5: AIA appointments (2026-09-09)
+
+The AIA publishes Serie A designations one matchday at a time as an article
+on aia-figc.it ("SERIE A ENILIVE - DESIGNAZIONI 4a GIORNATA"), on the Tuesday
+or Wednesday before the round. `data/fetch_appointments.py` gained a third
+source: the news index (the designations category first, the plain index as
+fallback) is searched for slugs naming a PENDING giornata, the highest article
+id per round wins over a previous season's article for the same round, and
+each article is stripped to text and parsed. It produces text only, exits
+non-zero on nothing found and asks only for rounds the committed
+`seriea_fixtures.js` shows uncovered, exactly like the other two.
+
+`data/ingest_appointments.py` gained `--format aia` and `parse_aia`: one block
+per fixture, "HOME – AWAY  Venerdì 11/09 h. 20.45", then the referee's
+surname alone on the next line, then the assistants' pair, IV, VAR and AVAR.
+The referee is the only unlabelled line, so a block whose first line is the
+assistants' pair or a labelled official is refused by fixture rather than
+mis-read. Dates carry no year: `--year` is the season's start year, defaulting
+to the committed fixture file's heading, and a month before July belongs to
+the following calendar year.
+
+Names: the AIA prints no forenames, so the existing resolver (which reads a
+forename first and refuses surname alone, for good reason) cannot reach a
+single Italian official. `appointments.resolve_surname_only` is a separate
+rule chosen by the format and by nothing else: the published surnames must be
+a contiguous run inside one table entry's surnames, an initial after the
+surname ("ROSSI C.") must match that entry's forename, and anything short of
+a unique hit is left as published. `REF_TABLES["SA"]` is `seriea_refs.json`.
+`harvest_apifootball.FIXTURE_FILES["SA"]` names `seriea_fixtures.js`, so the
+feed's own referee field is the fallback the brief asked for: until the AIA
+route is confirmed on a runner, what the page shows came from the feed, and
+the page will say so (task 6).
+
+What could not be done here, recorded exactly: `https://www.aia-figc.it/news/?c=9`
+and the article pages answer `EGRESS_BLOCKED` from this environment, as do
+every mirror tried (aiafrosinone.it, calcionews24.com, numericalcio.it,
+spaziocalcio.it, r.jina.ai, web.archive.org). The index shape and the block
+layout above are therefore taken from published excerpts of the articles
+(the 4th-round designations of 9 September 2026: "VENEZIA – FIORENTINA,
+Venerdì 11/09 h.20.45, FOURNEAU, ALASSIO – BARONE, IV: AYROLDI, VAR: DIONISI,
+AVAR: MAGGIONI") and not from the page. Whether a GitHub runner can fetch the
+site is a fact only the first run of the fixtures workflow (task 7) can
+establish; if it cannot, the failure goes under a dated heading here and the
+feed remains the source.
+
+Guards and tests: `scripts/check-appointments.mjs` knows the Serie A desk;
+`scripts/check-fetch-appointments.mjs` proves, without the network, that the
+chooser takes pending rounds only and the newest id, finds a slug in an
+anchor, a sitemap or a JSON island, and that an article survives its markup
+as its blocks with a referee-less block refused. `data/test_appointments.py`
+gained five tests (36 pass): the article parses with the year supplied, the
+assistants and labelled officials are never the referee, surname-only
+resolution is unique-or-nothing and reachable only through the AIA resolver,
+clubs in the AIA's capitals (MILAN, ROMA, HELLAS VERONA) reach the registry's
+codes against a temporary registry and card table, and the year rule. The
+`fixtures.yml` loop gains SA with the other workflows in task 7.
+
 ## Serie A desk, task 4: the referee join (2026-09-09)
 
 The free I1 records carry every card and every foul but name the official on

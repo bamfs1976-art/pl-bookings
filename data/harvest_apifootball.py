@@ -784,6 +784,7 @@ FIXTURE_FILES = {
     "PL": ("PL_FIXTURES", "pl_fixtures.js"),
     "EFLC": ("EFLC_FIXTURES", "eflc_fixtures.js"),
     "LL": ("LALIGA_FIXTURES", "laliga_fixtures.js"),
+    "SA": ("SERIEA_FIXTURES", "seriea_fixtures.js"),
 }
 
 # A SECOND, different fixture list, for leagues whose referees have to be

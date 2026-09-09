@@ -46,6 +46,7 @@ const DESKS = {
   EFLC: { fixtures: 'data/eflc_fixtures.js', global: 'EFLC_FIXTURES', data: 'data/eflc_data.js' },
   PL: { fixtures: 'data/pl_fixtures.js', global: 'PL_FIXTURES', data: 'data/pl_data.js' },
   LL: { fixtures: 'data/laliga_fixtures.js', global: 'LALIGA_FIXTURES', data: 'data/laliga_data.js' },
+  SA: { fixtures: 'data/seriea_fixtures.js', global: 'SERIEA_FIXTURES', data: 'data/seriea_data.js' },
 };
 
 const byLeague = {};

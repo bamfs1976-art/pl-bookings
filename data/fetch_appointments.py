@@ -55,6 +55,14 @@ HOW EACH LEAGUE IS FOUND, and why the two are found differently.
   over hrefs rather than a walk of the DOM: it needs the site's URLs to keep
   the word "referee-appointments" in them and nothing else about the markup.
 
+  SERIE A: by SEARCHING THE AIA's news index for the article whose slug
+  names the pending giornata ("serie-a-enilive-designazioni-4a-giornata-
+  27612"). The round number is in the URL, so the article for a round is
+  chosen by its round rather than by being newest, and a previous season's
+  article for the same round loses to the higher id. Officials are surname
+  only and the dates carry no year; the season heading of the committed
+  fixture file supplies it.
+
 WHAT IT NEEDS INSTALLED. `pdftotext` (poppler-utils) for La Liga, and only for
 La Liga. Layout matters: parse_rfef splits the two clubs on a run of spaces, so
 the columns have to survive extraction — which is what `-layout` preserves and
@@ -88,7 +96,8 @@ UA = ("Mozilla/5.0 (compatible; BookingsDesk/1.0; "
       "+https://bookingsdesk.netlify.app) referee-appointments")
 TIMEOUT = 45
 
-FIXTURES = {"LL": "laliga_fixtures.js", "EFLC": "eflc_fixtures.js"}
+FIXTURES = {"LL": "laliga_fixtures.js", "EFLC": "eflc_fixtures.js",
+            "SA": "seriea_fixtures.js"}
 
 # Spanish weekday names as the RFEF spells them in a filename: lowercase and
 # unaccented (miercoles, sabado), Monday first to match date.weekday().
@@ -126,6 +135,36 @@ MONTHS = {m.lower(): i for i, m in enumerate(
 # by competition, so they sort behind the league article rather than ahead of
 # it — see find_eflc.
 CUP_SLUG = re.compile(r"carabao|vertu|papa|trophy|cup", re.I)
+
+
+# SERIE A: the AIA publishes one article per matchday on its own news site,
+# titled "SERIE A ENILIVE - DESIGNAZIONI 4a GIORNATA", and the slug carries
+# the round number and a rising article id:
+#
+#   /news/serie-a-enilive-designazioni-4a-giornata-27612/
+#   /news/serie-a-enilive-designazioni-32-giornata-27289/   (the ordinal's
+#                                                            "a" is sometimes
+#                                                            dropped)
+#
+# So the article for a pending round is FOUND BY ITS ROUND, not by reading
+# the newest one and hoping: the index is searched for slugs naming that
+# giornata, and where a previous season's article for the same round is still
+# listed the highest id wins. The category page for designations is first;
+# the plain news index is the fallback, and both are matched on the URL
+# alone, for the same reason as the EFL's.
+#
+# NOT TESTED AGAINST THE SITE. aia-figc.it, and every mirror that reposts
+# its text, was refused by the network this was written on, so the index
+# shape and the article body are taken from published excerpts. The first
+# live run on a runner is what confirms it, and this script cannot half
+# succeed: an article that yields no blocks is reported as nothing found.
+AIA_INDEX = [
+    "https://www.aia-figc.it/news/?c=9",
+    "https://www.aia-figc.it/news/",
+]
+AIA_SLUG = re.compile(
+    r'["\'>(]([^"\'<>()\s]*serie-a-enilive-designazioni-(\d{1,2})a?-giornata-(\d+)'
+    r'[^"\'<>()\s]*)', re.I)
 
 
 def fetch(url, binary=False):
@@ -350,10 +389,73 @@ def find_eflc(verbose):
     return found
 
 
+# ---------------------------------------------------------------------------
+# Serie A: find the AIA article for each pending round
+# ---------------------------------------------------------------------------
+
+def aia_candidates(pages, rounds):
+    """{round: url} for the pending rounds, newest article id per round.
+
+    `pages` is [(index_url, markup)]. Pure, so the choice can be tested
+    without the site: the fetch is the only part of this that needs it.
+    """
+    wanted = {r for (_, r), _ in rounds if r is not None}
+    best = {}
+    for index, page in pages:
+        for href, rnd, art in AIA_SLUG.findall(page or ""):
+            rnd, art = int(rnd), int(art)
+            if rnd not in wanted:
+                continue
+            url = urllib.parse.urljoin(index, html.unescape(href))
+            if rnd not in best or art > best[rnd][0]:
+                best[rnd] = (art, url)
+    return {r: u for r, (_, u) in sorted(best.items())}
+
+
+def find_seriea(rounds, season_year, verbose):
+    pages = []
+    for index in AIA_INDEX:
+        page = fetch(index)
+        if page is None:
+            print(f"  {index} -> no response")
+            continue
+        hits = AIA_SLUG.findall(page)
+        print(f"  {index} -> {len(page)} bytes, {len(hits)} designation URL(s)")
+        pages.append((index, page))
+    chosen = aia_candidates(pages, rounds)
+    if not chosen:
+        if pages:
+            print("  no designation article for a pending round. If the pages "
+                  "above returned plenty of bytes and no matching URL, the "
+                  "listing is rendered in the browser or the slug has changed; "
+                  "if they returned nothing, the fetch itself is being refused.")
+        return []
+    found = []
+    for rnd, url in chosen.items():
+        page = fetch(url)
+        if page is None:
+            print(f"  {url} -> no response")
+            continue
+        text = to_text(page)
+        rows, problems = I.parse_aia(text, season_year)
+        print(f"  round {rnd}: {url}\n    {len(page)} bytes, {len(text)} chars "
+              f"of text, {len(rows)} appointment(s) parsed")
+        for pr in problems:
+            print(f"    {pr}")
+        if rows:
+            found.append((url, text))
+    if not found and chosen:
+        print("  articles were found and none parsed. Compare the byte count "
+              "with the text length above: a large page yielding little text "
+              "is rendered in the browser; plenty of text and no blocks means "
+              "the layout has moved from the one parse_aia reads.")
+    return found
+
+
 def main():
     ap = argparse.ArgumentParser(description=__doc__,
                                  formatter_class=argparse.RawDescriptionHelpFormatter)
-    ap.add_argument("--league", required=True, choices=["LL", "EFLC"])
+    ap.add_argument("--league", required=True, choices=["LL", "EFLC", "SA"])
     ap.add_argument("--out", help="write the text here (default: stdout)")
     ap.add_argument("--source-out", help="write the URL it came from here, so "
                                          "the workflow can pass it to --source")
@@ -385,7 +487,7 @@ def main():
             for u in rfef_candidates(rounds, season_label):
                 print(f"  would probe {u}")
         else:
-            for u in EFL_INDEX:
+            for u in (AIA_INDEX if args.league == "SA" else EFL_INDEX):
                 print(f"  would search {u}")
         return
 
@@ -394,6 +496,11 @@ def main():
             sys.exit("ERROR: laliga_fixtures.js carries no season heading — "
                      "the RFEF filename cannot be built without it.")
         found = find_laliga(rounds, f"{season}-{str(season + 1)[-2:]}", args.verbose)
+    elif args.league == "SA":
+        if not season:
+            sys.exit("ERROR: seriea_fixtures.js carries no season heading, and "
+                     "the AIA's dates carry no year without it.")
+        found = find_seriea(rounds, season, args.verbose)
     else:
         found = find_eflc(args.verbose)
 
