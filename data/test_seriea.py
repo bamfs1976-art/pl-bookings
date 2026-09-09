@@ -358,4 +358,93 @@ def _the_committed_registry_if_present_is_the_division():
 t("the committed registry, when present, is a twenty-club division",
   _the_committed_registry_if_present_is_the_division)
 
+
+# ---- the season file ---------------------------------------------------------
+#
+# build_seriea_data.py is the La Liga builder configured for Italy. These
+# tests pin what the configuration changes (files, constant, basis label) and
+# what the emitted file carries, without a harvest: a handful of rows through
+# the real emitter, to a temporary path.
+
+import build_laliga_data as B  # noqa: E402
+import build_pl_data as P      # noqa: E402
+
+
+def _the_builder_configures_for_serie_a():
+    try:
+        B.configure("SA")
+        assert B.CODE == "SA"
+        assert B.OUT.name == "seriea_data.js", B.OUT
+        assert B.STATUS.name == "seriea_status.txt", B.STATUS
+        assert B.D["const"] == "SERIEA_PLAYERS"
+        assert B.D["feeder"] == ("serieb_players.json", "SB", "Serie B"), B.D["feeder"]
+        assert B.D["squads"] == "sa_squads.json"
+        assert B.D["season_cards"] == "seriea_season_cards.json"
+        assert B.LEAGUE.code == "SA" and B.LEAGUE.players_file == "seriea_players.json"
+        # The wrapper is the entry point the workflow runs, and it must land
+        # on this configuration rather than a copy of the builder.
+        src = (DATA / "build_seriea_data.py").read_text(encoding="utf-8")
+        assert 'B.configure("SA")' in src and "B.main()" in src
+    finally:
+        B.configure("LL")
+    # Switching back restores every La Liga value, so the import-time default
+    # the other tests and the workflow rely on is unchanged.
+    assert B.CODE == "LL" and B.OUT.name == "laliga_data.js"
+    assert B.D["const"] == "LALIGA_PLAYERS" and B.D["feeder"][1] == "SEG"
+    assert B.D["fill"] == "laliga_squads.json"
+
+
+t("the Serie A builder is the shared builder configured for Italy",
+  _the_builder_configures_for_serie_a)
+
+
+def _the_season_file_carries_the_italian_rule_and_the_sb_basis():
+    """A club with a real I1 match record is basis SA; a promoted club with
+    none is SB, never SERB; and the SUSPENSION block is the ladder with its
+    tail, verbatim from the registry."""
+    import json as _json
+    import tempfile
+    clubs = {"Juventus": {"short": "JUV", "img": None},
+             "Cremonese": {"short": "CRE", "img": None}}
+    resolve = lambda n: {"Juventus": "JUV", "Cremonese": "CRE"}.get(n)  # noqa: E731
+    rows = [
+        P.mk({"team": "Juventus", "n": "M. Locatelli", "pos": "M", "min": 2700,
+              "yc": 9, "rc": 0, "fc90": 1.8}, "SA", resolve),
+        P.mk({"team": "Cremonese", "n": "M. Bianchetti", "pos": "D", "min": 3000,
+              "yc": 7, "rc": 1, "fc90": 1.2}, "SB", resolve),
+    ]
+    assert all(rows), rows
+    rates = {"JUV": (2.1, 1.9, 2.3)}          # Cremonese has no I1 record: promoted
+    tmp = Path(tempfile.mkdtemp()) / "seriea_data.js"
+    try:
+        B.configure("SA")
+        B.OUT = tmp
+        club_rows = B.build_clubs(rows, rates, clubs, promoted={"CRE"})
+        B.emit(club_rows, rows, "const REFS = [];")
+        out = tmp.read_text(encoding="utf-8")
+    finally:
+        B.configure("LL")
+        tmp.unlink(missing_ok=True)
+    by = {c["short"]: c for c in club_rows}
+    assert by["JUV"]["basis"] == "SA", by["JUV"]
+    assert by["CRE"]["basis"] == "SB", by["CRE"]
+    assert "SERB" not in out, "the feeder's registry code leaked into the page's basis label"
+    assert "const SERIEA_PLAYERS = [" in out and "const CLUBS = [" in out
+    assert "LALIGA" not in out and "La Liga" not in out, "a La Liga literal survived configure('SA')"
+    assert "(desk SA)" in out
+    line = next(l for l in out.splitlines() if l.startswith("const SUSPENSION = "))
+    scheme = _json.loads(line[len("const SUSPENSION = "):].rstrip(";"))
+    assert scheme == L.get("SA").suspension_scheme
+    assert scheme["kind"] == "ladder" and scheme["then_every"] == 1
+    assert [r["at"] for r in scheme["rungs"]] == [5, 10, 14, 17, 19]
+    assert all(r["by"] is None and r["ban"] == 1 for r in scheme["rungs"])
+    # This season's count is null until harvested: the strip must read "not
+    # counted", never "zero".
+    assert out.count("sc:null") == 2, out
+    assert 'b:"SB"' in out and 'b:"SA"' in out
+
+
+t("the season file carries the Italian rule verbatim and labels promoted clubs SB",
+  _the_season_file_carries_the_italian_rule_and_the_sb_basis)
+
 print(f"\n{passed} tests passed")

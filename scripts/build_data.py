@@ -61,6 +61,12 @@ STEPS = [
     dict(name="Serie A club registry",
          cmd=["python3", "data/harvest_apifootball.py", "--league", "SA", "--clubs"],
          leagues={"SA"}, needs="API_FOOTBALL_KEY"),
+    dict(name="Serie A squads", cmd=["python3", "data/harvest_apifootball.py", "--league", "SA"],
+         leagues={"SA"}, needs="API_FOOTBALL_KEY"),
+    # The feeder for the promoted three: rated on Serie B form, basis SB.
+    dict(name="Serie B squads (promoted clubs)",
+         cmd=["python3", "data/harvest_apifootball.py", "--league", "SERB"],
+         leagues={"SA"}, needs="API_FOOTBALL_KEY"),
     dict(name="Fixtures and referee appointments",
          cmd=["python3", "data/harvest_apifootball.py", "--fixtures", "--league", "{L}"],
          leagues={"PL", "EFLC", "LL"}, needs="API_FOOTBALL_KEY", per_league=True),
@@ -132,7 +138,8 @@ def run(cmd, season):
     runner."""
     full = list(cmd)
     if season and full[0] == "python3" and any(
-            n in full[1] for n in ("build_refs", "build_club_splits", "build_eflc_data", "build_laliga_data")):
+            n in full[1] for n in ("build_refs", "build_club_splits", "build_eflc_data", "build_laliga_data",
+                             "build_seriea_data")):
         full += ["--season", season]
     started = time.time()
     res = subprocess.run(full, cwd=ROOT)

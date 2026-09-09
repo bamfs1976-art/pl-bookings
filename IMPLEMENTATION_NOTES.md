@@ -6,6 +6,51 @@ work, newest first: what changed, what was deferred and why. Everything before
 in [docs/decisions.md](docs/decisions.md); the audit itself is
 [docs/audit-2026-07.md](docs/audit-2026-07.md).
 
+## Serie A desk, task 3: squads, cautions and the season file (2026-09-09)
+
+`data/build_seriea_data.py` exists and produces `data/seriea_data.js` in the
+shape of `laliga_data.js`: a `SUSPENSION` block from the registry, `CLUBS`,
+`SERIEA_PLAYERS` and a `REFS` block that `build_refs.py --league SA` patches
+in place. Rather than copy the 560-line La Liga builder and let two copies
+drift, `data/build_laliga_data.py` became one builder parametrised by desk.
+Everything that differs between Spain and Italy (data file, status file,
+players file, feeder file and its basis label, squads and season-cards files,
+the shipped constant, the header comment, the user agent) lives in its `DESKS`
+table; `configure("LL")` runs at import so every existing caller and test is
+unchanged, and the Serie A entry point is `configure("SA")` then `main()`.
+
+What the configuration decides for Italy:
+
+- Continuing clubs carry basis `SA` from `seriea_players.json`; promoted clubs
+  are derived exactly as in Spain (in the registry, absent from last season's
+  I1 records) and rated on Serie B form from `serieb_players.json` with basis
+  `SB`. `SB` is the label shown beside a player, `SERB` is the registry code,
+  and a test checks the code never leaks into the page.
+- This season's cautions come from `seriea_season_cards.json` into `sc`; last
+  season's total stays in `yc`. Neither file is read for the other number.
+- Current rosters reconcile from `sa_squads.json`, which is what
+  `harvest_apifootball.py --league SA --roster` writes.
+
+Tests: `data/test_seriea.py` gained two (the configuration lands on the right
+files and constant and switches back cleanly; a two-club emit to a temporary
+path carries the Italian ladder verbatim with `then_every: 1`, labels the
+promoted club `SB`, ships `sc` as null before a harvest and contains no
+La Liga literal). `data/test_coverage.py` now also confirms the Serie A entry
+point delegates to the shared builder.
+
+`scripts/build_data.py` gained the Serie A and Serie B squad harvests. The
+`Build seriea_data.js` step is deliberately NOT in the runner yet:
+`check-build-data.mjs` requires every runner script to appear in
+`data-refresh.yml`, and the workflow is task 7's. It goes in with the workflow
+step, and the guard will hold the two in step from then on.
+
+No harvest has run: API-Football is unreachable from this environment, so
+`seriea_players.json`, `serieb_players.json`, `sa_squads.json`,
+`seriea_season_cards.json` and `seriea_data.js` will be produced by the Data
+refresh workflow on the runner once task 7 has wired it, and folded into this
+commit's data. Nothing on the page has been written yet, so nothing describes
+Serie A with any card rate.
+
 ## Serie A desk, task 2: club discovery and name resolution (2026-09-09)
 
 `harvest_apifootball.py` no longer special-cases Spain. `known_names` and

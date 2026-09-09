@@ -51,6 +51,13 @@ Run order:
 Output: data/laliga_data.js (CLUBS, LALIGA_PLAYERS, REFS), the same shape as
 pl_data.js and eflc_data.js, so build_refs.py --league LL patches its REFS
 block unchanged.
+
+ONE BUILDER FOR EVERY DISCOVERED LEAGUE. Serie A is built by exactly this
+code with a different desk configuration: data/build_seriea_data.py calls
+configure("SA") and then main(). The per-desk facts (which files, which
+feeder, which basis labels) live in DESKS below; the arithmetic, the fallbacks
+and the refusals are shared, so the two desks cannot drift about what a
+booking risk is or when a build must refuse to write.
 """
 
 import argparse
@@ -68,12 +75,61 @@ import build_pl_data as P  # noqa: E402
 # workflow step leaves no trace in the repository otherwise: the run goes
 # green, nothing is committed, and the only record is a log pane somebody has
 # to open and read back.
-STATUS = DATA / "laliga_status.txt"
+# Everything that differs between the desks this builder produces. Nothing
+# below reads a league-specific literal; it reads D.
+DESKS = {
+    "LL": dict(
+        label="La Liga 2026-27", const="LALIGA_PLAYERS", status="laliga_status.txt",
+        season_cards="laliga_season_cards.json", squads="ll_squads.json",
+        fill="laliga_squads.json",
+        # (the feeder harvest's file, the basis label its players carry, the
+        # name used in the log)
+        feeder=("segunda_players.json", "SEG", "Segunda"),
+        agent="pl-bookings-laliga",
+        header=[
+            "// La Liga 2026-27, on 2025-26 form.",
+            "// Club card rates are counted from the free football-data.co.uk SP1",
+            "// records; the referee NAMES are joined on from API-Football, because",
+            "// that free source has never published an official for Spain.",
+        ],
+    ),
+    "SA": dict(
+        label="Serie A 2026-27", const="SERIEA_PLAYERS", status="seriea_status.txt",
+        season_cards="seriea_season_cards.json", squads="sa_squads.json",
+        fill="seriea_squads.json",
+        # SB, not SERB: the basis label is what the page shows beside a
+        # promoted club's players, and it reads as a division the way SEG
+        # and L1 do.
+        feeder=("serieb_players.json", "SB", "Serie B"),
+        agent="pl-bookings-seriea",
+        header=[
+            "// Serie A 2026-27, on 2025-26 form.",
+            "// Club card rates are counted from the free football-data.co.uk I1",
+            "// records; the referee NAMES are joined on from API-Football, because",
+            "// that free source names the official on 0 of 380 Italian rows.",
+        ],
+    ),
+}
 
-LEAGUE = leagues.get("LL")
-OUT = DATA / LEAGUE.data_file
-MATCHES = 38          # a La Liga season, for the per-game team rates
+LEAGUE = OUT = STATUS = D = CODE = None
+MATCHES = 38          # a 20-club season, for the per-game team rates
 MIN_VENUE = 6         # below this a venue split is noise
+
+
+def configure(code):
+    """Point this module at one desk. Called at import for La Liga so every
+    existing caller and test keeps its behaviour; build_seriea_data.py calls
+    it for Serie A before main()."""
+    global LEAGUE, OUT, STATUS, D, CODE
+    CODE = code.upper()
+    D = DESKS[CODE]
+    LEAGUE = leagues.get(CODE)
+    OUT = DATA / LEAGUE.data_file
+    STATUS = DATA / D["status"]
+    return D
+
+
+configure("LL")
 
 
 def write_status(lines):
@@ -87,17 +143,17 @@ def fail(msg, notes=()):
     desk with clubs missing and no indication which — so the previous
     laliga_data.js stays exactly as it was.
     """
-    write_status(["La Liga 2026-27 — build_laliga_data.py", *notes,
+    write_status([f"{D['label']}: build_laliga_data.py ({CODE})", *notes,
                   f"RESULT: REFUSED — {msg}"])
-    sys.exit(f"ERROR: {msg}\n  (laliga_data.js NOT overwritten; see "
+    sys.exit(f"ERROR: {msg}\n  ({OUT.name} NOT overwritten; see "
              f"{STATUS.name})")
 
 
 def clubs_registry():
-    clubs = leagues.load_clubs("LL")
+    clubs = leagues.load_clubs(CODE)
     if not clubs:
         fail("no club registry — the division has not been discovered yet",
-             ["Run: python3 data/harvest_apifootball.py --league LL --clubs"])
+             [f"Run: python3 data/harvest_apifootball.py --league {CODE} --clubs"])
     if len(clubs) != LEAGUE.clubs:
         fail(f"the club registry holds {len(clubs)} clubs, not {LEAGUE.clubs}")
     return clubs
@@ -106,7 +162,7 @@ def clubs_registry():
 def resolve_with(clubs):
     """A name-to-short resolver bound to one registry, so every stage of the
     build agrees about the division even if the file changes underneath."""
-    return lambda name: leagues.laliga_short(name, clubs=clubs)
+    return lambda name: leagues.discovered_short(CODE, name, clubs=clubs)
 
 
 def previous_players():
@@ -125,7 +181,7 @@ def previous_players():
         imgs[c["short"]] = c.get("img")
         names[c["short"]] = c.get("name")
     out = {}
-    for p in js_array(src, "LALIGA_PLAYERS"):
+    for p in js_array(src, D["const"]):
         out.setdefault(p.get("b"), []).append({
             "team": names.get(p["c"]), "n": p["n"],
             "pos": P.POS_NAME.get(p.get("p"), p.get("p")),
@@ -202,7 +258,7 @@ def last_seasons_clubs(rows, resolve):
     seen = set()
     for r in rows:
         for side in ("HomeTeam", "AwayTeam"):
-            n = leagues.canon_name("LL", r.get(side))
+            n = leagues.canon_name(CODE, r.get(side))
             if n:
                 seen.add(n)
     return seen
@@ -254,7 +310,7 @@ def season_cards(resolve):
     Absent before the season starts, which is the normal state in August and
     the reason every field this feeds is allowed to be null.
     """
-    rows = P.load_optional("laliga_season_cards.json")
+    rows = P.load_optional(D["season_cards"])
     if not rows:
         return {}
     out = {}
@@ -274,10 +330,11 @@ def build_players(clubs, continuing, promoted, resolve):
     rows = []
     # Order matters: de-duplication below keeps the FIRST row for a
     # (club, name), so a real rate can never be overwritten by a blank one.
+    feeder_file, feeder_basis, feeder_name = D["feeder"]
     for payload, keep, basis, src in (
-        (source(LEAGUE.players_file, "LL", shipped, reused), continuing, "LL", "La Liga"),
-        (source("segunda_players.json", "SEG", shipped, reused), promoted, "SEG", "Segunda"),
-        (source("laliga_squads.json", "NEW", shipped, reused),
+        (source(LEAGUE.players_file, CODE, shipped, reused), continuing, CODE, LEAGUE.name),
+        (source(feeder_file, feeder_basis, shipped, reused), promoted, feeder_basis, feeder_name),
+        (source(D["fill"], "NEW", shipped, reused),
          set(d["short"] for d in clubs.values()), "NEW", "squad fill"),
     ):
         got = rows_for(payload, keep, basis, unmapped, resolve)
@@ -317,10 +374,10 @@ def build_players(clubs, continuing, promoted, resolve):
         if short:
             name_by_short[short] = cname
     deduped = P.reconcile_squads(
-        deduped, P.load_optional("ll_squads.json"),
+        deduped, P.load_optional(D["squads"]),
         short_of=resolve, name_of=name_by_short.get,
         make=lambda row, basis: P.mk(row, basis, resolve),
-        league="LL", min_clubs=len(clubs or {}), min_players=15 * len(clubs or {}))
+        league=CODE, min_clubs=len(clubs or {}), min_players=15 * len(clubs or {}))
 
     # This season's cautions, stamped on where they are known. NOT defaulted
     # to zero: "no data" and "no cards yet" look identical on a strip that
@@ -354,7 +411,7 @@ def build_clubs(players, rates, clubs, promoted):
         # The club label says what the TEAM aggregate rests on, not what any
         # one player's rate does. A club with a real La Liga match record is
         # LL whatever mix of player bases fills its squad.
-        basis = "LL" if ca is not None else ("SEG" if short in promoted else "NEW")
+        basis = CODE if ca is not None else (D["feeder"][1] if short in promoted else "NEW")
         out.append({
             "short": short, "name": name_by_short.get(short, short),
             "img": d["img"], "basis": basis, "ca": ca, "caH": ca_h, "caA": ca_a,
@@ -374,11 +431,8 @@ j = P.jsval
 
 def emit(clubs, players, refs):
     lines = [
-        "// Auto-generated by data/build_laliga_data.py. Do not edit by hand.",
-        "// La Liga 2026-27, on 2025-26 form.",
-        "// Club card rates are counted from the free football-data.co.uk SP1",
-        "// records; the referee NAMES are joined on from API-Football, because",
-        "// that free source has never published an official for Spain.",
+        f"// Auto-generated by data/build_laliga_data.py (desk {CODE}). Do not edit by hand.",
+        *D["header"],
         "// The league's suspension rule, from data/leagues.py — shipped so the",
         "// page computes with it instead of hardcoding thresholds that could",
         "// drift from the registry.",
@@ -392,7 +446,7 @@ def emit(clubs, players, refs):
             f'caA:{j(c["caA"])}', f'fm:{j(c["fm"])}', f'squad:{c["squad"]}',
         ]) + "},")
     lines.append("];")
-    lines.append("const LALIGA_PLAYERS = [")
+    lines.append(f"const {D['const']} = [")
     for p in sorted(players, key=lambda x: (x["c"], x["r"] is None,
                                             -(x["r"] or 0), x["n"] or "")):
         lines.append("  {" + ",".join([
@@ -439,7 +493,7 @@ def main():
     ap.add_argument("--season", default="2526",
                     help="football-data season code for the CLUB CARD RATES "
                          "(the season just played, e.g. 2526)")
-    ap.add_argument("--csv", help="local SP1 season CSV instead of fetching")
+    ap.add_argument("--csv", help="local season CSV instead of fetching")
     ap.add_argument("--no-club-rates", action="store_true",
                     help="skip the free match records entirely")
     args = ap.parse_args()
@@ -453,7 +507,7 @@ def main():
     if not args.no_club_rates:
         match_rows, where = leagues.load_rows(LEAGUE, season=args.season,
                                               csv_path=args.csv,
-                                              agent="pl-bookings-laliga")
+                                              agent=D["agent"])
         notes.append(f"club rates from {where} ({len(match_rows)} matches)")
 
     # Promoted = in the division now, but not in last season's match records.
@@ -500,14 +554,14 @@ def main():
     nrefs = refs.count("{n:")
     notes.append(f"referees: {nrefs}")
     notes.append(f"RESULT: WRITTEN {OUT.name}")
-    write_status(["La Liga 2026-27 — build_laliga_data.py", *notes])
+    write_status([f"{D['label']}: build_laliga_data.py ({CODE})", *notes])
     print("\n" + "\n".join(notes))
     if not nrefs:
         print("\n  No referees yet. Harvest the completed season's officials "
               "and join them:\n"
               "    python3 data/harvest_apifootball.py --ref-fixtures "
-              "--league LL --season 2025\n"
-              "    python3 data/build_refs.py --league LL --season 2526")
+              f"--league {CODE} --season 2025\n"
+              f"    python3 data/build_refs.py --league {CODE} --season 2526")
 
 
 if __name__ == "__main__":
