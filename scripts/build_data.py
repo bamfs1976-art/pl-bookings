@@ -69,7 +69,7 @@ STEPS = [
          leagues={"SA"}, needs="API_FOOTBALL_KEY"),
     dict(name="Fixtures and referee appointments",
          cmd=["python3", "data/harvest_apifootball.py", "--fixtures", "--league", "{L}"],
-         leagues={"PL", "EFLC", "LL"}, needs="API_FOOTBALL_KEY", per_league=True),
+         leagues={"PL", "EFLC", "LL", "SA"}, needs="API_FOOTBALL_KEY", per_league=True),
 
     # ---- the free FPL leg, which fills the promoted clubs -------------------
     dict(name="Promoted-club squads from the FPL feed",
@@ -86,8 +86,12 @@ STEPS = [
          leagues={"EFLC"}, needs=None),
     dict(name="Build laliga_data.js", cmd=["python3", "data/build_laliga_data.py"],
          leagues={"LL"}, needs=None),
+    dict(name="Build seriea_data.js", cmd=["python3", "data/build_seriea_data.py"],
+         leagues={"SA"}, needs=None),
     dict(name="La Liga referees (bought names, free rates)",
          cmd=["python3", "data/build_refs.py", "--league", "LL"], leagues={"LL"}, needs=None),
+    dict(name="Serie A referees (bought names, free rates)",
+         cmd=["python3", "data/build_refs.py", "--league", "SA"], leagues={"SA"}, needs=None),
 
     # ---- the model, from the data just written ------------------------------
     dict(name="Card model parameters", cmd=["node", "scripts/build-model.mjs"],

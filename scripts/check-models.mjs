@@ -355,9 +355,9 @@ assert.ok(!/glmProb/.test(deskBase[1]),
     'below can never fire');
   const uses = [...wf.matchAll(/API_FOOTBALL_SEASON: \$\{\{([^}]*)\}\}/g)].map((m) => m[1]);
   const transitioning = uses.filter((u) => /steps\.form\.outputs\.form_/.test(u));
-  assert.equal(transitioning.length, 3,
-    `${transitioning.length} harvest(s) follow the form transition, expected 3 ` +
-    '(Championship squads, the relegated three, La Liga squads). Either a form ' +
+  assert.equal(transitioning.length, 4,
+    `${transitioning.length} harvest(s) follow the form transition, expected 4 ` +
+    '(Championship squads, the relegated three, La Liga squads, Serie A squads). Either a form ' +
     'harvest has been left on last season for ever, or a pinned one — a ' +
     'promoted club\'s prior-tier record, or the completed-season referee join ' +
     '— has been swept along with them.');

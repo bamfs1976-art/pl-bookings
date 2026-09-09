@@ -223,6 +223,13 @@ jobs:
       - name: La Liga dataset and desk guard
         run: node scripts/check-laliga.mjs
 
+      # The Serie A desk: registry against dataset, a referee join that must
+      # cover the whole season, a strip that reads this season's count and
+      # bans on the Italian rungs, with England's ladder and Spain's cycle
+      # both rejected by shape.
+      - name: Serie A dataset and desk guard
+        run: node scripts/check-seriea.mjs
+
       # The share cards. They are the one artefact that LEAVES the site, so
       # nobody who sees one can check it against the page it came from. Runs
       # the renderer against a recording stub and asserts the text drawn —

@@ -257,8 +257,8 @@ const wf = readFileSync(join(root, '.github', 'workflows', 'fixtures.yml'), 'utf
 assert.ok(/ref-coverage\.mjs/.test(wf),
   'the fixture harvest does not report appointment coverage, so a feed that ' +
   'stops publishing referees would look identical to a quiet week');
-assert.ok(/--fixtures --league \$L/.test(wf) && /for L in PL EFLC LL/.test(wf),
-  'the fixture workflow does not harvest all three leagues');
+assert.ok(/--fixtures --league \$L/.test(wf) && /for L in PL EFLC LL SA/.test(wf),
+  'the fixture workflow does not harvest all four leagues');
 /* Three schedules: the Spanish appointments land the afternoon before, so a
    single nightly run cannot carry them. */
 assert.ok((wf.match(/- cron:/g) || []).length >= 3,
@@ -273,7 +273,7 @@ assert.ok(/^\s*schedule:/m.test(refresh),
 /* On a scheduled run every input is empty. A boolean input read bare is
    therefore falsy, which would skip the Championship and La Liga steps on
    every cron run while the workflow still reported success. */
-for (const name of ['refresh_eflc', 'refresh_laliga', 'fit_model']) {
+for (const name of ['refresh_eflc', 'refresh_laliga', 'refresh_seriea', 'fit_model']) {
   const bare = new RegExp(`if: \\$\\{\\{[^}]*[^|] inputs\\.${name}(?!\\w)`);
   const guarded = new RegExp(`github\\.event_name != 'workflow_dispatch' \\|\\| inputs\\.${name}`);
   assert.ok(guarded.test(refresh),
@@ -282,7 +282,8 @@ for (const name of ['refresh_eflc', 'refresh_laliga', 'fit_model']) {
   void bare;
 }
 for (const [name, dflt] of [['refs_season', '2526'], ['season_af', '2025'],
-                            ['season_fixtures', '2026'], ['season_sp', '2526']]) {
+                            ['season_fixtures', '2026'], ['season_sp', '2526'],
+                            ['season_it', '2526']]) {
   assert.ok(new RegExp(`inputs\\.${name} \\|\\| '${dflt}'`).test(refresh),
     `inputs.${name} has no default, so a scheduled run would pass an empty ` +
     'season to the harvester');

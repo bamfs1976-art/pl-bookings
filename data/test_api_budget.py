@@ -55,7 +55,16 @@ for bad in ("* * * * *", "*/5 * * * *", "nonsense"):
 
 # ── the model is wired to the real files ─────────────────────────────────
 shapes = B.league_shapes()
-check(set(shapes) == {"PL", "EFLC", "LL"}, "all three divisions are shaped")
+check(set(shapes) == {"PL", "EFLC", "LL", "SA"}, "all four divisions are shaped")
+# A division whose fixture list has not been harvested yet is shaped from the
+# registry, and says which. Once the file exists the two must agree.
+for code, s in shapes.items():
+    check(s.get("from") in ("fixtures", "registry"), f"{code} does not say where its shape came from")
+    if s.get("from") == "fixtures":
+        import leagues
+        check(s["clubs"] == leagues.LEAGUES[code].clubs and s["fixtures"] == leagues.LEAGUES[code].matches,
+              f"{code}: the fixture list ({s['clubs']} clubs, {s['fixtures']} fixtures) and the registry disagree")
+check(B.FEEDER_CLUBS.get("SERB") == 20, "the Serie B feeder is budgeted at twenty clubs")
 for code, s in shapes.items():
     check(s["clubs"] >= 20, f"{code} has {s['clubs']} clubs, which cannot be right")
     check(s["fixtures"] >= 300, f"{code} has {s['fixtures']} fixtures")

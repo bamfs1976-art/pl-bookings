@@ -6,6 +6,63 @@ work, newest first: what changed, what was deferred and why. Everything before
 in [docs/decisions.md](docs/decisions.md); the audit itself is
 [docs/audit-2026-07.md](docs/audit-2026-07.md).
 
+## Serie A desk, task 7: budget, workflows and check-seriea.mjs (2026-09-09)
+
+`data/api_budget.py` shapes four divisions. Until the refresh workflow has
+produced `seriea_fixtures.js` the Serie A shape comes from the registry (20
+clubs, 380 fixtures) and the model says so on stderr; once the file exists it
+wins, and `data/test_api_budget.py` insists the two agree. The daily refresh
+row gained the Serie A squads, roster and cautions, the Serie B feeder
+(`FEEDER_CLUBS["SERB"] = 20`) and a second discover-and-ref-fixtures pair;
+the per-division terms (fixtures, ledger listings, standings, registry, card
+leaders, injuries) count the divisions rather than assuming three.
+
+The totals, from `python3 data/api_budget.py` on this branch:
+
+| day | as observed | of 7,500 | worst case (live feed stops inlining events) |
+|---|---|---|---|
+| typical | 1,623 | 22% | 3,063 (41%) |
+| peak | 2,127 | 28% | 4,767 (64%) |
+
+Before Serie A the same model read 1,298 typical, 1,682 peak and 3,842 worst
+case, so the fifth desk costs about 325 calls on a typical day and 445 at
+peak. The brief's 285-a-day estimate was for the harvests alone; the
+difference is the per-fixture feeds and the odds walk, which grow with the
+number of fixtures in view. The worst case stays under the 5,000 ceiling and
+under 70% of the allowance (5,250), so the guard passes without the ceiling
+moving.
+
+Workflows: `data-refresh.yml` gained `refresh_seriea` and `season_it` inputs,
+an Italian harvest log, and the Serie A block in the order the registry
+demands (discover, squads on the form decision, rosters, this season's
+cautions, Serie B, last season's officials, fixtures), then the build and
+the referee join after Spain's, the Serie A head-to-head, the player-match
+backfill loop and the commit list. `fixtures.yml` walks four divisions for
+fixtures and the ledger, fetches appointments for `LL EFLC SA` with format
+`aia` for Italy and stages the Serie A files. `extra-feeds.yml` and
+`lineups.yml` pass `PL,EFLC,LL,SA`; `live-check.yml` compares `seriea.html`.
+`scripts/build_data.py` runs the Serie A build and referee steps now that
+the workflow does, which is what `check-build-data.mjs` requires.
+
+`scripts/check-seriea.mjs` is the La Liga guard for Italy: registry against
+dataset, every club a real squad, a referee join that must cover at least 95%
+of 380 matches (the brief's 380-of-380 condition, allowing for officials
+under the 3-match floor), the strip reading `sc` and never `yc`, and the
+shipped scheme checked by shape: a cumulative ladder with rungs at 5, 10, 14,
+17 and 19, every ban one match, no gate, `then_every` 1, walked through
+`PLDCore.nextSuspension`; England's gated, escalating ladder and Spain's
+cycle are both shown to fail the same check. The league yellow rate must sit
+in the 2025-26 range (3.0 to 4.6 a game), not the old Italian six-season
+figure. It skips with a printed line until the dataset exists. Wired into
+`ci.yml` after the La Liga guard.
+
+Guards updated because of deliberate changes, and said so in the commit:
+`check-referees.mjs` now requires `for L in PL EFLC LL SA`, the
+`refresh_seriea` input and a `season_it` default; `check-fetch-appointments`
+requires the appointments loop to name SA; `check-models.mjs` expects four
+harvests on the form transition (Serie A squads joined the three). The full
+CI list, now 58 steps, runs green locally.
+
 ## Serie A desk, task 6: the page, navigation and share cards (2026-09-09)
 
 `seriea.html` is `laliga.html` with every La Liga reference replaced by a

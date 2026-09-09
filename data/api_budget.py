@@ -53,11 +53,12 @@ FIXTURE_FILES = {
     "PL": "pl_fixtures.js",
     "EFLC": "eflc_fixtures.js",
     "LL": "laliga_fixtures.js",
+    "SA": "seriea_fixtures.js",
 }
 
 # Divisions the daily refresh walks that have no desk of their own: the feeder
-# leagues a promoted club's form comes from.
-FEEDER_CLUBS = {"SEG": 22, "L1": 24}
+# leagues a promoted club's form comes from. Serie B has 20 clubs.
+FEEDER_CLUBS = {"SEG": 22, "L1": 24, "SERB": 20}
 
 # API-Football pages /players at twenty to a page, and the harvest queries it
 # per club, so a squad of 25-35 is two pages. Derived from PAGE_SIZE in
@@ -66,10 +67,26 @@ PLAYERS_PAGES_PER_CLUB = 2
 
 
 def league_shapes():
-    """Clubs and fixtures per division, from the shipped fixture lists."""
+    """Clubs and fixtures per division, from the shipped fixture lists.
+
+    A division whose fixture list the refresh workflow has not produced yet is
+    shaped from the league registry instead (data/leagues.py declares its club
+    and match counts) and says so, because the budget has to cover a desk from
+    the day its workflow steps exist, which is before its first harvest. Once
+    the file exists it wins, and the two must agree or the registry is wrong.
+    """
+    sys.path.insert(0, str(DATA))
+    import leagues
     out = {}
     for code, name in FIXTURE_FILES.items():
-        src = (DATA / name).read_text(encoding="utf-8")
+        path = DATA / name
+        if not path.exists():
+            L = leagues.LEAGUES[code]
+            out[code] = {"clubs": L.clubs, "fixtures": L.matches, "from": "registry"}
+            print(f"note: {name} not built yet; {code} shaped from the registry "
+                  f"({L.clubs} clubs, {L.matches} fixtures)", file=sys.stderr)
+            continue
+        src = path.read_text(encoding="utf-8")
         rows = re.findall(r'\{id:(\d+),[^}]*?h:"([A-Z0-9]+)",a:"([A-Z0-9]+)"', src)
         if not rows:
             raise SystemExit(f"ERROR: no fixtures parsed out of {name}. The "
@@ -77,7 +94,7 @@ def league_shapes():
                              "read, and guessing the season's size is how the "
                              "May question gets answered wrong.")
         clubs = {h for _, h, _ in rows} | {a for _, _, a in rows}
-        out[code] = {"clubs": len(clubs), "fixtures": len(rows)}
+        out[code] = {"clubs": len(clubs), "fixtures": len(rows), "from": "fixtures"}
     return out
 
 
@@ -153,7 +170,8 @@ def live_constants():
 
 
 # How long, on a heavy Saturday, at least one reader has a live desk open:
-# a 12:30, a 15:00, a 17:30 and a Spanish evening kick-off, back to back.
+# a 12:30, a 15:00, a 17:30 and a Spanish or Italian evening kick-off, back
+# to back.
 # The ticker refreshes on a timer, so this is the term that scales with
 # ATTENTION rather than with football, and it is the only one in the app that
 # does.
@@ -163,13 +181,14 @@ LIVE_WINDOW_HOURS = 6
 def budget(shapes, day):
     """Every scheduled call, by workflow. `day` is 'typical' or 'peak'.
 
-    A typical day is a single round across the three divisions — 32 matches,
-    the ordinary Saturday. A peak day is a midweek round landing on top of a
+    A typical day is a single round across the four divisions (42 matches,
+    the ordinary Saturday). A peak day is a midweek round landing on top of a
     weekend one, which is what makes both the finished-fixture walk and the
     upcoming-fixture odds walk twice their usual size.
     """
-    clubs = sum(s["clubs"] for s in shapes.values())          # 64
-    per_round = sum(s["clubs"] // 2 for s in shapes.values())  # 32 matches
+    divisions = len(shapes)                                     # 4
+    clubs = sum(s["clubs"] for s in shapes.values())          # 84
+    per_round = sum(s["clubs"] // 2 for s in shapes.values())  # 42 matches
     played = per_round * (2 if day == "peak" else 1)
     # Odds and predictions look 72 hours ahead, so a weekend's fixtures are in
     # the window on more than one firing; the walk is the fixtures in view.
@@ -190,9 +209,12 @@ def budget(shapes, day):
         + shapes["LL"]["clubs"] * PLAYERS_PAGES_PER_CLUB     # LL squads
         + shapes["LL"]["clubs"]                  # LL --roster
         + shapes["LL"]["clubs"] * PLAYERS_PAGES_PER_CLUB     # LL cautions
-        + feeders                                # SEG + L1, promoted clubs
-        + 1 + 1                                  # LL --clubs, --ref-fixtures
-        + 3                                      # --fixtures PL, EFLC, LL
+        + shapes["SA"]["clubs"] * PLAYERS_PAGES_PER_CLUB     # SA squads
+        + shapes["SA"]["clubs"]                  # SA --roster
+        + shapes["SA"]["clubs"] * PLAYERS_PAGES_PER_CLUB     # SA cautions
+        + feeders                                # SEG + L1 + SERB, promoted clubs
+        + (1 + 1) * 2                            # --clubs and --ref-fixtures, LL and SA
+        + divisions                              # --fixtures, one a division
         + 2                                      # cup/European dates, 2 seasons
     )
     rows.append(("data-refresh.yml", n, daily,
@@ -203,8 +225,9 @@ def budget(shapes, day):
     # Per run: one /fixtures a division, plus the ledger's own listing call a
     # division. The per-match walk is incremental, so across the DAY it costs
     # one call per match that finished, however many runs there are.
-    rows.append(("fixtures.yml", n, 3 + 3,
-                 "3 x /fixtures + 3 x ledger listing, every run", None, None))
+    rows.append(("fixtures.yml", n, divisions + divisions,
+                 f"{divisions} x /fixtures + {divisions} x ledger listing, every run",
+                 None, None))
     rows.append(("fixtures.yml (ledger walk)", 1, played,
                  f"/fixtures/players, once per match finished ({played})", None, None))
 
@@ -218,18 +241,18 @@ def budget(shapes, day):
     ex = firings("extra-feeds.yml")
     # The daily half is pinned to the FIRST cron (see the workflow's comment).
     rows.append(("extra-feeds.yml (daily half)", 1,
-                 3                      # /standings, one a division
-                 + 3                    # /teams registry, one a division, cached
+                 divisions              # /standings, one a division
+                 + divisions            # /teams registry, one a division, cached
                  + clubs                # /teams/statistics, one a club
                  + clubs                # /transfers, one a club
-                 + 6,                   # top yellow + red cards, two a division
+                 + divisions * 2,       # top yellow + red cards, two a division
                  "standings, team stats, transfers, card leaders", None, None))
     rows.append(("extra-feeds.yml (per fixture)", 1, played * 2,
                  f"/events + /fixtures/statistics, once ever per match "
                  f"({played} finished x 2)", None, None))
     rows.append(("extra-feeds.yml (moving half)", ex,
-                 3 + upcoming * 2,
-                 f"injuries (3) + odds and predictions on {upcoming} upcoming",
+                 divisions + upcoming * 2,
+                 f"injuries ({divisions}) + odds and predictions on {upcoming} upcoming",
                  None, None))
 
     # ── the live ticker: the only term driven by READERS, not by football ──
@@ -357,7 +380,7 @@ def main():
                   f"inlining events — {wpct:.0f}%")
         w = season_worst_case(shapes)
         print(f"\nthe incremental walk, on the last day of the season:")
-        print(f"  {w['season_fixtures']} fixtures across three divisions")
+        print(f"  {w['season_fixtures']} fixtures across {len(shapes)} divisions")
         print(f"  {w['if_it_re_walked']} calls a day if the per-fixture feeds "
               f"re-walked them (they do not)")
         print(f"  {w['as_built']} extra as built — a recorded fixture is never "

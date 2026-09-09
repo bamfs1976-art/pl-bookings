@@ -80,7 +80,7 @@ jobs:
 
       - name: Harvest fixtures and appointments
         run: |
-          for L in PL EFLC LL; do
+          for L in PL EFLC LL SA; do
             python3 data/harvest_apifootball.py --fixtures --league $L \
               || echo "::warning::$L fixtures unavailable this run — keeping the committed file"
           done
@@ -97,12 +97,13 @@ jobs:
       - name: This season's bookings ledger
         continue-on-error: true
         run: |
-          for L in PL EFLC LL; do
+          for L in PL EFLC LL SA; do
             LOWER=$(echo $L | tr A-Z a-z)
             case $L in
               PL)   LEDGER=pl_bookings.js ;;
               EFLC) LEDGER=eflc_bookings.js ;;
               LL)   LEDGER=laliga_bookings.js ;;
+              SA)   LEDGER=seriea_bookings.js ;;
             esac
             # THE BUILD RUNS EVEN IF THE HARVEST DOES NOT, and that is not
             # belt-and-braces. The build does two jobs now: fold in the newly
@@ -120,8 +121,13 @@ jobs:
               || echo "::warning::$L bookings ledger unavailable this run"
           done
 
-      # THE PUBLISHED SHEETS, for the two divisions API-Football does not carry
-      # in time. La Liga arrives as short forms and often late; the Championship
+      # THE PUBLISHED SHEETS, for the three divisions API-Football does not
+      # carry in time. Italy's come from the AIA's designation articles, a
+      # matchday at a time; the first run on this runner is what establishes
+      # whether aia-figc.it answers a fetch from here at all, which could not
+      # be checked where the parser was written (see IMPLEMENTATION_NOTES.md,
+      # Serie A task 5). Until it does, the feed's own referee field stands.
+      # La Liga arrives as short forms and often late; the Championship
       # not at all until close to kick-off — the file has read "0 with a referee
       # appointed" for a round starting in three days. Both publishers put the
       # appointments out days earlier than the feed does, and until now somebody
@@ -146,8 +152,8 @@ jobs:
       - name: Published referee appointments
         continue-on-error: true
         run: |
-          for L in LL EFLC; do
-            case $L in LL) FMT=rfef ;; EFLC) FMT=efl ;; esac
+          for L in LL EFLC SA; do
+            case $L in LL) FMT=rfef ;; EFLC) FMT=efl ;; SA) FMT=aia ;; esac
             if python3 data/fetch_appointments.py --league $L \
                  --out /tmp/$L.txt --source-out /tmp/$L.src --days 8; then
               python3 data/ingest_appointments.py --format $FMT \
@@ -177,8 +183,8 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          for f in data/pl_fixtures.js data/eflc_fixtures.js data/laliga_fixtures.js \
-                   data/pl_bookings.js data/eflc_bookings.js data/laliga_bookings.js; do
+          for f in data/pl_fixtures.js data/eflc_fixtures.js data/laliga_fixtures.js data/seriea_fixtures.js \
+                   data/pl_bookings.js data/eflc_bookings.js data/laliga_bookings.js data/seriea_bookings.js; do
             [ -f "$f" ] && git add "$f"
           done
           # appointments.json is hand-ingested, not written here — but staging

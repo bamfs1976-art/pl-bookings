@@ -268,7 +268,7 @@ for (const league of ['LL', 'EFLC']) {
   assert.ok(/fetch_appointments\.py/.test(wf),
     '.github/workflows/fixtures.yml never runs data/fetch_appointments.py — ' +
     'the appointments are automated in the repository and not in CI');
-  for (const league of ['LL', 'EFLC']) {
+  for (const league of ['LL', 'EFLC', 'SA']) {
     assert.ok(new RegExp(`for L in [^\\n]*\\b${league}\\b`).test(wf),
       `fixtures.yml does not fetch appointments for ${league}`);
   }
