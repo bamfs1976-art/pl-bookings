@@ -1,7 +1,16 @@
 {
   "note": "PROPOSALS from API-Football /transfers, for a person to read. data/transfers.json is the hand-curated overlay that is actually applied; this is not.",
-  "since": "2026-05-11",
+  "since": "2026-05-12",
   "moves": [
+    {
+      "n": "Matheus França",
+      "from": "Crystal Palace",
+      "to": "Alverca",
+      "fromCode": "CRY",
+      "toCode": null,
+      "date": "2026-09-03",
+      "type": "Loan"
+    },
     {
       "n": "Gabriel Martinelli",
       "from": "Arsenal",
@@ -165,6 +174,15 @@
       "type": "Loan"
     },
     {
+      "n": "R. Esse",
+      "from": "Crystal Palace",
+      "to": "Millwall",
+      "fromCode": "CRY",
+      "toCode": "MIL",
+      "date": "2026-08-31",
+      "type": "Loan"
+    },
+    {
       "n": "R. Borges Rodrigues",
       "from": "Coventry",
       "to": "Burton Albion",
@@ -172,6 +190,15 @@
       "toCode": null,
       "date": "2026-08-31",
       "type": "Loan"
+    },
+    {
+      "n": "Q. Timber",
+      "from": "Marseille",
+      "to": "Crystal Palace",
+      "fromCode": null,
+      "toCode": "CRY",
+      "date": "2026-08-31",
+      "type": "Transfer"
     },
     {
       "n": "O. Dovin",
@@ -354,6 +381,15 @@
       "type": "Loan"
     },
     {
+      "n": "J. Devenny",
+      "from": "Crystal Palace",
+      "to": "Stoke City",
+      "fromCode": "CRY",
+      "toCode": "STK",
+      "date": "2026-08-31",
+      "type": "Transfer"
+    },
+    {
       "n": "J. Bahoya",
       "from": "Eintracht Frankfurt",
       "to": "Leeds",
@@ -388,6 +424,24 @@
       "toCode": "MCI",
       "date": "2026-08-31",
       "type": "Transfer"
+    },
+    {
+      "n": "H. Larsson",
+      "from": "Eintracht Frankfurt",
+      "to": "Fulham",
+      "fromCode": null,
+      "toCode": "FUL",
+      "date": "2026-08-31",
+      "type": "Loan"
+    },
+    {
+      "n": "H. Ahanor",
+      "from": "Atalanta",
+      "to": "Crystal Palace",
+      "fromCode": null,
+      "toCode": "CRY",
+      "date": "2026-08-31",
+      "type": "Loan"
     },
     {
       "n": "Gabriel Jesus",
@@ -462,6 +516,24 @@
       "type": "Loan"
     },
     {
+      "n": "D. Ozoh",
+      "from": "Crystal Palace",
+      "to": "Derby",
+      "fromCode": "CRY",
+      "toCode": "DER",
+      "date": "2026-08-31",
+      "type": "Transfer"
+    },
+    {
+      "n": "D. Osorio",
+      "from": "FC Midtjylland",
+      "to": "Crystal Palace",
+      "fromCode": null,
+      "toCode": "CRY",
+      "date": "2026-08-31",
+      "type": "Loan"
+    },
+    {
       "n": "C. Ogbene",
       "from": "Ipswich",
       "to": "Lincoln",
@@ -487,6 +559,24 @@
       "toCode": null,
       "date": "2026-08-31",
       "type": "Transfer"
+    },
+    {
+      "n": "B. Sosa",
+      "from": "Crystal Palace",
+      "to": "1. FC Köln",
+      "fromCode": "CRY",
+      "toCode": null,
+      "date": "2026-08-31",
+      "type": "Loan"
+    },
+    {
+      "n": "B. Chilwell",
+      "from": "Strasbourg",
+      "to": "Crystal Palace",
+      "fromCode": null,
+      "toCode": "CRY",
+      "date": "2026-08-31",
+      "type": "Free agent"
     },
     {
       "n": "Abdulay Bah",
@@ -525,6 +615,15 @@
       "type": "Transfer"
     },
     {
+      "n": "Q. Timber",
+      "from": "Marseille",
+      "to": "Crystal Palace",
+      "fromCode": null,
+      "toCode": "CRY",
+      "date": "2026-08-30",
+      "type": "Transfer"
+    },
+    {
       "n": "O. Hutchinson",
       "from": "Nottingham Forest",
       "to": "AC Milan",
@@ -548,6 +647,15 @@
       "to": "RB Leipzig",
       "fromCode": "CHE",
       "toCode": null,
+      "date": "2026-08-30",
+      "type": "Transfer"
+    },
+    {
+      "n": "Manuel Ángel",
+      "from": "Real Madrid",
+      "to": "Fulham",
+      "fromCode": null,
+      "toCode": "FUL",
       "date": "2026-08-30",
       "type": "Transfer"
     },
@@ -584,6 +692,24 @@
       "to": "Brighton",
       "fromCode": null,
       "toCode": "BHA",
+      "date": "2026-08-30",
+      "type": "Transfer"
+    },
+    {
+      "n": "J. Whitworth",
+      "from": "Crystal Palace",
+      "to": "Wigan",
+      "fromCode": "CRY",
+      "toCode": null,
+      "date": "2026-08-30",
+      "type": "Free agent"
+    },
+    {
+      "n": "J. Devenny",
+      "from": "Crystal Palace",
+      "to": "Stoke City",
+      "fromCode": "CRY",
+      "toCode": "STK",
       "date": "2026-08-30",
       "type": "Transfer"
     },
@@ -633,6 +759,15 @@
       "type": "Transfer"
     },
     {
+      "n": "D. Ozoh",
+      "from": "Crystal Palace",
+      "to": "Derby",
+      "fromCode": "CRY",
+      "toCode": "DER",
+      "date": "2026-08-30",
+      "type": "Transfer"
+    },
+    {
       "n": "D. Muñoz",
       "from": "Crystal Palace",
       "to": "Nottingham Forest",
@@ -651,6 +786,15 @@
       "type": "Transfer"
     },
     {
+      "n": "D. Affengruber",
+      "from": "Elche",
+      "to": "Fulham",
+      "fromCode": null,
+      "toCode": "FUL",
+      "date": "2026-08-30",
+      "type": "Transfer"
+    },
+    {
       "n": "Caylan Vickers",
       "from": "Brighton",
       "to": "Burton Albion",
@@ -658,6 +802,15 @@
       "toCode": null,
       "date": "2026-08-30",
       "type": "Transfer"
+    },
+    {
+      "n": "B. Chilwell",
+      "from": "Strasbourg",
+      "to": "Crystal Palace",
+      "fromCode": null,
+      "toCode": "CRY",
+      "date": "2026-08-30",
+      "type": "Free agent"
     },
     {
       "n": "B. Barcola",
@@ -719,6 +872,15 @@
       "to": "Coventry",
       "fromCode": "MCI",
       "toCode": "COV",
+      "date": "2026-08-29",
+      "type": "Loan"
+    },
+    {
+      "n": "S. Amissah",
+      "from": "Fulham",
+      "to": "Estoril",
+      "fromCode": "FUL",
+      "toCode": null,
       "date": "2026-08-29",
       "type": "Loan"
     },
@@ -1659,6 +1821,15 @@
       "type": "Transfer"
     },
     {
+      "n": "M. Jemide",
+      "from": "Crystal Palace",
+      "to": "Alverca",
+      "fromCode": "CRY",
+      "toCode": null,
+      "date": "2026-08-18",
+      "type": "Transfer"
+    },
+    {
       "n": "K. Nedeljković",
       "from": "Aston Villa",
       "to": "Rangers",
@@ -1785,6 +1956,15 @@
       "type": "Transfer"
     },
     {
+      "n": "Z. Gozo",
+      "from": "Real Salt Lake",
+      "to": "Crystal Palace",
+      "fromCode": null,
+      "toCode": "CRY",
+      "date": "2026-08-16",
+      "type": "Transfer"
+    },
+    {
       "n": "T. Awoniyi",
       "from": "Nottingham Forest",
       "to": "Coventry",
@@ -1862,6 +2042,15 @@
       "to": "Coventry",
       "fromCode": "NFO",
       "toCode": "COV",
+      "date": "2026-08-15",
+      "type": "Transfer"
+    },
+    {
+      "n": "T. Adaramola",
+      "from": "Crystal Palace",
+      "to": "Cercle Brugge",
+      "fromCode": "CRY",
+      "toCode": null,
       "date": "2026-08-15",
       "type": "Transfer"
     },
@@ -2098,6 +2287,15 @@
       "toCode": null,
       "date": "2026-08-13",
       "type": "Loan"
+    },
+    {
+      "n": "A. Khalaili",
+      "from": "Union St. Gilloise",
+      "to": "Crystal Palace",
+      "fromCode": null,
+      "toCode": "CRY",
+      "date": "2026-08-13",
+      "type": "Transfer"
     },
     {
       "n": "H. Howell",
@@ -2449,6 +2647,15 @@
       "toCode": null,
       "date": "2026-08-10",
       "type": "Loan"
+    },
+    {
+      "n": "S. Charles",
+      "from": "Southampton",
+      "to": "Fulham",
+      "fromCode": "SOU",
+      "toCode": "FUL",
+      "date": "2026-08-09",
+      "type": "Transfer"
     },
     {
       "n": "R. Araújo",
@@ -2820,6 +3027,15 @@
       "type": "Transfer"
     },
     {
+      "n": "T. Tomiyasu",
+      "from": "Ajax",
+      "to": "Crystal Palace",
+      "fromCode": null,
+      "toCode": "CRY",
+      "date": "2026-08-05",
+      "type": "Free agent"
+    },
+    {
       "n": "T. Lo-Tutala",
       "from": "Hull City",
       "to": "Colchester",
@@ -3151,6 +3367,24 @@
       "toCode": null,
       "date": "2026-08-01",
       "type": "Free agent"
+    },
+    {
+      "n": "Gonzalo García",
+      "from": "Real Madrid",
+      "to": "Fulham",
+      "fromCode": null,
+      "toCode": "FUL",
+      "date": "2026-08-01",
+      "type": "Transfer"
+    },
+    {
+      "n": "César Palacios",
+      "from": "Real Madrid",
+      "to": "Fulham",
+      "fromCode": null,
+      "toCode": "FUL",
+      "date": "2026-08-01",
+      "type": "Transfer"
     },
     {
       "n": "V. Barco",
@@ -3495,6 +3729,15 @@
       "type": "Loan"
     },
     {
+      "n": "Daniel Edward Peter Imray",
+      "from": "Crystal Palace",
+      "to": "Wrexham",
+      "fromCode": "CRY",
+      "toCode": "WRE",
+      "date": "2026-07-27",
+      "type": "Transfer"
+    },
+    {
       "n": "Z. Christie",
       "from": "Bournemouth",
       "to": "Bournemouth",
@@ -3601,6 +3844,15 @@
       "toCode": "HUL",
       "date": "2026-07-23",
       "type": "Free agent"
+    },
+    {
+      "n": "D. Maeda",
+      "from": "Celtic",
+      "to": "Ipswich",
+      "fromCode": null,
+      "toCode": "IPS",
+      "date": "2026-07-23",
+      "type": "Transfer"
     },
     {
       "n": "C. Townsend",
@@ -4827,6 +5079,15 @@
       "type": "Transfer"
     },
     {
+      "n": "Oliver Mayer",
+      "from": "Fulham",
+      "to": "Brighton U21",
+      "fromCode": "FUL",
+      "toCode": null,
+      "date": "2026-07-03",
+      "type": "-"
+    },
+    {
       "n": "K. Palmer",
       "from": "Hull City",
       "to": "Luton",
@@ -4897,6 +5158,15 @@
       "toCode": null,
       "date": "2026-07-02",
       "type": "Free agent"
+    },
+    {
+      "n": "W. Rutter",
+      "from": "Brighton",
+      "to": "West Bromwich Albion U21",
+      "fromCode": "BHA",
+      "toCode": null,
+      "date": "2026-07-01",
+      "type": "-"
     },
     {
       "n": "S. Swinkels",
@@ -6859,6 +7129,15 @@
       "toCode": null,
       "date": "2026-06-29",
       "type": "Return from loan"
+    },
+    {
+      "n": "J. Kusi-Asare",
+      "from": "Bayern München",
+      "to": "Fulham",
+      "fromCode": null,
+      "toCode": "FUL",
+      "date": "2026-06-29",
+      "type": "Transfer"
     },
     {
       "n": "J. Kiwior",
