@@ -124,7 +124,15 @@ Nine appointments were applied to Serie A (`seriea_fixtures.js` went from 30
 to 39 fixtures with a referee), one official had no card record and was
 reported rather than guessed at, and `ref-coverage.mjs` put Serie A at nine of
 the round's ten appointed, known five days ahead, against zero for the
-Premier League and zero for La Liga at the same moment. So the desk reads the
+Premier League and zero for La Liga at the same moment.
+
+That first run could not commit them: the Premier League photograph fault
+below failed its guard step. Fixtures run 151, after the photographs were
+restored, committed the lot. `data/appointments.json` now carries nine Serie A
+entries, every one resolved by surname (FOURNEAU to Francesco Fourneau, ARENA
+to Alberto Ruben Arena, RAPUANO to Antonio Rapuano, CREZZINI to Valerio
+Crezzini and the rest), and the run also produced `data/seriea_bookings.js`,
+the division's own bookings ledger. So the desk reads the
 AIA directly and falls back to the feed, which is what the page's Guide now
 says; the sentence about the route being unconfirmed is gone from
 `seriea.html` and from `docs/leagues.md`.
