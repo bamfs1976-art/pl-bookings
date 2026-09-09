@@ -73,23 +73,28 @@
     REFS:    typeof REFS !== 'undefined' ? REFS : null,
     injuries: typeof PL_INJURIES !== 'undefined' ? PL_INJURIES
             : typeof EFLC_INJURIES !== 'undefined' ? EFLC_INJURIES
-            : typeof LALIGA_INJURIES !== 'undefined' ? LALIGA_INJURIES : null,
+            : typeof LALIGA_INJURIES !== 'undefined' ? LALIGA_INJURIES
+            : typeof SERIEA_INJURIES !== 'undefined' ? SERIEA_INJURIES : null,
     players: typeof PL_PLAYERS !== 'undefined' ? PL_PLAYERS
            : typeof EFLC_PLAYERS !== 'undefined' ? EFLC_PLAYERS
-           : typeof LALIGA_PLAYERS !== 'undefined' ? LALIGA_PLAYERS : null,
+           : typeof LALIGA_PLAYERS !== 'undefined' ? LALIGA_PLAYERS
+           : typeof SERIEA_PLAYERS !== 'undefined' ? SERIEA_PLAYERS : null,
     fixtures: typeof PL_FIXTURES !== 'undefined' ? PL_FIXTURES
             : typeof EFLC_FIXTURES !== 'undefined' ? EFLC_FIXTURES
-            : typeof LALIGA_FIXTURES !== 'undefined' ? LALIGA_FIXTURES : null,
+            : typeof LALIGA_FIXTURES !== 'undefined' ? LALIGA_FIXTURES
+            : typeof SERIEA_FIXTURES !== 'undefined' ? SERIEA_FIXTURES : null,
     // Null until a harvest has run. Every field here is allowed to be null —
     // that is what lets a league appear on the page before all of its files
     // exist — and this is the newest of them.
     bookings: typeof PL_BOOKINGS !== 'undefined' ? PL_BOOKINGS
             : typeof EFLC_BOOKINGS !== 'undefined' ? EFLC_BOOKINGS
-            : typeof LALIGA_BOOKINGS !== 'undefined' ? LALIGA_BOOKINGS : null,
+            : typeof LALIGA_BOOKINGS !== 'undefined' ? LALIGA_BOOKINGS
+            : typeof SERIEA_BOOKINGS !== 'undefined' ? SERIEA_BOOKINGS : null,
     // Null until the first extra-feeds run, like the two above.
     fxstats: typeof PL_FXSTATS !== 'undefined' ? PL_FXSTATS
            : typeof EFLC_FXSTATS !== 'undefined' ? EFLC_FXSTATS
-           : typeof LALIGA_FXSTATS !== 'undefined' ? LALIGA_FXSTATS : null,
+           : typeof LALIGA_FXSTATS !== 'undefined' ? LALIGA_FXSTATS
+           : typeof SERIEA_FXSTATS !== 'undefined' ? SERIEA_FXSTATS : null,
     // data/model.js and data/sim_model.js assign to window, so unlike the
     // datasets these ARE global properties and cross-frame reads see them.
     model: window.CARD_MODEL || null,

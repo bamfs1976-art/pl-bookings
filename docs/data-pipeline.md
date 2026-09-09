@@ -90,3 +90,10 @@ already harvested for the three domestic desks.
   competition-specific, and these desks hold domestic records. UEFA's
   accumulation rules are not encoded because they are not evidenced. See
   `docs/champions-league-feasibility.md` §4 and §5.
+
+The desk side of it is `/europe`, a route off `today.html` rather than a page:
+Europe is not a division, and a separate file would have had to load all three
+datasets again and keep its own copy of the pricing in step. Each side of a tie
+is priced through its own desk, which for the Premier League means the fitted
+model in `assets/plmodel.js` and for the other two the shrink-then-hazard path,
+with no referee factor, no derby boost and no game-state term.

@@ -57,6 +57,16 @@
 /record       /today.html   200
 /booked       /today.html   200
 
+# THE CHAMPIONS LEAGUE TIES BOTH DESKS HOLD. A seventh view of the same file,
+# and the clearest case yet for why these are routes rather than pages: a
+# European tie is priced from TWO of the datasets this page already loads, one
+# per side. A separate europe.html would have had to load all three again and
+# would then have had its own copy of the pricing to keep in step with this
+# one. Europe gets no desk of its own for a second reason as well: it is not a
+# division. The club list changes with the draw every August, there is no
+# table, and no suspension ladder has been evidenced for it.
+/europe       /today.html   200
+
 # The Premier League desk, moved off `/`. Its own internal routing is entirely
 # hash-based (#panel-...), so nothing inside it cares which path it is served
 # from — only the league bar's self-link had to change.

@@ -28,9 +28,10 @@ const codeOnly = (src) => src
 /* file -> the public URL it is served at, and the label that must be current
    on it. The redirects are what make the pretty URLs work, so they are checked
    too: a bar full of links to /eflc is worth nothing if /eflc 404s. */
-/* SEVEN ENTRIES ACROSS FOUR FILES. today.html serves four of them: `/` is
+/* EIGHT ENTRIES ACROSS FIVE FILES. today.html serves five of them: `/` is
    today's matches, /today is the season calendar, /record is the graded
-   record and /booked the cards actually shown (plus /accas and /derbies,
+   record, /booked the cards actually shown and /europe the Champions League
+   ties both desks hold (plus /accas and /derbies,
    which the bar reaches from the page). They are one file on
    purpose — a second copy would have forked the pricing, the confirmed-XI join
    and both card builders — so the bar has more entries than there are pages,
@@ -52,7 +53,14 @@ const LINKS = [
   /* /booked is the cards actually SHOWN — the counterpart to /record, which is
      the forecasts graded. Same file again: the ledger it reads is loaded
      through the same data frames the fixture list uses. */
-  { file: 'today.html', url: '/booked', label: 'Most booked', runtime: true }
+  { file: 'today.html', url: '/booked', label: 'Most booked', runtime: true },
+  /* /europe is the eighth entry and the second that is not a division: the
+     Champions League ties both desks hold. Same file again, and this one is
+     the clearest case for it. A European tie is priced from TWO of the
+     datasets this page loads, one per side, so a europe.html would have had
+     to load all three again and keep its own copy of the pricing in step
+     with this one. */
+  { file: 'today.html', url: '/europe', label: 'Champions League', runtime: true }
 ];
 /* The distinct files, for the per-page checks. */
 const DESKS = LINKS.filter((d, i) => LINKS.findIndex((x) => x.file === d.file) === i);

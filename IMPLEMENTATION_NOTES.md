@@ -6,6 +6,75 @@ work, newest first: what changed, what was deferred and why. Everything before
 in [docs/decisions.md](docs/decisions.md); the audit itself is
 [docs/audit-2026-07.md](docs/audit-2026-07.md).
 
+## Champions League share cards, and three bugs found on the way (2026-09-09)
+
+Eighteen of the 234 Champions League ties this season have both clubs on a
+desk this app holds players for. `/europe` lists them, prices each side off
+its own domestic season and exports a share card per tie.
+
+**The rule the whole thing turns on** is the one `index.html` already enforces
+for domestic matches: BOTH SIDES OR NEITHER. The match total is the sum of two
+halves, so pricing one side off a real squad and the other off nothing would
+make them answer different questions. `data/harvest_ucl.py` drops a tie whose
+clubs do not both resolve, `scripts/check-ucl.mjs` re-derives that from the
+three desks' own data files, and `tieRows()` checks it a third time because
+the harvest ran yesterday and a club can leave a dataset between two runs.
+
+**What the card says, and what it refuses to say.** Each side priced off its
+own domestic season, stated on the card's face: eight European matches is not
+a sample, and the two halves of the total come out of two different files. The
+referee's name, but not his rate, and the reason printed beside it: cards per
+foul is competition-specific and these desks hold domestic records. No
+suspension strip at all, because UEFA's accumulation rules are not evidenced
+here and this project does not draw a rung it has not read.
+
+**Europe is a route, not a desk,** and deliberately so. It has no fixed club
+list, no table and no ladder, and a `europe.html` would have had to load all
+three datasets again and keep its own copy of the pricing in step with
+`today.html`'s. It is the seventh view of that one file.
+
+### Three bugs, each found by trying to use the thing
+
+**1. Serie A had never appeared on /today at all.** `data-frame.html` reads
+each dataset's globals by name and was never taught `SERIEA_PLAYERS`,
+`SERIEA_FIXTURES`, `SERIEA_INJURIES`, `SERIEA_BOOKINGS` or `SERIEA_FXSTATS`.
+`readFrames()` drops a league with no players, by design, to lose a league
+rather than the page. So the desk shipped, the page kept working, and Serie A
+was silently missing from every combined view: the day's list, the calendar,
+the accas, the derbies and the ledger. Nothing failed. It surfaced only
+because a Champions League tie needed the Italian half of a price.
+
+**2. The Premier League prices through a different path, and the first version
+of this view did not know it.** `prepare()` sets `_y90` on the two
+shrink-then-hazard desks and never on the Premier League, whose players go
+through the fitted model in `assets/plmodel.js`. `sideProbs()` reads `_y90`,
+so every tie with an English club failed to price and the page showed the
+thirteen that were left as though that were the list. `europeSide()` now
+branches exactly as `price()` does, and each club carries the number its own
+desk shows for it.
+
+**3. Every share card could lose the end of its subtitle, silently.**
+`brandBand()` drew the subtitle with a bare `fillText`, so anything wider than
+the card ran off the right edge: no error, no ellipsis, no clue that the
+sentence had a second half. The European card found it because its subtitle
+carries the basis the price was computed on, and the basis was the half that
+fell off. The band fits the subtitle now, like the title above it, and
+`check-share.mjs` also caps the European subtitle's length so an overlong one
+fails in CI rather than on a timeline.
+
+A fourth, smaller one: the first version hung the download handler on the
+delegated listener attached to `#list`, which does not contain the European
+rows, so eighteen buttons did nothing at all.
+
+### Checked
+
+`/europe` was rendered in headless Chromium at 393px against the shipped data:
+eighteen ties, three desks, kick-offs from September to January, the league bar
+marking Europe as current, no other route's blocks visible, and no page errors.
+The Liverpool v Atletico Madrid card was downloaded and read: both clubs in
+their own desks' colours, the referee named without a rate, the basis stated
+whole. All 59 CI steps green.
+
 ## The Codice, read at last: the rule holds, the citation did not (2026-09-09)
 
 The Serie A desk shipped its suspension ladder on three secondary quotations,

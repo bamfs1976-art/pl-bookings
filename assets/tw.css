@@ -175,9 +175,15 @@ html[data-theme="dark"].lg-all {--accent:#22d3ee;--ring:var(--accent)}
 .lb-record .lb-dot{background:none;border:2px solid var(--warn-ink);box-sizing:border-box}
 /* MOST BOOKED. A solid yellow, the colour of the thing being counted. */
 .lb-booked .lb-dot{background:var(--yellow-card,#f2c200)}
-/* ONE FILE, FIVE ROUTES. today.html serves `/` (today's matches), /today (the
+/* EUROPE. The competition's own blue, and the only item in the bar that is not
+   a desk: the Champions League has no fixed club list here, so it has a mark
+   and a route rather than a page. */
+.lb-europe .lb-dot{background:var(--ucl)}
+/* ONE FILE, SEVEN ROUTES. today.html serves `/` (today's matches), /today (the
    season calendar), /accas (every combination), /derbies (every derby, all
-   three divisions) and /record (what the desk rated against what turned up); an early script in its head stamps <html data-route>.
+   three divisions), /record (what the desk rated against what turned up),
+   /booked (the cards actually shown) and /europe (the Champions League ties
+   both desks hold); an early script in its head stamps <html data-route>.
    Anything marked data-for shows only on its own route. Every block is in the
    markup so the page has real headings before any script has run — the
    selection is presentational, not a rebuild.
@@ -196,7 +202,8 @@ html[data-theme="dark"].lg-all {--accent:#22d3ee;--ring:var(--accent)}
 [data-route="accas"] [data-for]:not([data-for~="accas"]),
 [data-route="derbies"] [data-for]:not([data-for~="derbies"]),
 [data-route="record"] [data-for]:not([data-for~="record"]),
-[data-route="booked"] [data-for]:not([data-for~="booked"]){display:none}
+[data-route="booked"] [data-for]:not([data-for~="booked"]),
+[data-route="europe"] [data-for]:not([data-for~="europe"]){display:none}
 /* The fixture list is shared by the two match routes and belongs to neither
    alone, so it is hidden by route rather than tagged data-for. /accas is about
    the slips and /derbies about the rivalries; a reader who wants the matches
@@ -940,6 +947,7 @@ input[type=checkbox],input[type=radio]{accent-color:var(--accent)}
 .lg.EFLC{background:color-mix(in srgb,var(--eflc) 16%,transparent);color:var(--eflc-ink)}
 .lg.LL{background:color-mix(in srgb,var(--ll) 18%,transparent);color:var(--ll-ink)}
 .lg.SA{background:color-mix(in srgb,var(--sa) 18%,transparent);color:var(--sa-ink)}
+.lg.UCL{background:color-mix(in srgb,var(--ucl) 18%,transparent);color:var(--ucl-ink)}
 
 .empty{padding:26px;text-align:center;color:var(--text-2)}
 .note{font-size:12.5px;color:var(--text-2);margin-top:10px;line-height:1.55}

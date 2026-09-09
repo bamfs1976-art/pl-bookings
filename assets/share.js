@@ -197,7 +197,14 @@
     x.fillStyle = '#ffffff'; x.font = '800 46px ' + DISP;
     x.fillText(fit(x, title, w - P - 150), P, 126);
     x.fillStyle = '#586275'; x.font = '600 22px ' + BODY;
-    x.fillText(String(subtitle || ''), P, 210);
+    /* FITTED, like the title above it. This was a bare fillText, so a subtitle
+       wider than the card ran off the right edge and simply vanished: no
+       error, no ellipsis, no clue that the sentence had a second half. The
+       European card found it, because its subtitle carries the basis the
+       price was computed on and the basis was the half that fell off. Every
+       card shares this band, so every card had the same silent cut waiting
+       for a long enough season label. */
+    x.fillText(fit(x, subtitle, w - 2 * P), P, 210);
   }
 
   function footer(x, th, note, w, h) {
@@ -1426,11 +1433,14 @@
     var f = priced.fx, r = priced.ref || {};
     var when = f.d && ctx.whenText ? ctx.whenText(f.d) : null;
     base.league = 'UCL';
+    /* SHORT ENOUGH TO FIT WHOLE. The strap above already says CHAMPIONS
+       LEAGUE, so repeating the competition here cost the line the one clause
+       that cannot be dropped: the basis. */
     base.subtitle = [
-      'UEFA Champions League ' + (ctx.seasonLabel || ''),
+      ctx.seasonLabel || null,
       f.r || null,
       when || 'kick-off not published yet',
-      'each side priced off its ' + (ctx.basisWord || 'domestic') + ' season'
+      (ctx.basisWord || 'domestic') + '-season rates'
     ].filter(Boolean).join(' · ');
     base.refLine = r.name
       ? 'Referee: ' + r.name + ' · no European card record, priced neutral'

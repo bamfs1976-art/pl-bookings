@@ -210,8 +210,17 @@ assert.ok(/not yet appointed/i.test(noRef.refLine), noRef.refLine);
   /* 1. THE BASIS. Eight matches is not a sample, so each side is priced off
         its own domestic season and the card must say so where the reader
         cannot miss it. */
-  assert.ok(/domestic season/i.test(u.subtitle),
+  assert.ok(/domestic[- ]season/i.test(u.subtitle),
     `a European card does not state its domestic basis: ${u.subtitle}`);
+  /* AND IT MUST FIT. brandBand draws the subtitle in 22px at x=40 on a
+     1080-wide card, so about 78 characters reach the right edge. The first
+     version ran to 110 and the clause that fell off was the basis: the one
+     part of this card a reader cannot reconstruct. The band truncates with an
+     ellipsis now rather than running off silently, which makes an overlong
+     subtitle visible instead of invisible; this keeps it from happening. */
+  assert.ok(u.subtitle.length <= 78,
+    `the European subtitle is ${u.subtitle.length} characters and will be cut ` +
+    `on the card: ${u.subtitle}`);
   /* 2. THE ROUND, kept whole. A bare number loses which phase it names. */
   assert.ok(u.subtitle.includes('League Stage - 1'),
     `the European round label was not carried through: ${u.subtitle}`);
@@ -239,7 +248,7 @@ assert.ok(/not yet appointed/i.test(noRef.refLine), noRef.refLine);
   await S.matchCard(u);
   const t = drawn.join('\n');
   for (const need of ['Liverpool v Atletico Madrid', 'CHAMPIONS LEAGUE',
-                      'domestic season', 'no European card record']) {
+                      'domestic-season rates', 'no European card record']) {
     assert.ok(t.includes(need), `the European card never drew ${JSON.stringify(need)}`);
   }
   assert.ok(!t.includes('4.86'),
