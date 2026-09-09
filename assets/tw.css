@@ -204,14 +204,17 @@ html[data-theme="dark"].lg-all {--accent:#22d3ee;--ring:var(--accent)}
 [data-route="record"] [data-for]:not([data-for~="record"]),
 [data-route="booked"] [data-for]:not([data-for~="booked"]),
 [data-route="europe"] [data-for]:not([data-for~="europe"]){display:none}
-/* The fixture list is shared by the two match routes and belongs to neither
-   alone, so it is hidden by route rather than tagged data-for. /accas is about
-   the slips and /derbies about the rivalries; a reader who wants the matches
-   has two routes that are. */
-[data-route="accas"] #listCard,
-[data-route="derbies"] #listCard,
-[data-route="record"] #listCard,
-[data-route="booked"] #listCard{display:none}
+/* THE FIXTURE LIST IS TAGGED, NOT LISTED. It used to be hidden by a second
+   rule naming every route that must not show it, on the reasoning that a block
+   shared by two routes belongs to neither. That reasoning was wrong, and the
+   `~=` above is why: a block can name more than one route, so the shared case
+   is the case the sweep already handles.
+
+   The cost of the old shape was a route added to one list and not the other,
+   which is the exact half-written failure the note above says cannot happen.
+   It happened: /europe went to production with the Championship's fixture list
+   sitting on top of the Champions League ties. One list now, and a new route
+   cannot show an old block by omission. */
 
 /* ─── /derbies ──────────────────────────────────────────────────────────────
    A dense list rather than the fixture cards the other routes draw: eighty-odd

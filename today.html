@@ -344,7 +344,15 @@
     <p class="note" id="recordNote"></p>
   </section>
 
-  <div class="card" id="listCard">
+  <!-- THE FIXTURE LIST BELONGS TO THE TWO MATCH ROUTES, and now says so
+       rather than being hidden by a second rule that named the others. It
+       was untagged, so the route sweep in tw.css could not see it and a
+       separate rule listed every route that must hide it. Adding /europe to
+       one of those two lists and not the other put the Championship fixture
+       list on top of the Champions League page in production. `~=` matches a
+       whitespace-separated word, which is what lets one block name two
+       routes and is why the second rule never needed to exist. -->
+  <div class="card" id="listCard" data-for="home season">
     <div class="controls">
       <!-- THE VIEW SWITCHER IS GONE, and its three views are now two pages.
            "One date" and the day's acca are the home page; "Every date" and

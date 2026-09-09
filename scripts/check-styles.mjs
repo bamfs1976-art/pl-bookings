@@ -419,5 +419,47 @@ assert.ok(/BEGIN:VALARM/.test(prof), 'the calendar event carries no reminder');
     'the [hidden] override sits before preflight\'s own rule');
 }
 
+/* ---- every route today.html stamps is swept ----------------------------- */
+/* THE BUG THIS IS FOR. today.html serves seven routes off one file and hides
+   the blocks that do not belong to the current one with a rule per route in
+   tw.css. Adding a route means adding a line there, and forgetting it does not
+   hide the new route's blocks anywhere: it shows every OTHER route's blocks on
+   the new page. /europe shipped that way and put the Championship's fixture
+   list on top of the Champions League ties in production.
+ 
+   Counted off the routes the file itself stamps rather than a list written
+   here, for the same reason check-nav derives them: a guard that knows how
+   many routes there are is a guard that goes stale the next time one is added.
+   The route names come from the head script, which is the only place they are
+   decided. */
+{
+  const src = readFileSync(join(root, 'today.html'), 'utf8');
+  const css = readFileSync(join(root, 'assets', 'tw.css'), 'utf8');
+  const stamp = /var route = ([\s\S]*?);\s*\n/.exec(src);
+  assert.ok(stamp, 'today.html no longer stamps a route in its head');
+  const routes = [...new Set([...stamp[1].matchAll(/'([a-z][a-z-]*)'/g)]
+    .map((m) => m[1]))];
+  assert.ok(routes.length >= 2, `today.html stamps ${routes.length} route(s)`);
+  const unswept = routes.filter((r) =>
+    !css.includes(`[data-route="${r}"] [data-for]:not([data-for~="${r}"])`));
+  assert.deepStrictEqual(unswept, [],
+    `assets/tw.css never hides the other routes' blocks on ${unswept.join(', ')}. ` +
+    'A route with no sweep rule does not hide its own blocks somewhere else: ' +
+    'it shows every other route\'s blocks on itself, which is how the ' +
+    'Championship fixture list reached the Champions League page.');
+
+  /* AND NO BLOCK MAY CLAIM A ROUTE THAT IS NOT STAMPED. The other half of the
+     same mistake: a data-for naming a route the head never sets is a block
+     that shows nowhere, silently. */
+  const claimed = new Set();
+  for (const m of src.matchAll(/data-for="([^"]+)"/g)) {
+    for (const r of m[1].split(/\s+/)) if (r) claimed.add(r);
+  }
+  const unknown = [...claimed].filter((r) => !routes.includes(r));
+  assert.deepStrictEqual(unknown, [],
+    `today.html has blocks tagged for ${unknown.join(', ')}, which the head ` +
+    'script never stamps, so they are hidden on every route');
+}
+
 console.log(`check-styles OK: ${PAGES.length} pages, ${checked} class references, ` +
   'every one backed by a rule; matchday scoped; crests degrade; records open');
