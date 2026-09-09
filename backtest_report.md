@@ -5,7 +5,7 @@
 
 **No scoring run yet.**
 
-**Premier League** · source `data/match_history.json` · generated 2026-09-09T18:37:04.781Z
+**Premier League** · source `data/match_history.json` · generated 2026-09-09T19:13:14.902Z
 
 The history holds **929 match rows over 3 round(s)** (rounds 1-3), 115 of them booked (12.4%).
 

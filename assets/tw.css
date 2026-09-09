@@ -204,14 +204,17 @@ html[data-theme="dark"].lg-all {--accent:#22d3ee;--ring:var(--accent)}
 [data-route="record"] [data-for]:not([data-for~="record"]),
 [data-route="booked"] [data-for]:not([data-for~="booked"]),
 [data-route="europe"] [data-for]:not([data-for~="europe"]){display:none}
-/* The fixture list is shared by the two match routes and belongs to neither
-   alone, so it is hidden by route rather than tagged data-for. /accas is about
-   the slips and /derbies about the rivalries; a reader who wants the matches
-   has two routes that are. */
-[data-route="accas"] #listCard,
-[data-route="derbies"] #listCard,
-[data-route="record"] #listCard,
-[data-route="booked"] #listCard{display:none}
+/* THE FIXTURE LIST IS TAGGED, NOT LISTED. It used to be hidden by a second
+   rule naming every route that must not show it, on the reasoning that a block
+   shared by two routes belongs to neither. That reasoning was wrong, and the
+   `~=` above is why: a block can name more than one route, so the shared case
+   is the case the sweep already handles.
+
+   The cost of the old shape was a route added to one list and not the other,
+   which is the exact half-written failure the note above says cannot happen.
+   It happened: /europe went to production with the Championship's fixture list
+   sitting on top of the Champions League ties. One list now, and a new route
+   cannot show an old block by omission. */
 
 /* ─── /derbies ──────────────────────────────────────────────────────────────
    A dense list rather than the fixture cards the other routes draw: eighty-odd
@@ -1444,6 +1447,28 @@ tr[data-club]:focus-visible{outline:3px solid var(--ring);outline-offset:-3px}
    always see where you are. */
 .leaguebar-in{scroll-snap-type:x proximity;scroll-padding-left:12px}
 .lb-item{scroll-snap-align:start}
+/* AND ON A MOUSE IT WRAPS INSTEAD, because a row that scrolls with its
+   scrollbar hidden has no way to reach its ends without a thumb. The note
+   above is right that abbreviating loses the names of the desks the bar
+   exists to expose, and right that scrolling plus centring the active item
+   solves it on a phone. It does not solve it on a desktop: there is no
+   scrollbar to drag, a wheel scrolls the page rather than the bar, and
+   nothing on screen says the row continues.
+
+   That was tolerable at eight items and stopped being so at eleven. The bar
+   needs 1543px; the column it sits in is 1180px, so 363px hangs off the end
+   even on a 1440px screen, and because the active item is centred on load the
+   overflow is split across BOTH ends. On the Champions League route the bar
+   opened scrolled 363px in, with "Today's matches" and "Accas" off the left
+   and no indication either existed.
+
+   Wrapping costs a second row and hides nothing. Below the breakpoint it
+   still scrolls and snaps, because that is where a thumb is and where a
+   second row costs more than it buys. */
+@media (min-width:701px){
+  .leaguebar-in{flex-wrap:wrap;justify-content:center;overflow-x:visible;
+    row-gap:0}
+}
 @media (max-width:560px){
   .lb-full{display:inline}
   .lb-abbr{display:none}

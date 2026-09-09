@@ -6,6 +6,142 @@ work, newest first: what changed, what was deferred and why. Everything before
 in [docs/decisions.md](docs/decisions.md); the audit itself is
 [docs/audit-2026-07.md](docs/audit-2026-07.md).
 
+## The league bar lost both its ends, and /europe laid out differently (2026-09-09)
+
+Two reports from looking at the live page, and both were mine.
+
+**The bar could not reach its ends.** It carries full labels in one row and
+scrolls, with the active item centred on load. That is a deliberate design and
+the note in `tw.css` defends it: abbreviating cost the two desks the switcher
+exists to expose their names, so scrolling replaced it. It works with a thumb.
+It does not work with a mouse. There is no scrollbar to drag, a wheel scrolls
+the page rather than the bar, and nothing on screen says the row continues.
+
+Tolerable at eight items, and I made it eleven. Measured: the bar needs 1543px
+and sits in a 1180px column, so 363px hangs off even on a 1440px screen, and
+because the active item is centred the overflow is split across BOTH ends. On
+the Champions League route it opened scrolled 363px in, with "Today's matches"
+and "Accas" off the left and nothing to suggest they existed.
+
+It now wraps above 700px and scrolls below it. Zero overflow from 768px up,
+and a phone keeps the scroll, the snap and the centring, which is where a
+thumb is and where a second row costs more than it buys. Nothing is hidden
+anywhere now.
+
+**`/europe` laid its ties out differently from every other list.** The rows are
+`.fx` match cards, the same ones the day's fixtures use, but `renderOne` wraps
+its rows in `.fx-grid` and `renderEurope` did not. So the same card in the same
+markup rendered as full-width bands on one page and as a grid of cards on the
+other, for no reason a reader could see. One wrapper, and the page went from
+5,910px to 2,276px tall and now matches the fixture list exactly: three across
+on a desktop, one column below 700px, which the existing grid already handles.
+
+The "Share the day" control the report also mentioned was the fixture list
+leaking onto the route, fixed in the entry below.
+
+Checked at 1440, 1280, 1024, 768 and 393px: eleven items, no overflow above
+700px, no horizontal page scroll on a phone, one column of cards there and
+three on a desktop, and the share button still exports its card from inside
+the new grid. All 60 CI steps green.
+
+## Double-encoded names, and the fixture list on the wrong page (2026-09-09)
+
+Two things, both reported rather than found: a handful of player names shipped
+mangled, and `/europe` went live carrying the Championship's fixture list.
+
+### The fixture list on /europe
+
+The route sweep in `assets/tw.css` hides every block that does not belong to
+the current route, and its own comment claimed a new route is "one line that
+cannot be half-written". It could be, and I wrote it that way. The fixture
+list was not tagged `data-for`, on the reasoning that a block shared by two
+routes belongs to neither, so a SECOND rule listed each route that must hide
+it. I added `/europe` to the sweep and not to that list, and the Champions
+League page shipped with three EFL Championship fixtures and a "Share the day"
+button above its own ties.
+
+The reasoning behind the second rule was already contradicted by the sweep's
+own `~=`, which exists precisely so a block can name more than one route. The
+list now says `data-for="home season"` and the second rule is gone, so a route
+added later cannot show an old block by omission.
+
+`check-styles.mjs` gained the assertion that would have caught it, phrased as
+a property rather than a wording: every route the head script stamps must have
+a sweep rule, counted off the stamp rather than a list in the guard, and no
+block may be tagged for a route the head never stamps. That second half is the
+same mistake mirrored, a block hidden everywhere instead of shown somewhere.
+`check-derbies.mjs` pinned the deleted rule by name and now checks the same
+property on the tag.
+
+All seven routes were rendered in headless Chromium afterwards: each shows its
+own hero and nothing else, and no page errors.
+
+### The mangled names
+
+**The feed does it, not us, and that was worth proving.** Reading the code
+ruled this repository out but could not rule the feed in, so
+`scripts/probe-encoding.py` asked API-Football on a runner and printed the
+bytes:
+
+```
+C. Inao OulaÃ¯   43 2E 20 49 6E 61 6F 20 4F 75 6C 61 C3 83 C2 AF
+```
+
+`C3 83 C2 AF` is an i-diaeresis encoded twice, at the wire. Dani Martinez came
+back the same way, `C3 83 C2 AD`. Both from `/players/squads`, one of 34 names
+and one of 27; the `/players` statistics endpoint returned nothing mangled.
+Everything on this side was already right: the wire decode is an explicit
+UTF-8, every `open()` and `write_text()` under `data/` passes
+`encoding="utf-8"`, and `json.dumps` escapes non-ASCII losslessly.
+
+**It is wider than the two names reported.** Scanning every string literal in
+every shipped file found nine, six distinct names, in four files:
+
+| File | Names |
+|---|---|
+| `data/laliga_data.js` | Dani Martínez |
+| `data/laliga_transfers_feed.json` | Víctor Moreno, G. Albarracín |
+| `data/pl_transfers_feed.json` | M. Aleksić |
+| `data/seriea_data.js` | C. Inao Oulaï, L. Jovanović, R. Obrić |
+
+One of them is a Premier League file, so the framing that this was a La Liga
+and Serie A builder fault was wrong. Nobody was looking at the transfer feeds,
+which is the argument for a guard that scans everything rather than a list.
+
+**The repair sits in one place.** `unmangle_all()` runs in `_fetch_once`, where
+the feed's JSON becomes Python objects. Every harvest here reaches the API
+through `_get`, so one call covers the squads, the statistics, the transfers,
+the fixtures and the referee names. Repairing at each of the dozen places a
+name is read would have meant finding them all, and missing one is how a
+mangled name reaches a page.
+
+It is safe to run over everything because it can only touch a string that is
+BOTH Latin-1 encodable AND whose bytes are valid UTF-8 for a different string.
+A correct name fails one of those two steps: "Martínez" does not round-trip,
+"Çalhanoğlu" will not encode as Latin-1 at all, and ASCII decodes to itself and
+is returned unchanged. Proved rather than asserted: over all 112,536 string
+literals in the 65 shipped data files, exactly 9 move, and all 9 are the known
+mangled names. It is idempotent.
+
+**The guard mirrors it.** `scripts/check-encoding.mjs` reimplements the same
+test in JavaScript and scans every shipped data file, page and module. The
+mirror is deliberate: if the two ever disagree about what a mangled string is,
+one of them is wrong. It reports the file, the string and the correct spelling,
+because a file name alone would leave somebody grepping a two-megabyte
+generated file by hand.
+
+**What I did not do.** I did not hand-patch the generated files. They are
+rewritten by every refresh, so the correction would have vanished within eight
+hours and taken the evidence with it. The files were regenerated by a real
+harvest instead, which is also the only way to know the repair works end to
+end.
+
+### Not determined
+
+Why API-Football serves these particular names double-encoded, and whether the
+set is stable. It is their data, the probe only establishes that it arrives
+wrong, and the repair does not depend on the answer.
+
 ## The European card named the wrong season, and a rival card showed it (2026-09-09)
 
 Two Betting Village Stats cards arrived for Napoli v Arsenal and Liverpool v

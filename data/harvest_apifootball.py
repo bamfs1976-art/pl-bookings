@@ -388,12 +388,62 @@ def _get(host, key, path, params):
     return payload
 
 
+def unmangle(s):
+    """One round of UTF-8-read-as-Latin-1 undone, or the string untouched.
+
+    NOT OUR BUG, BUT OURS TO SURVIVE. API-Football serves a handful of names
+    already double-encoded. Measured on a runner on 9 September 2026, the
+    /players/squads response for Atletico Madrid carried "Dani MartÃ­nez" with
+    the bytes C3 83 C2 AD, and Fiorentina's carried "C. Inao OulaÃ¯" with
+    C3 83 C2 AF. Those are an i-acute and an i-diaeresis encoded twice. The
+    wire decode here is an explicit UTF-8 and is correct; the feed hands over a
+    string that is already wrong, so no amount of decoding on this side helps.
+
+    WHY THIS IS SAFE TO RUN OVER EVERYTHING. The repair can only touch a string
+    that is BOTH encodable as Latin-1 AND whose bytes are valid UTF-8 for a
+    DIFFERENT string. A correctly encoded name fails one of those two steps:
+    "Martínez" is not Latin-1 round-trippable to anything else, "Çalhanoğlu"
+    will not encode as Latin-1 at all, and pure ASCII decodes back to itself
+    and is returned unchanged. Checked against every name in all four shipped
+    datasets: exactly the mangled ones move and nothing else does.
+
+    A NO-OP ON ASCII, cheaply. isascii() is a C-level scan, so the common case
+    costs one pass and no exception.
+    """
+    if not isinstance(s, str) or s.isascii():
+        return s
+    try:
+        out = s.encode("latin-1").decode("utf-8")
+    except (UnicodeEncodeError, UnicodeDecodeError):
+        return s
+    return out if out != s else s
+
+
+def unmangle_all(node):
+    """unmangle() over every string in a decoded payload, in place where it can.
+
+    Applied once, at the point the feed's JSON becomes Python objects, rather
+    than at each of the dozen places a name is read out of it. Every harvest in
+    this project reaches the API through _get, so one call here is every
+    endpoint and every consumer: the squads, the statistics, the transfers, the
+    fixtures and the referee names. Repairing per caller would have meant
+    finding them all, and missing one is how a mangled name reaches a page.
+    """
+    if isinstance(node, dict):
+        for k, v in node.items():
+            node[k] = unmangle_all(v)
+        return node
+    if isinstance(node, list):
+        return [unmangle_all(v) for v in node]
+    return unmangle(node)
+
+
 def _fetch_once(host, key, url):
     _last_request[0] = time.monotonic()
     req = urllib.request.Request(url, headers=_headers(host, key))
     try:
         with urllib.request.urlopen(req, timeout=60) as r:
-            body = json.loads(r.read().decode("utf-8"))
+            body = unmangle_all(json.loads(r.read().decode("utf-8")))
             note_usage(r.headers)
             return body
     except urllib.error.HTTPError as e:

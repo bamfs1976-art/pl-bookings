@@ -215,8 +215,19 @@ const css = read('assets', 'tw.css');
 assert.ok(css.includes('[data-route="derbies"] [data-for]:not([data-for~="derbies"])'),
   'assets/tw.css no longer hides the other routes\' blocks on /derbies, so the ' +
   'page shows every route\'s hero at once');
-assert.ok(/\[data-route="derbies"\]\s*#listCard/.test(css),
-  'assets/tw.css no longer hides the fixture list on /derbies');
+/* THE FIXTURE LIST, which /derbies must not show. It used to be hidden by a
+   second rule naming each route that excludes it, and this asserted that rule
+   by name. That shape is gone: the list is tagged data-for and the sweep above
+   hides it, because a route added to one of the two lists and not the other
+   put the Championship's fixtures on top of the Champions League page in
+   production. The property is unchanged and is still checked, on the tag. */
+const listTag = /<div class="card" id="listCard" data-for="([^"]*)"/.exec(today);
+assert.ok(listTag,
+  'today.html\'s fixture list is no longer tagged with the routes it belongs ' +
+  'to, so nothing decides which routes show it');
+assert.ok(!listTag[1].split(/\s+/).includes('derbies'),
+  `the fixture list names /derbies among its routes (${listTag[1]}), so the ` +
+  'derby page shows the day\'s matches above the rivalries it is for');
 /*
  * THE ROUTE GATES MUST BE INCLUSIONS. Written the other way — each card naming
  * the routes it is absent from — a new route matches none of the exclusions and
