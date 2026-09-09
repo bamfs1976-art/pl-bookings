@@ -26,3 +26,39 @@ The `data` folder holds the build script and the raw harvests (harvest JSON giti
 - `extend_ref_history.py` writes `data/ref_history.js` (committed) by merging that baseline with every season from **2018/19 onward**, recomputed from the same public-domain football-data.co.uk match records the referee card rates use — so the career column keeps moving forward instead of stopping at 2018. It is **idempotent**: the baseline stays pristine and the football-data era is always rebuilt, so re-running can never double-count. Runs in the Data refresh Action; `python3 data/extend_ref_history.py` by hand also works.
 - `harvest.py` automates the harvest. ScoutingStats needs a logged-in session, so it authenticates with a browser cookie: log in at scoutingstats.ai, copy the `cookie` request header from DevTools, then `SS_COOKIE='…' python3 data/harvest.py && python3 data/build_pl_data.py`. If `pl_refs.json` is absent it is reconstructed from the shipped `pl_data.js` (referee figures only change when refreshed by hand).
 - The **Data refresh** GitHub Action (`.github/workflows/data-refresh.yml`) runs the whole pipeline in one click from the Actions tab — harvest → rebuild → regenerate the model → re-vendor the match model → guards → commit. The match-model step is `continue-on-error`: the desk works without it, so an unreachable simulator leaves the previous bundle in place instead of failing the refresh. It needs one repository secret, `SS_COOKIE`, holding that same cookie value; re-set it whenever the session expires. It also **fits the card model (Tier 2)**: the Action harvests per-match booking history from the public FPL `element-summary` endpoint (reachable from GitHub's runners) and refits the GLM by IRLS. The fitter keeps the season prior automatically until ≥200 real match rows exist, so it's a no-op early in the season and flips `data/model.js` to `basis:"match-fit"` once enough gameweeks have been played — no manual step needed. Uncheck the **fit_model** input to skip it.
+
+### Serie A (added 9 September 2026)
+
+The Italian steps mirror the Spanish ones, in the order the discovered
+registry demands. `scripts/build_data.py` runs them as a front door and
+`data-refresh.yml` is the pipeline that ships them; `check-build-data.mjs`
+keeps the two lists in step.
+
+- `harvest_apifootball.py --league SA --clubs` discovers the division from
+  API-Football league 135 and writes `data/seriea_clubs.json` (refuses a
+  division that is not twenty clubs). Everything below resolves club names
+  through it.
+- `harvest_apifootball.py --league SA` (last season's form, `yc`),
+  `--league SA --roster` (this season's membership, `sa_squads.json`),
+  `--league SA --out seriea_season_cards.json` (this season's cautions,
+  `sc`) and `--league SERB` (Serie B, league 136, for the promoted clubs).
+  The two card counts are never conflated: `yc` is 2025-26 form, `sc` is
+  2026-27 state.
+- `harvest_apifootball.py --ref-fixtures --league SA` takes the COMPLETED
+  season's officials into `data/seriea_ref_fixtures.js`; `--fixtures
+  --league SA` takes the season being played into `data/seriea_fixtures.js`.
+  Two files, two seasons.
+- `build_seriea_data.py --season 2526` writes `data/seriea_data.js`
+  (`SUSPENSION`, `CLUBS`, `SERIEA_PLAYERS`, `REFS`) through the shared La
+  Liga builder configured for Italy; club card rates come free from the I1
+  records on the football-data mirror.
+- `build_refs.py --league SA --season 2526` joins the bought names onto the
+  free rows by date and both canonical clubs and computes every referee rate
+  from the free columns. The join must cover the whole season; a partial
+  join is a stop, and `scripts/check-seriea.mjs` enforces it on the shipped
+  table.
+- `fetch_appointments.py --league SA` finds the AIA's designation article for
+  a pending giornata and `ingest_appointments.py --format aia` reads it,
+  resolving surname-only officials through `appointments.resolve_surname_only`.
+  Until that route is confirmed from a runner, the feed's own referee field is
+  what the desk shows.

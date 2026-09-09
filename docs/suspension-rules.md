@@ -1,7 +1,8 @@
 # Suspension rules, and how far each was checked
 
-Three desks, three schemes, and they are not variations on one rule — England
-and Spain do structurally different things. Getting them the wrong way round is
+Four desks, four schemes (Serie A added 9 September 2026), and they are not
+variations on one rule: England, Spain and Italy do structurally different
+things. Getting them the wrong way round is
 silent in both directions: Spain's cycle applied to England forgives a player
 who has already spent his 5- and 10-rungs, and England's ladder applied to
 Spain invents bans nobody serves.
@@ -11,16 +12,23 @@ dataset as `const SUSPENSION`, and are computed by one shared module
 (`assets/suspension.js` over `PLDCore.nextSuspension`). No page implements a
 threshold.
 
-## The two shapes
+## The three shapes
 
-| | Premier League | EFL Championship | La Liga |
-|---|---|---|---|
-| Shape | ladder | ladder | cycle |
-| Thresholds | 5 / 10 / 15 | 5 / 10 / 15 | every 5 |
-| Ban | 1 / **2** / 3 matches | 1 / **2** / 3 matches | 1 match, always |
-| Gate | by match 19 / 32 | by match **19 / 37** | none |
-| After a ban | count **keeps running** | count **keeps running** | count **resets** |
-| Beyond the top | 20+ → Regulatory Commission | 20+ → Regulatory Commission | cycle repeats |
+| | Premier League | EFL Championship | La Liga | Serie A |
+|---|---|---|---|---|
+| Shape | ladder | ladder | cycle | ladder with a tail |
+| Thresholds | 5 / 10 / 15 | 5 / 10 / 15 | every 5 | 5 / 10 / 14 / 17 / 19, then every 1 |
+| Ban | 1 / **2** / 3 matches | 1 / **2** / 3 matches | 1 match, always | 1 match, always |
+| Gate | by match 19 / 32 | by match **19 / 37** | none | none |
+| After a ban | count **keeps running** | count **keeps running** | count **resets** | count **keeps running** |
+| Beyond the top | 20+ → Regulatory Commission | 20+ → Regulatory Commission | cycle repeats | every caution is a ban |
+
+Italy is the one that is easiest to mistake for one of the other two. It is
+cumulative like England (ten cautions means the 5- and 10-rungs are spent)
+but it never escalates and has no gate, and past the nineteenth caution it
+behaves like a cycle of one. The registry carries it as a ladder with an
+optional `then_every` tail; the English ladders have no tail and are
+unchanged.
 
 Two consequences that are easy to miss:
 
@@ -49,6 +57,7 @@ Where they differ is freshness.
 | Premier League | `p.live.yc` from the FPL feed, stamped at render | every page load |
 | Championship | `sc`/`sm` emitted into `eflc_data.js` | when the workflow runs |
 | La Liga | `sc`/`sm` emitted into `laliga_data.js` | when the workflow runs |
+| Serie A | `sc`/`sm` emitted into `seriea_data.js` | when the workflow runs |
 
 The Premier League desk was already pulling the live feed for injuries and
 prices, so its strip is current rather than as-built. The cost is that it is
@@ -90,6 +99,19 @@ so no escalation at ten or fifteen. The caveat is that the primary document
 could not be opened from this environment; the rule rests on corroborated
 quotations of the article rather than the article itself.
 
+## Serie A: checked, with a caveat
+
+See `docs/italy-suspensions.md`. Art. 19 of the FIGC's Codice di Giustizia
+Sportiva: one match at the fifth caution, then *"alla quinta, alla quarta,
+alla terza, alla seconda ammonizione, ad ogni ulteriore ammonizione"*, which
+puts the bans at 5, 10, 14, 17 and 19 and at every caution from there. The
+count is per competition and cumulative within the season. The caveat is the
+same as Spain's: the Codice itself could not be opened from the build
+environment, so the rule rests on three independent quotations of the article
+that agree word for word. The brief that commissioned the desk stated a
+different progression (5, 10, 15, then every second caution); no source found
+supports it, and the Italy file records the disagreement for the reviewer.
+
 ## What is deliberately not modelled
 
 - **Red cards.** A dismissal is its own suspension and is not accumulation.
@@ -97,7 +119,7 @@ quotations of the article rather than the article itself.
   match for a fifth caution engineered within a single game. Both are
   discretionary decisions by a panel, not functions of a card count.
 - **Cup cautions.** Every scheme counts one competition at a time. The desks
-  hold league cards only, which is correct for all three, and pooling them
+  hold league cards only, which is correct for all four, and pooling them
   would ban players early.
 
 ## The evidence limit that applies to all of this
@@ -110,9 +132,9 @@ several independent sources and are the widely-published PL and EFL rules; the
 Spanish ones are corroborated too, but one secondary source disagreed and is
 recorded in the Spain file.
 
-Before any of the three strips is treated as authoritative, open the Premier
-League handbook, the EFL regulations and
-the RFEF Código Disciplinario on an unrestricted network and confirm the
+Before any of the four strips is treated as authoritative, open the Premier
+League handbook, the EFL regulations, the RFEF Código Disciplinario and the
+FIGC Codice di Giustizia Sportiva on an unrestricted network and confirm the
 thresholds, the gates and the ban lengths against the tables above.
 
 ## Sources
@@ -126,3 +148,4 @@ thresholds, the gates and the ban lengths against the tables above.
 - Players close to a ban, Premier League —
   <https://www.premierleague.com/en/news/4425344/which-players-are-suspended-or-close-to-a-ban-in-fantasy>
 - Spain: see `docs/spain-suspensions.md` for the RFEF sources.
+- Italy: see `docs/italy-suspensions.md` for the FIGC sources.

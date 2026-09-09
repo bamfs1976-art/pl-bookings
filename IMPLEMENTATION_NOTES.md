@@ -6,6 +6,97 @@ work, newest first: what changed, what was deferred and why. Everything before
 in [docs/decisions.md](docs/decisions.md); the audit itself is
 [docs/audit-2026-07.md](docs/audit-2026-07.md).
 
+## Serie A desk: closing entry (2026-09-09)
+
+The fifth desk is built and wired. Eight commits, one per task, in the order
+the brief set them out. What follows is what a reviewer needs before deciding
+whether to merge, and every place the work stops short of the definition of
+done.
+
+**What ships.** `/seriea` renders twenty clubs, per-player rates, a referee
+table, an appointments strip and a suspension strip on the Italian rungs; the
+La Liga desk, its guards and its numbers are untouched. The registry
+(`data/leagues.py`) carries Serie A as a discovered division on football-data
+`I1` and API-Football league 135, with Serie B (`SERB`, league 136) as its
+feeder. `data/build_seriea_data.py` produces the dataset through the shared La
+Liga builder configured for Italy, so the two discovered leagues cannot drift
+about what a booking risk is. `scripts/check-seriea.mjs` is the one new guard
+the brief allowed and is wired into `ci.yml`.
+
+**The suspension rule disagrees with the brief, deliberately.** The brief said
+the 5th, 10th and 15th caution then every second one. Three independent
+quotations of art. 19 of the FIGC's Codice di Giustizia Sportiva all give 5,
+then 10, 14, 17, 19, then every caution, and that is what the desk prices.
+`docs/italy-suspensions.md` sets out both readings, the sources, and the fact
+that the Codice itself could not be opened from here. If the brief turns out
+to be right, the fix is five lines in the registry and nothing else.
+
+**The budget, from `python3 data/api_budget.py` with four divisions:**
+
+| Day | As observed | Worst case | Worst case as a share of 7,500 |
+|---|---|---|---|
+| typical | 1,623 | 3,063 | 41% |
+| peak | 2,127 | 4,767 | 64% |
+
+The brief's condition was a worst case under 70% of the allowance. It is 64%,
+and `check-api-budget.mjs` passes. The Serie A fixture list does not exist
+yet, so `api_budget.league_shapes` shapes that division from the registry (20
+clubs, 380 matches) and says so on stderr; once the harvest lands, the file
+wins and a test requires the two to agree.
+
+**What is not done, and why.**
+
+1. **No Serie A data has been harvested.** API-Football is unreachable from
+   this environment (the egress proxy refuses the CONNECT), so
+   `seriea_clubs.json`, `seriea_players.json`, `serieb_players.json`,
+   `sa_squads.json`, `seriea_season_cards.json`, `seriea_ref_fixtures.js`,
+   `seriea_fixtures.js`, `seriea_refs.json` and `seriea_data.js` do not exist
+   in the repository. Every guard that reads them skips with a printed note
+   rather than failing, and `check-seriea.mjs` skips entirely. **The desk is
+   therefore wired and unproven**: the definition of done asks for a page
+   rendering twenty clubs with a 380-of-380 referee join, and that cannot be
+   established until the Data refresh workflow has run on a runner with the
+   key. That run is the next step and its output belongs in this file.
+2. **The referee join count is unknown.** It must be 380 of 380; below that is
+   a blocker by the brief and by `check-seriea.mjs`, which fails a table built
+   on less than 95% of the season.
+3. **The AIA appointments route is unproven.** `aia-figc.it` and every mirror
+   tried refuse the network here, so the index shape and the block layout come
+   from published excerpts of the articles rather than the pages. The parser,
+   the chooser and the surname resolver are all tested against those excerpts
+   without the network. Until a `fixtures.yml` run shows the fetch working,
+   the official on a Serie A fixture card comes from the API-Football feed,
+   and the page says so in its Guide.
+4. **No `check-desk-parity` script exists.** The brief listed it among the
+   guards that must pass with five desks. The repository has
+   `docs/desk-parity.md` (a document, not a script); the parity checks
+   themselves live across `check-nav`, `check-styles`, `check-firstrun` and
+   `check-desk-widgets`, and all four now include `seriea.html`.
+
+**Guards and page lists that gained the fifth desk**: `check-nav`,
+`check-styles`, `check-mobile`, `check-clock`, `check-inline`,
+`check-contrast`, `check-palette`, `check-firstrun`, `check-desk-widgets`,
+`check-suspension`, `check-cross-refs`, `check-derbies`, `check-share`,
+`check-models`, `check-matchday`, `check-match-record`, `check-referees`,
+`check-appointments`, `check-fetch-appointments`, `check-extra-feeds`,
+`check-api-budget`, `check-build-data`, plus `accas.mjs`, `form-season.mjs`
+and `ref-coverage.mjs`, which now skip a division whose dataset the workflow
+has not produced yet and say so on stderr rather than crashing.
+
+**Deliberate changes to existing guards, and why**: `check-models` expected
+exactly three harvests following the form transition and now expects four
+(the Serie A squads join them); `check-referees` expected
+`for L in PL EFLC LL` in `fixtures.yml` and now expects `SA` too, and checks
+`refresh_seriea` and `season_it` alongside the other inputs;
+`check-fetch-appointments` requires the appointments loop to cover Serie A;
+`check-cross-refs` reads a fourth referee table. Each was updated because the
+change under it was deliberate, and each was confirmed to still fail on the
+old shape.
+
+**The full CI list passes locally**, 58 steps, with the Serie A data files
+absent. `python3 data/test_seriea.py` is 23 tests, `data/test_appointments.py`
+36, `data/test_leagues.py` 29, `tests/test-core.mjs` 169.
+
 ## Serie A desk, task 7: budget, workflows and check-seriea.mjs (2026-09-09)
 
 `data/api_budget.py` shapes four divisions. Until the refresh workflow has
@@ -358,10 +449,16 @@ Deferred, and why:
 
 - **The first backtest report with numbers in it.** The fix cannot run here
   (the FPL endpoint is unreachable from this environment) and, with three
-  gameweeks played, the first scored run needs gameweek 5 anyway. The next
+  gameweeks played, the first scored run needs gameweek 4 anyway. The next
   scheduled Data refresh writes the dated "no scoring run yet" report; the
-  first scored report follows gameweek 5. Reading it is a person's job before
+  first scored report follows gameweek 4. Reading it is a person's job before
   anyone touches the model.
+
+  *Corrected 9 September 2026: this entry and the closing one below first said
+  gameweek 5. The warm-up in `scripts/backtest.mjs` is
+  `max(first round + 3, the fifth round present)`, which on rounds 1 to 3 is
+  round 4, and the report the refresh wrote on 9 September names round 4 as
+  the first it could score.*
 - **Sign-in on the deployed preview** with a real account, then pick sync and
   the AI review. Neither the preview nor `supabase.co` is reachable from
   here. The sign-in flow was driven in headless Chromium against a local
@@ -507,8 +604,9 @@ history cannot be harvested here, and the fix has not yet run on the runner.
 The next scheduled Data refresh after this lands writes and commits the report.
 On 8 September the 2026-27 season has three completed gameweeks, so that first
 report will say "no scoring run yet" with the counts, and the first scored run
-lands once gameweek 5 is complete: the walk-forward warms up to round 5 and
-needs 200 training rows behind it. The model is untouched by any of this.
+lands once gameweek 4 is complete: the walk-forward warms up to round 4 (the
+rule is `max(first round + 3, the fifth round present)`) and needs 200 training
+rows behind it. *Corrected 9 September 2026: this said gameweek 5.* The model is untouched by any of this.
 
 Noted for later, not changed: `harvest_history.py --season-past` reads FPL's
 `history_past`, which is one row per season rather than per match, so that

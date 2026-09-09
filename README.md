@@ -28,14 +28,15 @@ at the bottom.
 
 Longer: [docs/overview.md](docs/overview.md) and [docs/views.md](docs/views.md).
 
-## The four desks
+## The five desks
 
 | Desk | Route | File | Dataset | Notes |
 |---|---|---|---|---|
-| Today | `/`, `/today`, `/record`, `/booked`, `/accas`, `/derbies` | `today.html` | all three, loaded in same-origin frames via `data-frame.html` | One date across every league, the season calendar, the graded track record, the bookings ledgers and the accas. The home page. |
+| Today | `/`, `/today`, `/record`, `/booked`, `/accas`, `/derbies` | `today.html` | all four, loaded in same-origin frames via `data-frame.html` | One date across every league, the season calendar, the graded track record, the bookings ledgers and the accas. The home page. |
 | Premier League | `/pl` | `index.html` | `data/pl_data.js`, `data/model.js`, `data/pl_fixtures.js` | The original desk. Live card counts, availability and fixtures from the FPL API through a Netlify Function proxy. Sign-in, tracker, AI review, screener, methodology view. |
 | Championship | `/eflc` | `eflc.html` | `data/eflc_data.js`, `data/eflc_fixtures.js` | Referees from the free English match records; squads and fixtures from API-Football. No runtime fetches. |
 | La Liga | `/laliga` | `laliga.html` | `data/laliga_data.js`, `data/laliga_fixtures.js` | Card rates from the free Spanish records; the official's name bought from API-Football and joined on. No runtime fetches. |
+| Serie A | `/seriea` | `seriea.html` | `data/seriea_data.js`, `data/seriea_fixtures.js` | Built like La Liga: card rates from the free Italian records, the official's name bought and joined on, promoted clubs on Serie B form, the Italian suspension ladder. No runtime fetches. |
 
 A league switcher on every page links all of them, and `scripts/check-nav.mjs`
 fails CI if a desk becomes unreachable. Routes are in `_redirects`. Shared
@@ -82,7 +83,7 @@ it pushes, and the CI workflow re-checks each commit they make:
 
 | Workflow | Schedule (UTC) | What it writes |
 |---|---|---|
-| Data refresh | daily 04:10 | Player, club and referee datasets for all three desks, the season-prior model, the vendored match model, this season's fouls, the fixture lists, cup and European dates, and `backtest_report.md` |
+| Data refresh | daily 04:10 | Player, club and referee datasets for all four desks, the season-prior model, the vendored match model, this season's fouls, the fixture lists, cup and European dates, and `backtest_report.md` |
 | Fixtures and referee appointments | 07:20, 15:20, 19:20 daily; 17:20 on the day | Fixture lists with appointments, the published-appointments overlay, the bookings ledgers |
 | Confirmed team sheets | hourly 10:05 to 21:05 | Confirmed XIs near kick-off |
 | Extra API-Football feeds | 05:40, 11:40, 16:40, 20:40 | Standings, injuries, odds, predictions, card events, team and fixture stats (all optional to the desks) |
@@ -134,7 +135,7 @@ yellow rate per 90 shrunk toward a positional prior, scaled by his share of his
 side's minutes, the venue, the appointed referee (yellows per game blended with
 cards per foul, at the 3.71 pivot when the official has too thin a record), a
 derby boost and the game-state factor from a vendored Dixon-Coles match model.
-The three desks price through the same function, `PLDCore.pCardSeason`, and
+The four desks price through the same function, `PLDCore.pCardSeason`, and
 `scripts/check-models.mjs` holds each within a tenth of its division's real
 card rate. Fouls per 90 drive the *ranking* (the risk score) and not the price.
 The constants live in `data/model.js` and are not changed without a backtest.
@@ -191,7 +192,7 @@ Moved from the old README, unchanged, one file per subject:
 - [docs/navigation.md](docs/navigation.md): the league switcher and why it had to be added.
 - [docs/mobile.md](docs/mobile.md): the PWA, the share sheet on iOS, touch targets.
 - [docs/data-pipeline.md](docs/data-pipeline.md): every build script and the Data refresh Action.
-- [docs/leagues.md](docs/leagues.md): the Championship and La Liga desks, the suspension schemes.
+- [docs/leagues.md](docs/leagues.md): the Championship, La Liga and Serie A desks, the suspension schemes.
 - [docs/share-cards.md](docs/share-cards.md): the cards, `/today` and the season calendar.
 - [docs/backtest.md](docs/backtest.md): the in-page backtest and its result.
 - [docs/vendored-libraries.md](docs/vendored-libraries.md): what is vendored and how the bytes are proved.
