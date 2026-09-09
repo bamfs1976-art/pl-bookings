@@ -32,7 +32,7 @@
  *
  *     node scripts/check-fetch-appointments.mjs
  */
-import { readFileSync } from 'node:fs';
+import { readFileSync, existsSync } from 'node:fs';
 import { execFileSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
@@ -195,13 +195,80 @@ for (const league of ['LL', 'EFLC']) {
     'skips cup competitions — the slot is spent for nothing');
 }
 
+/* ---- 3c. the Italian article: found by its round, read as its layout ---- */
+{
+  /* The AIA slug names the giornata and carries a rising article id. The
+     chooser must take the article for a PENDING round and, where last
+     season's article for the same round is still listed, the newer id; and
+     it must find the slug however the index names it, as the EFL's does.
+     Then the body, wrapped in the markup an article carries, must come out
+     as its blocks: the referee is the first line under the fixture and the
+     assistants' pair, the fourth official and the video officials never
+     are. None of this touches the network; the site itself was unreachable
+     from where this was written, so the layout is the published excerpts'
+     and the first live run is what confirms it. */
+  const got = JSON.parse(py(
+    'import sys, json, datetime as dt; sys.path.insert(0,"data")\n' +
+    'import fetch_appointments as F, ingest_appointments as I\n' +
+    'idx = "https://www.aia-figc.it/news/?c=9"\n' +
+    'page = (\'<a href="/news/serie-a-enilive-designazioni-4a-giornata-27612/">n</a>\'\n' +
+    '        \'<a href="/news/serie-a-enilive-designazioni-4-giornata-25700/">old</a>\'\n' +
+    '        \'<url><loc>https://www.aia-figc.it/news/serie-a-enilive-designazioni-5a-giornata-27640/</loc></url>\'\n' +
+    '        \'{"url":"https://www.aia-figc.it/news/serie-a-enilive-designazioni-3a-giornata-27600/"}\')\n' +
+    'rounds = [((dt.date(2026, 9, 11), 4), 10), ((dt.date(2026, 9, 19), 5), 10)]\n' +
+    'chosen = F.aia_candidates([(idx, page)], rounds)\n' +
+    'article = "\\n".join([\n' +
+    '  "<html><head><style>.x{a:b}</style><script>var t=1</script></head><body>",\n' +
+    '  "<h1>SERIE A ENILIVE - DESIGNAZIONI 4a GIORNATA</h1>",\n' +
+    '  "<p>Si comunicano le designazioni degli arbitri, assistenti, IV ufficiali, VAR e AVAR:</p>",\n' +
+    '  "<p><strong>VENEZIA &#8211; FIORENTINA</strong>&nbsp;&nbsp; Venerd&igrave; 11/09 h. 20.45<br>",\n' +
+    '  "FOURNEAU<br>ALASSIO &#8211; BARONE<br>IV: AYROLDI<br>VAR: DIONISI<br>AVAR: MAGGIONI</p>",\n' +
+    '  "<p>LAZIO &#8211; MILAN   Sabato 12/09 h.18.00</p><p>MARCENARO</p>",\n' +
+    '  "<p>ROSSI C. &#8211; LO CICERO</p><p>IV: SOZZA</p><p>VAR: MERAVIGLIA</p><p>AVAR: PICCININI</p>",\n' +
+    '  "<p>INTER &#8211; UDINESE   Luned&igrave; 14/09 h. 20.45</p><p>BINDONI &#8211; CAPALDO</p>",\n' +
+    '  "</body></html>"])\n' +
+    't = F.to_text(article)\n' +
+    'rows, problems = I.parse_aia(t, 2026)\n' +
+    'print(json.dumps({"chosen": chosen, "rows": rows, "problems": problems,\n' +
+    '                  "script": ("var t=1" in t)}))\n'));
+  assert.deepEqual(got.chosen, {
+    4: 'https://www.aia-figc.it/news/serie-a-enilive-designazioni-4a-giornata-27612/',
+    5: 'https://www.aia-figc.it/news/serie-a-enilive-designazioni-5a-giornata-27640/',
+  }, `the AIA article chooser picked ${JSON.stringify(got.chosen)}: it must take ` +
+     'the pending rounds only, the newest id per round, and find a slug in an ' +
+     'anchor, a sitemap <loc> or a JSON island alike');
+  assert.equal(got.rows.length, 2,
+    `the AIA article reduced to ${got.rows.length} appointments, not 2: the ` +
+    'tag stripper has lost the line breaks the parser reads blocks on');
+  assert.deepEqual(got.rows.map((r) => [r.home, r.away, r.date, r.ko, r.ref]), [
+    ['VENEZIA', 'FIORENTINA', '2026-09-11', '20:45', 'FOURNEAU'],
+    ['LAZIO', 'MILAN', '2026-09-12', '18:00', 'MARCENARO'],
+  ], 'the Italian blocks came out wrong');
+  /* The third block has no referee line: the assistants' pair sits where the
+     referee should be. That is refused by name, never read as "BINDONI". */
+  assert.equal(got.problems.length, 1, `expected one refused block, got ${JSON.stringify(got.problems)}`);
+  assert.match(got.problems[0], /INTER v UDINESE/);
+  assert.ok(!got.script, 'script content survived into the article text');
+
+  /* And --list works for the third desk once its fixture file exists; before
+     the first harvest there is nothing to read pending rounds from, and the
+     fetcher says so rather than pretending the week is covered. */
+  if (existsSync(join(root, 'data', 'seriea_fixtures.js'))) {
+    const out = execFileSync('python3',
+      ['data/fetch_appointments.py', '--league', 'SA', '--list', '--days', '8'],
+      { cwd: root, encoding: 'utf8' });
+    assert.ok(/fixture\(s\) without a referee/.test(out) && /would search|nothing to fetch/.test(out),
+      `--list for SA neither named a source nor said the week is covered:\n${out}`);
+  }
+}
+
 /* ---- 4. and the workflow actually runs it ------------------------------- */
 {
   const wf = readFileSync(join(root, '.github', 'workflows', 'fixtures.yml'), 'utf8');
   assert.ok(/fetch_appointments\.py/.test(wf),
     '.github/workflows/fixtures.yml never runs data/fetch_appointments.py — ' +
     'the appointments are automated in the repository and not in CI');
-  for (const league of ['LL', 'EFLC']) {
+  for (const league of ['LL', 'EFLC', 'SA']) {
     assert.ok(new RegExp(`for L in [^\\n]*\\b${league}\\b`).test(wf),
       `fixtures.yml does not fetch appointments for ${league}`);
   }
@@ -226,8 +293,9 @@ for (const league of ['LL', 'EFLC']) {
     'checked, and the commit step would push them unverified');
 }
 
-console.log('check-fetch-appointments OK: both leagues ask only for the rounds '
+console.log('check-fetch-appointments OK: every league asks only for the rounds '
   + 'they are missing, the Spanish prober rebuilds every sheet URL the RFEF has '
   + 'actually published, an EFL article survives its own markup in all three '
-  + 'layouts, and the fixture workflow runs the fetch before it guards and '
+  + 'layouts, the Italian article is chosen by its round and read as its blocks, '
+  + 'and the fixture workflow runs the fetch before it guards and '
   + 'commits — absorbing a failed fetch rather than erasing an overlay.');

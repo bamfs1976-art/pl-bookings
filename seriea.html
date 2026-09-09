@@ -1,0 +1,2171 @@
+<!doctype html>
+<html lang="en" class="lg-sa" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data: https://cdn.sportmonks.com https://media.api-sports.io; connect-src 'self'">
+<title>Bookings Desk · Serie A</title>
+<meta name="description" content="Player booking risk, club discipline and a referee watchlist for the 2026-27 Italian Serie A, built on 2025-26 form.">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<!-- PNG fallbacks. The SVG is the better icon where it is honoured, but
+     Safari has never used one for a tab and several feed readers and
+     bookmark managers do not either — they fall back to /favicon.ico or
+     nothing at all. These two are drawn for their size rather than
+     scaled down from the 512: see scripts/gen-favicons.mjs. -->
+<link rel="icon" type="image/png" sizes="32x32" href="/icons/icon-32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="/icons/icon-16.png">
+<!-- Home-screen install on iOS. Without the manifest and the touch icon, adding
+     this page to an iPhone home screen produces a screenshot thumbnail that
+     opens in a Safari tab rather than the installed app. -->
+<link rel="manifest" href="/manifest.webmanifest">
+<link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
+<meta name="theme-color" content="#052e16">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Bookings Desk">
+<link rel="stylesheet" href="assets/tw.css">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400..800&family=Hanken+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  /* The palette — neutrals, semantics and this desk's league colour — lives in
+     assets/tw.css and is selected by the lg-* class on <html>. It used to be
+     declared here, in four near-identical copies that had already drifted.
+     Do not reintroduce a :root colour block: scripts/check-palette.mjs fails
+     the build on one, because that is how La Liga came to wear the
+     Championship's purple while its own nav dot was orange. */
+  *{box-sizing:border-box}
+  body{background:var(--bg);color:var(--text);font-family:'Hanken Grotesk',system-ui,sans-serif;margin:0;-webkit-font-smoothing:antialiased}
+
+  .topbar{position:sticky;top:0;z-index:30;height:var(--topbar-h);display:flex;align-items:center;
+    background:color-mix(in srgb,var(--surface) 88%,transparent);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);
+    border-bottom:1px solid var(--border)}
+  table{border-collapse:collapse;width:100%;font-size:13.5px}
+  th,td{padding:7px 9px;text-align:left;border-bottom:1px solid var(--border);white-space:nowrap}
+  /* top:0, NOT the topbar height. .tablewrap has overflow-x, which makes IT
+     the scroll container for a sticky child — so a top offset pushes the
+     header down from the wrapper's edge and lays it over the first row
+     instead of pinning it to the viewport. */
+  th{position:sticky;top:0;background:var(--surface-2);font-size:11.5px;text-transform:uppercase;
+    letter-spacing:.04em;color:var(--text-2);cursor:pointer;user-select:none;z-index:2}
+  th[data-sort]:hover{color:var(--text)}
+  th .arr{opacity:.45;font-size:10px}
+  tbody tr:hover{background:var(--surface-2)}
+  td.num,th.num{text-align:right;font-family:var(--mono);font-variant-numeric:tabular-nums}
+
+  .pill.sb{background:color-mix(in srgb,var(--warn) 18%,transparent);border-color:transparent;color:var(--warn-ink)}
+  .bar{height:6px;border-radius:99px;background:var(--surface-3);overflow:hidden;min-width:56px}
+  .bar i{display:block;height:100%;background:var(--accent)}
+  .susp{margin-bottom:12px}
+  @media (max-width:640px){ th{position:static} .hero h1{font-size:22px} }
+
+  /* ---- iPhone ---------------------------------------------------------- */
+  /* The viewport is declared viewport-fit=cover, which extends the page under
+     the notch and the home indicator. That is only correct if the content is
+     padded back out of them — without this the topbar sits under the status
+     bar and the footer under the home indicator. */
+  body{padding-left:env(safe-area-inset-left);padding-right:env(safe-area-inset-right)}
+  .topbar{padding-top:env(safe-area-inset-top);height:calc(60px + env(safe-area-inset-top))}
+  /* Safari inflates text in landscape unless told not to. */
+  html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
+  /* Tapping a control twice quickly must not zoom the page. */
+  button,select,label,input{touch-action:manipulation}
+
+  /* TOUCH TARGETS. Apple's minimum is 44px; the star was 15. On a mouse a
+     15px target is a small button, on a thumb it is a miss — and there are
+     hundreds of them in the table. Scoped to coarse pointers so the desktop
+     density is untouched. A 16px font on inputs is also what stops iOS
+     zooming the whole page when one takes focus. */
+  @media (pointer: coarse){
+    /* A select sizes itself to its LONGEST OPTION, and 16px — which is what
+       stops iOS zooming the page when the control takes focus — pushed
+       /today's date picker to 428px and La Liga's referee filter to 384px.
+       Neither overflowed visibly: Safari widens the layout viewport to fit
+       instead, silently shrinking the whole page. Capped rather than
+       shrinking the font back, because the zoom-on-focus is the worse bug. */
+    select{max-width:100%}
+    .star{font-size:20px;padding:10px 8px;min-height:44px;min-width:40px;
+      display:inline-flex;align-items:center;justify-content:center}
+    .btn,select,input[type=text],input[type=search],input:not([type]){min-height:44px;font-size:16px}
+    .tab{min-height:44px}
+    input[type=checkbox],input[type=radio]{width:20px;height:20px}
+    label.chk,.seg label{min-height:44px;display:inline-flex;align-items:center}
+  }
+</style>
+</head>
+<body>
+<a href="#main" class="skip">Skip to content</a>
+
+<header class="topbar">
+  <div class="wrap" style="display:flex;align-items:center;width:100%">
+    <div class="brand"><span class="dot">SA</span><span class="bname">Bookings Desk</span></div>
+    <span class="spacer"></span>
+    <button class="tb-tour" id="tourBtn" type="button">How to read this page</button>
+    <button class="btn" id="themeBtn" type="button" aria-label="Toggle dark mode">Dark</button>
+  </div>
+</header>
+
+<!-- Every desk reachable from every desk. See assets/tw.css for why this
+     exists: the other divisions were live but effectively unreachable. -->
+<nav class="leaguebar" aria-label="Leagues">
+  <div class="leaguebar-in">
+    <a class="lb-item lb-today" href="/"><span class="lb-dot"></span><span class="lb-full">Today's matches</span><span class="lb-abbr">Today</span></a>
+    <a class="lb-item lb-accas" href="/accas"><span class="lb-dot"></span><span class="lb-full">Accas</span><span class="lb-abbr">Accas</span></a>
+    <a class="lb-item lb-derbies" href="/derbies"><span class="lb-dot"></span><span class="lb-full">Derbies</span><span class="lb-abbr">Derbies</span></a>
+    <a class="lb-item lb-record" href="/record"><span class="lb-dot"></span><span class="lb-full">Track record</span><span class="lb-abbr">Record</span></a>
+    <a class="lb-item lb-booked" href="/booked"><span class="lb-dot"></span><span class="lb-full">Most booked</span><span class="lb-abbr">Booked</span></a>
+    <a class="lb-item lb-pl" href="/pl"><span class="lb-dot"></span><span class="lb-full">Premier League</span><span class="lb-abbr">PL</span></a>
+    <a class="lb-item lb-eflc" href="/eflc"><span class="lb-dot"></span><span class="lb-full">Championship</span><span class="lb-abbr">Championship</span></a>
+    <a class="lb-item lb-ll" href="/laliga"><span class="lb-dot"></span><span class="lb-full">La Liga</span><span class="lb-abbr">La Liga</span></a>
+    <a class="lb-item lb-sa" href="/seriea" aria-current="page"><span class="lb-dot"></span><span class="lb-full">Serie A</span><span class="lb-abbr">Serie A</span></a>
+    <a class="lb-item lb-season" href="/today"><span class="lb-dot"></span><span class="lb-full">Season calendar</span><span class="lb-abbr">Season</span></a>
+  </div>
+</nav>
+
+
+<main class="wrap" id="main">
+  <section class="hero">
+    <h1>Serie A 2026-27</h1>
+    <p class="muted" style="margin:8px 0 0;max-width:70ch">
+      Player booking risk, club discipline and a referee watchlist, built on 2025-26 form.
+      Pick the official for a fixture and every probability rescales to his card rate.
+    </p>
+    <p class="combined-note">
+      <span class="cn-dots" aria-hidden="true"><i></i><i></i><i></i></span>
+      <span>Playing the same day as the other divisions? <a href="/">Today&rsquo;s combined card</a>
+      ranks every league&rsquo;s matches on one date, with one share card across the lot &mdash; or open the
+      <a href="/today">whole-season calendar</a>, or every
+      <a href="/derbies">derby in the four divisions</a> in date order.
+      <button type="button" class="linkish" data-open-tour>How to read this page</button></span>
+    </p>
+    <div class="stats" id="stats"></div>
+  </section>
+
+  <nav class="tabs" role="tablist" aria-label="Sections">
+    <button class="tab" role="tab" id="tab-matchday" aria-controls="panel-matchday" aria-selected="false">This Matchday</button>
+    <button class="tab" role="tab" id="tab-players"  aria-controls="panel-players"  aria-selected="false">Players</button>
+    <button class="tab" role="tab" id="tab-fixtures" aria-controls="panel-fixtures" aria-selected="false">Fixtures</button>
+    <button class="tab" role="tab" id="tab-clubs"    aria-controls="panel-clubs"    aria-selected="false">Clubs</button>
+    <button class="tab" role="tab" id="tab-referees" aria-controls="panel-referees" aria-selected="false">Referees</button>
+    <button class="tab" role="tab" id="tab-guide"    aria-controls="panel-guide"    aria-selected="false">Guide</button>
+  </nav>
+
+  <!-- ── Players ────────────────────────────────────────────────────────── -->
+
+  <section class="panel" id="panel-matchday" role="tabpanel" aria-labelledby="tab-matchday" hidden>
+    <div class="stats" id="mdStats"></div>
+    <div class="card" style="margin-top:12px">
+      <div class="controls">
+        <b id="mdTitle">This Matchday</b>
+        <span class="faint" id="mdWhen" style="font-size:12.5px"></span>
+        <span class="spacer"></span>
+        <button class="btn primary" id="mdShareBtn" type="button">&#8681; Share matchday</button>
+      </div>
+      <div id="mdList"></div>
+      <p class="note" id="mdNote"></p>
+    </div>
+  </section>
+
+  <section class="panel" id="panel-players" role="tabpanel" aria-labelledby="tab-players" hidden>
+    <div class="card susp" id="suspCard" hidden>
+      <div class="susp-head">
+        <h2 style="font-size:15px">Suspension watch</h2>
+        <span class="faint" id="suspSub" style="font-size:12.5px"></span>
+      </div>
+      <div id="suspList"></div>
+      <p class="note" id="suspNote"></p>
+    </div>
+    <div class="card">
+      <div class="controls">
+        <select id="fClub" aria-label="Filter by club"></select>
+        <select id="fPos" aria-label="Filter by position">
+          <option value="">All positions</option><option>GK</option><option>DF</option><option>MF</option><option>FW</option>
+        </select>
+        <select id="fRef" aria-label="Referee for the fixture"></select>
+        <input type="search" id="fSearch" placeholder="Search player…" aria-label="Search player">
+        <label class="chk"><input type="checkbox" id="fMin" checked> 450+ minutes</label>
+        <button class="btn" id="csvBtn" type="button">&#8681; CSV</button>
+        <span class="faint" id="csvNote" style="font-size:12.5px"></span>
+        <label class="chk"><input type="checkbox" id="fStar"> ★ only</label>
+        <span class="seg-view" role="tablist" aria-label="How to show the players">
+          <button type="button" data-view="table" role="tab" aria-selected="true">Table</button>
+          <button type="button" data-view="cards" role="tab" aria-selected="false">All players</button>
+        </span>
+        <span class="spacer"></span>
+        <span class="faint" id="count" style="font-size:12.5px"></span>
+      </div>
+      <div id="apCards" class="ap-grid" hidden></div>
+      <div class="tablewrap" id="tableWrap">
+        <table id="tblPlayers">
+          <thead><tr>
+            <th style="width:26px" aria-label="Watchlist"></th>
+            <th data-sort="n">Player</th>
+            <th data-sort="c">Club</th>
+            <th data-sort="p">Pos</th>
+            <th class="num" data-sort="min">Min</th>
+            <th class="num" data-sort="yc">YC</th>
+            <th class="num" data-sort="y">Y/90</th>
+            <th class="num" data-sort="f">Fouls/90</th>
+            <th class="num" data-sort="r">Risk</th>
+            <th class="num" data-sort="prob">P(card)</th>
+            <th class="num" data-sort="odds">Fair</th>
+            <th data-sort="b">Basis</th>
+          </tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+      <div class="empty" id="emptyPlayers" hidden>Nothing matches those filters.</div>
+      <p class="note" id="refNote"></p>
+    </div>
+  </section>
+
+  <!-- ── Fixtures ───────────────────────────────────────────────────────── -->
+  <section class="panel" id="panel-fixtures" role="tabpanel" aria-labelledby="tab-fixtures" hidden>
+    <div class="card">
+      <div class="controls">
+        <select id="fxRound" aria-label="Matchday"></select>
+        <select id="fxOrder" aria-label="Order">
+          <option value="heat">Hottest first</option>
+          <option value="time">By kick-off</option>
+        </select>
+        <button class="btn" id="fxShareBtn" type="button" title="Download a shareable card of this matchday ranked by booking heat">⬇ Share matchday</button>
+        <span class="spacer"></span>
+        <span class="faint" id="fxCount" style="font-size:12.5px"></span>
+      </div>
+      <div id="fxList"></div>
+      <div class="empty" id="fxEmpty" hidden></div>
+      <p class="note">
+        Booking heat is the expected number of cards in the match: every squad player’s chance of
+        being carded, weighted by how likely he is to be on the pitch, added up across both sides.
+        Where the referee has been appointed the feed supplies him and the card is marked
+        <span class="pill">appointed</span>; where he has not, choose one and the whole card
+        re-prices. Your choice is remembered in this browser.
+      </p>
+    </div>
+  </section>
+
+  <!-- ── Clubs ──────────────────────────────────────────────────────────── -->
+  <section class="panel" id="panel-clubs" role="tabpanel" aria-labelledby="tab-clubs" hidden>
+    <div class="card">
+      <div class="tablewrap">
+        <table id="tblClubs">
+          <thead><tr>
+            <th data-sort="name">Club</th>
+            <th data-sort="basis">Form basis</th>
+            <th class="num" data-sort="ca">Cards/game</th>
+            <th class="num" data-sort="caH">Home</th>
+            <th class="num" data-sort="caA">Away</th>
+            <th class="num" data-sort="fm">Fouls/game</th>
+            <th data-sort="tier">Tier</th>
+            <th class="num" data-sort="squad">Squad</th>
+            <th data-sort="top">Top booking risk</th>
+          </tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+      <p class="note">
+        Cards per game are counted directly from the free football-data.co.uk Italian match
+        records — every match, both sides, yellows plus reds — so the home and away split is measured
+        rather than estimated. The clubs promoted this summer were not in this division last season,
+        have no such record, and show “—”; the app falls back to the league median for them rather
+        than borrowing a number from a different competition.
+      </p>
+    </div>
+  </section>
+
+  <!-- ── Referees ───────────────────────────────────────────────────────── -->
+  <section class="panel" id="panel-referees" role="tabpanel" aria-labelledby="tab-referees" hidden>
+    <div class="card">
+      <div class="tablewrap">
+        <table id="tblRefs">
+          <thead><tr>
+            <th data-sort="n">Referee</th>
+            <th class="num" data-sort="matches">Matches</th>
+            <th class="num" data-sort="ypg">Yellows/game</th>
+            <th class="num" data-sort="fpg">Fouls/game</th>
+            <th class="num" data-sort="cpf">Cards/foul</th>
+            <th class="num" data-sort="red">Reds/game</th>
+            <th class="num" data-sort="pen">Pens/game</th>
+            <th class="num" data-sort="factor">×factor</th>
+            <th data-sort="factor">Strictness</th>
+          </tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+      <p class="note" id="refFoot"></p>
+    </div>
+  </section>
+
+  <!-- ── Guide ──────────────────────────────────────────────────────────── -->
+  <section class="panel" id="panel-guide" role="tabpanel" aria-labelledby="tab-guide" hidden>
+    <div class="card guide">
+      <h2 style="font-size:20px">How this desk works</h2>
+      <p>Every number here comes from 2025-26 form. The 2026-27 Serie A season starts in
+      late August; until it has minutes in it, this is a pre-season book.</p>
+      <p><b>Serie A produced 3.70 yellows a game in 2025-26</b>, counted from the free match
+      records this desk is built on: every match, both sides. That is the rate every probability
+      here is calibrated against. Italian football used to card more freely than that, and older
+      multi-season averages run higher; they are not used anywhere on this desk, because a
+      probability calibrated to a whistle that has moved is a wrong probability.</p>
+
+      <h3>The risk score</h3>
+      <p>A player's booking risk is <code>yellows per 90 × 2 + fouls committed per 90</code>. Fouls
+      are the larger term because they are the thing a referee reacts to; yellows are weighted
+      double because they are the outcome being priced. It is the same formula the Premier League
+      desk uses, from the same tested code (<code>assets/core.js</code>), so the two desks cannot
+      drift apart about what risk means.</p>
+
+      <h3>From risk to a probability</h3>
+      <p>The risk score is mapped through a logistic curve anchored so that the average
+      minutes-weighted player lands on the league's actual base rate — total yellows divided by
+      total player-matches. <b>Fair odds</b> are that probability inverted. They carry no margin, so
+      a bookmaker's price will always be shorter; the gap is his edge, not an error.</p>
+
+      <h3>The referee ×factor</h3>
+      <p>Choosing an official on the Players tab rescales every probability by his card rate. The
+      factor blends two signals equally: yellows per game against the league average, and
+      <b>cards per foul</b> — which divides out how foul-heavy his fixtures happened to be and is the
+      purer measure of a strict whistle. It is applied on the odds scale and clamped to ×0.75–×1.30,
+      so a strict referee cannot push an already-likely booking to a silly number.</p>
+
+      <h3>Suspension watch</h3>
+      <p>Italy bans a player for one match at his fifth caution, again at the tenth, the
+      fourteenth, the seventeenth and the nineteenth, and at every caution after that. The count
+      never resets and the ban never grows: there is no escalating ladder as in England, no
+      repeating cycle as in Spain and no matchday gate. The strip shows how far each player is
+      from his next threshold and the chance he reaches it within the next one, three or five
+      matches, from his shrunk yellow rate and the share of a match he tends to play. Before the
+      season starts it shows instead the matchday his fifth caution is projected to land on.</p>
+
+      <h3>Fixtures, heat and the card markets</h3>
+      <p><b>Booking heat</b> is the expected number of cards in the match. Every squad player's
+      chance of being carded is weighted by how likely he is to be on the pitch — last season's
+      minutes spread eleven starters across the squad — and the two sides are added together. On the
+      2025-26 squads it is calibrated against the card rate the division actually produced; the
+      Guide footer below reports the current figure on both sides of that comparison.</p>
+      <p>The over lines and <b>both teams carded</b> come from the same per-player probabilities,
+      combined exactly rather than simulated. They assume the cards are independent given the
+      referee, which is the usual simplification and is not quite true: a flashpoint produces two at
+      once. Read the over lines as a fair baseline, not a forecast.</p>
+      <p><b>Referees come from where the appointment is published</b>: those cards are
+      marked <span class="pill">appointed</span> and cannot be overridden here. On this desk they
+      come from two places. The AIA publishes each round's designations on its own site on the
+      Tuesday or Wednesday before the round, and the desk reads that article directly, which is
+      how a Serie A fixture carries an official days before the fixture feed names one. Where the
+      AIA has not published yet, the API-Football feed's own referee field is used. An appointed
+      official this desk has no card record for is priced at &times;1.00 and says so, rather than
+      quietly guessing. Where one is not yet
+      named, choose an official and the whole card re-prices; that choice is remembered in this
+      browser only. An appointed referee this desk has no card record for is priced at ×1.00 and
+      says so, rather than quietly guessing.</p>
+
+      <h3>What “basis” means</h3>
+      <ul>
+        <li><span class="pill sa">SA</span> 2025-26 Serie A form. Same division, directly comparable.</li>
+        <li><span class="pill sb">SB</span> The clubs promoted this summer, whose 2025-26 form is a
+        Serie B record. Flagged because a foul rate earned in the second tier is not the same
+        evidence as one earned in the first.</li>
+        <li><span class="pill new">NEW</span> No usable record: minutes too few, or no fouls data. Rates
+        are blank rather than zero, because “unknown” and “never fouls” are different claims.</li>
+      </ul>
+
+      <h3>Known limits — read these before betting anything</h3>
+      <div class="warnbox">
+        <b>No live data.</b> The Premier League desk refreshes in-season from the official FPL API,
+        which is free, open and unauthenticated. Italy has no equivalent, so this desk is a static
+        book until it is refreshed.
+        <b>Nothing here knows who is injured, suspended, rested or dropped.</b> The fixture cards
+        name likely candidates from last season's minutes, not from a team sheet — a player who left
+        the club in the summer can still appear on one.
+      </div>
+      <ul>
+        <li><b>The suspension strip rests on a rule I could not read first-hand.</b> Art. 19 of
+        the FIGC's Codice di Giustizia Sportiva sets the first ban at the fifth caution and then
+        shortens the gap: “<span class="mono" style="font-size:12px">alla quinta, alla quarta, alla
+        terza, alla seconda ammonizione, ad ogni ulteriore ammonizione</span>”, which puts the bans
+        at 5, 10, 14, 17 and 19 and at every caution from there. That is corroborated across three
+        independent quotations of the article, but every attempt to open the Codice itself was
+        blocked, so it is not verified from the source document. <code>docs/italy-suspensions.md</code>
+        sets out exactly what was and was not checked, and records that the brief this desk was
+        built to stated a different progression.</li>
+        <li><b>The strip counts this season only.</b> Accumulation does not carry between seasons
+        and each competition counts separately, so Coppa Italia cautions never pool with league
+        ones. Until the season has been harvested every player is on zero and the strip says so,
+        forecasting who reaches five first rather than pretending to a live count.</li>
+        <li><b>No referee career history.</b> The English desks carry 26 seasons of it from a public
+        dataset. There is no Italian equivalent, so a referee here is described by last season only.</li>
+        <li><b>The promoted clubs have no club card rate.</b> They were in Serie B last season.</li>
+        <li><b>Small samples lie.</b> A player with 200 minutes and one foul reads as a high rate. The
+        450-minute filter is on by default for that reason; turn it off knowing what you are seeing.</li>
+        <li><b>Fair odds are a model, not a forecast.</b> They exclude the margin every real price
+        carries. Beating them is not the same as beating the bookmaker.</li>
+      </ul>
+
+      <h3>Where the data comes from</h3>
+      <ul>
+        <li><b>Players</b> — API-Football, fetched one club at a time so a squad is a squad rather
+        than a page of a league.</li>
+        <li><b>Club card rates, and every referee RATE</b> — football-data.co.uk match records,
+        public domain, free, no key. Every Italian match with both sides' cards and fouls.</li>
+        <li><b>Referee NAMES</b> — API-Football, and this is the one thing on this desk that is
+        bought. The free records above carry every card and every foul in Italy but name the
+        official on none of the 380 rows of 2025-26: it is a quirk of that source covering British
+        football, not a fact about Italy. So the name is taken from one fixtures call for the
+        completed season and joined onto the free rows by date and both clubs, after which every
+        published rate is computed from the free data exactly as it is for the English desks. The
+        paid dependency is a single column, not the foundation.</li>
+      </ul>
+      <p class="faint" id="prov" style="margin-top:18px"></p>
+    </div>
+  </section>
+
+  <!-- THREE NAMED GROUPS, and an age notice this desk did not have. See the
+       Championship footer for the reasoning; the three groups are identical
+       across the five desks by design and by guard. -->
+  <footer class="wrap" style="padding-left:0;padding-right:0">
+    <div class="ft">
+      <section class="ft-col" aria-labelledby="ftAbout">
+        <h2 class="ft-h" id="ftAbout">About &amp; method</h2>
+        <p>A statistical filter for Serie A player-bookings markets, built on 2025-26 form. A sibling of <a href="/pl">Bookings Desk for the Premier League</a>: same risk formula, same tested core, different competition. It does not pick players or price markets.</p>
+        <ul class="ft-list">
+          <li><a href="/pl">Premier League desk</a> &middot; <a href="/eflc">Championship desk</a> &middot; <a href="/laliga">La Liga desk</a> &middot; <a href="/">Today&rsquo;s matches</a></li>
+        </ul>
+      </section>
+      <section class="ft-col" aria-labelledby="ftData">
+        <h2 class="ft-h" id="ftData">Data sources</h2>
+        <ul class="ft-list">
+          <li><span class="ft-src">Player &amp; club form</span> — ScoutingStats, 2025-26</li>
+          <li><span class="ft-src">Referees and match records</span> — public-domain <a href="https://www.football-data.co.uk/" target="_blank" rel="noopener noreferrer">football-data.co.uk</a></li>
+          <li><span class="ft-src">Fixtures</span> — harvested schedule, absent until the harvest has run</li>
+        </ul>
+      </section>
+      <section class="ft-col" aria-labelledby="ftRG">
+        <h2 class="ft-h" id="ftRG">Responsible gambling</h2>
+        <div class="rg" role="note">
+          <span class="rg-18" aria-hidden="true">18+</span>
+          <span><strong>Over 18s only.</strong> Research, not betting advice — no result is guaranteed. Never stake more than you can afford to lose.
+            <br><a href="https://www.begambleaware.org/" target="_blank" rel="noopener noreferrer">BeGambleAware</a>
+            <span class="rg-sep" aria-hidden="true">·</span>
+            <a href="https://www.gamcare.org.uk/" target="_blank" rel="noopener noreferrer">GamCare</a>
+            <span class="rg-sep" aria-hidden="true">·</span>
+            <a href="https://www.gamstop.co.uk/" target="_blank" rel="noopener noreferrer">GAMSTOP</a>
+            <br>National Gambling Helpline <a href="tel:08088020133">0808 8020 133</a> (free, 24/7)</span>
+        </div>
+      </section>
+    </div>
+  </footer>
+</main>
+
+<script src="data/seriea_data.js"></script>
+<!-- Optional. Absent until the fixture harvest has run, and a 404 on a script
+     tag is harmless — the Fixtures tab says so rather than breaking. -->
+<script src="data/seriea_fixtures.js"></script>
+<script src="data/seriea_fxstats.js" onerror="void 0"></script>
+<script src="assets/accas.js"></script>
+<script src="assets/rotation.js"></script>
+<script src="assets/core.js"></script>
+<script src="data/seriea_h2h.js" onerror="void 0"></script>
+<!-- Confirmed team sheets. Absent until a harvest lands one, which is the
+     ordinary state; onerror keeps the page whole when the file is not there. -->
+<script src="data/lineups.js" onerror="void 0"></script>
+<!-- OPTIONAL, like the h2h above: a fixture absent from it prices off squad
+     minute-weights exactly as it always has, which is the state of most of a
+     round most of the time. -->
+
+<script src="assets/shell.js"></script>
+<script src="assets/tour.js"></script>
+<script src="assets/palette.js"></script>
+<script src="assets/save.js"></script>
+<script src="assets/leaguebar.js"></script>
+<script src="assets/clubcolours.js"></script>
+<script src="assets/share.js"></script>
+<script src="assets/suspension.js"></script>
+<script src="assets/a11y.js"></script>
+<script src="assets/price.js"></script>
+<script src="assets/livecards.js"></script>
+<script src="assets/profile.js"></script>
+<script>
+(function () {
+  'use strict';
+  var PLAYERS = (typeof SERIEA_PLAYERS !== 'undefined' && SERIEA_PLAYERS) || [];
+  var CLUBLIST = (typeof CLUBS !== 'undefined' && CLUBS) || [];
+  var REFLIST = (typeof REFS !== 'undefined' && REFS) || [];
+  var C = window.PLDCore;
+
+  var $ = function (s, r) { return (r || document).querySelector(s); };
+  var $$ = function (s, r) { return Array.prototype.slice.call((r || document).querySelectorAll(s)); };
+  var esc = function (s) {
+    return String(s == null ? '' : s).replace(/[&<>"']/g, function (ch) {
+      return ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[ch];
+    });
+  };
+  var n1 = function (x) { return x == null ? '—' : (Math.round(x * 10) / 10).toFixed(1); };
+  var n2 = function (x) { return x == null ? '—' : (Math.round(x * 100) / 100).toFixed(2); };
+  var pct = function (x) { return x == null ? '—' : (x * 100).toFixed(1) + '%'; };
+
+  /* ---- theme ------------------------------------------------------------ */
+  var THEME_KEY = 'seriea_desk_theme';
+  function setTheme(t) {
+    document.documentElement.setAttribute('data-theme', t);
+    $('#themeBtn').textContent = t === 'dark' ? 'Light' : 'Dark';
+    try { localStorage.setItem(THEME_KEY, t); } catch (e) {}
+  }
+  try {
+    var saved = localStorage.getItem(THEME_KEY);
+    setTheme(saved || (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'));
+  } catch (e) { setTheme('light'); }
+  $('#themeBtn').addEventListener('click', function () {
+    setTheme(document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark');
+  });
+
+  /* ---- watchlist -------------------------------------------------------- */
+  /* Its own key. Sharing pl_desk_v1 would let one desk's stars appear on the
+     other's players, which are different people with the same names. */
+  var STAR_KEY = 'seriea_desk_watch_v1';
+  var starred = {};
+  try { starred = JSON.parse(localStorage.getItem(STAR_KEY) || '{}') || {}; } catch (e) { starred = {}; }
+  var keyOf = function (p) { return p.c + '|' + p.n; };
+  function toggleStar(k) {
+    if (starred[k]) delete starred[k]; else starred[k] = 1;
+    try { localStorage.setItem(STAR_KEY, JSON.stringify(starred)); } catch (e) {}
+  }
+
+  /* ---- model ------------------------------------------------------------ */
+  /* Rates are SHRUNK toward a positional prior before they are priced.
+     Without it a forward with 892 minutes and a very high foul rate came out
+     at 83.7% to be booked, which is not a probability anyone should publish —
+     a rate measured over a few appearances is mostly noise, and the logistic
+     happily extrapolates it. The Premier League desk does the same thing with
+     the same function; it just carries its priors in a fitted model.js, which
+     this league does not have yet, so they are computed from the league here.
+
+     Priors are per POSITION because a centre-back and a winger are not the
+     same prior, and minutes-weighted so a full season counts for more than a
+     cameo. */
+  var SHRINK_MATCHES = 6;   /* the prior is worth six matches of evidence */
+
+  var PRIOR = (function () {
+    var acc = {};
+    PLAYERS.forEach(function (p) {
+      var m = Number(p.min) || 0;
+      if (!(m > 0)) return;
+      var a = acc[p.p] || (acc[p.p] = { yw: 0, ym: 0, fw: 0, fm: 0 });
+      if (p.y != null) { a.yw += p.y * m; a.ym += m; }
+      if (p.f != null) { a.fw += p.f * m; a.fm += m; }
+    });
+    var out = {}, allY = 0, allYm = 0, allF = 0, allFm = 0;
+    Object.keys(acc).forEach(function (k) {
+      var a = acc[k];
+      out[k] = { y: a.ym ? a.yw / a.ym : null, f: a.fm ? a.fw / a.fm : null };
+      allY += a.yw; allYm += a.ym; allF += a.fw; allFm += a.fm;
+    });
+    out._league = { y: allYm ? allY / allYm : 0.15, f: allFm ? allF / allFm : 1.2 };
+    return out;
+  })();
+
+  function priorFor(pos) {
+    var p = PRIOR[pos] || {};
+    return { y: p.y == null ? PRIOR._league.y : p.y, f: p.f == null ? PRIOR._league.f : p.f };
+  }
+
+  /* The yellow rate a price is computed from. The `r` on the row stays the
+     raw measured risk score — that is what the data says, and it is what the
+     table ranks on — while this is what that evidence is worth once a short
+     sample is pulled toward its position's prior. */
+  function shrunkY90(p) {
+    var m = Number(p.min) || 0;
+    if (!(m > 0) || p.yc == null) return null;
+    return C.shrinkRate(p.yc, m, priorFor(p.p).y, SHRINK_MATCHES);
+  }
+  PLAYERS.forEach(function (p) { p._y90 = shrunkY90(p); });
+
+  /* Kept for the league base rate in the header. */
+  var CAL = C.calibrate(PLAYERS);
+  var clubBy = {};
+  CLUBLIST.forEach(function (c) { clubBy[c.short] = c; });
+
+  /* League averages the referee factor is measured against. Weighted by the
+     matches each official actually took, so a one-off appointment does not
+     move the baseline as much as a season's work — and computed by the ONE
+     implementation in core.js, which is also what keeps an official borrowed
+     from another division out of this division's baseline. His matches were
+     played there and are already counted there; counting them here as well
+     would move the very number his borrowed rate is measured against. See
+     data/cross_refs.py. */
+  var LEAGUE = C.leagueRates(REFLIST);
+
+  function refFactor(ref) { return ref ? C.refCardFactor(ref, LEAGUE, {}) : 1; }
+
+  /* A HAZARD model, not the risk score put through a curve.
+     P(booked) = 1 - exp(-y90 * minutes/90 * referee factor).
+
+     The risk score is deliberately foul-heavy — that is what makes it a good
+     RANKING of who is asking for trouble. It is a poor thing to price from.
+     Boženík fouls 3.94 times a 90 and was booked twice in 892 minutes: put
+     his risk score through a logistic and he prices at 63%, while his own
+     record says about one booking in five games. The yellow rate is the
+     direct estimate of the thing being priced; the fouls belong in the prior
+     that steadies it, not multiplied into the answer.
+
+     Minutes are taken as a full 90 — this is "if he starts and finishes",
+     which is the question a bookings market asks. */
+  var FULL_MATCH = 90;
+
+  function probFor(p, ref) {
+    if (p._y90 == null) return null;
+    /* PLDCore.pCardSeason is the one definition of a full-match booking
+       probability, shared with the Premier League desk since the models were
+       converged. Composing cardLambda + pCardFromLambda here by hand gave the
+       same answer, but it was a second place for that answer to change. */
+    return C.pCardSeason(p._y90, { ref: ref ? refFactor(ref) : 1 });
+  }
+
+  function band(prob) {
+    if (prob == null) return ['', ''];
+    if (prob >= 0.5) return ['hi', 'High'];
+    if (prob >= 0.3) return ['mid', 'Watch'];
+    return ['lo', ''];
+  }
+
+  /* ---- header stats ----------------------------------------------------- */
+  (function () {
+    var rated = PLAYERS.filter(function (p) { return p.r != null; }).length;
+    var withRate = CLUBLIST.filter(function (c) { return c.ca != null; }).length;
+    var html = [
+      ['<b>' + CLUBLIST.length + '</b><span>clubs</span>'],
+      ['<b>' + PLAYERS.length + '</b><span>players</span>'],
+      ['<b>' + rated + '</b><span>with a risk score</span>'],
+      ['<b>' + REFLIST.length + '</b><span>referees</span>'],
+      ['<b>' + pct(CAL.baseRate) + '</b><span>base rate, a card per appearance</span>'],
+      ['<b>' + withRate + ' of ' + CLUBLIST.length + '</b><span>clubs with a measured card rate</span>']
+    ].map(function (s) { return '<div class="stat">' + s[0] + '</div>'; }).join('');
+    $('#stats').innerHTML = html;
+  })();
+
+  /* ---- tabs ------------------------------------------------------------- */
+  $$('.tab').forEach(function (t) {
+    t.addEventListener('click', function () {
+      $$('.tab').forEach(function (o) {
+        var on = o === t;
+        o.setAttribute('aria-selected', on ? 'true' : 'false');
+        $('#' + o.getAttribute('aria-controls')).hidden = !on;
+      });
+    });
+  });
+
+  /* ---- filters ---------------------------------------------------------- */
+  (function () {
+    var opts = ['<option value="">All clubs</option>'];
+    CLUBLIST.slice().sort(function (a, b) { return a.name.localeCompare(b.name); })
+      .forEach(function (c) { opts.push('<option value="' + esc(c.short) + '">' + esc(c.name) + '</option>'); });
+    $('#fClub').innerHTML = opts.join('');
+
+    var r = ['<option value="">No referee assigned</option>'];
+    REFLIST.slice().sort(function (a, b) { return (b.ypg || 0) - (a.ypg || 0); })
+      .forEach(function (x, i) {
+        r.push('<option value="' + i + '">' + esc(x.n) + ' — ' + n2(x.ypg) + ' y/g</option>');
+      });
+    $('#fRef').innerHTML = r.join('');
+  })();
+
+  var sortKey = 'prob', sortDir = -1;
+
+  function currentRef() {
+    var v = $('#fRef').value;
+    return v === '' ? null : REFLIST.slice().sort(function (a, b) { return (b.ypg || 0) - (a.ypg || 0); })[Number(v)];
+  }
+
+  function rows() {
+    var club = $('#fClub').value, pos = $('#fPos').value;
+    var q = $('#fSearch').value.trim().toLowerCase();
+    var minOnly = $('#fMin').checked, starOnly = $('#fStar').checked;
+    var ref = currentRef();
+    return PLAYERS.filter(function (p) {
+      if (club && p.c !== club) return false;
+      if (pos && p.p !== pos) return false;
+      if (minOnly && (Number(p.min) || 0) < 450) return false;
+      if (starOnly && !starred[keyOf(p)]) return false;
+      if (q && String(p.n || '').toLowerCase().indexOf(q) < 0) return false;
+      return true;
+    }).map(function (p) {
+      var prob = probFor(p, ref);
+      return { p: p, prob: prob, odds: prob ? C.fairOdds(prob) : null };
+    }).sort(function (a, b) {
+      var A, B;
+      if (sortKey === 'prob') { A = a.prob; B = b.prob; }
+      else if (sortKey === 'odds') { A = a.odds; B = b.odds; }
+      else { A = a.p[sortKey]; B = b.p[sortKey]; }
+      if (A == null && B == null) return 0;
+      if (A == null) return 1;      /* unknowns always last, both directions */
+      if (B == null) return -1;
+      if (typeof A === 'string') return A.localeCompare(B) * sortDir;
+      return (A - B) * sortDir;
+    });
+  }
+
+  /* ---- the player record ------------------------------------------------
+   * Tap any player row and get the number explained: what it is, what it is
+   * made of, and what fixture it is against. The Premier League desk has had
+   * this since it was written; these two showed a percentage in a table cell
+   * and no way to ask why. Rendering lives in assets/profile.js, shared with
+   * the other desk — the record below is the only league-specific part. */
+  /* THE LEAGUE'S OWN FOUL MODEL, derived once from its own dataset.
+     The Premier League bakes these into data/model.js at build time; this desk
+     has no model file, so it computes the same two constants at load from the
+     same shared functions. Deriving rather than copying the Premier League's
+     numbers is the whole point: Serie A fouls at a different rate and cards at
+     a different rate, and borrowing another division's hazard would price this
+     one on England's discipline. */
+  var FOUL_MODEL = (function () {
+    var rated = PLAYERS.filter(function (p) { return p.y != null && p.f != null; });
+    var foulLeague = C.leagueRate90(rated, 'f');
+    var wonLeague = C.leagueRate90(PLAYERS.filter(function (p) { return p.fw != null; }), 'fw');
+    return {
+      foulLeague: foulLeague,
+      wonLeague: wonLeague,
+      hazard: C.twoStageHazard(CAL.baseRate, foulLeague),
+      /* The NB size, shared with the Premier League build. It is a shape
+         parameter about how much a player's fouls vary match to match, not a
+         league rate — but it is a PRIOR here, not a fit, and it is written
+         down as one rather than presented as measured. */
+      dispersion: 6
+    };
+  })();
+
+  /* Expected fouls, the over-lines, and the fouls->card cross-check for one
+     player over a full 90. Null the whole way down when the player has no
+     foul rate, so the profile omits the block rather than printing dashes. */
+  function foulForecast(p) {
+    if (!p || p.f == null || !FOUL_MODEL.hazard) return null;
+    var ef = C.expectedFouls(p.f, 90);
+    var out = {
+      expFouls: ef,
+      over1: C.nbTailProb(ef, FOUL_MODEL.dispersion, 1),
+      over2: C.nbTailProb(ef, FOUL_MODEL.dispersion, 2),
+      twoStage: C.cardProbFromFouls(ef, FOUL_MODEL.hazard)
+    };
+    if (p.fw != null) {
+      var ew = C.expectedFouls(p.fw, 90);
+      out.wonExp = ew;
+      out.wonOver1 = C.nbTailProb(ew, FOUL_MODEL.dispersion, 1);
+      out.wonOver2 = C.nbTailProb(ew, FOUL_MODEL.dispersion, 2);
+    }
+    return out;
+  }
+
+  function playerRecord(p) {
+    var ref = currentRef();
+    var prob = probFor(p, ref), b = band(prob);
+    var fx = null, i;
+    for (i = 0; i < FIXTURES.length; i++) {
+      if (FIXTURES[i].h === p.c || FIXTURES[i].a === p.c) { fx = FIXTURES[i]; break; }
+    }
+    var rec = {
+      name: p.n, pos: p.p, club: clubBy[p.c] || { short: p.c },
+      /* Both stay undefined until a refresh populates them; the card shows a
+         monogram and no availability line rather than a broken image and a
+         claim about a player's fitness that nothing supports. */
+      photo: p.ph || null, injured: p.inj === true,
+      minutes: p.min, yellows: p.yc, reds: p.rc,
+      yc90: p.y, fouls90: p.f, foulsWon90: p.fw, risk: p.r,
+      forecast: foulForecast(p),
+      prob: prob, odds: prob ? C.fairOdds(prob) : null,
+      band: { label: b[1] || 'Low', colour: b[0] === 'hi' ? 'var(--danger-ink)'
+              : b[0] === 'mid' ? 'var(--warn-ink)' : '' },
+      lowSample: (Number(p.min) || 0) < 450,
+      ref: ref ? ref.n : null,
+      watched: !!starred[keyOf(p)],
+      onWatch: function () { toggleStar(keyOf(p)); return !!starred[keyOf(p)]; },
+      noteText: notes[keyOf(p)] || '',
+      onNote: function (t) { setNote(keyOf(p), t); },
+      note: 'Season-long rate, scaled by the referee when one is picked. '
+        + 'Research, not betting advice.'
+    };
+    if (fx) {
+      var x = priceFixture(fx);
+      rec.fixture = {
+        home: clubBy[fx.h] || { short: fx.h }, away: clubBy[fx.a] || { short: fx.a },
+        when: whenText(fx.d), iso: fx.d, heat: x.m.expected, derby: x.derby,
+        ref: x.ref && x.ref.ref ? x.ref.ref.n : null
+      };
+    }
+    /* Only when the dataset actually carries a season card count. sc is null
+       across the board until the refresh populates it, and a suspension line
+       computed from nothing would read as "0 cards, safe" rather than
+       "not known yet". */
+    if (p.sc != null && SUSP && SUSP.rungs) {
+      for (i = 0; i < SUSP.rungs.length; i++) {
+        if (p.sc < SUSP.rungs[i].at) {
+          var left = SUSP.rungs[i].at - p.sc;
+          rec.susp = {
+            text: left + ' booking' + (left === 1 ? '' : 's') + ' from a '
+              + SUSP.rungs[i].ban + '-match ban (' + SUSP.rungs[i].at + ' yellows).',
+            urgent: left === 1
+          };
+          break;
+        }
+      }
+    }
+    return rec;
+  }
+
+  function openPlayer(k) {
+    for (var i = 0; i < PLAYERS.length; i++) {
+      if (keyOf(PLAYERS[i]) === k) { PLDProfile.open(playerRecord(PLAYERS[i])); return; }
+    }
+  }
+
+  /* ---- All players: a card each -----------------------------------------
+   * The Premier League desk's second view of the same list. A table is the
+   * right shape for comparing a column; a card is the right shape for reading
+   * one player, and on a phone the table is a horizontal scroll. Same rows,
+   * same filters, same sort — only the presentation differs, so the two can
+   * never disagree about who is in the list. */
+  var playerView = 'table';
+
+  function renderPlayerCards(list) {
+    var host = $('#apCards');
+    host.innerHTML = list.slice(0, 400).map(function (row) {
+      var p = row.p, k = keyOf(p), b = band(row.prob), c = clubBy[p.c] || { short: p.c };
+      return '<button class="ap-card" type="button" data-pk="' + esc(k) + '"'
+        + ' aria-label="Open ' + esc(p.n) + '\u2019s record">'
+        + '<span class="ap-head">'
+        + PLDProfile.crest({ short: p.c, name: c.name, img: p.ph || null })
+        + '<span style="min-width:0;flex:1">'
+        + '<span class="ap-nm">' + esc(p.n)
+        + (notes[k] ? ' <span class="has-note">\u270e</span>' : '') + '</span>'
+        + '<span class="ap-sub">' + esc(c.name || p.c) + ' \u00b7 ' + esc(p.p || '') + '</span>'
+        + '</span>'
+        + '<span class="star" aria-hidden="true">' + (starred[k] ? '\u2605' : '') + '</span>'
+        + '</span>'
+        + '<span class="pc band ' + b[0] + '" style="font-size:20px;font-family:var(--mono);font-weight:800">'
+        + pct(row.prob) + (b[1] ? ' <span class="sev" style="display:inline">' + b[1] + '</span>' : '')
+        + '</span>'
+        + '<span class="ap-stats">'
+        + '<span class="ap-stat"><b>' + (p.min || 0) + '</b><span>mins</span></span>'
+        + '<span class="ap-stat"><b>' + (p.yc == null ? '\u2014' : p.yc) + '</b><span>yellows</span></span>'
+        + '<span class="ap-stat"><b>' + n2(p.r) + '</b><span>risk</span></span>'
+        + '</span>'
+        + '</button>';
+    }).join('');
+  }
+
+  function setPlayerView(v) {
+    playerView = (v === 'cards') ? 'cards' : 'table';
+    $('#apCards').hidden = playerView !== 'cards';
+    $('#tableWrap').hidden = playerView !== 'cards' ? false : true;
+    $$('.seg-view button').forEach(function (b) {
+      b.setAttribute('aria-selected', b.getAttribute('data-view') === playerView ? 'true' : 'false');
+    });
+    renderPlayers();
+  }
+
+
+  function renderPlayers() {
+    var list = rows(), ref = currentRef();
+    var tb = $('#tblPlayers tbody');
+    $('#emptyPlayers').hidden = list.length > 0;
+    if (playerView === 'cards') renderPlayerCards(list);
+    tb.innerHTML = list.slice(0, 400).map(function (row) {
+      var p = row.p, k = keyOf(p), b = band(row.prob), c = clubBy[p.c] || {};
+      return '<tr class="rowlink" data-pk="' + esc(k) + '" tabindex="0" role="button"'
+        + ' aria-label="Open ' + esc(p.n) + '\u2019s record">'
+        + '<td><button class="star" data-k="' + esc(k) + '" aria-pressed="' + (starred[k] ? 'true' : 'false')
+        + '" aria-label="Watchlist ' + esc(p.n) + '">' + (starred[k] ? '★' : '☆') + '</button></td>'
+        + '<td>' + esc(p.n) + formArrow(p)
+        + (notes[k] ? ' <span class="has-note" title="' + esc(notes[k]) + '">\u270e</span>' : '')
+        + '</td>'
+        + '<td><span class="clubcell">' + PLDProfile.crest(c)
+        + esc(p.c) + '</span></td>'
+        + '<td>' + esc(p.p) + '</td>'
+        + '<td class="num">' + confDot(p.min) + (p.min || 0) + '</td>'
+        + '<td class="num">' + (p.yc == null ? '—' : p.yc) + '</td>'
+        + '<td class="num">' + n2(p.y) + '</td>'
+        + '<td class="num">' + n2(p.f) + '</td>'
+        + '<td class="num">' + n2(p.r) + '</td>'
+        + '<td class="num band ' + b[0] + '">' + pct(row.prob) + (b[1] ? ' <span class="faint">' + b[1] + '</span>' : '') + '</td>'
+        + '<td class="num">' + (row.odds ? n2(row.odds) : '—') + '</td>'
+        + '<td><span class="pill ' + esc(String(p.b || '').toLowerCase()) + '">' + esc(p.b) + '</span></td>'
+        + '</tr>';
+    }).join('');
+    $('#count').textContent = list.length + ' players'
+      + (list.length > 400 ? ' (showing 400)' : '');
+    $('#refNote').innerHTML = ref
+      ? 'Probabilities scaled to <b>' + esc(ref.n) + '</b> — ' + n2(ref.ypg) + ' yellows a game, '
+        + n2(ref.cpf) + ' cards per foul, <b>×' + n2(refFactor(ref)) + '</b> against the league average.'
+      : 'No referee assigned, so these are season-long probabilities. Pick an official above and '
+        + 'every row rescales to his card rate.';
+    $$('.star', tb).forEach(function (btn) {
+      btn.addEventListener('click', function (e) {
+        /* The star lives INSIDE a row that opens the record. Without this the
+           same tap would toggle the watchlist and then open the profile. */
+        e.stopPropagation();
+        toggleStar(btn.getAttribute('data-k'));
+        renderPlayers();
+      });
+    });
+  }
+
+  /* Delegated, so it survives every re-render of the table body. */
+  $('#tblPlayers').addEventListener('click', function (e) {
+    var tr = e.target.closest ? e.target.closest('tr[data-pk]') : null;
+    if (tr) openPlayer(tr.getAttribute('data-pk'));
+  });
+  $('#tblPlayers').addEventListener('keydown', function (e) {
+    if (e.key !== 'Enter' && e.key !== ' ') return;
+    var tr = e.target.closest ? e.target.closest('tr[data-pk]') : null;
+    if (tr && e.target === tr) { e.preventDefault(); openPlayer(tr.getAttribute('data-pk')); }
+  });
+  $$('.seg-view button').forEach(function (b) {
+    b.addEventListener('click', function () { setPlayerView(b.getAttribute('data-view')); });
+  });
+  $('#apCards').addEventListener('click', function (e) {
+    var c = e.target.closest ? e.target.closest('.ap-card[data-pk]') : null;
+    if (c) openPlayer(c.getAttribute('data-pk'));
+  });
+
+  /* The division's own colours, so a crest that does not load falls back to
+     the club's colour rather than a hue hashed from its three letters. */
+  if (window.PLDClubColours) PLDProfile.colours(window.PLDClubColours.of('SA'));
+  PLDProfile.wire();
+
+  /* Candidate rows inside a fixture card open the same record the players
+     table opens. Delegated on document, because these cards are rebuilt by
+     the Matchday panel AND the Fixtures panel and per-node listeners would
+     leak a set per redraw. */
+  document.addEventListener('click', function (e) {
+    var b = e.target.closest ? e.target.closest('.cand[data-pk]') : null;
+    if (b) openPlayer(b.getAttribute('data-pk'));
+  });
+
+  ['#fClub', '#fPos', '#fRef', '#fMin', '#fStar'].forEach(function (s) {
+    $(s).addEventListener('change', renderPlayers);
+  });
+  $('#fSearch').addEventListener('input', renderPlayers);
+
+  $$('#tblPlayers th[data-sort]').forEach(function (th) {
+    th.addEventListener('click', function () {
+      var k = th.getAttribute('data-sort');
+      if (sortKey === k) sortDir = -sortDir;
+      else { sortKey = k; sortDir = (k === 'n' || k === 'c' || k === 'p' || k === 'b') ? 1 : -1; }
+      $$('#tblPlayers th[data-sort]').forEach(function (o) {
+        var s = o.querySelector('.arr'); if (s) s.remove();
+      });
+      th.insertAdjacentHTML('beforeend', ' <span class="arr">' + (sortDir > 0 ? '▲' : '▼') + '</span>');
+      if (typeof PLDA11y !== 'undefined') PLDA11y.markSorted(th, sortDir);
+      renderPlayers();
+    });
+  });
+
+  /* ---- clubs ------------------------------------------------------------ */
+  var clubSort = { k: 'ca', d: -1 };
+  function renderClubs() {
+    var topBy = {};
+    PLAYERS.forEach(function (p) {
+      if (p.r == null || (Number(p.min) || 0) < 450) return;
+      if (!topBy[p.c] || p.r > topBy[p.c].r) topBy[p.c] = p;
+    });
+    var rates = CLUBLIST.filter(function (c) { return c.ca != null; }).map(function (c) { return c.ca; });
+    var med = rates.slice().sort(function (a, b) { return a - b; })[Math.floor(rates.length / 2)] || 2;
+    var max = Math.max.apply(null, rates.concat([1]));
+
+    var list = CLUBLIST.slice().map(function (c) {
+      var t = c.ca == null ? null : (c.ca >= med * 1.08 ? 1 : (c.ca <= med * 0.92 ? 3 : 2));
+      return { c: c, tier: t, top: topBy[c.short] || null };
+    }).sort(function (a, b) {
+      var A, B;
+      if (clubSort.k === 'top') { A = a.top && a.top.r; B = b.top && b.top.r; }
+      else if (clubSort.k === 'tier') { A = a.tier; B = b.tier; }
+      else { A = a.c[clubSort.k]; B = b.c[clubSort.k]; }
+      if (A == null && B == null) return 0;
+      if (A == null) return 1;
+      if (B == null) return -1;
+      if (typeof A === 'string') return A.localeCompare(B) * clubSort.d;
+      return (A - B) * clubSort.d;
+    });
+
+    $('#tblClubs tbody').innerHTML = list.map(function (r) {
+      var c = r.c;
+      var tierTxt = r.tier === 1 ? 'Card-heavy' : r.tier === 3 ? 'Disciplined' : r.tier === 2 ? 'Middling' : '—';
+      var w = c.ca == null ? 0 : Math.round((c.ca / max) * 100);
+      /* DRILL-THROUGH. The club table answered "which sides are card-heavy"
+         and then stopped: the obvious next question — WHICH PLAYERS — meant
+         going to another tab and finding the club in a select. The Premier
+         League desk has opened the filtered player list on a row tap since it
+         was built; these two shipped the same table with the row inert. */
+      return '<tr data-club="' + esc(c.short) + '" tabindex="0" role="link"'
+        + ' aria-label="View ' + esc(c.name) + ' players"'
+        + ' title="View ' + esc(c.name) + '\u2019s players">'
+        + '<td><span class="clubcell">' + PLDProfile.crest(c)
+        + esc(c.name)
+        + ((c.ca != null && c.ca >= 2.0 && c.fm != null && c.fm >= 12.0)
+            ? ' <span title="Combustible — 2.0+ cards and 12.0+ fouls a game" aria-label="Combustible">\uD83D\uDD25</span>' : '')
+        + '</span></td>'
+        + '<td><span class="pill ' + esc(String(c.basis || '').toLowerCase()) + '">' + esc(c.basis) + '</span></td>'
+        + '<td class="num">' + n2(c.ca) + (c.ca == null ? '' : ' <span class="bar" style="display:inline-block;width:52px;vertical-align:middle"><i style="width:' + w + '%"></i></span>') + '</td>'
+        + '<td class="num">' + n2(c.caH) + '</td>'
+        + '<td class="num">' + n2(c.caA) + '</td>'
+        + '<td class="num">' + (c.fm == null ? '—' : c.fm.toFixed(1)) + '</td>'
+        + '<td>' + (r.tier ? '<span class="tier t' + r.tier + '">' + tierTxt + '</span>' : '<span class="faint">—</span>') + '</td>'
+        + '<td class="num">' + (c.squad || 0) + '</td>'
+        + '<td>' + (r.top ? esc(r.top.n) + ' <span class="faint mono">' + n2(r.top.r) + '</span>' : '<span class="faint">—</span>') + '</td>'
+        + '</tr>';
+    }).join('');
+  }
+  /* A club row opens that club's players, the same drill-through the Premier
+     League desk has. SHELL is read lazily: it is assigned further down this
+     file, and by the time anybody clicks a row it exists — the same order the
+     command palette's club entries already rely on. */
+  function openClubPlayers(short) {
+    if (SHELL) SHELL.setArea('desk', 'panel-players');
+    var sel = $('#fClub'); if (sel) sel.value = short;
+    var q = $('#fSearch'); if (q) q.value = '';
+    renderPlayers();
+  }
+  $('#tblClubs').addEventListener('click', function (e) {
+    var tr = e.target.closest('tr[data-club]');
+    if (tr) openClubPlayers(tr.getAttribute('data-club'));
+  });
+  $('#tblClubs').addEventListener('keydown', function (e) {
+    if (e.key !== 'Enter' && e.key !== ' ') return;
+    var tr = e.target.closest('tr[data-club]');
+    if (tr) { e.preventDefault(); openClubPlayers(tr.getAttribute('data-club')); }
+  });
+  $$('#tblClubs th[data-sort]').forEach(function (th) {
+    th.addEventListener('click', function () {
+      var k = th.getAttribute('data-sort');
+      if (clubSort.k === k) clubSort.d = -clubSort.d;
+      else { clubSort.k = k; clubSort.d = (k === 'name' || k === 'basis') ? 1 : -1; }
+      if (typeof PLDA11y !== 'undefined') PLDA11y.syncSorted('#tblClubs', clubSort.k, clubSort.d);
+      renderClubs();
+    });
+  });
+
+  /* ---- referees --------------------------------------------------------- */
+  var refSort = { k: 'ypg', d: -1 };
+  function renderRefs() {
+    var list = REFLIST.slice().map(function (r) {
+      return { r: r, factor: refFactor(r) };
+    }).sort(function (a, b) {
+      var A = refSort.k === 'factor' ? a.factor : a.r[refSort.k];
+      var B = refSort.k === 'factor' ? b.factor : b.r[refSort.k];
+      if (A == null && B == null) return 0;
+      if (A == null) return 1;
+      if (B == null) return -1;
+      if (typeof A === 'string') return A.localeCompare(B) * refSort.d;
+      return (A - B) * refSort.d;
+    });
+    var maxF = list.reduce(function (m, x) { return Math.max(m, x.factor); }, 1);
+    $('#tblRefs tbody').innerHTML = list.map(function (x) {
+      var r = x.r, w = Math.round((x.factor / maxF) * 100);
+      var cls = x.factor >= 1.08 ? 't1' : x.factor <= 0.94 ? 't3' : 't2';
+      /* The borrowed marker, from the one place that words it (core.js).
+         Without it this row reads as N matches in THIS division. */
+      var bn = C.refBorrowNote(r);
+      return '<tr>'
+        + '<td' + (bn ? ' title="' + esc(bn.title) + '"' : '') + '>' + esc(r.n)
+        + (bn ? '<span class="ref-borrowed">' + bn.mark + '</span>' : '') + '</td>'
+        + '<td class="num">' + (r.matches || 0) + '</td>'
+        + '<td class="num">' + n2(r.ypg) + '</td>'
+        + '<td class="num">' + n1(r.fpg) + '</td>'
+        + '<td class="num">' + (r.cpf == null ? '—' : r.cpf.toFixed(3)) + '</td>'
+        + '<td class="num">' + (r.red == null ? '—' : r.red.toFixed(2)) + '</td>'
+        + '<td class="num">' + (r.pen == null ? '—' : r.pen.toFixed(2)) + '</td>'
+        + '<td class="num"><span class="tier ' + cls + '">×' + n2(x.factor) + '</span></td>'
+        + '<td><span class="bar" style="width:110px;display:inline-block"><i style="width:' + w + '%"></i></span></td>'
+        + '</tr>';
+    }).join('');
+    /* NATIVE officials, not every row. The average deliberately skips the
+         borrowed ones, so counting them here would caption the number with a
+         population it was not taken over. */
+      var nOwn = REFLIST.filter(function (x) { return !x.borrowed; }).length;
+      var nLent = REFLIST.length - nOwn;
+      $('#refFoot').innerHTML = 'League average across ' + nOwn + ' officials, weighted by matches: <b>'
+      + n2(LEAGUE.avgYpg) + '</b> yellows a game and <b>' + (LEAGUE.avgCpf == null ? '—' : LEAGUE.avgCpf.toFixed(3))
+      + '</b> cards per foul. The ×factor blends the two equally and is clamped to ×0.75–×1.30. '
+      + 'Cards per foul is the purer strictness signal: it divides out how foul-heavy an official’s '
+      + 'fixtures happened to be.'
+      + (nLent ? ' † marks ' + nLent + ' official' + (nLent === 1 ? '' : 's')
+          + ' with no record in this division, priced off their record in another and '
+          + 'excluded from the average above.' : '');
+  }
+  $$('#tblRefs th[data-sort]').forEach(function (th) {
+    th.addEventListener('click', function () {
+      var k = th.getAttribute('data-sort');
+      if (refSort.k === k) refSort.d = -refSort.d;
+      else { refSort.k = k; refSort.d = k === 'n' ? 1 : -1; }
+      if (typeof PLDA11y !== 'undefined') PLDA11y.syncSorted('#tblRefs', refSort.k, refSort.d);
+      renderRefs();
+    });
+  });
+
+  /* ---- fixtures --------------------------------------------------------- */
+  var FIXTURES = (typeof SERIEA_FIXTURES !== 'undefined' && SERIEA_FIXTURES) || [];
+  var S = (typeof PLDShare !== 'undefined' && PLDShare) || null;
+  /* Notes live beside the watchlist, in this browser only. Same shape the
+     Premier League desk uses: a map of player key to text. */
+  var NOTE_KEY = 'seriea_desk_notes_v1';
+  var notes = {};
+  try { notes = JSON.parse(localStorage.getItem(NOTE_KEY) || '{}') || {}; } catch (e) { notes = {}; }
+  function setNote(k, text) {
+    var t = String(text || '').trim();
+    if (t) notes[k] = t; else delete notes[k];
+    try { localStorage.setItem(NOTE_KEY, JSON.stringify(notes)); } catch (e) {}
+    renderPlayers();
+  }
+
+  /* The standing rule — no pick before confirmed lineups — made visible.
+     Keyed per desk so a Serie A mark cannot claim a Championship fixture. */
+
+  /* Paste a bookmaker price, see the edge. The maths has been in core.js
+     since the beginning with nowhere to type a number into. */
+  var PRICES = (typeof PLDPrice !== 'undefined' && PLDPrice) ? PLDPrice.create({}) : null;
+
+  var REF_KEY = 'seriea_desk_refs_v1';
+  var myRefs = {};
+  try { myRefs = JSON.parse(localStorage.getItem(REF_KEY) || '{}') || {}; } catch (e) { myRefs = {}; }
+
+  var refByName = {};
+  REFLIST.forEach(function (r) { refByName[r.n] = r; });
+
+  /* A fixture's official: the appointment from the feed if there is one, else
+     whatever has been chosen here. The feed wins — a published appointment is
+     not something to override by accident. */
+  function refFor(fx) {
+    /* NOT an exact lookup. The appointment overlay and the card table are
+       different feeds and spell the same official differently — "F. Hallam"
+       against "Farai Hallam", "A. Herczeg" against "A Herczeg". An unresolved
+       appointment prices at refFactor = 1, which is indistinguishable on the
+       page from no official being named, so eleven of the Championship's
+       twelve opening fixtures were about to be priced off nobody. */
+    if (fx.ref) {
+      var hit = C.matchRefName(fx.ref, refByName);
+      if (hit && refByName[hit]) return { ref: refByName[hit], appointed: true };
+    }
+    if (fx.ref) return { ref: null, appointed: true, name: fx.ref };  /* named, but no card record */
+    var chosen = myRefs[fx.id];
+    return { ref: chosen ? refByName[chosen] : null, appointed: false };
+  }
+
+  /* Squad probabilities for one club, weighted by the chance of playing.
+     A fringe player is not a starter, and counting his full-match card
+     chance would inflate every total. minuteWeights spreads an XI across
+     the squad by last season's minutes; the weight becomes expected minutes,
+     which is what the hazard model takes. */
+  /* The confirmed team sheets, when a harvest has landed one. Absent is the
+     ordinary state — sheets publish about an hour before kick-off — and an
+     absent file must leave every number exactly where it was. */
+  var XI_SHEETS = (typeof window !== 'undefined' && window.LINEUP_SHEETS) || null;
+
+  /* One club's roles for a fixture, or null to price it the way it always was.
+     Null covers three cases and they are not distinguished here because the
+     answer to all three is the same: no file, no sheet for this fixture, or a
+     sheet whose XI does not fully resolve against the squad. */
+  function rolesFor(fx, short) {
+    if (!XI_SHEETS || !fx || fx.id == null) return null;
+    var sheet = XI_SHEETS[String(fx.id)];
+    if (!sheet || !sheet[short]) return null;
+    var squad = PLAYERS.filter(function (p) { return p.c === short; })
+                       .map(function (p) { return p.n; });
+    return C.lineupRoles(sheet[short], squad);
+  }
+
+  function sideProbs(short, factor, roles) {
+    var squad = PLAYERS.filter(function (p) { return p.c === short && p._y90 != null; });
+    if (!squad.length) return { ps: [], top: [] };
+    /* THE ONLY BRANCH. With no roles this is the weighting that has always
+       run, reached by the same call with the same arguments — a fixture with
+       no team sheet must price to the digit it printed yesterday. */
+    var w = roles
+      ? C.xiWeights(squad.map(function (p) { return roles[p.n] || null; }))
+      : C.minuteWeights(squad.map(function (p) { return p.min; }), 11);
+    var rows = squad.map(function (p, i) {
+      var expMin = Math.max(0, w[i]) * 90;
+      var lam = C.cardLambda(p._y90, expMin, { ref: factor });
+      return { p: p, prob: C.pCardFromLambda(lam) || 0 };
+    });
+    return {
+      ps: rows.map(function (r) { return r.prob; }),
+      top: rows.slice().sort(function (a, b) { return b.prob - a.prob; }).slice(0, 4)
+    };
+  }
+
+  /* DERBY_BOOST is 1.08 per player, the same figure the Premier League desk
+     applies — a derby is carded more than the same two clubs otherwise would
+     be. It multiplies into the pricing factor but is kept OUT of `factor`,
+     which is displayed as the referee's ×figure: folding it in there would
+     report an official as stricter than he is because of who is playing. */
+  var DERBY_BOOST = 1.08;
+  /* Reds a game across the division, weighted by matches refereed. Computed
+     once: it is the fallback for every fixture with no official appointed. */
+  var LEAGUE_RED = C.leagueRedRate(REFLIST);
+  var BP_LINES = [35.5, 45.5, 55.5];
+
+  function priceFixture(fx) {
+    var r = refFor(fx);
+    var factor = r.ref ? refFactor(r.ref) : 1;
+    var derby = isDerby(fx.h, fx.a);
+    var priced = factor * (derby ? DERBY_BOOST : 1);
+    /* BOTH SIDES OR NEITHER, the same rule the harvest applies: pricing one
+       team off its real XI and the other off last season's minutes would make
+       the two halves of one match answer different questions, and the match
+       total is their sum. */
+    var rh = rolesFor(fx, fx.h), ra = rolesFor(fx, fx.a);
+    if (!rh || !ra) { rh = null; ra = null; }
+    var home = sideProbs(fx.h, priced, rh), away = sideProbs(fx.a, priced, ra);
+    var m = C.teamCardMarkets(home.ps, away.ps, [3.5, 4.5, 5.5]);
+    /* Booking points: the market a bookmaker actually posts for cards, 10 a
+       yellow and 25 a red. Reds come from the APPOINTED referee's own rate
+       where there is one, and the match-weighted league rate where there is
+       not — the same rule the yellow side follows, so the two halves of the
+       number are not built on different conventions. */
+    var lamRed = (r.ref && r.ref.red != null) ? Number(r.ref.red) : LEAGUE_RED;
+    var bp = C.bookingPointsMarkets(home.ps, away.ps, lamRed, BP_LINES);
+    /* Whether this price came off a harvested team sheet or off last season's
+       minutes. Set here so the share card can say which — the fact the removed
+       confirmed/unconfirmed button used to ask the reader for. */
+    m.xi = !!(rh && ra);
+    return { fx: fx, ref: r, factor: factor, derby: derby, home: home, away: away,
+             m: m, bp: bp };
+  }
+
+  function whenText(iso) {
+    if (!iso) return '';
+    var d = new Date(iso);
+    if (isNaN(d)) return '';
+    return PLDCore.dateClock(d);
+  }
+
+  (function initRounds() {
+    if (!FIXTURES.length) return;
+    var rs = [];
+    FIXTURES.forEach(function (f) { if (f.r && rs.indexOf(f.r) < 0) rs.push(f.r); });
+    rs.sort(function (a, b) { return a - b; });
+    /* Land on the next matchday that has not been played, which is the one
+       anyone opening this page wants — and "not been played" is a question
+       about the day, not the kick-off time. */
+    /* THE SAME CALL the This Matchday tab makes. This used to test each
+       round for a fixture whose KICK-OFF was still ahead, which advanced the
+       dropdown the moment the last game of the round kicked off — while it
+       was being played, and hours before the other tab moved. */
+    var next = C.currentRound(FIXTURES);
+    if (next == null) next = rs[0];
+    $('#fxRound').innerHTML = rs.map(function (r) {
+      return '<option value="' + r + '"' + (r === next ? ' selected' : '') + '>Matchday ' + r + '</option>';
+    }).join('');
+  })();
+
+
+  /* ═══════════════════════════════════════════════════════════════════
+   * THE LIVE TICKER — the half of assets/livecards.js this desk never had.
+   *
+   * That file has said since it was written that "a bookings desk saying a
+   * carded player is a 52% chance of being carded is the worst sentence this
+   * product can produce". It was loaded on index.html and nowhere else,
+   * because its source is the Fantasy Premier League live feed and FPL is the
+   * Premier League and nothing else. So at 4.30pm on a Saturday this desk
+   * still showed a booked player as a 52% chance of being booked.
+   *
+   * /api/live-cards fills that from API-Football's events feed. The TICKER is
+   * the same one — clubTally, fixtureTicker, playerState all reused; only the
+   * indexing differs, because FPL gives a gameweek total per player and this
+   * gives the cards themselves.
+   *
+   * IT COSTS QUOTA, which the FPL feed does not, so the function is cached at
+   * the edge for 60 seconds: however many people are watching, the upstream
+   * sees one refresh a minute. A card reaches a reader inside a minute.
+   *
+   * ABSENT IS THE ORDINARY STATE. No key, no live fixtures, a failed poll —
+   * all of them render as the desk's normal forecast view, which is what it
+   * has always shown.
+   * ═══════════════════════════════════════════════════════════════════ */
+  var LIVE = { fixtures: null, at: 0, timer: null };
+
+  /* The feed's club spelling as this desk's short code. On the desk's OWN
+     club list, because that is the map this page already holds and the
+     function deliberately does not resolve names — a club-name join inside a
+     serverless function is a fourth copy nobody would think to look in.
+     Exact, then accent-folded: three feeds spell an Italian club three ways,
+     which is the problem data/test_seriea.py exists for. Unique or nothing. */
+  function liveResolve(feedName) {
+    if (!feedName) return null;
+    var want = String(feedName).trim();
+    var hit = CLUBS.filter(function (c) { return c.name === want; });
+    if (hit.length === 1) return hit[0].short;
+    var flat = function (v) {
+      return String(v || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+        .toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim();
+    };
+    var f = flat(want);
+    hit = CLUBS.filter(function (c) { return flat(c.name) === f; });
+    if (hit.length === 1) return hit[0].short;
+    hit = CLUBS.filter(function (c) {
+      return flat(c.name).indexOf(f) === 0 || f.indexOf(flat(c.name)) === 0; });
+    return hit.length === 1 ? hit[0].short : null;
+  }
+
+  function liveFor(f) {
+    if (!LIVE.fixtures || !f) return null;
+    var row = LIVE.fixtures[String(f.id)];
+    if (!row) return null;
+    var got = LiveCards.indexApiLive(row, liveResolve);
+    return LiveCards.fixtureTicker(got.idx, got.elClub, f.h, f.a, {
+      minute: row.minute,
+      started: true,
+      /* C.isPlayed, not a local list of statuses. Written out here first and
+         caught by check-matchday: the same three strings feed the suspension
+         ladder, where two copies disagreeing bans the wrong player. */
+      finished: C.isPlayed({ st: row.status })
+    });
+  }
+
+  function liveChip(f) {
+    var t = liveFor(f);
+    if (!t) return '';
+    var label = t.cards + ' card' + (t.cards === 1 ? '' : 's');
+    var clock = t.minute ? t.minute + "'" : 'LIVE';
+    return '<span class="fx-live" title="Live: ' + t.yellows + ' yellow, '
+      + t.reds + ' red, ' + esc(clock)
+      + ' — from the match events feed, refreshed about once a minute">'
+      + '<span class="fx-live-dot"></span>' + esc(clock) + ' · ' + esc(label)
+      + '</span>';
+  }
+
+  function liveApply(d) {
+    /* A FAILED POLL IS NOT NEWS THAT THE CARDS WERE RESCINDED — the previous
+       state is kept. Only an explicit "not live" clears it. */
+    if (d && d.live === false) { LIVE.fixtures = null; }
+    else if (d && d.fixtures) { LIVE.fixtures = d.fixtures; LIVE.at = Date.now(); }
+    renderFixtures();
+  }
+
+  function liveStart() {
+    if (LIVE.timer) return;
+    /* Polled from the SCHEDULE, like the Premier League ticker: the fixture
+       list already on the page says whether anything is on, and asking the
+       function that would spend a call to find out nothing is happening. */
+    var on = (FIXTURES || []).some(function (f) {
+      if (!f.d || C.isPlayed(f)) return false;
+      var ko = Date.parse(f.d);
+      return isFinite(ko) && Date.now() >= ko && Date.now() < ko + LiveCards.WINDOW_MS;
+    });
+    if (!on) return;
+    /* The cadence comes from the function's own TTL, and the edge cache is
+       left to do its job — see LiveCards.pollLoop. */
+    LIVE.timer = LiveCards.pollLoop('/api/live-cards?leagues=SA', liveApply);
+  }
+
+  function renderFixtures() {
+    var host = $('#fxList'), empty = $('#fxEmpty');
+    if (!FIXTURES.length) {
+      host.innerHTML = '';
+      empty.hidden = false;
+      empty.innerHTML = 'No fixture list yet. It is built by '
+        + '<code>harvest_apifootball.py --fixtures --league SA</code>, which runs in the '
+        + 'data-refresh workflow once the 2026-27 schedule is published.';
+      $('#fxCount').textContent = '';
+      return;
+    }
+    empty.hidden = true;
+    var round = Number($('#fxRound').value);
+    var list = FIXTURES.filter(function (f) { return f.r === round; }).map(priceFixture);
+    if ($('#fxOrder').value === 'heat') {
+      list.sort(function (a, b) { return b.m.expected - a.m.expected; });
+    } else {
+      list.sort(function (a, b) { return String(a.fx.d).localeCompare(String(b.fx.d)); });
+    }
+    $('#fxCount').textContent = list.length + ' fixtures';
+
+    var refOpts = refOptions();
+
+    host.innerHTML = '<div class="fx-grid">'
+      + list.map(function (x) { return fixtureCard(x, refOpts); }).join('')
+      + '</div>';
+
+    $$('.fxref', host).forEach(function (sel) {
+      sel.addEventListener('change', function () {
+        var id = sel.getAttribute('data-fx');
+        if (sel.value) myRefs[id] = sel.value; else delete myRefs[id];
+        try { localStorage.setItem(REF_KEY, JSON.stringify(myRefs)); } catch (e) {}
+        renderFixtures();
+      });
+    });
+  }
+
+  function refOptions() {
+    return REFLIST.slice().sort(function (a, b) { return (b.ypg || 0) - (a.ypg || 0); });
+  }
+
+  /* ONE fixture card, used by both the Matchday landing and the Fixtures tab.
+     The Premier League desk lands on a grid of these; these desks landed on a
+     plain text list, which is the difference that made them look like a
+     different application rather than the same one for another division. */
+  /* The Premier League desk's yellow-rate meter, same scale: five pips, one
+     per 0.09 yellows a 90. A shape you can compare down a column faster than
+     four decimal numbers. */
+  function pipMeter(p) {
+    var y = p.y;
+    if (y == null) return '';
+    var n = Math.max(0, Math.min(5, Math.round(y / 0.09))), s = '';
+    for (var i = 0; i < 5; i++) s += '<span class="pip' + (i < n ? ' on' : '') + '"></span>';
+    return '<span class="pips" aria-hidden="true" title="Yellow-card rate '
+      + n2(y) + ' per 90">' + s + '</span>';
+  }
+
+  /* A referee's surname, for the card header where there is room for one word.
+     "Ref Attwell", not "Ref Stuart Attwell" — the same shortening the Premier
+     League desk uses in the same place. */
+  /* PLDCore.refShort — one implementation across four pages. This was a local
+     copy taking the LAST token, which for a Spanish name is the maternal
+     surname nobody uses: the desk read "Ref Vega" where the RFEF sheet says
+     Adrián Cordero. See the note in core.js. */
+  function refAbbr(n) { return C.refShort(n); }
+
+  /* ONE ranked list across both sides, each row carrying its club — the
+     Premier League card's shape. Splitting home and away into two columns
+     inside a 435px card left about 90px for a name, so "José Ángel Carmona"
+     rendered as "José Ángel Car...". Nothing is lost by merging: the per-side
+     totals are already in the markets strip as Home and Away, and the club is
+     on every row. */
+  /* The same five the card ranks, so the price check answers a question
+     about what is on screen rather than a private shortlist. */
+  function priceBlock(x) {
+    if (!PRICES) return '';
+    var all = (x.home.top || []).concat(x.away.top || [])
+      .sort(function (a, b) { return b.prob - a.prob; }).slice(0, 5);
+    return PRICES.block(all.map(function (t, i) {
+      return { key: x.fx.id + '-' + i, label: t.p.n, prob: t.prob };
+    }));
+  }
+
+  function candidateList(x, ch, ca) {
+    var all = [];
+    (x.home.top || []).forEach(function (t) { all.push(t); });
+    (x.away.top || []).forEach(function (t) { all.push(t); });
+    all.sort(function (a, b) { return b.prob - a.prob; });
+    if (!all.length) return '<div class="faint" style="font-size:12.5px">No rated players.</div>';
+    return all.slice(0, 5).map(function (t) {
+      var b = band(t.prob), club = clubBy[t.p.c] || { short: t.p.c };
+      return '<button class="cand" type="button" data-pk="' + esc(keyOf(t.p)) + '"'
+        + ' aria-label="Open ' + esc(t.p.n) + '\u2019s record">'
+        + PLDProfile.crest({ short: t.p.c, name: club.name, img: t.p.ph || null }, 'cand-face')
+        + '<span class="cbadge">' + esc(t.p.c) + '</span>'
+        + '<span class="nm">' + esc(t.p.n)
+        + ' <span class="faint">' + esc(t.p.p) + '</span>'
+        + pipMeter(t.p) + '</span>'
+        + '<span class="pc-wrap"><span class="pc band ' + b[0] + '">' + pct(t.prob) + '</span>'
+        + (b[1] ? '<span class="sev">' + esc(b[1]) + '</span>' : '') + '</span>'
+        + '</button>';
+    }).join('');
+  }
+
+  function fixtureCard(x, refOpts) {
+      var f = x.fx, ch = clubBy[f.h] || {}, ca = clubBy[f.a] || {};
+      var refCell;
+      if (x.ref.appointed && x.ref.ref) {
+        refCell = '<b>' + esc(x.ref.ref.n) + '</b> <span class="pill">appointed</span> '
+          + '<span class="faint">' + n2(x.ref.ref.ypg) + ' y/g · ×' + n2(x.factor) + '</span>';
+      } else if (x.ref.appointed) {
+        refCell = '<b>' + esc(x.ref.name) + '</b> <span class="pill">appointed</span> '
+          + '<span class="faint">no card record for him yet — priced at ×1.00</span>';
+      } else {
+        refCell = '<label class="faint" for="ref' + f.id + '">Referee</label>'
+          + '<select id="ref' + f.id + '" data-fx="' + f.id + '" class="fxref">'
+          + '<option value="">Not appointed</option>'
+          + refOpts.map(function (r) {
+              return '<option value="' + esc(r.n) + '"' + (myRefs[f.id] === r.n ? ' selected' : '')
+                + '>' + esc(r.n) + ' — ' + n2(r.ypg) + ' y/g</option>';
+            }).join('')
+          + '</select>'
+          + (x.ref.ref ? '<span class="faint">×' + n2(x.factor) + '</span>' : '');
+      }
+
+      /* A candidate row shaped like the Premier League desk's: face, name and
+         position, a five-pip yellow-rate meter, the percentage and its band.
+         A BUTTON, because it opens the player's record — the same record the
+         players table opens, so the two ways in agree. */
+      function side(label, club, s) {
+        return '<div class="fx-side"><h4>' + esc(label) + '</h4>'
+          + (s.top.length ? s.top.map(function (t) {
+              var b = band(t.prob);
+              return '<button class="cand" type="button" data-pk="' + esc(keyOf(t.p)) + '"'
+                + ' aria-label="Open ' + esc(t.p.n) + '\u2019s record">'
+                + PLDProfile.crest({ short: t.p.c, name: (clubBy[t.p.c] || {}).name,
+                                     img: t.p.ph || null }, 'cand-face')
+                + '<span class="nm">' + esc(t.p.n)
+                + ' <span class="faint">' + esc(t.p.p) + '</span>'
+                + pipMeter(t.p) + '</span>'
+                + '<span class="pc-wrap"><span class="pc band ' + b[0] + '">' + pct(t.prob) + '</span>'
+                + (b[1] ? '<span class="sev">' + esc(b[1]) + '</span>' : '') + '</span>'
+                + '</button>';
+            }).join('') : '<div class="faint" style="font-size:12.5px">No rated players.</div>')
+          + '</div>';
+      }
+
+      /* SHORT CODES in the header, as the Premier League desk has always done.
+         Full names wrapped to two lines on any club with a long one —
+         "Wolverhampton Wanderers v Blackburn Rovers" took three — which left
+         the cards ragged and unlike the other desk. Nothing is lost: the full
+         name is the title, and both appear in full as the side headings
+         directly below. */
+      /* THREE STATES, from PLDCore.refLabel. This read "rated, or nothing",
+         so a fixture with an official the desk has no card record for \u2014 Carlos
+         Mu\u00f1iz and Manuel Jes\u00fas Orellana both have jornada 3 matches \u2014 showed
+         "Ref \u2014" in the header while the panel below it said "appointed". */
+      var rl = C.refLabel(x.ref, refAbbr);
+      var refLine = rl.title
+        ? '<span title="' + esc(rl.title) + '">' + esc(rl.text) + '</span>'
+        : esc(rl.text);
+      return '<div class="fx">'
+        + '<div class="fx-top">'
+        + '<div class="fx-topl">'
+        + '<div class="fx-teams">'
+        + PLDProfile.crest(ch) + '<b>' + esc(f.h) + '</b>'
+        + '<span class="faint">v</span>'
+        + PLDProfile.crest(ca) + '<b>' + esc(f.a) + '</b>'
+        + derbyTag(x) + thinTag(x)
+        + '</div>'
+        + '<div class="fx-when">' + esc(whenText(f.d)) + '</div>'
+        + '</div>'
+        + '<div class="fx-topr">'
+        + '<div class="fx-refline">' + refLine + '</div>'
+        + liveChip(f)
+        + '<span class="fx-heat' + (x.m.expected >= 4.2 ? ' hot' : '') + '" '
+        + 'title="Booking heat: expected cards in the match, both sides added together">'
+        + n1(x.m.expected) + '</span>'
+        + '</div>'
+        + '</div>'
+        + '<div class="fx-ref">' + refCell + '</div>'
+        + '<div class="fx-cands">' + candidateList(x, ch, ca) + '</div>'
+        + priceBlock(x)
+        + '<div class="mkts">'
+        + '<button class="mkt fx-share" type="button" data-share="' + f.id + '">\u2b07 Share match</button>'
+        + '<button class="mkt fx-share" type="button" data-sheet="' + f.id + '">\u2b07 Stat sheet</button>'
+        + '<span class="mkt">Home <b>' + n1(x.m.expectedHome) + '</b></span>'
+        + '<span class="mkt">Away <b>' + n1(x.m.expectedAway) + '</b></span>'
+        + [3.5, 4.5, 5.5].map(function (l) {
+            return '<span class="mkt">Over ' + l + ' <b>' + pct(x.m.over[l]) + '</b></span>';
+          }).join('')
+        + h2hChip(x)
+        + '<span class="mkt">Both teams carded <b>' + pct(x.m.bothCarded) + '</b></span>'
+        + '<span class="mkt" title="Each side picks up two or more. The two sides are priced independently, and real matches produce joint outcomes more often than that — so this is a floor.">Both 2+ <b>' + pct(x.m.bothTwo) + '</b></span>'
+        + bookingPointsChips(x)
+        + '</div>'
+        + '</div>';
+  }
+  $('#fxRound').addEventListener('change', renderFixtures);
+  $('#fxOrder').addEventListener('change', renderFixtures);
+
+
+  /* ---- suspension watch -------------------------------------------------
+   * The rule ships with the data (const SUSPENSION, generated from
+   * data/leagues.py) and the maths lives in assets/suspension.js, shared with
+   * the Championship desk. This end only supplies the league's shape: how
+   * long a season is, and how many matches each club has played. */
+  var SUSP = (typeof SUSPENSION !== 'undefined' && SUSPENSION) || null;
+  var SU = (typeof PLDSuspension !== 'undefined' && PLDSuspension) || null;
+  var SEASON_MATCHES = 38;
+
+  /* Matches played, from the fixture list rather than a separate feed: a
+     finished fixture is one the club has played, which is exactly what the
+     gates in the English schemes count. Italy has no gates, but the same
+     number drives the minutes share, so every desk computes it. */
+  function playedFor(short) {
+    var n = 0;
+    FIXTURES.forEach(function (f) {
+      if (f.h !== short && f.a !== short) return;
+      /* C.isPlayed, not a local list of statuses — this one counts toward a
+         suspension ladder, and the two desks each carried their own copy. */
+      if (C.isPlayed(f)) n++;
+    });
+    return n;
+  }
+
+  function renderSuspension() {
+    var card = $('#suspCard');
+    if (!SU || !SUSP) { card.hidden = true; return; }
+    var res = SU.rows(PLAYERS, SUSP, {
+      seasonMatches: SEASON_MATCHES, playedFor: playedFor
+    });
+    if (!res.rows.length) { card.hidden = true; return; }
+    card.hidden = false;
+    $('#suspList').innerHTML = SU.header(res) + SU.render($('#suspList'), res, SUSP, {});
+    $('#suspSub').textContent = res.known
+      ? 'Closest to a one-match ban: the 5th, 10th, 14th, 17th and 19th caution, then every one'
+      : 'The 2026-27 season has not started, so every player is on zero. '
+        + 'These are the likeliest to reach five first, and roughly when.';
+    $('#suspNote').innerHTML =
+      'Columns are the chance of reaching the next threshold within '
+      + res.horizons.join(', ') + ' matches, from each player\'s shrunk yellow '
+      + 'rate and the share of a match he tends to play. '
+      + (res.known
+          ? 'Counts are this season\'s, in Serie A only: the Codice di Giustizia '
+            + 'Sportiva counts each competition separately, so Coppa Italia cautions '
+            + 'never pool with these.'
+          : '<b>No cautions have been played yet</b>, so these are forecasts from '
+            + '2025-26 form, not a live count.')
+      + ' Italy bans for one match at the 5th, 10th, 14th, 17th and 19th caution '
+      + 'and at every caution after that, with no escalation and no matchday '
+      + 'cut-off. How far that rule was verified is set out in '
+      + '<code>docs/italy-suspensions.md</code>.';
+  }
+
+  /* ---- share cards ------------------------------------------------------ */
+  /* The drawing lives in assets/share.js, shared with the other desks, so
+     the cards cannot drift apart the first time a colour changes. This end
+     only says which league is asking and hands over fixtures already priced by
+     priceFixture() — the same objects the cards on screen are built from, so
+     a share card can never disagree with the page that produced it. */
+  var SHARE_CTX = {
+    league: 'SA',
+    seasonLabel: 'Serie A 2026-27',
+    roundWord: 'Matchday',
+    clubBy: clubBy,
+    /* THE TWO CLUBS' OWN COLOURS. Without a palette assets/share.js falls back
+       to the league's ink for every club, so both halves of a stat sheet came
+       out the same colour and the layout's organising idea — that you can see
+       at a glance which side you are reading — did nothing. */
+    palette: (window.PLDClubColours && window.PLDClubColours.of('SA')) || {},
+    /* THE PORTRAIT AND THE BADGE the page already draws for this player and
+       this club. Both feeds have gaps, so a card asks for the same URL the
+       row on screen asks for and falls back to the same monogram when it is
+       missing — a face on the sheet and a face on the page are one lookup. */
+    photoUrl: function (p) { return (p && p.ph) || null; },
+    whenText: whenText
+  };
+
+  function shareBusy(btn, on) {
+    if (!btn) return;
+    btn.disabled = on;
+    btn.textContent = on ? 'Building…' : btn.dataset.label;
+  }
+
+  /* THE STAT SHEET, off the same priced fixture the match card uses.
+     Two cards, one pricing: a figure on the dossier and the same figure on the
+     portrait card come from one call to priceFixture rather than two readings
+     of it. squadOf hands the adapter this desk's own player list, which it
+     cannot reach on its own — the three datasets each declare their players
+     under a different global. */
+  function shareSheet(id, btn) {
+    var fx = FIXTURES.filter(function (f) { return String(f.id) === String(id); })[0];
+    if (!fx) return;
+    var priced = priceFixture(fx);
+    var ctx = Object.assign({}, SHARE_CTX, {
+      squadOf: function (short) {
+        return SERIEA_PLAYERS.filter(function (p) { return p.c === short; });
+      },
+      h2hRows: h2hRowsFor(fx),
+      recentFor: function (short) { return recentCards(short, 5); },
+      basis: 'Serie A 2026-27 only'
+    });
+    var spec = S.deskStatSheetSpec(priced, ctx);
+    shareBusy(btn, true);
+    S.statSheetCard(spec)
+      .then(function (b) { S.download(b, spec.filename); })
+      .catch(function (e) { console.error(e); })
+      .then(function () { shareBusy(btn, false); });
+  }
+
+  /* The head-to-head panel, in CARDS rather than goals — which is the whole
+     difference between this desk and a general stats graphic. Empty when the
+     pair has no recorded meetings, and the card then omits the panel rather
+     than drawing an empty box. */
+  /* A club's last five COMPLETED matches, as the share card's form grid reads
+     them — team cards, match cards, and whether both sides were carded. From
+     SERIEA_FXSTATS, the feed's own count per fixture: the grid is a record of what
+     happened and has to be sourced like one, not from the model. Newest
+     first, and finished only — a scheduled match has no cards, and counting
+     it as none would state that a clean game was played. */
+  function recentCards(short, n) {
+    if (typeof SERIEA_FXSTATS === 'undefined' || !SERIEA_FXSTATS) return [];
+    var out = [];
+    var done = FIXTURES.filter(function (f) { return f.st === 'FT'; })
+      .sort(function (a, b) { return String(b.d).localeCompare(String(a.d)); });
+    for (var i = 0; i < done.length && out.length < (n || 5); i++) {
+      var f = done[i], st = SERIEA_FXSTATS[String(f.id)];
+      if (!st || (f.h !== short && f.a !== short)) continue;
+      var mine = st[short], other = st[f.h === short ? f.a : f.h];
+      if (!mine || !other) continue;
+      var tc = Number(mine.yc || 0), oc = Number(other.yc || 0);
+      out.push({ tc: tc, mc: tc + oc, both: tc > 0 && oc > 0 });
+    }
+    return out;
+  }
+
+  function h2hRowsFor(fx) {
+    var p = typeof h2hFor === 'function' ? h2hFor(fx.h, fx.a) : null;
+    if (!p || p.n == null || p.n < 3) return [];
+    return [{ left: 'Last ' + p.n + ' meetings', right: p.avg.toFixed(1) + ' cards avg' }];
+  }
+
+  function shareMatch(id, btn) {
+    var fx = FIXTURES.filter(function (f) { return String(f.id) === String(id); })[0];
+    if (!fx) return;
+    /* The lineup state is per fixture, so the context is built per share
+       rather than taken from the static SHARE_CTX. */
+    /* WHAT THE PRICE IS BASED ON, from the pricing itself rather than from a
+       reader's self-report. The confirmed/unconfirmed button was the reader
+       marking "I have seen the team sheet"; the desk now knows, because
+       priceFixture records whether a harvested XI was actually used. */
+    var priced = priceFixture(fx);
+    var ctx = Object.assign({}, SHARE_CTX, { pricedOffXI: !!(priced.m && priced.m.xi) });
+    var spec = S.deskMatchSpec(priced, ctx);
+    shareBusy(btn, true);
+    S.matchCard(spec)
+      .then(function (b) { S.download(b, spec.filename); })
+      .catch(function (e) { console.error(e); })
+      .then(function () { shareBusy(btn, false); });
+  }
+
+  /* Takes the round rather than reading #fxRound: This Matchday shares a
+     round that is not the one selected on the Fixtures tab, and a function
+     that read the dropdown would export the wrong matchday from there
+     while succeeding. */
+  function shareRound(round, btn) {
+    var list = FIXTURES.filter(function (f) { return f.r === round; }).map(priceFixture);
+    list.sort(function (a, b) { return b.m.expected - a.m.expected; });
+    if (!list.length) return;
+    var ctx = Object.assign({}, SHARE_CTX, { round: round });
+    var spec = S.deskRoundSpec(list, ctx);
+    shareBusy(btn, true);
+    S.roundCard(spec)
+      .then(function (b) { S.download(b, spec.filename); })
+      .catch(function (e) { console.error(e); })
+      .then(function () { shareBusy(btn, false); });
+  }
+
+  /* TWO GRIDS DRAW THE SAME CARD, SO BOTH NEED THE SAME WIRING. fixtureCard()
+     renders a "Share match" button, and it is drawn into #fxList (Fixtures)
+     AND #mdList (This Matchday). The delegation used to be bound to #fxList
+     alone, so the button on This Matchday — the tab people land on — was
+     inert: it looked identical, and clicking it did nothing at all.
+
+     Delegated on the host rather than on each button, because both grids are
+     redrawn by innerHTML on every referee change and per-button listeners
+     would be lost on the redraw. */
+  function wireShareGrid(id) {
+    var host = $(id);
+    if (!host || host._shareWired) return;
+    host._shareWired = true;
+    host.addEventListener('click', function (e) {
+      var b = e.target.closest && e.target.closest('[data-share]');
+      if (b) { b.dataset.label = b.dataset.label || b.textContent; shareMatch(b.dataset.share, b); return; }
+      var sh = e.target.closest && e.target.closest('[data-sheet]');
+      if (sh) { sh.dataset.label = sh.dataset.label || sh.textContent; shareSheet(sh.dataset.sheet, sh); }
+    });
+  }
+
+  /* No module, no buttons. A share control that throws on click is worse
+     than one that was never drawn — the page still works without cards. */
+  if (!S) {
+    $('#fxShareBtn').hidden = true;
+    document.documentElement.classList.add('no-share');
+  } else {
+    wireShareGrid('#fxList');
+    wireShareGrid('#mdList');
+    var rb = $('#fxShareBtn');
+    rb.dataset.label = rb.textContent;
+    /* shareRound takes (round, btn). Passing the button as the round left
+       the filter above matching no fixture, and `if (!list.length) return`
+       swallowed it — a button that reported nothing and did nothing. The
+       round is the one SELECTED here, read at click time because
+       #mdShareBtn shares a different one. */
+    rb.addEventListener('click', function () { shareRound(Number($('#fxRound').value), rb); });
+  }
+
+  /* ---- provenance ------------------------------------------------------- */
+  /* Says what the model prices against what the division actually produced.
+     A calibration that drifts shows nothing on screen — the cards still
+     render, the numbers are just wrong — so it is stated in the open rather
+     than left to a build guard nobody reads. Neutral referee throughout, so
+     it measures the model and not an appointment. */
+  function calibrationNote() {
+    if (!FIXTURES.length || !REFLIST.length) return '';
+    var sum = 0, n = 0, cache = {};
+    function expected(short) {
+      if (cache[short] === undefined) {
+        var ps = sideProbs(short, 1).ps;
+        cache[short] = ps.length
+          ? ps.reduce(function (t, v) { return t + v; }, 0)
+          : null;
+      }
+      return cache[short];
+    }
+    FIXTURES.forEach(function (f) {
+      var h = expected(f.h), a = expected(f.a);
+      if (h == null || a == null) return;   // a club with no priced squad
+      var t = h + a;
+      if (isFinite(t)) { sum += t; n++; }
+    });
+    if (!n) return '';
+    /* The FIFTH copy of this loop, found by the guard rather than by reading:
+       it captions the appointed-fixtures line and had drifted nowhere only
+       because nothing had changed. Same call as LEAGUE above, same exclusion
+       of an official borrowed from another division. */
+    var avg = C.leagueRates(REFLIST).avgYpg;
+    if (avg == null) return '';
+    return ' Prices ' + n2(sum / n) + ' cards a match against the '
+      + n2(avg) + ' the division produced last season.';
+  }
+
+  /* ---- sample confidence and card form ---------------------------------- */
+  /* A probability built on 90 minutes and one built on 2,000 are not the same
+     number. The dot says which you are looking at, on the same thresholds the
+     Premier League Guide has always described. */
+  function confDot(min) {
+    var m = Number(min) || 0;
+    var cls = m >= 900 ? 'conf-hi' : m >= 450 ? 'conf-mid' : 'conf-lo';
+    var lab = m >= 900 ? 'high' : m >= 450 ? 'medium' : 'low';
+    return '<span class="conf-dot ' + cls + '" title="Sample confidence: ' + lab
+      + ' (' + m + ' minutes)" aria-label="sample confidence ' + lab + '"></span>';
+  }
+
+  /* Is he carding faster this season than his baseline? The Premier League desk
+     answers this from gameweek snapshots it accumulates live; these two have no
+     such history, but they do carry sc/sm — this season's cautions and minutes
+     — so the same question is answered by comparing this season's rate with the
+     rate the row is priced on. Null until the season is harvested, and null
+     means "not counted", not "no change". */
+  function formArrow(p) {
+    if (p.sc == null || !p.sm || p.y == null) return '';
+    var now = p.sc / (p.sm / 90);
+    if (!isFinite(now)) return '';
+    var d = now - p.y;
+    if (Math.abs(d) < 0.08) return '';
+    return d > 0
+      ? '<span class="form-arr form-up" title="Carding faster than his baseline this season">▲</span>'
+      : '<span class="form-arr form-down" title="Carding slower than his baseline this season">▼</span>';
+  }
+
+  /* ---- CSV --------------------------------------------------------------- */
+  function exportCsv() {
+    var list = rows(), ref = currentRef();
+    var head = ['Player', 'Club', 'Pos', 'Minutes', 'YC', 'Y/90', 'Fouls/90', 'Risk',
+                'P(card)', 'Fair odds', 'Basis', 'Referee'];
+    var cell = function (v) {
+      var t = v == null ? '' : String(v);
+      return /[",\n]/.test(t) ? '"' + t.replace(/"/g, '""') + '"' : t;
+    };
+    var lines = [head.join(',')].concat(list.map(function (r) {
+      var p = r.p;
+      return [p.n, p.c, p.p, p.min, p.yc, p.y, p.f, p.r,
+              r.prob == null ? '' : r.prob.toFixed(4),
+              r.odds ? r.odds.toFixed(2) : '', p.b, ref ? ref.n : ''].map(cell).join(',');
+    }));
+    var name = (LEAGUE_SLUG || 'bookings') + '-players.csv';
+    saveFile(new Blob([lines.join('\n')], { type: 'text/csv' }), name, 'text/csv',
+      function (res) { if (res !== 'cancelled') toastLite(list.length + ' players exported'); });
+  }
+
+  /* PLDSave routes a phone to the share sheet; an <a download> is inert on iOS. */
+  function saveFile(blob, name, mime, done) {
+    if (!window.PLDSave) { console.warn('assets/save.js did not load'); return; }
+    window.PLDSave.file(blob, name, mime).then(function (r) { if (done) done(r); })
+      .catch(function (e) { console.warn(e); });
+  }
+  function toastLite(msg) {
+    var n = $('#csvNote'); if (!n) return;
+    n.textContent = msg;
+    clearTimeout(toastLite._t);
+    toastLite._t = setTimeout(function () { n.textContent = ''; }, 4000);
+  }
+
+  var LEAGUE_SLUG = 'seriea-bookings';
+
+  /* ---- head to head ------------------------------------------------------
+   * What these two clubs actually do to each other, beside what the model
+   * expects. Deliberately BESIDE the model, not inside it: they are two
+   * independent reads of one question — this season's player rates, and what
+   * happened when these sides last met — and the disagreement is the useful
+   * part. Yellows only, matching the model, which counts players booked.
+   *
+   * Under three meetings is anecdote, not history, and is not shown. Promoted
+   * clubs have no top-flight meetings at all and correctly show nothing.
+   */
+  var H2H_DATA = (typeof SERIEA_H2H !== 'undefined') ? SERIEA_H2H : null;
+  function h2hFor(h, a) {
+    if (!H2H_DATA || !H2H_DATA.pairs) return null;
+    var p = H2H_DATA.pairs[[h, a].sort().join('|')];
+    return (p && p.n >= 3) ? p : null;
+  }
+  /* Rendered as a market chip so it sits in the same row as the numbers it is
+     meant to be compared against. */
+  /* The booking-points strip. Titled with the rate it was priced at, because
+     the red half of the number is the part a reader cannot check by counting
+     the yellows on the card above it. */
+  function bookingPointsChips(x) {
+    if (!x.bp) return '';
+    var src = (x.ref && x.ref.ref) ? x.ref.ref.n + "'s" : 'the league';
+    var t = esc('Booking points: 10 a yellow, 25 a red. Reds priced at '
+      + n2(x.bp.lambdaRed) + ' a game, ' + src + ' rate. Points land in steps '
+      + 'of 5, so a line is cleared or it is not — over 35.5 means 40.');
+    return '<span class="mkt" title="' + t + '">Points <b>' + n1(x.bp.expected) + '</b></span>'
+      + BP_LINES.map(function (l) {
+          return '<span class="mkt" title="' + t + '">Over ' + l + ' <b>'
+            + pct(x.bp.over[l]) + '</b></span>';
+        }).join('');
+  }
+
+  function h2hChip(x) {
+    var p = h2hFor(x.fx.h, x.fx.a);
+    if (!p) return '';
+    var gap = Math.abs(p.avg - (x.m.expected || 0));
+    var hot = gap >= 1 ? ' style="color:var(--danger-ink)"' : '';
+    return '<span class="mkt" title="' + esc('Past meetings: ' + p.avg
+        + ' yellows on average across ' + p.n + ' games (' + p.last.join(', ')
+        + ', most recent first). ' + Math.round(p.o45 * 100)
+        + '% produced 5 or more. Reds ' + p.red + ' a game.'
+        + (gap >= 1 ? ' Highlighted: it disagrees with the model by a card or more.' : ''))
+      + '">H2H ' + p.n + ' <b' + hot + '>' + p.avg.toFixed(1) + '</b></span>';
+  }
+
+  /* ---- derbies -----------------------------------------------------------
+   * A derby is carded more than the same two clubs would be otherwise, and the
+   * Premier League desk has priced that for a while. The list is editorial —
+   * there is no feed for "these two dislike each other" — and it is written
+   * down rather than inferred from distance, because Sevilla v Betis and two
+   * clubs that merely share a city are not the same thing.
+   *
+   * THE PAIRS ARE NOT HERE ANY MORE — see the note in eflc.html and the list
+   * itself in assets/core.js. Three copies of one editorial list, each visible
+   * only to its own page, is why a view across the three divisions could not
+   * be built until they were folded together. */
+  var DERBY_LEAGUE = 'SA';
+  function isDerby(h, a) { return C.isDerby(h, a, DERBY_LEAGUE); }
+  function derbyTag(x) {
+    var on = x.derby != null ? x.derby : isDerby(x.fx.h, x.fx.a);
+    if (!on) return '';
+    /* THE PILL NAMES THE RIVALRY. Every derby on this desk read a bare
+       "derby" — including Barcelona v Real Madrid. */
+    var name = C.derbyName(x.fx.h, x.fx.a, DERBY_LEAGUE);
+    return ' <span class="pill band-hi" title="'
+      + (name ? esc(name) + ' — these fixtures carry more cards than the same '
+                + 'two clubs otherwise would'
+              : 'Derby — these fixtures carry more cards than the same two '
+                + 'clubs otherwise would')
+      + '">' + (name ? esc(name) : 'derby') + '</span>';
+  }
+
+  /* ---- This Matchday ----------------------------------------------------
+   * The landing view. The Premier League desk opens on its fixtures ranked by
+   * booking heat; these two opened on a table of several hundred players,
+   * which is a different product on first impression rather than a different
+   * skin. Same pricing path as the Fixtures tab (priceFixture), so a match
+   * cannot read differently depending on which view you arrived through.
+   */
+  /* PLDCore.currentRound, not a local rule. The Fixtures dropdown below uses
+     the identical call, which is the whole point — these were two rules that
+     disagreed for several hours of every matchday. */
+  function nextRound() {
+    return FIXTURES.length ? C.currentRound(FIXTURES) : null;
+  }
+
+  /* Fewer than twelve rated players between two squads is not a confident
+     price and must not look like one. */
+  function thinTag(x) {
+    var rated = ((x.home && x.home.ps) || []).length + ((x.away && x.away.ps) || []).length;
+    return rated < 12
+      ? ' <span class="pill" title="Fewer than 12 rated players between the two squads">thin sample</span>' : '';
+  }
+
+  function renderMatchday() {
+    var host = $('#mdList');
+    if (!host) return;
+    var r = nextRound();
+    if (r == null) {
+      host.innerHTML = '<div class="empty">No fixture list yet.</div>';
+      $('#mdStats').innerHTML = ''; $('#mdNote').textContent = '';
+      return;
+    }
+    /* STILL TO PLAY FIRST, then hottest to coolest within each group.
+       Ranking a whole round by heat alone put finished matches above the ones
+       kicking off tonight: on 24 August this desk listed jornada 2 with the
+       two matches actually being played that evening at the BOTTOM, under
+       eight that had already finished. A settled result cannot be researched
+       or backed, so it does not outrank a match that can. The heat ordering
+       inside each group is unchanged — it is what the note under the list
+       describes. */
+    var list = FIXTURES.filter(function (f) { return f.r === r; }).map(priceFixture)
+      .sort(function (a, b) {
+        var ap = C.isPlayed(a.fx) ? 1 : 0, bp = C.isPlayed(b.fx) ? 1 : 0;
+        if (ap !== bp) return ap - bp;
+        return b.m.expected - a.m.expected;
+      });
+    var cards = list.reduce(function (a, x) { return a + (x.m.expected || 0); }, 0);
+    var withRef = list.filter(function (x) { return x.ref.appointed; }).length;
+    var dates = list.map(function (x) { return x.fx.d; }).filter(Boolean).sort();
+    var dfmt = function (d) {
+      var t = new Date(d);
+      return isNaN(t) ? '' : t.toLocaleDateString(undefined, { weekday: 'short', day: 'numeric', month: 'short' });
+    };
+
+    $('#mdTitle').textContent = 'Matchday ' + r;
+    $('#mdWhen').textContent = dates.length
+      ? dfmt(dates[0]) + (dates[dates.length - 1].slice(0, 10) !== dates[0].slice(0, 10)
+          ? ' – ' + dfmt(dates[dates.length - 1]) : '')
+      : '';
+    $('#mdStats').innerHTML = [
+      ['<b>' + list.length + '</b><span>matches</span>'],
+      ['<b>' + cards.toFixed(1) + '</b><span>cards expected</span>'],
+      ['<b>' + (list.length ? (cards / list.length).toFixed(2) : '—') + '</b><span>a match</span>'],
+      ['<b>' + withRef + ' of ' + list.length + '</b><span>referees appointed</span>']
+    ].map(function (h) { return '<div class="stat">' + h + '</div>'; }).join('');
+
+    /* The SAME card the Fixtures tab draws, in the same grid the Premier
+       League desk lands on. This was a plain text list — team names, four
+       names and percentages, a heat number — which carried the same numbers
+       but read as a different application. Nothing here is new: it is the
+       card that already existed, shown on the page people arrive at. */
+    var refOpts = refOptions();
+    host.innerHTML = '<div class="fx-grid">'
+      + list.map(function (x) { return fixtureCard(x, refOpts); }).join('')
+      + '</div>';
+
+    $$('.fxref', host).forEach(function (sel) {
+      sel.addEventListener('change', function () {
+        var id = sel.getAttribute('data-fx');
+        if (sel.value) myRefs[id] = sel.value; else delete myRefs[id];
+        try { localStorage.setItem(REF_KEY, JSON.stringify(myRefs)); } catch (e) {}
+        renderMatchday();
+      });
+    });
+
+    $('#mdNote').textContent = 'Ranked hottest to coolest by booking heat — the expected number of '
+      + 'cards in the match, both sides added together, with the referee applied where one has been '
+      + 'appointed. A player’s percentage is his chance of a card in that match: High is 50%+, '
+      + 'Watch 30–50%.';
+
+    var b = $('#mdShareBtn');
+    if (b && !b._wired) { b._wired = true; b.addEventListener('click', function () { shareRound(r, b); }); }
+  }
+
+  $('#prov').textContent = 'Dataset: ' + PLAYERS.length + ' players across ' + CLUBLIST.length
+    + ' clubs, ' + REFLIST.length + ' referees. Base rate ' + pct(CAL.baseRate)
+    + ', average risk ' + n2(CAL.avgRisk) + '.' + calibrationNote();
+
+  $('#csvBtn').addEventListener('click', exportCsv);
+
+  /* Both grids draw the same card, so both carry the lineup control and both
+     need it wired — the lesson the share buttons taught. */
+  if (PRICES) { PRICES.wire($('#fxList')); PRICES.wire($('#mdList')); }
+
+  renderMatchday();
+  renderSuspension();
+  renderPlayers();
+  renderFixtures();
+  liveStart();
+  renderClubs();
+  renderRefs();
+
+  /* The tables arrive already sorted, so the initial state has to be
+     announced too — otherwise the first thing a screen reader meets is a
+     sorted table insisting nothing is sorted. */
+  if (typeof PLDA11y !== 'undefined') {
+    PLDA11y.syncSorted('#tblPlayers', sortKey, sortDir);
+    PLDA11y.syncSorted('#tblClubs', clubSort.k, clubSort.d);
+    PLDA11y.syncSorted('#tblRefs', refSort.k, refSort.d);
+  }
+
+  /* ---- app shell -------------------------------------------------------- */
+  /* Sidebar, breadcrumb and mobile bottom bar, matching the Premier League
+     desk. Areas hold panels; Desk holds the three tables, so those stay on the
+     existing strip and every other area hides it. */
+  var SHELL = null;
+  if (window.PLDShell) {
+    SHELL = window.PLDShell.build({
+      code: 'SA', name: 'Serie A', accent: '#14532d', tag: 'Serie A Bookings Desk',
+      glossary: [
+        ['Booking heat', 'The expected number of cards in a match, both sides added together, with the referee applied where one has been appointed.'],
+        ['P(card)', "A player's chance of being booked if he plays the full 90. High is 50%+, Watch is 30–50%."],
+        ['Fair odds', 'The decimal price that P(card) implies with no margin. Beat it and there is an edge; that is an estimate, not a guarantee.'],
+        ['Risk score', 'Yellows and fouls per 90 combined, shrunk toward the positional average so a small sample cannot top the table on one booking.'],
+        ['Y/90 and Fouls/90', 'Per-90 rates rather than totals, so a substitute and an ever-present can be compared.'],
+        ['×factor', 'The multiplier every probability is scaled by when a referee is appointed. Blends his yellows per game and his cards per foul equally, clamped to ×0.75–×1.30.'],
+        ['Cards/foul', 'How readily an official reaches for a card given the same provocation — the purer strictness signal, because it divides out how foul-heavy his fixtures happened to be.'],
+        ['Form basis', "Which division's form a rate is measured on. A promoted club's 2.4 measured on last season's second-tier form is not the same claim as one measured on this division."],
+        ['Sample confidence', 'The coloured dot beside minutes: green above 900, amber above 450, grey below. A 0.50 built on 90 minutes is not the 0.50 built on 2,000.'],
+        ['Thin sample', 'Fewer than twelve rated players between the two squads. The match price is still shown, but it is not a confident one.'],
+        ['Suspension watch', 'Who is closest to a ban by accumulated cautions, under this division\u2019s own rules.']
+      ],
+      tour: [
+        { sel: '.leaguebar', title: 'Four leagues, one model',
+          body: 'This desk is Serie A. The same thing exists for the other three divisions: same model, same numbers, so the percentages compare directly. Today pulls every league playing on one date into a single list.' },
+        { sel: '#panel-matchday', title: 'This Matchday',
+          body: 'Your landing view: the next round\u2019s fixtures ranked hottest to coolest by booking heat, with the referee folded in where one has been appointed.' },
+        { sel: '.as-nav', title: 'Where everything lives',
+          body: 'Desk holds the players, clubs and referees tables. Fixtures is the full season. On a phone these are the tabs along the bottom instead.' },
+        { sel: '#suspCard', title: 'Suspension watch',
+          body: 'Who is closest to a ban by accumulated cautions, under this division\u2019s own rules, which are genuinely different between England, Spain and Italy.' }
+      ],
+      areas: [
+        { id: 'matchday', label: 'Matchday', icon: 'matchday',
+          panels: [{ id: 'panel-matchday', label: 'This Matchday' }] },
+        { id: 'desk', label: 'Desk', icon: 'desk', panels: [
+          { id: 'panel-players', label: 'Players' },
+          { id: 'panel-clubs', label: 'Clubs' },
+          { id: 'panel-referees', label: 'Referees' }] },
+        { id: 'fixtures', label: 'Fixtures', icon: 'fixtures',
+          panels: [{ id: 'panel-fixtures', label: 'All fixtures' }] },
+        { id: 'guide', label: 'Guide', icon: 'guide',
+          panels: [{ id: 'panel-guide', label: 'How to use' }] }
+      ]
+    });
+  }
+  var SHELL_TOUR = (SHELL && SHELL.tour) || null;
+
+  /* ---- command palette --------------------------------------------------- */
+  /* The Premier League desk has had Cmd-K since it was built. Here a referee
+     could only be found by knowing which tab he lived on first. */
+  if (window.PLDPalette) {
+    window.PLDPalette.init({
+      items: function () {
+        var out = [];
+        CLUBLIST.forEach(function (c) {
+          out.push({ label: c.name, sub: c.short, group: 'Club', run: function () {
+            if (SHELL) SHELL.setArea('desk', 'panel-players');
+            $('#fClub').value = c.short; renderPlayers();
+          } });
+        });
+        PLAYERS.forEach(function (p) {
+          out.push({ label: p.n, sub: p.p + ' · ' + p.c, group: 'Player', run: function () {
+            if (SHELL) SHELL.setArea('desk', 'panel-players');
+            $('#fSearch').value = p.n; $('#fClub').value = ''; renderPlayers();
+          } });
+        });
+        REFLIST.forEach(function (r) {
+          out.push({ label: r.n, sub: n2(r.ypg) + ' yellows a game', group: 'Referee', run: function () {
+            if (SHELL) SHELL.setArea('desk', 'panel-referees');
+          } });
+        });
+        [['This Matchday','matchday','panel-matchday'],['Players','desk','panel-players'],
+         ['Clubs','desk','panel-clubs'],['Referees','desk','panel-referees'],
+         ['All fixtures','fixtures','panel-fixtures'],['Guide','guide','panel-guide']]
+          .forEach(function (v) {
+            out.push({ label: v[0], group: 'View', run: function () { if (SHELL) SHELL.setArea(v[1], v[2]); } });
+          });
+        return out;
+      }
+    });
+  }
+
+  /* OFFERED, never fired. Keyed per desk: being shown round the Championship
+     is not being shown round Serie A. The tour used to open itself 600ms
+     after load, so the first thing a new visitor saw was an overlay on a
+     page they had not read yet — and the spotlight's scroll left the desk
+     sitting past its own heading on a phone. */
+  if (window.PLDTour) window.PLDTour.offer(SHELL_TOUR, 'seriea_tour_v1', { button: document.getElementById('tourBtn') });
+  document.querySelectorAll('[data-open-tour]').forEach(function (b) {
+    b.addEventListener('click', function () { window.PLDTour.run(SHELL_TOUR, {}); });
+  });
+})();
+</script>
+<script>
+/* The service worker makes this an installable app on the home screen rather
+   than a page in a tab. Registered on every desk, not just the Premier League
+   one, or a phone that installed from here would launch into Safari. */
+if("serviceWorker" in navigator&&(location.protocol==="https:"||location.hostname==="localhost")){
+  window.addEventListener("load",function(){ navigator.serviceWorker.register("/sw.js").catch(function(){}); });
+}
+</script>
+</body>
+</html>

@@ -63,13 +63,89 @@ The trap on this desk specifically is that there are now two card counts in scop
 
 **All three suspension schemes are now settled and shipped**, and England and Spain are structurally different rather than variants of one rule:
 
-| | PL | Championship | La Liga |
-|---|---|---|---|
-| Shape | ladder | ladder | cycle |
-| Ban | 1 / **2** / 3 | 1 / **2** / 3 | 1, always |
-| Gate | match 19 / 32 | match **19 / 37** | none |
-| After a ban | keeps running | keeps running | resets |
+| | PL | Championship | La Liga | Serie A |
+|---|---|---|---|---|
+| Shape | ladder | ladder | cycle | ladder with a tail |
+| Ban | 1 / **2** / 3 | 1 / **2** / 3 | 1, always | 1, always |
+| Gate | match 19 / 32 | match **19 / 37** | none | none |
+| After a ban | keeps running | keeps running | resets | keeps running |
+| Thresholds | 5 / 10 / 15 | 5 / 10 / 15 | every 5 | 5 / 10 / 14 / 17 / 19, then every 1 |
+
+(The Serie A column was added on 9 September 2026 with the fifth desk; see
+the Serie A section below and `docs/italy-suspensions.md`.)
 
 Getting those the wrong way round is silent both ways, so no page implements a threshold: the rules live in `data/leagues.py`, ship with each dataset as `const SUSPENSION`, and are computed by one shared module (`assets/suspension.js` over `PLDCore.nextSuspension`). `check-data`, `check-eflc` and `check-laliga` each reject the *other* leagues' schemes: the Championship guard rejects the Premier League's match-32 gate, and the Premier League guard rejects the Championship's match-37 one — the pair that differ by five matches and by nothing visible on screen.
 
 The gating is load-bearing and was wrong at first: a Championship player on four cautions after his club's 19th match can no longer reach that rung, so pricing his ban over a 23-match horizon showed **99%** for something already impossible. The horizon is capped at the gate. `docs/suspension-rules.md` covers all three schemes and — as with Spain — exactly how far each was verified, which is not all the way: the regulations themselves are unreachable from this environment.
+
+### Serie A
+
+*Added 9 September 2026.*
+
+**The Serie A desk is at `/seriea`** (`seriea.html`), built like La Liga's
+and reading `data/seriea_data.js`. It is the fifth desk and the second
+outside British football, and it takes the Spanish route in every respect
+that matters:
+
+- **The division is discovered, not declared.** `harvest_apifootball.py
+  --league SA --clubs` reads the twenty off `/teams` (API-Football league
+  135) and writes `data/seriea_clubs.json`; it refuses a division that is not
+  twenty clubs. Every later stage resolves club names through that registry,
+  and the Serie B feeder (`SERB`, league 136) resolves through its owner's
+  registry rather than a table of its own.
+- **Three feeds, three spellings, one canonical name.** football-data.co.uk
+  writes `Milan`, `Roma`, `Verona`, `Inter`; API-Football writes `AC Milan`,
+  `AS Roma`, `Hellas Verona`, `Inter`; the AIA writes them in capitals. The
+  spelling tables in `data/leagues.py` map each to one canonical name, and
+  `data/test_seriea.py` pins all twenty of 2025-26 in both feed spellings
+  against each other, with accent folding for a name in no table at all. The
+  short codes are assigned clear of the other three desks' codes, because
+  `/today` merges the colour tables into one lookup.
+- **Club card rates are free and exact.** The I1 file on the football-data
+  mirror carries every card and every foul for all 380 matches of 2025-26,
+  so the home and away split is measured rather than estimated. Promoted
+  clubs are derived (in the registry, absent from last season's records) and
+  rated on Serie B form from `serieb_players.json` with basis label `SB`.
+- **The referee NAME is bought, once.** The free records name the official on
+  0 of 380 Italian rows, so `harvest_apifootball.py --ref-fixtures --league SA`
+  takes last season's officials from one `/fixtures` call and
+  `build_refs.py --league SA` joins them onto the free rows by date and both
+  canonical clubs. Every published rate is then computed from the free
+  columns exactly as for England. The join must cover the whole season:
+  `scripts/check-seriea.mjs` fails a table built on less than 95% of the 380.
+- **The season file is the La Liga builder, configured.**
+  `data/build_seriea_data.py` calls `build_laliga_data.configure("SA")` and
+  `main()`; the per-desk facts (files, feeder, basis labels, the shipped
+  constant) live in that module's `DESKS` table, so the two discovered
+  leagues cannot drift about what a booking risk is.
+
+**The rate the desk is calibrated to is 2025-26's: 3.70 yellows a game**,
+counted from the free records on 9 September 2026. Italian football used to
+card more freely, and the older multi-season averages run well above that;
+none of them is quoted anywhere on the desk, and `check-seriea.mjs` refuses a
+league rate outside the 2025-26 range.
+
+**Appointments.** The AIA publishes each round's designations as an article
+on aia-figc.it on the Tuesday or Wednesday before the round, one block per
+fixture, officials by surname alone. `data/fetch_appointments.py --league SA`
+finds the article for a pending round by the giornata in its slug and
+`ingest_appointments.py --format aia` parses it, resolving surnames through
+`appointments.resolve_surname_only` (unique or nothing, an initial after the
+surname where two officials share one). That route could not be exercised where it was
+written (the site and every mirror refuse the network there); the first
+fixtures run on a GitHub runner, on 9 September 2026, confirmed it works:
+nine of the round's ten officials were read from the AIA article and resolved
+by surname five days before the fixture feed named any of them. Where the AIA
+has not published yet, the feed's own referee field is used.
+
+**The suspension rule is a third shape.** Art. 19 of the FIGC's Codice di
+Giustizia Sportiva bans for one match at the fifth caution, then at the
+tenth, fourteenth, seventeenth and nineteenth, then at every caution: a
+cumulative ladder that never escalates and never expires, with a tail. The
+registry expresses it as a `ladder` with rungs at 5, 10, 14, 17 and 19, no
+gate, and `then_every: 1`; `PLDCore.nextSuspension` walks the tail and
+`assets/suspension.js` measures the pips over one step past the top. The
+commissioning brief stated a different progression (5, 10, 15, then every
+second caution); no source found supports it, and `docs/italy-suspensions.md`
+records both readings and exactly how far the rule was verified, which is not
+from the Codice itself.

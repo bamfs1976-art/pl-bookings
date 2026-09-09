@@ -500,9 +500,14 @@ t("no photo means no field, not a column of nulls", _absent_photo_adds_nothing)
 
 
 def _every_builder_emits_it():
-    """All three desks, not just the one that was checked. The Championship
-    and La Liga writers are separate functions with their own key lists."""
+    """Every desk, not just the one that was checked. The Championship and
+    La Liga writers are separate functions with their own key lists; the
+    Serie A builder delegates to the La Liga one, so it is checked by naming
+    the module it configures rather than by grepping a wrapper."""
     import re as _re
+    seriea = (DATA / "build_seriea_data.py").read_text(encoding="utf-8")
+    assert 'B.configure("SA")' in seriea and "import build_laliga_data as B" in seriea, \
+        "build_seriea_data.py no longer delegates to the shared builder"
     for name in ("build_pl_data.py", "build_eflc_data.py", "build_laliga_data.py"):
         src = (DATA / name).read_text(encoding="utf-8")
         assert _re.search(r"ph:\{js?val?\(?p\[.ph.\]\)?\}", src) or "p[\"ph\"]" in src, \
@@ -510,7 +515,7 @@ def _every_builder_emits_it():
         assert "inj:true" in src, f"{name} never emits the availability flag"
 
 
-t("all three dataset builders emit the photo, not just the Premier League one",
+t("every dataset builder emits the photo, not just the Premier League one",
   _every_builder_emits_it)
 
 print(f"\n{passed} tests passed")

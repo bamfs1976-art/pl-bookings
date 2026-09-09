@@ -36,6 +36,7 @@ fails CI if a guard exists that `ci.yml` does not also list.
 | `check-core-insights.mjs` | The vendored fouls file is well-formed and about last season, putting a "live rate" marker beside 2025-26 numbers. | Number | No: reads the committed file. |
 | `check-eflc.mjs` | The Championship desk prices outside the 25 to 60% range a bookings market occupies, or prices the division away from the card rate it produced. | Number | No: re-prices the shipped dataset. |
 | `check-laliga.mjs` | The discovered club registry and the dataset describe different divisions, or the bought referee join covered a fraction of the season and looks complete. Also the strip reading `yc` instead of `sc`. | Join | No: reads three committed files together. |
+| `check-seriea.mjs` (added 9 September 2026) | The Serie A registry and dataset describe different divisions; the bought referee join covers less than the whole season; the strip reads `yc` instead of `sc`; the shipped scheme is England's ladder or Spain's cycle rather than the Italian rungs. | Join | No: reads three committed files together and walks the scheme through `PLDCore.nextSuspension`. |
 | `check-share.mjs` | A share card, the one artefact that leaves the site, draws the wrong numbers, drops a league's identity, or truncates the 18+ line off the end. | Number | No: runs the renderer over real desk data. |
 | `check-models.mjs` | The three desks price the same thing differently; a desk drifts more than a tenth from its division's real card rate, or a player above 55%; a desk goes back to the logistic. | Number | No: it is a calibration check over the datasets. |
 | `check-nav.mjs` | A desk is built, deployed and live and nothing links to it; a pretty URL is routed after the catch-all and silently serves the wrong page. | Product | No: reads the pages and `_redirects`. |
@@ -69,10 +70,13 @@ fails CI if a guard exists that `ci.yml` does not also list.
 
 ## Summary for the reviewer
 
-- 38 scripts: the 36 `check-*.mjs` guards that `check-all.mjs` also runs
-  (`check-inline.mjs` among them), plus `build-model.mjs` as a reproducibility
-  check and `vendor-libs.mjs --check`. By kind: 18 guard a number a bettor acts
-  on, 7 guard a data join, 13 guard a product decision.
+- 38 scripts on 8 September 2026: the 36 `check-*.mjs` guards that
+  `check-all.mjs` also runs (`check-inline.mjs` among them), plus
+  `build-model.mjs` as a reproducibility check and `vendor-libs.mjs --check`.
+  By kind: 18 guard a number a bettor acts on, 7 guard a data join, 13 guard
+  a product decision. The Serie A desk added one on 9 September 2026,
+  `check-seriea.mjs` (a join guard), the only new guard that desk was allowed;
+  the totals are now 39, 37 and 8.
 - Four look cheaper as unit tests outright: `check-lineup-pricing`,
   `check-matchday`, `check-clock` and `check-desk-widgets`. Each mostly
   exercises pure functions with built inputs and keeps a small page-reading

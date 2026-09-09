@@ -39,7 +39,7 @@ const codeOnly = (src) => src
 const problems = [];
 const ok = (cond, msg) => { if (!cond) problems.push(msg); };
 
-const PAGES = ['index.html', 'today.html', 'eflc.html', 'laliga.html'];
+const PAGES = ['index.html', 'today.html', 'eflc.html', 'laliga.html', 'seriea.html'];
 const KO = '2026-08-30T16:30:00+00:00';   // a 16:30 kick-off, i.e. 4.30pm
 
 /* ── 1. the helpers exist and read 24-hour ─────────────────────────────── */

@@ -86,31 +86,28 @@ def known_names(code):
     who only the Premier League map knows. Neither list is complete alone; the
     union is what a division contains.
     """
-    if code.upper() in SPANISH:
-        # Spain's division is DISCOVERED, not declared — see leagues.py. Before
-        # --clubs has ever run there is no vocabulary to check against, and
-        # that is the normal first state rather than an error.
+    if leagues.is_discovered(code):
+        # A discovered division — Spain's, and now Italy's — see leagues.py.
+        # Before --clubs has ever run there is no vocabulary to check against,
+        # and that is the normal first state rather than an error.
         #
-        # SEGUNDA RESOLVES AGAINST LA LIGA'S REGISTRY, deliberately. That
-        # harvest exists for the clubs PROMOTED into La Liga, so the twenty
-        # names worth recognising in a second-tier response are La Liga's, and
-        # the other twenty are meant to be skipped. Falling through to the
-        # English maps below — which is what this did — checks Spanish clubs
-        # against Championship and Premier League names, matches nothing, and
-        # exits with "no clubs this desk recognises". Inside a
-        # continue-on-error step that is a green tick and three missing squads.
-        return set(leagues.load_clubs("LL"))
+        # A FEEDER RESOLVES AGAINST THE REGISTRY OF THE DIVISION IT FEEDS,
+        # deliberately. The Segunda harvest exists for the clubs PROMOTED into
+        # La Liga, so the twenty names worth recognising in a second-tier
+        # response are La Liga's, and the other twenty are meant to be
+        # skipped; Serie B and Serie A are the same pair. Falling through to
+        # the English maps below — which is what this did — checks Spanish
+        # clubs against Championship and Premier League names, matches
+        # nothing, and exits with "no clubs this desk recognises". Inside a
+        # continue-on-error step that is a green tick and three missing
+        # squads. leagues.load_clubs already resolves a feeder to its owner.
+        return set(leagues.load_clubs(code))
     return set(leagues.EFLC_CLUBS) | set(build_pl_data.SHORT)
-
-
-# The Spanish family. Both resolve against La Liga's registry: Segunda is
-# harvested only for the clubs that have just come up into it.
-SPANISH = {"LL", "SEG"}
 
 
 def canonical_for(code, raw):
     """A feed's club name as the name that league's builder keys on."""
-    if code.upper() in SPANISH:
+    if leagues.is_discovered(code):
         n = (raw or "").strip()
         if not n:
             return None
@@ -121,8 +118,8 @@ def canonical_for(code, raw):
         # "Deportivo Alaves" (via the football-data table, which the referee
         # join uses) while the 2026-27 registry stored the raw "Alaves" — two
         # canonicalisers, two answers, one club with no squad and no error.
-        canon = leagues.canon_name("LL", n)
-        reg = leagues.load_clubs("LL")
+        canon = leagues.canon_name(code, n)
+        reg = leagues.load_clubs(code)
         if not reg:
             return canon          # discovery pass: every club is new
         if canon in reg:
@@ -787,6 +784,7 @@ FIXTURE_FILES = {
     "PL": ("PL_FIXTURES", "pl_fixtures.js"),
     "EFLC": ("EFLC_FIXTURES", "eflc_fixtures.js"),
     "LL": ("LALIGA_FIXTURES", "laliga_fixtures.js"),
+    "SA": ("SERIEA_FIXTURES", "seriea_fixtures.js"),
 }
 
 # A SECOND, different fixture list, for leagues whose referees have to be
@@ -797,6 +795,7 @@ FIXTURE_FILES = {
 # Conflating them gives a desk that prices every fixture off no referee data.
 REF_FIXTURE_FILES = {
     "LL": ("LALIGA_REF_FIXTURES", "laliga_ref_fixtures.js"),
+    "SA": ("SERIEA_REF_FIXTURES", "seriea_ref_fixtures.js"),
 }
 
 
@@ -1090,7 +1089,7 @@ def discover_clubs(payload, league, season):
         canon = leagues.canon_name(league.code, raw)
         names.append(canon)
         ids[canon] = team["id"]
-    shorts = leagues.assign_shorts(names)
+    shorts = leagues.assign_shorts(names, code=league.code)
     clubs = {n: {"short": shorts[n], "id": ids[n]} for n in sorted(shorts)}
 
     if len(clubs) != league.clubs:
@@ -1103,9 +1102,9 @@ def discover_clubs(payload, league, season):
                    "and no error anywhere downstream.")
     if len(set(s["short"] for s in clubs.values())) != len(clubs):
         sys.exit("ERROR: two clubs were assigned the same short code. Add an "
-                 "override to leagues.LALIGA_SHORT.")
+                 "override to the league's short-code table in leagues.py.")
 
-    generated = [n for n in clubs if n not in leagues.LALIGA_SHORT]
+    generated = [n for n in clubs if n not in leagues.short_table(league.code)]
     path = leagues.save_clubs(league.code, clubs, season=season)
     print(f"\n{path.name} written ({len(clubs)} clubs)")
     for n, d in sorted(clubs.items(), key=lambda kv: kv[1]["short"]):
@@ -1114,8 +1113,8 @@ def discover_clubs(payload, league, season):
     if generated:
         print("\n  Codes above marked generated came from auto_short, not the "
               "override table.\n  They are stable, but a club that stays in "
-              "the division belongs in\n  leagues.LALIGA_SHORT so its code is "
-              "chosen rather than derived.")
+              "the division belongs in\n  the league's short-code table in "
+              "leagues.py so its code is chosen rather than derived.")
     return clubs
 
 
@@ -1348,11 +1347,13 @@ def main():
         return
 
     ids, unmapped = resolve_teams(teams_payload, league.code)
-    if not ids and league.code == "LL":
-        sys.exit(f"ERROR: no {league.name} club registry yet, so there is no "
-                 "vocabulary to match the feed against.\n\nRun the discovery "
-                 "pass first — it reads the division off the same endpoint:\n"
-                 "    python3 data/harvest_apifootball.py --league LL --clubs")
+    if not ids and leagues.is_discovered(league.code):
+        owner = leagues.registry_owner(league.code)
+        sys.exit(f"ERROR: no {leagues.get(owner).name} club registry yet, so "
+                 "there is no vocabulary to match the feed against.\n\nRun the "
+                 "discovery pass first — it reads the division off the same "
+                 f"endpoint:\n    python3 data/harvest_apifootball.py --league "
+                 f"{owner} --clubs")
     if not ids:
         sys.exit(f"ERROR: league {af} season {season} returned no clubs this "
                  "desk recognises.\n  API returned: "

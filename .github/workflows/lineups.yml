@@ -75,7 +75,7 @@ jobs:
           echo "::error::API_FOOTBALL_KEY is not set — no team sheet can be fetched."
           exit 1
 
-      # ONE INVOCATION FOR ALL THREE LEAGUES, not a shell loop over them.
+      # ONE INVOCATION FOR ALL FOUR LEAGUES, not a shell loop over them.
       # data/lineups.js is keyed by fixture id across every division and is
       # written WHOLE from a single run, so three separate runs would each
       # overwrite the last and leave only La Liga's sheets. The comma list is
@@ -84,7 +84,7 @@ jobs:
       - name: Harvest team sheets near kick-off
         run: |
           python3 data/harvest_apifootball.py --lineups \
-            --league PL,EFLC,LL \
+            --league PL,EFLC,LL,SA \
             --within-hours "${{ inputs.within_hours || '1' }}" \
             || echo "::warning::lineup harvest failed this run — keeping the committed file"
 

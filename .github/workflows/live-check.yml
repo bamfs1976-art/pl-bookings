@@ -27,7 +27,7 @@ jobs:
 
       - name: Is the live page the file we committed?
         run: |
-          for f in laliga.html eflc.html today.html assets/core.js; do
+          for f in laliga.html seriea.html eflc.html today.html assets/core.js; do
             curl -sS "https://bookingsdesk.netlify.app/$f" -o /tmp/live.$$ || exit 1
             if diff -q "$f" /tmp/live.$$ >/dev/null; then
               echo "same as committed: $f"

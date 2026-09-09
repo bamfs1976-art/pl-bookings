@@ -1010,6 +1010,57 @@ t('unknown counts and missing schemes yield null, never a default', () => {
   assert.equal(core.nextSuspension(-1, 10, LADDER), null);
 });
 
+/* Italy: Codice di Giustizia Sportiva art. 19. One match at the fifth
+   caution, then at the fifth, fourth, third and second caution after each
+   ban, then at every caution. Bans at 5, 10, 14, 17, 19, 20, 21... No gate,
+   no escalation, cumulative within the season. See docs/italy-suspensions.md. */
+const ITALY = { kind: 'ladder', cumulative: true, review: null, then_every: 1,
+  rungs: [{ at: 5, ban: 1, by: null }, { at: 10, ban: 1, by: null },
+          { at: 14, ban: 1, by: null }, { at: 17, ban: 1, by: null },
+          { at: 19, ban: 1, by: null }] };
+
+t('the Italian ladder closes its gaps and never escalates', () => {
+  const thresholds = [];
+  for (let c = 0; c <= 22; c++) thresholds.push(core.nextSuspension(c, 30, ITALY).at);
+  /* Bans at 5, 10, 14, 17, 19, then every caution. */
+  assert.deepEqual(thresholds.slice(0, 5), [5, 5, 5, 5, 5]);
+  assert.equal(thresholds[5], 10);
+  assert.equal(thresholds[10], 14);
+  assert.equal(thresholds[14], 17);
+  assert.equal(thresholds[17], 19);
+  assert.equal(thresholds[19], 20, 'past the 19th every caution is a ban');
+  assert.equal(thresholds[22], 23);
+  for (let c = 0; c <= 22; c++) {
+    const n = core.nextSuspension(c, 30, ITALY);
+    assert.equal(n.ban, 1, `the Italian ban is always one match (at ${c})`);
+    assert.equal(n.by, null, 'no Italian rung has a matchday gate');
+    assert.equal(n.dead, false, 'a ladder with a tail never runs out');
+  }
+  /* The count is cumulative: on twelve the 5- and 10-rungs are spent and the
+     next is fourteen, two away. A cycle would say three. */
+  const twelve = core.nextSuspension(12, 30, ITALY);
+  assert.equal(twelve.need, 2);
+  assert.equal(twelve.served, 2);
+  /* And in the tail, served counts the bans past the last rung too. */
+  const deep = core.nextSuspension(23, 30, ITALY);
+  assert.equal(deep.served, 9, 'five rungs plus four single-caution bans');
+  assert.equal(deep.need, 1);
+});
+
+t('the three schemes are told apart by shape, not by name', () => {
+  /* England's ladder is gated and escalates; Italy's is neither; Spain is
+     not a ladder at all. A guard that could not tell them apart from the
+     shipped object would let one desk ship another country's rule. */
+  assert.ok(LADDER.rungs.some((r) => r.by != null) && !LADDER.then_every);
+  assert.ok(ITALY.rungs.every((r) => r.by == null) && ITALY.then_every === 1);
+  assert.ok(ITALY.rungs.every((r) => r.ban === 1));
+  assert.equal(CYCLE.kind, 'cycle');
+  /* The English ladder still dies at the top: no tail, no more bans. */
+  assert.equal(core.nextSuspension(16, 44, LADDER).dead, true);
+  /* Twenty on the English ladder is dead; twenty in Italy is one from a ban. */
+  assert.equal(core.nextSuspension(20, 44, ITALY).need, 1);
+});
+
 /* ---- booking points ----------------------------------------------------
  * The market bookmakers actually price for cards: 10 a yellow, 25 a red.
  * These check the ARITHMETIC and the SHAPE, not just that a number comes

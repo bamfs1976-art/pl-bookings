@@ -50,6 +50,17 @@ data/*.json
 # step went green having done nothing — the only record being a log pane
 # somebody had to open. Committing it makes the failure readable from the repo.
 !data/laliga_harvest.log
+# ...and the same three files for Serie A, for the same reasons as Spain's.
+# The registry, because that division is discovered rather than declared and
+# this file is the only record of which twenty clubs the desk is about. The
+# referee table, because data/appointments.py resolves a published official
+# against it, so an uncommitted one leaves every AIA name unresolved and every
+# fixture priced at the league rate, silently. The log, because the Serie A
+# harvest steps are continue-on-error and it is the only readable trace of a
+# step that went green having done nothing.
+!data/seriea_clubs.json
+!data/seriea_refs.json
+!data/seriea_harvest.log
 data/epldata/
 __pycache__/
 

@@ -51,7 +51,7 @@ const KEY = process.env.API_FOOTBALL_KEY || '';
    allowlist and not a passthrough: the league id arrives in a query string a
    reader controls, and without this the function is an open, authenticated
    proxy to somebody else's metered API. */
-const LEAGUES = { EFLC: 40, LL: 140, PL: 39 };
+const LEAGUES = { EFLC: 40, LL: 140, PL: 39, SA: 135 };
 
 /* Cards only. Every other event type is noise for this desk, and dropping
    them at the edge keeps the payload small enough to poll. */

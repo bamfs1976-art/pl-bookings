@@ -61,7 +61,28 @@
     BAR: '#A50044', RAC: '#009B48', MAL: '#0B4EA2', DEP: '#0A5CA8'
   };
 
-  var BY = { PL: PL, EFLC: EFLC, LL: LL };
+  /* Serie A, in the codes data/leagues.py assigns. Juventus and Udinese play
+     in white and black and take the black; Parma's white shirt takes the
+     badge's blue; Inter and Atalanta, both blue and black, take their blues,
+     which are different enough to tell apart on a card; Frosinone take the
+     yellow of the giallazzurri rather than a fourth blue.
+
+     EXACTLY THE DIVISION, and check-share.mjs holds it there in both
+     directions: a club with no colour draws a hue hashed from its three
+     letters, and a colour kept for a club that has gone down is one nobody
+     will ever see. The twenty below are the 2026-27 division as the feed
+     discovered it on 9 September 2026 (Frosinone, Monza and Venezia up;
+     Cremonese, Hellas Verona and Pisa down), so a promotion means an entry
+     added and a relegation means one removed, and the guard names both. */
+  var SA = {
+    ACM: '#FB090B', ATA: '#1E71B8', BGN: '#1A2F48', CAG: '#B01E23',
+    COM: '#1E4A9E', FIO: '#482E92', FRO: '#F2C500', GEN: '#AE1C28',
+    INT: '#0068A8', JUV: '#000000', LAZ: '#87D8F7', LEC: '#D0021B',
+    MON: '#E30613', NAP: '#12A0D7', PAR: '#1B3F8B', ROM: '#8E1F2F',
+    SAS: '#00A752', TOR: '#881425', UDI: '#000000', VEN: '#F58220'
+  };
+
+  var BY = { PL: PL, EFLC: EFLC, LL: LL, SA: SA };
 
   /* One league's table, or an empty one. Empty rather than null on purpose:
      every caller passes the result straight to something that indexes it, and
@@ -90,11 +111,12 @@
     for (k in PL) if (PL.hasOwnProperty(k)) out[k] = PL[k];
     for (k in EFLC) if (EFLC.hasOwnProperty(k)) out[k] = EFLC[k];
     for (k in LL) if (LL.hasOwnProperty(k)) out[k] = LL[k];
+    for (k in SA) if (SA.hasOwnProperty(k)) out[k] = SA[k];
     return out;
   }
 
   var api = { of: of, colour: colour, merged: merged,
-              PL: PL, EFLC: EFLC, LL: LL, leagues: BY };
+              PL: PL, EFLC: EFLC, LL: LL, SA: SA, leagues: BY };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   root.PLDClubColours = api;
 })(typeof globalThis !== 'undefined' ? globalThis

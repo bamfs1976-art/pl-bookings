@@ -483,7 +483,7 @@
      nothing. The desks each know their own league's name; none of them knows
      the others', which is exactly why this sits here. */
   const LEAGUE_LABEL = {
-    PL: 'Premier League', EFLC: 'EFL Championship', LL: 'La Liga'
+    PL: 'Premier League', EFLC: 'EFL Championship', LL: 'La Liga', SA: 'Serie A'
   };
 
   function refShort(name) {
@@ -944,6 +944,13 @@
    *   {kind:'ladder', rungs:[{at,ban,by}], review} England — cumulative,
    *                                                escalating, gated by the
    *                                                club's match number
+   *   {kind:'ladder', rungs:[...], then_every: n}  Italy — the same ladder
+   *                                                shape with an OPEN TAIL:
+   *                                                after the last rung every
+   *                                                n further cautions is
+   *                                                another ban, for ever.
+   *                                                Nobody is ever "dead" on
+   *                                                a ladder with a tail.
    *
    * `played` is how many league matches the player's CLUB has played, which
    * is what the English gates are measured in. It is ignored by a cycle.
@@ -980,6 +987,21 @@
       if (r.by != null && isFinite(p) && p >= r.by) continue;
       return { need: r.at - c, ban: r.ban, at: r.at, by: r.by, dead: false,
                inCycle: c, served: rungs.filter((x) => c >= x.at).length };
+    }
+    /* THE TAIL. Italy's Codice di Giustizia Sportiva bans at the 5th, 10th,
+       14th, 17th and 19th caution and then at EVERY caution after that. The
+       rungs above stop at 19; `then_every` says what happens past the last
+       one. The next threshold is the first step past the current count, and
+       the ban is the last rung's, because nothing in the Italian rule ever
+       escalates the ban itself. A player on twenty-three has served eight
+       bans and is one caution from the ninth. */
+    const step = Number(scheme.then_every);
+    if (rungs.length && isFinite(step) && step > 0) {
+      const last = rungs[rungs.length - 1];
+      const past = Math.max(0, Math.floor(c) - last.at);
+      const target = last.at + step * (Math.floor(past / step) + 1);
+      return { need: target - c, ban: last.ban, at: target, by: null, dead: false,
+               inCycle: c, served: rungs.length + Math.floor(past / step) };
     }
     return { need: null, ban: null, at: null, by: null, dead: true,
              inCycle: c, served: rungs.filter((x) => c >= x.at).length };
@@ -2030,6 +2052,29 @@
       ['CEL', 'DEP', 'O Noso Derbi — Galician'],
       ['SEV', 'MAL', 'Andalusian'],
       ['BET', 'MAL', 'Andalusian'],
+    ],
+    /* Serie A, in the codes data/leagues.py assigns (SERIEA_SHORT). Only the
+       pairs every Italian source names as a derby by title; a rivalry between
+       clubs from different cities carries its title where it has one (the
+       Derby d'Italia) and is left out where it does not.
+
+       BOTH CLUBS MUST BE IN THE DIVISION, and check-derbies.mjs fails the
+       build when one is not: a pair naming a relegated club is a fixture that
+       can never be played and a boost that can never be applied. The Genoa
+       and Sampdoria, Verona and Venezia, and Tuscan pairs are real derbies
+       and are left out for exactly that reason until both clubs are up. */
+    SA: [
+      ['INT', 'ACM', 'Derby della Madonnina'],
+      ['ROM', 'LAZ', 'Derby della Capitale'],
+      ['JUV', 'TOR', 'Derby della Mole'],
+      ['INT', 'JUV', "Derby d'Italia"],
+      ['BGN', 'FIO', "Derby dell'Appennino"],
+      ['NAP', 'ROM', 'Derby del Sole'],
+      ['CAG', 'NAP', 'Derby del Mediterraneo'],
+      ['UDI', 'VEN', 'Derby del Triveneto'],
+      ['PAR', 'BGN', "Derby dell'Emilia"],
+      ['PAR', 'SAS', "Derby dell'Emilia"],
+      ['BGN', 'SAS', "Derby dell'Emilia"],
     ],
   };
 

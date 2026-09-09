@@ -157,6 +157,14 @@ jobs:
       - name: La Liga club names and the referee join
         run: python3 data/test_laliga.py
 
+      # The Serie A leg, the fourth division and the second discovered one.
+      # The same two silent failures as Spain (short forms that resolve to
+      # nothing, a referee join that half-lands) plus one Italy adds: a fourth
+      # set of short codes that must stay clear of the other three, because
+      # /today merges the colour tables into one lookup.
+      - name: Serie A club names, codes and the referee join
+        run: python3 data/test_seriea.py
+
       # Half a megabyte of minified JavaScript inlined into index.html is
       # unreviewable by eye: nobody can tell a genuine Tabulator from one with
       # a line changed in the middle of it. Every vendored block's SHA-256 is
@@ -214,6 +222,13 @@ jobs:
       # fraction of it that happened to line up.
       - name: La Liga dataset and desk guard
         run: node scripts/check-laliga.mjs
+
+      # The Serie A desk: registry against dataset, a referee join that must
+      # cover the whole season, a strip that reads this season's count and
+      # bans on the Italian rungs, with England's ladder and Spain's cycle
+      # both rejected by shape.
+      - name: Serie A dataset and desk guard
+        run: node scripts/check-seriea.mjs
 
       # The share cards. They are the one artefact that LEAVES the site, so
       # nobody who sees one can check it against the page it came from. Runs

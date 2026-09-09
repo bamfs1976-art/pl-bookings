@@ -109,13 +109,13 @@ assert.ok(/def collapse_second_yellow\(/.test(src),
    first successful harvest. A page that assumed one would break for every
    reader in the meantime. */
 const OUTPUTS = [];
-for (const lg of ['pl', 'eflc', 'laliga']) {
+for (const lg of ['pl', 'eflc', 'laliga', 'seriea']) {
   for (const n of ['injuries', 'cardleaders', 'standings', 'teamstats',
                    'cardevents', 'fxstats', 'predictions', 'odds']) {
     OUTPUTS.push(`data/${lg}_${n}.js`);
   }
 }
-for (const page of ['index.html', 'today.html', 'eflc.html', 'laliga.html',
+for (const page of ['index.html', 'today.html', 'eflc.html', 'laliga.html', 'seriea.html',
                     'data-frame.html']) {
   const html = read(page);
   for (const f of OUTPUTS) {
@@ -227,7 +227,7 @@ for (const f of OUTPUTS) {
   /* AND THE KEY STAYS ON THE SERVER. */
   assert.ok(/process\.env\.API_FOOTBALL_KEY/.test(fn),
     'live-cards.js does not read the key from the environment');
-  for (const page of ['index.html', 'today.html', 'eflc.html', 'laliga.html',
+  for (const page of ['index.html', 'today.html', 'eflc.html', 'laliga.html', 'seriea.html',
                       'assets/livecards.js']) {
     assert.ok(!/API_FOOTBALL_KEY|x-apisports-key/.test(read(page)),
       `${page} mentions the API-Football key. It is a metered credential and ` +
@@ -252,7 +252,7 @@ for (const f of OUTPUTS) {
     'assets/livecards.js has no indexer for the events feed');
   assert.equal((lc.match(/function fixtureTicker\(/g) || []).length, 1,
     'there is more than one fixture-ticker builder');
-  for (const page of ['eflc.html', 'laliga.html']) {
+  for (const page of ['eflc.html', 'laliga.html', 'seriea.html']) {
     const src2 = read(page);
     assert.ok(/LiveCards\.fixtureTicker\(/.test(src2),
       `${page} does not go through the shared LiveCards.fixtureTicker`);

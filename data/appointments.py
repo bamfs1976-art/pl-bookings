@@ -47,6 +47,7 @@ APPOINTMENTS = DATA / "appointments.json"
 REF_TABLES = {
     "EFLC": "eflc_refs.json",
     "LL": "laliga_refs.json",
+    "SA": "seriea_refs.json",
 }
 
 # ---------------------------------------------------------------------------
@@ -202,6 +203,53 @@ def resolve_ref_name(published, known):
             return got, "given2"
 
     return None, None
+
+
+def resolve_surname_only(published, known):
+    """A referee published by SURNAME ALONE as the card table's own spelling.
+
+    The AIA publishes its Serie A designations with no forenames at all:
+    "FOURNEAU", "FERRIERI CAPUTI", and an initial AFTER the surname only when
+    two officials on the list share one ("ROSSI C."). Every rule in
+    resolve_ref_name reads a forename first and refuses on surname alone,
+    which is right for a publisher that prints forenames and useless for one
+    that never does. So this is a SEPARATE resolver, chosen by the ingest
+    format and by nothing else: the EFL and RFEF paths never reach it, and
+    the bar it applies is the same as everywhere else in this file, a UNIQUE
+    hit or nothing.
+
+    The published surnames must be a contiguous run inside the table entry's
+    surnames (the tokens after its forename), and a trailing initial must
+    match the table's forename initial. "ROSSI" against a table holding both
+    "Claudio Rossi" and "Marco Rossi" is refused; "ROSSI C." takes Claudio.
+
+    Returns (resolved_name, "surname") or (None, None).
+    """
+    known = list(known or [])
+    bits = _fold(published).split()
+    if not bits:
+        return None, None
+    initial = None
+    if len(bits) >= 2 and len(bits[-1]) == 1:
+        initial, bits = bits[-1], bits[:-1]
+    hits = []
+    for k in known:
+        kb = _fold(k).split()
+        if not kb:
+            continue
+        if len(kb) == 1:
+            # A table entry with no forename at all is one surname, and it
+            # matches only whole and only when no initial was published.
+            if kb == bits and initial is None:
+                hits.append(k)
+            continue
+        fore, sur = kb[0], kb[1:]
+        if initial and fore[0] != initial:
+            continue
+        if _run_in(bits, sur):
+            hits.append(k)
+    hits = list(dict.fromkeys(hits))
+    return (hits[0], "surname") if len(hits) == 1 else (None, None)
 
 
 def _run_in(a, b):

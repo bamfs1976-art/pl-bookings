@@ -332,7 +332,7 @@ const PL_PLAYERS = [
   {c:"FUL",n:"Gonzalo García",p:"FW",min:0,yc:null,rc:null,y:null,f:null,fw:null,r:null,ls:true,b:"NEW"},
   {c:"FUL",n:"Hugo Larsson",p:"MF",min:0,yc:null,rc:null,y:null,f:null,fw:null,r:null,ls:true,b:"NEW"},
   {c:"FUL",n:"Luc De Fougerolles",p:"DF",min:0,yc:null,rc:null,y:null,f:null,fw:null,r:null,ls:true,b:"NEW"},
-  {c:"FUL",n:"Macauley Zepa",p:"MF",min:0,yc:null,rc:null,y:null,f:null,fw:null,r:null,ls:true,b:"NEW"},
+  {c:"FUL",n:"Macaulay Zepa",p:"MF",min:0,yc:null,rc:null,y:null,f:null,fw:null,r:null,ls:true,b:"NEW"},
   {c:"FUL",n:"Manuel Ángel Morán Ibáñez",p:"MF",min:0,yc:null,rc:null,y:null,f:null,fw:null,r:null,ls:true,b:"NEW"},
   {c:"FUL",n:"Shea Charles",p:"MF",min:0,yc:null,rc:null,y:null,f:null,fw:null,r:null,ls:true,b:"NEW"},
   {c:"HUL",n:"D. Akintola",p:"FW",min:534,yc:4,rc:0,y:0.674,f:2.697,fw:1.011,r:4.045,ls:false,b:"EFL"},

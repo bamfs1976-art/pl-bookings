@@ -8,6 +8,7 @@
   "https://rfef.es/sites/default/files/designaciones_1a_division_masculina_-_temp_2026-27_-_jornada_1_domingo16.pdf",
   "https://rfef.es/sites/default/files/designaciones_1a_division_masculina_-_temp_2026-27_-_jornada_1_lunes17.pdf",
   "https://rfef.es/sites/default/files/designaciones_1a_division_masculina_-_temp_2026-27_-_jornada_1_sabado15.pdf",
+  "https://www.aia-figc.it/news/serie-a-enilive-designazioni-4a-giornata-27632/",
   "https://www.efl.com/news/2026/august/11/referee-appointments--14-20-august/",
   "rfef.es — CTA designaciones, Primera División, jornada 4, 7 September 2026 (published sheet supplied; exact PDF URL not captured)",
   "rfef.es — CTA designation sheet, Primera División, 19-08-2026 (supplied as a screenshot; exact PDF URL not captured)",
@@ -1078,6 +1079,105 @@
    "refResolved": "César Soto Grado",
    "resolvedBy": "run",
    "source": "rfef.es — CTA designaciones, Primera División, jornada 4, 7 September 2026 (published sheet supplied; exact PDF URL not captured)"
+  },
+  {
+   "league": "SA",
+   "date": "2026-09-11",
+   "h": "VEN",
+   "a": "FIO",
+   "ko": "20:45",
+   "ref": "FOURNEAU",
+   "refResolved": "Francesco Fourneau",
+   "resolvedBy": "surname",
+   "source": "https://www.aia-figc.it/news/serie-a-enilive-designazioni-4a-giornata-27632/"
+  },
+  {
+   "league": "SA",
+   "date": "2026-09-12",
+   "h": "ATA",
+   "a": "CAG",
+   "ko": "20:45",
+   "ref": "ARENA",
+   "refResolved": "Alberto Ruben Arena",
+   "resolvedBy": "surname",
+   "source": "https://www.aia-figc.it/news/serie-a-enilive-designazioni-4a-giornata-27632/"
+  },
+  {
+   "league": "SA",
+   "date": "2026-09-12",
+   "h": "GEN",
+   "a": "FRO",
+   "ko": "15:00",
+   "ref": "RAPUANO",
+   "refResolved": "Antonio Rapuano",
+   "resolvedBy": "surname",
+   "source": "https://www.aia-figc.it/news/serie-a-enilive-designazioni-4a-giornata-27632/"
+  },
+  {
+   "league": "SA",
+   "date": "2026-09-13",
+   "h": "LEC",
+   "a": "MON",
+   "ko": "15:00",
+   "ref": "CREZZINI",
+   "refResolved": "Valerio Crezzini",
+   "resolvedBy": "surname",
+   "source": "https://www.aia-figc.it/news/serie-a-enilive-designazioni-4a-giornata-27632/"
+  },
+  {
+   "league": "SA",
+   "date": "2026-09-13",
+   "h": "NAP",
+   "a": "BGN",
+   "ko": "18:00",
+   "ref": "BONACINA",
+   "refResolved": "Kevin Bonacina",
+   "resolvedBy": "surname",
+   "source": "https://www.aia-figc.it/news/serie-a-enilive-designazioni-4a-giornata-27632/"
+  },
+  {
+   "league": "SA",
+   "date": "2026-09-13",
+   "h": "SAS",
+   "a": "JUV",
+   "ko": "20:45",
+   "ref": "SACCHI J. L.",
+   "refResolved": null,
+   "resolvedBy": null,
+   "source": "https://www.aia-figc.it/news/serie-a-enilive-designazioni-4a-giornata-27632/"
+  },
+  {
+   "league": "SA",
+   "date": "2026-09-14",
+   "h": "COM",
+   "a": "PAR",
+   "ko": "18:30",
+   "ref": "MUCERA",
+   "refResolved": "Giuseppe Mucera",
+   "resolvedBy": "surname",
+   "source": "https://www.aia-figc.it/news/serie-a-enilive-designazioni-4a-giornata-27632/"
+  },
+  {
+   "league": "SA",
+   "date": "2026-09-14",
+   "h": "INT",
+   "a": "UDI",
+   "ko": "20:45",
+   "ref": "PAIRETTO",
+   "refResolved": "Luca Pairetto",
+   "resolvedBy": "surname",
+   "source": "https://www.aia-figc.it/news/serie-a-enilive-designazioni-4a-giornata-27632/"
+  },
+  {
+   "league": "SA",
+   "date": "2026-09-14",
+   "h": "TOR",
+   "a": "ROM",
+   "ko": "18:30",
+   "ref": "MARESCA",
+   "refResolved": "Fabio Maresca",
+   "resolvedBy": "surname",
+   "source": "https://www.aia-figc.it/news/serie-a-enilive-designazioni-4a-giornata-27632/"
   }
  ]
 }

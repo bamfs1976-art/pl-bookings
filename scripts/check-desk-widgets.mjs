@@ -62,7 +62,7 @@ const A11Y = readFileSync(join(root, 'assets', 'a11y.js'), 'utf8');
 }
 
 /* And every desk actually calls it — a helper nothing invokes is decoration. */
-for (const page of ['index.html', 'eflc.html', 'laliga.html']) {
+for (const page of ['index.html', 'eflc.html', 'laliga.html', 'seriea.html']) {
   const src = readFileSync(join(root, page), 'utf8');
   assert.ok(/<script src="assets\/a11y\.js">/.test(src), `${page} does not load assets/a11y.js`);
   assert.ok(/PLDA11y\.(markSorted|syncSorted)\(/.test(src),
@@ -135,7 +135,7 @@ console.log('check-desk-widgets: sortable tables announce aria-sort on all three
 
   /* The three desks render it and wire it. A block nobody wired is a set of
      inputs that compute nothing. */
-  for (const page of ['index.html', 'eflc.html', 'laliga.html']) {
+  for (const page of ['index.html', 'eflc.html', 'laliga.html', 'seriea.html']) {
     const src = readFileSync(join(root, page), 'utf8');
     assert.ok(/<script src="assets\/price\.js">/.test(src), `${page} does not load assets/price.js`);
     assert.ok(/PRICES\s*\?\s*PRICES\.block\(|PRICES\.block\(/.test(src), `${page} never renders the price check`);

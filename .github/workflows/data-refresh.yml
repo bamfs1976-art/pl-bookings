@@ -92,6 +92,15 @@ on:
         description: "football-data season code for SPAIN's club rates and referee join (e.g. 2526 = the season just played)."
         required: false
         default: "2526"
+      refresh_seriea:
+        description: "Also refresh the Serie A desk. Needs the API key: Italy's free match records carry every card but never the official."
+        type: boolean
+        required: false
+        default: true
+      season_it:
+        description: "football-data season code for ITALY's club rates and referee join (e.g. 2526 = the season just played)."
+        required: false
+        default: "2526"
 
 permissions:
   contents: write
@@ -136,6 +145,9 @@ jobs:
       - name: Start this run's Spanish harvest log
         run: |
           echo "La Liga harvest — run ${{ github.run_number }}" > data/laliga_harvest.log
+      - name: Start this run's Italian harvest log
+        run: |
+          echo "Serie A harvest, run ${{ github.run_number }}" > data/seriea_harvest.log
 
       - name: Refresh referees (free source, always runs)
         run: python3 data/build_refs.py --season "${{ inputs.refs_season || '2526' }}"
@@ -169,11 +181,12 @@ jobs:
       # sandbox cannot reach — this workflow is the only place it can be built.
       # continue-on-error for the same reason as the step above: an origin
       # outage must leave the shipped file in place rather than empty it.
-      - name: Head-to-head history (Championship, La Liga)
+      - name: Head-to-head history (Championship, La Liga, Serie A)
         continue-on-error: true
         run: |
           python3 data/build_h2h.py --league EFLC || echo "EFLC h2h unavailable this run"
           python3 data/build_h2h.py --league LL   || echo "LL h2h unavailable this run"
+          python3 data/build_h2h.py --league SA   || echo "SA h2h unavailable this run"
 
       # LEGACY, and Premier League only. Kept because pl_data.js is still built
       # on a ScoutingStats basis and switching that changes every published
@@ -451,6 +464,88 @@ jobs:
           echo "== fixtures ==" >> data/laliga_harvest.log
           python3 data/harvest_apifootball.py --fixtures --league LL 2>&1 | tee -a data/laliga_harvest.log
 
+      # ── Serie A ─────────────────────────────────────────────────────────
+      #
+      # The same shape as La Liga above, for the same reasons: the division is
+      # DISCOVERED (--clubs first, everything after it resolves through the
+      # registry), the free I1 records carry every card and no official, so
+      # the completed season's names are bought once and joined on, and the
+      # promoted clubs are rated on Serie B form via the SERB feeder.
+      - name: Discover the Serie A division (writes the club registry)
+        if: ${{ env.API_FOOTBALL_KEY != '' && (github.event_name != 'workflow_dispatch' || inputs.refresh_seriea) }}
+        continue-on-error: true
+        env:
+          API_FOOTBALL_SEASON: ${{ inputs.season_fixtures || '2026' }}
+        run: |
+          echo "== discover ==" >> data/seriea_harvest.log
+          python3 data/harvest_apifootball.py --league SA --clubs 2>&1 | tee -a data/seriea_harvest.log
+
+      - name: Harvest the Serie A squads from API-Football
+        if: ${{ env.API_FOOTBALL_KEY != '' && (github.event_name != 'workflow_dispatch' || inputs.refresh_seriea) }}
+        continue-on-error: true
+        env:
+          # FORM, so it transitions with the season decision above.
+          API_FOOTBALL_SEASON: ${{ inputs.season_af || steps.form.outputs.form_sa || '2025' }}
+        run: |
+          echo "== squads ==" >> data/seriea_harvest.log
+          python3 data/harvest_apifootball.py --league SA 2>&1 | tee -a data/seriea_harvest.log
+
+      - name: Harvest Serie A's current rosters (membership, not form)
+        if: ${{ env.API_FOOTBALL_KEY != '' && (github.event_name != 'workflow_dispatch' || inputs.refresh_seriea) }}
+        continue-on-error: true
+        env:
+          API_FOOTBALL_SEASON: ${{ inputs.season_fixtures || '2026' }}
+        run: |
+          echo "== rosters ==" >> data/seriea_harvest.log
+          python3 data/harvest_apifootball.py --league SA --roster 2>&1 | tee -a data/seriea_harvest.log
+
+      # THIS season's cautions, for the suspension strip: 2026-27 STATE, never
+      # the 2025-26 FORM above. The Italian count is cumulative within a
+      # season and starts from zero each August.
+      - name: Harvest this season's Italian cautions (for the suspension strip)
+        if: ${{ env.API_FOOTBALL_KEY != '' && (github.event_name != 'workflow_dispatch' || inputs.refresh_seriea) }}
+        continue-on-error: true
+        env:
+          API_FOOTBALL_SEASON: ${{ inputs.season_fixtures || '2026' }}
+        run: |
+          echo "== season-cards ==" >> data/seriea_harvest.log
+          python3 data/harvest_apifootball.py --league SA --out seriea_season_cards.json 2>&1 \
+            | tee -a data/seriea_harvest.log
+
+      - name: Harvest Serie B from API-Football (the promoted clubs)
+        if: ${{ env.API_FOOTBALL_KEY != '' && (github.event_name != 'workflow_dispatch' || inputs.refresh_seriea) }}
+        continue-on-error: true
+        env:
+          # PINNED, like Segunda: a promoted club's prior-tier form is last
+          # season's by definition.
+          API_FOOTBALL_SEASON: ${{ inputs.season_af || '2025' }}
+        run: |
+          echo "== serie-b ==" >> data/seriea_harvest.log
+          python3 data/harvest_apifootball.py --league SERB 2>&1 | tee -a data/seriea_harvest.log
+
+      # The one thing Italy buys: last season's officials, joined onto the
+      # free I1 rows, which name the referee on 0 of 380 matches.
+      - name: Harvest last season's Italian officials (for the referee join)
+        if: ${{ env.API_FOOTBALL_KEY != '' && (github.event_name != 'workflow_dispatch' || inputs.refresh_seriea) }}
+        continue-on-error: true
+        env:
+          # PINNED. The COMPLETED season, whose officials are joined onto the
+          # free match records; the season being played would give a referee
+          # table of nothing.
+          API_FOOTBALL_SEASON: ${{ inputs.season_af || '2025' }}
+        run: |
+          echo "== ref-fixtures ==" >> data/seriea_harvest.log
+          python3 data/harvest_apifootball.py --ref-fixtures --league SA 2>&1 | tee -a data/seriea_harvest.log
+
+      - name: Harvest the Serie A fixtures from API-Football
+        if: ${{ env.API_FOOTBALL_KEY != '' && (github.event_name != 'workflow_dispatch' || inputs.refresh_seriea) }}
+        continue-on-error: true
+        env:
+          API_FOOTBALL_SEASON: ${{ inputs.season_fixtures || '2026' }}
+        run: |
+          echo "== fixtures ==" >> data/seriea_harvest.log
+          python3 data/harvest_apifootball.py --fixtures --league SA 2>&1 | tee -a data/seriea_harvest.log
+
       # The Premier League fixture list. Committed like the other two, which is
       # what lets /today price a PL fixture at all: the desk itself reads
       # fixtures from the live FPL feed at runtime, and a static page cannot.
@@ -558,6 +653,23 @@ jobs:
           echo "== referee-join ==" >> data/laliga_harvest.log
           python3 data/build_refs.py --league LL --season "${{ inputs.season_sp || '2526' }}" 2>&1 | tee -a data/laliga_harvest.log
 
+      # The Serie A dataset, then its referees, in that order for the same
+      # reason as Spain's: build_refs.py --league SA patches the REFS block of
+      # a file the build has to have written first.
+      - name: Build the Serie A dataset
+        if: ${{ (github.event_name != 'workflow_dispatch' || inputs.refresh_seriea) }}
+        continue-on-error: true
+        run: |
+          echo "== build ==" >> data/seriea_harvest.log
+          python3 data/build_seriea_data.py --season "${{ inputs.season_it || '2526' }}" 2>&1 | tee -a data/seriea_harvest.log
+
+      - name: Join the Italian referees onto the free match records
+        if: ${{ (github.event_name != 'workflow_dispatch' || inputs.refresh_seriea) }}
+        continue-on-error: true
+        run: |
+          echo "== referee-join ==" >> data/seriea_harvest.log
+          python3 data/build_refs.py --league SA --season "${{ inputs.season_it || '2526' }}" 2>&1 | tee -a data/seriea_harvest.log
+
       # AN OFFICIAL'S RECORD FROM THE DIVISION NEXT DOOR. Must run AFTER all
       # three build_refs steps above, because it reads every division's table
       # to fill each one — Josh Smith took a Premier League fixture with 27
@@ -634,8 +746,8 @@ jobs:
           [ -n "${{ inputs.player_matches_limit }}" ] && LIM="--limit ${{ inputs.player_matches_limit }}"
           # One run's worth, not an ever-growing pile.
           : > data/fit_report.txt
-          for L in EFLC LL; do
-            NAME=$([ "$L" = "LL" ] && echo "La Liga" || echo "Championship")
+          for L in EFLC LL SA; do
+            case $L in LL) NAME="La Liga" ;; SA) NAME="Serie A" ;; *) NAME="Championship" ;; esac
             python3 data/harvest_apifootball.py --player-matches --league $L $LIM \
               && python3 data/build_match_history.py --league $L \
               && node scripts/backtest.mjs "data/$(echo $L | tr A-Z a-z)_match_history.json" \
@@ -710,12 +822,14 @@ jobs:
           # cheerful summary, and discards it when the runner is torn down —
           # which is what happened until this line was added, and it is invisible
           # because the step itself passes.
-          for f in data/pl_fixtures.js data/laliga_harvest.log \
+          for f in data/pl_fixtures.js data/laliga_harvest.log data/seriea_harvest.log \
                    data/pl_other_fixtures.js data/pl_other_fixtures_2526.js \
-                   data/h2h.js data/eflc_h2h.js data/laliga_h2h.js \
+                   data/h2h.js data/eflc_h2h.js data/laliga_h2h.js data/seriea_h2h.js \
                    data/eflc_refs.json data/eflc_data.js data/eflc_status.txt data/eflc_fixtures.js \
                    data/laliga_clubs.json data/laliga_refs.json data/laliga_data.js \
                    data/laliga_status.txt data/laliga_fixtures.js data/laliga_ref_fixtures.js \
+                   data/seriea_clubs.json data/seriea_refs.json data/seriea_data.js \
+                   data/seriea_status.txt data/seriea_fixtures.js data/seriea_ref_fixtures.js \
                    data/player_matches_status.txt data/fit_report.txt \
                    docs/scottish-derbies.md \
                    backtest_report.md; do

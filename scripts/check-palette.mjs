@@ -40,6 +40,7 @@ const PAGES = {
   'index.html': 'lg-pl',
   'eflc.html': 'lg-eflc',
   'laliga.html': 'lg-ll',
+  'seriea.html': 'lg-sa',
   'today.html': 'lg-all'
 };
 
@@ -169,6 +170,7 @@ const DESKS = {
   PL: ['--pl', 'lg-pl'],
   EFLC: ['--eflc', 'lg-eflc'],
   LL: ['--ll', 'lg-ll'],
+  SA: ['--sa', 'lg-sa'],
   ALL: ['--all', 'lg-all']
 };
 
@@ -198,7 +200,7 @@ for (const [code, [mark, cls]] of Object.entries(DESKS)) {
    share card's deep end so the splash, the status bar and the card that gets
    posted are one family. */
 const FROM = {
-  'index.html': 'PL', 'eflc.html': 'EFLC', 'laliga.html': 'LL', 'today.html': 'ALL'
+  'index.html': 'PL', 'eflc.html': 'EFLC', 'laliga.html': 'LL', 'seriea.html': 'SA', 'today.html': 'ALL'
 };
 for (const [page, code] of Object.entries(FROM)) {
   const src = read(page);

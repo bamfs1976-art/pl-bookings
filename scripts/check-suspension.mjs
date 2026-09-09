@@ -98,7 +98,7 @@ for (const k of live.horizons) {
 }
 
 /* Every desk must actually draw it. */
-for (const page of ['index.html', 'eflc.html', 'laliga.html']) {
+for (const page of ['index.html', 'eflc.html', 'laliga.html', 'seriea.html']) {
   const s = readFileSync(join(root, page), 'utf8');
   assert.ok(/SU\.header\(res\)/.test(s),
     `${page} renders the strip without its column header`);
@@ -180,7 +180,7 @@ for (const sel of ['.susp-row', '.susp-nums', '.susp-top', '.susp-cols', '.pip']
 }
 /* It was defined three times, byte-identical, in three pages. A fix to one
    would have left the other two desks broken. */
-for (const page of ['index.html', 'eflc.html', 'laliga.html']) {
+for (const page of ['index.html', 'eflc.html', 'laliga.html', 'seriea.html']) {
   const s = readFileSync(join(root, page), 'utf8');
   assert.ok(!/\.susp-row\s*\{/.test(s),
     `${page} has its own copy of the suspension styling again`);

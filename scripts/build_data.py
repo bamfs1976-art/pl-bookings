@@ -58,9 +58,18 @@ STEPS = [
          leagues={"LL"}, needs="API_FOOTBALL_KEY"),
     dict(name="La Liga squads", cmd=["python3", "data/harvest_apifootball.py", "--league", "LL"],
          leagues={"LL"}, needs="API_FOOTBALL_KEY"),
+    dict(name="Serie A club registry",
+         cmd=["python3", "data/harvest_apifootball.py", "--league", "SA", "--clubs"],
+         leagues={"SA"}, needs="API_FOOTBALL_KEY"),
+    dict(name="Serie A squads", cmd=["python3", "data/harvest_apifootball.py", "--league", "SA"],
+         leagues={"SA"}, needs="API_FOOTBALL_KEY"),
+    # The feeder for the promoted three: rated on Serie B form, basis SB.
+    dict(name="Serie B squads (promoted clubs)",
+         cmd=["python3", "data/harvest_apifootball.py", "--league", "SERB"],
+         leagues={"SA"}, needs="API_FOOTBALL_KEY"),
     dict(name="Fixtures and referee appointments",
          cmd=["python3", "data/harvest_apifootball.py", "--fixtures", "--league", "{L}"],
-         leagues={"PL", "EFLC", "LL"}, needs="API_FOOTBALL_KEY", per_league=True),
+         leagues={"PL", "EFLC", "LL", "SA"}, needs="API_FOOTBALL_KEY", per_league=True),
 
     # ---- the free FPL leg, which fills the promoted clubs -------------------
     dict(name="Promoted-club squads from the FPL feed",
@@ -77,8 +86,12 @@ STEPS = [
          leagues={"EFLC"}, needs=None),
     dict(name="Build laliga_data.js", cmd=["python3", "data/build_laliga_data.py"],
          leagues={"LL"}, needs=None),
+    dict(name="Build seriea_data.js", cmd=["python3", "data/build_seriea_data.py"],
+         leagues={"SA"}, needs=None),
     dict(name="La Liga referees (bought names, free rates)",
          cmd=["python3", "data/build_refs.py", "--league", "LL"], leagues={"LL"}, needs=None),
+    dict(name="Serie A referees (bought names, free rates)",
+         cmd=["python3", "data/build_refs.py", "--league", "SA"], leagues={"SA"}, needs=None),
 
     # ---- the model, from the data just written ------------------------------
     dict(name="Card model parameters", cmd=["node", "scripts/build-model.mjs"],
@@ -103,7 +116,7 @@ def expand(step, league):
 
 def plan(args):
     """Which steps this invocation would run, and which it would skip."""
-    want = set(args.league) if args.league else {"PL", "EFLC", "LL"}
+    want = set(args.league) if args.league else {"PL", "EFLC", "LL", "SA"}
     out = []
     for s in STEPS:
         if not (s["leagues"] & want):
@@ -129,7 +142,8 @@ def run(cmd, season):
     runner."""
     full = list(cmd)
     if season and full[0] == "python3" and any(
-            n in full[1] for n in ("build_refs", "build_club_splits", "build_eflc_data", "build_laliga_data")):
+            n in full[1] for n in ("build_refs", "build_club_splits", "build_eflc_data", "build_laliga_data",
+                             "build_seriea_data")):
         full += ["--season", season]
     started = time.time()
     res = subprocess.run(full, cwd=ROOT)
@@ -139,7 +153,7 @@ def run(cmd, season):
 def main():
     ap = argparse.ArgumentParser(description=__doc__,
                                  formatter_class=argparse.RawDescriptionHelpFormatter)
-    ap.add_argument("--league", action="append", choices=["PL", "EFLC", "LL"],
+    ap.add_argument("--league", action="append", choices=["PL", "EFLC", "LL", "SA"],
                     help="limit to one desk (repeatable). Default: all three.")
     ap.add_argument("--season", help="football-data season code, e.g. 2526")
     ap.add_argument("--with-keyed", action="store_true",

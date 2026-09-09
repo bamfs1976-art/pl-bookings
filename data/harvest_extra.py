@@ -875,7 +875,7 @@ def probe(host, key, league, season, ctx, only=None):
 WHAT = ["injuries", "cards", "events", "transfers", "teamstats", "standings",
         "predictions", "fxstats", "h2h", "odds", "sidelined"]
 
-OUT_FOR = {"PL": "pl", "EFLC": "eflc", "LL": "laliga"}
+OUT_FOR = {"PL": "pl", "EFLC": "eflc", "LL": "laliga", "SA": "seriea"}
 
 
 def out_path(league, name):
@@ -1078,7 +1078,7 @@ def run_one(host, key, L, season, want, args):
         # league registry that netlify/functions/live-cards.js's LEAGUES map
         # mirrors, rather than from a fourth copy of them.
         ctx["live_ids"] = "-".join(
-            str(leagues.LEAGUES[c].af_league) for c in ("PL", "EFLC", "LL"))
+            str(leagues.LEAGUES[c].af_league) for c in ("PL", "EFLC", "LL", "SA"))
         ok, failed = probe(host, key, L, season, ctx, only=args.probe_only)
         for line in ok:
             print(f"  probed {line}")

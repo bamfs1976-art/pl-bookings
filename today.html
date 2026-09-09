@@ -56,7 +56,7 @@
       : "Today's matches — Bookings Desk";
   })();
 </script>
-<meta name="description" content="Every match across the Premier League, Championship and La Liga on one day — or a consolidated calendar of every date — ranked by booking heat, with a combined share card per date.">
+<meta name="description" content="Every match across the Premier League, Championship, La Liga and Serie A on one day, or a consolidated calendar of every date, ranked by booking heat, with a combined share card per date.">
 <link rel="icon" href="favicon.svg" type="image/svg+xml">
 <!-- PNG fallbacks. The SVG is the better icon where it is honoured, but
      Safari has never used one for a tab and several feed readers and
@@ -175,6 +175,7 @@
     <a class="lb-item lb-pl" href="/pl"><span class="lb-dot"></span><span class="lb-full">Premier League</span><span class="lb-abbr">PL</span></a>
     <a class="lb-item lb-eflc" href="/eflc"><span class="lb-dot"></span><span class="lb-full">Championship</span><span class="lb-abbr">Championship</span></a>
     <a class="lb-item lb-ll" href="/laliga"><span class="lb-dot"></span><span class="lb-full">La Liga</span><span class="lb-abbr">La Liga</span></a>
+    <a class="lb-item lb-sa" href="/seriea"><span class="lb-dot"></span><span class="lb-full">Serie A</span><span class="lb-abbr">Serie A</span></a>
     <a class="lb-item lb-season" href="/today"><span class="lb-dot"></span><span class="lb-full">Season calendar</span><span class="lb-abbr">Season</span></a>
   </div>
 </nav>
@@ -187,7 +188,7 @@
   <section class="hero" data-for="home">
     <h1>Today&rsquo;s matches, riskiest first</h1>
     <p class="muted" style="margin:8px 0 0;max-width:70ch">
-      Every match on today&rsquo;s card across the Premier League, Championship and La Liga,
+      Every match on today&rsquo;s card across the Premier League, Championship, La Liga and Serie A,
       ranked by booking heat — the expected number of cards in the match — hottest at the
       top. One combined share card across the lot. Below the list, <b>the day&rsquo;s acca</b>:
       the likeliest market in each match, one leg a match, so unlike a same-match combo the
@@ -455,7 +456,7 @@
     <div class="ft">
       <section class="ft-col" aria-labelledby="ftAbout">
         <h2 class="ft-h" id="ftAbout">About &amp; method</h2>
-        <p>Every match across three divisions on one day, ranked by booking heat. The <a href="/">Premier League</a>, <a href="/eflc">Championship</a> and <a href="/laliga">La Liga</a> desks, same risk formula and same tested core, read side by side. It does not pick players or price markets.</p>
+        <p>Every match across four divisions on one day, ranked by booking heat. The <a href="/">Premier League</a>, <a href="/eflc">Championship</a>, <a href="/laliga">La Liga</a> and <a href="/seriea">Serie A</a> desks, same risk formula and same tested core, read side by side. It does not pick players or price markets.</p>
       </section>
       <section class="ft-col" aria-labelledby="ftData">
         <h2 class="ft-h" id="ftData">Data sources</h2>
@@ -503,6 +504,7 @@
 <iframe id="f-pl"     src="data-frame.html#pl"     hidden title="Premier League dataset"></iframe>
 <iframe id="f-eflc"   src="data-frame.html#eflc"   hidden title="EFL Championship dataset"></iframe>
 <iframe id="f-laliga" src="data-frame.html#laliga" hidden title="La Liga dataset"></iframe>
+<iframe id="f-seriea" src="data-frame.html#seriea" hidden title="Serie A dataset"></iframe>
 <script>
 (function () {
   'use strict';
@@ -544,7 +546,8 @@
   var SOURCES = [
     { code: 'PL', name: 'Premier League', href: '/pl', frame: 'f-pl' },
     { code: 'EFLC', name: 'EFL Championship', href: '/eflc', frame: 'f-eflc' },
-    { code: 'LL', name: 'La Liga', href: '/laliga', frame: 'f-laliga' }
+    { code: 'LL', name: 'La Liga', href: '/laliga', frame: 'f-laliga' },
+    { code: 'SA', name: 'Serie A', href: '/seriea', frame: 'f-seriea' }
   ];
 
   function readFrames() {
@@ -2255,7 +2258,7 @@
       + 'and no club appears in two legs — seven days can contain a side twice, and two legs '
       + 'leaning on one team\'s discipline are not the independent pair the price assumes. '
       + 'The three win legs are Premier League only — the match model rates the twenty '
-      + 'PL clubs, and the Championship and La Liga datasets carry no goals at all, so '
+      + 'PL clubs, and the Championship, La Liga and Serie A datasets carry no goals at all, so '
       + 'there is nothing to price a result from. Win legs and card legs come from two '
       + 'separate models, and all nine are combined as if independent: matches in one '
       + 'week share a competition\'s temperament and a weekend\'s officiating, and that '
@@ -2281,7 +2284,7 @@
     end.setUTCDate(end.getUTCDate() + WEEK_DAYS - 1);
     var why = c.pl < 3
       ? 'The three win legs can only come from the Premier League — it is the one '
-        + 'division the match model rates, and the Championship and La Liga data '
+        + 'division the match model rates, and the Championship, La Liga and Serie A data '
         + 'carries no goals at all. This window has ' + c.pl
         + ' Premier League match' + (c.pl === 1 ? '' : 'es') + ', and it needs three.'
       : 'This window has ' + c.total + ' priced match' + (c.total === 1 ? '' : 'es')
@@ -2400,7 +2403,8 @@
   var SHARE_META = {
     PL:   { seasonLabel: 'Premier League 2026-27', roundWord: 'Gameweek' },
     EFLC: { seasonLabel: 'EFL Championship 2026-27', roundWord: 'Matchday' },
-    LL:   { seasonLabel: 'La Liga 2026-27', roundWord: 'Matchday' }
+    LL:   { seasonLabel: 'La Liga 2026-27', roundWord: 'Matchday' },
+    SA:   { seasonLabel: 'Serie A 2026-27', roundWord: 'Matchday' }
   };
 
   /* THE FIXTURE'S OWN DIVISION'S COLOURS. This page holds three datasets at
@@ -2815,7 +2819,7 @@
       $('#empty').innerHTML = 'Something went wrong assembling the combined view, so '
         + 'this page is empty rather than wrong. The individual '
         + '<a href="/">Premier League</a>, <a href="/eflc">Championship</a> and '
-        + '<a href="/laliga">La Liga</a> desks are unaffected.<br>'
+        + '<a href="/laliga">La Liga</a> and <a href="/seriea">Serie A</a> desks are unaffected.<br>'
         + '<span style="font-family:var(--mono);font-size:11.5px;color:var(--text-3)">'
         + String((err && (err.message || err)) || 'unknown error') + '</span>';
       $('#shareBtn').disabled = true;

@@ -41,7 +41,8 @@ function load(file, playersKey) {
 const DESKS = [
   { code: 'PL', name: 'Premier League', file: 'pl_data.js', key: 'PL_PLAYERS' },
   { code: 'EFLC', name: 'EFL Championship', file: 'eflc_data.js', key: 'EFLC_PLAYERS' },
-  { code: 'LL', name: 'La Liga', file: 'laliga_data.js', key: 'LALIGA_PLAYERS' }
+  { code: 'LL', name: 'La Liga', file: 'laliga_data.js', key: 'LALIGA_PLAYERS' },
+  { code: 'SA', name: 'Serie A', file: 'seriea_data.js', key: 'SERIEA_PLAYERS' }
 ];
 
 const S = model.shrink;
@@ -354,9 +355,9 @@ assert.ok(!/glmProb/.test(deskBase[1]),
     'below can never fire');
   const uses = [...wf.matchAll(/API_FOOTBALL_SEASON: \$\{\{([^}]*)\}\}/g)].map((m) => m[1]);
   const transitioning = uses.filter((u) => /steps\.form\.outputs\.form_/.test(u));
-  assert.equal(transitioning.length, 3,
-    `${transitioning.length} harvest(s) follow the form transition, expected 3 ` +
-    '(Championship squads, the relegated three, La Liga squads). Either a form ' +
+  assert.equal(transitioning.length, 4,
+    `${transitioning.length} harvest(s) follow the form transition, expected 4 ` +
+    '(Championship squads, the relegated three, La Liga squads, Serie A squads). Either a form ' +
     'harvest has been left on last season for ever, or a pinned one — a ' +
     'promoted club\'s prior-tier record, or the completed-season referee join ' +
     '— has been swept along with them.');

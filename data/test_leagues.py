@@ -379,6 +379,82 @@ def test_risk_arithmetic_is_shared_with_the_premier_league_builder():
         "the Premier League map does not know Millwall — default unchanged"
 
 
+
+# ── Serie A and its feeder ──────────────────────────────────────────────────
+
+def test_serie_a_is_registered_the_way_la_liga_is():
+    """A registry entry plus one page, not a new copy of a script. Everything
+    that made La Liga buildable is a field here."""
+    sa = L.get("SA")
+    assert sa.fd_div == "I1" and sa.mirror_slug == "serie-a", (sa.fd_div, sa.mirror_slug)
+    assert sa.clubs == 20 and sa.matches == 380
+    assert sa.af_league == 135
+    assert sa.referee_source == "api-football" and not sa.has_free_referees
+    assert sa.min_ref_matches == 3
+    assert sa.clubs_file == "seriea_clubs.json", "the division must be discovered, not declared"
+    assert sa.players_file == "seriea_players.json"
+    assert sa.data_file == "seriea_data.js" and sa.refs_file == "seriea_refs.json"
+    src = sa.sources("2526")
+    assert src[0][0] == "mirror" and "/serie-a/season-2526.csv" in src[0][1], src
+    assert src[1][1].endswith("/2526/I1.csv"), src
+
+
+def test_serie_b_feeds_the_promoted_clubs_and_nothing_else():
+    sb = L.get("SERB")
+    assert sb.af_league == 136 and sb.referee_source == "none"
+    assert sb.clubs_file is None, "the feeder resolves against Serie A's registry"
+    assert L.registry_owner("SERB") == "SA" and L.registry_owner("SEG") == "LL"
+    assert L.registry_owner("SA") == "SA" and L.registry_owner("EFLC") == "EFLC"
+    assert L.is_discovered("SERB") and L.is_discovered("SA")
+    assert not L.is_discovered("EFLC") and not L.is_discovered("PL")
+    assert L.clubs_path("SERB") == L.clubs_path("SA")
+
+
+def test_the_italian_scheme_is_a_third_shape():
+    """Neither England's gated ladder nor Spain's cycle. Bans at 5, 10, 14,
+    17, 19 and then every caution: a ladder with an open tail."""
+    s = L.get("SA").suspension_scheme
+    assert s["kind"] == "ladder" and s["cumulative"] is True
+    assert [r["at"] for r in s["rungs"]] == [5, 10, 14, 17, 19], s["rungs"]
+    assert all(r["ban"] == 1 for r in s["rungs"]), "an Italian ban is always one match"
+    assert all(r["by"] is None for r in s["rungs"]), "Italy has no matchday gate"
+    assert s["then_every"] == 1, "after the 19th, every caution is a ban"
+    # And the other three are untouched by the extension.
+    for code in ("PL", "EFLC"):
+        e = L.get(code).suspension_scheme
+        assert "then_every" not in e and any(r["by"] for r in e["rungs"]), code
+    assert L.get("LL").suspension_scheme["kind"] == "cycle"
+
+
+def test_discovered_resolution_serves_both_families():
+    """One resolver, two spelling tables, and neither reaches the other's."""
+    assert L.canon_name("SA", "Milan") == "AC Milan"
+    assert L.canon_name("SA", "Roma") == "AS Roma"
+    assert L.canon_name("SA", "Verona") == "Hellas Verona"
+    assert L.canon_name("SERB", "Hellas Verona FC") == "Hellas Verona"
+    assert L.canon_name("SA", "Ath Madrid") == "Ath Madrid", "a Spanish spelling means nothing in Italy"
+    assert L.canon_name("LL", "Milan") == "Milan", "an Italian spelling means nothing in Spain"
+    assert L.short_for("SA", "Inter", clubs={"Inter": {"short": "INT", "id": 1}}) == "INT"
+    assert L.short_for("SERB", "Bari", clubs={"Bari": {"short": "BRI", "id": 2}}) == "BRI"
+    assert L.short_for("EFLC", "Millwall") == "MIL"
+
+
+def test_generated_codes_never_collide_across_the_desks():
+    """/today merges every division's colour table into one lookup, which is
+    only safe while no two different clubs share a code. A code generated for
+    a discovered league must therefore avoid every other league's."""
+    taken = L.codes_elsewhere("SA")
+    for other in ("BOL", "MIL", "BAR", "LIV", "SOU"):
+        assert other in taken, other
+    got = L.assign_shorts(["Bologna", "AC Milan", "Bari", "Livorno", "Southend Italia"], code="SA")
+    assert got["Bologna"] == "BGN" and got["AC Milan"] == "ACM" and got["Bari"] == "BRI"
+    assert got["Livorno"] == "LVO"
+    assert got["Southend Italia"] not in taken, got
+    assert not (set(L.SERIEA_SHORT.values()) & taken), \
+        f"Serie A codes collide with another desk: {set(L.SERIEA_SHORT.values()) & taken}"
+    # and La Liga's own table is still what La Liga generates from
+    assert L.assign_shorts(["Real Madrid"])["Real Madrid"] == "RMA"
+
 if __name__ == "__main__":
     print("league registry and referee build")
     for name, fn in sorted(globals().items()):

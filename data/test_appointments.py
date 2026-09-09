@@ -748,4 +748,180 @@ def _an_abbreviated_harvest_yields_to_the_sheet_that_named_the_man():
 t("an abbreviated harvest yields to the sheet that named the man",
   _an_abbreviated_harvest_yields_to_the_sheet_that_named_the_man)
 
+
+# --- the AIA designation article ------------------------------------------
+#
+# Italy publishes a matchday as an article with one block per fixture and NO
+# forenames: "FOURNEAU", "FERRIERI CAPUTI", "ROSSI C." only when two officials
+# share a surname. The referee is the first line under the fixture and carries
+# no label; the assistants' pair follows it, then IV, VAR and AVAR. The layout
+# below is the published excerpts', not the page's (aia-figc.it was refused by
+# the network this was written on), and the first live run confirms it.
+
+AIA_ARTICLE = """SERIE A ENILIVE - DESIGNAZIONI 4a GIORNATA
+Si comunicano le designazioni degli arbitri, assistenti, IV ufficiali, VAR e AVAR che dirigeranno le gare valide per la 4a giornata del Campionato di Serie A Enilive 2026/27 in programma da venerdì 11 a lunedì 14 settembre:
+
+VENEZIA – FIORENTINA   Venerdì 11/09 h. 20.45
+FOURNEAU
+ALASSIO – BARONE
+IV: AYROLDI
+VAR: DIONISI
+AVAR: MAGGIONI
+
+LAZIO – MILAN   Sabato 12/09 h.18.00
+MARCENARO
+ROSSI C. – LO CICERO
+IV: SOZZA
+VAR: MERAVIGLIA
+AVAR: PICCININI
+
+HELLAS VERONA – ROMA   Domenica 13/09 h. 15.00
+FERRIERI CAPUTI
+BINDONI – CAPALDO
+IV: MASSA
+VAR: DI PAOLO
+AVAR: PATERNA
+
+CAGLIARI – INTER   Domenica 03/01 h. 20.45
+ROSSI C.
+DEI GIUDICI – PERETTI
+IV: COLLU
+"""
+
+# The Serie A card table in miniature, as build_refs writes it from the
+# API-Football names: forename and surname, or a harvested initial.
+SA_TABLE = ["Francesco Fourneau", "Matteo Marcenaro", "Maria Sole Ferrieri Caputi",
+            "Claudio Rossi", "Marco Rossi", "D. Doveri", "Luca Pairetto", "Andrea Colombo"]
+
+
+def _the_aia_article_parses_to_its_blocks():
+    rows, problems = I.parse_aia(AIA_ARTICLE, 2026)
+    assert not problems, problems
+    assert [(r["home"], r["away"]) for r in rows] == [
+        ("VENEZIA", "FIORENTINA"), ("LAZIO", "MILAN"), ("HELLAS VERONA", "ROMA"),
+        ("CAGLIARI", "INTER")], rows
+    assert [r["ref"] for r in rows] == ["FOURNEAU", "MARCENARO", "FERRIERI CAPUTI", "ROSSI C."]
+    assert [r["ko"] for r in rows] == ["20:45", "18:00", "15:00", "20:45"]
+    assert all(r["competition"] == "serie a enilive" for r in rows)
+    # No year on the page: September is the season's first year, January
+    # the second. Guessed from "this year" half the season would be wrong.
+    assert [r["date"] for r in rows] == ["2026-09-11", "2026-09-12", "2026-09-13", "2027-01-03"]
+
+
+t("an AIA designation article parses to its blocks, with the year supplied",
+  _the_aia_article_parses_to_its_blocks)
+
+
+def _the_assistants_are_never_read_as_the_referee():
+    """A block whose referee line is missing puts the assistants' pair where
+    the referee should be. That is refused by fixture, not read as the first
+    name on the line; and the labelled officials are never referees."""
+    broken = """INTER – UDINESE   Lunedì 14/09 h. 20.45
+BINDONI – CAPALDO
+IV: MASSA
+VAR: DI PAOLO
+
+TORINO – ATALANTA   Lunedì 14/09 h. 18.30
+IV: SOZZA
+VAR: MERAVIGLIA
+
+GENOA – PISA   Lunedì 14/09 h. 20.45
+Arbitro: DOVERI
+IV: MASSA
+"""
+    rows, problems = I.parse_aia(broken, 2026)
+    assert [r["ref"] for r in rows] == ["DOVERI"], rows
+    assert len(problems) == 2, problems
+    assert "INTER v UDINESE" in problems[0] and "BINDONI" in problems[0], problems
+    assert "TORINO v ATALANTA" in problems[1], problems
+
+
+t("the assistants and the labelled officials are never read as the referee",
+  _the_assistants_are_never_read_as_the_referee)
+
+
+def _a_surname_alone_resolves_only_when_it_is_unique():
+    """The AIA's format, and only that format, resolves on surname: a unique
+    run of the published surnames inside a table entry's surnames, an
+    initial after the surname matched to the table's forename, and two
+    officials sharing a surname refused unless the initial settles it."""
+    r = A.resolve_surname_only
+    assert r("FOURNEAU", SA_TABLE) == ("Francesco Fourneau", "surname")
+    assert r("Fourneau", SA_TABLE) == ("Francesco Fourneau", "surname")
+    assert r("FERRIERI CAPUTI", SA_TABLE) == ("Maria Sole Ferrieri Caputi", "surname")
+    assert r("DOVERI", SA_TABLE) == ("D. Doveri", "surname")
+    assert r("ROSSI", SA_TABLE) == (None, None), "two Rossis: refused"
+    assert r("ROSSI C.", SA_TABLE) == ("Claudio Rossi", "surname")
+    assert r("ROSSI M.", SA_TABLE) == ("Marco Rossi", "surname")
+    assert r("ROSSI F.", SA_TABLE) == (None, None), "an initial nobody has"
+    assert r("GUIDA", SA_TABLE) == (None, None), "not in the table: left as published"
+    assert r("", SA_TABLE) == (None, None)
+    # The EFL and RFEF resolver is untouched: surname alone is still never
+    # enough there, whatever this one accepts.
+    assert A.resolve_ref_name("Fourneau", SA_TABLE) == (None, None)
+    assert A.resolve_ref_name("Smith", TABLE) == (None, None)
+
+
+t("a surname alone resolves only through the AIA resolver, and only when unique",
+  _a_surname_alone_resolves_only_when_it_is_unique)
+
+
+def _aia_clubs_and_referees_resolve_through_the_registry():
+    """Clubs in capitals, and in the AIA's own spellings (MILAN, ROMA, HELLAS
+    VERONA), reach the registry's codes; officials resolve by surname. Against
+    a temporary registry, because the division has not been discovered here."""
+    import leagues
+    league = leagues.get("SA")
+    real, table = league.clubs_file, A.REF_TABLES["SA"]
+    league.clubs_file = "seriea_clubs.__appt_test__.json"
+    A.REF_TABLES["SA"] = "seriea_refs.__appt_test__.json"
+    reg_path = leagues.clubs_path("SA")
+    refs_path = A.DATA / A.REF_TABLES["SA"]
+    try:
+        names = ["Venezia", "Fiorentina", "Lazio", "AC Milan", "Hellas Verona",
+                 "AS Roma", "Cagliari", "Inter"]
+        shorts = leagues.assign_shorts(names, code="SA")
+        leagues.save_clubs("SA", {n: {"short": s, "id": 3000 + i}
+                                  for i, (n, s) in enumerate(sorted(shorts.items()))},
+                           season="2026")
+        import json
+        refs_path.write_text(json.dumps({"refs": [{"name": n} for n in SA_TABLE]}),
+                             encoding="utf-8")
+        rows, _ = I.parse_aia(AIA_ARTICLE, 2026)
+        entries, skipped, problems = I.to_entries(rows, "test://aia", A.resolve_surname_only)
+    finally:
+        reg_path.unlink(missing_ok=True)
+        refs_path.unlink(missing_ok=True)
+        league.clubs_file = real
+        A.REF_TABLES["SA"] = table
+    assert not problems, problems
+    assert not skipped, skipped
+    assert len(entries) == 4, entries
+    assert all(e["league"] == "SA" for e in entries)
+    assert [e["h"] for e in entries] == [shorts["Venezia"], shorts["Lazio"],
+                                         shorts["Hellas Verona"], shorts["Cagliari"]], entries
+    assert [e["a"] for e in entries] == [shorts["Fiorentina"], shorts["AC Milan"],
+                                         shorts["AS Roma"], shorts["Inter"]], entries
+    assert [e["refResolved"] for e in entries] == [
+        "Francesco Fourneau", "Matteo Marcenaro", "Maria Sole Ferrieri Caputi", "Claudio Rossi"]
+    assert all(e["resolvedBy"] == "surname" for e in entries), entries
+    assert [e["ref"] for e in entries] == ["FOURNEAU", "MARCENARO", "FERRIERI CAPUTI", "ROSSI C."], \
+        "the published spelling must be kept beside the resolved one"
+
+
+t("AIA clubs and referees resolve through the Serie A registry and card table",
+  _aia_clubs_and_referees_resolve_through_the_registry)
+
+
+def _the_aia_year_rule():
+    assert I.aia_year(9, 2026) == 2026
+    assert I.aia_year(12, 2026) == 2026
+    assert I.aia_year(1, 2026) == 2027
+    assert I.aia_year(6, 2026) == 2027
+    assert I.aia_year(7, 2026) == 2026
+    assert I.fixture_season("SA") is None or isinstance(I.fixture_season("SA"), int)
+
+
+t("an Italian date before July belongs to the season's second year", _the_aia_year_rule)
+
 print(f"\n{passed} tests passed")

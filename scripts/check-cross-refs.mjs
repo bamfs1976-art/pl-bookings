@@ -42,6 +42,7 @@ const LEAGUES = [
   ['PL', 'data/pl_data.js', 'Premier League'],
   ['EFLC', 'data/eflc_data.js', 'EFL Championship'],
   ['LL', 'data/laliga_data.js', 'La Liga'],
+  ['SA', 'data/seriea_data.js', 'Serie A'],
 ];
 
 /* ---- 1. the average is over what the division actually refereed --------- */
@@ -76,7 +77,7 @@ const LEAGUES = [
 /* Three desks call it. The fourth — index.html — keeps its own UNWEIGHTED mean
    deliberately (changing it moves every price on that desk), so what is
    required of it is only the exclusion. */
-for (const page of ['today.html', 'eflc.html', 'laliga.html']) {
+for (const page of ['today.html', 'eflc.html', 'laliga.html', 'seriea.html']) {
   const src = read(page);
   assert.ok(/(C|PLDCore)\.leagueRates\(/.test(src),
     `${page} computes its own league average instead of calling ` +
@@ -176,14 +177,14 @@ assert.equal(C.refBorrowNote({ n: 'X', matches: 11 }), null,
 /* ALL THREE REFEREE TABLES, not the fixture line only. The fixture card and
    the table are two views of one row, and a marker on one of them is how the
    page comes to contradict itself. */
-for (const page of ['index.html', 'eflc.html', 'laliga.html']) {
+for (const page of ['index.html', 'eflc.html', 'laliga.html', 'seriea.html']) {
   assert.ok(/refBorrowNote\(/.test(read(page)),
     `${page}'s referee table does not mark a borrowed row, so it states a ` +
     'match count in this division for an official who has none here');
 }
 /* And the two desks with a table footer must not caption the average with a
    population it was not taken over. */
-for (const page of ['eflc.html', 'laliga.html']) {
+for (const page of ['eflc.html', 'laliga.html', 'seriea.html']) {
   assert.ok(/nOwn/.test(read(page)),
     `${page} captions the league average with REFLIST.length, which now counts ` +
     'borrowed officials the average deliberately excludes');

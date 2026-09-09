@@ -236,7 +236,7 @@ assert.ok(/APPOINTED=null;/.test(index.slice(index.indexOf('LIVE={bootstrap:bs')
 }
 
 /* ---- the other two desks still read their appointments ------------------ */
-for (const page of ['eflc.html', 'laliga.html']) {
+for (const page of ['eflc.html', 'laliga.html', 'seriea.html']) {
   const s = readFileSync(join(root, page), 'utf8');
   /* THROUGH THE SHARED RESOLVER, not an exact lookup. The overlay and the
      card table are different feeds: eleven of the Championship's twelve
@@ -257,8 +257,8 @@ const wf = readFileSync(join(root, '.github', 'workflows', 'fixtures.yml'), 'utf
 assert.ok(/ref-coverage\.mjs/.test(wf),
   'the fixture harvest does not report appointment coverage, so a feed that ' +
   'stops publishing referees would look identical to a quiet week');
-assert.ok(/--fixtures --league \$L/.test(wf) && /for L in PL EFLC LL/.test(wf),
-  'the fixture workflow does not harvest all three leagues');
+assert.ok(/--fixtures --league \$L/.test(wf) && /for L in PL EFLC LL SA/.test(wf),
+  'the fixture workflow does not harvest all four leagues');
 /* Three schedules: the Spanish appointments land the afternoon before, so a
    single nightly run cannot carry them. */
 assert.ok((wf.match(/- cron:/g) || []).length >= 3,
@@ -273,7 +273,7 @@ assert.ok(/^\s*schedule:/m.test(refresh),
 /* On a scheduled run every input is empty. A boolean input read bare is
    therefore falsy, which would skip the Championship and La Liga steps on
    every cron run while the workflow still reported success. */
-for (const name of ['refresh_eflc', 'refresh_laliga', 'fit_model']) {
+for (const name of ['refresh_eflc', 'refresh_laliga', 'refresh_seriea', 'fit_model']) {
   const bare = new RegExp(`if: \\$\\{\\{[^}]*[^|] inputs\\.${name}(?!\\w)`);
   const guarded = new RegExp(`github\\.event_name != 'workflow_dispatch' \\|\\| inputs\\.${name}`);
   assert.ok(guarded.test(refresh),
@@ -282,7 +282,8 @@ for (const name of ['refresh_eflc', 'refresh_laliga', 'fit_model']) {
   void bare;
 }
 for (const [name, dflt] of [['refs_season', '2526'], ['season_af', '2025'],
-                            ['season_fixtures', '2026'], ['season_sp', '2526']]) {
+                            ['season_fixtures', '2026'], ['season_sp', '2526'],
+                            ['season_it', '2526']]) {
   assert.ok(new RegExp(`inputs\\.${name} \\|\\| '${dflt}'`).test(refresh),
     `inputs.${name} has no default, so a scheduled run would pass an empty ` +
     'season to the harvester');
@@ -626,7 +627,7 @@ assert.ok(/plb_card_predictions/.test(calib) && !/rest\/v1\/plb_predictions/.tes
      disagreed with the other two, plus the referee control and the referee
      strip, which both took the last token. Nothing on a card shortens a name
      any other way. */
-  for (const page of ['index.html', 'eflc.html', 'laliga.html', 'today.html',
+  for (const page of ['index.html', 'eflc.html', 'laliga.html', 'seriea.html', 'today.html',
                       'assets/refpicker.js', 'assets/charts.js']) {
     const src = readFileSync(join(root, page), 'utf8');
     assert.ok(/refShort\(/.test(src),
@@ -799,7 +800,7 @@ assert.ok(/plb_card_predictions/.test(calib) && !/rest\/v1\/plb_predictions/.tes
     assert.ok(unrated.title && /league rate/.test(unrated.title),
       'the unrated label does not say why the match prices at the league rate');
     assert.equal(none.text, 'Ref —');
-    for (const page of ['today.html', 'eflc.html', 'laliga.html']) {
+    for (const page of ['today.html', 'eflc.html', 'laliga.html', 'seriea.html']) {
       const src = readFileSync(join(root, page), 'utf8');
       assert.ok(/C\.refLabel\(/.test(src),
         `${page} does not build its referee line through PLDCore.refLabel — ` +

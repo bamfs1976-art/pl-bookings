@@ -55,6 +55,7 @@ OUT_FOR = {
     "PL": ("pl_bookings.js", "PL_BOOKINGS"),
     "EFLC": ("eflc_bookings.js", "EFLC_BOOKINGS"),
     "LL": ("laliga_bookings.js", "LALIGA_BOOKINGS"),
+    "SA": ("seriea_bookings.js", "SERIEA_BOOKINGS"),
 }
 
 # The shipped dataset each ledger borrows its faces from. Same division, same
@@ -64,6 +65,7 @@ DATA_FOR = {
     "PL": ("pl_data.js", "PL_PLAYERS"),
     "EFLC": ("eflc_data.js", "EFLC_PLAYERS"),
     "LL": ("laliga_data.js", "LALIGA_PLAYERS"),
+    "SA": ("seriea_data.js", "SERIEA_PLAYERS"),
 }
 
 

@@ -1,0 +1,86 @@
+{
+ "clubs": {
+  "AC Milan": {
+   "id": 489,
+   "short": "ACM"
+  },
+  "AS Roma": {
+   "id": 497,
+   "short": "ROM"
+  },
+  "Atalanta": {
+   "id": 499,
+   "short": "ATA"
+  },
+  "Bologna": {
+   "id": 500,
+   "short": "BGN"
+  },
+  "Cagliari": {
+   "id": 490,
+   "short": "CAG"
+  },
+  "Como": {
+   "id": 895,
+   "short": "COM"
+  },
+  "Fiorentina": {
+   "id": 502,
+   "short": "FIO"
+  },
+  "Frosinone": {
+   "id": 512,
+   "short": "FRO"
+  },
+  "Genoa": {
+   "id": 495,
+   "short": "GEN"
+  },
+  "Inter": {
+   "id": 505,
+   "short": "INT"
+  },
+  "Juventus": {
+   "id": 496,
+   "short": "JUV"
+  },
+  "Lazio": {
+   "id": 487,
+   "short": "LAZ"
+  },
+  "Lecce": {
+   "id": 867,
+   "short": "LEC"
+  },
+  "Monza": {
+   "id": 1579,
+   "short": "MON"
+  },
+  "Napoli": {
+   "id": 492,
+   "short": "NAP"
+  },
+  "Parma": {
+   "id": 523,
+   "short": "PAR"
+  },
+  "Sassuolo": {
+   "id": 488,
+   "short": "SAS"
+  },
+  "Torino": {
+   "id": 503,
+   "short": "TOR"
+  },
+  "Udinese": {
+   "id": 494,
+   "short": "UDI"
+  },
+  "Venezia": {
+   "id": 517,
+   "short": "VEN"
+  }
+ },
+ "league": "SA",
+ "season": "2026"
+}

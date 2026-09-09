@@ -49,7 +49,7 @@ on:
         required: false
         default: ""
       probe_league:
-        description: "Division to probe (PL, EFLC, LL)"
+        description: "Division to probe (PL, EFLC, LL, SA)"
         required: false
         default: "PL"
       what:
@@ -133,7 +133,7 @@ jobs:
               ) }}
         continue-on-error: true
         run: |
-          python3 data/harvest_extra.py --league PL,EFLC,LL \
+          python3 data/harvest_extra.py --league PL,EFLC,LL,SA \
             --what standings,teamstats,transfers,cards
 
       # ---- the per-fixture half: only what has finished and is not recorded --
@@ -143,7 +143,7 @@ jobs:
         run: |
           LIM=""
           [ -n "${{ inputs.limit }}" ] && LIM="--limit ${{ inputs.limit }}"
-          python3 data/harvest_extra.py --league PL,EFLC,LL \
+          python3 data/harvest_extra.py --league PL,EFLC,LL,SA \
             --what events,fxstats $LIM
 
       # ---- the moving half: run on every firing ----------------------------
@@ -151,7 +151,7 @@ jobs:
         if: ${{ !inputs.probe }}
         continue-on-error: true
         run: |
-          python3 data/harvest_extra.py --league PL,EFLC,LL \
+          python3 data/harvest_extra.py --league PL,EFLC,LL,SA \
             --what injuries,odds,predictions --within-hours 72
 
       # ONE GUARD STEP, BEFORE EITHER COMMIT. It was after the probe push,
@@ -179,7 +179,7 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          for f in pl eflc laliga; do
+          for f in pl eflc laliga seriea; do
             for n in injuries cardleaders standings teamstats cardevents \
                      fxstats predictions odds; do
               [ -f "data/${f}_${n}.js" ] && git add "data/${f}_${n}.js"

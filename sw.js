@@ -3,7 +3,7 @@
    cache-first. Live FPL data (/api/fpl/*) and Supabase calls are never
    touched here — the app's own data layer decides what is fresh vs cached. */
 
-const VERSION = 'plb-v21';
+const VERSION = 'plb-v23';
 /* Every desk, not just the Premier League one. The shell decides what opens
    with no connection: installed on a phone, a page missing from here is a
    blank screen on the Underground even though it works perfectly on wifi.
@@ -24,12 +24,14 @@ const SHELL = [
   '/today.html',
   '/eflc.html',
   '/laliga.html',
+  '/seriea.html',
   '/data-frame.html',
   '/data/pl_data.js',
   '/data/ref_history.js',
   '/data/h2h.js',
   '/data/eflc_h2h.js',
   '/data/laliga_h2h.js',
+  '/data/seriea_h2h.js',
   '/data/model.js',
   '/data/sim_model.js',
   '/data/core_insights.js',
@@ -39,6 +41,12 @@ const SHELL = [
   '/data/laliga_data.js',
   '/data/laliga_fixtures.js',
   '/data/laliga_fxstats.js',
+  /* Serie A. Its fxstats file is written by extra-feeds.yml and is not
+     precached until it exists, for the same reason as every other
+     optional feed: addAll is atomic and one missing file empties the
+     whole shell. */
+  '/data/seriea_data.js',
+  '/data/seriea_fixtures.js',
   '/data/pl_fixtures.js',
   '/data/pl_fxstats.js',
   /* The 2025/26 match record the Methodology view scores the model against.

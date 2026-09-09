@@ -15,8 +15,9 @@ yellows per game, fouls per game, cards per foul, the fixture x-factor — comes
 from the free football-data.co.uk match records, and that source publishes a
 referee for English and Scottish football and effectively nowhere else. It is
 measured, not assumed: 0 of 33 seasons for La Liga and Ligue 1, 2 of 33 for
-Serie A and the Bundesliga, all of them for England's five tiers and Scotland's
-four. See docs/la-liga-feasibility.md. So a Championship desk reuses the whole
+Serie A and the Bundesliga (and 0 of 380 rows in Serie A's 2025-26 file), all
+of them for England's five tiers and Scotland's four. See
+docs/la-liga-feasibility.md. So a Championship desk reuses the whole
 referee spine with a changed division code, and a La Liga desk has to buy the
 referee NAME from a keyed API and compute the rates from this same free file.
 
@@ -234,7 +235,72 @@ LEAGUES = {
                    "effect (RFEF art. 112) — no escalation at 10 or 15",
         suspension_scheme={"kind": "cycle", "at": 5, "ban": 1, "cumulative": False},
     ),
+    "SERB": League(
+        code="SERB", name="Serie B", fd_div="I2", clubs=20, matches=380,
+        # No desk of its own, and no referees: here for the clubs PROMOTED
+        # into Serie A, whose 2025-26 form is a Serie B record and appears in
+        # no Serie A harvest. The Italian counterpart of SEG and L1.
+        data_file="serieb_data.js", refs_file="serieb_refs.json",
+        players_file="serieb_players.json",
+        mirror_slug=None, af_league=136, referee_source="none",
+    ),
+    "SA": League(
+        code="SA", name="Serie A", fd_div="I1", clubs=20, matches=380,
+        data_file="seriea_data.js", refs_file="seriea_refs.json",
+        # The mirror carries Italy under `serie-a`. Measured on 9 September
+        # 2026 against the 2025-26 file: 380 rows, cards and fouls filled on
+        # 380 of 380, the referee named on 0 of 380. The same shape as Spain,
+        # so the same route: every rate is free, only the official's name is
+        # bought and joined on by date and both clubs.
+        mirror_slug="serie-a", af_league=135,
+        players_file="seriea_players.json", clubs_file="seriea_clubs.json",
+        referee_source="api-football",
+        # 380 matches over roughly 20 officials, the same ratio as La Liga.
+        min_ref_matches=3,
+        # THE ITALIAN RULE IS A THIRD SHAPE. Codice di Giustizia Sportiva
+        # art. 19: a one-match ban at the FIFTH caution, and then, in
+        # recidiva, a further one-match ban at the fifth, the fourth, the
+        # third and the second caution after each ban, and at every caution
+        # from there on. So the bans fall at 5, 10, 14, 17, 19, 20, 21 and so
+        # on: a ladder whose gaps close rather than a cycle that repeats, with
+        # no matchday gate, the count cumulative within one season and one
+        # competition, and no escalation of the ban itself, which is always
+        # one match. Expressed as the ladder shape with an open tail
+        # (`then_every`), because the two existing shapes cannot say "and
+        # every caution after the last rung".
+        #
+        # NOT VERIFIED FROM THE SOURCE DOCUMENT. figc.it and the legal
+        # databases that reprint the Codice were unreachable from the build
+        # environment; the rule rests on three independent quotations of
+        # art. 19 that agree with each other. See docs/italy-suspensions.md,
+        # which also records that the commissioning brief stated a different
+        # progression (5, 10, 15, then every second caution) that no source
+        # supports.
+        suspension="one match at the 5th caution, then at the 10th, 14th, "
+                   "17th and 19th, then every caution (CGS art. 19); "
+                   "cumulative, no gate, no escalation",
+        suspension_scheme={
+            "kind": "ladder", "cumulative": True, "review": None,
+            "rungs": [{"at": 5, "ban": 1, "by": None},
+                      {"at": 10, "ban": 1, "by": None},
+                      {"at": 14, "ban": 1, "by": None},
+                      {"at": 17, "ban": 1, "by": None},
+                      {"at": 19, "ban": 1, "by": None}],
+            "then_every": 1,
+        },
+    ),
 }
+
+# A feeder league resolves against the registry of the division its promoted
+# clubs go UP into: Segunda against La Liga, Serie B against Serie A. A code
+# not listed here owns its own registry (or declares its clubs).
+FEEDS_INTO = {"SEG": "LL", "SERB": "SA"}
+
+
+def registry_owner(code):
+    """The league whose discovered club registry `code` resolves against."""
+    c = (code or "").upper()
+    return FEEDS_INTO.get(c, c)
 
 
 # ── the 2026-27 EFL Championship ────────────────────────────────────────────
@@ -453,6 +519,135 @@ LALIGA_AF_ALIASES = {
 }
 
 
+# ── Serie A ─────────────────────────────────────────────────────────────────
+#
+# The same arrangement as La Liga: NOT a roster, a spelling table wider than any
+# one season, with the actual twenty DISCOVERED from API-Football
+# (harvest_apifootball.py --league SA --clubs) and written to seriea_clubs.json.
+#
+# CODES ARE CHOSEN AGAINST EVERY OTHER DESK'S. /today draws crests for all the
+# divisions in one list off a merged colour table, which is only safe while no
+# two different clubs share a code across the leagues. Bologna is not BOL
+# (Bolton), Milan is not MIL (Millwall), Bari is not BAR (Barcelona) and Livorno
+# is not LIV (Liverpool). data/test_seriea.py asserts the whole table stays
+# clear of the other three.
+SERIEA_SHORT = {
+    "Atalanta": "ATA", "Bologna": "BGN", "Cagliari": "CAG", "Como": "COM",
+    "Cremonese": "CRE", "Fiorentina": "FIO", "Genoa": "GEN", "Inter": "INT",
+    "Juventus": "JUV", "Lazio": "LAZ", "Lecce": "LEC", "AC Milan": "ACM",
+    "Napoli": "NAP", "Parma": "PAR", "Pisa": "PIS", "AS Roma": "ROM",
+    "Sassuolo": "SAS", "Torino": "TOR", "Udinese": "UDI",
+    "Hellas Verona": "VER",
+    # Recent Serie A and Serie B clubs, so a promoted side takes a chosen code
+    # rather than a generated one.
+    "Empoli": "EMP", "Monza": "MON", "Venezia": "VEN", "Frosinone": "FRO",
+    "Salernitana": "SAL", "Sampdoria": "SAM", "Spezia": "SPE",
+    "Palermo": "PAL", "Bari": "BRI", "Brescia": "BSC", "Catanzaro": "CTZ",
+    "Cesena": "CES", "Modena": "MOD", "Reggiana": "REG", "Cittadella": "CIT",
+    "Sudtirol": "SDT", "Carrarese": "CRR", "Mantova": "MNT",
+    "Juve Stabia": "JST", "Padova": "PAD", "Avellino": "AVE",
+    "Pescara": "PES", "Virtus Entella": "ENT", "Cosenza": "COS",
+    "Benevento": "BEN", "Ascoli": "ASC", "Perugia": "PER", "Ternana": "TER",
+    "Crotone": "CRO", "Chievo": "CHI", "SPAL": "SPL", "Livorno": "LVO",
+    "Vicenza": "VIC", "Triestina": "TRI", "Trapani": "TRA", "Foggia": "FOG",
+    "Novara": "NOV", "Pordenone": "PRD", "Feralpisalo": "FER", "Lecco": "LKO",
+    "Ancona": "ANC", "Siena": "SIE", "Catania": "CAT",
+}
+
+# football-data.co.uk's Italian spellings, from the 2025-26 I1 file read on
+# 9 September 2026: it writes "Inter", "Milan", "Roma" and "Verona" where
+# API-Football writes "Inter", "AC Milan", "AS Roma" and "Hellas Verona". The
+# rest agree. Older seasons add the short forms below.
+SERIEA_FD_ALIASES = {
+    "Milan": "AC Milan", "Roma": "AS Roma", "Verona": "Hellas Verona",
+    "Spal": "SPAL", "Sudtirol": "Sudtirol", "Entella": "Virtus Entella",
+}
+
+# API-Football's own spellings that differ from the canonical name above, plus
+# every legal form the feed, the federation and the press use for the same
+# club. An unmapped name is reported by every caller rather than guessed.
+SERIEA_AF_ALIASES = {
+    "Milan": "AC Milan", "Roma": "AS Roma", "Verona": "Hellas Verona",
+    "Hellas Verona FC": "Hellas Verona", "H. Verona": "Hellas Verona",
+    "Internazionale": "Inter", "FC Internazionale": "Inter",
+    "Inter Milan": "Inter", "FC Internazionale Milano": "Inter",
+    "Juventus FC": "Juventus", "SS Lazio": "Lazio", "SSC Napoli": "Napoli",
+    "US Sassuolo": "Sassuolo", "US Sassuolo Calcio": "Sassuolo",
+    "Torino FC": "Torino", "Udinese Calcio": "Udinese", "US Lecce": "Lecce",
+    "Genoa CFC": "Genoa", "Cagliari Calcio": "Cagliari", "Como 1907": "Como",
+    "US Cremonese": "Cremonese", "Pisa SC": "Pisa", "Pisa Sporting Club": "Pisa",
+    "Bologna FC": "Bologna", "Bologna FC 1909": "Bologna",
+    "Atalanta BC": "Atalanta", "ACF Fiorentina": "Fiorentina",
+    "Parma Calcio 1913": "Parma", "Parma Calcio": "Parma",
+    "AC Monza": "Monza", "Empoli FC": "Empoli", "Venezia FC": "Venezia",
+    "US Salernitana 1919": "Salernitana", "UC Sampdoria": "Sampdoria",
+    "Spezia Calcio": "Spezia", "Palermo FC": "Palermo", "SSC Bari": "Bari",
+    "Brescia Calcio": "Brescia", "US Catanzaro": "Catanzaro",
+    "Cesena FC": "Cesena", "Modena FC": "Modena", "AC Reggiana": "Reggiana",
+    "AS Cittadella": "Cittadella", "FC Sudtirol": "Sudtirol",
+    "S\u00fcdtirol": "Sudtirol", "FC S\u00fcdtirol": "Sudtirol",
+    "Carrarese Calcio": "Carrarese", "Mantova 1911": "Mantova",
+    "SS Juve Stabia": "Juve Stabia", "Padova Calcio": "Padova",
+    "US Avellino": "Avellino", "Delfino Pescara": "Pescara",
+    "Pescara Calcio": "Pescara", "Entella": "Virtus Entella",
+    "Cosenza Calcio": "Cosenza", "Benevento Calcio": "Benevento",
+    "Ascoli Calcio": "Ascoli", "AC Perugia": "Perugia", "Ternana Calcio": "Ternana",
+    "FC Crotone": "Crotone", "Chievo Verona": "Chievo", "ChievoVerona": "Chievo",
+    "AS Livorno": "Livorno", "LR Vicenza": "Vicenza", "US Triestina": "Triestina",
+    "Trapani Calcio": "Trapani", "Calcio Foggia 1920": "Foggia",
+    "Novara Calcio": "Novara", "Pordenone Calcio": "Pordenone",
+    "FeralpiSal\u00f2": "Feralpisalo", "Feralpisalo": "Feralpisalo",
+    "Calcio Lecco 1912": "Lecco", "Lecco": "Lecco", "US Ancona": "Ancona",
+    "ACN Siena": "Siena", "Catania FC": "Catania",
+}
+
+# Legal endings no registry carries, stripped and retried once.
+SERIEA_LEGAL_SUFFIXES = (" FC", " Calcio", " BC", " CFC", " SC", " 1907",
+                         " 1909", " 1913", " 1919", " 1911", " 1912", " 1920")
+
+# The spelling tables and legal endings for every league that DISCOVERS its
+# division, keyed by the registry owner. A feeder league (SEG, SERB) resolves
+# through its owner's entry, which is what registry_owner() is for.
+#
+# NAMES, NOT OBJECTS, and read at call time. data/test_laliga.py proves each
+# published-sheet alias is load-bearing by swapping the module's table for a
+# copy without it; a dict captured here at import would keep pointing at the
+# original and the test would pass with the entry deleted, which is the exact
+# failure that test exists to catch.
+DISCOVERED = {
+    "LL": {"short": "LALIGA_SHORT", "fd": "LALIGA_FD_ALIASES", "af": "LALIGA_AF_ALIASES",
+           "published": "LALIGA_RFEF_ALIASES", "suffixes": "LALIGA_LEGAL_SUFFIXES"},
+    "SA": {"short": "SERIEA_SHORT", "fd": "SERIEA_FD_ALIASES", "af": "SERIEA_AF_ALIASES",
+           "published": "SERIEA_AIA_ALIASES", "suffixes": "SERIEA_LEGAL_SUFFIXES"},
+}
+
+# The AIA's own spellings on its designation pages, where they differ from
+# every table above. Empty until a live sheet shows one that does not resolve;
+# the same rule as Spain's table, which carries only spellings observed to
+# fail. Consulted on the accent-insensitive pass.
+SERIEA_AIA_ALIASES = {}
+
+
+def _tables(owner):
+    """The live tables for a discovered league, or None."""
+    names = DISCOVERED.get(owner)
+    if not names:
+        return None
+    g = globals()
+    return {k: g[v] for k, v in names.items()}
+
+
+def is_discovered(code):
+    """Whether a league (or the league it feeds into) names its own division."""
+    return registry_owner(code) in DISCOVERED
+
+
+def short_table(code):
+    """The chosen-code table for a discovered league, or {} for a declared one."""
+    entry = _tables(registry_owner(code))
+    return entry["short"] if entry else {}
+
+
 def strip_accents(text):
     """Accent-insensitive form. Feeds disagree about diacritics on the same
     club — "Alavés" and "Alaves" are one team — and a name that differs only
@@ -494,7 +689,25 @@ def auto_short(name, taken):
     return None
 
 
-def assign_shorts(names):
+def codes_elsewhere(code):
+    """Every short code another league already uses, so a code generated for
+    this one cannot collide with it. /today merges the divisions' colour
+    tables into one lookup, which is only safe while no two different clubs
+    across the leagues answer to the same three letters."""
+    owner = registry_owner(code)
+    taken = set(EFLC_CLUBS.values())
+    for other in DISCOVERED:
+        if other != owner:
+            taken |= set(_tables(other)["short"].values())
+    try:
+        import build_pl_data
+        taken |= set(build_pl_data.SHORT.values())
+    except Exception:          # noqa: BLE001 — the PL map is a convenience here
+        pass
+    return taken
+
+
+def assign_shorts(names, code="LL"):
     """{club name: short code} for a discovered division.
 
     Overrides first, in a fixed order, so a generated code can never take a
@@ -502,27 +715,28 @@ def assign_shorts(names):
     not depend on the order the API happened to answer in, or a re-harvest
     would silently rename clubs and orphan every stored pick.
     """
+    table = short_table(code)
     names = sorted({(n or "").strip() for n in names if (n or "").strip()})
-    out, taken = {}, set()
+    out, taken = {}, set(codes_elsewhere(code))
     for n in names:
-        code = LALIGA_SHORT.get(n)
-        if code and code not in taken:
-            out[n] = code
-            taken.add(code)
+        code_ = table.get(n)
+        if code_ and code_ not in taken:
+            out[n] = code_
+            taken.add(code_)
     for n in names:
         if n in out:
             continue
-        code = auto_short(n, taken)
-        if code:
-            out[n] = code
-            taken.add(code)
+        code_ = auto_short(n, taken)
+        if code_:
+            out[n] = code_
+            taken.add(code_)
     return out
 
 
 def clubs_path(code):
     """Where a league's discovered club registry lives, or None if that league
     declares its clubs in this module instead."""
-    league = LEAGUES.get(code.upper())
+    league = LEAGUES.get(registry_owner(code))
     name = getattr(league, "clubs_file", None) if league else None
     return DATA / name if name else None
 
@@ -563,32 +777,52 @@ def _accent_index(mapping):
 
 
 def laliga_short(name, clubs=None):
-    """A La Liga club name from ANY feed as its short code, or None.
+    """A La Liga club name from ANY feed as its short code, or None."""
+    return discovered_short("LL", name, clubs=clubs)
+
+
+def seriea_short(name, clubs=None):
+    """A Serie A club name from ANY feed as its short code, or None."""
+    return discovered_short("SA", name, clubs=clubs)
+
+
+def discovered_short(code, name, clubs=None):
+    """A club name from ANY feed as its short code, for a league that
+    discovers its division, or None.
 
     Tries, in order: the discovered registry, the football-data spelling table,
     the API-Football spelling table, then an accent-insensitive pass over all
-    three. Returns None rather than guessing — an unmapped name is reported by
-    every caller, because a club that quietly resolves to nothing is
-    indistinguishable from a club with no players.
+    three and the published-sheet aliases. Returns None rather than guessing:
+    an unmapped name is reported by every caller, because a club that quietly
+    resolves to nothing is indistinguishable from a club with no players.
+
+    ONE RESOLVER FOR EVERY DISCOVERED LEAGUE. It was La Liga's alone, with
+    the Spanish tables named inline; Serie A takes the same route with its own
+    tables, and a second copy of this walk is how the two would come to
+    disagree about what "resolves" means.
     """
+    owner = registry_owner(code)
+    T = _tables(owner)
+    if not T:
+        return None
     n = (name or "").strip()
     if not n:
         return None
-    reg = load_clubs("LL") if clubs is None else clubs
+    reg = load_clubs(owner) if clubs is None else clubs
     entry = reg.get(n)
     if entry:
         return entry.get("short") if isinstance(entry, dict) else entry
-    for table in (LALIGA_FD_ALIASES, LALIGA_AF_ALIASES):
+    for table in (T["fd"], T["af"]):
         canon = table.get(n)
         if canon:
             hit = reg.get(canon)
             if hit:
                 return hit.get("short") if isinstance(hit, dict) else hit
-            if canon in LALIGA_SHORT and not reg:
-                return LALIGA_SHORT[canon]
+            if canon in T["short"] and not reg:
+                return T["short"][canon]
     flat = strip_accents(n).lower()
-    for table in (_accent_index(reg), _accent_index(LALIGA_FD_ALIASES),
-                  _accent_index(LALIGA_AF_ALIASES), _accent_index(LALIGA_RFEF_ALIASES)):
+    for table in (_accent_index(reg), _accent_index(T["fd"]),
+                  _accent_index(T["af"]), _accent_index(T["published"])):
         hit = table.get(flat)
         if hit is None:
             continue
@@ -597,17 +831,17 @@ def laliga_short(name, clubs=None):
         canon = reg.get(hit)
         if canon:
             return canon.get("short") if isinstance(canon, dict) else canon
-        if not reg and hit in LALIGA_SHORT:
-            return LALIGA_SHORT[hit]
+        if not reg and hit in T["short"]:
+            return T["short"][hit]
     # A legal ending no registry carries ("Getafe CF"). Stripped and retried
     # ONCE, so an ending that leaves nothing recognisable still returns None
     # instead of half a name.
-    for suffix in LALIGA_LEGAL_SUFFIXES:
+    for suffix in T["suffixes"]:
         if n.endswith(suffix):
             # No emptiness guard: the recursive call's own `if not n` returns
             # None for a name that was nothing but a suffix, and a guard no
             # input can reach is a branch no test can cover.
-            return laliga_short(n[: -len(suffix)].strip(), clubs=reg)
+            return discovered_short(owner, n[: -len(suffix)].strip(), clubs=reg)
     return None
 
 def canon_name(code, name):
@@ -624,18 +858,19 @@ def canon_name(code, name):
     n = (name or "").strip()
     if not n:
         return None
-    if code.upper() != "LL":
+    T = _tables(registry_owner(code))
+    if not T:
         canon = EFLC_CLUBS.get(n) or EFLC_ALIASES.get(n) or AF_ALIASES.get(n)
         return canon or n
-    for table in (LALIGA_FD_ALIASES, LALIGA_AF_ALIASES):
+    for table in (T["fd"], T["af"]):
         if n in table:
             return table[n]
     flat = strip_accents(n).lower()
-    for table in (LALIGA_FD_ALIASES, LALIGA_AF_ALIASES):
+    for table in (T["fd"], T["af"]):
         for k, v in table.items():
             if strip_accents(k).lower() == flat:
                 return v
-    for known in LALIGA_SHORT:
+    for known in T["short"]:
         if strip_accents(known).lower() == flat:
             return known
     return n
@@ -643,8 +878,8 @@ def canon_name(code, name):
 
 def short_for(code, name, clubs=None):
     """A club name as its short code, for whichever league is asking."""
-    if code.upper() == "LL":
-        return laliga_short(name, clubs=clubs)
+    if is_discovered(code):
+        return discovered_short(code, name, clubs=clubs)
     return eflc_short(name)
 
 

@@ -58,12 +58,14 @@ import build_pl_data as P  # noqa: E402
 
 # The divisions that can lend to each other: every one the app models and
 # whose officials are named in its match records.
-CODES = ("PL", "EFLC", "LL")
+CODES = ("PL", "EFLC", "LL", "SA")
 
 FIXTURE_CONST = {"PL": ("PL_FIXTURES", "pl_fixtures.js"),
                  "EFLC": ("EFLC_FIXTURES", "eflc_fixtures.js"),
-                 "LL": ("LALIGA_FIXTURES", "laliga_fixtures.js")}
-DATA_FILE = {"PL": "pl_data.js", "EFLC": "eflc_data.js", "LL": "laliga_data.js"}
+                 "LL": ("LALIGA_FIXTURES", "laliga_fixtures.js"),
+                 "SA": ("SERIEA_FIXTURES", "seriea_fixtures.js")}
+DATA_FILE = {"PL": "pl_data.js", "EFLC": "eflc_data.js", "LL": "laliga_data.js",
+             "SA": "seriea_data.js"}
 
 
 def read_refs(code):
