@@ -133,16 +133,43 @@ TAIL_PHRASES = ["ogni ulteriore ammonizione", "ogni successiva ammonizione",
                 "ogni ulteriore sanzione"]
 
 
-def contexts(text, needle, span=260, limit=3):
-    """Every occurrence of `needle` with the text around it, so the reader
-    judges the sentence rather than the match."""
-    out, low = [], text.lower()
+def flatten(text):
+    """One space between every word.
+
+    THE SEARCHES RUN ON THIS, NOT ON THE RAW TEXT, and the first version did
+    not. A PDF wraps at the column, so "alla quarta\nammonizione" is one
+    phrase to a reader and two strings to str.find: the run that settled this
+    question reported 'quarta ammonizione' zero times while printing the
+    sentence containing it. A probe whose summary contradicts its own evidence
+    is worse than one that says nothing.
+    """
+    return " ".join(text.split())
+
+
+def article_at(flat, idx):
+    """The number of the last article heading before `idx`, or None.
+
+    WHICH ARTICLE CARRIES THE RULE IS PART OF THE ANSWER. The desk's own note
+    cites art. 19 on the strength of secondary sources; art. 19 of the current
+    Codice is `Esecuzione delle sanzioni` and contains no progression at all.
+    A rule quoted under the wrong number is a rule a reader cannot check.
+    """
+    last = None
+    for m in re.finditer(r"Art(?:icolo)?\.?\s*(\d+)\b", flat[:idx]):
+        last = m.group(1)
+    return last
+
+
+def contexts(flat, needle, span=280, limit=3):
+    """Every occurrence of `needle` with the text around it and the article it
+    sits in, so the reader judges the sentence rather than the match."""
+    out, low = [], flat.lower()
     start = 0
     while len(out) < limit:
         i = low.find(needle.lower(), start)
         if i < 0:
             break
-        out.append(" ".join(text[max(0, i - span):i + span].split()))
+        out.append((article_at(flat, i), flat[max(0, i - span):i + span]))
         start = i + len(needle)
     return out
 
@@ -172,20 +199,27 @@ def report(text, label):
     # accumulation rule is itself in question: the desk's note cites art. 19
     # from secondary sources, and if the primary text puts it elsewhere that
     # is worth knowing rather than reporting as absent.
-    low = text.lower()
+    flat = flatten(text)
+    low = flat.lower()
     hits = {o: low.count(o + " ammonizione") for o in PROGRESSION}
     tail = [t for t in TAIL_PHRASES if t in low]
-    print(f"    whole document: " + ", ".join(f"'{o} ammonizione' x{n}"
-                                              for o, n in hits.items()))
+    print("    whole document: " + ", ".join(f"'{o} ammonizione' x{n}"
+                                             for o, n in hits.items()))
     print(f"    tail phrase: {tail or 'none'}")
+    where = set()
     for phrase in ["quinta ammonizione"] + TAIL_PHRASES:
-        for ctx in contexts(text, phrase, limit=2):
-            print(f"      ~ ...{ctx}...")
+        for art, ctx in contexts(flat, phrase, limit=2):
+            if art:
+                where.add(art)
+            print(f"      ~ [art. {art or '?'}] ...{ctx}...")
 
     ordered = all(hits[o] for o in PROGRESSION)
     if ordered and tail:
-        print(f"    => the text states the 5/4/3/2 progression and a tail, "
-              f"which is the shipped ladder {ITALY_LADDER} then every caution")
+        print(f"    => the text states the 5/4/3/2 progression and a tail: the "
+              f"shipped ladder {ITALY_LADDER} then every caution")
+        print(f"    => the progression sits in art. "
+              f"{', '.join(sorted(where, key=int)) or 'unknown'}, "
+              "which is the number to cite")
     elif "quindicesima ammonizione" in low:
         print(f"    => the text names a fifteenth caution; compare the brief's "
               f"{BRIEF_LADDER}")
