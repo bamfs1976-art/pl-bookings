@@ -6,6 +6,65 @@ work, newest first: what changed, what was deferred and why. Everything before
 in [docs/decisions.md](docs/decisions.md); the audit itself is
 [docs/audit-2026-07.md](docs/audit-2026-07.md).
 
+## Serie A desk: the first data run, and what it caught (2026-09-09)
+
+Data refresh run 148 on this branch, with `refresh_seriea` on and the other
+desks off. Every Serie A harvest, the build and the referee join succeeded;
+the guard step then failed on two of my own files and **nothing was
+committed**, which is the pipeline behaving exactly as designed.
+
+**The numbers the brief asked for, from the run log:**
+
+| | |
+|---|---|
+| Referee join | **380 of 380** matches got an official, from 380 fixtures |
+| `seriea_ref_fixtures.js` | 380 matches over 20 clubs, 380 with an official named |
+| `seriea_fixtures.js` | 380 fixtures over 38 matchdays, 30 with a referee appointed |
+| Dataset | 643 players, 20 of 20 clubs with players, 17 of 20 with a measured card rate |
+| Basis split | SA 411, SB 49, NEW 183 |
+| This season's cautions | 514 players |
+| Referees | 32 above the 3-match floor, 11 dropped below it; 33 abbreviated spellings merged |
+| League rate | 3.67 yellows a game, against the 3.70 the desk quotes |
+| API cost | 60 calls for the whole Serie A leg; 1,055 of 7,500 used that day |
+
+`check-seriea.mjs` passed on the real data: 20 clubs, 643 players, P(card) max
+43.9% and median 13.6%, 32 referees over 363 counted matches, fixtures pricing
+3.27 a match against the league's 3.67. `check-models.mjs` put Serie A at
+15.2% priced against 14.7% observed.
+
+**What the guards caught.** The division the feed discovered is not the one
+2025-26 finished with. Frosinone, Monza and Venezia came up; Cremonese, Hellas
+Verona and Pisa went down. I had written the club colour table and the derby
+list from last season's twenty, so:
+
+- `check-share.mjs`: no colour for Frosinone. A club with no entry draws a hue
+  hashed from its three letters on the page and the league ink on a share
+  card, which looks deliberate and is not.
+- `check-derbies.mjs`: six pairs named clubs that are not in the division
+  (Sampdoria, Brescia, Hellas Verona, Pisa, Empoli). A derby pair naming a
+  relegated club is a fixture that can never be played and a boost that can
+  never be applied.
+
+Both are now fixed against the discovered twenty: the colour table is exactly
+the division (Frosinone takes the giallazzurri yellow rather than a fourth
+blue), and the derby list keeps the eleven pairs whose clubs are both in it.
+The Genoa and Sampdoria, Verona and Venezia and Tuscan derbies are real and
+are left out until both clubs are up, with the reason written beside them.
+
+**The lesson, recorded rather than papered over.** A discovered division was
+the right call and I still hand-wrote two lists against a division I assumed.
+Nothing on the page would have shown either fault: a hashed colour looks like
+a colour, and a derby that never occurs never renders. The guards that caught
+them read the shipped dataset, which is why they could only fire once the
+data existed, and why the desk was described in the previous entry as wired
+but unproven. It is now proven on one run, and the run refused to ship what
+was wrong.
+
+**Still open**: the AIA appointments route (the fixtures workflow has not run
+on this branch yet), and the Serie A entries in the service worker's precache
+list, which are added once the data files exist in the repository rather than
+before, so `check-mobile.mjs` never precaches a path that is not there.
+
 ## Serie A desk: closing entry (2026-09-09)
 
 The fifth desk is built and wired. Eight commits, one per task, in the order

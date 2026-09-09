@@ -64,15 +64,22 @@
   /* Serie A, in the codes data/leagues.py assigns. Juventus and Udinese play
      in white and black and take the black; Parma's white shirt takes the
      badge's blue; Inter and Atalanta, both blue and black, take their blues,
-     which are different enough to tell apart on a card. */
+     which are different enough to tell apart on a card; Frosinone take the
+     yellow of the giallazzurri rather than a fourth blue.
+
+     EXACTLY THE DIVISION, and check-share.mjs holds it there in both
+     directions: a club with no colour draws a hue hashed from its three
+     letters, and a colour kept for a club that has gone down is one nobody
+     will ever see. The twenty below are the 2026-27 division as the feed
+     discovered it on 9 September 2026 (Frosinone, Monza and Venezia up;
+     Cremonese, Hellas Verona and Pisa down), so a promotion means an entry
+     added and a relegation means one removed, and the guard names both. */
   var SA = {
-    ATA: '#1E71B8', BGN: '#1A2F48', CAG: '#B01E23', COM: '#1E4A9E',
-    CRE: '#C8102E', FIO: '#482E92', GEN: '#AE1C28', INT: '#0068A8',
-    JUV: '#000000', LAZ: '#87D8F7', LEC: '#D0021B', ACM: '#FB090B',
-    NAP: '#12A0D7', PAR: '#1B3F8B', PIS: '#0B3B79', ROM: '#8E1F2F',
-    SAS: '#00A752', TOR: '#881425', UDI: '#000000', VER: '#003C82',
-    EMP: '#0F5DA8', MON: '#E30613', VEN: '#F58220', SAM: '#0D4C9A',
-    PAL: '#E7418D', BSC: '#1B3A93'
+    ACM: '#FB090B', ATA: '#1E71B8', BGN: '#1A2F48', CAG: '#B01E23',
+    COM: '#1E4A9E', FIO: '#482E92', FRO: '#F2C500', GEN: '#AE1C28',
+    INT: '#0068A8', JUV: '#000000', LAZ: '#87D8F7', LEC: '#D0021B',
+    MON: '#E30613', NAP: '#12A0D7', PAR: '#1B3F8B', ROM: '#8E1F2F',
+    SAS: '#00A752', TOR: '#881425', UDI: '#000000', VEN: '#F58220'
   };
 
   var BY = { PL: PL, EFLC: EFLC, LL: LL, SA: SA };
