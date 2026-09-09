@@ -6,6 +6,44 @@ work, newest first: what changed, what was deferred and why. Everything before
 in [docs/decisions.md](docs/decisions.md); the audit itself is
 [docs/audit-2026-07.md](docs/audit-2026-07.md).
 
+## The league bar lost both its ends, and /europe laid out differently (2026-09-09)
+
+Two reports from looking at the live page, and both were mine.
+
+**The bar could not reach its ends.** It carries full labels in one row and
+scrolls, with the active item centred on load. That is a deliberate design and
+the note in `tw.css` defends it: abbreviating cost the two desks the switcher
+exists to expose their names, so scrolling replaced it. It works with a thumb.
+It does not work with a mouse. There is no scrollbar to drag, a wheel scrolls
+the page rather than the bar, and nothing on screen says the row continues.
+
+Tolerable at eight items, and I made it eleven. Measured: the bar needs 1543px
+and sits in a 1180px column, so 363px hangs off even on a 1440px screen, and
+because the active item is centred the overflow is split across BOTH ends. On
+the Champions League route it opened scrolled 363px in, with "Today's matches"
+and "Accas" off the left and nothing to suggest they existed.
+
+It now wraps above 700px and scrolls below it. Zero overflow from 768px up,
+and a phone keeps the scroll, the snap and the centring, which is where a
+thumb is and where a second row costs more than it buys. Nothing is hidden
+anywhere now.
+
+**`/europe` laid its ties out differently from every other list.** The rows are
+`.fx` match cards, the same ones the day's fixtures use, but `renderOne` wraps
+its rows in `.fx-grid` and `renderEurope` did not. So the same card in the same
+markup rendered as full-width bands on one page and as a grid of cards on the
+other, for no reason a reader could see. One wrapper, and the page went from
+5,910px to 2,276px tall and now matches the fixture list exactly: three across
+on a desktop, one column below 700px, which the existing grid already handles.
+
+The "Share the day" control the report also mentioned was the fixture list
+leaking onto the route, fixed in the entry below.
+
+Checked at 1440, 1280, 1024, 768 and 393px: eleven items, no overflow above
+700px, no horizontal page scroll on a phone, one column of cards there and
+three on a desktop, and the share button still exports its card from inside
+the new grid. All 60 CI steps green.
+
 ## Double-encoded names, and the fixture list on the wrong page (2026-09-09)
 
 Two things, both reported rather than found: a handful of player names shipped

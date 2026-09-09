@@ -2020,7 +2020,14 @@
     var pairs = {};
     TIES.forEach(function (r) { pairs[r.Lh.code + ' v ' + r.La.code] = 1; });
     var dated = TIES.filter(function (r) { return !!r.fx.d; }).length;
-    $('#uclBody').innerHTML = TIES.map(uclRowHTML).join('');
+    /* THE SAME GRID THE FIXTURE LIST USES. These are .fx match cards, exactly
+       as the day's matches are, and renderOne wraps its rows in .fx-grid so
+       they lay out as cards across the width rather than as full-width bands.
+       This shipped without the wrapper and read as a different page for no
+       reason: same rows, same card, different layout. One column below 700px,
+       which the grid already handles. */
+    $('#uclBody').innerHTML = '<div class="fx-grid">'
+      + TIES.map(uclRowHTML).join('') + '</div>';
     $('#uclSub').innerHTML = TIES.length + ' tie' + (TIES.length === 1 ? '' : 's')
       + ' &nbsp;' + Object.keys(pairs).sort().map(function (k) {
           return '<span class="lg UCL">' + esc(k) + '</span>'; }).join(' ');

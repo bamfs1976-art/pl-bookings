@@ -1447,6 +1447,28 @@ tr[data-club]:focus-visible{outline:3px solid var(--ring);outline-offset:-3px}
    always see where you are. */
 .leaguebar-in{scroll-snap-type:x proximity;scroll-padding-left:12px}
 .lb-item{scroll-snap-align:start}
+/* AND ON A MOUSE IT WRAPS INSTEAD, because a row that scrolls with its
+   scrollbar hidden has no way to reach its ends without a thumb. The note
+   above is right that abbreviating loses the names of the desks the bar
+   exists to expose, and right that scrolling plus centring the active item
+   solves it on a phone. It does not solve it on a desktop: there is no
+   scrollbar to drag, a wheel scrolls the page rather than the bar, and
+   nothing on screen says the row continues.
+
+   That was tolerable at eight items and stopped being so at eleven. The bar
+   needs 1543px; the column it sits in is 1180px, so 363px hangs off the end
+   even on a 1440px screen, and because the active item is centred on load the
+   overflow is split across BOTH ends. On the Champions League route the bar
+   opened scrolled 363px in, with "Today's matches" and "Accas" off the left
+   and no indication either existed.
+
+   Wrapping costs a second row and hides nothing. Below the breakpoint it
+   still scrolls and snaps, because that is where a thumb is and where a
+   second row costs more than it buys. */
+@media (min-width:701px){
+  .leaguebar-in{flex-wrap:wrap;justify-content:center;overflow-x:visible;
+    row-gap:0}
+}
 @media (max-width:560px){
   .lb-full{display:inline}
   .lb-abbr{display:none}
