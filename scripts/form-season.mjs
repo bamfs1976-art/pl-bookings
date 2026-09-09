@@ -43,7 +43,7 @@
 // The workflow uses --github and lets an explicit `season_af` input override
 // the answer, so a manual run can still harvest any season by hand.
 
-import { readFileSync } from 'node:fs';
+import { readFileSync, existsSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
 import vm from 'node:vm';
@@ -62,11 +62,19 @@ export const FLIP_DEADLINE = 10;   // and never later than this, whatever SWITCH
 export const flipAt = (switchAt, deadline) => Math.min(switchAt, deadline);
 export const FLIP_AT = flipAt(SWITCH_AT, FLIP_DEADLINE);
 
-export const LEAGUES = [
+export const ALL_LEAGUES = [
   { code: 'PL', name: 'Premier League', file: 'data/pl_fixtures.js', konst: 'PL_FIXTURES' },
   { code: 'EFLC', name: 'EFL Championship', file: 'data/eflc_fixtures.js', konst: 'EFLC_FIXTURES' },
   { code: 'LL', name: 'La Liga', file: 'data/laliga_fixtures.js', konst: 'LALIGA_FIXTURES' },
+  { code: 'SA', name: 'Serie A', file: 'data/seriea_fixtures.js', konst: 'SERIEA_FIXTURES' },
 ];
+/* Only the divisions whose fixture file exists. A desk added before its first
+   harvest has no season to decide, and it is reported rather than crashed. */
+export const LEAGUES = ALL_LEAGUES.filter((L) => {
+  const here = existsSync(join(dirname(fileURLToPath(import.meta.url)), '..', L.file));
+  if (!here) process.stderr.write(`form-season: ${L.code} fixture file not built yet, skipped\n`);
+  return here;
+});
 
 const FINISHED = new Set(['FT', 'AET', 'PEN']);
 

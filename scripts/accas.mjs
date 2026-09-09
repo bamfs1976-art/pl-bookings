@@ -49,7 +49,7 @@
  * Without them `verify` still works; build and settle no-op with a message
  * rather than half-writing.
  */
-import { readFileSync } from 'node:fs';
+import { readFileSync, existsSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
 import { createRequire } from 'node:module';
@@ -83,11 +83,21 @@ const SUPABASE_URL = (process.env.SUPABASE_URL || 'https://knodunjnsxelmpziupwk.
 const SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || '';
 const AF_KEY = process.env.API_FOOTBALL_KEY || '';
 
-const LEAGUES = [
+const ALL_LEAGUES = [
   { code: 'PL', data: 'data/pl_data.js', players: 'PL_PLAYERS', fixtures: 'data/pl_fixtures.js', fx: 'PL_FIXTURES' },
   { code: 'EFLC', data: 'data/eflc_data.js', players: 'EFLC_PLAYERS', fixtures: 'data/eflc_fixtures.js', fx: 'EFLC_FIXTURES' },
-  { code: 'LL', data: 'data/laliga_data.js', players: 'LALIGA_PLAYERS', fixtures: 'data/laliga_fixtures.js', fx: 'LALIGA_FIXTURES' }
+  { code: 'LL', data: 'data/laliga_data.js', players: 'LALIGA_PLAYERS', fixtures: 'data/laliga_fixtures.js', fx: 'LALIGA_FIXTURES' },
+  { code: 'SA', data: 'data/seriea_data.js', players: 'SERIEA_PLAYERS', fixtures: 'data/seriea_fixtures.js', fx: 'SERIEA_FIXTURES' }
 ];
+/* A division whose dataset the refresh workflow has not produced yet is left
+   out, and said so on stderr: a desk added before its first harvest must not
+   crash every acca, forecast and guard that walks the divisions, and it must
+   not vanish quietly either. */
+const built = (L) => existsSync(join(root, L.data)) && existsSync(join(root, L.fixtures));
+for (const L of ALL_LEAGUES) {
+  if (!built(L)) process.stderr.write(`accas: ${L.code} dataset not built yet, skipped\n`);
+}
+const LEAGUES = ALL_LEAGUES.filter(built);
 
 /* The data files declare bare `const`s, which are lexical and never become
    properties of anything, so they cannot be read off any object — they are
@@ -270,7 +280,7 @@ function candidatesFor(league) {
  * files. A division whose pairs cannot be read is a loud failure, not a quiet
  * zero.
  */
-const DERBY_BOOST = { EFLC: 1.08, LL: 1.08, PL: 1.15 };   /* as each page applies */
+const DERBY_BOOST = { EFLC: 1.08, LL: 1.08, SA: 1.08, PL: 1.15 };   /* as each page applies */
 
 function derbySet(code) {
   const pairs = C.derbyPairs(code);

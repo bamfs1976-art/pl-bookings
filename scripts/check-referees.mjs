@@ -236,7 +236,7 @@ assert.ok(/APPOINTED=null;/.test(index.slice(index.indexOf('LIVE={bootstrap:bs')
 }
 
 /* ---- the other two desks still read their appointments ------------------ */
-for (const page of ['eflc.html', 'laliga.html']) {
+for (const page of ['eflc.html', 'laliga.html', 'seriea.html']) {
   const s = readFileSync(join(root, page), 'utf8');
   /* THROUGH THE SHARED RESOLVER, not an exact lookup. The overlay and the
      card table are different feeds: eleven of the Championship's twelve
@@ -626,7 +626,7 @@ assert.ok(/plb_card_predictions/.test(calib) && !/rest\/v1\/plb_predictions/.tes
      disagreed with the other two, plus the referee control and the referee
      strip, which both took the last token. Nothing on a card shortens a name
      any other way. */
-  for (const page of ['index.html', 'eflc.html', 'laliga.html', 'today.html',
+  for (const page of ['index.html', 'eflc.html', 'laliga.html', 'seriea.html', 'today.html',
                       'assets/refpicker.js', 'assets/charts.js']) {
     const src = readFileSync(join(root, page), 'utf8');
     assert.ok(/refShort\(/.test(src),
@@ -799,7 +799,7 @@ assert.ok(/plb_card_predictions/.test(calib) && !/rest\/v1\/plb_predictions/.tes
     assert.ok(unrated.title && /league rate/.test(unrated.title),
       'the unrated label does not say why the match prices at the league rate');
     assert.equal(none.text, 'Ref —');
-    for (const page of ['today.html', 'eflc.html', 'laliga.html']) {
+    for (const page of ['today.html', 'eflc.html', 'laliga.html', 'seriea.html']) {
       const src = readFileSync(join(root, page), 'utf8');
       assert.ok(/C\.refLabel\(/.test(src),
         `${page} does not build its referee line through PLDCore.refLabel — ` +

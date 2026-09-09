@@ -61,7 +61,21 @@
     BAR: '#A50044', RAC: '#009B48', MAL: '#0B4EA2', DEP: '#0A5CA8'
   };
 
-  var BY = { PL: PL, EFLC: EFLC, LL: LL };
+  /* Serie A, in the codes data/leagues.py assigns. Juventus and Udinese play
+     in white and black and take the black; Parma's white shirt takes the
+     badge's blue; Inter and Atalanta, both blue and black, take their blues,
+     which are different enough to tell apart on a card. */
+  var SA = {
+    ATA: '#1E71B8', BGN: '#1A2F48', CAG: '#B01E23', COM: '#1E4A9E',
+    CRE: '#C8102E', FIO: '#482E92', GEN: '#AE1C28', INT: '#0068A8',
+    JUV: '#000000', LAZ: '#87D8F7', LEC: '#D0021B', ACM: '#FB090B',
+    NAP: '#12A0D7', PAR: '#1B3F8B', PIS: '#0B3B79', ROM: '#8E1F2F',
+    SAS: '#00A752', TOR: '#881425', UDI: '#000000', VER: '#003C82',
+    EMP: '#0F5DA8', MON: '#E30613', VEN: '#F58220', SAM: '#0D4C9A',
+    PAL: '#E7418D', BSC: '#1B3A93'
+  };
+
+  var BY = { PL: PL, EFLC: EFLC, LL: LL, SA: SA };
 
   /* One league's table, or an empty one. Empty rather than null on purpose:
      every caller passes the result straight to something that indexes it, and
@@ -90,11 +104,12 @@
     for (k in PL) if (PL.hasOwnProperty(k)) out[k] = PL[k];
     for (k in EFLC) if (EFLC.hasOwnProperty(k)) out[k] = EFLC[k];
     for (k in LL) if (LL.hasOwnProperty(k)) out[k] = LL[k];
+    for (k in SA) if (SA.hasOwnProperty(k)) out[k] = SA[k];
     return out;
   }
 
   var api = { of: of, colour: colour, merged: merged,
-              PL: PL, EFLC: EFLC, LL: LL, leagues: BY };
+              PL: PL, EFLC: EFLC, LL: LL, SA: SA, leagues: BY };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   root.PLDClubColours = api;
 })(typeof globalThis !== 'undefined' ? globalThis

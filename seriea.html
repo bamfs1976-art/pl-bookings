@@ -1,11 +1,11 @@
 <!doctype html>
-<html lang="en" class="lg-ll" data-theme="light">
+<html lang="en" class="lg-sa" data-theme="light">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data: https://cdn.sportmonks.com https://media.api-sports.io; connect-src 'self'">
-<title>Bookings Desk · La Liga</title>
-<meta name="description" content="Player booking risk, club discipline and a referee watchlist for the 2026-27 Spanish La Liga, built on 2025-26 form.">
+<title>Bookings Desk · Serie A</title>
+<meta name="description" content="Player booking risk, club discipline and a referee watchlist for the 2026-27 Italian Serie A, built on 2025-26 form.">
 <link rel="icon" href="favicon.svg" type="image/svg+xml">
 <!-- PNG fallbacks. The SVG is the better icon where it is honoured, but
      Safari has never used one for a tab and several feed readers and
@@ -19,7 +19,7 @@
      opens in a Safari tab rather than the installed app. -->
 <link rel="manifest" href="/manifest.webmanifest">
 <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
-<meta name="theme-color" content="#7f1d1d">
+<meta name="theme-color" content="#052e16">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Bookings Desk">
@@ -53,7 +53,7 @@
   tbody tr:hover{background:var(--surface-2)}
   td.num,th.num{text-align:right;font-family:var(--mono);font-variant-numeric:tabular-nums}
 
-  .pill.seg{background:color-mix(in srgb,var(--warn) 18%,transparent);border-color:transparent;color:var(--warn-ink)}
+  .pill.sb{background:color-mix(in srgb,var(--warn) 18%,transparent);border-color:transparent;color:var(--warn-ink)}
   .bar{height:6px;border-radius:99px;background:var(--surface-3);overflow:hidden;min-width:56px}
   .bar i{display:block;height:100%;background:var(--accent)}
   .susp{margin-bottom:12px}
@@ -98,7 +98,7 @@
 
 <header class="topbar">
   <div class="wrap" style="display:flex;align-items:center;width:100%">
-    <div class="brand"><span class="dot">LL</span><span class="bname">Bookings Desk</span></div>
+    <div class="brand"><span class="dot">SA</span><span class="bname">Bookings Desk</span></div>
     <span class="spacer"></span>
     <button class="tb-tour" id="tourBtn" type="button">How to read this page</button>
     <button class="btn" id="themeBtn" type="button" aria-label="Toggle dark mode">Dark</button>
@@ -106,7 +106,7 @@
 </header>
 
 <!-- Every desk reachable from every desk. See assets/tw.css for why this
-     exists: the other two divisions were live but effectively unreachable. -->
+     exists: the other divisions were live but effectively unreachable. -->
 <nav class="leaguebar" aria-label="Leagues">
   <div class="leaguebar-in">
     <a class="lb-item lb-today" href="/"><span class="lb-dot"></span><span class="lb-full">Today's matches</span><span class="lb-abbr">Today</span></a>
@@ -116,8 +116,8 @@
     <a class="lb-item lb-booked" href="/booked"><span class="lb-dot"></span><span class="lb-full">Most booked</span><span class="lb-abbr">Booked</span></a>
     <a class="lb-item lb-pl" href="/pl"><span class="lb-dot"></span><span class="lb-full">Premier League</span><span class="lb-abbr">PL</span></a>
     <a class="lb-item lb-eflc" href="/eflc"><span class="lb-dot"></span><span class="lb-full">Championship</span><span class="lb-abbr">Championship</span></a>
-    <a class="lb-item lb-ll" href="/laliga" aria-current="page"><span class="lb-dot"></span><span class="lb-full">La Liga</span><span class="lb-abbr">La Liga</span></a>
-    <a class="lb-item lb-sa" href="/seriea"><span class="lb-dot"></span><span class="lb-full">Serie A</span><span class="lb-abbr">Serie A</span></a>
+    <a class="lb-item lb-ll" href="/laliga"><span class="lb-dot"></span><span class="lb-full">La Liga</span><span class="lb-abbr">La Liga</span></a>
+    <a class="lb-item lb-sa" href="/seriea" aria-current="page"><span class="lb-dot"></span><span class="lb-full">Serie A</span><span class="lb-abbr">Serie A</span></a>
     <a class="lb-item lb-season" href="/today"><span class="lb-dot"></span><span class="lb-full">Season calendar</span><span class="lb-abbr">Season</span></a>
   </div>
 </nav>
@@ -125,7 +125,7 @@
 
 <main class="wrap" id="main">
   <section class="hero">
-    <h1>La Liga 2026-27</h1>
+    <h1>Serie A 2026-27</h1>
     <p class="muted" style="margin:8px 0 0;max-width:70ch">
       Player booking risk, club discipline and a referee watchlist, built on 2025-26 form.
       Pick the official for a fixture and every probability rescales to his card rate.
@@ -135,7 +135,7 @@
       <span>Playing the same day as the other divisions? <a href="/">Today&rsquo;s combined card</a>
       ranks every league&rsquo;s matches on one date, with one share card across the lot &mdash; or open the
       <a href="/today">whole-season calendar</a>, or every
-      <a href="/derbies">derby in the three divisions</a> in date order.
+      <a href="/derbies">derby in the four divisions</a> in date order.
       <button type="button" class="linkish" data-open-tour>How to read this page</button></span>
     </p>
     <div class="stats" id="stats"></div>
@@ -264,7 +264,7 @@
         </table>
       </div>
       <p class="note">
-        Cards per game are counted directly from the free football-data.co.uk Spanish match
+        Cards per game are counted directly from the free football-data.co.uk Italian match
         records — every match, both sides, yellows plus reds — so the home and away split is measured
         rather than estimated. The clubs promoted this summer were not in this division last season,
         have no such record, and show “—”; the app falls back to the league median for them rather
@@ -300,13 +300,13 @@
   <section class="panel" id="panel-guide" role="tabpanel" aria-labelledby="tab-guide" hidden>
     <div class="card guide">
       <h2 style="font-size:20px">How this desk works</h2>
-      <p>Every number here comes from 2025-26 form. The 2026-27 La Liga season starts in
-      mid-August; until it has minutes in it, this is a pre-season book.</p>
-      <p><b>La Liga is the most card-heavy of Europe's big five, and it is not close.</b> Over the
-      six seasons to 2025-26 it produced 4.71 yellows a game against the Premier League's 3.64 —
-      29% more — plus double the reds and the highest yellows-per-foul rate of the five. So the
-      whistle is genuinely stricter rather than the football merely scrappier, and every probability
-      on this desk sits higher than its English sibling for that reason.</p>
+      <p>Every number here comes from 2025-26 form. The 2026-27 Serie A season starts in
+      late August; until it has minutes in it, this is a pre-season book.</p>
+      <p><b>Serie A produced 3.70 yellows a game in 2025-26</b>, counted from the free match
+      records this desk is built on: every match, both sides. That is the rate every probability
+      here is calibrated against. Italian football used to card more freely than that, and older
+      multi-season averages run higher; they are not used anywhere on this desk, because a
+      probability calibrated to a whistle that has moved is a wrong probability.</p>
 
       <h3>The risk score</h3>
       <p>A player's booking risk is <code>yellows per 90 × 2 + fouls committed per 90</code>. Fouls
@@ -329,13 +329,13 @@
       so a strict referee cannot push an already-likely booking to a silly number.</p>
 
       <h3>Suspension watch</h3>
-      <p>Spain bans a player for one match at every fifth caution, and then the count restarts with
-      the same penalty — there is no escalating ladder as in England, and no matchday gate, which
-      makes this the busiest of the three desks for a suspension watch: on a full season's form a
-      regular starter is near-certain to be banned at least once. The strip shows how far into his
-      current cycle each player is and the chance he completes it within the next one, three or
-      five matches, from his shrunk yellow rate and the share of a match he tends to play. Before
-      the season starts it shows instead the matchday his fifth caution is projected to land on.</p>
+      <p>Italy bans a player for one match at his fifth caution, again at the tenth, the
+      fourteenth, the seventeenth and the nineteenth, and at every caution after that. The count
+      never resets and the ban never grows: there is no escalating ladder as in England, no
+      repeating cycle as in Spain and no matchday gate. The strip shows how far each player is
+      from his next threshold and the chance he reaches it within the next one, three or five
+      matches, from his shrunk yellow rate and the share of a match he tends to play. Before the
+      season starts it shows instead the matchday his fifth caution is projected to land on.</p>
 
       <h3>Fixtures, heat and the card markets</h3>
       <p><b>Booking heat</b> is the expected number of cards in the match. Every squad player's
@@ -347,19 +347,22 @@
       combined exactly rather than simulated. They assume the cards are independent given the
       referee, which is the usual simplification and is not quite true: a flashpoint produces two at
       once. Read the over lines as a fair baseline, not a forecast.</p>
-      <p><b>Referees come from the feed where the appointment is published</b> — those cards are
-      marked <span class="pill">appointed</span> and cannot be overridden here. Where one is not yet
+      <p><b>Referees come from the feed where the appointment is published</b>: those cards are
+      marked <span class="pill">appointed</span> and cannot be overridden here. On this desk the
+      appointment comes from the API-Football fixture feed. The AIA publishes its own designations
+      on the Tuesday or Wednesday before a round and the desk is wired to read them, but that route
+      has not yet been confirmed from a build runner, so until it is, the official shown here is the
+      one the feed names. Where one is not yet
       named, choose an official and the whole card re-prices; that choice is remembered in this
       browser only. An appointed referee this desk has no card record for is priced at ×1.00 and
       says so, rather than quietly guessing.</p>
 
       <h3>What “basis” means</h3>
       <ul>
-        <li><span class="pill ll">LL</span> 2025-26 La Liga form. Same division, directly comparable.</li>
-        <li><span class="pill seg">SEG</span> The clubs promoted this summer, whose 2025-26 form is a
-        Segunda División record. Flagged because a foul rate earned in the second tier is not the
-        same evidence as one earned in the first — and on this league's numbers it will understate
-        them, because La Liga's referees card more readily than Segunda's.</li>
+        <li><span class="pill sa">SA</span> 2025-26 Serie A form. Same division, directly comparable.</li>
+        <li><span class="pill sb">SB</span> The clubs promoted this summer, whose 2025-26 form is a
+        Serie B record. Flagged because a foul rate earned in the second tier is not the same
+        evidence as one earned in the first.</li>
         <li><span class="pill new">NEW</span> No usable record: minutes too few, or no fouls data. Rates
         are blank rather than zero, because “unknown” and “never fouls” are different claims.</li>
       </ul>
@@ -367,31 +370,29 @@
       <h3>Known limits — read these before betting anything</h3>
       <div class="warnbox">
         <b>No live data.</b> The Premier League desk refreshes in-season from the official FPL API,
-        which is free, open and unauthenticated. Spain has no equivalent — the official fantasy game's
-        API is app-only and needs a token that expires daily — so this desk is a static book until it
-        is refreshed.
+        which is free, open and unauthenticated. Italy has no equivalent, so this desk is a static
+        book until it is refreshed.
         <b>Nothing here knows who is injured, suspended, rested or dropped.</b> The fixture cards
         name likely candidates from last season's minutes, not from a team sheet — a player who left
         the club in the summer can still appear on one.
       </div>
       <ul>
-        <li><b>The suspension strip rests on a rule I could not read first-hand.</b> RFEF art.
-        112 sets one threshold — five cautions in a season <em>and competition</em>, one match —
-        and then “<span class="mono" style="font-size:12px">cumplida la sanción, se iniciará un
-        nuevo ciclo de la misma clase y con idénticos efectos</span>”. So unlike England there is
-        no ladder: the tenth card costs one match and so does the fifteenth. That is corroborated
-        across several independent quotations of the article, but every attempt to open the
-        Código Disciplinario itself was blocked, so it is not verified from the source document —
-        <code>docs/spain-suspensions.md</code> sets out exactly what was and was not checked, and
-        names the one page to open to close the gap. One secondary source disagreed and is
-        recorded there too.</li>
+        <li><b>The suspension strip rests on a rule I could not read first-hand.</b> Art. 19 of
+        the FIGC's Codice di Giustizia Sportiva sets the first ban at the fifth caution and then
+        shortens the gap: “<span class="mono" style="font-size:12px">alla quinta, alla quarta, alla
+        terza, alla seconda ammonizione, ad ogni ulteriore ammonizione</span>”, which puts the bans
+        at 5, 10, 14, 17 and 19 and at every caution from there. That is corroborated across three
+        independent quotations of the article, but every attempt to open the Codice itself was
+        blocked, so it is not verified from the source document. <code>docs/italy-suspensions.md</code>
+        sets out exactly what was and was not checked, and records that the brief this desk was
+        built to stated a different progression.</li>
         <li><b>The strip counts this season only.</b> Accumulation does not carry between seasons
-        and each competition counts separately, so Copa cautions never pool with league ones. Until
-        the season has been harvested every player is on zero and the strip says so, forecasting
-        who reaches five first rather than pretending to a live count.</li>
+        and each competition counts separately, so Coppa Italia cautions never pool with league
+        ones. Until the season has been harvested every player is on zero and the strip says so,
+        forecasting who reaches five first rather than pretending to a live count.</li>
         <li><b>No referee career history.</b> The English desks carry 26 seasons of it from a public
-        dataset. There is no Spanish equivalent, so a referee here is described by last season only.</li>
-        <li><b>The promoted clubs have no club card rate.</b> They were in Segunda last season.</li>
+        dataset. There is no Italian equivalent, so a referee here is described by last season only.</li>
+        <li><b>The promoted clubs have no club card rate.</b> They were in Serie B last season.</li>
         <li><b>Small samples lie.</b> A player with 200 minutes and one foul reads as a high rate. The
         450-minute filter is on by default for that reason; turn it off knowing what you are seeing.</li>
         <li><b>Fair odds are a model, not a forecast.</b> They exclude the margin every real price
@@ -403,11 +404,11 @@
         <li><b>Players</b> — API-Football, fetched one club at a time so a squad is a squad rather
         than a page of a league.</li>
         <li><b>Club card rates, and every referee RATE</b> — football-data.co.uk match records,
-        public domain, free, no key. Every Spanish match with both sides' cards and fouls.</li>
+        public domain, free, no key. Every Italian match with both sides' cards and fouls.</li>
         <li><b>Referee NAMES</b> — API-Football, and this is the one thing on this desk that is
-        bought. The free records above carry every card and every foul in Spain but have never
-        named an official, in any of 33 seasons: it is a quirk of that source covering British
-        football, not a fact about Spain. So the name is taken from one fixtures call for the
+        bought. The free records above carry every card and every foul in Italy but name the
+        official on none of the 380 rows of 2025-26: it is a quirk of that source covering British
+        football, not a fact about Italy. So the name is taken from one fixtures call for the
         completed season and joined onto the free rows by date and both clubs, after which every
         published rate is computed from the free data exactly as it is for the English desks. The
         paid dependency is a single column, not the foundation.</li>
@@ -418,14 +419,14 @@
 
   <!-- THREE NAMED GROUPS, and an age notice this desk did not have. See the
        Championship footer for the reasoning; the three groups are identical
-       across the four desks by design and by guard. -->
+       across the five desks by design and by guard. -->
   <footer class="wrap" style="padding-left:0;padding-right:0">
     <div class="ft">
       <section class="ft-col" aria-labelledby="ftAbout">
         <h2 class="ft-h" id="ftAbout">About &amp; method</h2>
-        <p>A statistical filter for La Liga player-bookings markets, built on 2025-26 form. A sibling of <a href="/pl">Bookings Desk for the Premier League</a> — same risk formula, same tested core, different competition. It does not pick players or price markets.</p>
+        <p>A statistical filter for Serie A player-bookings markets, built on 2025-26 form. A sibling of <a href="/pl">Bookings Desk for the Premier League</a>: same risk formula, same tested core, different competition. It does not pick players or price markets.</p>
         <ul class="ft-list">
-          <li><a href="/pl">Premier League desk</a> &middot; <a href="/eflc">Championship desk</a> &middot; <a href="/">Today&rsquo;s matches</a></li>
+          <li><a href="/pl">Premier League desk</a> &middot; <a href="/eflc">Championship desk</a> &middot; <a href="/laliga">La Liga desk</a> &middot; <a href="/">Today&rsquo;s matches</a></li>
         </ul>
       </section>
       <section class="ft-col" aria-labelledby="ftData">
@@ -453,15 +454,15 @@
   </footer>
 </main>
 
-<script src="data/laliga_data.js"></script>
+<script src="data/seriea_data.js"></script>
 <!-- Optional. Absent until the fixture harvest has run, and a 404 on a script
      tag is harmless — the Fixtures tab says so rather than breaking. -->
-<script src="data/laliga_fixtures.js"></script>
-<script src="data/laliga_fxstats.js" onerror="void 0"></script>
+<script src="data/seriea_fixtures.js"></script>
+<script src="data/seriea_fxstats.js" onerror="void 0"></script>
 <script src="assets/accas.js"></script>
 <script src="assets/rotation.js"></script>
 <script src="assets/core.js"></script>
-<script src="data/laliga_h2h.js" onerror="void 0"></script>
+<script src="data/seriea_h2h.js" onerror="void 0"></script>
 <!-- Confirmed team sheets. Absent until a harvest lands one, which is the
      ordinary state; onerror keeps the page whole when the file is not there. -->
 <script src="data/lineups.js" onerror="void 0"></script>
@@ -484,7 +485,7 @@
 <script>
 (function () {
   'use strict';
-  var PLAYERS = (typeof LALIGA_PLAYERS !== 'undefined' && LALIGA_PLAYERS) || [];
+  var PLAYERS = (typeof SERIEA_PLAYERS !== 'undefined' && SERIEA_PLAYERS) || [];
   var CLUBLIST = (typeof CLUBS !== 'undefined' && CLUBS) || [];
   var REFLIST = (typeof REFS !== 'undefined' && REFS) || [];
   var C = window.PLDCore;
@@ -501,7 +502,7 @@
   var pct = function (x) { return x == null ? '—' : (x * 100).toFixed(1) + '%'; };
 
   /* ---- theme ------------------------------------------------------------ */
-  var THEME_KEY = 'laliga_desk_theme';
+  var THEME_KEY = 'seriea_desk_theme';
   function setTheme(t) {
     document.documentElement.setAttribute('data-theme', t);
     $('#themeBtn').textContent = t === 'dark' ? 'Light' : 'Dark';
@@ -518,7 +519,7 @@
   /* ---- watchlist -------------------------------------------------------- */
   /* Its own key. Sharing pl_desk_v1 would let one desk's stars appear on the
      other's players, which are different people with the same names. */
-  var STAR_KEY = 'laliga_desk_watch_v1';
+  var STAR_KEY = 'seriea_desk_watch_v1';
   var starred = {};
   try { starred = JSON.parse(localStorage.getItem(STAR_KEY) || '{}') || {}; } catch (e) { starred = {}; }
   var keyOf = function (p) { return p.c + '|' + p.n; };
@@ -710,7 +711,7 @@
      The Premier League bakes these into data/model.js at build time; this desk
      has no model file, so it computes the same two constants at load from the
      same shared functions. Deriving rather than copying the Premier League's
-     numbers is the whole point: La Liga fouls at a different rate and cards at
+     numbers is the whole point: Serie A fouls at a different rate and cards at
      a different rate, and borrowing another division's hazard would price this
      one on England's discipline. */
   var FOUL_MODEL = (function () {
@@ -923,7 +924,7 @@
 
   /* The division's own colours, so a crest that does not load falls back to
      the club's colour rather than a hue hashed from its three letters. */
-  if (window.PLDClubColours) PLDProfile.colours(window.PLDClubColours.of('LL'));
+  if (window.PLDClubColours) PLDProfile.colours(window.PLDClubColours.of('SA'));
   PLDProfile.wire();
 
   /* Candidate rows inside a fixture card open the same record the players
@@ -1097,11 +1098,11 @@
   });
 
   /* ---- fixtures --------------------------------------------------------- */
-  var FIXTURES = (typeof LALIGA_FIXTURES !== 'undefined' && LALIGA_FIXTURES) || [];
+  var FIXTURES = (typeof SERIEA_FIXTURES !== 'undefined' && SERIEA_FIXTURES) || [];
   var S = (typeof PLDShare !== 'undefined' && PLDShare) || null;
   /* Notes live beside the watchlist, in this browser only. Same shape the
      Premier League desk uses: a map of player key to text. */
-  var NOTE_KEY = 'laliga_desk_notes_v1';
+  var NOTE_KEY = 'seriea_desk_notes_v1';
   var notes = {};
   try { notes = JSON.parse(localStorage.getItem(NOTE_KEY) || '{}') || {}; } catch (e) { notes = {}; }
   function setNote(k, text) {
@@ -1112,13 +1113,13 @@
   }
 
   /* The standing rule — no pick before confirmed lineups — made visible.
-     Keyed per desk so a La Liga mark cannot claim a Championship fixture. */
+     Keyed per desk so a Serie A mark cannot claim a Championship fixture. */
 
   /* Paste a bookmaker price, see the edge. The maths has been in core.js
      since the beginning with nowhere to type a number into. */
   var PRICES = (typeof PLDPrice !== 'undefined' && PLDPrice) ? PLDPrice.create({}) : null;
 
-  var REF_KEY = 'laliga_desk_refs_v1';
+  var REF_KEY = 'seriea_desk_refs_v1';
   var myRefs = {};
   try { myRefs = JSON.parse(localStorage.getItem(REF_KEY) || '{}') || {}; } catch (e) { myRefs = {}; }
 
@@ -1282,8 +1283,8 @@
      club list, because that is the map this page already holds and the
      function deliberately does not resolve names — a club-name join inside a
      serverless function is a fourth copy nobody would think to look in.
-     Exact, then accent-folded: three feeds spell a Spanish club three ways,
-     which is the problem data/test_laliga.py exists for. Unique or nothing. */
+     Exact, then accent-folded: three feeds spell an Italian club three ways,
+     which is the problem data/test_seriea.py exists for. Unique or nothing. */
   function liveResolve(feedName) {
     if (!feedName) return null;
     var want = String(feedName).trim();
@@ -1349,7 +1350,7 @@
     if (!on) return;
     /* The cadence comes from the function's own TTL, and the edge cache is
        left to do its job — see LiveCards.pollLoop. */
-    LIVE.timer = LiveCards.pollLoop('/api/live-cards?leagues=LL', liveApply);
+    LIVE.timer = LiveCards.pollLoop('/api/live-cards?leagues=SA', liveApply);
   }
 
   function renderFixtures() {
@@ -1358,7 +1359,7 @@
       host.innerHTML = '';
       empty.hidden = false;
       empty.innerHTML = 'No fixture list yet. It is built by '
-        + '<code>harvest_apifootball.py --fixtures --league LL</code>, which runs in the '
+        + '<code>harvest_apifootball.py --fixtures --league SA</code>, which runs in the '
         + 'data-refresh workflow once the 2026-27 schedule is published.';
       $('#fxCount').textContent = '';
       return;
@@ -1565,8 +1566,8 @@
 
   /* Matches played, from the fixture list rather than a separate feed: a
      finished fixture is one the club has played, which is exactly what the
-     gates in the English schemes count. Spain has no gates, but the same
-     number drives the minutes share, so both desks compute it. */
+     gates in the English schemes count. Italy has no gates, but the same
+     number drives the minutes share, so every desk computes it. */
   function playedFor(short) {
     var n = 0;
     FIXTURES.forEach(function (f) {
@@ -1588,7 +1589,7 @@
     card.hidden = false;
     $('#suspList').innerHTML = SU.header(res) + SU.render($('#suspList'), res, SUSP, {});
     $('#suspSub').textContent = res.known
-      ? 'Closest to a one-match ban — five cautions, then the cycle repeats'
+      ? 'Closest to a one-match ban: the 5th, 10th, 14th, 17th and 19th caution, then every one'
       : 'The 2026-27 season has not started, so every player is on zero. '
         + 'These are the likeliest to reach five first, and roughly when.';
     $('#suspNote').innerHTML =
@@ -1596,31 +1597,33 @@
       + res.horizons.join(', ') + ' matches, from each player\'s shrunk yellow '
       + 'rate and the share of a match he tends to play. '
       + (res.known
-          ? 'Counts are this season\'s, in La Liga only — RFEF art. 112 counts '
-            + 'each competition separately, so Copa cautions never pool with these.'
+          ? 'Counts are this season\'s, in Serie A only: the Codice di Giustizia '
+            + 'Sportiva counts each competition separately, so Coppa Italia cautions '
+            + 'never pool with these.'
           : '<b>No cautions have been played yet</b>, so these are forecasts from '
             + '2025-26 form, not a live count.')
-      + ' Spain bans at every fifth caution with no escalation and no matchday '
+      + ' Italy bans for one match at the 5th, 10th, 14th, 17th and 19th caution '
+      + 'and at every caution after that, with no escalation and no matchday '
       + 'cut-off. How far that rule was verified is set out in '
-      + '<code>docs/spain-suspensions.md</code>.';
+      + '<code>docs/italy-suspensions.md</code>.';
   }
 
   /* ---- share cards ------------------------------------------------------ */
-  /* The drawing lives in assets/share.js, shared with the other two desks, so
-     three cards cannot drift apart the first time a colour changes. This end
+  /* The drawing lives in assets/share.js, shared with the other desks, so
+     the cards cannot drift apart the first time a colour changes. This end
      only says which league is asking and hands over fixtures already priced by
      priceFixture() — the same objects the cards on screen are built from, so
      a share card can never disagree with the page that produced it. */
   var SHARE_CTX = {
-    league: 'LL',
-    seasonLabel: 'La Liga 2026-27',
+    league: 'SA',
+    seasonLabel: 'Serie A 2026-27',
     roundWord: 'Matchday',
     clubBy: clubBy,
     /* THE TWO CLUBS' OWN COLOURS. Without a palette assets/share.js falls back
        to the league's ink for every club, so both halves of a stat sheet came
        out the same colour and the layout's organising idea — that you can see
        at a glance which side you are reading — did nothing. */
-    palette: (window.PLDClubColours && window.PLDClubColours.of('LL')) || {},
+    palette: (window.PLDClubColours && window.PLDClubColours.of('SA')) || {},
     /* THE PORTRAIT AND THE BADGE the page already draws for this player and
        this club. Both feeds have gaps, so a card asks for the same URL the
        row on screen asks for and falls back to the same monogram when it is
@@ -1647,11 +1650,11 @@
     var priced = priceFixture(fx);
     var ctx = Object.assign({}, SHARE_CTX, {
       squadOf: function (short) {
-        return LALIGA_PLAYERS.filter(function (p) { return p.c === short; });
+        return SERIEA_PLAYERS.filter(function (p) { return p.c === short; });
       },
       h2hRows: h2hRowsFor(fx),
       recentFor: function (short) { return recentCards(short, 5); },
-      basis: 'La Liga 2026-27 only'
+      basis: 'Serie A 2026-27 only'
     });
     var spec = S.deskStatSheetSpec(priced, ctx);
     shareBusy(btn, true);
@@ -1667,17 +1670,17 @@
      than drawing an empty box. */
   /* A club's last five COMPLETED matches, as the share card's form grid reads
      them — team cards, match cards, and whether both sides were carded. From
-     LALIGA_FXSTATS, the feed's own count per fixture: the grid is a record of what
+     SERIEA_FXSTATS, the feed's own count per fixture: the grid is a record of what
      happened and has to be sourced like one, not from the model. Newest
      first, and finished only — a scheduled match has no cards, and counting
      it as none would state that a clean game was played. */
   function recentCards(short, n) {
-    if (typeof LALIGA_FXSTATS === 'undefined' || !LALIGA_FXSTATS) return [];
+    if (typeof SERIEA_FXSTATS === 'undefined' || !SERIEA_FXSTATS) return [];
     var out = [];
     var done = FIXTURES.filter(function (f) { return f.st === 'FT'; })
       .sort(function (a, b) { return String(b.d).localeCompare(String(a.d)); });
     for (var i = 0; i < done.length && out.length < (n || 5); i++) {
-      var f = done[i], st = LALIGA_FXSTATS[String(f.id)];
+      var f = done[i], st = SERIEA_FXSTATS[String(f.id)];
       if (!st || (f.h !== short && f.a !== short)) continue;
       var mine = st[short], other = st[f.h === short ? f.a : f.h];
       if (!mine || !other) continue;
@@ -1865,7 +1868,7 @@
     toastLite._t = setTimeout(function () { n.textContent = ''; }, 4000);
   }
 
-  var LEAGUE_SLUG = 'laliga-bookings';
+  var LEAGUE_SLUG = 'seriea-bookings';
 
   /* ---- head to head ------------------------------------------------------
    * What these two clubs actually do to each other, beside what the model
@@ -1877,7 +1880,7 @@
    * Under three meetings is anecdote, not history, and is not shown. Promoted
    * clubs have no top-flight meetings at all and correctly show nothing.
    */
-  var H2H_DATA = (typeof LALIGA_H2H !== 'undefined') ? LALIGA_H2H : null;
+  var H2H_DATA = (typeof SERIEA_H2H !== 'undefined') ? SERIEA_H2H : null;
   function h2hFor(h, a) {
     if (!H2H_DATA || !H2H_DATA.pairs) return null;
     var p = H2H_DATA.pairs[[h, a].sort().join('|')];
@@ -1925,7 +1928,7 @@
    * itself in assets/core.js. Three copies of one editorial list, each visible
    * only to its own page, is why a view across the three divisions could not
    * be built until they were folded together. */
-  var DERBY_LEAGUE = 'LL';
+  var DERBY_LEAGUE = 'SA';
   function isDerby(h, a) { return C.isDerby(h, a, DERBY_LEAGUE); }
   function derbyTag(x) {
     var on = x.derby != null ? x.derby : isDerby(x.fx.h, x.fx.a);
@@ -2068,7 +2071,7 @@
   var SHELL = null;
   if (window.PLDShell) {
     SHELL = window.PLDShell.build({
-      code: 'LL', name: 'La Liga', accent: '#ea580c', tag: 'La Liga Bookings Desk',
+      code: 'SA', name: 'Serie A', accent: '#14532d', tag: 'Serie A Bookings Desk',
       glossary: [
         ['Booking heat', 'The expected number of cards in a match, both sides added together, with the referee applied where one has been appointed.'],
         ['P(card)', "A player's chance of being booked if he plays the full 90. High is 50%+, Watch is 30–50%."],
@@ -2083,14 +2086,14 @@
         ['Suspension watch', 'Who is closest to a ban by accumulated cautions, under this division\u2019s own rules.']
       ],
       tour: [
-        { sel: '.leaguebar', title: 'Three leagues, one model',
-          body: 'This desk is La Liga. The same thing exists for the other two divisions — same model, same numbers, so the percentages compare directly. Today pulls every league playing on one date into a single list.' },
+        { sel: '.leaguebar', title: 'Four leagues, one model',
+          body: 'This desk is Serie A. The same thing exists for the other three divisions: same model, same numbers, so the percentages compare directly. Today pulls every league playing on one date into a single list.' },
         { sel: '#panel-matchday', title: 'This Matchday',
           body: 'Your landing view: the next round\u2019s fixtures ranked hottest to coolest by booking heat, with the referee folded in where one has been appointed.' },
         { sel: '.as-nav', title: 'Where everything lives',
           body: 'Desk holds the players, clubs and referees tables. Fixtures is the full season. On a phone these are the tabs along the bottom instead.' },
         { sel: '#suspCard', title: 'Suspension watch',
-          body: 'Who is closest to a ban by accumulated cautions, under this division\u2019s own rules — which are genuinely different between England and Spain.' }
+          body: 'Who is closest to a ban by accumulated cautions, under this division\u2019s own rules, which are genuinely different between England, Spain and Italy.' }
       ],
       areas: [
         { id: 'matchday', label: 'Matchday', icon: 'matchday',
@@ -2144,11 +2147,11 @@
   }
 
   /* OFFERED, never fired. Keyed per desk: being shown round the Championship
-     is not being shown round La Liga. The tour used to open itself 600ms
+     is not being shown round Serie A. The tour used to open itself 600ms
      after load, so the first thing a new visitor saw was an overlay on a
      page they had not read yet — and the spotlight's scroll left the desk
      sitting past its own heading on a phone. */
-  if (window.PLDTour) window.PLDTour.offer(SHELL_TOUR, 'laliga_tour_v1', { button: document.getElementById('tourBtn') });
+  if (window.PLDTour) window.PLDTour.offer(SHELL_TOUR, 'seriea_tour_v1', { button: document.getElementById('tourBtn') });
   document.querySelectorAll('[data-open-tour]').forEach(function (b) {
     b.addEventListener('click', function () { window.PLDTour.run(SHELL_TOUR, {}); });
   });

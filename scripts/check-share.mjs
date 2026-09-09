@@ -110,7 +110,7 @@ const S = sb.PLDShare;
 assert.ok(S, 'assets/share.js did not export PLDShare');
 
 /* ---- every desk has an identity ---------------------------------------- */
-for (const code of ['PL', 'EFLC', 'LL', 'ALL']) {
+for (const code of ['PL', 'EFLC', 'LL', 'SA', 'ALL']) {
   const t = S.theme(code);
   assert.ok(t && t.strap && t.mark && t.slug, `theme ${code} is incomplete`);
   assert.ok(/^#[0-9a-f]{6}$/i.test(t.from) && /^#[0-9a-f]{6}$/i.test(t.to),
@@ -118,9 +118,9 @@ for (const code of ['PL', 'EFLC', 'LL', 'ALL']) {
 }
 /* Two desks sharing a wordmark would make their cards indistinguishable once
    posted, which is the whole job of the wordmark. */
-const marks = ['PL', 'EFLC', 'LL', 'ALL'].map((c) => S.theme(c).mark);
+const marks = ['PL', 'EFLC', 'LL', 'SA', 'ALL'].map((c) => S.theme(c).mark);
 assert.equal(new Set(marks).size, marks.length, `duplicate wordmarks: ${marks.join(', ')}`);
-const slugs = ['PL', 'EFLC', 'LL', 'ALL'].map((c) => S.theme(c).slug);
+const slugs = ['PL', 'EFLC', 'LL', 'SA', 'ALL'].map((c) => S.theme(c).slug);
 assert.equal(new Set(slugs).size, slugs.length,
   `duplicate filename slugs — cards would overwrite each other in Downloads: ${slugs.join(', ')}`);
 
@@ -862,6 +862,7 @@ assert.equal(drawn.filter((t) => t === 'PL').length, 0,
 for (const [page, needs] of [
   ['eflc.html', ['assets/share.js', 'PLDShare', 'deskMatchSpec', 'fxShareBtn', 'data-share']],
   ['laliga.html', ['assets/share.js', 'PLDShare', 'deskMatchSpec', 'fxShareBtn', 'data-share']],
+  ['seriea.html', ['assets/share.js', 'PLDShare', 'deskMatchSpec', 'fxShareBtn', 'data-share']],
   ['today.html', ['assets/share.js', 'PLDShare', 'roundCard', 'data-frame.html']]
 ]) {
   if (!existsSync(join(root, page))) continue;
@@ -956,7 +957,7 @@ assert.equal(M.isDerby('TOT', 'ARS'), M.isDerby('ARS', 'TOT'));
 
 /* ---- /today carries every league it can ---------------------------------- */
 const frameSrc2 = codeOnly(readFileSync(join(root, 'data-frame.html'), 'utf8'));
-for (const code of ['pl', 'eflc', 'laliga']) {
+for (const code of ['pl', 'eflc', 'laliga', 'seriea']) {
   assert.ok(new RegExp(`\\b${code}:\\s*\\[`).test(frameSrc2),
     `data-frame.html cannot load the ${code} dataset`);
 }
@@ -966,7 +967,7 @@ assert.ok(/data\/model\.js/.test(frameSrc2) && /data\/sim_model\.js/.test(frameS
   'for the same match than the desk does');
 assert.ok(todaySrc.includes('PLModel'),
   'today.html must price the Premier League through the shared model');
-for (const code of ['PL', 'EFLC', 'LL']) {
+for (const code of ['PL', 'EFLC', 'LL', 'SA']) {
   assert.ok(new RegExp(`code:\\s*'${code}'`).test(todaySrc),
     `today.html no longer lists ${code} as a source`);
 }
@@ -1388,10 +1389,14 @@ for (const page of ['index.html', 'eflc.html', 'laliga.html', 'today.html']) {
   assert.ok(CC && CC.of && CC.merged, 'assets/clubcolours.js exports no table');
 
   const DATASETS = [
-    ['PL', 'pl_data.js'], ['EFLC', 'eflc_data.js'], ['LL', 'laliga_data.js']
+    ['PL', 'pl_data.js'], ['EFLC', 'eflc_data.js'], ['LL', 'laliga_data.js'], ['SA', 'seriea_data.js']
   ];
   const shorts = {};
   for (const [code, file] of DATASETS) {
+    if (!existsSync(join(root, 'data', file))) {
+      console.log(`check-share: data/${file} not built yet, its club colours are checked on the first refresh`);
+      continue;
+    }
     const data = readFileSync(join(root, 'data', file), 'utf8');
     const open = data.indexOf('const CLUBS');
     assert.ok(open >= 0, `data/${file} declares no CLUBS`);
@@ -1445,6 +1450,7 @@ for (const page of ['index.html', 'eflc.html', 'laliga.html', 'today.html']) {
 for (const [page, needle] of [
   ['eflc.html', /palette:[\s\S]{0,90}?PLDClubColours\.of\('EFLC'\)/],
   ['laliga.html', /palette:[\s\S]{0,90}?PLDClubColours\.of\('LL'\)/],
+  ['seriea.html', /palette:[\s\S]{0,90}?PLDClubColours\.of\('SA'\)/],
   ['today.html', /palette:\s*paletteFor\(code\)/]
 ]) {
   const html = readFileSync(join(root, page), 'utf8');
@@ -1466,7 +1472,7 @@ for (const [page, needle] of [
  */
 {
   const frame = readFileSync(join(root, 'data-frame.html'), 'utf8');
-  for (const f of ['pl_fxstats.js', 'eflc_fxstats.js', 'laliga_fxstats.js']) {
+  for (const f of ['pl_fxstats.js', 'eflc_fxstats.js', 'laliga_fxstats.js', 'seriea_fxstats.js']) {
     assert.ok(frame.includes('data/' + f),
       `data-frame.html does not load data/${f}, so /today can never draw a ` +
       'form grid for that division');
@@ -1486,7 +1492,7 @@ for (const [page, needle] of [
 
   /* AND EVERY DESK SAYS WHAT SEASON ITS NUMBERS ARE FROM. A card outlives the
      page it came from. */
-  for (const page of ['index.html', 'eflc.html', 'laliga.html', 'today.html']) {
+  for (const page of ['index.html', 'eflc.html', 'laliga.html', 'seriea.html', 'today.html']) {
     const html = readFileSync(join(root, page), 'utf8');
     assert.ok(/basis:/.test(html),
       `${page} builds a stat sheet without a basis line — the card would not ` +
@@ -1564,7 +1570,7 @@ for (const [page, needle] of [
 }
 
 console.log(
-  `check-share OK: ${['PL', 'EFLC', 'LL', 'ALL'].length} themes, match + round + ` +
+  `check-share OK: ${['PL', 'EFLC', 'LL', 'SA', 'ALL'].length} themes, match + round + ` +
   'combined cards render, adapters agree with the desks, every card carries 18+, ' +
   '/today renders one date and the whole calendar from one row builder and one card builder, ' +
   'and every logged acca — won, lost and open — has a card that states its result'

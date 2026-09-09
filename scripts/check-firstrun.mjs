@@ -52,7 +52,7 @@ const codeOnly = (s) => s
   .replace(/\/\*[\s\S]*?\*\//g, '')
   .replace(/(^|[^:])\/\/.*$/gm, '$1');
 
-const DESKS_WITH_A_TOUR = ['index.html', 'eflc.html', 'laliga.html'];
+const DESKS_WITH_A_TOUR = ['index.html', 'eflc.html', 'laliga.html', 'seriea.html'];
 
 /* ---- 1. nothing schedules a tour on load -------------------------------- */
 for (const page of DESKS_WITH_A_TOUR) {
@@ -598,7 +598,7 @@ for (const page of DESKS_WITH_A_TOUR) {
  * in this repo passed while three of four desks shipped without one, because
  * every check asked about the desk it was pointed at. */
 {
-  const ALL = ['index.html', 'eflc.html', 'laliga.html', 'today.html'];
+  const ALL = ['index.html', 'eflc.html', 'laliga.html', 'seriea.html', 'today.html'];
   const GROUPS = ['About &amp; method', 'Data sources', 'Responsible gambling'];
   /* Every one of these must sit INSIDE the responsible-gambling group. A search
      of the page would be answered by the sidebar's own BeGambleAware link on
@@ -723,7 +723,7 @@ for (const page of DESKS_WITH_A_TOUR) {
     'and the number is something else, which is the bug this block exists for');
   /* Every caller feeds it under the same name. A desk passing p.fw as
      anything else puts the number back under a label it does not match. */
-  for (const page of ['eflc.html', 'laliga.html']) {
+  for (const page of ['eflc.html', 'laliga.html', 'seriea.html']) {
     const src = read(page);
     assert.ok(/foulsWon90:\s*p\.fw/.test(src),
       `${page} no longer passes p.fw as foulsWon90 — either the fouls-won cell ` +
@@ -780,6 +780,7 @@ for (const page of DESKS_WITH_A_TOUR) {
       help: /,\s*board\.bothTwo\s*,\s*"([^"]*)"/ },
     { file: 'eflc.html', slice: /<span class="mkt"[^>]*>Both 2\+ <b>[\s\S]{0,120}?<\/b>/, help: TITLE },
     { file: 'laliga.html', slice: /<span class="mkt"[^>]*>Both 2\+ <b>[\s\S]{0,120}?<\/b>/, help: TITLE },
+    { file: 'seriea.html', slice: /<span class="mkt"[^>]*>Both 2\+ <b>[\s\S]{0,120}?<\/b>/, help: TITLE },
     { file: 'today.html', slice: /<span class="mkt"[^>]*>Both 2\+ <b>[\s\S]{0,120}?<\/b>/, help: TITLE },
   ];
   for (const { file, slice } of CELLS) {

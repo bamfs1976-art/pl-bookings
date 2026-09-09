@@ -22,7 +22,7 @@ import { dirname, join } from 'node:path';
 import assert from 'node:assert';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
-const PAGES = ['index.html', 'today.html', 'eflc.html', 'laliga.html'];
+const PAGES = ['index.html', 'today.html', 'eflc.html', 'laliga.html', 'seriea.html'];
 const read = (f) => readFileSync(join(root, f), 'utf8');
 
 /* Comments stripped before scanning for code patterns — this file has been

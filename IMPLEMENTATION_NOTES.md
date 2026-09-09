@@ -6,6 +6,71 @@ work, newest first: what changed, what was deferred and why. Everything before
 in [docs/decisions.md](docs/decisions.md); the audit itself is
 [docs/audit-2026-07.md](docs/audit-2026-07.md).
 
+## Serie A desk, task 6: the page, navigation and share cards (2026-09-09)
+
+`seriea.html` is `laliga.html` with every La Liga reference replaced by a
+checked substitution list (each replacement asserted to occur exactly the
+number of times expected, so a drifted line fails the build script rather
+than surviving): `lg-sa`, the `SA` brand dot, the data files and globals
+(`seriea_data.js`, `SERIEA_PLAYERS`, `SERIEA_FIXTURES`, `SERIEA_FXSTATS`,
+`SERIEA_H2H`), the `seriea_desk_` storage keys, `DERBY_LEAGUE`, the share
+context, the live-cards query, the app shell (code `SA`, accent `#14532d`),
+the tour and the Guide. The Guide states the 2025-26 rate as 3.70 yellows a
+game and says outright that older multi-season Italian averages are not used;
+the suspension copy gives the 5 / 10 / 14 / 17 / 19 / then-every-caution
+rule, names `docs/italy-suspensions.md`, says the Codice itself was not read
+and that the commissioning brief stated a different progression; the
+referee paragraph says the appointment comes from the API-Football feed until
+the AIA route is confirmed from a runner. Basis pills are `SA` and `SB`.
+Serie A is wired into the nav on every page, `today.html` (league bar, a
+fourth data frame, `SOURCES`, `SHARE_META`, the copy that counted three
+divisions), `data-frame.html`, `_redirects` (`/seriea`, `/serie-a`, before
+the catch-all), the service worker shell (`/seriea.html`, version bumped to
+plb-v22), `assets/core.js` (`LEAGUE_LABEL`, a Serie A derby list in the
+registry's codes), `assets/share.js` (an `SA` theme: from `#052e16`, to
+`#16a34a`, ink `#14532d`, its own wordmark and slug), `assets/clubcolours.js`
+(a Serie A table) and `assets/tw.css` (`--sa` and `--sa-ink`, `lg-sa` in both
+themes, `.lb-sa`, `.pill.sa`, `.lg.SA`, a fourth colour in the multi-league
+gradients and dot rows). The Netlify functions and the pipeline scripts that
+list divisions (`live-cards`, `match-record`, `model-calibration`,
+`build_bookings.py`, `build_h2h.py`, `harvest_extra.py`, `accas.mjs`,
+`form-season.mjs`, `ref-coverage.mjs`) know the fifth desk.
+
+Contrast: `--sa-ink` `#166534` reads at 6.3:1 or better on every light
+ground and the dark mark `#4ade80` at 9:1 or better; `check-contrast` now
+covers `lg-sa` and `--sa-ink`, and `check-palette` pins the share theme to
+the tokens and the page's theme-colour to the card's deep end.
+
+Guards: every page list gained `seriea.html` (`check-nav`, `check-clock`,
+`check-inline`, `check-mobile`, `check-styles`, `check-contrast`,
+`check-palette`, `check-desk-widgets`, `check-firstrun`, `check-suspension`,
+`check-cross-refs`, `check-derbies`, `check-extra-feeds`, `check-api-budget`,
+`check-matchday`, `check-referees`, `check-share`, `check-match-record`,
+`check-models`). "check-desk-parity" is named in the brief and does not
+exist as a script; the parity checks live in the guards above and in
+`docs/desk-parity.md`, and no new guard was invented for it. Where a guard
+reads a division's dataset, the Serie A entry is skipped with a printed note
+until the refresh workflow has produced the files: `accas.mjs`,
+`form-season.mjs` and `ref-coverage.mjs` filter their league lists on file
+existence and say so on stderr, `check-share` and `check-nav` print a
+"not built yet" line for the Serie A dataset and history. The four Serie A
+data files are not yet in the service-worker precache because
+`check-mobile` requires every precached path to exist; they go in with the
+data in task 8.
+
+Rendered in Chromium against a local server: `/seriea.html` loads with no
+page error, wears `lg-sa`, shows the five-desk league bar and, with no
+fixture file yet, the "No fixture list yet" notice naming the harvest that
+produces it. Every one of the 55 guards and test suites passes, and the full
+CI list runs green locally.
+
+One thing to say plainly: `seriea.html` inherits the punctuation of
+`laliga.html`, including the em dashes in the prose that was copied
+unchanged. None of the lines written for this desk carry one. Stripping the
+inherited ones would mean rewriting a hundred lines of prose the two desks
+share, and that is a decision for the reviewer rather than a side effect of
+this task.
+
 ## Serie A desk, task 5: AIA appointments (2026-09-09)
 
 The AIA publishes Serie A designations one matchday at a time as an article

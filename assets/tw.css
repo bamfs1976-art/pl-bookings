@@ -39,14 +39,14 @@
   --sidebar-w:248px; --topbar-h:60px; --bottomnav-h:66px;
   /* League marks. Every desk carries all four, because every desk SHOWS all
      four: the switcher, the tier chips and /today's rows are cross-league. */
-  --pl:#e90052; --eflc:#7c3aed; --ll:#ea580c; --all:#0891b2;
+  --pl:#e90052; --eflc:#7c3aed; --ll:#ea580c; --sa:#16a34a; --all:#0891b2;
   --efl:var(--eflc);  /* the older name; .tier-efl and .pill.eflc still use it */
   /* Ink variants, for the marks used as SMALL TEXT rather than as a fill. The
      marks are chosen to read at 9px as a dot; as a 10px uppercase label on
      white, --ll reaches 3.6:1 and --all 3.7:1, both under the 4.5:1 WCAG 2.2
      AA wants. Same reasoning as --danger-ink, and the same trap: a colour that
      is merely hard to read fails no check and throws nothing. */
-  --pl-ink:#be123c; --eflc-ink:#6d28d9; --ll-ink:#c2410c; --all-ink:#0e7490;
+  --pl-ink:#be123c; --eflc-ink:#6d28d9; --ll-ink:#c2410c; --sa-ink:#166534; --all-ink:#0e7490;
   /* The identity of THIS desk. Defaults to the combined view, so a page that
      forgets its class gets the neutral teal rather than another league's kit. */
   --accent:#0e7490; --accent-2:var(--all); --accent-ink:var(--all-ink);
@@ -62,6 +62,7 @@
 html.lg-pl  {--accent:#3d195b;--accent-2:var(--pl);  --accent-ink:var(--pl-ink);  --ring:var(--accent)}
 html.lg-eflc{--accent:#4b2e83;--accent-2:var(--eflc);--accent-ink:var(--eflc-ink);--ring:var(--accent)}
 html.lg-ll  {--accent:#9a3412;--accent-2:var(--ll);  --accent-ink:var(--ll-ink);  --ring:var(--accent)}
+html.lg-sa  {--accent:#14532d;--accent-2:var(--sa);  --accent-ink:var(--sa-ink);  --ring:var(--accent)}
 html.lg-all {--accent:#0e7490;--accent-2:var(--all); --accent-ink:var(--all-ink); --ring:var(--accent)}
 
 html[data-theme="dark"]{
@@ -77,9 +78,9 @@ html[data-theme="dark"]{
   --target:#34d399; --mid:#fbbf24; --fade:#94a3b8;
   --shadow-sm:0 1px 2px rgba(0,0,0,.4);
   --shadow:0 10px 30px -8px rgba(0,0,0,.55),0 2px 6px rgba(0,0,0,.4);
-  --pl:#ff2d7e; --eflc:#a78bfa; --ll:#fb923c; --all:#67e8f9;
+  --pl:#ff2d7e; --eflc:#a78bfa; --ll:#fb923c; --sa:#4ade80; --all:#67e8f9;
   /* The dark marks are already pastels clearing AA on #0b0f1a, so ink == mark. */
-  --pl-ink:#ff418a; --eflc-ink:#a78bfa; --ll-ink:#fb923c; --all-ink:#67e8f9;
+  --pl-ink:#ff418a; --eflc-ink:#a78bfa; --ll-ink:#fb923c; --sa-ink:#4ade80; --all-ink:#67e8f9;
   --accent:#22d3ee; --ring:var(--accent);
 }
 /* Two classes, so these beat the generic dark block above it whatever the
@@ -91,6 +92,7 @@ html[data-theme="dark"]{
 html[data-theme="dark"].lg-pl  {--accent:#a78bfa;--ring:var(--accent)}
 html[data-theme="dark"].lg-eflc{--accent:#ddd6fe;--ring:var(--accent)}
 html[data-theme="dark"].lg-ll  {--accent:#fdba74;--ring:var(--accent)}
+html[data-theme="dark"].lg-sa  {--accent:#86efac;--ring:var(--accent)}
 html[data-theme="dark"].lg-all {--accent:#22d3ee;--ring:var(--accent)}
 
 /* ─── League switcher ───────────────────────────────────────────────────────
@@ -136,18 +138,19 @@ html[data-theme="dark"].lg-all {--accent:#22d3ee;--ring:var(--accent)}
 .lb-pl .lb-dot{background:var(--pl)}
 .lb-eflc .lb-dot{background:var(--eflc)}
 .lb-ll .lb-dot{background:var(--ll)}
-.lb-today .lb-dot{background:linear-gradient(135deg,var(--pl) 0%,var(--eflc) 50%,var(--ll) 100%)}
+.lb-sa .lb-dot{background:var(--sa)}
+.lb-today .lb-dot{background:linear-gradient(135deg,var(--pl) 0%,var(--eflc) 33%,var(--ll) 66%,var(--sa) 100%)}
 /* The season calendar is the same three divisions as Today, so it carries the
    same three-league gradient — reversed, so the two are distinguishable at a
    glance in the bar without inventing a fourth colour for a view that has no
    league of its own. */
-.lb-season .lb-dot{background:linear-gradient(315deg,var(--pl) 0%,var(--eflc) 50%,var(--ll) 100%)}
+.lb-season .lb-dot{background:linear-gradient(315deg,var(--pl) 0%,var(--eflc) 33%,var(--ll) 66%,var(--sa) 100%)}
 /* Accas draw on all three divisions and belong to none, like the two views
    above — but a third gradient of the same three colours would be a dot nobody
    could tell from the other two at 9px. A ring instead: same three-league
    sweep, hollow centre, distinguishable at a glance without inventing a
    fourth competition colour for a view that is not a competition. */
-.lb-accas .lb-dot{background:conic-gradient(var(--pl),var(--eflc),var(--ll),var(--pl));
+.lb-accas .lb-dot{background:conic-gradient(var(--pl),var(--eflc),var(--ll),var(--sa),var(--pl));
   -webkit-mask:radial-gradient(circle,transparent 32%,#000 34%);
   mask:radial-gradient(circle,transparent 32%,#000 34%)}
 /* Derbies are also all three divisions and no competition of their own, and by
@@ -264,6 +267,7 @@ html[data-theme="dark"].lg-all {--accent:#22d3ee;--ring:var(--accent)}
 .combined-note .cn-dots i:nth-child(1){background:var(--pl)}
 .combined-note .cn-dots i:nth-child(2){background:var(--eflc)}
 .combined-note .cn-dots i:nth-child(3){background:var(--ll)}
+.combined-note .cn-dots i:nth-child(4){background:var(--sa)}
 .combined-note a{font-weight:700;text-decoration:none;
   border-bottom:1.5px solid currentColor;padding-bottom:1px}
 .combined-note a:hover{opacity:.8}
@@ -725,6 +729,7 @@ button.mkt:hover{background:var(--surface-3);color:var(--accent)}
 .pill.pl{background:color-mix(in srgb,var(--pl) 14%,transparent);border-color:transparent;color:var(--pl)}
 .pill.eflc{background:color-mix(in srgb,var(--eflc) 14%,transparent);border-color:transparent;color:var(--eflc)}
 .pill.ll{background:color-mix(in srgb,var(--ll) 14%,transparent);border-color:transparent;color:var(--ll)}
+.pill.sa{background:color-mix(in srgb,var(--sa) 14%,transparent);border-color:transparent;color:var(--sa-ink)}
 
 /* High / Watch banding, at the thresholds every desk uses. */
 .band{font-weight:700}
@@ -925,6 +930,7 @@ input[type=checkbox],input[type=radio]{accent-color:var(--accent)}
 .lg.PL{background:color-mix(in srgb,var(--pl) 15%,transparent);color:var(--pl-ink)}
 .lg.EFLC{background:color-mix(in srgb,var(--eflc) 16%,transparent);color:var(--eflc-ink)}
 .lg.LL{background:color-mix(in srgb,var(--ll) 18%,transparent);color:var(--ll-ink)}
+.lg.SA{background:color-mix(in srgb,var(--sa) 18%,transparent);color:var(--sa-ink)}
 
 .empty{padding:26px;text-align:center;color:var(--text-2)}
 .note{font-size:12.5px;color:var(--text-2);margin-top:10px;line-height:1.55}
@@ -1017,6 +1023,7 @@ footer{padding:26px 0 40px;font-size:12.5px;color:var(--text-3);
 .gw-intro .cn-dots i:nth-child(1){background:var(--pl)}
 .gw-intro .cn-dots i:nth-child(2){background:var(--eflc)}
 .gw-intro .cn-dots i:nth-child(3){background:var(--ll)}
+.gw-intro .cn-dots i:nth-child(4){background:var(--sa)}
 .gw-intro a{font-weight:700;border-bottom:1.5px solid currentColor;padding-bottom:1px}
 .gw-intro a:hover{opacity:.8}
 .gw-intro-x{margin-left:auto;flex:none;background:none;border:0;cursor:pointer;

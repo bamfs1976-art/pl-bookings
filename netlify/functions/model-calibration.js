@@ -84,7 +84,7 @@ exports.handler = async (event) => {
   /* ?league=PL narrows it. Validated against the known set rather than
      interpolated, so the query string cannot shape the PostgREST filter. */
   const want = ((event && event.queryStringParameters) || {}).league;
-  const league = ['PL', 'EFLC', 'LL'].includes(want) ? want : null;
+  const league = ['PL', 'EFLC', 'LL', 'SA'].includes(want) ? want : null;
 
   let all;
   try {
@@ -125,7 +125,7 @@ exports.handler = async (event) => {
      an aggregate that hides a badly calibrated one is the number a reader
      would most want broken out. */
   const byLeague = {};
-  for (const code of ['PL', 'EFLC', 'LL']) {
+  for (const code of ['PL', 'EFLC', 'LL', 'SA']) {
     const s = score(inSeason.filter((r) => r.league === code));
     if (s) byLeague[code] = s;
   }

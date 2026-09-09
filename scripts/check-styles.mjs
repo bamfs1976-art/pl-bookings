@@ -46,7 +46,7 @@ const NO_RULE_NEEDED = new Set([
   'linklike', 'pk-status', 'pk-del', 'ref-sel', 'fx-simrow', 'mk-h2h'
 ]);
 
-const PAGES = ['index.html', 'today.html', 'eflc.html', 'laliga.html'];
+const PAGES = ['index.html', 'today.html', 'eflc.html', 'laliga.html', 'seriea.html'];
 let checked = 0;
 
 for (const page of PAGES) {
@@ -95,7 +95,7 @@ for (const page of PAGES) {
    Asserted on both the renderer and the grid, because either alone regresses
    silently: cards outside a grid stack one-up, and a grid with the old list
    inside it is still a list. */
-for (const page of ['eflc.html', 'laliga.html']) {
+for (const page of ['eflc.html', 'laliga.html', 'seriea.html']) {
   const src = read(page);
   assert.ok(/function fixtureCard\(/.test(src),
     `${page} has no shared fixtureCard() — the Matchday and Fixtures panels ` +
@@ -205,7 +205,7 @@ for (const sel of ['.fx-teams', '.fx-heat', '.cand', '.cbadge', '.mkts', '.band'
   assert.ok(decl.test(shared),
     `assets/tw.css has no "${sel}" rule — the fixture card is drawn by four ` +
     'pages and its styling must be shared, not copied into each');
-  for (const page of ['eflc.html', 'laliga.html']) {
+  for (const page of ['eflc.html', 'laliga.html', 'seriea.html']) {
     const inline = [...read(page).matchAll(/<style[^>]*>([\s\S]*?)<\/style>/g)].map((m) => m[1]).join('\n');
     assert.ok(!decl.test(inline),
       `${page} keeps its own "${sel}" rule, which shadows the shared one and ` +
@@ -226,7 +226,7 @@ assert.ok(/\.cand \.pip\s*\{/.test(shared),
  * does not answer left 400 broken icons in the players table. The fallback is
  * invisible when the host IS answering, which is exactly why it needs a guard
  * — nobody will notice it rotting until the next outage. */
-for (const page of ['eflc.html', 'laliga.html']) {
+for (const page of ['eflc.html', 'laliga.html', 'seriea.html']) {
   const src = read(page);
   assert.ok(!/<img class="crest"/.test(src),
     `${page} still emits a bare <img class="crest">. Route it through ` +
@@ -257,7 +257,7 @@ for (const page of ['eflc.html', 'laliga.html']) {
 }
 
 /* ---- the smaller parity items ------------------------------------------ */
-for (const page of ['eflc.html', 'laliga.html']) {
+for (const page of ['eflc.html', 'laliga.html', 'seriea.html']) {
   const src = read(page);
   /* Notes: offered only where they can be STORED. A textarea with nowhere to
      write to is worse than no textarea — it accepts what you type and forgets
@@ -288,7 +288,7 @@ for (const page of ['eflc.html', 'laliga.html']) {
 }
 
 /* Skip link, on every page that has a shell to skip past. */
-for (const page of ['eflc.html', 'laliga.html', 'today.html']) {
+for (const page of ['eflc.html', 'laliga.html', 'seriea.html', 'today.html']) {
   const src = read(page);
   assert.ok(/<a href="#main" class="skip">/.test(src), `${page} has no skip link`);
   assert.ok(/id="main"/.test(src), `${page} skip link points at #main, which does not exist`);
@@ -356,7 +356,7 @@ assert.ok(/crest-failed/.test(prof) && /crest-failed::after/.test(shared),
   'and tw.css must render its data-mono through ::after');
 
 /* ---- booking points, and the player's face ----------------------------- */
-for (const page of ['eflc.html', 'laliga.html']) {
+for (const page of ['eflc.html', 'laliga.html', 'seriea.html']) {
   const src = read(page);
   /* Booking points is the market a bookmaker actually posts for cards. The
      red half must come from the APPOINTED referee where there is one — a

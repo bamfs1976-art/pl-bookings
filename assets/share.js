@@ -64,6 +64,11 @@
       strap: 'BOOKINGS DESK · LA LIGA', mark: 'LA LIGA BOOKINGS',
       slug: 'laliga-bookings', tag: 'LL', lg: 'lg-ll'
     },
+    SA: {
+      from: '#052e16', to: '#16a34a', ink: '#14532d',
+      strap: 'BOOKINGS DESK · SERIE A', mark: 'SERIE A BOOKINGS',
+      slug: 'seriea-bookings', tag: 'SA', lg: 'lg-sa'
+    },
     ALL: {
       from: '#0f172a', to: '#0891b2', ink: '#0e7490',
       strap: 'BOOKINGS DESK · ALL LEAGUES', mark: 'BOOKINGS DESK',
@@ -1173,7 +1178,7 @@
    * }
    */
   var LEAGUE_TINT = {
-    PL: '#e90052', EFLC: '#7c3aed', LL: '#ea580c', ALL: '#0891b2'
+    PL: '#e90052', EFLC: '#7c3aed', LL: '#ea580c', SA: '#16a34a', ALL: '#0891b2'
   };
 
   function leagueChip(x, cx, mid, code, w) {

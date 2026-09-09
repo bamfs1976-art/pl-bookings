@@ -44,7 +44,7 @@ function load(file, konst) {
 /* ---- 1. the record is priced with the page's own constants -------------- */
 /* Asserted against the page source rather than restated here: a constant this
    file declared would agree with itself forever. */
-const DESKS = { EFLC: 'eflc.html', LL: 'laliga.html' };
+const DESKS = { EFLC: 'eflc.html', LL: 'laliga.html', SA: 'seriea.html' };
 for (const [code, page] of Object.entries(DESKS)) {
   const src = readFileSync(join(root, page), 'utf8');
 
@@ -88,7 +88,7 @@ for (const [code, page] of Object.entries(DESKS)) {
  * which keyword a page happens to declare it with. The loop above deliberately
  * stays on the two desks whose CONSTANTS are graded against the record.
  */
-for (const page of ['index.html', 'eflc.html', 'laliga.html']) {
+for (const page of ['index.html', 'eflc.html', 'laliga.html', 'seriea.html']) {
   const src = readFileSync(join(root, page), 'utf8');
   const flat = src.replace(/\s+/g, '');
   const bp = /(?:var|const)BP_LINES=\[([^\]]+)\]/.exec(flat);

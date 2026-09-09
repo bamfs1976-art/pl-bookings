@@ -48,6 +48,8 @@ const LEAGUES = [
     data: 'eflc_data.js', fixtures: 'eflc_fixtures.js', fxGlobal: 'EFLC_FIXTURES' },
   { code: 'LL', name: 'La Liga',
     data: 'laliga_data.js', fixtures: 'laliga_fixtures.js', fxGlobal: 'LALIGA_FIXTURES' },
+  { code: 'SA', name: 'Serie A',
+    data: 'seriea_data.js', fixtures: 'seriea_fixtures.js', fxGlobal: 'SERIEA_FIXTURES' },
 ];
 
 /* ---- 1. one list, and only one ------------------------------------------ */
@@ -99,6 +101,7 @@ for (const [file, needle] of [
   ['index.html', 'PLModel.DERBIES'],
   ['eflc.html', 'C.isDerby(h, a, DERBY_LEAGUE)'],
   ['laliga.html', 'C.isDerby(h, a, DERBY_LEAGUE)'],
+  ['seriea.html', 'C.isDerby(h, a, DERBY_LEAGUE)'],
 ]) {
   assert.ok(read(file).includes(needle),
     `${file} no longer reads the shared derby list (looked for ${needle})`);
@@ -197,7 +200,7 @@ assert.ok(redirects.indexOf('/derbies') < catchAll.index,
   'the route silently serves the Premier League desk');
 assert.ok(read('sw.js').includes("'/derbies'"),
   'sw.js does not precache /derbies, so it is blank with no connection');
-for (const f of ['index.html', 'eflc.html', 'laliga.html', 'today.html']) {
+for (const f of ['index.html', 'eflc.html', 'laliga.html', 'seriea.html', 'today.html']) {
   assert.ok(read(f).includes('class="lb-item lb-derbies" href="/derbies"'),
     `${f} has no league-bar link to /derbies`);
 }

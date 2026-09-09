@@ -11,7 +11,7 @@
 // same on the page. Here they do not: a division inside its own publication
 // window with zero appointments is called out.
 
-import { readFileSync } from 'node:fs';
+import { readFileSync, existsSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
 import vm from 'node:vm';
@@ -24,8 +24,15 @@ const LEAGUES = [
   // is inside its window yet — never to invent an appointment.
   { code: 'PL', name: 'Premier League', file: 'data/pl_fixtures.js', konst: 'PL_FIXTURES', lead: 5 },
   { code: 'EFLC', name: 'EFL Championship', file: 'data/eflc_fixtures.js', konst: 'EFLC_FIXTURES', lead: 5 },
-  { code: 'LL', name: 'La Liga', file: 'data/laliga_fixtures.js', konst: 'LALIGA_FIXTURES', lead: 1 }
-];
+  { code: 'LL', name: 'La Liga', file: 'data/laliga_fixtures.js', konst: 'LALIGA_FIXTURES', lead: 1 },
+  { code: 'SA', name: 'Serie A', file: 'data/seriea_fixtures.js', konst: 'SERIEA_FIXTURES', lead: 3 }
+].filter((L) => {
+  /* A division whose fixture file the workflow has not produced yet has no
+     coverage to report; said so, not crashed on. */
+  const here = existsSync(join(dirname(fileURLToPath(import.meta.url)), '..', L.file));
+  if (!here) process.stderr.write(`ref-coverage: ${L.code} fixture file not built yet, skipped\n`);
+  return here;
+});
 
 /* `--data <dir>` reads the fixture files from somewhere other than the
    repository. Same purpose as `--at` below, and it exists for the same

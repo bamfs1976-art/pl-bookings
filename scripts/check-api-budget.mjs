@@ -190,7 +190,7 @@ ok(/ttl,/.test(fn),
    one of them will be forgotten. */
 
 /* ── 4. no page may bypass the edge cache on the metered endpoint ────────── */
-for (const page of ['eflc.html', 'laliga.html', 'index.html', 'today.html']) {
+for (const page of ['eflc.html', 'laliga.html', 'seriea.html', 'index.html', 'today.html']) {
   let text;
   try { text = read(page); } catch { continue; }
   /* Find every fetch of the live function and check it does not ask the CDN
@@ -212,7 +212,7 @@ ok(/function pollLoop\(/.test(shared) && /pollLoop: pollLoop/.test(shared),
 ok(/d\.ttl/.test(shared) && /setTimeout\(tick, ttl \* 1000\)/.test(shared),
   'pollLoop must pace itself from the ttl the function returns; polling faster ' +
   'than the TTL cannot produce newer data, it only spends invocations');
-for (const page of ['eflc.html', 'laliga.html']) {
+for (const page of ['eflc.html', 'laliga.html', 'seriea.html']) {
   const text = read(page);
   ok(/LiveCards\.pollLoop\(/.test(text),
     `${page} must poll through LiveCards.pollLoop rather than its own setInterval`);

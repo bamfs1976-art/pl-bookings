@@ -483,7 +483,7 @@
      nothing. The desks each know their own league's name; none of them knows
      the others', which is exactly why this sits here. */
   const LEAGUE_LABEL = {
-    PL: 'Premier League', EFLC: 'EFL Championship', LL: 'La Liga'
+    PL: 'Premier League', EFLC: 'EFL Championship', LL: 'La Liga', SA: 'Serie A'
   };
 
   function refShort(name) {
@@ -2052,6 +2052,31 @@
       ['CEL', 'DEP', 'O Noso Derbi — Galician'],
       ['SEV', 'MAL', 'Andalusian'],
       ['BET', 'MAL', 'Andalusian'],
+    ],
+    /* Serie A, in the codes data/leagues.py assigns (SERIEA_SHORT). Only the
+       pairs every Italian source names as a derby by title; a rivalry between
+       clubs from different cities carries its title where it has one (the
+       Derby d'Italia) and is left out where it does not. A pair whose club is
+       not in the division this season is dropped by the page and flagged by
+       check-derbies, so a relegation costs nothing here. */
+    SA: [
+      ['INT', 'ACM', "Derby della Madonnina"],
+      ['ROM', 'LAZ', 'Derby della Capitale'],
+      ['JUV', 'TOR', 'Derby della Mole'],
+      ['INT', 'JUV', "Derby d'Italia"],
+      ['GEN', 'SAM', 'Derby della Lanterna'],
+      ['BGN', 'FIO', "Derby dell'Appennino"],
+      ['NAP', 'ROM', 'Derby del Sole'],
+      ['ATA', 'BSC', 'Derby della Lombardia orientale'],
+      ['CAG', 'NAP', 'Derby del Mediterraneo'],
+      ['UDI', 'VER', 'Derby del Triveneto'],
+      ['UDI', 'VEN', 'Derby del Triveneto'],
+      ['VER', 'VEN', 'Derby del Triveneto'],
+      ['PAR', 'BGN', "Derby dell'Emilia"],
+      ['PAR', 'SAS', "Derby dell'Emilia"],
+      ['BGN', 'SAS', "Derby dell'Emilia"],
+      ['PIS', 'FIO', 'Derby toscano'],
+      ['EMP', 'FIO', 'Derby toscano'],
     ],
   };
 

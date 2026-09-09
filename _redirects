@@ -13,6 +13,9 @@
 # The La Liga desk. Same rule — before the catch-all.
 /laliga       /laliga.html  200
 /la-liga      /laliga.html  200
+# The Serie A desk. Same rule again.
+/seriea       /seriea.html  200
+/serie-a      /seriea.html  200
 # THE HOMEPAGE IS TODAY'S MATCHES. `/` used to be the Premier League desk;
 # it now serves the same-day card across every division, riskiest first. The
 # desk moved to /pl and keeps a spelled-out alias.

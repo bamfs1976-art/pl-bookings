@@ -292,7 +292,7 @@ ok(`${DESKS.length} desks x 2 tabs all resolve the matchday through PLDCore.curr
    * because what can regress here is the comparator — the sort silently losing
    * its first term and going back to heat alone.
    */
-  for (const [file, name] of [['eflc.html', 'Championship'], ['laliga.html', 'La Liga']]) {
+  for (const [file, name] of [['eflc.html', 'Championship'], ['laliga.html', 'La Liga'], ['seriea.html', 'Serie A']]) {
     const src = readFileSync(join(root, file), 'utf8');
     const at = src.indexOf('function renderMatchday(');
     assert.ok(at >= 0, `${file} has no renderMatchday()`);
@@ -316,7 +316,7 @@ ok(`${DESKS.length} desks x 2 tabs all resolve the matchday through PLDCore.curr
     'PLDCore.isPlayed files a live, postponed or unknown fixture as played — ' +
     'a match in progress has not been played, and an unrecognised status must ' +
     'keep its fixture visible rather than hiding it');
-  for (const f of ['eflc.html', 'laliga.html']) {
+  for (const f of ['eflc.html', 'laliga.html', 'seriea.html']) {
     assert.ok(!/\['FT', 'AET', 'PEN'\]/.test(readFileSync(join(root, f), 'utf8')),
       `${f} carries its own list of finished statuses again — it is one rule ` +
       'in core.js, and the copy in playedFor() counts toward a suspension ' +

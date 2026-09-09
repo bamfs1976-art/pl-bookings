@@ -41,7 +41,8 @@ function load(file, playersKey) {
 const DESKS = [
   { code: 'PL', name: 'Premier League', file: 'pl_data.js', key: 'PL_PLAYERS' },
   { code: 'EFLC', name: 'EFL Championship', file: 'eflc_data.js', key: 'EFLC_PLAYERS' },
-  { code: 'LL', name: 'La Liga', file: 'laliga_data.js', key: 'LALIGA_PLAYERS' }
+  { code: 'LL', name: 'La Liga', file: 'laliga_data.js', key: 'LALIGA_PLAYERS' },
+  { code: 'SA', name: 'Serie A', file: 'seriea_data.js', key: 'SERIEA_PLAYERS' }
 ];
 
 const S = model.shrink;

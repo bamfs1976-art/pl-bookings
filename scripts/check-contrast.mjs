@@ -39,7 +39,7 @@ function block(sel) {
 
 const LIGHT = block(':root');
 const DARK = block('html[data-theme="dark"]');
-const LEAGUES = ['lg-pl', 'lg-eflc', 'lg-ll', 'lg-all'];
+const LEAGUES = ['lg-pl', 'lg-eflc', 'lg-ll', 'lg-sa', 'lg-all'];
 
 /* Resolve a token to a hex, following var() indirection. */
 function hex(token, theme, leagueTokens) {
@@ -76,7 +76,7 @@ const INKS = [
   ['--text', false], ['--text-2', false], ['--text-3', false],
   ['--danger-ink', false], ['--warn-ink', false], ['--good-ink', false],
   ['--accent', false], ['--accent-ink', false],
-  ['--pl-ink', false], ['--eflc-ink', false], ['--ll-ink', false], ['--all-ink', false],
+  ['--pl-ink', false], ['--eflc-ink', false], ['--ll-ink', false], ['--sa-ink', false], ['--all-ink', false],
 ];
 
 const AA_BODY = 4.5, AA_LARGE = 3.0;
@@ -152,7 +152,7 @@ assert.ok(/sev\.icon/.test(index),
    for fills only" the brief asks for. --accent-ink exists so the two uses do
    not share a value; this stops them sharing one again. */
 {
-  const pages = ['index.html', 'eflc.html', 'laliga.html', 'today.html'];
+  const pages = ['index.html', 'eflc.html', 'laliga.html', 'seriea.html', 'today.html'];
   const offenders = [];
   for (const page of pages) {
     const src = readFileSync(join(root, page), 'utf8');
