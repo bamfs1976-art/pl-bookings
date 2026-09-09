@@ -202,8 +202,15 @@
      the whole season. Zero for the first rung and for a cycle. */
   function prevRung(scheme, at) {
     if (scheme.kind === 'cycle') return 0;
-    var below = (scheme.rungs || []).filter(function (r) { return r.at < at; })
+    var rungs = scheme.rungs || [];
+    var below = rungs.filter(function (r) { return r.at < at; })
       .map(function (r) { return r.at; });
+    /* Past the last rung on a ladder with a tail (Italy: every caution after
+       the 19th), the stretch being measured is one step long, not the whole
+       climb since the 19th. */
+    var top = rungs.length ? Math.max.apply(null, rungs.map(function (r) { return r.at; })) : 0;
+    var step = Number(scheme.then_every);
+    if (isFinite(step) && step > 0 && at > top) return at - step;
     return below.length ? Math.max.apply(null, below) : 0;
   }
 

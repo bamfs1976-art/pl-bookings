@@ -6,6 +6,43 @@ work, newest first: what changed, what was deferred and why. Everything before
 in [docs/decisions.md](docs/decisions.md); the audit itself is
 [docs/audit-2026-07.md](docs/audit-2026-07.md).
 
+## Serie A desk, task 1: registry entry and the Italian suspension rule (2026-09-09)
+
+`data/leagues.py` gains `SA` (fd_div I1, mirror slug serie-a, 20 clubs, 380
+matches, API-Football league 135, referees bought from API-Football, a
+three-match floor, division discovered into `seriea_clubs.json`) and a `SERB`
+feeder (league 136, no referees, no desk) for the promoted clubs, mirroring
+`SEG`. The Serie A spelling tables sit beside La Liga's, and the resolver that
+was La Liga's alone (`laliga_short`, `canon_name`, `assign_shorts`) is now one
+league-aware walk over a `DISCOVERED` table, with `registry_owner()` sending a
+feeder to the registry of the division it feeds. Short codes are chosen clear
+of every other desk's, because `/today` merges the colour tables: Bologna is
+BGN, Milan ACM, Bari BRI, Livorno LVO. `assign_shorts` now seeds its taken set
+with the other leagues' codes, so a generated code cannot collide either.
+
+**The suspension rule is not the one the brief stated, and this is flagged
+for a decision.** The brief said one match at the 5th, 10th and 15th caution
+and every second caution after that. Three independent sources quoting art.
+19 of the Codice di Giustizia Sportiva all give a different progression: one
+match at the fifth caution, then at the fifth, fourth, third and second
+caution after each ban, then at every caution. Bans at 5, 10, 14, 17, 19, 20,
+21 and so on; the well-known *diffida* list of 4, 9, 13, 16, 18. The brief
+also said never to guess a rule, so the desk prices what the sources say.
+Neither the FIGC PDF nor the legal databases that reprint it could be opened
+from this environment (the egress proxy refuses figc.it, altalex.com and
+aia-figc.it), so the rule rests on corroborated quotations, exactly as La
+Liga's did. `docs/italy-suspensions.md` records the quotations, the sources,
+the disagreement with the brief, and what to check on an open network.
+
+The two existing shapes could not express "and every caution after the last
+rung", so the ladder shape gained an optional `then_every` tail.
+`PLDCore.nextSuspension` steps past the last rung by that interval and never
+declares such a player dead; `assets/suspension.js` measures the pips over
+one step once the tail is reached. The English ladders carry no tail and
+behave exactly as before, and the three existing guards still reject each
+other's schemes by shape. Five tests in `data/test_leagues.py` and two in
+`tests/test-core.mjs` pin all of it.
+
 ## Review follow-up: closing entry (2026-09-08)
 
 Six commits on `claude/bookings-desk-review-followup-b8yztv`, one per task,
