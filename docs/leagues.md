@@ -138,14 +138,17 @@ nine of the round's ten officials were read from the AIA article and resolved
 by surname five days before the fixture feed named any of them. Where the AIA
 has not published yet, the feed's own referee field is used.
 
-**The suspension rule is a third shape.** Art. 19 of the FIGC's Codice di
-Giustizia Sportiva bans for one match at the fifth caution, then at the
-tenth, fourteenth, seventeenth and nineteenth, then at every caution: a
+**The suspension rule is a third shape.** Art. 9, comma 5 of the FIGC's
+Codice di Giustizia Sportiva bans for one match at the fifth caution, then at
+the tenth, fourteenth, seventeenth and nineteenth, then at every caution: a
 cumulative ladder that never escalates and never expires, with a tail. The
 registry expresses it as a `ladder` with rungs at 5, 10, 14, 17 and 19, no
 gate, and `then_every: 1`; `PLDCore.nextSuspension` walks the tail and
 `assets/suspension.js` measures the pips over one step past the top. The
 commissioning brief stated a different progression (5, 10, 15, then every
-second caution); no source found supports it, and `docs/italy-suspensions.md`
-records both readings and exactly how far the rule was verified, which is not
-from the Codice itself.
+second caution) and no source supports it. The desk shipped on three agreeing
+secondary quotations; the Codice itself was then read on a GitHub runner on 9
+September 2026 and confirms the ladder word for word. That read also moved the
+citation: the progression is in art. 9, not art. 19, which is *Esecuzione
+delle sanzioni* and carries no ladder. `docs/italy-suspensions.md` sets out
+the evidence and what remains unchecked.

@@ -576,6 +576,21 @@ jobs:
           python3 data/harvest_other_fixtures.py --season 2025 \
                   --out pl_other_fixtures_2526.js
 
+      # The Champions League ties this app can actually price: both clubs on a
+      # desk it holds players for, which with three desks built is no longer a
+      # rare case. ONE /fixtures call for the whole competition, and it buys no
+      # players: the squads are already harvested for the domestic desks, and
+      # the card prices each side off its own domestic season.
+      #
+      # season_fixtures, not season_af. This is the European season being
+      # played, not a completed one being learned from.
+      - name: Harvest the Champions League ties both desks hold
+        if: ${{ env.API_FOOTBALL_KEY != '' }}
+        continue-on-error: true
+        env:
+          API_FOOTBALL_SEASON: ${{ inputs.season_fixtures || '2026' }}
+        run: python3 data/harvest_ucl.py
+
       # League One, for the three clubs promoted into the Championship. Only
       # the Championship desk needs it, so it never blocks the Premier League.
       - name: Harvest League One from API-Football (the promoted three)
@@ -830,6 +845,7 @@ jobs:
                    data/laliga_status.txt data/laliga_fixtures.js data/laliga_ref_fixtures.js \
                    data/seriea_clubs.json data/seriea_refs.json data/seriea_data.js \
                    data/seriea_status.txt data/seriea_fixtures.js data/seriea_ref_fixtures.js \
+                   data/ucl_ties.js \
                    data/player_matches_status.txt data/fit_report.txt \
                    docs/scottish-derbies.md \
                    backtest_report.md; do
@@ -848,10 +864,20 @@ jobs:
             # that it had succeeded. Rebase onto whatever landed and try
             # again — the commits touch different files, so there is nothing
             # to resolve, only to re-order.
+            #
+            # ONTO THE BRANCH THIS RUN IS ON, not onto main. It said main,
+            # which is right only because that is where this usually runs.
+            # Dispatched on a feature branch on 9 September 2026 it rebased
+            # the branch's own commits onto main, hit an add/add conflict in
+            # fourteen files that exist on the branch and not on main, and
+            # exited: a run that had harvested everything and committed it
+            # threw the commit away and reported a failure, which is the
+            # exact outcome the retry above was written to prevent.
+            branch="${GITHUB_REF_NAME:-main}"
             for attempt in 1 2 3; do
             git push && break
-            echo "push rejected (attempt $attempt) — rebasing onto origin/main"
-            git pull --rebase --autostash origin main || exit 1
+            echo "push rejected (attempt $attempt), rebasing onto origin/$branch"
+            git pull --rebase --autostash origin "$branch" || exit 1
             sleep $((attempt * 5))
             done
           fi

@@ -3,7 +3,7 @@
    cache-first. Live FPL data (/api/fpl/*) and Supabase calls are never
    touched here — the app's own data layer decides what is fresh vs cached. */
 
-const VERSION = 'plb-v23';
+const VERSION = 'plb-v24';
 /* Every desk, not just the Premier League one. The shell decides what opens
    with no connection: installed on a phone, a page missing from here is a
    blank screen on the Underground even though it works perfectly on wifi.
@@ -20,6 +20,9 @@ const SHELL = [
   '/today',
   '/accas',
   '/derbies',
+  /* Europe. The route, because the Champions League ties are a view of
+     today.html and `caches.match` matches on URL. */
+  '/europe',
   '/index.html',
   '/today.html',
   '/eflc.html',
@@ -47,6 +50,11 @@ const SHELL = [
      whole shell. */
   '/data/seriea_data.js',
   '/data/seriea_fixtures.js',
+  /* The Champions League tie list, written once a day by data/harvest_ucl.py.
+     Added only now the file exists, for the same reason as every other
+     optional feed: addAll is atomic and one missing file empties the whole
+     shell. */
+  '/data/ucl_ties.js',
   '/data/pl_fixtures.js',
   '/data/pl_fxstats.js',
   /* The 2025/26 match record the Methodology view scores the model against.

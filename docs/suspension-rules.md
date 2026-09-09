@@ -99,18 +99,21 @@ so no escalation at ten or fifteen. The caveat is that the primary document
 could not be opened from this environment; the rule rests on corroborated
 quotations of the article rather than the article itself.
 
-## Serie A: checked, with a caveat
+## Serie A: checked against the primary text
 
-See `docs/italy-suspensions.md`. Art. 19 of the FIGC's Codice di Giustizia
-Sportiva: one match at the fifth caution, then *"alla quinta, alla quarta,
-alla terza, alla seconda ammonizione, ad ogni ulteriore ammonizione"*, which
-puts the bans at 5, 10, 14, 17 and 19 and at every caution from there. The
-count is per competition and cumulative within the season. The caveat is the
-same as Spain's: the Codice itself could not be opened from the build
-environment, so the rule rests on three independent quotations of the article
-that agree word for word. The brief that commissioned the desk stated a
-different progression (5, 10, 15, then every second caution); no source found
-supports it, and the Italy file records the disagreement for the reviewer.
+See `docs/italy-suspensions.md`. Art. 9, comma 5 of the FIGC's Codice di
+Giustizia Sportiva: one match at the fifth caution, then *"alla quinta, alla
+quarta, alla terza, alla seconda ammonizione, ad ogni ulteriore ammonizione"*,
+which puts the bans at 5, 10, 14, 17 and 19 and at every caution from there.
+The count is per competition and cumulative within the season. This is the one
+rule in this file read from the source document rather than from quotations of
+it: the FIGC PDF is refused by the build network but not by a GitHub runner,
+where `scripts/probe-codice.py` read it on 9 September 2026. The ladder came
+back verbatim; the article number did not. The desk had cited art. 19, which
+is *Esecuzione delle sanzioni* and contains no ladder, and every citation has
+been corrected. The brief that commissioned the desk stated a different
+progression (5, 10, 15, then every second caution). The Codice does not say
+that, and the desk does not price it.
 
 ## What is deliberately not modelled
 

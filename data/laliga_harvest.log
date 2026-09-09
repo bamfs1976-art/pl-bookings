@@ -1,4 +1,4 @@
-La Liga harvest — run 151
+La Liga harvest — run 153
 == discover ==
 La Liga: API-Football league 140, season 2026
 
@@ -24,7 +24,7 @@ laliga_clubs.json written (20 clubs)
     VAL  Valencia
     VIL  Villarreal
 
-API-Football: 1 call(s) this run; 1673 of 7500 used today (22%), 5827 left
+API-Football: 1 call(s) this run; 2448 of 7500 used today (33%), 5052 left
 == squads ==
 La Liga: API-Football league 140, season 2025
   not in this desk's club list (3): Girona, Mallorca, Oviedo
@@ -49,7 +49,7 @@ La Liga: API-Football league 140, season 2025
 
 laliga_players.json written (671 players from 17 clubs, API-Football, LL season 2025)
 
-API-Football: 43 call(s) this run; 1545 of 7500 used today (21%), 5955 left
+API-Football: 43 call(s) this run; 2491 of 7500 used today (33%), 5009 left
 == rosters ==
 La Liga: API-Football league 140, season 2026
     Athletic Club               30 players
@@ -75,7 +75,7 @@ La Liga: API-Football league 140, season 2026
 
 ll_squads.json written (639 players from 20 clubs, API-Football current rosters)
 
-API-Football: 21 call(s) this run; 1566 of 7500 used today (21%), 5934 left
+API-Football: 21 call(s) this run; 2512 of 7500 used today (33%), 4988 left
 == season-cards ==
 La Liga: API-Football league 140, season 2026
   fetching 20 squads
@@ -102,7 +102,7 @@ La Liga: API-Football league 140, season 2026
 
 laliga_season_cards.json written (558 players from 20 clubs, API-Football, LL season 2026)
 
-API-Football: 41 call(s) this run; 1607 of 7500 used today (21%), 5893 left
+API-Football: 41 call(s) this run; 2652 of 7500 used today (35%), 4848 left
 == segunda ==
 Segunda División: API-Football league 141, season 2025
   not in this desk's club list (19): AD Ceuta FC, Albacete, Almeria, Burgos, Cadiz, Castellón, Cordoba, Cultural Leonesa, Eibar, FC Andorra, Granada CF, Huesca, Las Palmas, Leganes, Mirandes, Real Sociedad II, Sporting Gijon, Valladolid, Zaragoza
@@ -113,13 +113,13 @@ Segunda División: API-Football league 141, season 2025
 
 segunda_players.json written (111 players from 3 clubs, API-Football, SEG season 2025)
 
-API-Football: 7 call(s) this run; 1614 of 7500 used today (22%), 5886 left
+API-Football: 7 call(s) this run; 2659 of 7500 used today (35%), 4841 left
 == ref-fixtures ==
 La Liga: API-Football league 140, season 2025
 
 laliga_ref_fixtures.js written (380 matches over 20 clubs, 380 with an official named)
 
-API-Football: 1 call(s) this run; 1615 of 7500 used today (22%), 5885 left
+API-Football: 1 call(s) this run; 2660 of 7500 used today (35%), 4840 left
 == fixtures ==
 La Liga: API-Football league 140, season 2026
   LL appointments overlay: 0 applied, 33 already harvested
@@ -138,17 +138,17 @@ La Liga: API-Football league 140, season 2026
 
 laliga_fixtures.js written (380 fixtures over 38 matchdays, 41 with a referee appointed)
 
-API-Football: 1 call(s) this run; 1616 of 7500 used today (22%), 5884 left
+API-Football: 1 call(s) this run; 2661 of 7500 used today (35%), 4839 left
 == build ==
 Division: 17 clubs were in it last season, 3 came up
   promoted: Deportivo La Coruna, Malaga, Racing Santander
   LL    671 players from the La Liga feed
   SEG   111 players from the Segunda feed
-  NEW   154 players from the squad fill feed
+  NEW   156 players from the squad fill feed
 Reusing the previous build for sources that did not harvest:
-  - laliga_squads.json (154 players kept from the previous build)
+  - laliga_squads.json (156 players kept from the previous build)
     27 duplicate row(s) collapsed after the moves, keeping the row with a rate on it
-Squads reconciled against the FPL feed: 66 moved, 3 joined, 268 left the division, 19 left alone as ambiguous (935 rows in, 643 out).
+Squads reconciled against the FPL feed: 66 moved, 0 joined, 267 left the division, 19 left alone as ambiguous (937 rows in, 643 out).
     A. Gonzalez RMA -> SEV
     A. Sánchez SEV -> ELC
     Adrià Alti VIL -> DEP

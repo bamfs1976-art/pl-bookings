@@ -110,7 +110,7 @@ const S = sb.PLDShare;
 assert.ok(S, 'assets/share.js did not export PLDShare');
 
 /* ---- every desk has an identity ---------------------------------------- */
-for (const code of ['PL', 'EFLC', 'LL', 'SA', 'ALL']) {
+for (const code of ['PL', 'EFLC', 'LL', 'SA', 'ALL', 'UCL']) {
   const t = S.theme(code);
   assert.ok(t && t.strap && t.mark && t.slug, `theme ${code} is incomplete`);
   assert.ok(/^#[0-9a-f]{6}$/i.test(t.from) && /^#[0-9a-f]{6}$/i.test(t.to),
@@ -118,9 +118,9 @@ for (const code of ['PL', 'EFLC', 'LL', 'SA', 'ALL']) {
 }
 /* Two desks sharing a wordmark would make their cards indistinguishable once
    posted, which is the whole job of the wordmark. */
-const marks = ['PL', 'EFLC', 'LL', 'SA', 'ALL'].map((c) => S.theme(c).mark);
+const marks = ['PL', 'EFLC', 'LL', 'SA', 'ALL', 'UCL'].map((c) => S.theme(c).mark);
 assert.equal(new Set(marks).size, marks.length, `duplicate wordmarks: ${marks.join(', ')}`);
-const slugs = ['PL', 'EFLC', 'LL', 'SA', 'ALL'].map((c) => S.theme(c).slug);
+const slugs = ['PL', 'EFLC', 'LL', 'SA', 'ALL', 'UCL'].map((c) => S.theme(c).slug);
 assert.equal(new Set(slugs).size, slugs.length,
   `duplicate filename slugs — cards would overwrite each other in Downloads: ${slugs.join(', ')}`);
 
@@ -189,6 +189,87 @@ assert.ok(/\.png$/.test(spec.filename) && spec.filename.startsWith('eflc-booking
 const noRef = S.deskMatchSpec(
   { ...priced, ref: { ref: null, name: null, appointed: false } }, ctx);
 assert.ok(/not yet appointed/i.test(noRef.refLine), noRef.refLine);
+
+/* ---- the Champions League card ------------------------------------------
+ *
+ * The one card whose two halves come out of two different data files, so it is
+ * the one card that can be silently wrong in a way no reader could detect: a
+ * total that is half a real European record and half a domestic one would look
+ * exactly like a total that is neither. Four things are asserted, and each of
+ * them is a claim the card makes on its face.
+ */
+{
+  const uclCtx = {
+    ...ctx, league: 'UCL', seasonLabel: '2026-27',
+    clubBy: { LIV: { name: 'Liverpool' }, ATM: { name: 'Atletico Madrid' } }
+  };
+  const tie = { ...priced, fx: { ...priced.fx, h: 'LIV', a: 'ATM', r: 'League Stage - 1' } };
+  const u = S.uclMatchSpec(tie, uclCtx);
+
+  assert.equal(u.league, 'UCL', 'the tie is not drawn in the European identity');
+  /* 1. THE BASIS. Eight matches is not a sample, so each side is priced off
+        its own domestic season and the card must say so where the reader
+        cannot miss it. */
+  assert.ok(/domestic/i.test(u.subtitle),
+    `a European card does not state its domestic basis: ${u.subtitle}`);
+  /* AND THE BASIS MUST NAME ITS OWN SEASON. This card carries TWO seasons and
+     they are different: the tie is 2026-27, the player rates behind it are
+     2025-26 form, which is what all three desks are built on. The first
+     version printed only the fixture's season and then the words "rates", so
+     a reader with a rival card for the same tie in front of them, carrying
+     genuine 2026-27 numbers, would have compared two different years and been
+     told they were the same one. Asserted as a season stamped on the basis
+     clause itself rather than merely present in the line, because the line
+     already had a season in it and that was the whole problem. */
+  const basis = u.subtitle.split(' · ').pop();
+  assert.ok(/\b\d{4}-\d{2}\b/.test(basis),
+    `the European card's basis clause names no season, so its rates read as ` +
+    `the fixture's year: ${u.subtitle}`);
+  assert.notEqual(basis.match(/\b\d{4}-\d{2}\b/)[0], '2026-27',
+    'the European card says its rates are the fixture\'s own season. They are ' +
+    'last season\'s form, which is what the desks are built on.');
+  /* AND IT MUST FIT. brandBand draws the subtitle in 22px at x=40 on a
+     1080-wide card, so about 78 characters reach the right edge. The first
+     version ran to 110 and the clause that fell off was the basis: the one
+     part of this card a reader cannot reconstruct. The band truncates with an
+     ellipsis now rather than running off silently, which makes an overlong
+     subtitle visible instead of invisible; this keeps it from happening. */
+  assert.ok(u.subtitle.length <= 78,
+    `the European subtitle is ${u.subtitle.length} characters and will be cut ` +
+    `on the card: ${u.subtitle}`);
+  /* 2. THE ROUND, kept whole. A bare number loses which phase it names. */
+  assert.ok(u.subtitle.includes('League Stage - 1'),
+    `the European round label was not carried through: ${u.subtitle}`);
+  /* 3. THE REFEREE'S RATE, ABSENT AND SAID TO BE. The domestic figure is on
+        the priced row and must not reach this card: a Premier League
+        cards-per-foul is not a Champions League one. */
+  assert.ok(u.refLine.includes('A Referee'), u.refLine);
+  assert.ok(!u.refLine.includes('4.86'),
+    `the European card printed the referee's DOMESTIC rate: ${u.refLine}`);
+  assert.ok(/no European card record/i.test(u.refLine), u.refLine);
+  /* 4. NO KICK-OFF INVENTED. A tie whose date the feed has not published says
+        so rather than printing a placeholder somebody would diarise. */
+  const undated = S.uclMatchSpec(
+    { ...tie, fx: { ...tie.fx, d: null } }, uclCtx);
+  assert.ok(/not published yet/i.test(undated.subtitle),
+    `an undated tie claims a kick-off: ${undated.subtitle}`);
+  assert.ok(!/Sat, Aug 15/.test(undated.subtitle), undated.subtitle);
+  /* The markets are the SAME six in the SAME order as a domestic card, so a
+     reader can hold one against the other. */
+  assert.deepEqual(u.markets.map((m) => m.label), spec.markets.map((m) => m.label),
+    'the European card asks different questions from the domestic one');
+  assert.ok(u.filename.startsWith('ucl-bookings-'), u.filename);
+
+  drawn.length = 0;
+  await S.matchCard(u);
+  const t = drawn.join('\n');
+  for (const need of ['Liverpool v Atletico Madrid', 'CHAMPIONS LEAGUE',
+                      '2025-26 domestic form', 'no European card record']) {
+    assert.ok(t.includes(need), `the European card never drew ${JSON.stringify(need)}`);
+  }
+  assert.ok(!t.includes('4.86'),
+    "the European card DREW the referee's domestic rate even though the spec omitted it");
+}
 
 /* ---- the round card ----------------------------------------------------- */
 const round = S.deskRoundSpec([priced], { ...ctx, round: 1 });
@@ -1570,7 +1651,7 @@ for (const [page, needle] of [
 }
 
 console.log(
-  `check-share OK: ${['PL', 'EFLC', 'LL', 'SA', 'ALL'].length} themes, match + round + ` +
+  `check-share OK: ${['PL', 'EFLC', 'LL', 'SA', 'ALL', 'UCL'].length} themes, match + round + ` +
   'combined cards render, adapters agree with the desks, every card carries 18+, ' +
   '/today renders one date and the whole calendar from one row builder and one card builder, ' +
   'and every logged acca — won, lost and open — has a card that states its result'

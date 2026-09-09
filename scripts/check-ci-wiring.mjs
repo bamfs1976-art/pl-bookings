@@ -54,6 +54,29 @@ for (const f of pushers) {
      that has already deployed. */
   assert.ok(src.indexOf('check-all.mjs') < src.indexOf('git push'),
     `${f} runs the guards AFTER pushing, so a bad commit is already live`);
+
+  /* THE RETRY MUST REBASE ONTO THE BRANCH THE RUN IS ON. Every one of these
+     workflows retries a rejected push by rebasing, because several of them
+     commit at once and a collision is ordinary. All six named `origin main`,
+     which is right only because main is where they usually run. Dispatched on
+     a feature branch on 9 September 2026, data-refresh.yml rebased the
+     branch's own commits onto main, hit an add/add conflict in fourteen files
+     that exist only on the branch, and exited: a run that had harvested
+     everything and committed it threw the commit away and reported a failure,
+     which is the exact outcome the retry was written to prevent.
+
+     Asserted on the git command rather than on the presence of the variable,
+     because a workflow that defines `branch` and then pulls from main anyway
+     is the failure, not the fix. */
+  for (const m of src.matchAll(/git pull --rebase[^\n]*origin\s+(\S+)/g)) {
+    assert.notEqual(m[1].replace(/["']/g, ''), 'main',
+      `${f} recovers from a rejected push by rebasing onto a hardcoded main. ` +
+      'On any branch but main that replays the branch onto a tree that has ' +
+      'never seen it, conflicts on every file the branch added, and discards ' +
+      'a run that had already done its work. Rebase onto the branch the run ' +
+      'is on: git pull --rebase origin "$branch", with branch taken from ' +
+      'GITHUB_REF_NAME.');
+  }
 }
 
 /* ---- 2. check-all really is every guard -------------------------------- */

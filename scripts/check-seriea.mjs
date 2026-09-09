@@ -251,8 +251,10 @@ assert.ok(!/rungs\s*:/.test(codeOnlyPage),
   'seriea.html defines its own rungs: they are shipped from the registry, and ' +
   'a page-local copy is a second place for the Italian thresholds to drift');
 
-/* The shipped scheme must be Italy's: the ladder of art. 19 of the Codice di
-   Giustizia Sportiva, and neither England's nor Spain's. Checked by SHAPE, so
+/* The shipped scheme must be Italy's: the ladder of art. 9, comma 5 of the
+   Codice di Giustizia Sportiva, and neither England's nor Spain's. The
+   article number was corrected on 9 September 2026 after the Codice was read
+   on a runner; art. 19 is "Esecuzione delle sanzioni". Checked by SHAPE, so
    a registry edit that swapped in the wrong country's rule fails here whatever
    it is called. */
 const SUSP = vm.runInContext("typeof SUSPENSION !== 'undefined' ? SUSPENSION : null", ctx);
@@ -264,14 +266,14 @@ assert.ok(SUSP.at == null && SUSP.cumulative === true,
   'the Serie A scheme carries a cycle length or resets after a ban, which is Spain');
 assert.deepEqual((SUSP.rungs || []).map((r) => r.at), [5, 10, 14, 17, 19],
   `the Italian rungs are ${JSON.stringify((SUSP.rungs || []).map((r) => r.at))}, ` +
-  'not 5 / 10 / 14 / 17 / 19 (art. 19: fifth, then fourth, third, second)');
+  'not 5 / 10 / 14 / 17 / 19 (art. 9, comma 5: fifth, then fourth, third, second)');
 for (const r of SUSP.rungs) {
   assert.equal(r.ban, 1, `the ban at ${r.at} is ${r.ban} matches: Italy never escalates`);
   assert.equal(r.by, null, `the rung at ${r.at} is gated by match ${r.by}: gates are England`);
 }
 assert.equal(SUSP.then_every, 1,
-  `after the nineteenth caution the ban comes every ${SUSP.then_every}; art. 19 ` +
-  'says every caution');
+  `after the nineteenth caution the ban comes every ${SUSP.then_every}; art. 9, ` +
+  'comma 5 says every caution');
 /* And the two other countries' schemes are rejected by the same checks, so the
    checks are known to bite rather than to pass whatever is shipped. */
 const ENGLAND = { kind: 'ladder', cumulative: true,

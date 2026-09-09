@@ -230,6 +230,15 @@ jobs:
       - name: Serie A dataset and desk guard
         run: node scripts/check-seriea.mjs
 
+      # The Champions League tie list. It is the one file in the repository
+      # that names two desks in one row, so it is the one place BOTH SIDES OR
+      # NEITHER can be broken silently: every club code is confirmed against
+      # the data file of the desk the row files it under. It also catches the
+      # thing the feed gets wrong every August, a whole league phase stamped
+      # with one provisional kick-off.
+      - name: Champions League tie list guard
+        run: node scripts/check-ucl.mjs
+
       # The share cards. They are the one artefact that LEAVES the site, so
       # nobody who sees one can check it against the page it came from. Runs
       # the renderer against a recording stub and asserts the text drawn —

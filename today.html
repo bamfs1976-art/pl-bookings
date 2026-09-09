@@ -40,10 +40,13 @@
       : p === '/derbies' || p === '/derbies.html' ? 'derbies'
       : p === '/record' || p === '/record.html' ? 'record'
       : p === '/booked' || p === '/booked.html' ? 'booked'
+      : p === '/europe' || p === '/europe.html' ? 'europe'
       : (p === '/today' || p === '/season' || p === '/today.html') ? 'season'
       : 'home';
     document.documentElement.setAttribute('data-route', route);
-    document.title = route === 'accas'
+    document.title = route === 'europe'
+      ? 'Champions League — the ties this desk can price — Bookings Desk'
+      : route === 'accas'
       ? 'Accas — every combination, in one place — Bookings Desk'
       : route === 'derbies'
       ? 'Every derby, all season, all three divisions — Bookings Desk'
@@ -176,6 +179,7 @@
     <a class="lb-item lb-eflc" href="/eflc"><span class="lb-dot"></span><span class="lb-full">Championship</span><span class="lb-abbr">Championship</span></a>
     <a class="lb-item lb-ll" href="/laliga"><span class="lb-dot"></span><span class="lb-full">La Liga</span><span class="lb-abbr">La Liga</span></a>
     <a class="lb-item lb-sa" href="/seriea"><span class="lb-dot"></span><span class="lb-full">Serie A</span><span class="lb-abbr">Serie A</span></a>
+    <a class="lb-item lb-europe" href="/europe"><span class="lb-dot"></span><span class="lb-full">Champions League</span><span class="lb-abbr">Europe</span></a>
     <a class="lb-item lb-season" href="/today"><span class="lb-dot"></span><span class="lb-full">Season calendar</span><span class="lb-abbr">Season</span></a>
   </div>
 </nav>
@@ -414,6 +418,36 @@
     <p class="note" id="derbyNote"></p>
   </section>
 
+  <!-- EUROPE. Not a desk and not pretending to be one: the Champions League
+       has no fixed club list, no table and no evidenced suspension ladder, so
+       it gets a route off this file rather than a page of its own. This is
+       also the only view here whose two halves come out of two different
+       datasets, which is exactly why it belongs on the page that already
+       holds all three. /europe only. -->
+  <section class="hero" data-for="europe">
+    <h1>Champions League: the ties this desk can price</h1>
+    <p class="muted" style="margin:8px 0 0;max-width:70ch">
+      A European tie is priceable here only when <b>both</b> clubs sit on a desk that holds
+      players for them. The match total is the sum of two halves, so pricing one side off its
+      real squad and the other off nothing would make them answer different questions.
+      With the Premier League, La Liga and Serie A desks built, that is a real list.
+      Each side is priced off its <b>own domestic league, on 2025-26 form</b>, which is what the
+      share card says: eight European matches is not a sample, and neither is four. There is no referee rate, because a referee's
+      cards per foul is competition-specific and these desks hold domestic records. There is no
+      suspension strip, because UEFA's accumulation rules are not evidenced here.
+    </p>
+    <div class="stats" id="statsEurope"></div>
+  </section>
+
+  <section class="card" id="uclCard" data-for="europe" style="margin-top:14px" hidden>
+    <div class="controls" style="margin-bottom:4px">
+      <h2 style="font-size:16px">Every priceable tie</h2>
+    </div>
+    <p class="faint" id="uclSub" style="font-size:12.5px;margin:0"></p>
+    <div id="uclBody"></div>
+    <p class="note" id="uclNote"></p>
+  </section>
+
   <!-- THE WEEK'S CARD NINE-FOLD, across every division this page holds.
        Under the day's acca because it is the wider read of the two, and it
        is the one card here that cannot be built on any other page: three
@@ -494,6 +528,13 @@
 <!-- Confirmed team sheets. Absent until a harvest lands one, which is the
      ordinary state; onerror keeps the page whole when the file is not there. -->
 <script src="data/lineups.js" onerror="void 0"></script>
+<!-- The Champions League ties both desks hold. Written once a day by
+     data/harvest_ucl.py and absent until it has run, which is why onerror is
+     here for the same reason it is on the line above: /data/* is routed to a
+     real 404 so the browser fires `error` rather than parsing HTML as
+     JavaScript. Loaded flat rather than through a frame because it declares
+     one global nothing else uses and it is a few hundred bytes. -->
+<script src="data/ucl_ties.js" onerror="void 0"></script>
 <script src="assets/profile.js"></script>
 <!-- Every desk's committed dataset, each in its OWN GLOBAL SCOPE.
 
@@ -1763,6 +1804,231 @@
   }
 
   /* ═══════════════════════════════════════════════════════════
+   * EUROPE
+   *
+   * The one view on this page whose two halves come out of two different
+   * datasets, and the reason it is on this page rather than a desk of its own.
+   *
+   * BOTH SIDES OR NEITHER, exactly as price() enforces it within a division:
+   * the match total is the sum of two halves, so pricing one side off a real
+   * squad and the other off nothing would make them answer different
+   * questions. data/harvest_ucl.py has already dropped every tie with a club
+   * no desk holds, and scripts/check-ucl.mjs re-derives that from the desks'
+   * own data files. This does it a third time, because the harvest ran
+   * yesterday and a club can leave a dataset between two runs.
+   *
+   * NO REFEREE FACTOR. A referee's cards per foul is competition-specific and
+   * these desks hold DOMESTIC records, so Michael Oliver's Premier League rate
+   * is not his Champions League rate. Every tie is priced at a neutral
+   * official and the card says so. Passing `null` here rather than a factor of
+   * one is deliberate: it is the same argument sideProbs takes when no
+   * referee is known, so this path and that one cannot drift.
+   *
+   * NO SUSPENSION LADDER and no derby boost: neither is evidenced for this
+   * competition, and this project does not draw a rung it has not read.
+   */
+  /* ONE SIDE OF A EUROPEAN TIE, THROUGH ITS OWN DESK'S PRICING.
+   *
+   * The three desks do not price a player the same way and are not meant to.
+   * The Premier League runs a fitted GLM through assets/plmodel.js with a
+   * venue term and the match model's game-state term; La Liga and Serie A run
+   * the shrink-then-hazard path in prepare(). price() branches on exactly that
+   * and so does this, for the same reason: a Liverpool player must carry the
+   * number the Premier League desk shows for him, not a second opinion
+   * computed here.
+   *
+   * That branch is why the first version of this view priced five ties out of
+   * eighteen. sideProbs() reads `_y90`, which prepare() sets on the two
+   * shrink-path desks and never on the Premier League, whose players are
+   * priced through the model instead. Every tie with an English club silently
+   * failed to price and the page showed the thirteen that were left as though
+   * that were the list.
+   *
+   * THREE TERMS ARE DELIBERATELY OFF on both paths. No referee factor, because
+   * a referee's cards per foul is competition-specific and these desks hold
+   * domestic records. No derby boost, because a European tie is not a derby.
+   * No game-state term, because that is a simulation of a domestic fixture and
+   * there is none for this one; `null` is passed rather than letting simFor()
+   * look up two clubs that never meet in a league.
+   */
+  function europeSide(L, short, isHome) {
+    if (L.pl) {
+      /* candidates(h, a, ...) filters to the two clubs named and prices each
+         as home or away by which one he is in. The opponent is on another
+         desk, so naming it here yields nobody: the filter widens, it never
+         invents. */
+      var cands = L.pl.candidates(isHome ? short : null, isHome ? null : short,
+                                  null, false, null)
+        .filter(function (c) { return c.p.c === short; });
+      if (!cands.length) return null;
+      return {
+        ps: C.matchLambdas(cands.map(function (c) { return c.prob; }),
+                           cands.map(function (c) { return c.p.min; })),
+        top: cands.slice(0, 4)
+      };
+    }
+    return sideProbs(L, short, null, null);
+  }
+
+  function tieRows() {
+    if (typeof UCL_TIES === 'undefined' || !UCL_TIES) return [];
+    var by = {};
+    LEAGUES.forEach(function (L) { by[L.code] = L; });
+    var out = [];
+    UCL_TIES.forEach(function (t) {
+      var Lh = by[t.hl], La = by[t.al];
+      /* A desk whose dataset did not load is a tie missing from this list,
+         never half a tie priced against a stranger. */
+      if (!Lh || !La) return;
+      var home = europeSide(Lh, t.h, true), away = europeSide(La, t.a, false);
+      if (!home || !away) return;
+      var m = C.teamCardMarkets(home.ps, away.ps, [3.5, 4.5, 5.5]);
+      /* Neither side was priced off a team sheet: European lineups are not
+         harvested, and claiming otherwise on the card would be the one thing
+         a reader cannot check. */
+      m.xi = false;
+      out.push({
+        t: t, Lh: Lh, La: La,
+        fx: { id: t.id, d: t.d, r: t.r, h: t.h, a: t.a, ref: t.ref },
+        ref: { ref: null, name: t.ref || null, appointed: !!t.ref },
+        factor: 1, home: home, away: away, m: m
+      });
+    });
+    /* Dated ties first in kick-off order, then the ones UEFA has not
+       published a calendar for, in round order. The same rule the harvest
+       sorts the file by, so the page and the file agree. */
+    return out.sort(function (a, b) {
+      var ad = a.fx.d ? 0 : 1, bd = b.fx.d ? 0 : 1;
+      if (ad !== bd) return ad - bd;
+      return String(a.fx.d || a.fx.r || '').localeCompare(String(b.fx.d || b.fx.r || ''));
+    });
+  }
+
+  /* A club's own desk, so each side of a European row links to the page that
+     actually holds it. rowHTML() links a whole fixture to one desk, which is
+     the right answer for a domestic match and the wrong one here. */
+  function tieClub(L, short) {
+    return (L.clubBy && L.clubBy[short]) || { short: short };
+  }
+
+  function uclRowHTML(r) {
+    var all = [];
+    ['home', 'away'].forEach(function (k) {
+      (r[k].top || []).forEach(function (x) { all.push(x); });
+    });
+    all.sort(function (a, b) { return b.prob - a.prob; });
+    var deskOf = {}; deskOf[r.fx.h] = r.Lh; deskOf[r.fx.a] = r.La;
+
+    var cands = all.length
+      ? all.slice(0, 5).map(function (x) {
+          var b = band(x.prob), L = deskOf[x.p.c] || r.Lh;
+          var club = tieClub(L, x.p.c);
+          return '<div class="cand">'
+            + PLDProfile.crest({ short: x.p.c, name: club.name, img: x.p.ph || null })
+            + '<span class="cbadge">' + esc(x.p.c) + '</span>'
+            + '<span class="nm">' + esc(x.p.n)
+            + ' <span class="faint">' + esc(x.p.p || '') + '</span></span>'
+            + '<span class="pc-wrap"><span class="pc band ' + b[0] + '">' + pct(x.prob) + '</span>'
+            + (b[1] ? '<span class="sev">' + esc(b[1]) + '</span>' : '') + '</span>'
+            + '</div>';
+        }).join('')
+      : '<div class="faint" style="font-size:12.5px">No rated players.</div>';
+
+    /* THE KICK-OFF, OR THE ROUND, NEVER A GUESS. A tie whose date the feed has
+       not published carries none: the harvest writes null rather than the one
+       provisional instant API-Football stamps a whole league phase with, and
+       this says so in words a reader can act on. */
+    /* A PLAYED TIE SAYS SO. The league phase runs from September to January
+       and this list is the whole of it in date order, so the top of it is
+       history within a fortnight. A forecast shown beside a result nobody
+       marked as one is the reader's mistake to make and the page's fault. */
+    var played = r.t.st === 'FT' || r.t.st === 'AET' || r.t.st === 'PEN';
+    var when = (r.fx.d ? fmtTime(r.fx.d) : 'date to be confirmed')
+      + (played ? ' · played' : '');
+    var rl = C.refLabel(r.ref, refAbbr);
+
+    return '<div class="fx" data-lg="UCL" data-h="' + esc(r.fx.h)
+      + '" data-a="' + esc(r.fx.a) + '">'
+      + '<div class="fx-top">'
+      + '<div class="fx-topl">'
+      + '<span class="fx-teams">'
+      + '<span class="lg UCL">UCL</span>'
+      + '<a href="' + esc(r.Lh.href || '/') + '" title="Open the '
+      + esc(r.Lh.name || r.Lh.code) + ' desk">'
+      + PLDProfile.crest(tieClub(r.Lh, r.fx.h)) + '<b>' + esc(r.fx.h) + '</b></a>'
+      + '<span class="faint">v</span>'
+      + '<a href="' + esc(r.La.href || '/') + '" title="Open the '
+      + esc(r.La.name || r.La.code) + ' desk">'
+      + PLDProfile.crest(tieClub(r.La, r.fx.a)) + '<b>' + esc(r.fx.a) + '</b></a>'
+      + '</span>'
+      + '<div class="fx-when">' + esc((r.fx.r ? r.fx.r + ' · ' : '') + when) + '</div>'
+      + '</div>'
+      + '<div class="fx-topr">'
+      /* THE SHARED RULE, not a local ternary: PLDCore.refLabel already has the
+         state this needs. An appointed European official is exactly its
+         "unrated" case, because there is no European card record in this app
+         and there is not meant to be. Its title says the match prices at the
+         league rate; the note under this list says which league rate, and the
+         share card says it again on its face. */
+      + '<div class="fx-refline"' + (rl.title ? ' title="' + esc(rl.title) + '"' : '')
+      + '>' + esc(rl.text) + '</div>'
+      + (S ? '<button class="fx-shareico" type="button"'
+           + ' data-share-ucl="' + esc(String(r.fx.id)) + '"'
+           + ' title="Download a shareable card of this tie"'
+           + ' aria-label="Share ' + esc(r.fx.h) + ' versus ' + esc(r.fx.a) + '">'
+           + '⬇</button>' : '')
+      + '<span class="fx-heat' + (r.m.expected >= 4.2 ? ' hot' : '') + '" '
+      + 'title="Booking heat: expected cards, both sides added together">'
+      + n1(r.m.expected) + '</span>'
+      + '</div>'
+      + '</div>'
+      + '<div class="fx-cands">' + cands + '</div>'
+      + '<div class="mkts">'
+      + '<span class="mkt">Over 3.5 <b>' + pct(r.m.over[3.5]) + '</b></span>'
+      + '<span class="mkt">Over 4.5 <b>' + pct(r.m.over[4.5]) + '</b></span>'
+      + '<span class="mkt">Both carded <b>' + pct(r.m.bothCarded) + '</b></span>'
+      + '<span class="mkt" title="Each side picks up two or more. Sides priced independently, so treat it as a floor.">Both 2+ <b>' + pct(r.m.bothTwo) + '</b></span>'
+      + '</div>'
+      + '</div>';
+  }
+
+  var TIES = [];
+
+  function renderEurope() {
+    var card = $('#uclCard');
+    if (!card) return;
+    if (!onRoute('europe')) { card.hidden = true; return; }
+    TIES = tieRows();
+    if (!TIES.length) {
+      card.hidden = false;
+      $('#uclBody').innerHTML = '<p class="faint" style="font-size:13px">'
+        + 'No Champions League tie has both clubs on a desk this app holds yet. '
+        + 'The list is rebuilt once a day from the draw.</p>';
+      $('#uclSub').textContent = '';
+      $('#uclNote').textContent = '';
+      return;
+    }
+    card.hidden = false;
+    var pairs = {};
+    TIES.forEach(function (r) { pairs[r.Lh.code + ' v ' + r.La.code] = 1; });
+    var dated = TIES.filter(function (r) { return !!r.fx.d; }).length;
+    $('#uclBody').innerHTML = TIES.map(uclRowHTML).join('');
+    $('#uclSub').innerHTML = TIES.length + ' tie' + (TIES.length === 1 ? '' : 's')
+      + ' &nbsp;' + Object.keys(pairs).sort().map(function (k) {
+          return '<span class="lg UCL">' + esc(k) + '</span>'; }).join(' ');
+    $('#uclNote').textContent = 'Each side is priced off its own domestic league, '
+      + 'on 2025-26 form, because eight European matches is not a sample and this '
+      + 'season is four games old. The share card says so on its face. '
+      + 'No referee rate: a referee’s cards per foul is competition-specific and these '
+      + 'desks hold domestic records. No suspension strip: UEFA runs its own accumulation '
+      + 'rules and none of them is evidenced here. '
+      + (dated < TIES.length
+          ? (TIES.length - dated) + ' tie' + (TIES.length - dated === 1 ? '' : 's')
+            + ' show no kick-off because the feed has published the draw and not the calendar.'
+          : '');
+  }
+
+  /* ═══════════════════════════════════════════════════════════
    * MOST BOOKED
    *
    * Three tables off ONE ledger. data/<league>_bookings.js records, per
@@ -2337,7 +2603,7 @@
      add a route here is silent: the head stamps data-route correctly, the CSS
      shows the right blocks, and the SCRIPT quietly builds the home page
      underneath them. It cost this route a debugging session. */
-  if (['season', 'accas', 'derbies', 'record', 'booked'].indexOf(ROUTE) < 0) ROUTE = 'home';
+  if (['season', 'accas', 'derbies', 'record', 'booked', 'europe'].indexOf(ROUTE) < 0) ROUTE = 'home';
   /* The accas and derbies routes show no fixture list, so which LIST they
      would have shown is not a question they ask. Both index and price exactly
      as the other two do — the slips and the derby heat are built off the same
@@ -2388,6 +2654,7 @@
     renderNine();
     renderCombos();
     renderDerbies();
+    renderEurope();
     renderRecord();
     renderBooked();
   }
@@ -2493,6 +2760,52 @@
          a reader's mark — see the note in share.js. */
       pricedOffXI: !!(p.m && p.m.xi),
       palette: paletteFor(code)
+    });
+    var label = btn ? btn.getAttribute('aria-label') : null;
+    if (btn) { btn.disabled = true; }
+    S.matchCard(spec)
+      .then(function (b) { S.download(b, spec.filename); })
+      .catch(function (e) { if (window.console) console.error(e); })
+      .then(function () { if (btn) { btn.disabled = false; if (label) btn.setAttribute('aria-label', label); } });
+  }
+
+  /* ONE EUROPEAN TIE'S CARD, through share.js's own European adapter.
+   *
+   * The palette is merged from BOTH desks rather than taken from one: this is
+   * the only card in the app whose two clubs come from two colour tables, and
+   * handing it either desk's table alone would draw one side in a stranger's
+   * kit. clubBy is merged for the same reason, so the card can print both
+   * clubs' full names.
+   *
+   * No stat sheet is offered beside it. The sheet's form grid is five recent
+   * matches read from a division's own fixture statistics, and there is no
+   * European equivalent to read: a grid filled from domestic matches under a
+   * European heading would be the one thing on the card a reader could not
+   * check.
+   */
+  function shareTie(fid, btn) {
+    if (!S || !S.uclMatchSpec) return;
+    var r = null;
+    for (var i = 0; i < TIES.length; i++) {
+      if (String(TIES[i].fx.id) === String(fid)) { r = TIES[i]; break; }
+    }
+    if (!r) return;
+    var clubBy = {};
+    clubBy[r.fx.h] = tieClub(r.Lh, r.fx.h);
+    clubBy[r.fx.a] = tieClub(r.La, r.fx.a);
+    var palette = {};
+    [r.Lh.code, r.La.code].forEach(function (code) {
+      var t = paletteFor(code);
+      Object.keys(t || {}).forEach(function (k) { palette[k] = t[k]; });
+    });
+    var spec = S.uclMatchSpec(r, {
+      league: 'UCL', seasonLabel: '2026-27', roundWord: 'Matchday',
+      /* THE FIXTURE'S SEASON AND THE RATES' SEASON ARE DIFFERENT THINGS, and
+         the card says both. The tie is 2026-27; the player rates behind it are
+         2025-26 form, which is what all three desks are built on and what
+         their file headers say. */
+      formSeason: '2025-26',
+      clubBy: clubBy, whenText: fmtWhen, palette: palette
     });
     var label = btn ? btn.getAttribute('aria-label') : null;
     if (btn) { btn.disabled = true; }
@@ -2889,6 +3202,23 @@
         + stat(pairs, 'rivalries')
         + stat(left, 'still to play')
         + (hot ? stat(hot.p.m.expected.toFixed(1), 'cards, hottest derby') : '');
+    } else if (ROUTE === 'europe') {
+      /* PRICEABLE OF DRAWN is the number that matters here and the one a
+         reader would otherwise have to take on trust: this list is eight ties
+         out of a hundred and forty-four, and saying only "8 ties" would read
+         as the competition being small rather than as the desk being honest
+         about its reach. The total comes from the file's own header, which is
+         where the harvest wrote it. */
+      var trows = tieRows();
+      var hotT = trows.reduce(function (m, r) {
+        return !m || r.m.expected > m.m.expected ? r : m; }, null);
+      var desks = {};
+      trows.forEach(function (r) { desks[r.Lh.code] = 1; desks[r.La.code] = 1; });
+      $('#statsEurope').innerHTML =
+        stat(trows.length, trows.length === 1 ? 'priceable tie' : 'priceable ties')
+        + stat(Object.keys(desks).length, 'desks involved')
+        + (hotT ? stat(hotT.m.expected.toFixed(1), 'cards, hottest tie') : '')
+        + stat(trows.filter(function (r) { return !!r.fx.d; }).length, 'with a kick-off');
     } else {
       /* Computed off the date the page will actually open on, which on a blank
          Tuesday is the next one with matches rather than today — the same date
@@ -2931,6 +3261,7 @@
       : ROUTE === 'derbies' ? '.lb-derbies'
       : ROUTE === 'record' ? '.lb-record'
       : ROUTE === 'booked' ? '.lb-booked'
+      : ROUTE === 'europe' ? '.lb-europe'
       : '.lb-today');
     if (cur) cur.setAttribute('aria-current', 'page');
     /* Only the derby list redraws — nothing else on the page reads it. */
@@ -2959,6 +3290,18 @@
        of its matches you are combining. */
     Array.prototype.forEach.call(document.querySelectorAll('input[name=legs]'),
       function (r) { r.addEventListener('change', renderAcca); });
+
+    /* The European ties are their own list on their own route, so they need
+       their own delegated listener: #list holds the domestic fixtures and a
+       handler added there fires for nothing under #uclBody. The first version
+       put it there and the download buttons silently did nothing, which is
+       why this comment names the container rather than describing the
+       pattern. */
+    $('#uclBody').addEventListener('click', function (ev) {
+      if (!ev.target.closest) return;
+      var ucb = ev.target.closest('[data-share-ucl]');
+      if (ucb) shareTie(ucb.getAttribute('data-share-ucl'), ucb);
+    });
 
     /* Delegated, because the calendar's buttons are rebuilt by every render
        and per-node listeners would leak one set per redraw. */

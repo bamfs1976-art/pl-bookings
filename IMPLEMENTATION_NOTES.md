@@ -6,6 +6,193 @@ work, newest first: what changed, what was deferred and why. Everything before
 in [docs/decisions.md](docs/decisions.md); the audit itself is
 [docs/audit-2026-07.md](docs/audit-2026-07.md).
 
+## The European card named the wrong season, and a rival card showed it (2026-09-09)
+
+Two Betting Village Stats cards arrived for Napoli v Arsenal and Liverpool v
+Atletico Madrid, which are two of the eighteen ties `/europe` prices. Held
+against ours, three things came out.
+
+**Two independent confirmations.** Both referee names match the harvest
+exactly, Glenn Nyberg on Napoli v Arsenal and Davide Massa on Liverpool v
+Atletico, as do both kick-offs at 19:00 UTC. That is the API-Football
+appointment field checked against a source that never saw it.
+
+**One real inaccuracy, now fixed.** The card's subtitle read
+`2026-27 · League Stage - 1 · Wed, Sep 9, 19:00 · domestic-season rates`. The
+season in that line is the FIXTURE's, and putting it beside the word "rates"
+tells a reader the rates are this season's. They are not. All three desks are
+built on 2025-26 form and say so in their own file headers, and the rival card
+for the same tie carries genuine 2026-27 numbers, so the two would have been
+compared as though they were the same year. The clause now names its own
+season: `2025-26 domestic form`. The Premier League desk's own share card has
+named its form season since it was written, so this was the odd one out rather
+than a new idea.
+
+`check-share.mjs` asserts it on the basis clause specifically, not on the line,
+because the line already had a season in it and that was the whole problem: the
+last clause must carry a four-digit season and it must not be the fixture's.
+Verified by putting the old wording back and watching the guard fail.
+
+**The measured gap between the two cards.** Ours prices bookings and theirs is
+a general stat sheet, so most of the difference is intended. The part that is
+not is squad coverage, because a player with no card record cannot be priced
+at all:
+
+| Club | Squad | Rated | No record |
+|---|---|---|---|
+| Napoli | 27 | 23 | 4 |
+| Arsenal | 29 | 25 | 4 |
+| Atletico Madrid | 32 | 21 | 11 |
+| Liverpool | 36 | 22 | 14 |
+
+The unrated are summer signings with no 2025-26 minutes in a league a desk
+holds, and the rival card ranks several of them at the top of its own tables:
+Victor Munoz first for Liverpool fouls and shots, Jeremy Jacquet second for
+tackles, Alex Grimaldo first for Atletico tackles, Lee Kang-In first for
+shots. This is the known NEW-basis limitation with a European example on it,
+and it resolves itself as this season's minutes accrue. Listing them with
+dashes rather than invented numbers is still the right answer.
+
+**One thing I got wrong while checking.** I first reported Julian Alvarez as
+absent from the La Liga dataset. He is in it, as "J. Alvarez" with 1,902
+minutes; my lookup matched on the full first name and the feed abbreviates it.
+
+**One new bug, not fixed here.** Two player names are mojibake: "Dani
+MartÃ­nez" in `laliga_data.js` and "C. Inao OulaÃ¯" in `seriea_data.js`, both
+UTF-8 read as Latin-1. Two names out of roughly nineteen hundred, and the
+Premier League and Championship files are clean, so it is narrow. The raw
+harvest JSON is gitignored and the refresh runs on a runner, so the root cause
+cannot be located from this checkout and guessing at the fix would be worse
+than leaving it named.
+
+## Champions League share cards, and three bugs found on the way (2026-09-09)
+
+Eighteen of the 234 Champions League ties this season have both clubs on a
+desk this app holds players for. `/europe` lists them, prices each side off
+its own domestic season and exports a share card per tie.
+
+**The rule the whole thing turns on** is the one `index.html` already enforces
+for domestic matches: BOTH SIDES OR NEITHER. The match total is the sum of two
+halves, so pricing one side off a real squad and the other off nothing would
+make them answer different questions. `data/harvest_ucl.py` drops a tie whose
+clubs do not both resolve, `scripts/check-ucl.mjs` re-derives that from the
+three desks' own data files, and `tieRows()` checks it a third time because
+the harvest ran yesterday and a club can leave a dataset between two runs.
+
+**What the card says, and what it refuses to say.** Each side priced off its
+own domestic season, stated on the card's face: eight European matches is not
+a sample, and the two halves of the total come out of two different files. The
+referee's name, but not his rate, and the reason printed beside it: cards per
+foul is competition-specific and these desks hold domestic records. No
+suspension strip at all, because UEFA's accumulation rules are not evidenced
+here and this project does not draw a rung it has not read.
+
+**Europe is a route, not a desk,** and deliberately so. It has no fixed club
+list, no table and no ladder, and a `europe.html` would have had to load all
+three datasets again and keep its own copy of the pricing in step with
+`today.html`'s. It is the seventh view of that one file.
+
+### Three bugs, each found by trying to use the thing
+
+**1. Serie A had never appeared on /today at all.** `data-frame.html` reads
+each dataset's globals by name and was never taught `SERIEA_PLAYERS`,
+`SERIEA_FIXTURES`, `SERIEA_INJURIES`, `SERIEA_BOOKINGS` or `SERIEA_FXSTATS`.
+`readFrames()` drops a league with no players, by design, to lose a league
+rather than the page. So the desk shipped, the page kept working, and Serie A
+was silently missing from every combined view: the day's list, the calendar,
+the accas, the derbies and the ledger. Nothing failed. It surfaced only
+because a Champions League tie needed the Italian half of a price.
+
+**2. The Premier League prices through a different path, and the first version
+of this view did not know it.** `prepare()` sets `_y90` on the two
+shrink-then-hazard desks and never on the Premier League, whose players go
+through the fitted model in `assets/plmodel.js`. `sideProbs()` reads `_y90`,
+so every tie with an English club failed to price and the page showed the
+thirteen that were left as though that were the list. `europeSide()` now
+branches exactly as `price()` does, and each club carries the number its own
+desk shows for it.
+
+**3. Every share card could lose the end of its subtitle, silently.**
+`brandBand()` drew the subtitle with a bare `fillText`, so anything wider than
+the card ran off the right edge: no error, no ellipsis, no clue that the
+sentence had a second half. The European card found it because its subtitle
+carries the basis the price was computed on, and the basis was the half that
+fell off. The band fits the subtitle now, like the title above it, and
+`check-share.mjs` also caps the European subtitle's length so an overlong one
+fails in CI rather than on a timeline.
+
+A fourth, smaller one: the first version hung the download handler on the
+delegated listener attached to `#list`, which does not contain the European
+rows, so eighteen buttons did nothing at all.
+
+### Checked
+
+`/europe` was rendered in headless Chromium at 393px against the shipped data:
+eighteen ties, three desks, kick-offs from September to January, the league bar
+marking Europe as current, no other route's blocks visible, and no page errors.
+The Liverpool v Atletico Madrid card was downloaded and read: both clubs in
+their own desks' colours, the referee named without a rate, the basis stated
+whole. All 59 CI steps green.
+
+## The Codice, read at last: the rule holds, the citation did not (2026-09-09)
+
+The Serie A desk shipped its suspension ladder on three secondary quotations,
+because `figc.it` and every legal database that reprints the Codice di
+Giustizia Sportiva are refused by the network this desk is built on. A GitHub
+runner is not refused. `scripts/probe-codice.py` reads the FIGC's own PDF
+there, prints what it finds and writes nothing;
+`.github/workflows/probe-codice.yml` runs it whenever the probe itself
+changes, because `workflow_dispatch` only reaches workflows already on the
+default branch.
+
+**The rule is right.** 730,287 bytes of PDF, 271,453 characters of extracted
+text, and the progression comes back verbatim:
+
+> I tesserati cui gli organi di giustizia sportiva infliggano piu ammonizioni,
+> ancorche conseguenti ad infrazioni di diversa natura, alla quinta
+> ammonizione incorrono nella squalifica per una gara. Nei casi di recidiva,
+> si procede secondo la seguente progressione: a) ... alla quinta ammonizione;
+> b) ... alla quarta ammonizione; c) ... alla terza ammonizione; d) ... alla
+> seconda ammonizione; e) successiva squalifica per una gara ad ogni ulteriore
+> ammonizione.
+
+That is the shipped ladder exactly: bans at 5, 10, 14, 17 and 19, then every
+caution, each one match, no gate. No code changed. The commissioning brief's
+5, 10, 15 then every second caution is not in the document.
+
+**The citation was wrong, and had been repeated seven times.** The progression
+sits in **art. 9, comma 5**. Art. 19 is *Esecuzione delle sanzioni*: its nine
+commas cover publication, enforceability pending appeal, the ban on entering
+the ground, Coppa Italia, the play-offs, and when cautions lapse. There is no
+ladder in it. The number came from the secondary sources, one of which is a
+reprint of art. 19 under that very heading, and it propagated into
+`data/leagues.py`, `docs/italy-suspensions.md`, `docs/leagues.md`,
+`docs/suspension-rules.md`, `scripts/check-seriea.mjs`, `tests/test-core.mjs`
+and the `seriea.html` Guide. All corrected. A rule quoted under the wrong
+number is a rule a reader cannot check, which is the whole point of quoting it.
+
+**Two smaller findings, now recorded** in `docs/italy-suspensions.md`: the
+Coppa Italia threshold is one ban every two cautions rather than five (art.
+19, comma 5), and cautions lapse at the end of the season and on a transfer
+between Leghe (art. 19, comma 9). Neither changes a league desk.
+
+**Three faults in the probe, worth recording because each hid the answer.**
+The first run printed nothing: `article_19()` took the first heading matching
+art. 19, which in a code this size is the table of contents entry with nothing
+under it. The second run printed the article but filtered the search to lines
+containing "ammonizion", and the progression names its ordinals without
+repeating the noun, so the filter removed exactly the evidence. The third
+fault was the sharpest: the summary said `'quarta ammonizione' x0` on the same
+page as the sentence containing it, because a PDF wraps at the column and the
+phrase was split across a newline. Every search now runs on a
+whitespace-flattened copy, and every hit names the article it sits in. A
+diagnostic that reports zero while printing the evidence is worse than one
+that fails.
+
+**Still unchecked:** whether a Comunicato Ufficiale this season has amended
+art. 9. The probe reads the consolidated text as published, which is the right
+document, but an amendment would not appear in it until the FIGC republishes.
+
 ## Serie A desk: the first data run, and what it caught (2026-09-09)
 
 Data refresh run 148 on this branch, with `refresh_seriea` on and the other
@@ -171,11 +358,11 @@ the brief allowed and is wired into `ci.yml`.
 
 **The suspension rule disagrees with the brief, deliberately.** The brief said
 the 5th, 10th and 15th caution then every second one. Three independent
-quotations of art. 19 of the FIGC's Codice di Giustizia Sportiva all give 5,
-then 10, 14, 17, 19, then every caution, and that is what the desk prices.
-`docs/italy-suspensions.md` sets out both readings, the sources, and the fact
-that the Codice itself could not be opened from here. If the brief turns out
-to be right, the fix is five lines in the registry and nothing else.
+quotations of the FIGC's Codice di Giustizia Sportiva all give 5, then 10, 14,
+17, 19, then every caution, and that is what the desk prices.
+`docs/italy-suspensions.md` sets out both readings and the sources. The Codice
+itself could not be opened from here; it was read on a runner the same day and
+confirms the ladder, which is the entry below.
 
 **The budget, from `python3 data/api_budget.py` with four divisions:**
 

@@ -258,7 +258,7 @@ LEAGUES = {
         # 380 matches over roughly 20 officials, the same ratio as La Liga.
         min_ref_matches=3,
         # THE ITALIAN RULE IS A THIRD SHAPE. Codice di Giustizia Sportiva
-        # art. 19: a one-match ban at the FIFTH caution, and then, in
+        # art. 9, comma 5: a one-match ban at the FIFTH caution, and then, in
         # recidiva, a further one-match ban at the fifth, the fourth, the
         # third and the second caution after each ban, and at every caution
         # from there on. So the bans fall at 5, 10, 14, 17, 19, 20, 21 and so
@@ -269,15 +269,17 @@ LEAGUES = {
         # (`then_every`), because the two existing shapes cannot say "and
         # every caution after the last rung".
         #
-        # NOT VERIFIED FROM THE SOURCE DOCUMENT. figc.it and the legal
-        # databases that reprint the Codice were unreachable from the build
-        # environment; the rule rests on three independent quotations of
-        # art. 19 that agree with each other. See docs/italy-suspensions.md,
-        # which also records that the commissioning brief stated a different
-        # progression (5, 10, 15, then every second caution) that no source
-        # supports.
+        # VERIFIED AGAINST THE SOURCE DOCUMENT on 9 September 2026. figc.it
+        # is unreachable from the build environment but not from a GitHub
+        # runner, where scripts/probe-codice.py read the consolidated PDF and
+        # printed the progression verbatim. The rungs were right. The article
+        # was not: the desk had cited art. 19, which is "Esecuzione delle
+        # sanzioni" and carries no ladder, so the citation moved to art. 9,
+        # comma 5. See docs/italy-suspensions.md, which also records that the
+        # commissioning brief stated a different progression (5, 10, 15, then
+        # every second caution) that the Codice does not support.
         suspension="one match at the 5th caution, then at the 10th, 14th, "
-                   "17th and 19th, then every caution (CGS art. 19); "
+                   "17th and 19th, then every caution (CGS art. 9, comma 5); "
                    "cumulative, no gate, no escalation",
         suspension_scheme={
             "kind": "ladder", "cumulative": True, "review": None,

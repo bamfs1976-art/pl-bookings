@@ -1010,7 +1010,7 @@ t('unknown counts and missing schemes yield null, never a default', () => {
   assert.equal(core.nextSuspension(-1, 10, LADDER), null);
 });
 
-/* Italy: Codice di Giustizia Sportiva art. 19. One match at the fifth
+/* Italy: Codice di Giustizia Sportiva art. 9, comma 5. One match at the fifth
    caution, then at the fifth, fourth, third and second caution after each
    ban, then at every caution. Bans at 5, 10, 14, 17, 19, 20, 21... No gate,
    no escalation, cumulative within the season. See docs/italy-suspensions.md. */
