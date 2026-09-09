@@ -60,6 +60,31 @@ data existed, and why the desk was described in the previous entry as wired
 but unproven. It is now proven on one run, and the run refused to ship what
 was wrong.
 
+**Run 149, on the fixed lists: every guard passed and the commit step failed**
+on a fault of mine that neither the guards nor a local run could see.
+`.gitignore` carries `*.log` and `data/*.json` as blanket rules with a
+written-down exception per file that is genuinely shipped, and I had added
+three Serie A files to the workflow's commit list without the matching
+exceptions. `git add` on an ignored path exits non-zero, the step runs under
+`bash -e`, and the run stopped there.
+
+Two of the three would have been silent rather than loud if the log had not
+been in the same list:
+
+- `data/seriea_clubs.json`, the discovered registry. It is the only record of
+  which twenty clubs the desk is about, and `check-seriea.mjs` skips its
+  registry-against-dataset check when the file is absent. The desk would have
+  shipped with no registry and nothing would have said so.
+- `data/seriea_refs.json`, the referee table `data/appointments.py` resolves a
+  published official against. Absent, every AIA name stays unresolved and
+  every Serie A fixture prices at the league rate, which on the page is
+  indistinguishable from a neutral referee.
+- `data/seriea_harvest.log`, which is the loud one: `git add` refused it and
+  took the step down, which is how the other two were found.
+
+All three now carry the same written-down exception La Liga's equivalents
+have, with the reason beside each.
+
 **Still open**: the AIA appointments route (the fixtures workflow has not run
 on this branch yet), and the Serie A entries in the service worker's precache
 list, which are added once the data files exist in the repository rather than
