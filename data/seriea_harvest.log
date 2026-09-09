@@ -1,4 +1,4 @@
-Serie A harvest, run 150
+Serie A harvest, run 151
 == discover ==
 Serie A: API-Football league 135, season 2026
 
@@ -24,7 +24,7 @@ seriea_clubs.json written (20 clubs)
     UDI  Udinese
     VEN  Venezia
 
-API-Football: 1 call(s) this run; 1342 of 7500 used today (18%), 6158 left
+API-Football: 1 call(s) this run; 1617 of 7500 used today (22%), 5883 left
 == squads ==
 Serie A: API-Football league 135, season 2025
   not in this desk's club list (3): Cremonese, Hellas Verona, Pisa
@@ -49,7 +49,7 @@ Serie A: API-Football league 135, season 2025
 
 seriea_players.json written (732 players from 17 clubs, API-Football, SA season 2025)
 
-API-Football: 47 call(s) this run; 1294 of 7500 used today (17%), 6206 left
+API-Football: 47 call(s) this run; 1664 of 7500 used today (22%), 5836 left
 == rosters ==
 Serie A: API-Football league 135, season 2026
     AC Milan                    32 players
@@ -75,7 +75,7 @@ Serie A: API-Football league 135, season 2026
 
 sa_squads.json written (643 players from 20 clubs, API-Football current rosters)
 
-API-Football: 21 call(s) this run; 1315 of 7500 used today (18%), 6185 left
+API-Football: 21 call(s) this run; 1685 of 7500 used today (22%), 5815 left
 == season-cards ==
 Serie A: API-Football league 135, season 2026
   fetching 20 squads
@@ -102,7 +102,7 @@ Serie A: API-Football league 135, season 2026
 
 seriea_season_cards.json written (584 players from 20 clubs, API-Football, SA season 2026)
 
-API-Football: 41 call(s) this run; 1356 of 7500 used today (18%), 6144 left
+API-Football: 41 call(s) this run; 1726 of 7500 used today (23%), 5774 left
 == serie-b ==
 Serie B: API-Football league 136, season 2025
   not in this desk's club list (17): Avellino, Bari, Carrarese, Catanzaro, Cesena, Empoli, Juve Stabia, Mantova, Modena, Padova, Palermo, Pescara, Reggiana, Sampdoria, Spezia, Sudtirol, Virtus Entella
@@ -113,26 +113,29 @@ Serie B: API-Football league 136, season 2025
 
 serieb_players.json written (116 players from 3 clubs, API-Football, SERB season 2025)
 
-API-Football: 8 call(s) this run; 1364 of 7500 used today (18%), 6136 left
+API-Football: 8 call(s) this run; 1734 of 7500 used today (23%), 5766 left
 == ref-fixtures ==
 Serie A: API-Football league 135, season 2025
 
 seriea_ref_fixtures.js written (380 matches over 20 clubs, 380 with an official named)
 
-API-Football: 1 call(s) this run; 1365 of 7500 used today (18%), 6135 left
+API-Football: 1 call(s) this run; 1735 of 7500 used today (23%), 5765 left
 == fixtures ==
 Serie A: API-Football league 135, season 2026
 
 seriea_fixtures.js written (380 fixtures over 38 matchdays, 30 with a referee appointed)
 
-API-Football: 1 call(s) this run; 1366 of 7500 used today (18%), 6134 left
+API-Football: 1 call(s) this run; 1736 of 7500 used today (23%), 5764 left
 == build ==
 Division: 17 clubs were in it last season, 3 came up
   promoted: Frosinone, Monza, Venezia
   SA    732 players from the Serie A feed
   SB    116 players from the Serie B feed
+  NEW   183 players from the squad fill feed
+Reusing the previous build for sources that did not harvest:
+  - seriea_squads.json (183 players kept from the previous build)
     35 duplicate row(s) collapsed after the moves, keeping the row with a rate on it
-Squads reconciled against the FPL feed: 98 moved, 183 joined, 353 left the division, 11 left alone as ambiguous (848 rows in, 643 out).
+Squads reconciled against the FPL feed: 98 moved, 0 joined, 353 left the division, 11 left alone as ambiguous (1031 rows in, 643 out).
     A. Atta UDI -> FIO
     A. Dembélé TOR -> LEC
     A. Dossena CAG -> COM
@@ -191,12 +194,8 @@ players: 643  by basis: NEW=183, SA=411, SB=49
 clubs with players: 20 of 20
 club rates from match records: 17 of 20
 season cautions (2026-27): 514 players
-referees: 0
+referees: 32
 RESULT: WRITTEN seriea_data.js
-
-  No referees yet. Harvest the completed season's officials and join them:
-    python3 data/harvest_apifootball.py --ref-fixtures --league SA --season 2025
-    python3 data/build_refs.py --league SA --season 2526
 == referee-join ==
   merged 33 abbreviated referee names into their full spelling:
     A. Arena -> Alberto Ruben Arena
