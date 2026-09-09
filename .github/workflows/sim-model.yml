@@ -41,10 +41,18 @@ jobs:
             # rather than theoretical, and a rejected push takes the commit
             # down with the runner: the work is done, thrown away, and reported
             # as a failed job with nothing to say it had succeeded.
+            # ONTO THE BRANCH THIS RUN IS ON, not onto main. It said main,
+            # which is right only because that is where this usually runs.
+            # Dispatched on a feature branch, `origin main` rebases the
+            # branch's own commits onto main, conflicts on every file that
+            # exists only on the branch, and throws away a run that had
+            # already succeeded. That happened to data-refresh.yml on
+            # 9 September 2026, which is the note this points at.
+            branch="${GITHUB_REF_NAME:-main}"
             for attempt in 1 2 3; do
               git push && break
-              echo "push rejected (attempt $attempt) — rebasing onto origin/main"
-              git pull --rebase --autostash origin main || exit 1
+              echo "push rejected (attempt $attempt), rebasing onto origin/$branch"
+              git pull --rebase --autostash origin "$branch" || exit 1
               sleep $((attempt * 5))
             done
           fi

@@ -169,9 +169,17 @@ jobs:
           git add -f data/probes/ || true
           git diff --cached --quiet && echo "probes unchanged" && exit 0
           git commit -m "API-Football endpoint probes (recorded shapes)"
+          # ONTO THE BRANCH THIS RUN IS ON, not onto main. It said main,
+          # which is right only because that is where this usually runs.
+          # Dispatched on a feature branch, `origin main` rebases the
+          # branch's own commits onto main, conflicts on every file that
+          # exists only on the branch, and throws away a run that had
+          # already succeeded. That happened to data-refresh.yml on
+          # 9 September 2026, which is the note this points at.
+          branch="${GITHUB_REF_NAME:-main}"
           for i in 1 2 3; do
             git push && exit 0
-            git pull --rebase origin main || exit 1
+            git pull --rebase origin "$branch" || exit 1
           done
 
       - name: Commit if anything changed
@@ -191,11 +199,19 @@ jobs:
             exit 0
           fi
           git commit -m "Extra API-Football feeds"
+          # ONTO THE BRANCH THIS RUN IS ON, not onto main. It said main,
+          # which is right only because that is where this usually runs.
+          # Dispatched on a feature branch, `origin main` rebases the
+          # branch's own commits onto main, conflicts on every file that
+          # exists only on the branch, and throws away a run that had
+          # already succeeded. That happened to data-refresh.yml on
+          # 9 September 2026, which is the note this points at.
+          branch="${GITHUB_REF_NAME:-main}"
           # Four workflows push to main now; a rejected push is expected.
           for i in 1 2 3; do
             git push && exit 0
-            echo "push rejected (attempt $i) — rebasing on origin/main"
-            git pull --rebase origin main || exit 1
+            echo "push rejected (attempt $i), rebasing onto origin/$branch"
+            git pull --rebase origin "$branch" || exit 1
           done
           echo "::error::could not push the feeds after three attempts"
           exit 1

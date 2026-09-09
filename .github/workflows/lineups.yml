@@ -140,10 +140,18 @@ jobs:
           # three, both pushing to main, so a rejected push is expected rather
           # than exceptional. Rebase and retry instead of failing the run and
           # losing a sheet that is only useful for the next hour.
+          # ONTO THE BRANCH THIS RUN IS ON, not onto main. It said main,
+          # which is right only because that is where this usually runs.
+          # Dispatched on a feature branch, `origin main` rebases the
+          # branch's own commits onto main, conflicts on every file that
+          # exists only on the branch, and throws away a run that had
+          # already succeeded. That happened to data-refresh.yml on
+          # 9 September 2026, which is the note this points at.
+          branch="${GITHUB_REF_NAME:-main}"
           for i in 1 2 3; do
             git push && exit 0
-            echo "push rejected (attempt $i) — rebasing on origin/main"
-            git pull --rebase origin main || exit 1
+            echo "push rejected (attempt $i), rebasing onto origin/$branch"
+            git pull --rebase origin "$branch" || exit 1
           done
           echo "::error::could not push the team sheets after three attempts"
           exit 1

@@ -864,10 +864,20 @@ jobs:
             # that it had succeeded. Rebase onto whatever landed and try
             # again — the commits touch different files, so there is nothing
             # to resolve, only to re-order.
+            #
+            # ONTO THE BRANCH THIS RUN IS ON, not onto main. It said main,
+            # which is right only because that is where this usually runs.
+            # Dispatched on a feature branch on 9 September 2026 it rebased
+            # the branch's own commits onto main, hit an add/add conflict in
+            # fourteen files that exist on the branch and not on main, and
+            # exited: a run that had harvested everything and committed it
+            # threw the commit away and reported a failure, which is the
+            # exact outcome the retry above was written to prevent.
+            branch="${GITHUB_REF_NAME:-main}"
             for attempt in 1 2 3; do
             git push && break
-            echo "push rejected (attempt $attempt) — rebasing onto origin/main"
-            git pull --rebase --autostash origin main || exit 1
+            echo "push rejected (attempt $attempt), rebasing onto origin/$branch"
+            git pull --rebase --autostash origin "$branch" || exit 1
             sleep $((attempt * 5))
             done
           fi
