@@ -1,0 +1,8 @@
+Serie A 2026-27: build_laliga_data.py (SA)
+club rates from mirror (380 matches)
+players: 643  by basis: NEW=183, SA=411, SB=49
+clubs with players: 20 of 20
+club rates from match records: 17 of 20
+season cautions (2026-27): 514 players
+referees: 0
+RESULT: WRITTEN seriea_data.js

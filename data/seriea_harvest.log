@@ -1,0 +1,271 @@
+Serie A harvest, run 150
+== discover ==
+Serie A: API-Football league 135, season 2026
+
+seriea_clubs.json written (20 clubs)
+    ACM  AC Milan
+    ATA  Atalanta
+    BGN  Bologna
+    CAG  Cagliari
+    COM  Como
+    FIO  Fiorentina
+    FRO  Frosinone
+    GEN  Genoa
+    INT  Inter
+    JUV  Juventus
+    LAZ  Lazio
+    LEC  Lecce
+    MON  Monza
+    NAP  Napoli
+    PAR  Parma
+    ROM  AS Roma
+    SAS  Sassuolo
+    TOR  Torino
+    UDI  Udinese
+    VEN  Venezia
+
+API-Football: 1 call(s) this run; 1342 of 7500 used today (18%), 6158 left
+== squads ==
+Serie A: API-Football league 135, season 2025
+  not in this desk's club list (3): Cremonese, Hellas Verona, Pisa
+  fetching 17 squads
+    AC Milan                    39 players
+    AS Roma                     43 players
+    Atalanta                    37 players
+    Bologna                     44 players
+    Cagliari                    46 players
+    Como                        44 players
+    Fiorentina                  47 players
+    Genoa                       49 players
+    Inter                       44 players
+    Juventus                    41 players
+    Lazio                       38 players
+    Lecce                       39 players
+    Napoli                      39 players
+    Parma                       50 players
+    Sassuolo                    47 players
+    Torino                      44 players
+    Udinese                     41 players
+
+seriea_players.json written (732 players from 17 clubs, API-Football, SA season 2025)
+
+API-Football: 47 call(s) this run; 1294 of 7500 used today (17%), 6206 left
+== rosters ==
+Serie A: API-Football league 135, season 2026
+    AC Milan                    32 players
+    AS Roma                     28 players
+    Atalanta                    32 players
+    Bologna                     35 players
+    Cagliari                    33 players
+    Como                        30 players
+    Fiorentina                  27 players
+    Frosinone                   30 players
+    Genoa                       39 players
+    Inter                       30 players
+    Juventus                    35 players
+    Lazio                       34 players
+    Lecce                       37 players
+    Monza                       34 players
+    Napoli                      27 players
+    Parma                       30 players
+    Sassuolo                    34 players
+    Torino                      30 players
+    Udinese                     30 players
+    Venezia                     36 players
+
+sa_squads.json written (643 players from 20 clubs, API-Football current rosters)
+
+API-Football: 21 call(s) this run; 1315 of 7500 used today (18%), 6185 left
+== season-cards ==
+Serie A: API-Football league 135, season 2026
+  fetching 20 squads
+    AC Milan                    28 players
+    AS Roma                     26 players
+    Atalanta                    27 players
+    Bologna                     28 players
+    Cagliari                    30 players
+    Como                        31 players
+    Fiorentina                  31 players
+    Frosinone                   28 players
+    Genoa                       31 players
+    Inter                       25 players
+    Juventus                    32 players
+    Lazio                       29 players
+    Lecce                       28 players
+    Monza                       28 players
+    Napoli                      25 players
+    Parma                       30 players
+    Sassuolo                    33 players
+    Torino                      33 players
+    Udinese                     30 players
+    Venezia                     31 players
+
+seriea_season_cards.json written (584 players from 20 clubs, API-Football, SA season 2026)
+
+API-Football: 41 call(s) this run; 1356 of 7500 used today (18%), 6144 left
+== serie-b ==
+Serie B: API-Football league 136, season 2025
+  not in this desk's club list (17): Avellino, Bari, Carrarese, Catanzaro, Cesena, Empoli, Juve Stabia, Mantova, Modena, Padova, Palermo, Pescara, Reggiana, Sampdoria, Spezia, Sudtirol, Virtus Entella
+  fetching 3 squads
+    Frosinone                   38 players
+    Monza                       41 players
+    Venezia                     37 players
+
+serieb_players.json written (116 players from 3 clubs, API-Football, SERB season 2025)
+
+API-Football: 8 call(s) this run; 1364 of 7500 used today (18%), 6136 left
+== ref-fixtures ==
+Serie A: API-Football league 135, season 2025
+
+seriea_ref_fixtures.js written (380 matches over 20 clubs, 380 with an official named)
+
+API-Football: 1 call(s) this run; 1365 of 7500 used today (18%), 6135 left
+== fixtures ==
+Serie A: API-Football league 135, season 2026
+
+seriea_fixtures.js written (380 fixtures over 38 matchdays, 30 with a referee appointed)
+
+API-Football: 1 call(s) this run; 1366 of 7500 used today (18%), 6134 left
+== build ==
+Division: 17 clubs were in it last season, 3 came up
+  promoted: Frosinone, Monza, Venezia
+  SA    732 players from the Serie A feed
+  SB    116 players from the Serie B feed
+    35 duplicate row(s) collapsed after the moves, keeping the row with a rate on it
+Squads reconciled against the FPL feed: 98 moved, 183 joined, 353 left the division, 11 left alone as ambiguous (848 rows in, 643 out).
+    A. Atta UDI -> FIO
+    A. Dembélé TOR -> LEC
+    A. Dossena CAG -> COM
+    A. Dovbyk ROM -> BGN
+    A. Fadera COM -> CAG
+    A. Fadera SAS -> CAG
+    A. Guðmundsson FIO -> LAZ
+    A. Njie TOR -> FIO
+    A. Pinamonti SAS -> LAZ
+    A. Raimondo BGN -> FRO
+    A. Romano ROM -> CAG
+    A. Russo SAS -> CAG
+    A. Sherri FRO -> CAG
+    A. Zanoli NAP -> UDI
+    A. Zerbin NAP -> FRO
+    B. Domínguez BGN -> SAS
+    C. Ngonge TOR -> MON
+    D. Frattesi INT -> LAZ
+    D. Maldini ATA -> CAG
+    D. Maldini LAZ -> CAG
+    D. Rugani FIO -> JUV
+    Diego Carlos COM -> PAR
+    E. Akinsanmiro INT -> MON
+    E. Ebosse TOR -> UDI
+    E. Elmas NAP -> ATA
+    E. Holm JUV -> BGN
+    E. Kouadio FIO -> MON
+    E. Touré ATA -> PAR
+    F. Camarda LEC -> ACM
+    G. Fabbian BGN -> PAR
+    G. Fabbian FIO -> PAR
+    G. Gaetano CAG -> ATA
+    G. Oristanio PAR -> TOR
+    G. Oristanio VEN -> TOR
+    Giacomo Giacomone LAZ -> BGN
+    H. Nicolussi FIO -> PAR
+    H. Nicolussi VEN -> PAR
+    I. Ilić TOR -> LEC
+    I. Provedel LAZ -> INT
+    I. Sulemana ATA -> SAS
+    ... and 58 more
+    AMBIGUOUS, left at ACM: L. Colombo
+    AMBIGUOUS, left at ROM: L. Pellegrini
+    AMBIGUOUS, left at BGN: M. Pessina
+    AMBIGUOUS, left at CAG: J. Rodríguez
+    AMBIGUOUS, left at COM: Jesús Rodríguez
+    AMBIGUOUS, left at GEN: L. Colombo
+    AMBIGUOUS, left at LAZ: Pedro
+    AMBIGUOUS, left at LAZ: L. Pellegrini
+    AMBIGUOUS, left at NAP: Amir Rrahmani
+    AMBIGUOUS, left at MON: M. Pessina
+    AMBIGUOUS, left at MON: L. Colombo
+
+club rates from mirror (380 matches)
+players: 643  by basis: NEW=183, SA=411, SB=49
+clubs with players: 20 of 20
+club rates from match records: 17 of 20
+season cautions (2026-27): 514 players
+referees: 0
+RESULT: WRITTEN seriea_data.js
+
+  No referees yet. Harvest the completed season's officials and join them:
+    python3 data/harvest_apifootball.py --ref-fixtures --league SA --season 2025
+    python3 data/build_refs.py --league SA --season 2526
+== referee-join ==
+  merged 33 abbreviated referee names into their full spelling:
+    A. Arena -> Alberto Ruben Arena
+    A. Calzavara -> Andrea Calzavara
+    A. Colombo -> Andrea Colombo
+    A. Rapuano -> Antonio Rapuano
+    D. Chiffi -> Daniele Chiffi
+    D. Di Marco -> Davide Di Marco
+    D. Doveri -> Daniele Doveri
+    D. Massa -> Davide Massa
+    D. Perenzoni -> Daniele Perenzoni
+    E. Feliciani -> Ermanno Feliciani
+    F. Dionisi -> Federico Dionisi
+    F. Fourneau -> Francesco Fourneau
+    F. La Penna -> Federico La Penna
+    F. Maresca -> Fabio Maresca
+    G. Ayroldi -> Giovanni Ayroldi
+    G. Collu -> Giuseppe Collu
+    G. Manganiello -> Gianluca Manganiello
+    G. Mucera -> Giuseppe Mucera
+    I. Pezzuto -> Ivano Pezzuto
+    K. Bonacina -> Kevin Bonacina
+    L. Marinelli -> Livio Marinelli
+    L. Pairetto -> Luca Pairetto
+    L. Zufferli -> Luca Zufferli
+    M. Di Bello -> Marco Di Bello
+    M. Fabbri -> Michael Fabbri
+    M. Guida -> Marco Guida
+    M. Marcenaro -> Matteo Marcenaro
+    M. Marchetti -> Matteo Marchetti
+    M. Mariani -> Maurizio Mariani
+    M. Piccinini -> Marco Piccinini
+    R. Abisso -> Rosario Abisso
+    S. Sozza -> Simone Sozza
+    V. Crezzini -> Valerio Crezzini
+Referee join: 380 of 380 matches got an official from 380 fixtures
+Serie A refs: 32 from 380 matches via mirror
+  (dropped 11 under 3 matches, skipped 0 rows without card data)
+     5.3   0.3 red    -  pen  26.80 fouls  0.198 c/f  10m  Luca Pairetto
+    4.94  0.41 red    -  pen  28.35 fouls  0.174 c/f  17m  Davide Massa
+     4.6   0.3 red    -  pen  29.40 fouls  0.157 c/f  10m  Giovanni Ayroldi
+     4.5  0.58 red    -  pen  25.92 fouls  0.174 c/f  12m  Fabio Maresca
+    4.33  0.17 red    -  pen  22.25 fouls  0.195 c/f  12m  Giuseppe Collu
+    4.27   0.0 red    -  pen  28.13 fouls  0.152 c/f  15m  Andrea Colombo
+    4.14  0.43 red    -  pen  25.71 fouls  0.161 c/f   7m  Antonio Rapuano
+    4.13  0.13 red    -  pen  24.87 fouls  0.166 c/f  15m  Michael Fabbri
+    4.08  0.08 red    -  pen  25.08 fouls  0.163 c/f  12m  Matteo Marcenaro
+     4.0  0.33 red    -  pen  27.60 fouls  0.145 c/f  15m  Federico La Penna
+     4.0   0.0 red    -  pen  25.92 fouls  0.154 c/f  12m  Francesco Fourneau
+    3.94  0.19 red    -  pen  24.31 fouls  0.162 c/f  16m  Marco Guida
+    3.83   0.0 red    -  pen  24.50 fouls  0.157 c/f   6m  J. L. Sacchi
+    3.82  0.41 red    -  pen  25.47 fouls  0.150 c/f  17m  Simone Sozza
+     3.8  0.07 red    -  pen  24.13 fouls  0.158 c/f  15m  Maurizio Mariani
+    3.64  0.55 red    -  pen  24.36 fouls  0.149 c/f  11m  Rosario Abisso
+    3.62  0.38 red    -  pen  27.38 fouls  0.132 c/f   8m  Livio Marinelli
+    3.57  0.43 red    -  pen  26.29 fouls  0.136 c/f   7m  Marco Piccinini
+    3.54  0.31 red    -  pen  23.85 fouls  0.148 c/f  13m  Matteo Marchetti
+    3.27   0.0 red    -  pen  21.55 fouls  0.152 c/f  11m  Alberto Ruben Arena
+    3.22   0.0 red    -  pen  26.33 fouls  0.122 c/f   9m  Valerio Crezzini
+    3.16  0.05 red    -  pen  23.68 fouls  0.133 c/f  19m  Daniele Doveri
+     3.1   0.0 red    -  pen  24.30 fouls  0.128 c/f  10m  Gianluca Manganiello
+    3.09  0.18 red    -  pen  25.55 fouls  0.121 c/f  11m  Kevin Bonacina
+     3.0   0.0 red    -  pen  30.20 fouls  0.099 c/f   5m  Juan Luca Sacchi
+     3.0   0.0 red    -  pen  27.33 fouls  0.110 c/f   3m  Andrea Calzavara
+    2.94  0.06 red    -  pen  24.50 fouls  0.120 c/f  18m  Luca Zufferli
+    2.67   0.0 red    -  pen  22.33 fouls  0.119 c/f   3m  Davide Di Marco
+    2.67   0.0 red    -  pen  27.00 fouls  0.099 c/f   3m  Giuseppe Mucera
+    2.54   0.0 red    -  pen  24.08 fouls  0.105 c/f  13m  Ermanno Feliciani
+    2.53   0.2 red    -  pen  22.67 fouls  0.112 c/f  15m  Daniele Chiffi
+    2.38  0.08 red    -  pen  26.46 fouls  0.090 c/f  13m  Marco Di Bello
+
+patched the REFS block of seriea_data.js
