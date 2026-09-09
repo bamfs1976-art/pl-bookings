@@ -6,6 +6,44 @@ work, newest first: what changed, what was deferred and why. Everything before
 in [docs/decisions.md](docs/decisions.md); the audit itself is
 [docs/audit-2026-07.md](docs/audit-2026-07.md).
 
+## A bot lost a race it was built to survive (2026-09-09)
+
+The scheduled feeds run failed at 19:27. It harvested injuries, odds and
+predictions for all four desks, committed them, and lost the push race to the
+merge of pull request 17, which landed thirty seconds later. That is the case
+the retry exists for, and this time the retry itself failed.
+
+**The rebase conflicted on content.** The note above the retry says "the
+commits touch different files, so there is nothing to resolve, only to
+re-order". That held while the four bots each owned their own outputs and
+never met. It stopped holding the moment a pull request carrying REGENERATED
+data files merged mid-run: the merge had rewritten the same twelve feed files
+this run had just harvested, so every one of them conflicted and the rebase
+died. Forty seconds of harvesting discarded, reported as a failed job.
+
+**Two harvests of one generated file are not a merge.** The file is rewritten
+whole every run and is never edited by hand, which the guards say outright, so
+the newer harvest is simply the right answer. `-X theirs` says that in one
+flag, and it is not a typo for "ours": a rebase replays this run's commit onto
+the fetched head, so in its vocabulary the replayed commit is "theirs".
+
+Reproduced before shipping it, in a throwaway repository with the same shape:
+a bot commit and a merge both rewriting one generated file plus a source file.
+A plain rebase conflicts, exactly as production did. With `-X theirs` it
+resolves, the bot keeps its fresh harvest, and the merge keeps its change to
+the source file. Applied to all six committing workflows, and
+`check-ci-wiring.mjs` now asserts every `git pull --rebase` in them carries it,
+verified by taking it out of one and watching the guard name that file.
+
+**No data was lost beyond that run.** The feed files on main came from the same
+harvest fifteen minutes earlier, through the branch, and the next scheduled run
+refreshes them regardless.
+
+**What this does not cover.** A conflict in something that is NOT a generated
+file would also be resolved in the run's favour, silently. That is acceptable
+only because these workflows commit nothing else; if one ever starts committing
+hand-written content, this flag becomes the wrong default for it.
+
 ## The league bar lost both its ends, and /europe laid out differently (2026-09-09)
 
 Two reports from looking at the live page, and both were mine.

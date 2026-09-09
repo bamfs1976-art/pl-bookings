@@ -52,7 +52,10 @@ jobs:
             for attempt in 1 2 3; do
               git push && break
               echo "push rejected (attempt $attempt), rebasing onto origin/$branch"
-              git pull --rebase --autostash origin "$branch" || exit 1
+              # `-X theirs` keeps THIS run's freshly harvested file where both
+              # sides changed it. A rebase calls the replayed commit "theirs", so
+              # the flag is not inverted by accident. See data-refresh.yml.
+              git pull --rebase -X theirs --autostash origin "$branch" || exit 1
               sleep $((attempt * 5))
             done
           fi
