@@ -112,10 +112,37 @@ precaches a path that is not there. `seriea_fxstats.js` is written by
 extra-feeds.yml and is deliberately not precached until it exists: `addAll` is
 atomic and one missing file empties the whole shell.
 
-**Still open**: the AIA appointments route. The fixtures workflow has not run
-on this branch, so whether a GitHub runner can fetch aia-figc.it is still
-unestablished, and until it is, the official on a Serie A fixture card comes
-from the API-Football feed, which is what the page's Guide says.
+**The AIA appointments route works.** Fixtures run 150 on this branch, the
+first on a GitHub runner, fetched the AIA's designation article for the
+pending giornata, parsed its blocks and resolved the officials by surname
+alone:
+
+    2026-09-14  COM v PAR  MUCERA    -> Giuseppe Mucera  (surname)
+    2026-09-14  INT v UDI  PAIRETTO  -> Luca Pairetto    (surname)
+
+Nine appointments were applied to Serie A (`seriea_fixtures.js` went from 30
+to 39 fixtures with a referee), one official had no card record and was
+reported rather than guessed at, and `ref-coverage.mjs` put Serie A at nine of
+the round's ten appointed, known five days ahead, against zero for the
+Premier League and zero for La Liga at the same moment. So the desk reads the
+AIA directly and falls back to the feed, which is what the page's Guide now
+says; the sentence about the route being unconfirmed is gone from
+`seriea.html` and from `docs/leagues.md`.
+
+**One thing that run broke, and it was mine.** `check-booked.mjs` failed:
+`data/pl_bookings.js: only 0 of 38 booked players have a photograph`. The
+cause was my dispatch of the Data refresh, not any code here. I passed
+`refresh_eflc: false` to keep the run small, and that input gates the step
+that harvests `pl_af_players.json`, which is where the PREMIER LEAGUE's player
+photographs come from. Without it, `build_pl_data.py` reused the previous
+rows, which carry no photograph, and the ledger rebuilt from that file lost
+every face. The refresh was re-run with its ordinary inputs to put them back.
+
+Worth knowing for the next person: `refresh_eflc` does not only gate the
+Championship. It gates the Premier League's API-Football harvest too, because
+that step exists to fill the relegated three, and the photographs come along
+with it. A run with that box unticked quietly ships a Premier League desk
+with no faces.
 
 ## Serie A desk: closing entry (2026-09-09)
 

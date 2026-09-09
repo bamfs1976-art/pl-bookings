@@ -131,10 +131,12 @@ fixture, officials by surname alone. `data/fetch_appointments.py --league SA`
 finds the article for a pending round by the giornata in its slug and
 `ingest_appointments.py --format aia` parses it, resolving surnames through
 `appointments.resolve_surname_only` (unique or nothing, an initial after the
-surname where two officials share one). That route could not be exercised
-where it was written (the site and every mirror refuse the network there),
-so until the first fixtures run on a runner confirms it, the official shown
-on the desk is the API-Football feed's, and the page says so.
+surname where two officials share one). That route could not be exercised where it was
+written (the site and every mirror refuse the network there); the first
+fixtures run on a GitHub runner, on 9 September 2026, confirmed it works:
+nine of the round's ten officials were read from the AIA article and resolved
+by surname five days before the fixture feed named any of them. Where the AIA
+has not published yet, the feed's own referee field is used.
 
 **The suspension rule is a third shape.** Art. 19 of the FIGC's Codice di
 Giustizia Sportiva bans for one match at the fifth caution, then at the
