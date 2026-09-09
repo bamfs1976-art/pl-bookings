@@ -437,7 +437,7 @@ const PL_PLAYERS = [
   {c:"LEE",n:"Daniel James",p:"FW",min:554,yc:0,rc:0,y:0.0,f:0.16,fw:1.261,r:0.16,ls:false,b:"PL",ph:"https://media.api-sports.io/football/players/19329.png"},
   {c:"LEE",n:"James Trafford",p:"GK",min:360,yc:0,rc:0,y:0.0,f:0.0,fw:0.242,r:0.0,ls:true,b:"PL"},
   {c:"LEE",n:"Alex Cairns",p:"GK",min:0,yc:null,rc:null,y:null,f:null,fw:null,r:null,ls:true,b:"NEW"},
-  {c:"LEE",n:"Alfie Cresswell",p:"MF",min:0,yc:null,rc:null,y:null,f:null,fw:null,r:null,ls:true,b:"NEW",ph:"https://media.api-sports.io/football/players/557342.png"},
+  {c:"LEE",n:"Alfie Cresswell",p:"MF",min:0,yc:null,rc:null,y:null,f:null,fw:null,r:null,ls:true,b:"NEW",ph:"https://media.api-sports.io/football/players/389303.png"},
   {c:"LEE",n:"Jayden Lienou",p:"DF",min:0,yc:null,rc:null,y:null,f:null,fw:null,r:null,ls:true,b:"NEW",ph:"https://media.api-sports.io/football/players/545996.png"},
   {c:"LEE",n:"Jean-Mattéo Bahoya",p:"MF",min:0,yc:null,rc:null,y:null,f:null,fw:null,r:null,ls:true,b:"NEW"},
   {c:"LEE",n:"Mateo Joseph Fernández-Regatillo",p:"FW",min:0,yc:null,rc:null,y:null,f:null,fw:null,r:null,ls:true,b:"NEW"},
