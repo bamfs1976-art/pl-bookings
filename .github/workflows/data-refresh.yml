@@ -877,7 +877,31 @@ jobs:
             for attempt in 1 2 3; do
             git push && break
             echo "push rejected (attempt $attempt), rebasing onto origin/$branch"
-            git pull --rebase --autostash origin "$branch" || exit 1
+            # AND `-X theirs`, WHICH IS NOT A TYPO FOR "ours".
+            #
+            # A rebase replays THIS run's commit onto the fetched head, so in
+            # its conflict vocabulary the fetched head is "ours" and the commit
+            # being replayed is "theirs". `-X theirs` therefore means: where
+            # both sides changed the same lines, keep what THIS RUN just
+            # harvested. Everything the other side changed and this one did not
+            # is untouched.
+            #
+            # THE ASSUMPTION THIS REPLACES. The note above says "the commits
+            # touch different files, so there is nothing to resolve, only to
+            # re-order". That held while the four bots each owned their own
+            # outputs. It stopped holding the moment a pull request carrying
+            # REGENERATED data files merged mid-run: on 9 September 2026 the
+            # scheduled feeds run harvested injuries, odds and predictions,
+            # lost the push race to a merge that had just rewritten those same
+            # twelve files, and the rebase died on a content conflict in every
+            # one of them. Forty seconds of harvesting discarded, reported as a
+            # failed job.
+            #
+            # Two harvests of one generated file are not a merge. The file is
+            # rewritten whole every run and is never edited by hand, which the
+            # guards say outright, so the newer harvest is simply the right
+            # answer and this says so.
+            git pull --rebase -X theirs --autostash origin "$branch" || exit 1
             sleep $((attempt * 5))
             done
           fi

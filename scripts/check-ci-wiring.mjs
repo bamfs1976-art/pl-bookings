@@ -68,6 +68,23 @@ for (const f of pushers) {
      Asserted on the git command rather than on the presence of the variable,
      because a workflow that defines `branch` and then pulls from main anyway
      is the failure, not the fix. */
+  /* AND IT MUST RESOLVE THE ONE CONFLICT IT CAN EXPECT. A rebase replays this
+     run's commit onto the fetched head, so in its vocabulary the replayed
+     commit is "theirs": `-X theirs` means the file THIS RUN just harvested
+     wins where both sides changed it. Without it the retry dies on a content
+     conflict, which is what happened on 9 September 2026 when a pull request
+     carrying regenerated data files merged while the scheduled feeds run was
+     harvesting. Twelve generated files conflicted and the run threw its work
+     away. Two harvests of one generated file are not a merge: the file is
+     rewritten whole every run and never edited by hand. */
+  for (const m of src.matchAll(/git pull --rebase[^\n]*\n/g)) {
+    assert.ok(/-X theirs/.test(m[0]),
+      `${f} retries a rejected push with a plain rebase:\n    ${m[0].trim()}\n` +
+      'Two runs that regenerate the same data file conflict on content, and ' +
+      'the retry then fails with the run\'s work already done and discarded. ' +
+      'Add -X theirs so this run\'s freshly harvested file wins.');
+  }
+
   for (const m of src.matchAll(/git pull --rebase[^\n]*origin\s+(\S+)/g)) {
     assert.notEqual(m[1].replace(/["']/g, ''), 'main',
       `${f} recovers from a rejected push by rebasing onto a hardcoded main. ` +

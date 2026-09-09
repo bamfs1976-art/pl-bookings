@@ -179,7 +179,10 @@ jobs:
           branch="${GITHUB_REF_NAME:-main}"
           for i in 1 2 3; do
             git push && exit 0
-            git pull --rebase origin "$branch" || exit 1
+            # `-X theirs` keeps THIS run's freshly harvested file where both
+            # sides changed it. A rebase calls the replayed commit "theirs", so
+            # the flag is not inverted by accident. See data-refresh.yml.
+            git pull --rebase -X theirs origin "$branch" || exit 1
           done
 
       - name: Commit if anything changed
@@ -211,7 +214,10 @@ jobs:
           for i in 1 2 3; do
             git push && exit 0
             echo "push rejected (attempt $i), rebasing onto origin/$branch"
-            git pull --rebase origin "$branch" || exit 1
+            # `-X theirs` keeps THIS run's freshly harvested file where both
+            # sides changed it. A rebase calls the replayed commit "theirs", so
+            # the flag is not inverted by accident. See data-refresh.yml.
+            git pull --rebase -X theirs origin "$branch" || exit 1
           done
           echo "::error::could not push the feeds after three attempts"
           exit 1
