@@ -6,6 +6,65 @@ work, newest first: what changed, what was deferred and why. Everything before
 in [docs/decisions.md](docs/decisions.md); the audit itself is
 [docs/audit-2026-07.md](docs/audit-2026-07.md).
 
+## The Codice, read at last: the rule holds, the citation did not (2026-09-09)
+
+The Serie A desk shipped its suspension ladder on three secondary quotations,
+because `figc.it` and every legal database that reprints the Codice di
+Giustizia Sportiva are refused by the network this desk is built on. A GitHub
+runner is not refused. `scripts/probe-codice.py` reads the FIGC's own PDF
+there, prints what it finds and writes nothing;
+`.github/workflows/probe-codice.yml` runs it whenever the probe itself
+changes, because `workflow_dispatch` only reaches workflows already on the
+default branch.
+
+**The rule is right.** 730,287 bytes of PDF, 271,453 characters of extracted
+text, and the progression comes back verbatim:
+
+> I tesserati cui gli organi di giustizia sportiva infliggano piu ammonizioni,
+> ancorche conseguenti ad infrazioni di diversa natura, alla quinta
+> ammonizione incorrono nella squalifica per una gara. Nei casi di recidiva,
+> si procede secondo la seguente progressione: a) ... alla quinta ammonizione;
+> b) ... alla quarta ammonizione; c) ... alla terza ammonizione; d) ... alla
+> seconda ammonizione; e) successiva squalifica per una gara ad ogni ulteriore
+> ammonizione.
+
+That is the shipped ladder exactly: bans at 5, 10, 14, 17 and 19, then every
+caution, each one match, no gate. No code changed. The commissioning brief's
+5, 10, 15 then every second caution is not in the document.
+
+**The citation was wrong, and had been repeated seven times.** The progression
+sits in **art. 9, comma 5**. Art. 19 is *Esecuzione delle sanzioni*: its nine
+commas cover publication, enforceability pending appeal, the ban on entering
+the ground, Coppa Italia, the play-offs, and when cautions lapse. There is no
+ladder in it. The number came from the secondary sources, one of which is a
+reprint of art. 19 under that very heading, and it propagated into
+`data/leagues.py`, `docs/italy-suspensions.md`, `docs/leagues.md`,
+`docs/suspension-rules.md`, `scripts/check-seriea.mjs`, `tests/test-core.mjs`
+and the `seriea.html` Guide. All corrected. A rule quoted under the wrong
+number is a rule a reader cannot check, which is the whole point of quoting it.
+
+**Two smaller findings, now recorded** in `docs/italy-suspensions.md`: the
+Coppa Italia threshold is one ban every two cautions rather than five (art.
+19, comma 5), and cautions lapse at the end of the season and on a transfer
+between Leghe (art. 19, comma 9). Neither changes a league desk.
+
+**Three faults in the probe, worth recording because each hid the answer.**
+The first run printed nothing: `article_19()` took the first heading matching
+art. 19, which in a code this size is the table of contents entry with nothing
+under it. The second run printed the article but filtered the search to lines
+containing "ammonizion", and the progression names its ordinals without
+repeating the noun, so the filter removed exactly the evidence. The third
+fault was the sharpest: the summary said `'quarta ammonizione' x0` on the same
+page as the sentence containing it, because a PDF wraps at the column and the
+phrase was split across a newline. Every search now runs on a
+whitespace-flattened copy, and every hit names the article it sits in. A
+diagnostic that reports zero while printing the evidence is worse than one
+that fails.
+
+**Still unchecked:** whether a Comunicato Ufficiale this season has amended
+art. 9. The probe reads the consolidated text as published, which is the right
+document, but an amendment would not appear in it until the FIGC republishes.
+
 ## Serie A desk: the first data run, and what it caught (2026-09-09)
 
 Data refresh run 148 on this branch, with `refresh_seriea` on and the other
@@ -171,11 +230,11 @@ the brief allowed and is wired into `ci.yml`.
 
 **The suspension rule disagrees with the brief, deliberately.** The brief said
 the 5th, 10th and 15th caution then every second one. Three independent
-quotations of art. 19 of the FIGC's Codice di Giustizia Sportiva all give 5,
-then 10, 14, 17, 19, then every caution, and that is what the desk prices.
-`docs/italy-suspensions.md` sets out both readings, the sources, and the fact
-that the Codice itself could not be opened from here. If the brief turns out
-to be right, the fix is five lines in the registry and nothing else.
+quotations of the FIGC's Codice di Giustizia Sportiva all give 5, then 10, 14,
+17, 19, then every caution, and that is what the desk prices.
+`docs/italy-suspensions.md` sets out both readings and the sources. The Codice
+itself could not be opened from here; it was read on a runner the same day and
+confirms the ladder, which is the entry below.
 
 **The budget, from `python3 data/api_budget.py` with four divisions:**
 
