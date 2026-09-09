@@ -85,10 +85,37 @@ been in the same list:
 All three now carry the same written-down exception La Liga's equivalents
 have, with the reason beside each.
 
-**Still open**: the AIA appointments route (the fixtures workflow has not run
-on this branch yet), and the Serie A entries in the service worker's precache
-list, which are added once the data files exist in the repository rather than
-before, so `check-mobile.mjs` never precaches a path that is not there.
+**Run 150 committed the data.** `data/seriea_clubs.json`,
+`seriea_data.js`, `seriea_fixtures.js`, `seriea_ref_fixtures.js`,
+`seriea_refs.json`, `seriea_status.txt` and `seriea_harvest.log` are in the
+repository, and the desk was rendered against them in headless Chromium at
+393px: twenty clubs, thirty-two officials, 322 player rows through the
+450-minute filter, the next round's fixture cards with the Italian referee
+dropdown, and a suspension strip reading "2 more for 1 match" on the Italian
+rungs. No console errors.
+
+**One file the runner could not produce, and why.** `data/seriea_h2h.js` was
+missing: `build_h2h.py --league SA` maps club names through the discovered
+registry, and the workflow runs the head-to-head step near the top, among the
+free sources, while the registry is written by the keyed discovery step much
+further down. On a first run there was no registry to map with, so the step
+reported itself unavailable and carried on, exactly as it is written to. The
+mirror it reads is reachable from the build environment, so the file was built
+here with the repository's own script (187 pairs, 1,242 meetings, 4.21 yellows
+a meeting) and committed. From the next run onward the registry is in the
+repository before that step reads it, which is the same reason the La Liga
+step has always worked, and no reordering is needed.
+
+**The offline shell** now carries `seriea_data.js`, `seriea_fixtures.js` and
+`seriea_h2h.js`, added only once the files existed so `check-mobile.mjs` never
+precaches a path that is not there. `seriea_fxstats.js` is written by
+extra-feeds.yml and is deliberately not precached until it exists: `addAll` is
+atomic and one missing file empties the whole shell.
+
+**Still open**: the AIA appointments route. The fixtures workflow has not run
+on this branch, so whether a GitHub runner can fetch aia-figc.it is still
+unestablished, and until it is, the official on a Serie A fixture card comes
+from the API-Football feed, which is what the page's Guide says.
 
 ## Serie A desk: closing entry (2026-09-09)
 
