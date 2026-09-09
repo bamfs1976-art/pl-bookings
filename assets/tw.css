@@ -40,6 +40,12 @@
   /* League marks. Every desk carries all four, because every desk SHOWS all
      four: the switcher, the tier chips and /today's rows are cross-league. */
   --pl:#e90052; --eflc:#7c3aed; --ll:#ea580c; --sa:#16a34a; --all:#0891b2;
+  /* THE CHAMPIONS LEAGUE IS NOT A DESK. It has no page, no class on
+     <html> and no division: the club list changes with the draw every
+     August. It has a mark because its share cards and its rows on the
+     combined view need one, and it is here rather than in a page's own
+     <style> for exactly the reason the four above are. */
+  --ucl:#2563eb;
   --efl:var(--eflc);  /* the older name; .tier-efl and .pill.eflc still use it */
   /* Ink variants, for the marks used as SMALL TEXT rather than as a fill. The
      marks are chosen to read at 9px as a dot; as a 10px uppercase label on
@@ -47,6 +53,7 @@
      AA wants. Same reasoning as --danger-ink, and the same trap: a colour that
      is merely hard to read fails no check and throws nothing. */
   --pl-ink:#be123c; --eflc-ink:#6d28d9; --ll-ink:#c2410c; --sa-ink:#166534; --all-ink:#0e7490;
+  --ucl-ink:#1d4ed8;
   /* The identity of THIS desk. Defaults to the combined view, so a page that
      forgets its class gets the neutral teal rather than another league's kit. */
   --accent:#0e7490; --accent-2:var(--all); --accent-ink:var(--all-ink);
@@ -79,8 +86,10 @@ html[data-theme="dark"]{
   --shadow-sm:0 1px 2px rgba(0,0,0,.4);
   --shadow:0 10px 30px -8px rgba(0,0,0,.55),0 2px 6px rgba(0,0,0,.4);
   --pl:#ff2d7e; --eflc:#a78bfa; --ll:#fb923c; --sa:#4ade80; --all:#67e8f9;
+  --ucl:#60a5fa;
   /* The dark marks are already pastels clearing AA on #0b0f1a, so ink == mark. */
   --pl-ink:#ff418a; --eflc-ink:#a78bfa; --ll-ink:#fb923c; --sa-ink:#4ade80; --all-ink:#67e8f9;
+  --ucl-ink:#60a5fa;
   --accent:#22d3ee; --ring:var(--accent);
 }
 /* Two classes, so these beat the generic dark block above it whatever the

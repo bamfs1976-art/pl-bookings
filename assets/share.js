@@ -73,6 +73,17 @@
       from: '#0f172a', to: '#0891b2', ink: '#0e7490',
       strap: 'BOOKINGS DESK · ALL LEAGUES', mark: 'BOOKINGS DESK',
       slug: 'bookings-desk', tag: 'ALL', lg: 'lg-all'
+    },
+    /* THE ONE THEME WITHOUT A DESK BEHIND IT. Europe is not a division: the
+       club list changes with the draw, there is no table, no season card
+       record and no evidenced suspension ladder, so it has no page of its own
+       and `lg` names the page that ISSUES the card, which is the combined
+       view. The guard checks it against --ucl and --ucl-ink rather than
+       against a desk accent for the same reason. */
+    UCL: {
+      from: '#0b1437', to: '#2563eb', ink: '#1d4ed8',
+      strap: 'BOOKINGS DESK · CHAMPIONS LEAGUE', mark: 'CHAMPIONS LEAGUE',
+      slug: 'ucl-bookings', tag: 'UCL', lg: 'lg-all'
     }
   };
   function theme(code) { return THEMES[code] || THEMES.ALL; }
@@ -1178,7 +1189,8 @@
    * }
    */
   var LEAGUE_TINT = {
-    PL: '#e90052', EFLC: '#7c3aed', LL: '#ea580c', SA: '#16a34a', ALL: '#0891b2'
+    PL: '#e90052', EFLC: '#7c3aed', LL: '#ea580c', SA: '#16a34a', ALL: '#0891b2',
+    UCL: '#2563eb'
   };
 
   function leagueChip(x, cx, mid, code, w) {
@@ -1374,6 +1386,57 @@
       ],
       filename: (theme(ctx.league).slug + '-' + slug(f.h) + '-' + slug(f.a) + '.png')
     };
+  }
+
+
+  /* A CHAMPIONS LEAGUE tie, from the same priced row, with three things said
+     differently and one thing removed.
+   *
+   * It delegates to deskMatchSpec rather than restating the market cells,
+   * because a European card and a domestic one must answer the same six
+   * questions in the same order or a reader cannot hold one against the other.
+   * What changes is everything the competition makes untrue:
+   *
+   *   THE BASIS. Eight matches is not a sample, so each side is priced off its
+   *   own DOMESTIC season and the card says so on its face. That is not a
+   *   caveat added for politeness: the two halves of this total come out of
+   *   two different data files, and a reader who assumes a European record is
+   *   reading a number nobody computed.
+   *
+   *   THE ROUND. "League Stage - 3" is UEFA's own label and is kept whole. A
+   *   bare number would lose which phase it names once the knockouts start.
+   *
+   *   THE KICK-OFF, WHEN THERE IS ONE. A tie whose date the feed has not
+   *   published carries none here either; the harvest writes null and the card
+   *   prints nothing rather than a placeholder somebody would diarise.
+   *
+   *   THE REFEREE'S RATE, REMOVED. The name is drawn because it is a fact
+   *   about the tie. The rate is not, because a referee's cards-per-foul is
+   *   competition-specific and these desks hold domestic records: Michael
+   *   Oliver's Premier League figure is not his Champions League figure. The
+   *   line says which it is, so the absence reads as a decision rather than
+   *   as missing data.
+   *
+   * There is no suspension strip on this card and there is not meant to be.
+   * UEFA runs its own accumulation rules and this project does not draw a rung
+   * it has not evidenced.
+   */
+  function uclMatchSpec(priced, ctx) {
+    var base = deskMatchSpec(priced, ctx);
+    var f = priced.fx, r = priced.ref || {};
+    var when = f.d && ctx.whenText ? ctx.whenText(f.d) : null;
+    base.league = 'UCL';
+    base.subtitle = [
+      'UEFA Champions League ' + (ctx.seasonLabel || ''),
+      f.r || null,
+      when || 'kick-off not published yet',
+      'each side priced off its ' + (ctx.basisWord || 'domestic') + ' season'
+    ].filter(Boolean).join(' · ');
+    base.refLine = r.name
+      ? 'Referee: ' + r.name + ' · no European card record, priced neutral'
+      : 'Referee: not yet appointed';
+    base.filename = theme('UCL').slug + '-' + slug(f.h) + '-' + slug(f.a) + '.png';
+    return base;
   }
 
 
@@ -1943,7 +2006,8 @@
     trendRows: trendRows,
     rankCard: rankCard,
     accaCard: accaCard, accaRowSpec: accaRowSpec, nineFoldSpec: nineFoldSpec,
-    deskMatchSpec: deskMatchSpec, deskRoundSpec: deskRoundSpec,
+    deskMatchSpec: deskMatchSpec, uclMatchSpec: uclMatchSpec,
+    deskRoundSpec: deskRoundSpec,
     deskStatSheetSpec: deskStatSheetSpec,
     download: download, slug: slug,
     heatHex: heatHex, probHex: probHex, textOn: textOn,

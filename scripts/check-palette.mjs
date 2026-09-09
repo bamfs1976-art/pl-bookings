@@ -194,6 +194,29 @@ for (const [code, [mark, cls]] of Object.entries(DESKS)) {
     `THEMES.${code}.lg says "${th.lg}" but the desk wears "${cls}"`);
 }
 
+/* THE CHAMPIONS LEAGUE THEME, checked separately because it has no desk.
+   Europe is not a division here: the club list changes with the draw, there is
+   no page wearing an lg-ucl class and there is no desk accent to ink it
+   against. So the card is checked against the two tokens that DO exist, and
+   its `lg` must name the page that issues it. Without this block the one theme
+   with no page behind it would be the one theme nothing checks, which is
+   exactly backwards. */
+{
+  const th = shareTheme('UCL');
+  for (const [field, token] of [['to', '--ucl'], ['ink', '--ucl-ink']]) {
+    const wanted = LIGHT.get(token);
+    assert.ok(wanted, `assets/tw.css defines no ${token}`);
+    assert.strictEqual(th[field], wanted,
+      `share.js draws the Champions League card's ${field} in ${th[field]} ` +
+      `while tw.css sets ${token} to ${wanted}. The card is the one artefact ` +
+      'that leaves the site, so nobody who sees one can hold it up against ' +
+      'the page it came from.');
+  }
+  assert.ok(Object.values(PAGES).includes(th.lg),
+    `THEMES.UCL.lg says "${th.lg}", which is no page's class. Europe has no ` +
+    'page of its own, so this must name the page that issues the card.');
+}
+
 /* The browser chrome the installed app paints behind the status bar. It is a
    hex literal in a <meta> — no stylesheet reaches it — and it is the FIRST
    colour anyone sees, before a byte of CSS has been parsed. Pinned to the
