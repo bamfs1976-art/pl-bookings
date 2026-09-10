@@ -193,6 +193,12 @@ def build_players():
         make=lambda row, basis: P.mk(row, basis, resolve),
         league="EFLC", min_clubs=len(all_shorts), min_players=15 * len(all_shorts))
 
+    # AND THE FACES, from that same roster. It is loaded twice on purpose: the
+    # reconcile above may drop and add rows, so filling before it would leave
+    # every arrival faceless and waste the work on everyone it retires.
+    P.fill_photos(deduped, P.load_optional("eflc_squads.json"),
+                  resolve=resolve, label="eflc_squads.json")
+
     # This season's cautions where known. NOT defaulted to zero: "no data" and
     # "no cards yet" look identical on a strip that says a ban is one booking
     # away, and only one of them is safe to act on.
@@ -237,6 +243,12 @@ def shipped_rows():
             "min": p.get("min"), "yc": p.get("yc"), "rc": p.get("rc"),
             "fc90": p.get("f"), "fd90": p.get("fw"),
             "tid": None, "img": imgs.get(p["c"]),
+            # THE FACE SURVIVES A REUSE. Without this a source that did not
+            # harvest came back through mk() with no photograph at all, so a
+            # single failed harvest silently stripped every face that source
+            # had contributed. It is the one field here that is a fact about
+            # the person rather than about the season.
+            "photo": p.get("ph"),
         })
     return out
 

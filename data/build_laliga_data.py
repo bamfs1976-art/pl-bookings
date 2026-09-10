@@ -188,6 +188,12 @@ def previous_players():
             "min": p.get("min"), "yc": p.get("yc"), "rc": p.get("rc"),
             "fc90": p.get("f"), "fd90": p.get("fw"),
             "tid": None, "img": imgs.get(p["c"]),
+            # THE FACE SURVIVES A REUSE. Without this a source that did not
+            # harvest came back through mk() with no photograph at all, so a
+            # single failed harvest silently stripped every face that source
+            # had contributed. It is the one field here that is a fact about
+            # the person rather than about the season.
+            "photo": p.get("ph"),
         })
     return out
 
@@ -378,6 +384,13 @@ def build_players(clubs, continuing, promoted, resolve):
         short_of=resolve, name_of=name_by_short.get,
         make=lambda row, basis: P.mk(row, basis, resolve),
         league=CODE, min_clubs=len(clubs or {}), min_players=15 * len(clubs or {}))
+
+    # AND THE FACES, from that same roster, which takes no season and so cannot
+    # be emptied by a form-season flip the way the form harvest can. La Liga
+    # flips at round 6 and Serie A behind it, which is exactly how the
+    # Championship lost all 445 of its photographs in one refresh.
+    P.fill_photos(deduped, P.load_optional(D["squads"]),
+                  resolve=resolve, label=D["squads"])
 
     # This season's cautions, stamped on where they are known. NOT defaulted
     # to zero: "no data" and "no cards yet" look identical on a strip that
