@@ -1189,7 +1189,8 @@ def emit_roster(host, key, league, ids):
     with no season parameter, because "who is at this club" has no season. It
     is one call per club: 24 for the Championship, 20 for La Liga.
 
-    RATES ARE NOT TOUCHED. This file carries names and clubs and nothing else.
+    RATES ARE NOT TOUCHED. This file carries names, clubs and faces, and
+    nothing else.
     The card rate is a property of the player and keeps coming from the form
     harvest, which is the whole point of separating the two: membership is a
     fact about today, a rate is a record of last season, and conflating them is
@@ -1206,7 +1207,14 @@ def emit_roster(host, key, league, ids):
                 if not name:
                     continue
                 rows.append({"team": club_name, "n": name,
-                             "pos": pl.get("position"), "id": pl.get("id")})
+                             "pos": pl.get("position"), "id": pl.get("id"),
+                             # THE FACE, WHICH THIS CALL HAS ALWAYS CARRIED AND
+                             # THIS HARVEST HAS ALWAYS THROWN AWAY. Measured on
+                             # a runner: /players/squads returns a photo for 37
+                             # of 37, and it takes NO season parameter, so it is
+                             # the one photograph source a form-season flip
+                             # cannot empty. The builders fill from it.
+                             "photo": pl.get("photo")})
                 got += 1
         print(f"    {club_name:26} {got:>3} players")
 

@@ -845,9 +845,62 @@ def same_tokens(ta, tb):
     return ta[0][:1] == tb[0][:1] and ta[-1] == tb[-1]
 
 
-def fouls_won_index(rows):
+def fill_photos(rows, roster, resolve=None, label="the roster"):
+    """Give every faceless row a photograph from the season-less roster.
+
+    WHY THIS EXISTS. A photograph is a fact about a PERSON, and until now every
+    desk but the Premier League took it from the same season-scoped form
+    harvest that supplies his rate. So the face lived or died with the form,
+    and on 10 September 2026 the Championship lost all 445 of them in one
+    refresh: data/eflc_data.js went from 575 faces in 763 rows to 126 in 761,
+    and check-booked.mjs stopped the fixtures workflow because 15 of 85 booked
+    players had a face.
+
+    Measured on a runner that day, the feed was blameless: /players carries a
+    photograph for 20 of 20 rows in the CURRENT season and the completed one
+    alike, map_player keeps it for 20 of 20 and mk() keeps it for 20 of 20. The
+    loss was ours, in the assembly below the mapping.
+
+    /players/squads is the answer because it takes NO SEASON AT ALL, returns a
+    photograph for 37 of 37, and the roster harvest already calls it once per
+    club for membership. The face costs nothing extra and no form-season flip
+    can empty it again.
+
+    A FILL, NEVER AN OVERWRITE: a row that already has a face keeps it, and
+    nothing else on the row is touched. Ambiguity is refused rather than
+    guessed, by the same index the Premier League desk uses, because a wrong
+    join here puts one man's face beside another man's card record.
+    """
+    if not roster:
+        print(f"Photographs: {label} did not harvest, so faces come only from "
+              "the form sources; a monogram is the fallback.")
+        return 0
+    exact, initial, _ = fouls_won_index(roster, resolve=resolve)
+    filled = 0
+    for r in rows:
+        if r.get("ph"):
+            continue
+        full, ini = name_keys(r.get("n"))
+        if full is None:
+            continue
+        rec = exact.get((r["c"], full)) or initial.get((r["c"], ini))
+        if rec and rec.get("ph"):
+            r["ph"] = rec["ph"]
+            filled += 1
+    have = sum(1 for r in rows if r.get("ph"))
+    print(f"Photographs: filled {filled} from {label}; {have} of {len(rows)} "
+          "rows carry a face.")
+    return filled
+
+
+def fouls_won_index(rows, resolve=None):
     """(club, name key) -> {"fw": fouls won, "ph": photograph}, from the
     API-Football squads.
+
+    `resolve` maps a feed's club name to a short code and defaults to this
+    league's map, exactly as mk() does. The other three desks pass their own so
+    they can fill photographs from their own roster rather than reimplementing
+    a join that already refuses ambiguity.
 
     TWO FIELDS OFF ONE JOIN. This read fd90 alone, and the photograph sitting
     in the same row went unread — so the Premier League shipped 74 faces out of
@@ -876,8 +929,9 @@ def fouls_won_index(rows):
     """
     exact, initial, clash = {}, {}, set()
     seen = {}
+    short_of = resolve or SHORT.get
     for r in rows or []:
-        short = SHORT.get(r.get("team"))
+        short = r.get("c") or short_of(r.get("team"))
         if not short:
             continue
         fw = num(r.get("fd90"))
