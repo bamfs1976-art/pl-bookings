@@ -246,6 +246,14 @@ jobs:
       - name: No double-encoded names in any shipped file
         run: node scripts/check-encoding.mjs
 
+      # Player photographs. A desk that has lost its faces renders perfectly
+      # well and prices correctly, so nothing else reports it: the Championship
+      # dropped from 575 to 126 and it surfaced six hours later in a different
+      # workflow, with the bad data already on main. This is that test one step
+      # earlier, on the datasets, where the refresh sees it before it pushes.
+      - name: Every desk still has its player photographs
+        run: node scripts/check-photos.mjs
+
       # The share cards. They are the one artefact that LEAVES the site, so
       # nobody who sees one can check it against the page it came from. Runs
       # the renderer against a recording stub and asserts the text drawn —

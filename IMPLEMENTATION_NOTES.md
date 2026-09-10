@@ -6,6 +6,84 @@ work, newest first: what changed, what was deferred and why. Everything before
 in [docs/decisions.md](docs/decisions.md); the audit itself is
 [docs/audit-2026-07.md](docs/audit-2026-07.md).
 
+## The Championship lost every face, and the guard that found it was too late (2026-09-10)
+
+The fixtures workflow failed on `check-booked.mjs`: 15 of 85 booked Championship
+players had a photograph, against the 85% the join normally finds. The cause
+was upstream and six hours old.
+
+**What happened.** `data/eflc_data.js` went from 575 photographs in 763 rows to
+126 in 761 in a single data refresh. By the basis each row was built on the
+loss was total and confined to one source, and the other three desks were
+rebuilt by the same run and lost nothing:
+
+| Basis | Before | After |
+|---|---|---|
+| EFLC | 445 of 445 | 0 of 403 |
+| L1 | 66 of 66 | 66 of 66 |
+| PL | 64 of 64 | 60 of 60 |
+| NEW | 0 of 188 | 0 of 232 |
+
+**My first explanation was wrong, and the probe said so.** The Championship
+reached round 6 that morning, so `form-season.mjs` flipped it to current-season
+form. It was the only desk that flipped and the only desk that lost its faces,
+which is as clean a correlation as this repository ever produces. It is not the
+cause. Measured on a runner, `/players` carries a photograph for 20 of 20 rows
+in the current season and 20 of 20 in the completed one, `map_player` keeps 20
+of 20 and `mk()` keeps 20 of 20. Had I acted on the correlation I would have
+rewritten the season logic and fixed nothing.
+
+**The provable defect.** `shipped_rows()`, the fallback both builders use when
+a source did not harvest, rebuilds a source row without the photograph. One
+failed harvest therefore stripped every face that source had contributed,
+silently. Measured against the file that still had them, the fallback now
+returns 445 of 445 with a face and `mk()` keeps them.
+
+**The class of bug, removed.** Every desk but the Premier League took a face
+from the same season-scoped form harvest that supplies the rate, so the face
+lived or died with the form. `/players/squads` takes no season at all, returns
+a photograph for 37 of 37, and the roster harvest already calls it once per
+club for membership. `emit_roster` had been discarding that field since it was
+written. It keeps it now, and both builders fill from it after the squad
+reconcile so arrivals get faces too. A fill, never an overwrite, through the
+index the Premier League desk already uses, which refuses an ambiguous join
+rather than putting one man's face beside another man's card record. No new API
+calls.
+
+This was never an EFL problem. La Liga is at round 5 and flips at 6, Serie A
+behind it, and both share the fallback.
+
+**The guard was in the wrong place.** `check-booked.mjs` did catch it, which is
+why we know. But it caught it in a different workflow six hours later, with the
+bad data already on main and referee appointments no longer being committed.
+`scripts/check-photos.mjs` runs the same question on the datasets themselves,
+so the refresh sees it in its own `check-all` before it pushes. A floor rather
+than a comparison, because a guard cannot see the previous build: the four
+desks sit between 56% and 76% and the failure was 17%, so 40% has room on both
+sides. It also refuses a photograph that is not an https URL, because a broken
+image reads as a fault in the page where a monogram reads as a gap in the data.
+
+**The fix did more than restore the loss.** The roster covers players the form
+harvest has nothing on, so filling from it lifted every discovered desk past
+where it had ever been. The Premier League is unchanged because it fills from
+its own API-Football harvest rather than a roster and has no `/players/squads`
+call to draw on; giving it one would cost twenty calls a day, which is a
+decision rather than a fix, so it is left as it is and noted here.
+
+| Desk | Before | After |
+|---|---|---|
+| EFL Championship | 126 of 761 (17%) | 757 of 761 (99%) |
+| La Liga | 487 of 643 (76%) | 641 of 643 (100%) |
+| Serie A | 459 of 648 (71%) | 648 of 648 (100%) |
+| Premier League | 367 of 651 (56%) | unchanged |
+
+**What I could not pin.** The exact trigger in that one run. A plain reuse of
+the shipped file reproduces 431 Championship rows here and the run recorded
+403, so something moved the row set as well, and the build step's own log is
+past what the API will hand back. Both hosts that serve full run logs are
+blocked from this environment. The fix does not depend on the answer, because
+it removes the dependency that made any of it possible.
+
 ## A bot lost a race it was built to survive (2026-09-09)
 
 The scheduled feeds run failed at 19:27. It harvested injuries, odds and
