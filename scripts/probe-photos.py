@@ -131,6 +131,42 @@ def main():
                 people.extend(entry.get("players") or [])
             report("photo", *photo_rate(people, lambda p: (p or {}).get("photo")))
 
+    # 4. OUR OWN CHAIN, on a real team-scoped response, which is the call the
+    #    harvest actually makes. The three answers above are about the feed;
+    #    this one is about this repository. map_player turns a response row
+    #    into the harvest file's shape and build_pl_data.mk turns that into a
+    #    shipped player row, and a photograph has to survive both.
+    if team_id is not None:
+        import build_pl_data as B  # noqa: E402
+        payload = af._get(host, key, "players",
+                          {"team": team_id, "season": CURRENT, "page": 1})
+        errs = af.api_errors(payload)
+        print(f"\n/players?team={team_id}&season={CURRENT}   (THE CALL THE HARVEST MAKES)")
+        if errs:
+            print(f"  refused: {errs}")
+        else:
+            rows = (payload or {}).get("response") or []
+            report("response player.photo", *photo_rate(
+                rows, lambda r: ((r or {}).get("player") or {}).get("photo")))
+            mapped = [m for m in
+                      (af.map_player(r, "Probe FC", team_id) for r in rows)
+                      if m]
+            report("after map_player, photo", *photo_rate(
+                mapped, lambda r: (r or {}).get("photo")))
+            shipped = [B.mk(dict(m, team="Probe FC"), "EFLC", resolve=lambda _n: "PRB")
+                       for m in mapped]
+            shipped = [r for r in shipped if r]
+            report("after mk(), ph", *photo_rate(
+                shipped, lambda r: (r or {}).get("ph")))
+            if mapped and not any(m.get("photo") for m in mapped):
+                print("    => the loss is in map_player or the response, not the build")
+            elif shipped and not any(r.get("ph") for r in shipped):
+                print("    => the loss is in mk()")
+            elif shipped:
+                print("    => the chain preserves the photograph, so the loss is "
+                      "further down: a source that did not harvest and fell back "
+                      "to shipped_rows(), which does not carry ph")
+
     print("\nReading:")
     print("  If the current season is empty and the completed one is not, the")
     print("  season flip is the cause and every desk hits it at round 6.")
