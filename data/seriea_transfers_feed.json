@@ -1,7 +1,16 @@
 {
   "note": "PROPOSALS from API-Football /transfers, for a person to read. data/transfers.json is the hand-curated overlay that is actually applied; this is not.",
-  "since": "2026-05-12",
+  "since": "2026-05-13",
   "moves": [
+    {
+      "n": "A. Barák",
+      "from": "Fiorentina",
+      "to": "Apoel Nicosia",
+      "fromCode": "FIO",
+      "toCode": null,
+      "date": "2026-09-05",
+      "type": "Free agent"
+    },
     {
       "n": "K. Ehizibue",
       "from": "Udinese",
@@ -43,6 +52,15 @@
       "from": "Frosinone",
       "to": "Anderlecht",
       "fromCode": "FRO",
+      "toCode": null,
+      "date": "2026-09-01",
+      "type": "Transfer"
+    },
+    {
+      "n": "A. Romagnoli",
+      "from": "Lazio",
+      "to": "Al Sadd",
+      "fromCode": "LAZ",
       "toCode": null,
       "date": "2026-09-01",
       "type": "Transfer"

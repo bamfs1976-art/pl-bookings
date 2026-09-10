@@ -1,6 +1,6 @@
 {
   "note": "PROPOSALS from API-Football /transfers, for a person to read. data/transfers.json is the hand-curated overlay that is actually applied; this is not.",
-  "since": "2026-05-12",
+  "since": "2026-05-13",
   "moves": [
     {
       "n": "D. Downs",
@@ -10332,15 +10332,6 @@
       "fromCode": null,
       "toCode": "PRE",
       "date": "2026-05-29",
-      "type": "Return from loan"
-    },
-    {
-      "n": "T. McDermott",
-      "from": "Shrewsbury",
-      "to": "Burnley",
-      "fromCode": null,
-      "toCode": "BUR",
-      "date": "2026-05-12",
       "type": "Return from loan"
     }
   ]
