@@ -1,0 +1,27 @@
+name: Probe the player photographs
+
+# WHY A PUSH TRIGGER. workflow_dispatch only reaches a workflow that is already
+# on the default branch, so a diagnostic written on a feature branch cannot be
+# run from the Actions tab. Scoping a push trigger to this workflow and its own
+# script gives it a way to run without putting it on main first.
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'scripts/probe-photos.py'
+      - '.github/workflows/probe-photos.yml'
+
+# READ-ONLY. Three calls, and it writes no file and commits nothing.
+permissions:
+  contents: read
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Ask
+        env:
+          API_FOOTBALL_KEY: ${{ secrets.API_FOOTBALL_KEY }}
+        run: python3 scripts/probe-photos.py
