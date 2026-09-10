@@ -627,7 +627,7 @@ const PL_PLAYERS = [
   {c:"SUN",n:"Jenson Seelt",p:"DF",min:134,yc:0,rc:0,y:0.0,f:0.67,fw:0.672,r:0.67,ls:true,b:"PL",ph:"https://media.api-sports.io/football/players/290545.png"},
   {c:"SUN",n:"Chemsdine Talbi",p:"FW",min:1563,yc:0,rc:0,y:0.0,f:0.29,fw:0.058,r:0.29,ls:false,b:"PL",ph:"https://media.api-sports.io/football/players/336659.png"},
   {c:"SUN",n:"Robin Roefs",p:"GK",min:3150,yc:4,rc:0,y:0.114,f:0.0,fw:0.398,r:0.228,ls:false,b:"PL",ph:"https://media.api-sports.io/football/players/194536.png"},
-  {c:"SUN",n:"Jocelin Ta Bi",p:"FW",min:39,yc:0,rc:0,y:0.0,f:0.0,fw:2.308,r:0.0,ls:true,b:"PL",ph:"https://media.api-sports.io/football/players/554280.png"},
+  {c:"SUN",n:"Jocelin Ta Bi",p:"FW",min:39,yc:0,rc:0,y:0.0,f:0.0,fw:2.308,r:0.0,ls:true,b:"PL",ph:"https://media.api-sports.io/football/players/492528.png"},
   {c:"SUN",n:"Melker Ellborg",p:"GK",min:270,yc:0,rc:0,y:0.0,f:0.0,fw:0.333,r:0.0,ls:true,b:"PL",ph:"https://media.api-sports.io/football/players/278454.png"},
   {c:"SUN",n:"Anthony Patterson",p:"GK",min:0,yc:null,rc:null,y:null,f:null,fw:null,r:null,ls:true,b:"NEW",ph:"https://media.api-sports.io/football/players/19881.png"},
   {c:"SUN",n:"Daniel Ballard",p:"DF",min:0,yc:null,rc:null,y:null,f:null,fw:1.257,r:null,ls:true,b:"NEW",ph:"https://media.api-sports.io/football/players/55904.png"},

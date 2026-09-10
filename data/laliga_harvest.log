@@ -1,4 +1,4 @@
-La Liga harvest — run 154
+La Liga harvest — run 155
 == discover ==
 La Liga: API-Football league 140, season 2026
 
@@ -24,7 +24,7 @@ laliga_clubs.json written (20 clubs)
     VAL  Valencia
     VIL  Villarreal
 
-API-Football: 1 call(s) this run; 3001 of 7500 used today (40%), 4499 left
+API-Football: 1 call(s) this run; 197 of 7500 used today (3%), 7303 left
 == squads ==
 La Liga: API-Football league 140, season 2025
   not in this desk's club list (3): Girona, Mallorca, Oviedo
@@ -49,7 +49,7 @@ La Liga: API-Football league 140, season 2025
 
 laliga_players.json written (671 players from 17 clubs, API-Football, LL season 2025)
 
-API-Football: 43 call(s) this run; 2859 of 7500 used today (38%), 4641 left
+API-Football: 43 call(s) this run; 240 of 7500 used today (3%), 7260 left
 == rosters ==
 La Liga: API-Football league 140, season 2026
     Athletic Club               30 players
@@ -75,12 +75,12 @@ La Liga: API-Football league 140, season 2026
 
 ll_squads.json written (639 players from 20 clubs, API-Football current rosters)
 
-API-Football: 21 call(s) this run; 2880 of 7500 used today (38%), 4620 left
+API-Football: 21 call(s) this run; 51 of 7500 used today (1%), 7449 left
 == season-cards ==
 La Liga: API-Football league 140, season 2026
   fetching 20 squads
     Athletic Club               26 players
-    Atletico Madrid             27 players
+    Atletico Madrid             26 players
     Barcelona                   27 players
     Celta Vigo                  27 players
     Deportivo Alaves            28 players
@@ -90,19 +90,19 @@ La Liga: API-Football league 140, season 2026
     Getafe                      29 players
     Levante                     29 players
     Malaga                      26 players
-    Osasuna                     27 players
+    Osasuna                     26 players
     Racing Santander            31 players
     Rayo Vallecano              29 players
     Real Betis                  25 players
-    Real Madrid                 26 players
+    Real Madrid                 25 players
     Real Sociedad               28 players
     Sevilla                     31 players
     Valencia                    32 players
     Villarreal                  27 players
 
-laliga_season_cards.json written (557 players from 20 clubs, API-Football, LL season 2026)
+laliga_season_cards.json written (554 players from 20 clubs, API-Football, LL season 2026)
 
-API-Football: 41 call(s) this run; 2921 of 7500 used today (39%), 4579 left
+API-Football: 41 call(s) this run; 92 of 7500 used today (1%), 7408 left
 == segunda ==
 Segunda División: API-Football league 141, season 2025
   not in this desk's club list (19): AD Ceuta FC, Albacete, Almeria, Burgos, Cadiz, Castellón, Cordoba, Cultural Leonesa, Eibar, FC Andorra, Granada CF, Huesca, Las Palmas, Leganes, Mirandes, Real Sociedad II, Sporting Gijon, Valladolid, Zaragoza
@@ -113,13 +113,13 @@ Segunda División: API-Football league 141, season 2025
 
 segunda_players.json written (111 players from 3 clubs, API-Football, SEG season 2025)
 
-API-Football: 7 call(s) this run; 2928 of 7500 used today (39%), 4572 left
+API-Football: 7 call(s) this run; 99 of 7500 used today (1%), 7401 left
 == ref-fixtures ==
 La Liga: API-Football league 140, season 2025
 
 laliga_ref_fixtures.js written (380 matches over 20 clubs, 380 with an official named)
 
-API-Football: 1 call(s) this run; 2929 of 7500 used today (39%), 4571 left
+API-Football: 1 call(s) this run; 100 of 7500 used today (1%), 7400 left
 == fixtures ==
 La Liga: API-Football league 140, season 2026
   LL appointments overlay: 0 applied, 33 already harvested
@@ -138,7 +138,7 @@ La Liga: API-Football league 140, season 2026
 
 laliga_fixtures.js written (380 fixtures over 38 matchdays, 41 with a referee appointed)
 
-API-Football: 1 call(s) this run; 2930 of 7500 used today (39%), 4570 left
+API-Football: 1 call(s) this run; 101 of 7500 used today (1%), 7399 left
 == build ==
 Division: 17 clubs were in it last season, 3 came up
   promoted: Deportivo La Coruna, Malaga, Racing Santander

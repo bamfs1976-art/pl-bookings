@@ -43,7 +43,7 @@ const LALIGA_PLAYERS = [
   {c:"ALA",n:"Angel Pérez",p:"DF",min:1290,yc:4,rc:0,y:0.279,f:1.116,fw:1.186,r:1.674,ls:false,b:"LL",sc:0,sm:306,ph:"https://media.api-sports.io/football/players/331369.png"},
   {c:"ALA",n:"Toni Martínez",p:"Forward",min:2725,yc:2,rc:0,y:0.066,f:1.519,fw:1.222,r:1.651,ls:false,b:"LL",sc:0,sm:234,ph:"https://media.api-sports.io/football/players/47181.png"},
   {c:"ALA",n:"Jonny",p:"DF",min:2998,yc:7,rc:0,y:0.21,f:1.111,fw:0.901,r:1.531,ls:false,b:"LL",sc:0,sm:330,ph:"https://media.api-sports.io/football/players/18740.png"},
-  {c:"ALA",n:"Aitor Mañas",p:"DF",min:134,yc:0,rc:0,y:0.0,f:1.343,fw:0.672,r:1.343,ls:true,b:"LL",sc:0,sm:19,ph:"https://media.api-sports.io/football/players/330440.png"},
+  {c:"ALA",n:"Aitor Mañas",p:"DF",min:134,yc:0,rc:0,y:0.0,f:1.343,fw:0.672,r:1.343,ls:true,b:"LL",sc:0,sm:84,ph:"https://media.api-sports.io/football/players/330440.png"},
   {c:"ALA",n:"N. Tenaglia",p:"DF",min:3239,yc:3,rc:0,y:0.083,f:0.861,fw:1.167,r:1.027,ls:false,b:"LL",sc:1,sm:360,ph:"https://media.api-sports.io/football/players/6233.png"},
   {c:"ALA",n:"V. Koski",p:"DF",min:281,yc:0,rc:0,y:0.0,f:0.641,fw:null,r:0.641,ls:true,b:"LL",sc:0,sm:350,ph:"https://media.api-sports.io/football/players/106759.png"},
   {c:"ALA",n:"Sivera",p:"GK",min:3420,yc:3,rc:0,y:0.079,f:0.026,fw:0.026,r:0.184,ls:false,b:"LL",sc:1,sm:360,ph:"https://media.api-sports.io/football/players/47353.png"},
