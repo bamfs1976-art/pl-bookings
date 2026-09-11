@@ -33,10 +33,10 @@ def main():
     a = ap.parse_args()
 
     import os
-    key = os.environ.get("API_FOOTBALL_KEY", "")
+    key = os.environ.get("API_FOOTBALL_KEY", "").strip().strip(chr(34)).strip(chr(39))
     if not key:
         sys.exit("ERROR: API_FOOTBALL_KEY is not set — nothing to ask.")
-    season = os.environ.get("API_FOOTBALL_SEASON", "2026")
+    season = os.environ.get("API_FOOTBALL_SEASON", "2026").strip()
     host = os.environ.get("API_FOOTBALL_HOST", H.DEFAULT_HOST)
 
     af_id = {"PL": 39, "EFLC": 40, "LL": 140, "SA": 135}[a.league.upper()]
