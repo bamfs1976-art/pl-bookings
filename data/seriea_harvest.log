@@ -1,4 +1,4 @@
-Serie A harvest, run 156
+Serie A harvest, run 157
 == discover ==
 Serie A: API-Football league 135, season 2026
 
@@ -24,7 +24,7 @@ seriea_clubs.json written (20 clubs)
     UDI  Udinese
     VEN  Venezia
 
-API-Football: 1 call(s) this run; 819 of 7500 used today (11%), 6681 left
+API-Football: 1 call(s) this run; 99 of 7500 used today (1%), 7401 left
 == squads ==
 Serie A: API-Football league 135, season 2025
   not in this desk's club list (3): Cremonese, Hellas Verona, Pisa
@@ -49,7 +49,7 @@ Serie A: API-Football league 135, season 2025
 
 seriea_players.json written (732 players from 17 clubs, API-Football, SA season 2025)
 
-API-Football: 47 call(s) this run; 866 of 7500 used today (12%), 6634 left
+API-Football: 47 call(s) this run; 146 of 7500 used today (2%), 7354 left
 == rosters ==
 Serie A: API-Football league 135, season 2026
     AC Milan                    32 players
@@ -75,7 +75,7 @@ Serie A: API-Football league 135, season 2026
 
 sa_squads.json written (648 players from 20 clubs, API-Football current rosters)
 
-API-Football: 21 call(s) this run; 887 of 7500 used today (12%), 6613 left
+API-Football: 21 call(s) this run; 167 of 7500 used today (2%), 7333 left
 == season-cards ==
 Serie A: API-Football league 135, season 2026
   fetching 20 squads
@@ -102,7 +102,7 @@ Serie A: API-Football league 135, season 2026
 
 seriea_season_cards.json written (583 players from 20 clubs, API-Football, SA season 2026)
 
-API-Football: 41 call(s) this run; 928 of 7500 used today (12%), 6572 left
+API-Football: 41 call(s) this run; 208 of 7500 used today (3%), 7292 left
 == serie-b ==
 Serie B: API-Football league 136, season 2025
   not in this desk's club list (17): Avellino, Bari, Carrarese, Catanzaro, Cesena, Empoli, Juve Stabia, Mantova, Modena, Padova, Palermo, Pescara, Reggiana, Sampdoria, Spezia, Sudtirol, Virtus Entella
@@ -113,16 +113,15 @@ Serie B: API-Football league 136, season 2025
 
 serieb_players.json written (116 players from 3 clubs, API-Football, SERB season 2025)
 
-API-Football: 8 call(s) this run; 936 of 7500 used today (12%), 6564 left
+API-Football: 8 call(s) this run; 216 of 7500 used today (3%), 7284 left
 == ref-fixtures ==
 Serie A: API-Football league 135, season 2025
 
 seriea_ref_fixtures.js written (380 matches over 20 clubs, 380 with an official named)
 
-API-Football: 1 call(s) this run; 937 of 7500 used today (12%), 6563 left
+API-Football: 1 call(s) this run; 217 of 7500 used today (3%), 7283 left
 == fixtures ==
 Serie A: API-Football league 135, season 2026
-  SA appointments overlay: 2 applied, 0 already harvested
   CHANGED: VEN v FIO: harvested 'F. Fourneau', published 'Francesco Fourneau' — the harvested name stands
   CHANGED: ATA v CAG: harvested 'A. Arena', published 'Alberto Ruben Arena' — the harvested name stands
   CHANGED: GEN v FRO: harvested 'A. Rapuano', published 'Antonio Rapuano' — the harvested name stands
@@ -130,11 +129,13 @@ Serie A: API-Football league 135, season 2026
   CHANGED: NAP v BGN: harvested 'K. Bonacina', published 'Kevin Bonacina' — the harvested name stands
   CHANGED: SAS v JUV: harvested 'J. L. Sacchi', published 'SACCHI J. L.' — the harvested name stands
   CHANGED: COM v PAR: harvested 'G. Mucera', published 'Giuseppe Mucera' — the harvested name stands
+  CHANGED: INT v UDI: harvested 'L. Pairetto', published 'Luca Pairetto' — the harvested name stands
+  CHANGED: TOR v ROM: harvested 'F. Maresca', published 'Fabio Maresca' — the harvested name stands
   NOTE: no card record for SACCHI J. L. (SAS v JUV) — priced at the league rate
 
 seriea_fixtures.js written (380 fixtures over 38 matchdays, 40 with a referee appointed)
 
-API-Football: 1 call(s) this run; 938 of 7500 used today (13%), 6562 left
+API-Football: 1 call(s) this run; 218 of 7500 used today (3%), 7282 left
 == build ==
 Division: 17 clubs were in it last season, 3 came up
   promoted: Frosinone, Monza, Venezia
@@ -197,7 +198,7 @@ Squads reconciled against the FPL feed: 99 moved, 0 joined, 354 left the divisio
     AMBIGUOUS, left at NAP: Amir Rrahmani
     AMBIGUOUS, left at MON: M. Pessina
     AMBIGUOUS, left at MON: L. Colombo
-Photographs: filled 189 from sa_squads.json; 648 of 648 rows carry a face.
+Photographs: filled 0 from sa_squads.json; 648 of 648 rows carry a face.
 
 club rates from mirror (380 matches)
 players: 648  by basis: NEW=189, SA=410, SB=49

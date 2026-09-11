@@ -20,7 +20,7 @@ const CLUBS = [
   {short:"FUL",name:"Fulham",img:"https://cdn.sportmonks.com/images/soccer/teams/11/11.png",basis:"PL",ca:1.37,caH:1.33,caA:1.41,fm:7.5,squad:28},
   {short:"AVL",name:"Aston Villa",img:"https://cdn.sportmonks.com/images/soccer/teams/15/15.png",basis:"PL",ca:1.32,caH:1.16,caA:1.48,fm:7.4,squad:35},
   {short:"LIV",name:"Liverpool",img:"https://cdn.sportmonks.com/images/soccer/teams/8/8.png",basis:"PL",ca:1.29,caH:1.02,caA:1.56,fm:9.3,squad:36},
-  {short:"COV",name:"Coventry City",img:"https://media.api-sports.io/football/teams/1346.png",basis:"EFL",ca:null,caH:null,caA:null,fm:null,squad:34},
+  {short:"COV",name:"Coventry City",img:"https://media.api-sports.io/football/teams/1346.png",basis:"EFL",ca:null,caH:null,caA:null,fm:null,squad:35},
   {short:"HUL",name:"Hull City",img:"https://media.api-sports.io/football/teams/64.png",basis:"EFL",ca:null,caH:null,caA:null,fm:null,squad:43},
   {short:"IPS",name:"Ipswich Town",img:"https://media.api-sports.io/football/teams/57.png",basis:"EFL",ca:null,caH:null,caA:null,fm:null,squad:36},
 ];
@@ -246,6 +246,7 @@ const PL_PLAYERS = [
   {c:"COV",n:"Loum Tchaouna",p:"MF",min:166,yc:null,rc:null,y:null,f:null,fw:null,r:null,ls:true,b:"NEW"},
   {c:"COV",n:"O. Dovin",p:"GK",min:0,yc:null,rc:null,y:null,f:null,fw:null,r:null,ls:true,b:"EFL"},
   {c:"COV",n:"Sidiki Cherif",p:"FW",min:0,yc:null,rc:null,y:null,f:null,fw:null,r:null,ls:true,b:"NEW"},
+  {c:"COV",n:"Yann Gboho",p:"MF",min:0,yc:null,rc:null,y:null,f:null,fw:null,r:null,ls:true,b:"NEW"},
   {c:"CRY",n:"Borna Sosa",p:"DF",min:98,yc:1,rc:0,y:0.918,f:3.67,fw:null,r:5.506,ls:true,b:"PL",ph:"https://media.api-sports.io/football/players/26303.png"},
   {c:"CRY",n:"Jørgen Strand Larsen",p:"FW",min:911,yc:2,rc:0,y:0.198,f:2.07,fw:0.988,r:2.466,ls:false,b:"PL",ph:"https://media.api-sports.io/football/players/2032.png"},
   {c:"CRY",n:"Eddie Nketiah",p:"FW",min:416,yc:2,rc:0,y:0.433,f:1.51,fw:1.514,r:2.376,ls:true,b:"PL",ph:"https://media.api-sports.io/football/players/1468.png"},
