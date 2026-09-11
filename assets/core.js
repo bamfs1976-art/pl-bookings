@@ -1327,6 +1327,45 @@
     if (!(baseRate > 0) || !(baseRate < 1) || !(foulLeague > 0)) return null;
     return -Math.log(1 - baseRate) / foulLeague;
   }
+  /* ONE POPULATION FOR BOTH HALVES OF THAT RATIO.
+   *
+   * The hazard is a league's cards divided by that league's fouls, so the two
+   * have to be measured over the same players or it is not a rate of anything.
+   * The desks were dividing calibrate(EVERY player).baseRate by a foul rate
+   * averaged over RATED players only — everyone with both a yellow rate and a
+   * foul rate. A player with minutes and yellows but no fouls figure therefore
+   * contributed cards to the numerator and nothing to the denominator.
+   *
+   * WHICH WAY THAT BIT depends entirely on how those players card, so it is
+   * worth having measured rather than reasoned. There are 40 to 47 of them per
+   * desk and they card at 0.038 to 0.045 per player-match against the rated
+   * population's 0.166 to 0.209 — about a quarter of the rate, because a feed
+   * that has no fouls for a player is generally not recording his yellows
+   * properly either. So they DILUTED the numerator and the hazard read LOW:
+   * the Championship by 5.4%, La Liga by 7.0%, Serie A by 4.6%. The desks were
+   * under-pricing a card on the fouls path, not over-pricing it.
+   *
+   * That was invisible for as long as every row had a foul rate, which was
+   * true of the ScoutingStats export the Premier League was built from: rated
+   * and all were the same set, and the runtime answer matched the one
+   * build-model.mjs bakes, to four decimal places. Moving the Premier League
+   * onto API-Football, where some rows carry yellows and no fouls, pulled them
+   * apart — 0.1852 against a baked 0.192, a 3.5% gap, on a constant three
+   * desks price fouls with. tests/test-core.mjs caught it before it shipped.
+   *
+   * So the filter lives HERE, next to the arithmetic that depends on it,
+   * rather than being restated at each call site where one copy can drift.
+   * calibrate() itself is untouched: over every player is the right population
+   * for the logistic the desks print, and only this ratio needs the narrower
+   * one.
+   */
+  function leagueHazard(players) {
+    var rated = (players || []).filter(function (p) {
+      return p && p.y != null && p.f != null;
+    });
+    if (!rated.length) return null;
+    return twoStageHazard(calibrate(rated).baseRate, leagueRate90(rated, 'f'));
+  }
   /* MATCH FOULS: the sum of a set of player-level Negative Binomials.
    *
    * A sum of independent NB(mu_i, r) is NOT itself Negative Binomial unless
@@ -2203,7 +2242,7 @@
     pCardsAtLeast, suspensionCycle, nextSuspension,
     brier, logLoss, reliability, glmProb,
     gammaln, expectedFouls, nbTailProb, cardProbFromFouls, recencyWeight, refCardFactor,
-    leagueRate90, twoStageHazard, sumNegBin,
+    leagueRate90, twoStageHazard, leagueHazard, sumNegBin,
     matchLegOptions, simLegOptions, accaAllocate, accaPrice,
   };
 

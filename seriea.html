@@ -725,7 +725,7 @@
     return {
       foulLeague: foulLeague,
       wonLeague: wonLeague,
-      hazard: C.twoStageHazard(CAL.baseRate, foulLeague),
+      hazard: C.leagueHazard(PLAYERS),
       /* The NB size, shared with the Premier League build. It is a shape
          parameter about how much a player's fouls vary match to match, not a
          league rate — but it is a PRIOR here, not a fit, and it is written

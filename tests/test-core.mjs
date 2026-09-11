@@ -1165,10 +1165,12 @@ t('the shared hazard reproduces the Premier League constant it was lifted from',
   const g = {};
   new Function('globalThis', readFileSync(join(root, 'data', 'pl_data.js'), 'utf8')
     + ';globalThis.P=PL_PLAYERS;')(g);
-  const rated = g.P.filter((p) => p.y != null && p.f != null);
-  const cal = core.calibrate(g.P);
-  const foulLeague = core.leagueRate90(rated, 'f');
-  const hz = core.twoStageHazard(cal.baseRate, foulLeague);
+  /* Through leagueHazard, which is what the three desks call — not through a
+     fourth copy of the filter. Restating the population here is how this test
+     came to pass while the desks were dividing every player's card rate by a
+     rated player's foul rate: the test agreed with the mistake because it made
+     the same one. */
+  const hz = core.leagueHazard(g.P);
   /* Within a thousandth: build-model.mjs rounds to 4dp and filters `rated`
      the same way, so anything wider means the two have drifted apart. */
   assert.ok(Math.abs(hz - model.twoStage.baseHazard) < 0.001,
@@ -1176,6 +1178,41 @@ t('the shared hazard reproduces the Premier League constant it was lifted from',
     'the runtime derivation and the baked one no longer agree, so the ' +
     'Championship and La Liga are pricing fouls on a different definition ' +
     'from the Premier League');
+});
+
+t('the hazard divides one population by itself, not one by another', () => {
+  /* The defect this function exists to prevent, as data: a player with
+     minutes and yellows but NO foul rate belongs to neither half of the
+     ratio. Counting his cards while excluding his (absent) fouls measures one
+     population against another, and the result is still a plausible number,
+     which is why it went unnoticed.
+
+     The invariant is direction-free on purpose — such a player must not move
+     the hazard AT ALL. Which way he would move it depends on whether he cards
+     more or less than the rated population, so asserting a direction here
+     would pin the test to one accident of one dataset. (On the live desks he
+     cards about a quarter as often, so the old form read low; a fixture is
+     free to go the other way, and both are the same bug.) */
+  const both = [{ min: 2700, yc: 6, y: 0.2, f: 1.0 },
+                { min: 2700, yc: 6, y: 0.2, f: 1.0 }];
+  const rated = plusRateless => plusRateless.filter((p) => p.f != null);
+  const naive = (rows) => core.twoStageHazard(core.calibrate(rows).baseRate,
+    core.leagueRate90(rated(rows), 'f'));
+  assert.ok(core.leagueHazard(both) > 0);
+  [['cards more', { min: 2700, yc: 12, y: 0.4, f: null }],
+   ['cards less', { min: 2700, yc: 1, y: 0.033, f: null }]].forEach(([how, ghost]) => {
+    const rows = both.concat([ghost]);
+    assert.equal(core.leagueHazard(rows), core.leagueHazard(both),
+      `a rateless player who ${how} moved the hazard, so he is being counted ` +
+      'on one side of the ratio and not the other');
+    /* And the naive form really does move on that data, in both directions —
+       or the check above passes for a rule nothing exercises. */
+    assert.ok(Math.abs(naive(rows) - core.leagueHazard(rows)) > 1e-6,
+      `the mismatched population was expected to differ when a rateless ` +
+      `player ${how}`);
+  });
+  assert.equal(core.leagueHazard([]), null);
+  assert.equal(core.leagueHazard(null), null);
 });
 
 t('the hazard refuses inputs that would make it meaningless', () => {
