@@ -5,7 +5,7 @@
 // through PLDCore.matchSquadName. A fixture absent from here prices off
 // squad minute-weights exactly as it always has — that is the normal
 // state until about an hour before kick-off, not a failure.
-// Fetched 2026-09-09T18:24Z.
+// Fetched 2026-09-11T18:17Z.
 //
 // THE GLOBAL IS NOT CALLED `LINEUPS`, and that is deliberate. index.html
 // already declares a top-level `const LINEUPS` for assets/lineup.js (the
@@ -14,8 +14,6 @@
 // a parse error, not a shadow: the whole inline script fails and the desk
 // renders blank. Read `window.LINEUP_SHEETS`.
 var __LINEUP_SHEETS = {
-  "1563152":{"DER":{start:["J. Widell Zetterström", "S. Langås", "D. Sanderson", "E. Cashin", "C. Taylor", "D. Ozoh", "A. Mowatt", "B. Clark", "S. Szmodics", "R. Hedges", "M. Fuseini"],sub:["C. Blackett-Taylor", "O. Fraulo", "M. Johnston", "H. Meister", "R. Nyambe", "L. Salvesen", "J. Vickers", "J. Ward", "Raymond Offor"]},"WBA":{start:["M. O’Leary", "B. Pereira", "N. Phillips", "G. Campbell", "C. Styles", "Harry Whitwell", "J. Molumby", "O. Diakité", "I. Price", "A. Heggebø", "J. Morgan"],sub:["B. Cisse", "Tobias Christopher Collyer", "N. Galves", "C. Mepham", "F. Myhre", "R. Nzingoula", "B. Stewart", "C. Townsend", "K. Tunde"]}},
-  "1563153":{"BIR":{start:["J. Beadle", "B. Osayi-Samuel", "P. Neumann", "C. Klarer", "K. Lund", "T. Iwata", "Paik Seung-Ho", "Carlos Vicente", "J. Stansfield", "L. Millar", "A. Priske"],sub:["D. Fry", "K. Fujimoto", "E. Laird", "Bradley Mayo", "L. Vázquez", "M. Ducksch", "A. Cochrane", "L. Buchanan", "R. Allsop"]},"NOR":{start:["V. Kovačević", "J. Stacey", "Ruairi McConville", "J. Córdoba", "B. Chrisene", "K. McLean", "P. Mattsson", "A. Brooks", "P. Diallo", "O. Schwartau", "M. Kvistgaarden"],sub:["A. Crnac", "H. Darling", "K. Fisher", "D. Grimshaw", "P. Maghoma", "J. Makama", "A. Musaba", "Jacob Wright", "D. Yongwa"]}},
 };
 if (typeof module !== "undefined" && module.exports) module.exports = __LINEUP_SHEETS;
 if (typeof window !== "undefined") window.LINEUP_SHEETS = __LINEUP_SHEETS;
