@@ -571,4 +571,126 @@ t("two players sharing an initial and a surname get neither face nor number",
 t("the full name still resolves through that collision",
   _a_full_name_still_beats_the_collision)
 
+# --- which file the FORM comes from ---------------------------------------
+# The fill above joins fouls won onto rows whose form came from somewhere else,
+# and the season check is only worth anything if it knows which somewhere. The
+# Premier League's original form export stopped harvesting — the workflow step
+# is cookie-gated and wrapped in continue-on-error — so the build had been
+# falling back to the shipped file every run, which is a frozen 2025-26 basis
+# with no route to any other season. Moving FORM_SEASON by hand in that state
+# would not have moved the form. It would only have stopped the check noticing
+# that the form had not moved, and joined this season's fouls to last season's
+# players, and every number would have read as fine.
+
+def _with_files(files, fn):
+    """Run fn with exactly these harvest files on disk, restoring whatever was
+    there. `files` maps a name to its payload, or to None to force absence."""
+    saved = {}
+    for name, payload in files.items():
+        path = DATA / name
+        saved[name] = path.read_text(encoding="utf-8") if path.exists() else None
+        if payload is None:
+            if path.exists():
+                path.unlink()
+        else:
+            path.write_text(json.dumps(payload), encoding="utf-8")
+    try:
+        return fn()
+    finally:
+        for name, keep in saved.items():
+            path = DATA / name
+            if keep is None:
+                if path.exists():
+                    path.unlink()
+            else:
+                path.write_text(keep, encoding="utf-8")
+
+
+def _stamped(season, rows, league="PL"):
+    return {"league": league, "season": season, "players": rows}
+
+
+SS_ROW = {"team": "Arsenal", "n": "Declan Rice", "min": 900, "yc": 3,
+          "fc90": 1.2, "fd90": 0.9, "pos": "Midfielder"}
+AF_ROW = {"team": "Arsenal", "n": "Declan Rice", "min": 450, "yc": 1,
+          "fc90": 0.8, "fd90": 1.1, "pos": "Midfielder"}
+
+
+def _scoutingstats_still_wins_when_it_harvests():
+    """Restoring the cookie restores the old basis exactly. A live desk does
+    not change what every published number is computed from as a side effect
+    of a file appearing."""
+    def go():
+        reused = []
+        rows = B.pl_form({}, reused)
+        assert rows and rows[0]["min"] == 900, rows
+        assert B._FORM_SEASON_USED is None, B._FORM_SEASON_USED
+        assert B.form_season() == B.FORM_SEASON
+        assert reused == [], reused
+    _with_files({B.SS_FORM: [SS_ROW],
+                 B.AF_FILL: _stamped("2026", [AF_ROW])}, go)
+
+
+def _api_football_is_the_form_when_scoutingstats_does_not_harvest():
+    """The state the desk has actually been in. The form is the live file, and
+    the season is read off it rather than asserted."""
+    def go():
+        reused = []
+        rows = B.pl_form({}, reused)
+        assert rows and rows[0]["min"] == 450, rows
+        assert B.form_season() == "2026", B.form_season()
+        assert reused == [], reused
+    _with_files({B.SS_FORM: None,
+                 B.AF_FILL: _stamped("2026", [AF_ROW])}, go)
+
+
+def _the_fill_agrees_with_the_form_it_was_given():
+    """The transition, end to end: a 2026 harvest supplying both the form and
+    the fouls is coherent and builds, where the same harvest against a frozen
+    2025-26 form is the mis-join the guard exists to refuse."""
+    def coherent():
+        B.pl_form({}, [])
+        rows = [{"c": "ARS", "n": "Declan Rice", "fw": None, "ph": None}]
+        assert B.fill_fouls_won(rows) == 1, rows
+        assert rows[0]["fw"] == 1.1, rows
+    _with_files({B.SS_FORM: None, B.AF_FILL: _stamped("2026", [AF_ROW])},
+                coherent)
+
+    def mixed():
+        B.pl_form({}, [])            # ScoutingStats present, so form is 2025-26
+        rows = [{"c": "ARS", "n": "Declan Rice", "fw": None, "ph": None}]
+        try:
+            B.fill_fouls_won(rows)
+        except SystemExit as e:
+            assert "season 2026" in str(e), str(e)
+            return
+        raise AssertionError(
+            "a 2026 harvest joined onto a frozen 2025-26 form must stop the build")
+    _with_files({B.SS_FORM: [SS_ROW], B.AF_FILL: _stamped("2026", [AF_ROW])},
+                mixed)
+
+
+def _neither_harvest_keeps_the_shipped_rows():
+    """And the fallback that makes a partial refresh possible still works: no
+    source today must never mean an empty league."""
+    def go():
+        reused = []
+        rows = B.pl_form({"PL": [SS_ROW]}, reused)
+        assert rows == [SS_ROW], rows
+        assert len(reused) == 1 and "kept from the previous build" in reused[0]
+        # Unmeasurable, so it falls back to the declared season rather than
+        # claiming the last harvest's.
+        assert B.form_season() == B.FORM_SEASON
+    _with_files({B.SS_FORM: None, B.AF_FILL: None}, go)
+
+
+t("ScoutingStats remains the form wherever it harvests",
+  _scoutingstats_still_wins_when_it_harvests)
+t("API-Football becomes the form when ScoutingStats does not harvest",
+  _api_football_is_the_form_when_scoutingstats_does_not_harvest)
+t("the season check follows the form it was actually given",
+  _the_fill_agrees_with_the_form_it_was_given)
+t("with no source at all the shipped rows are kept",
+  _neither_harvest_keeps_the_shipped_rows)
+
 print(f"\n{passed} tests passed")

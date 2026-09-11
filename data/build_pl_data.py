@@ -63,20 +63,72 @@ import leagues  # noqa: E402
 OUT = DATA / "pl_data.js"
 LOW_MIN = 450
 
-# The API-Football harvest of this same season, read for fouls won only.
-# Written by the refresh workflow's "--league PL --out" step, which exists for
-# the Championship desk; this build is a second reader of a file it already
-# pays for, not a new call.
+# The API-Football harvest of the Premier League, written every run by the
+# refresh workflow's "--league PL --out" step at the season scripts/
+# form-season.mjs picks. It was read for fouls won only; it is now also the
+# league's FORM source, for the reason below.
 AF_FILL = "pl_af_players.json"
+
+# The ScoutingStats export this desk was originally built on: league 8, season
+# 25583, i.e. 2025-26. Preferred when it is present, because it is the basis
+# every published Premier League number has been computed from to date and a
+# silent change of basis is not something a refresh should do on its own.
+#
+# It is, however, no longer harvested. The workflow step is gated on a cookie
+# and wrapped in continue-on-error, and it has been exiting in about a second;
+# the build has been falling back to reading the form back out of the shipped
+# pl_data.js on every run. So the Premier League form is a frozen copy of
+# 2025-26 with no route to any other season, which is the fact that matters
+# here: FORM_SEASON below could not be moved while this was the only source,
+# because moving it would not move the form — it would only stop the guard
+# complaining that the form had not moved.
+SS_FORM = "pl_players.json"
+
+# THE FORM SOURCES, IN PREFERENCE ORDER. The API-Football harvest is second
+# rather than first so that restoring the cookie restores the old basis
+# exactly; it is in the list at all so that the desk has a live source when the
+# cookie is not there, which is the state it has actually been in.
+#
+# map_player() in harvest_apifootball.py already emits mk()'s shape — minutes,
+# yellows, reds, fouls committed and drawn per 90, position, crest, photograph
+# — and says so in its own docstring. Nothing is converted here and no extra
+# call is made: this is the file the refresh has been paying for all along,
+# read for the other nine fields it was already carrying.
+FORM_SOURCES = (SS_FORM, AF_FILL)
+
 # The season the shipped FORM describes, in API-Football's vocabulary (a season
 # named by its starting year, so 2025 is 2025-26). NOT the season being played:
 # this desk is built for 2026-27 and prices it off the last completed season.
 #
-# It is a constant here because the two feeds have no season in common to check
-# against — ScoutingStats names seasons by an internal id (25583) that does not
-# convert. So this is the one place that says which season the form is, and the
-# fill refuses a harvest stamped as any other. Move it when the form moves.
+# This is the DECLARED season of the ScoutingStats export, which names seasons
+# by an internal id that does not convert — so when that export is the form,
+# this constant is the only thing that can say which season it is, and the
+# fouls-won fill refuses a harvest stamped as any other.
+#
+# When the form comes from API-Football instead, the file stamps its own
+# season and there is nothing left to declare: form_season() below returns what
+# the form actually was rather than what this line asserts. That is what makes
+# the transition safe. The old arrangement had one file supplying the form and
+# another supplying fouls won, with no season in common to check — which is why
+# a mismatch had to be asserted by hand, and why moving this line by hand while
+# the form stayed frozen would have joined one season's fouls to another
+# season's players and looked entirely correct doing it.
 FORM_SEASON = "2025"
+
+# Which season the form ACTUALLY came from this run, set by build_players().
+# None before then, and None for the whole run when the form was reused from
+# the shipped file, since that is a copy of whatever basis last harvested.
+_FORM_SEASON_USED = None
+
+
+def form_season():
+    """The season this build's form is in, measured where it can be measured.
+
+    Falls back to the declared FORM_SEASON, which is the right answer for the
+    ScoutingStats basis and the only available one when the form was reused
+    from the shipped file.
+    """
+    return _FORM_SEASON_USED or FORM_SEASON
 
 # The share of players that must end up carrying a fouls-won number before
 # the build will ship. This is what the fouls-won guard actually protects:
@@ -287,11 +339,40 @@ def source(name, basis, shipped, reused):
     return kept
 
 
+def pl_form(shipped, reused):
+    """The Premier League form rows, from the first source that harvested.
+
+    Records the season alongside them when the source stamps one, which is what
+    lets fill_fouls_won check the join against the form it was actually given
+    rather than against a line someone has to remember to edit.
+    """
+    global _FORM_SEASON_USED
+    _FORM_SEASON_USED = None
+    for name in FORM_SOURCES:
+        fresh = load_optional(name)
+        if not fresh:
+            continue
+        _, season = stamp(name)
+        if name != SS_FORM:
+            # Named on stdout every run. A desk changing the basis of every
+            # number it publishes is not something to discover from a diff.
+            print(f"Premier League form: {SS_FORM} did not harvest, so the "
+                  f"form is {name}"
+                  + (f", season {season}." if season else " (no season stamp)."))
+            _FORM_SEASON_USED = season
+        return fresh
+    kept = shipped.get("PL", [])
+    if kept:
+        reused.append(f"{' / '.join(FORM_SOURCES)} "
+                      f"({_n_players(len(kept))} kept from the previous build)")
+    return kept
+
+
 def build_players():
     shipped = shipped_rows()
     reused = []
     rows = []
-    for p in source("pl_players.json", "PL", shipped, reused):
+    for p in pl_form(shipped, reused):
         if p.get("team") in DROP:
             continue
         rows.append(mk(p, "PL"))
@@ -975,21 +1056,29 @@ def fill_fouls_won(rows):
     # numbers if they were wrong, which is the only reason this is checked at
     # all: last season's fouls on this season's players is not a visible error.
     af_league, af_season = stamp(AF_FILL)
+    want = form_season()
     if af_season is None:
         print(f"Fouls won: {AF_FILL} carries no season stamp (harvested before "
-              f"they existed), so it is being taken as {FORM_SEASON}. The next "
+              f"they existed), so it is being taken as {want}. The next "
               "refresh stamps it.")
-    elif af_season != FORM_SEASON or (af_league or "PL") != "PL":
+    elif af_season != want or (af_league or "PL") != "PL":
         sys.exit(
             f"ERROR: {AF_FILL} holds {af_league or '?'} season {af_season}, but "
-            f"this build's form is PL season {FORM_SEASON}.\n"
+            f"this build's form is PL season {want}.\n"
             "Filling from it would put one season's fouls won on another "
             "season's players, and every number would look right.\n\n"
-            "Either re-harvest that season:\n"
-            f"    API_FOOTBALL_SEASON={FORM_SEASON} python3 "
+            # THE REMEDY IS NOT "move FORM_SEASON", which is what this said
+            # before and which would have been wrong every time it was
+            # followed. The form was a frozen ScoutingStats export; moving the
+            # line would not have moved the form, it would only have silenced
+            # the one check standing between a stale basis and this season's
+            # fouls. The form source is the thing that has to move.
+            f"The form came from {SS_FORM}, which names seasons by an internal "
+            f"id and is pinned to 2025-26. Either re-harvest to match it:\n"
+            f"    API_FOOTBALL_SEASON={want} python3 "
             f"data/harvest_apifootball.py --league PL --out {AF_FILL}\n"
-            "or, if the form itself has moved on, move FORM_SEASON in this "
-            "file to match it.")
+            f"or let {AF_FILL} be the form as well as the fill, which is what "
+            f"happens on its own as soon as {SS_FORM} stops arriving.")
 
     exact, initial, clashes = fouls_won_index(src)
 
