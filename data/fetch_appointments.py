@@ -184,6 +184,41 @@ def fetch(url, binary=False):
         return None
 
 
+RENDERER = Path(__file__).resolve().parent.parent / "scripts" / "render-page.mjs"
+
+
+def render(url, timeout=90):
+    """The page as a browser would see it, or None with the reason printed.
+
+    NEVER FATAL, and never the first thing tried. This exists for one failure:
+    a site that serves its markup and builds its article body from a second
+    request, which a plain GET cannot see however many headers it sends. When
+    the renderer is missing, or no Chromium is installed, or the page cannot be
+    reached, that is a fetch that did not work — the same outcome the caller
+    already handles — and not a reason to take a data job down.
+    """
+    if not RENDERER.exists():
+        print(f"    no renderer at {RENDERER.name}; skipping the browser leg")
+        return None
+    try:
+        p = subprocess.run(["node", str(RENDERER), url],
+                           capture_output=True, text=True, timeout=timeout)
+    except FileNotFoundError:
+        print("    node is not installed, so the browser leg cannot run")
+        return None
+    except subprocess.TimeoutExpired:
+        print(f"    the browser did not finish within {timeout}s")
+        return None
+    # stderr carries the renderer's own measurements and its reasons; print
+    # them so a workflow log says WHY a render produced nothing, rather than
+    # leaving "0 appointments" to mean six different things.
+    for line in (p.stderr or "").strip().splitlines():
+        print(f"    {line.strip()}")
+    if p.returncode != 0 or not (p.stdout or "").strip():
+        return None
+    return p.stdout
+
+
 def pending(code, days):
     """(date, round) for every fixture inside the window with no referee.
 
@@ -375,6 +410,20 @@ def find_eflc(verbose):
         rows, _, _ = I.parse(text, default_year=d.year)
         print(f"  {url}\n    published {d}, {len(page)} bytes, "
               f"{len(text)} chars of text, {len(rows)} appointment(s) parsed")
+        # THE BODY IS ASSEMBLED IN THE BROWSER, so the markup that arrives is
+        # a page of chrome: 144,243 bytes yielding 556 characters on the
+        # 9 September article, parsing to nothing. The fix is to execute the
+        # page rather than fetch it. Only on the way DOWN, never as the first
+        # move: a plain GET is free and works on any week the EFL serves the
+        # article as markup, and the renderer costs a browser launch.
+        if not rows:
+            rendered = render(url)
+            if rendered:
+                rows, _, _ = I.parse(rendered, default_year=d.year)
+                print(f"    rendered in a browser -> {len(rendered)} chars of "
+                      f"text, {len(rows)} appointment(s) parsed")
+                if rows:
+                    text = rendered
         if rows:
             found.append((url, text))
             # ONE ARTICLE IS A WEEK. Reading further back would re-ingest a

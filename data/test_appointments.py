@@ -924,4 +924,81 @@ def _the_aia_year_rule():
 
 t("an Italian date before July belongs to the season's second year", _the_aia_year_rule)
 
+
+# --- the article as the EFL actually publishes it --------------------------
+# A VERBATIM ROUND, kept because the parser was never the broken half and this
+# is the evidence. For four days the fetch reported "0 appointment(s) parsed"
+# and the natural reading was that the prose had changed; the byte counts said
+# otherwise (144,243 bytes of markup, 556 characters of text) and when the
+# round-7 article was finally read in a browser it parsed first time, whole.
+# So this fixture pins what the renderer has to deliver: get this text out of
+# the page and everything downstream already works.
+EFL_ROUND_7 = """Referee appointments: 12-17 Sepember
+
+Match Officials
+9 Sep
+Words: ProRef
+Share
+Saturday, 12th September 2026
+Sky Bet Championship
+West Ham United v Wrexham (20:00)
+Referee: Sam Barrott
+Assistant Referees: George Byrne & Matt Gunn-Smith
+Fourth Official: Tom Nield
+
+Bolton Wanderers v Cardiff City (12:30)
+Referee: Tom Parsons
+Assistant Referees: Mark Stevens & Matt McGrath
+Fourth Official: Bobby Madley
+
+Derby County v Birmingham City (12:30)
+Referee: John Busby
+Assistant Referees: Paul Hodgkinson & Hugh Gilroy
+Fourth Official: David Rock
+
+Blackburn Rovers v Millwall (15:00)
+Referee: Josh Smith
+Assistant Referees: Alistair Nelson & Alan Cresswell
+Fourth Official: Ritchie Watkins
+
+Swansea City v Burnley (15:00)
+Referee: James Bell
+Assistant Referees: Andrew Fox & Dan Leach
+Fourth Official: Ross Martin
+"""
+
+
+def _the_real_article_parses_whole():
+    flat, _, _ = I.parse(EFL_ROUND_7, default_year=2026)
+    assert len(flat) == 5, f"expected 5 fixtures, got {len(flat)}: {flat}"
+    first = flat[0]
+    assert first["home"] == "West Ham United", first
+    assert first["away"] == "Wrexham", first
+    assert first["ref"] == "Sam Barrott", first
+    assert first["date"] == "2026-09-12", first
+    assert first["ko"] == "20:00", first
+    # THE SATURDAY, not the 9th in the byline. The article is published days
+    # ahead and carries its own publication date near the top; taking that as
+    # the fixture date would appoint every referee to the wrong match, and the
+    # apply step would then silently match nothing.
+    assert {r["date"] for r in flat} == {"2026-09-12"}, flat
+    # Assistants and fourth officials are NOT appointments. Only the referee
+    # is priced, and a row per official would be four times the fixtures.
+    names = {r["ref"] for r in flat}
+    for other in ("George Byrne", "Tom Nield", "Matt Gunn-Smith"):
+        assert other not in names, f"{other} was read as a referee"
+
+
+def _a_typo_in_the_headline_changes_nothing():
+    """The real article said "12-17 Sepember". The heading is not read, and a
+    parser that tripped over it would be reading the wrong thing anyway."""
+    fixed = EFL_ROUND_7.replace("12-17 Sepember", "12-17 September")
+    a, _, _ = I.parse(EFL_ROUND_7, default_year=2026)
+    b, _, _ = I.parse(fixed, default_year=2026)
+    assert a == b, "the headline changed the parse"
+
+
+t("the EFL's real round-7 article parses whole", _the_real_article_parses_whole)
+t("a typo in the headline changes nothing", _a_typo_in_the_headline_changes_nothing)
+
 print(f"\n{passed} tests passed")

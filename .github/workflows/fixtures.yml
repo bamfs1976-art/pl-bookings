@@ -140,6 +140,26 @@ jobs:
         continue-on-error: true
         run: sudo apt-get update -qq && sudo apt-get install -y -qq poppler-utils
 
+      # A BROWSER FOR THE ENGLISH ONE. efl.com serves its markup and builds the
+      # article body from a second request, so a plain GET reads 144,243 bytes
+      # and finds 556 characters of text — the appointments are simply not in
+      # what arrives. scripts/render-page.mjs executes the page instead.
+      #
+      # playwright-core, NOT playwright: the difference is the bundled browser
+      # download, about 170MB, and this job runs seven times a day. The runner
+      # image already ships Google Chrome; the renderer finds it and drives it.
+      # If either half is missing the fetch prints why and the leg below
+      # absorbs it, exactly as it does for a site having a bad day.
+      - name: A browser for the EFL's rendered article
+        continue-on-error: true
+        run: |
+          npm install -g playwright-core --silent
+          for p in /usr/bin/google-chrome /usr/bin/google-chrome-stable \
+                   /usr/bin/chromium-browser /usr/bin/chromium; do
+            [ -x "$p" ] && echo "PW_CHROMIUM=$p" >> "$GITHUB_ENV" && break
+          done
+          echo "chrome: ${PW_CHROMIUM:-$(command -v google-chrome || echo 'none found')}"
+
       # continue-on-error on the LEG, and non-zero INSIDE it. The fetcher exits
       # non-zero when it finds nothing, which is what keeps a silent failure
       # impossible; the leg absorbs that so a publisher having a bad day cannot
