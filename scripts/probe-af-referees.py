@@ -13,6 +13,14 @@ This answers that by printing the RAW field, per fixture, straight off the
 response, next to what the committed file holds. It writes nothing, commits
 nothing and touches no dataset. One call per league.
 
+ALWAYS EXITS ZERO, which is the same rule scripts/probe-source.mjs follows and
+for the same reason. A person asked a question and is reading the answer; "the
+key is not set" or "the API refused" IS the answer, and the tool did its job by
+finding it out. Exiting non-zero marks the run red and emails the repository
+owner "Run failed" about a diagnostic that worked — which is exactly what this
+script did on its first run, over a trailing newline in the secret. That rule
+was already written down one directory away and I did not follow it here.
+
 Usage: python3 scripts/probe-af-referees.py [--league PL] [--rounds 2]
 """
 import argparse
@@ -35,7 +43,9 @@ def main():
     import os
     key = os.environ.get("API_FOOTBALL_KEY", "").strip().strip(chr(34)).strip(chr(39))
     if not key:
-        sys.exit("ERROR: API_FOOTBALL_KEY is not set — nothing to ask.")
+        print("API_FOOTBALL_KEY is not set — nothing to ask. That is the "
+              "answer, not a crash.")
+        return
     season = os.environ.get("API_FOOTBALL_SEASON", "2026").strip()
     host = os.environ.get("API_FOOTBALL_HOST", H.DEFAULT_HOST)
 
@@ -46,7 +56,10 @@ def main():
                      {"league": af_id, "season": season})
     errs = H.api_errors(payload)
     if errs:
-        sys.exit(f"ERROR: the API refused: {errs}")
+        print(f"  the API refused: {errs}")
+        print("  That is a finding about the source, not a fault in this "
+              "script, so the run stays green.")
+        return
     rows = (payload or {}).get("response") or []
     print(f"  {len(rows)} fixture(s) in the response")
 
@@ -93,4 +106,13 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    try:
+        main()
+    except Exception as e:                                   # noqa: BLE001
+        # Even a bug in here is a failed QUESTION, not a failed data job. The
+        # traceback goes to the log where it can be read; the run stays green
+        # so nobody is paged about a diagnostic.
+        import traceback
+        traceback.print_exc()
+        print(f"\nthe probe itself failed: {type(e).__name__}: {e}")
+    sys.exit(0)
