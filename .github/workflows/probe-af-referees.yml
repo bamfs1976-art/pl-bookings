@@ -1,0 +1,49 @@
+name: Probe API-Football referees
+
+# A DIAGNOSTIC, like probe-source.yml and probe-ucl.yml. It prints what the
+# API holds against what the committed fixture file holds, writes nothing and
+# commits nothing.
+#
+# WHY: Premier League referees stopped appearing after 6 September. 30 of 30
+# played fixtures carry an official and 0 of 350 upcoming do, and round 3's ten
+# were all present the day before kick-off — so the supply worked and stopped.
+# From inside the repository there is no way to tell whether the API has none
+# or the harvest is dropping them. One call answers it.
+#
+# MANUAL ONLY. Nothing here belongs on a schedule: it is a question asked once.
+
+on:
+  workflow_dispatch:
+    inputs:
+      league:
+        description: "Which division (PL, EFLC, LL, SA)."
+        required: false
+        default: "PL"
+      rounds:
+        description: "How many upcoming rounds to list."
+        required: false
+        default: "2"
+
+# No contents: write. This job has nothing to push and must not be able to.
+permissions:
+  contents: read
+
+concurrency:
+  group: probe-af-referees
+  cancel-in-progress: true
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Ask the API
+        env:
+          API_FOOTBALL_KEY: ${{ secrets.API_FOOTBALL_KEY }}
+          # The season being PLAYED, which is what --fixtures harvests, not the
+          # form season. Same default the fixture harvest uses.
+          API_FOOTBALL_SEASON: ${{ vars.API_FOOTBALL_SEASON || '2026' }}
+        run: |
+          python3 scripts/probe-af-referees.py \
+            --league "${{ inputs.league }}" --rounds "${{ inputs.rounds }}"
