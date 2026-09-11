@@ -243,7 +243,20 @@ for (const url of urls) {
   const all = links(html, res.url);
   const same = all.filter((h) => { try { return new URL(h).host === new URL(res.url).host; } catch { return false; } });
   console.log(`  ${all.length} link(s), ${same.length} on the same host`);
-  const interesting = same.filter((h) => /referee|discipline|card|foul|booking/i.test(h));
+  /* IN THE SITE'S OWN LANGUAGE, not only in English. This filter was written
+     against English statistics sites and then pointed at rfef.es, where every
+     word it looks for is spelled differently: the Spanish federation calls an
+     appointment a DESIGNACION and a referee an ARBITRO. It reported "208
+     link(s), 164 on the same host" and printed exactly one of them — an
+     English-titled inclusion campaign — so the designations section could have
+     been three links away and the probe would have said nothing about it.
+     A diagnostic that is blind in the language of the source it was aimed at
+     is worse than no diagnostic: it answers confidently and wrongly. */
+  const interesting = same.filter((h) => new RegExp(
+    'referee|discipline|card|foul|booking'              // English
+    + '|arbitr|designacion|designaciones|jornada|sancion'  // Spanish (RFEF)
+    + '|designazion|arbitri|giornata',                     // Italian (AIA)
+    'i').test(h));
   for (const h of interesting.slice(0, 20)) console.log(`    ${h}`);
   if (interesting.length > 20) console.log(`    ... and ${interesting.length - 20} more`);
 }
