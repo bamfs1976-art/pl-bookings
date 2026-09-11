@@ -154,11 +154,22 @@ jobs:
         continue-on-error: true
         run: |
           npm install -g playwright-core --silent
+          # SAY WHAT LANDED WHERE. The first run of this step passed in one
+          # second and the fetch then reported "neither playwright nor
+          # playwright-core is installed" — the install had worked and the
+          # lookup was looking in the wrong place, which these two lines would
+          # have told us immediately. NODE_PATH is exported for the same
+          # reason: it is the answer that survives the tool cache.
+          ROOT="$(npm root -g)"
+          echo "NODE_PATH=$ROOT" >> "$GITHUB_ENV"
+          echo "global modules: $ROOT"
+          ls -d "$ROOT/playwright-core" 2>/dev/null \
+            || echo "  playwright-core NOT present in $ROOT"
           for p in /usr/bin/google-chrome /usr/bin/google-chrome-stable \
                    /usr/bin/chromium-browser /usr/bin/chromium; do
-            [ -x "$p" ] && echo "PW_CHROMIUM=$p" >> "$GITHUB_ENV" && break
+            [ -x "$p" ] && echo "PW_CHROMIUM=$p" >> "$GITHUB_ENV" \
+              && echo "chrome: $p" && break
           done
-          echo "chrome: ${PW_CHROMIUM:-$(command -v google-chrome || echo 'none found')}"
 
       # continue-on-error on the LEG, and non-zero INSIDE it. The fetcher exits
       # non-zero when it finds nothing, which is what keeps a silent failure

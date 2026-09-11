@@ -70,6 +70,18 @@ function findBrowser() {
   return null;
 }
 
+/* Where this machine's globally installed modules actually live. `npm root -g`
+   is the only answer that survives nvm, the GitHub tool cache and a custom
+   prefix; it costs one process and is asked once. */
+function globalRoots() {
+  try {
+    const p = execFileSync('npm', ['root', '-g'], { encoding: 'utf8' }).trim();
+    return p ? [p] : [];
+  } catch {
+    return [];
+  }
+}
+
 /* playwright or playwright-core, whichever the machine has. They expose the
    same chromium.launch, and the difference is only whether browsers were
    bundled — which does not matter here because the executable is supplied.
@@ -81,6 +93,14 @@ function findBrowser() {
  * where it is rather than to install a second copy. PW_MODULE overrides. */
 async function loadChromium() {
   const globals = [
+    /* ASK NPM WHERE IT PUTS THINGS, rather than listing the places it
+       usually does. The first CI run failed here: actions/setup-node installs
+       Node into the hosted tool cache, so `npm install -g playwright-core`
+       landed in /opt/hostedtoolcache/node/20.20.2/x64/lib/node_modules and
+       every hardcoded path missed it. The install had worked perfectly; the
+       lookup was wrong, and reported it as "neither is installed". */
+    ...globalRoots(),
+    ...(process.env.NODE_PATH || '').split(':').filter(Boolean),
     '/opt/node22/lib/node_modules',
     '/usr/lib/node_modules',
     '/usr/local/lib/node_modules',
