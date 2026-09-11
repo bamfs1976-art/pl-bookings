@@ -3,7 +3,7 @@
    cache-first. Live FPL data (/api/fpl/*) and Supabase calls are never
    touched here — the app's own data layer decides what is fresh vs cached. */
 
-const VERSION = 'plb-v24';
+const VERSION = 'plb-v25';
 /* Every desk, not just the Premier League one. The shell decides what opens
    with no connection: installed on a phone, a page missing from here is a
    blank screen on the Underground even though it works perfectly on wifi.
@@ -20,6 +20,20 @@ const SHELL = [
   '/today',
   '/accas',
   '/derbies',
+  /* THE OTHER THREE DESKS AND THE OTHER THREE VIEWS, which this list had never
+     carried even though the comment above is precisely about them. _redirects
+     rewrites /eflc, /laliga and /seriea to their pages and /booked, /record
+     and /season to today.html; none was ever fetched at install time, so each
+     was a cache miss offline and fell through to the fallback. Installed on a
+     phone with no connection, tapping "Serie A" in the league bar produced the
+     Premier League home page — the exact failure the Season calendar had, left
+     in place for three quarters of the app. */
+  '/eflc',
+  '/laliga',
+  '/seriea',
+  '/booked',
+  '/record',
+  '/season',
   /* Europe. The route, because the Champions League ties are a view of
      today.html and `caches.match` matches on URL. */
   '/europe',

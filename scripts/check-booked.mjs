@@ -76,10 +76,17 @@ for (const section of ['#bookedLeagues', '#bookedRecent', '#bookedClubs']) {
 /* Run against the real files where they exist. This is the assertion that
    would have caught a merge bug in the ledger builder AFTER it shipped, which
    the Python tests cannot: they test the builder, this tests the artefact. */
+/* FOUR, not three. Serie A's ledger has been built, committed, staged by
+   fixtures.yml and rendered on the page since the desk was added, and this
+   list never grew with it — so 88 booked players shipped to readers with none
+   of the checks below ever looking at them. The summary said "3 ledger(s),
+   216 booked player(s)" every run, and 38 + 85 + 93 is exactly 216, which is
+   what a silently missing league looks like: a number that adds up. */
 const LEDGERS = [
   ['data/pl_bookings.js', 'PL_BOOKINGS', 'PL'],
   ['data/eflc_bookings.js', 'EFLC_BOOKINGS', 'EFLC'],
   ['data/laliga_bookings.js', 'LALIGA_BOOKINGS', 'LL'],
+  ['data/seriea_bookings.js', 'SERIEA_BOOKINGS', 'SA'],
 ];
 let seen = 0, players = 0, cards = 0;
 for (const [file, konst, code] of LEDGERS) {
@@ -262,7 +269,9 @@ assert.equal(ledgerJobs.length, 1,
   `${ledgerJobs.length} workflow(s) build the bookings ledger (${ledgerJobs.join(', ')}) — ` +
   'one owner, or the two will drift and the page will show whichever ran last');
 const owner = readFileSync(join(wf, ledgerJobs[0]), 'utf8');
-for (const f of ['pl_bookings.js', 'eflc_bookings.js', 'laliga_bookings.js']) {
+/* From LEDGERS, so this list cannot fall behind that one the way both fell
+   behind the desks. */
+for (const f of LEDGERS.map(([p]) => p.replace('data/', ''))) {
   assert.ok(owner.includes('data/' + f),
     `${ledgerJobs[0]} builds the ledger but never stages data/${f} — the file is ` +
     'written on the runner, reported in the log, and discarded when it is torn down');

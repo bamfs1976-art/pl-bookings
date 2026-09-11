@@ -159,6 +159,45 @@ for (const p of PAGES) {
     'page calls directly takes the render down with it rather than degrading.');
 }
 
+/* EVERY PRETTY ROUTE, not just the files behind them. The shell is matched by
+   URL, so a rewrite that was never fetched at install time is a cache miss
+   offline and falls through to the "/" fallback — which means the reader taps
+   "Serie A" and gets the home page, with nothing on screen saying the app is
+   showing them something they did not ask for.
+   sw.js has carried a comment saying exactly this since the Season calendar
+   hit it, and /eflc, /laliga, /seriea, /booked, /record and /season were still
+   missing: the note was written and the list was not fixed. The check above
+   only verifies that entries which ARE listed exist, which is why three
+   quarters of the app could be unreachable offline with this guard green.
+   Read from _redirects so a new route is covered the day it is added. */
+const REWRITES = readFileSync(join(root, '_redirects'), 'utf8')
+  .split('\n')
+  .map((l) => l.trim())
+  .filter((l) => l && !l.startsWith('#'))
+  .map((l) => l.split(/\s+/))
+  /* 200 rewrites only. A 301/302 sends the browser to a URL that IS in the
+     shell, so it needs no entry of its own; and /api/* is deliberately never
+     intercepted. Splats cannot be precached as a literal URL. */
+  .filter(([from, , code]) => code === '200' && from.startsWith('/')
+    && !from.includes('*') && !from.startsWith('/api'))
+  .map(([from]) => from);
+/* Narrowed to the routes THE APP ITSELF LINKS TO. _redirects also carries
+   typed-alias spellings — /championship, /la-liga, /serie-a, /premier-league —
+   that nothing navigates to; someone who types one offline and gets the home
+   page has not been misled by the app. A tapped link that does it has. So the
+   rule is "every route reachable by following this app's own navigation",
+   which stays true as pages gain and lose links without anyone maintaining a
+   second list. */
+const linked = new Set();
+for (const p of PAGES) {
+  for (const m of read(p).matchAll(/href="(\/[a-z0-9-]*)"/g)) linked.add(m[1]);
+}
+const unshelledRoutes = REWRITES.filter((r) => linked.has(r) && !paths.includes(r));
+assert.deepStrictEqual(unshelledRoutes, [],
+  `the app links to ${unshelledRoutes.join(', ')} and _redirects serves them, `
+  + 'but the service worker does not precache the route itself. Installed and '
+  + 'offline, each one is a cache miss and silently renders the home page.');
+
 /* addAll is atomic: one 404 rejects the install and the app has NO offline
    shell rather than one page fewer. With four desks in the list that stopped
    being an acceptable failure mode. */
