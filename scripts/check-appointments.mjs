@@ -92,9 +92,37 @@ for (const [code, appts] of Object.entries(byLeague)) {
   const index = new Map();
   for (const f of fixtures) index.set(`${String(f.d || '').slice(0, 10)}|${f.h}|${f.a}`, f);
 
+  /* A DAY EITHER SIDE, because that is the rule appointments.apply_to applies
+     and documents: "a kickoff can move, so a fixture found a day either side
+     of the published date is accepted and reported rather than treated as a
+     miss". This guard had an exact-date lookup instead — a second, stricter
+     copy of a rule it exists to verify — and the first EFL article to arrive
+     through the renderer proved the difference. The EFL published West Ham
+     United v Wrexham for Saturday 12 September; the fixture file, from
+     API-Football, has it at 19:00 on the 11th. The ingest matched it, filled
+     the referee and said so. The guard reported "no such fixture" for an
+     appointment that had been applied, and took the commit down with it,
+     holding back all eleven of that article's officials over one date.
+     A guard that re-describes the behaviour instead of calling it eventually
+     disagrees with it, and then it is the guard that is wrong. */
+  const shift = (iso, days) => {
+    const d = new Date(`${iso}T00:00:00Z`);
+    if (Number.isNaN(d.getTime())) return null;
+    d.setUTCDate(d.getUTCDate() + days);
+    return d.toISOString().slice(0, 10);
+  };
+  const findFixture = (a) => {
+    for (const days of [0, -1, 1]) {
+      const on = days === 0 ? a.date : shift(a.date, days);
+      const hit = on && index.get(`${on}|${a.h}|${a.a}`);
+      if (hit) return hit;
+    }
+    return null;
+  };
+
   for (const a of appts) {
     checked++;
-    const fx = index.get(`${a.date}|${a.h}|${a.a}`);
+    const fx = findFixture(a);
     if (!fx) {
       /* Not a failure on its own: a postponement removes a fixture, and the
          ingest reports an unmatched appointment when it runs. */
