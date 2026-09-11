@@ -1,6 +1,6 @@
 {
   "note": "PROPOSALS from API-Football /transfers, for a person to read. data/transfers.json is the hand-curated overlay that is actually applied; this is not.",
-  "since": "2026-05-13",
+  "since": "2026-05-14",
   "moves": [
     {
       "n": "A. Barák",
@@ -3997,6 +3997,15 @@
       "toCode": null,
       "date": "2026-07-30",
       "type": "Transfer"
+    },
+    {
+      "n": "Valerio Cinti",
+      "from": "AS Roma",
+      "to": "Certosa V. Campagnano",
+      "fromCode": "ROM",
+      "toCode": null,
+      "date": "2026-07-29",
+      "type": "Free agent"
     },
     {
       "n": "S. Castro",
