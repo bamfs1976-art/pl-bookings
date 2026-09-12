@@ -11,7 +11,7 @@ const SUSPENSION = {"kind": "cycle", "at": 5, "ban": 1, "cumulative": false};
 // a page rendering it — states the desk's basis instead of asserting
 // one. Null where the source did not harvest and the rows were kept
 // from the previous build, which is 'cannot tell', not 'no season'.
-const FORM = {"LL": "2026-27", "NEW": null, "SEG": "2025-26"};
+const FORM = {"LL": "2026-27", "SEG": "2025-26"};
 const CLUBS = [
   {short:"GET",name:"Getafe",img:"https://media.api-sports.io/football/teams/546.png",basis:"LL",ca:3.13,caH:2.53,caA:3.74,fm:1.3,squad:34},
   {short:"SEV",name:"Sevilla",img:"https://media.api-sports.io/football/teams/536.png",basis:"LL",ca:3.0,caH:3.32,caA:2.68,fm:1.9,squad:31},
@@ -586,22 +586,23 @@ const LALIGA_PLAYERS = [
   {c:"SEV",n:"Peque Fernández",p:"FW",min:158,yc:1,rc:0,y:0.57,f:3.418,fw:3.987,r:4.558,ls:false,b:"LL",sc:1,sm:158,ph:"https://media.api-sports.io/football/players/162126.png"},
   {c:"SEV",n:"G. Kochorashvili",p:"MF",min:108,yc:1,rc:0,y:0.833,f:2.5,fw:1.667,r:4.166,ls:false,b:"LL",sc:1,sm:108,ph:"https://media.api-sports.io/football/players/119795.png"},
   {c:"SEV",n:"Jon Guridi",p:"MF",min:260,yc:2,rc:0,y:0.692,f:1.731,fw:0.346,r:3.115,ls:false,b:"LL",sc:2,sm:260,ph:"https://media.api-sports.io/football/players/104821.png"},
-  {c:"SEV",n:"M. Sierra",p:"MF",min:266,yc:2,rc:0,y:0.677,f:1.692,fw:2.368,r:3.046,ls:false,b:"LL",sc:2,sm:266,ph:"https://media.api-sports.io/football/players/546798.png"},
   {c:"SEV",n:"G. Suazo",p:"DF",min:450,yc:2,rc:0,y:0.4,f:1.8,fw:1.0,r:2.6,ls:false,b:"LL",sc:2,sm:450,ph:"https://media.api-sports.io/football/players/11421.png"},
+  {c:"SEV",n:"M. Sierra",p:"MF",min:329,yc:2,rc:0,y:0.547,f:1.368,fw:2.188,r:2.462,ls:false,b:"LL",sc:2,sm:329,ph:"https://media.api-sports.io/football/players/546798.png"},
   {c:"SEV",n:"L. Agoumé",p:"MF",min:450,yc:1,rc:0,y:0.2,f:2.0,fw:1.0,r:2.4,ls:false,b:"LL",sc:1,sm:450,ph:"https://media.api-sports.io/football/players/21004.png"},
   {c:"SEV",n:"R. Ure",p:"FW",min:306,yc:1,rc:0,y:0.294,f:1.765,fw:2.647,r:2.353,ls:false,b:"LL",sc:1,sm:306,ph:"https://media.api-sports.io/football/players/327536.png"},
   {c:"SEV",n:"José Ángel Carmona",p:"DF",min:41,yc:0,rc:0,y:0.0,f:2.195,fw:4.39,r:2.195,ls:true,b:"LL",sc:0,sm:41,ph:"https://media.api-sports.io/football/players/195923.png"},
   {c:"SEV",n:"C. Ejuke",p:"FW",min:179,yc:1,rc:0,y:0.503,f:1.006,fw:1.006,r:2.012,ls:false,b:"LL",sc:1,sm:179,ph:"https://media.api-sports.io/football/players/39121.png"},
   {c:"SEV",n:"Kike Salas",p:"DF",min:358,yc:0,rc:1,y:0.0,f:1.76,fw:1.257,r:1.76,ls:false,b:"LL",sc:0,sm:358,ph:"https://media.api-sports.io/football/players/297311.png"},
   {c:"SEV",n:"A. Sangante",p:"DF",min:214,yc:0,rc:1,y:0.0,f:1.682,fw:0.421,r:1.682,ls:false,b:"LL",sc:0,sm:214,ph:"https://media.api-sports.io/football/players/174927.png"},
-  {c:"SEV",n:"Julio Díaz del Romo",p:"DF",min:67,yc:0,rc:0,y:0.0,f:1.343,fw:null,r:1.343,ls:true,b:"LL",sc:0,sm:67,ph:"https://media.api-sports.io/football/players/386870.png"},
+  {c:"SEV",n:"Julio Díaz del Romo",p:"DF",min:74,yc:0,rc:0,y:0.0,f:1.216,fw:1.216,r:1.216,ls:true,b:"LL",sc:0,sm:74,ph:"https://media.api-sports.io/football/players/386870.png"},
   {c:"SEV",n:"Y. Fofana",p:"MF",min:107,yc:0,rc:0,y:0.0,f:0.841,fw:0.841,r:0.841,ls:false,b:"LL",sc:0,sm:107,ph:"https://media.api-sports.io/football/players/22254.png"},
   {c:"SEV",n:"Juan Iglesias",p:"DF",min:450,yc:0,rc:0,y:0.0,f:0.6,fw:1.8,r:0.6,ls:false,b:"LL",sc:0,sm:450,ph:"https://media.api-sports.io/football/players/119742.png"},
   {c:"SEV",n:"Alfon González",p:"FW",min:10,yc:0,rc:0,y:0.0,f:0.0,fw:0.0,r:0.0,ls:true,b:"LL",sc:0,sm:10,ph:"https://media.api-sports.io/football/players/119213.png"},
+  {c:"SEV",n:"Andrés Castrín",p:"DF",min:300,yc:0,rc:0,y:0.0,f:0.0,fw:0.3,r:0.0,ls:false,b:"LL",sc:0,sm:300,ph:"https://media.api-sports.io/football/players/338902.png"},
   {c:"SEV",n:"Félix Correia",p:"FW",min:83,yc:0,rc:0,y:0.0,f:0.0,fw:1.084,r:0.0,ls:true,b:"LL",sc:0,sm:83,ph:"https://media.api-sports.io/football/players/135749.png"},
   {c:"SEV",n:"L. Stassin",p:"FW",min:119,yc:0,rc:0,y:0.0,f:0.0,fw:0.756,r:0.0,ls:false,b:"LL",sc:0,sm:119,ph:"https://media.api-sports.io/football/players/322560.png"},
+  {c:"SEV",n:"Manu Bueno",p:"MF",min:27,yc:0,rc:0,y:0.0,f:0.0,fw:6.667,r:0.0,ls:true,b:"LL",sc:0,sm:27,ph:"https://media.api-sports.io/football/players/331607.png"},
   {c:"SEV",n:"O. Vlachodimos",p:"GK",min:450,yc:0,rc:0,y:0.0,f:0.0,fw:0.0,r:0.0,ls:false,b:"LL",sc:0,sm:450,ph:"https://media.api-sports.io/football/players/557.png"},
-  {c:"SEV",n:"Andrés Castrín",p:"DF",min:210,yc:0,rc:0,y:0.0,f:null,fw:null,r:null,ls:false,b:"LL",sc:0,sm:210,ph:"https://media.api-sports.io/football/players/338902.png"},
   {c:"SEV",n:"Eduardo Altozano Agudo",p:"MF",min:0,yc:0,rc:0,y:null,f:null,fw:null,r:null,ls:true,b:"LL",sc:0,sm:0,ph:"https://media.api-sports.io/football/players/443593.png"},
   {c:"SEV",n:"Fran González",p:"GK",min:0,yc:0,rc:0,y:null,f:null,fw:null,r:null,ls:true,b:"LL",sc:0,sm:0,ph:"https://media.api-sports.io/football/players/396475.png"},
   {c:"SEV",n:"Fábio Cardoso",p:"DF",min:0,yc:null,rc:null,y:null,f:null,fw:null,r:null,ls:true,b:"NEW",sc:null,sm:null,ph:"https://media.api-sports.io/football/players/41208.png"},
@@ -609,7 +610,6 @@ const LALIGA_PLAYERS = [
   {c:"SEV",n:"Ibrahima Sow",p:"FW",min:0,yc:0,rc:0,y:null,f:null,fw:null,r:null,ls:true,b:"LL",sc:0,sm:0,ph:"https://media.api-sports.io/football/players/386270.png"},
   {c:"SEV",n:"José Ángel",p:"",min:0,yc:0,rc:0,y:null,f:null,fw:null,r:null,ls:true,b:"LL",sc:null,sm:null,ph:"https://media.api-sports.io/football/players/404415.png"},
   {c:"SEV",n:"M. Castillo",p:"FW",min:0,yc:0,rc:0,y:null,f:null,fw:null,r:null,ls:true,b:"LL",sc:0,sm:0,ph:"https://media.api-sports.io/football/players/548686.png"},
-  {c:"SEV",n:"Manu Bueno",p:"MF",min:0,yc:null,rc:null,y:null,f:null,fw:null,r:null,ls:true,b:"NEW",sc:null,sm:null,ph:"https://media.api-sports.io/football/players/331607.png"},
   {c:"SEV",n:"R. Vargas",p:"MF",min:20,yc:0,rc:0,y:0.0,f:null,fw:null,r:null,ls:true,b:"LL",sc:0,sm:20,ph:"https://media.api-sports.io/football/players/48471.png"},
   {c:"SEV",n:"Rafael Romero",p:"GK",min:0,yc:0,rc:0,y:null,f:null,fw:null,r:null,ls:true,b:"LL",sc:0,sm:0,ph:"https://media.api-sports.io/football/players/290686.png"},
   {c:"VAL",n:"J. de Haas",p:"DF",min:45,yc:1,rc:0,y:2.0,f:2.0,fw:0.0,r:6.0,ls:true,b:"LL",sc:1,sm:45,ph:"https://media.api-sports.io/football/players/36884.png"},

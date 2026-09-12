@@ -11,7 +11,7 @@ const SUSPENSION = {"kind": "ladder", "cumulative": true, "review": null, "rungs
 // a page rendering it — states the desk's basis instead of asserting
 // one. Null where the source did not harvest and the rows were kept
 // from the previous build, which is 'cannot tell', not 'no season'.
-const FORM = {"NEW": null, "SA": "2025-26", "SB": "2025-26"};
+const FORM = {"SA": "2025-26", "SB": "2025-26"};
 const CLUBS = [
   {short:"SAS",name:"Sassuolo",img:"https://media.api-sports.io/football/teams/488.png",basis:"SA",ca:2.32,caH:2.21,caA:2.42,fm:10.1,squad:34},
   {short:"LAZ",name:"Lazio",img:"https://media.api-sports.io/football/teams/487.png",basis:"SA",ca:2.29,caH:2.53,caA:2.05,fm:8.8,squad:35},
