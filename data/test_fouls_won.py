@@ -17,6 +17,7 @@ is explicit about is that the Premier League's basis is not being switched as a
 side effect of the Championship's.
 """
 import json
+import os
 import sys
 from pathlib import Path
 
@@ -692,5 +693,93 @@ t("the season check follows the form it was actually given",
   _the_fill_agrees_with_the_form_it_was_given)
 t("with no source at all the shipped rows are kept",
   _neither_harvest_keeps_the_shipped_rows)
+
+
+# ── FORM_SEASON moves itself, because nobody is scheduled to move it ─────────
+#
+# The constant names the season the Premier League form is in. form-season.mjs
+# flips form_pl to 2026 at round six, and the desk is at round three — so the
+# literal is right today, wrong in a few weeks, and there is no reminder
+# attached to the day it changes. It now comes from PL_FORM_SEASON, which
+# data-refresh.yml sets from the same expression it harvests the form at.
+
+def _with_env(value, fn):
+    """Run fn with PL_FORM_SEASON set (or removed), and rebuild the constant
+    the way import time does. Restores both."""
+    import importlib
+    had = os.environ.get("PL_FORM_SEASON")
+    before = B.FORM_SEASON
+    try:
+        if value is None:
+            os.environ.pop("PL_FORM_SEASON", None)
+        else:
+            os.environ["PL_FORM_SEASON"] = value
+        B.FORM_SEASON = ((os.environ.get("PL_FORM_SEASON") or "").strip()
+                         or B.FORM_SEASON_DECLARED)
+        return fn()
+    finally:
+        B.FORM_SEASON = before
+        if had is None:
+            os.environ.pop("PL_FORM_SEASON", None)
+        else:
+            os.environ["PL_FORM_SEASON"] = had
+        importlib.invalidate_caches()
+
+
+def _the_workflow_moves_it_and_a_local_run_still_builds():
+    assert _with_env("2026", lambda: B.FORM_SEASON) == "2026"
+    # Blank and whitespace are "not set", not a season. A workflow expression
+    # that resolves to nothing must not make the build think the form has no
+    # season; it must fall back to something a person wrote down.
+    assert _with_env("", lambda: B.FORM_SEASON) == B.FORM_SEASON_DECLARED
+    assert _with_env("  ", lambda: B.FORM_SEASON) == B.FORM_SEASON_DECLARED
+    assert _with_env(None, lambda: B.FORM_SEASON) == B.FORM_SEASON_DECLARED
+
+
+t("the workflow's season moves FORM_SEASON, and a local run still has one",
+  _the_workflow_moves_it_and_a_local_run_still_builds)
+
+
+def _after_the_flip_scoutingstats_is_taken_as_this_season():
+    """THE DAY THE PREMIER LEAGUE REACHES ROUND SIX, with the cookie restored.
+    ScoutingStats stamps no season anyone can convert, so the build can only
+    believe what it is told — and what it is told is now the same season the
+    harvest fetched. Under the old literal it would have believed 2025 while
+    the workflow harvested 2026, and fill_fouls_won would have stopped the
+    build on a pairing that was in fact coherent."""
+    def go():
+        B.pl_form({}, [])
+        assert B._FORM_SEASON_USED is None          # unmeasurable, as before
+        assert B.form_season() == "2026", B.form_season()
+        rows = [{"c": "ARS", "n": "Declan Rice", "fw": None, "ph": None}]
+        assert B.fill_fouls_won(rows) == 1, rows    # 2026 fouls on 2026 form
+    _with_env("2026", lambda: _with_files(
+        {B.SS_FORM: [SS_ROW], B.AF_FILL: _stamped("2026", [AF_ROW])}, go))
+
+
+t("after the flip a ScoutingStats form is taken as the season harvested",
+  _after_the_flip_scoutingstats_is_taken_as_this_season)
+
+
+def _a_mis_join_is_still_refused_after_the_flip():
+    """And the guard does not become a rubber stamp. Told 2026 while the fill
+    carries 2025, it still refuses — the check is that the two agree, not that
+    the variable exists."""
+    def go():
+        B.pl_form({}, [])
+        rows = [{"c": "ARS", "n": "Declan Rice", "fw": None, "ph": None}]
+        try:
+            B.fill_fouls_won(rows)
+        except SystemExit as e:
+            assert "season 2025" in str(e) and "PL season 2026" in str(e), str(e)
+            return
+        raise AssertionError("a 2025 fill on a 2026 form must stop the build")
+    _with_env("2026", lambda: _with_files(
+        {B.SS_FORM: [SS_ROW], B.AF_FILL: _stamped("2025", [AF_ROW])}, go))
+
+
+t("a season mis-join is still refused once the constant is variable",
+  _a_mis_join_is_still_refused_after_the_flip)
+
 
 print(f"\n{passed} tests passed")

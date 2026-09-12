@@ -51,6 +51,7 @@ Booking risk = yc_p90*2 + fouls_p90, the same metric as the WC desk.
 """
 
 import json
+import os
 import re
 import sys
 from collections import Counter
@@ -114,7 +115,28 @@ FORM_SOURCES = (SS_FORM, AF_FILL)
 # a mismatch had to be asserted by hand, and why moving this line by hand while
 # the form stayed frozen would have joined one season's fouls to another
 # season's players and looked entirely correct doing it.
-FORM_SEASON = "2025"
+#
+# AND IT IS NO LONGER MOVED BY HAND. The Premier League reaches round six in a
+# few weeks and form_pl flips to 2026; on that morning this constant becomes a
+# statement about a season the desk has stopped using, and the person who has
+# to notice is the one person nobody has scheduled. Editing it TODAY does not
+# help either — the league has played three rounds, its form is genuinely
+# 2025-26, and a 2026 here would be wrong for three weeks and right by
+# accident afterwards.
+#
+# So it moves itself. PL_FORM_SEASON is set by data-refresh.yml from the same
+# expression that decides which season to HARVEST the form at, which is what
+# data-refresh.yml already says out loud beside that step: "form_pl is the
+# automatic form of exactly the quantity build_pl_data.FORM_SEASON names". The
+# two were described as moving together and only one of them could move.
+#
+# The literal below is the answer for a developer machine running the build by
+# hand with no workflow around it, and for that only. check-build-data.mjs
+# asserts the workflow passes the variable and passes the SAME expression the
+# harvest uses, because a build and a harvest that disagree about the season
+# produce a page of entirely plausible numbers — see fill_fouls_won.
+FORM_SEASON_DECLARED = "2025"
+FORM_SEASON = (os.environ.get("PL_FORM_SEASON") or "").strip() or FORM_SEASON_DECLARED
 
 # Which season the form ACTUALLY came from this run, set by build_players().
 # None before then, and None for the whole run when the form was reused from
@@ -125,9 +147,10 @@ _FORM_SEASON_USED = None
 def form_season():
     """The season this build's form is in, measured where it can be measured.
 
-    Falls back to the declared FORM_SEASON, which is the right answer for the
-    ScoutingStats basis and the only available one when the form was reused
-    from the shipped file.
+    Falls back to FORM_SEASON — the season the workflow harvested the form at
+    — which is the right answer for the ScoutingStats basis, whose export names
+    seasons by an internal id that does not convert, and the only available one
+    when the form was reused from the shipped file.
     """
     return _FORM_SEASON_USED or FORM_SEASON
 
@@ -361,6 +384,21 @@ def pl_form(shipped, reused):
                   f"form is {name}"
                   + (f", season {season}." if season else " (no season stamp)."))
             _FORM_SEASON_USED = season
+        else:
+            # THE ONE BASIS THAT CANNOT BE MEASURED, said out loud rather than
+            # assumed. ScoutingStats names seasons by an internal id, so the
+            # only thing that can say which season these rows are is
+            # FORM_SEASON — and everything downstream, the fouls-won join
+            # included, is checked against that belief. Printing where the
+            # belief came from is the difference between a wrong season being
+            # visible in the log and being visible only in the odds.
+            print(f"Premier League form: {SS_FORM} harvested, and it stamps no "
+                  f"season of its own — this build takes it as {FORM_SEASON}"
+                  + (", from PL_FORM_SEASON."
+                     if os.environ.get("PL_FORM_SEASON", "").strip()
+                     else f", the declared fallback (PL_FORM_SEASON is not set, "
+                          f"so this is a local run or the workflow has stopped "
+                          f"passing it)."))
         return fresh
     kept = shipped.get("PL", [])
     if kept:

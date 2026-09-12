@@ -623,7 +623,18 @@ jobs:
       # what it produced last time, read back out of the shipped pl_data.js —
       # so a missing cookie means "the Premier League rows are unchanged", not
       # "the Premier League is empty". Every fallback is named in the log.
+      # THE SAME SEASON THE FORM WAS HARVESTED AT, handed to the build rather
+      # than written down in it. build_pl_data.FORM_SEASON used to be a literal
+      # with a comment telling the next person to move it when the form moved;
+      # the Premier League flips at round six and nobody is scheduled to be
+      # watching that morning. The expression below is character-for-character
+      # the one on "Harvest the Premier League from API-Football" above, which
+      # is the point: a build and a harvest that disagree about the season join
+      # one season's fouls won to another season's players, and every number
+      # on the page looks right. check-build-data.mjs asserts they stay equal.
       - name: Rebuild pl_data.js from the harvest
+        env:
+          PL_FORM_SEASON: ${{ inputs.season_af || steps.form.outputs.form_pl || '2025' }}
         run: python3 data/build_pl_data.py
 
       # After build_pl_data regenerates CLUBS, re-add the home/away

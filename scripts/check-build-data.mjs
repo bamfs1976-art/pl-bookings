@@ -68,6 +68,38 @@ for (const k of new Set(keyed)) {
   assert.ok(flow.includes(k), `build_data.py needs ${k}, which the workflow never sets`);
 }
 
+/* THE BUILD AND THE HARVEST MUST AGREE WHICH SEASON THE FORM IS.
+   build_pl_data.FORM_SEASON was a literal with a comment telling the next
+   person to move it when the form moved — and the form moves on its own, at
+   round six, when scripts/form-season.mjs flips form_pl. It now comes from
+   PL_FORM_SEASON, which the workflow must set on the build step from exactly
+   the expression it harvests at. Not "an expression": the same one. A build
+   that thinks the form is 2025-26 while the harvest fetched 2026-27 joins one
+   season's fouls won onto another season's players and every number on the
+   page looks right, which is the failure fill_fouls_won exists to refuse and
+   the reason it has anything to compare against at all. */
+const seasonOf = (re, what) => {
+  const m = re.exec(flow);
+  assert.ok(m, `data-refresh.yml no longer sets a season on ${what} — the ` +
+    'Premier League build and its form harvest can no longer be shown to agree');
+  return m[1].trim();
+};
+const harvestSeason = seasonOf(
+  /API_FOOTBALL_SEASON:([^\n]*)\n\s*run: python3 data\/harvest_apifootball\.py --league PL --out pl_af_players\.json/,
+  'the Premier League form harvest');
+const buildSeason = seasonOf(
+  /PL_FORM_SEASON:([^\n]*)\n\s*run: python3 data\/build_pl_data\.py/,
+  'the Premier League build');
+assert.equal(buildSeason, harvestSeason,
+  'the Premier League build and its form harvest read different season ' +
+  `expressions:\n  harvest ${harvestSeason}\n  build   ${buildSeason}\n` +
+  'They must be identical, or the build will guard the fouls-won join ' +
+  'against a season the harvest did not fetch.');
+assert.ok(/steps\.form\.outputs\.form_pl/.test(buildSeason),
+  'the Premier League build no longer takes its season from ' +
+  'scripts/form-season.mjs, so nothing moves it when the league reaches ' +
+  'round six and the form flips');
+
 /* And the guards it runs afterwards must exist, or the run reports a clean
    dataset it never checked. */
 const guards = [...runner.slice(runner.indexOf('GUARDS = [')).matchAll(/"(scripts\/[a-z-]+\.mjs)"/g)]
