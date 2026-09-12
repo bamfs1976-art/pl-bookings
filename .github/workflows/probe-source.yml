@@ -21,6 +21,10 @@ on:
       urls:
         description: "URL(s) to probe, space-separated."
         required: true
+      render:
+        description: "Execute the page in a browser and print its text, for a site that assembles its content client-side. Only meaningful for a host that already answers us willingly."
+        required: false
+        default: "false"
 
 # No `contents: write`. This job has nothing to push and must not be able to.
 permissions:
@@ -43,3 +47,31 @@ jobs:
       # a reader could open in a browser.
       - name: Look
         run: node scripts/probe-source.mjs ${{ inputs.urls }}
+
+      # THE SAME PAGES, EXECUTED. A plain GET tells you whether the content is
+      # in the markup; this tells you what a reader actually sees when it is
+      # not. Deliberately a separate step and off by default, because it costs
+      # a browser launch and is only worth it once the fetch above has shown a
+      # low yield.
+      #
+      # NOT A WAY PAST A REFUSAL. If the fetch came back as a challenge or a
+      # block, the site is saying no and this step is not the answer — it is
+      # for a host that serves us happily and simply builds its page in the
+      # browser, which is what efl.com and premierleague.com do.
+      - name: Look again, in a browser
+        if: ${{ inputs.render == 'true' }}
+        run: |
+          npm install -g playwright-core --silent
+          echo "NODE_PATH=$(npm root -g)" >> "$GITHUB_ENV"
+          for p in /usr/bin/google-chrome /usr/bin/google-chrome-stable \
+                   /usr/bin/chromium-browser /usr/bin/chromium; do
+            [ -x "$p" ] && export PW_CHROMIUM="$p" && echo "chrome: $p" && break
+          done
+          export NODE_PATH="$(npm root -g)"
+          for u in ${{ inputs.urls }}; do
+            echo "===================================================="
+            echo "$u"
+            echo "===================================================="
+            node scripts/render-page.mjs "$u" | head -c 4000
+            echo
+          done
