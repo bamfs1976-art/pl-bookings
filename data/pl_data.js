@@ -20,7 +20,7 @@ const CLUBS = [
   {short:"AVL",name:"Aston Villa",img:"https://media.api-sports.io/football/teams/66.png",basis:"PL",ca:1.32,caH:1.16,caA:1.48,fm:7.4,squad:35},
   {short:"LIV",name:"Liverpool",img:"https://media.api-sports.io/football/teams/40.png",basis:"PL",ca:1.29,caH:1.02,caA:1.56,fm:9.2,squad:36},
   {short:"FUL",name:"Fulham",img:"https://media.api-sports.io/football/teams/36.png",basis:"PL",ca:1.26,caH:1.23,caA:1.29,fm:7.1,squad:28},
-  {short:"COV",name:"Coventry City",img:"https://media.api-sports.io/football/teams/1346.png",basis:"EFL",ca:null,caH:null,caA:null,fm:null,squad:35},
+  {short:"COV",name:"Coventry City",img:"https://media.api-sports.io/football/teams/1346.png",basis:"EFL",ca:null,caH:null,caA:null,fm:null,squad:36},
   {short:"HUL",name:"Hull City",img:"https://media.api-sports.io/football/teams/64.png",basis:"EFL",ca:null,caH:null,caA:null,fm:null,squad:43},
   {short:"IPS",name:"Ipswich Town",img:"https://media.api-sports.io/football/teams/57.png",basis:"EFL",ca:null,caH:null,caA:null,fm:null,squad:36},
 ];
@@ -246,6 +246,7 @@ const PL_PLAYERS = [
   {c:"COV",n:"Kai Andrews",p:"MF",min:74,yc:0,rc:0,y:0.0,f:null,fw:2.432,r:null,ls:true,b:"EFL"},
   {c:"COV",n:"Loum Tchaouna",p:"MF",min:166,yc:null,rc:null,y:null,f:null,fw:null,r:null,ls:true,b:"NEW"},
   {c:"COV",n:"O. Dovin",p:"GK",min:0,yc:null,rc:null,y:null,f:null,fw:null,r:null,ls:true,b:"EFL"},
+  {c:"COV",n:"S. Mfuni",p:"DF",min:0,yc:0,rc:0,y:null,f:null,fw:null,r:null,ls:true,b:"PL",ph:"https://media.api-sports.io/football/players/382358.png"},
   {c:"COV",n:"Sidiki Cherif",p:"FW",min:0,yc:null,rc:null,y:null,f:null,fw:null,r:null,ls:true,b:"NEW"},
   {c:"COV",n:"Yann Gboho",p:"MF",min:0,yc:null,rc:null,y:null,f:null,fw:null,r:null,ls:true,b:"NEW"},
   {c:"CRY",n:"B. Sosa",p:"DF",min:99,yc:1,rc:0,y:0.909,f:3.636,fw:null,r:5.454,ls:true,b:"PL",ph:"https://media.api-sports.io/football/players/26303.png"},

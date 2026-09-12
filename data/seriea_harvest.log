@@ -1,4 +1,4 @@
-Serie A harvest, run 159
+Serie A harvest, run 162
 == discover ==
 Serie A: API-Football league 135, season 2026
 
@@ -24,7 +24,7 @@ seriea_clubs.json written (20 clubs)
     UDI  Udinese
     VEN  Venezia
 
-API-Football: 1 call(s) this run; 1434 of 7500 used today (19%), 6066 left
+API-Football: 1 call(s) this run; 1411 of 7500 used today (19%), 6089 left
 == squads ==
 Serie A: API-Football league 135, season 2025
   not in this desk's club list (3): Cremonese, Hellas Verona, Pisa
@@ -49,7 +49,7 @@ Serie A: API-Football league 135, season 2025
 
 seriea_players.json written (731 players from 17 clubs, API-Football, SA season 2025)
 
-API-Football: 46 call(s) this run; 1240 of 7500 used today (17%), 6260 left
+API-Football: 46 call(s) this run; 1457 of 7500 used today (19%), 6043 left
 == rosters ==
 Serie A: API-Football league 135, season 2026
     AC Milan                    32 players
@@ -75,7 +75,7 @@ Serie A: API-Football league 135, season 2026
 
 sa_squads.json written (648 players from 20 clubs, API-Football current rosters)
 
-API-Football: 21 call(s) this run; 1261 of 7500 used today (17%), 6239 left
+API-Football: 21 call(s) this run; 1478 of 7500 used today (20%), 6022 left
 == season-cards ==
 Serie A: API-Football league 135, season 2026
   fetching 20 squads
@@ -98,11 +98,11 @@ Serie A: API-Football league 135, season 2026
     Sassuolo                    33 players
     Torino                      33 players
     Udinese                     30 players
-    Venezia                     31 players
+    Venezia                     33 players
 
-seriea_season_cards.json written (583 players from 20 clubs, API-Football, SA season 2026)
+seriea_season_cards.json written (585 players from 20 clubs, API-Football, SA season 2026)
 
-API-Football: 41 call(s) this run; 1302 of 7500 used today (17%), 6198 left
+API-Football: 41 call(s) this run; 1283 of 7500 used today (17%), 6217 left
 == serie-b ==
 Serie B: API-Football league 136, season 2025
   not in this desk's club list (17): Avellino, Bari, Carrarese, Catanzaro, Cesena, Empoli, Juve Stabia, Mantova, Modena, Padova, Palermo, Pescara, Reggiana, Sampdoria, Spezia, Sudtirol, Virtus Entella
@@ -113,16 +113,16 @@ Serie B: API-Football league 136, season 2025
 
 serieb_players.json written (116 players from 3 clubs, API-Football, SERB season 2025)
 
-API-Football: 8 call(s) this run; 1310 of 7500 used today (17%), 6190 left
+API-Football: 8 call(s) this run; 1291 of 7500 used today (17%), 6209 left
 == ref-fixtures ==
 Serie A: API-Football league 135, season 2025
 
 seriea_ref_fixtures.js written (380 matches over 20 clubs, 380 with an official named)
 
-API-Football: 1 call(s) this run; 1311 of 7500 used today (17%), 6189 left
+API-Football: 1 call(s) this run; 1292 of 7500 used today (17%), 6208 left
 == fixtures ==
 Serie A: API-Football league 135, season 2026
-  CHANGED: VEN v FIO: harvested 'F. Fourneau', published 'Francesco Fourneau' — the harvested name stands
+  SA appointments overlay: 0 applied, 1 already harvested
   CHANGED: ATA v CAG: harvested 'A. Arena', published 'Alberto Ruben Arena' — the harvested name stands
   CHANGED: GEN v FRO: harvested 'A. Rapuano', published 'Antonio Rapuano' — the harvested name stands
   CHANGED: LEC v MON: harvested 'V. Crezzini', published 'Valerio Crezzini' — the harvested name stands
@@ -135,7 +135,7 @@ Serie A: API-Football league 135, season 2026
 
 seriea_fixtures.js written (380 fixtures over 38 matchdays, 40 with a referee appointed)
 
-API-Football: 1 call(s) this run; 1312 of 7500 used today (17%), 6188 left
+API-Football: 1 call(s) this run; 1293 of 7500 used today (17%), 6207 left
 == build ==
 Division: 17 clubs were in it last season, 3 came up
   promoted: Frosinone, Monza, Venezia
@@ -204,7 +204,7 @@ club rates from mirror (380 matches)
 players: 648  by basis: NEW=189, SA=410, SB=49
 clubs with players: 20 of 20
 club rates from match records: 17 of 20
-season cautions (2026-27): 523 players
+season cautions (2026-27): 518 players
 referees: 32
 RESULT: WRITTEN seriea_data.js
 == referee-join ==
