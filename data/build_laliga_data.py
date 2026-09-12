@@ -86,8 +86,9 @@ DESKS = {
         # name used in the log)
         feeder=("segunda_players.json", "SEG", "Segunda"),
         agent="pl-bookings-laliga",
+        # The "on <season> form" line is NOT here. It is generated from the
+        # stamps on the files this run actually read — see form_headline.
         header=[
-            "// La Liga 2026-27, on 2025-26 form.",
             "// Club card rates are counted from the free football-data.co.uk SP1",
             "// records; the referee NAMES are joined on from API-Football, because",
             "// that free source has never published an official for Spain.",
@@ -102,8 +103,8 @@ DESKS = {
         # and L1 do.
         feeder=("serieb_players.json", "SB", "Serie B"),
         agent="pl-bookings-seriea",
+        # As above: the form season is measured, not written down here.
         header=[
-            "// Serie A 2026-27, on 2025-26 form.",
             "// Club card rates are counted from the free football-data.co.uk I1",
             "// records; the referee NAMES are joined on from API-Football, because",
             "// that free source names the official on 0 of 380 Italian rows.",
@@ -114,6 +115,50 @@ DESKS = {
 LEAGUE = OUT = STATUS = D = CODE = None
 MATCHES = 38          # a 20-club season, for the per-game team rates
 MIN_VENUE = 6         # below this a venue split is noise
+
+# WHICH SEASON EACH BASIS IS IN, measured by build_players from the stamp on
+# the file it actually read. basis -> API-Football season start year, or None
+# where the source did not harvest and the rows came from the previous build.
+#
+# WHY THIS IS NOT A CONSTANT. The header these desks ship said "on 2025-26
+# form" in a literal beside the desk's name, and scripts/form-season.mjs flips
+# a division's form to the season being played at round six. La Liga crossed
+# that line on 12 September 2026 and the shipped file went on describing
+# itself as 2025-26 while every rate in it came from 2026-27; Serie A reaches
+# round six about a fortnight later. The same reasoning as
+# build_pl_data.FORM_SEASON, and the same conclusion: a season that moves on
+# its own cannot be a line somebody has to remember to edit. Here it need not
+# even be passed in, because unlike the ScoutingStats export every source this
+# builder reads stamps its own season.
+_FORM_SEASONS = {}
+
+
+def season_label(start):
+    """API-Football's "2026" as football's "2026-27". None stays None, because
+    "not stamped" is a different answer from a season and must read as one."""
+    try:
+        y = int(str(start)[:4])
+    except (TypeError, ValueError):
+        return None
+    return f"{y}-{str(y + 1)[-2:]}"
+
+
+def form_headline():
+    """The "// <desk>, on <season> form." line, from what this run read.
+
+    Both bases collapse into one clause while they agree, which is the state
+    every desk starts a season in and the exact line these files used to carry.
+    They stop agreeing at the flip — the top flight moves to the season being
+    played and the feeder cannot, because a promoted club's prior-tier form is
+    last season's by definition — and then the header says so rather than
+    picking one and calling it the desk's basis.
+    """
+    feeder_basis = D["feeder"][1]
+    seen = [(b, season_label(_FORM_SEASONS.get(b))) for b in (CODE, feeder_basis)]
+    if seen[0][1] and seen[0][1] == seen[1][1]:
+        return f"// {D['label']}, on {seen[0][1]} form."
+    return f"// {D['label']}, on " + ", ".join(
+        f"{lab or 'an unstamped season'} form for {b}" for b, lab in seen) + "."
 
 
 def configure(code):
@@ -343,15 +388,26 @@ def build_players(clubs, continuing, promoted, resolve):
     # Order matters: de-duplication below keeps the FIRST row for a
     # (club, name), so a real rate can never be overwritten by a blank one.
     feeder_file, feeder_basis, feeder_name = D["feeder"]
-    for payload, keep, basis, src in (
-        (source(LEAGUE.players_file, CODE, shipped, reused), continuing, CODE, LEAGUE.name),
-        (source(feeder_file, feeder_basis, shipped, reused), promoted, feeder_basis, feeder_name),
+    _FORM_SEASONS.clear()
+    for payload, keep, basis, src, fname in (
+        (source(LEAGUE.players_file, CODE, shipped, reused), continuing, CODE,
+         LEAGUE.name, LEAGUE.players_file),
+        (source(feeder_file, feeder_basis, shipped, reused), promoted, feeder_basis,
+         feeder_name, feeder_file),
+        # The fill is a ROSTER — membership, no form, no season to record.
         (source(D["fill"], "NEW", shipped, reused),
-         set(d["short"] for d in clubs.values()), "NEW", "squad fill"),
+         set(d["short"] for d in clubs.values()), "NEW", "squad fill", None),
     ):
+        if fname:
+            # Off the file that was read, not off a constant. A source that did
+            # not harvest leaves None here, which form_headline reports as an
+            # unstamped season rather than silently claiming the other basis's.
+            _FORM_SEASONS[basis] = P.stamp(fname)[1]
         got = rows_for(payload, keep, basis, unmapped, resolve)
         if got:
-            print(f"  {basis:4} {len(got):4} players from the {src} feed")
+            season = season_label(_FORM_SEASONS.get(basis))
+            print(f"  {basis:4} {len(got):4} players from the {src} feed"
+                  + (f", {season} form" if season else ""))
         rows.extend(got)
 
     if reused:
@@ -451,11 +507,18 @@ j = P.jsval
 def emit(clubs, players, refs):
     lines = [
         f"// Auto-generated by data/build_laliga_data.py (desk {CODE}). Do not edit by hand.",
+        form_headline(),
         *D["header"],
         "// The league's suspension rule, from data/leagues.py — shipped so the",
         "// page computes with it instead of hardcoding thresholds that could",
         "// drift from the registry.",
         "const SUSPENSION = " + json.dumps(LEAGUE.suspension_scheme) + ";",
+        "// Which season each basis's form is in, so a reader of this file — or",
+        "// a page rendering it — states the desk's basis instead of asserting",
+        "// one. Null where the source did not harvest and the rows were kept",
+        "// from the previous build, which is 'cannot tell', not 'no season'.",
+        "const FORM = " + json.dumps(
+            {b: season_label(s) for b, s in sorted(_FORM_SEASONS.items())}) + ";",
         "const CLUBS = [",
     ]
     for c in clubs:
@@ -557,6 +620,12 @@ def main():
         f"players: {len(players)}  by basis: "
         + ", ".join(f"{b}={sum(1 for p in players if p['b'] == b)}"
                     for b in sorted({p["b"] for p in players})),
+        # The basis every published number rests on, in the status file the
+        # repository keeps, so a flip is a committed diff rather than something
+        # to notice in a log pane.
+        "form: " + ", ".join(
+            f"{b}={season_label(s) or 'not stamped'}"
+            for b, s in sorted(_FORM_SEASONS.items())),
         f"clubs with players: {len({p['c'] for p in players})} of {len(shorts)}",
         f"club rates from match records: {len(rates)} of {len(shorts)}",
         "season cautions (2026-27): "

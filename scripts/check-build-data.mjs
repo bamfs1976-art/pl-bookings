@@ -13,7 +13,7 @@
 //
 // So: every script build_data.py runs must be a script the workflow runs, and
 // the one ordering constraint that is load-bearing must hold in both.
-import { readFileSync } from 'node:fs';
+import { readFileSync, existsSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
 import assert from 'node:assert';
@@ -99,6 +99,52 @@ assert.ok(/steps\.form\.outputs\.form_pl/.test(buildSeason),
   'the Premier League build no longer takes its season from ' +
   'scripts/form-season.mjs, so nothing moves it when the league reaches ' +
   'round six and the form flips');
+
+/* A GENERATED FILE MUST STATE THE BASIS IT WAS GENERATED FROM.
+   laliga_data.js and seriea_data.js carried "on 2025-26 form" in their header
+   from a literal in the desk config, and form-season.mjs flips a division's
+   form to the season being played at round six. La Liga crossed that on
+   12 September 2026 and the file went on describing itself as 2025-26 while
+   every rate in it came from 2026-27 — a shipped artefact misdescribing its
+   own contents, which is the kind of wrong that survives because it is in a
+   comment nobody diffs. Both desks now generate the line from the stamps on
+   the files they read, and ship the same fact as FORM for anything that wants
+   to render it. This checks the two agree, on both desks — a header taken
+   from one basis while FORM says another is the same failure in a new place. */
+for (const [file, desk] of [['laliga_data.js', 'La Liga'], ['seriea_data.js', 'Serie A']]) {
+  const path = join(root, 'data', file);
+  if (!existsSync(path)) continue;
+  const text = readFileSync(path, 'utf8');
+  const head = /^\/\/ .+\n(\/\/ .+)/.exec(text);
+  assert.ok(head, `${file} has no headline under the generated-by line`);
+  const form = /^const FORM = (\{.*\});$/m.exec(text);
+  assert.ok(form, `${file} no longer ships FORM, so nothing can render the ` +
+    'desk\'s basis and the header is the only claim about it');
+  const seasons = JSON.parse(form[1]);
+  const bases = Object.entries(seasons).filter(([b]) => b !== 'NEW');
+  assert.ok(bases.length >= 2, `${file}: FORM names ${bases.length} bases`);
+  /* THE CLAUSE AFTER ", on ", never the whole line. The desk's name carries
+     the season being PLAYED — "Serie A 2026-27, on 2025-26 form" is two
+     different seasons and only the second says anything about the basis.
+     Read whole, the line contains "2026-27" no matter what the form is, so a
+     header left behind by the flip matched itself and this guard passed on
+     precisely the file it was written to catch. */
+  const claim = head[1].slice(head[1].indexOf(', on '));
+  for (const [basis, season] of bases) {
+    if (season == null) continue;   // not stamped — the header says so instead
+    assert.ok(claim.includes(season),
+      `${desk}: the file says "${head[1].trim()}" but its ${basis} rows are ` +
+      `${season} form. A dataset that misdescribes its own basis is read as ` +
+      'fact by the next person to open it.');
+  }
+  /* And no season the data does NOT rest on. Catching a stale header needs
+     both directions: the flip leaves the old season behind, not absent. */
+  for (const stale of claim.match(/\d{4}-\d{2}/g) || []) {
+    assert.ok(bases.some(([, s]) => s === stale),
+      `${desk}: the header claims ${stale} form, which no basis in FORM is in ` +
+      `(${bases.map(([b, s]) => `${b}=${s}`).join(', ')})`);
+  }
+}
 
 /* And the guards it runs afterwards must exist, or the run reports a clean
    dataset it never checked. */

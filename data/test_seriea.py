@@ -542,4 +542,78 @@ def _the_season_file_carries_the_italian_rule_and_the_sb_basis():
 t("the season file carries the Italian rule verbatim and labels promoted clubs SB",
   _the_season_file_carries_the_italian_rule_and_the_sb_basis)
 
+
+# ── The form season this desk states is the one it measured ─────────────────
+#
+# The header read "// Serie A 2026-27, on 2025-26 form." from a literal in the
+# desk config, and form-season.mjs flips a division's form to the season being
+# PLAYED at round six. La Liga crossed that on 12 September 2026 and its
+# shipped file went on calling itself 2025-26 while every rate in it came from
+# 2026-27. Serie A is about a fortnight behind. Same problem as
+# build_pl_data.FORM_SEASON, and unlike that one it needs nothing passed in:
+# every source this builder reads stamps its own season.
+
+def _a_season_reads_as_football_writes_it():
+    assert B.season_label("2026") == "2026-27"
+    assert B.season_label(2025) == "2025-26"
+    assert B.season_label("2099") == "2099-00"          # the century rolls
+    # "Not stamped" must stay distinguishable from a season, all the way out
+    # to the header and the FORM block.
+    assert B.season_label(None) is None
+    assert B.season_label("") is None
+    assert B.season_label("not a season") is None
+
+
+t("a stamped season reads as football writes it, and an absent one stays absent",
+  _a_season_reads_as_football_writes_it)
+
+
+def _the_headline_is_measured_not_declared():
+    def headline(top, feeder):
+        was, before = B.CODE, dict(B._FORM_SEASONS)
+        try:
+            B.configure("SA")
+            B._FORM_SEASONS.clear()
+            B._FORM_SEASONS.update({"SA": top, "SB": feeder})
+            return B.form_headline()
+        finally:
+            B.configure(was)
+            B._FORM_SEASONS.clear()
+            B._FORM_SEASONS.update(before)
+
+    # Before the flip both bases agree, and the line is the one these files
+    # have always carried — character for character.
+    assert headline("2025", "2025") == "// Serie A 2026-27, on 2025-26 form.", \
+        headline("2025", "2025")
+    # AFTER THE FLIP they cannot agree. The top flight moves to the season
+    # being played; a promoted club's second-tier form is last season's by
+    # definition and always will be. The header says both rather than picking
+    # one and calling it the desk's basis.
+    assert headline("2026", "2025") == (
+        "// Serie A 2026-27, on 2026-27 form for SA, 2025-26 form for SB."), \
+        headline("2026", "2025")
+    # A source that did not harvest is reported, not filled in from its
+    # neighbour — "cannot tell" is the honest answer and the visible one.
+    assert "an unstamped season form for SA" in headline(None, "2025")
+
+
+t("the header states the form seasons this run read, before and after the flip",
+  _the_headline_is_measured_not_declared)
+
+
+def _no_desk_declares_a_form_season_any_more():
+    """The literal is gone from BOTH desks this builder configures, not just
+    the one that was checked. Serie A was asked for; La Liga is the same code
+    path and is the desk that has already flipped."""
+    import re as _re
+    for code in ("LL", "SA"):
+        for line in B.DESKS[code]["header"]:
+            assert not _re.search(r"\d{4}-\d{2}\s+form", line), \
+                f"{code} still declares its form season in a literal: {line}"
+
+
+t("neither desk config declares a form season in a literal",
+  _no_desk_declares_a_form_season_any_more)
+
+
 print(f"\n{passed} tests passed")
