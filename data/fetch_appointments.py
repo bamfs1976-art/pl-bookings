@@ -97,7 +97,37 @@ UA = ("Mozilla/5.0 (compatible; BookingsDesk/1.0; "
 TIMEOUT = 45
 
 FIXTURES = {"LL": "laliga_fixtures.js", "EFLC": "eflc_fixtures.js",
-            "SA": "seriea_fixtures.js"}
+            "SA": "seriea_fixtures.js", "PL": "pl_fixtures.js"}
+
+# ---------------------------------------------------------------------------
+# The Premier League's own matchweek article
+# ---------------------------------------------------------------------------
+# THE FOURTH PUBLISHER, added because the third-party feed stopped. Premier
+# League referees came from API-Football's fixture list until 6 September 2026,
+# when it simply stopped carrying them: rounds 1 to 3 were appointed a day
+# ahead, round 4 was still empty nineteen hours before kick-off with Manchester
+# United v Manchester City in it. Asking the API directly confirmed it was
+# publishing none — 0 of 350 upcoming fixtures — so no change to the harvest
+# could have recovered them. The other three desks read the body that appoints
+# the officials; this one now does too.
+#
+# premierleague.com assembles its pages in the browser, so the article comes
+# back through scripts/render-page.mjs exactly as the EFL's does, and the same
+# rule applies: the host serves us willingly and we execute what it sends.
+# Hosts that REFUSE automated access are not in this list and must not be —
+# fbref answered a probe with a Cloudflare challenge and Transfermarkt with a
+# zero-byte 202, and rendering is not the reply to a refusal.
+PL_INDEX = [
+    "https://www.premierleague.com/en/news",
+    "https://www.premierleague.com/news",
+]
+# "Match officials for Matchweek 4". The matchweek number is the one thing that
+# identifies which round an article covers, so it is captured rather than
+# assumed, and the newest article for a round the desk is still missing wins.
+PL_SLUG = re.compile(
+    r'["\'>(]([^"\'<>()\s]*match-officials[^"\'<>()\s]*)', re.I)
+PL_WEEK = re.compile(r"match[- ]officials[- ]?(?:for[- ])?matchweek[- ](\d{1,2})",
+                     re.I)
 
 # Spanish weekday names as the RFEF spells them in a filename: lowercase and
 # unaccented (miercoles, sabado), Monday first to match date.weekday().
@@ -501,10 +531,69 @@ def find_seriea(rounds, season_year, verbose):
     return found
 
 
+def find_pl(rounds, verbose):
+    """The Premier League's matchweek article for a round still missing.
+
+    THE ROUND IS IN THE TITLE, so the article is chosen by the round the desk
+    is short of rather than by being newest. That matters in a week where two
+    matchweeks are both inside the window: taking the newest would fetch the
+    one already covered and report nothing found.
+
+    The index is rendered, because premierleague.com builds its listing in the
+    browser and a plain GET reads 86,176 bytes yielding 1,284 characters.
+    """
+    want = sorted({r for (_, r), _ in rounds if r is not None})
+    print(f"  looking for matchweek {', '.join(str(r) for r in want) or '?'}")
+    seen = []
+    for index in PL_INDEX:
+        page = fetch(index)
+        hits = PL_SLUG.findall(page or "")
+        print(f"  {index} -> {len(page or '')} bytes, {len(hits)} matching URL(s)")
+        if not hits:
+            # The listing is assembled in the browser; execute it rather than
+            # concluding the articles are gone.
+            rendered = render(index)
+            hits = PL_SLUG.findall(rendered or "")
+            if rendered is not None:
+                print(f"    rendered -> {len(hits)} matching URL(s)")
+        for href in hits:
+            url = urllib.parse.urljoin(index, html.unescape(href))
+            if url not in seen:
+                seen.append(url)
+        if seen:
+            break
+
+    if not seen:
+        print("  no index listed a match-officials URL. If the pages above "
+              "returned plenty of bytes and no matches, the slug has changed; "
+              "if they returned nothing, the fetch itself is being refused.")
+        return []
+
+    # Newest first WITHIN a wanted round, so a re-issued article wins.
+    wanted, others = [], []
+    for url in seen:
+        m = PL_WEEK.search(url)
+        (wanted if (m and int(m.group(1)) in want) else others).append(url)
+    print(f"  {len(seen)} candidate article(s), {len(wanted)} for a round "
+          f"this desk is missing")
+
+    for url in (wanted or others)[:4]:
+        text = render(url)
+        if not text:
+            continue
+        rows = I.parse_pl(text, default_year=None)
+        print(f"  {url}\n    {len(text)} chars of text, "
+              f"{len(rows)} appointment(s) parsed")
+        if rows:
+            return [(url, text)]
+    return []
+
+
 def main():
     ap = argparse.ArgumentParser(description=__doc__,
                                  formatter_class=argparse.RawDescriptionHelpFormatter)
-    ap.add_argument("--league", required=True, choices=["LL", "EFLC", "SA"])
+    ap.add_argument("--league", required=True,
+                    choices=["LL", "EFLC", "SA", "PL"])
     ap.add_argument("--out", help="write the text here (default: stdout)")
     ap.add_argument("--source-out", help="write the URL it came from here, so "
                                          "the workflow can pass it to --source")
@@ -536,7 +625,8 @@ def main():
             for u in rfef_candidates(rounds, season_label):
                 print(f"  would probe {u}")
         else:
-            for u in (AIA_INDEX if args.league == "SA" else EFL_INDEX):
+            idx = {"SA": AIA_INDEX, "PL": PL_INDEX}.get(args.league, EFL_INDEX)
+            for u in idx:
                 print(f"  would search {u}")
         return
 
@@ -550,6 +640,8 @@ def main():
             sys.exit("ERROR: seriea_fixtures.js carries no season heading, and "
                      "the AIA's dates carry no year without it.")
         found = find_seriea(rounds, season, args.verbose)
+    elif args.league == "PL":
+        found = find_pl(rounds, args.verbose)
     else:
         found = find_eflc(args.verbose)
 

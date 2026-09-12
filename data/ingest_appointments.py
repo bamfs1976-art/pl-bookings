@@ -57,6 +57,7 @@ DIVISIONS = {
     "sky bet championship": "EFLC",
     "primera división": "LL",
     "serie a enilive": "SA",
+    "premier league": "PL",
 }
 
 # ---------------------------------------------------------------------------
@@ -297,6 +298,90 @@ def _ko24(hour, minute, meridiem):
     return f"{h:02d}:{m:02d}"
 
 
+# ---------------------------------------------------------------------------
+# The Premier League's own matchweek article (--format pl)
+# ---------------------------------------------------------------------------
+# THE FOURTH PUBLISHER, and the one this desk went longest without. Premier
+# League referees came from API-Football's fixture feed until it stopped
+# carrying them on 6 September 2026 — rounds 1 to 3 were appointed a day ahead,
+# round 4 was still empty nineteen hours before kick-off. An aggregator that
+# goes quiet takes the whole desk with it; the other three leagues each read
+# the body that actually appoints the officials, and now so does this one.
+#
+# premierleague.com publishes "Match officials for Matchweek N", and its page
+# is assembled in the browser, so the text arrives through scripts/
+# render-page.mjs exactly as the EFL's does. Rendered, one fixture reads:
+#
+#   Aston Villa
+#   Aston Villa
+#   15:00
+#   Nott'm Forest
+#   Nottingham Forest
+#   Premier League•Sat 12 Sep
+#   Referee: Andy Madley. Assistants: Constantine Hatzidakis, Richard West.
+#   Fourth official: Oliver Langford. VAR: Tim Wood. Assistant VAR: Will Finnie.
+#
+# Each club appears TWICE, short name then full — "Spurs / Tottenham Hotspur",
+# "Man Utd / Manchester United". The full name is taken, because that is what
+# the club map knows and the short forms are the site's own abbreviations.
+#
+# THE DATE LINE IS THE ANCHOR, not the "Referee:" line, because the fixture's
+# identity sits above it and its officials below. Everything is read at a fixed
+# offset from that line and a block that does not have the shape is skipped
+# rather than guessed at: a mis-split club is reported downstream by name, a
+# mis-read official is not.
+#
+# The kick-off is LOCAL time (15:00 BST for a 14:00Z fixture), so it is parsed
+# for the record and never used to match — apply_to joins on the date and both
+# club codes, and tolerates a day either side.
+PL_DATE = re.compile(r"^Premier League\s*[•·|]\s*\w{3}\s+(\d{1,2})\s+(\w{3})",
+                     re.I)
+PL_REF = re.compile(r"^Referee:\s*([^.]+?)\s*(?:\(pictured\)\s*)?\.", re.I)
+PL_TIME = re.compile(r"^(\d{1,2}):(\d{2})$")
+# "Sep", not "September": MONTHS is keyed on the full name the EFL prints, and
+# this publisher abbreviates. Derived rather than retyped, so the two lists
+# cannot disagree about which month is which.
+MONTHS3 = {k[:3]: v for k, v in MONTHS.items()}
+
+
+def parse_pl(text, default_year=None):
+    """A Premier League matchweek article as the rows parse() returns."""
+    lines = [ln.strip() for ln in (text or "").splitlines()]
+    lines = [ln for ln in lines if ln]
+    out = []
+    for i, line in enumerate(lines):
+        d = PL_DATE.match(line)
+        if not d or i < 5:
+            continue
+        # Fixed offsets back from the date line. See the block comment above.
+        home, ko_raw, away = lines[i - 4], lines[i - 3], lines[i - 1]
+        if not PL_TIME.match(ko_raw):
+            continue                      # not the shape; skip rather than guess
+        ref = None
+        for ahead in lines[i + 1:i + 4]:  # the officials line follows the date
+            m = PL_REF.match(ahead)
+            if m:
+                ref = m.group(1).strip()
+                break
+        if not ref:
+            continue
+        day, mon = int(d.group(1)), MONTHS3.get(d.group(2).lower()[:3])
+        if not mon:
+            continue
+        year = default_year
+        if year and mon <= 6:
+            # Same season-rollover rule the other parsers use: an article
+            # published in August naming a January fixture means next year.
+            year += 1
+        out.append({
+            "competition": "premier league",
+            "date": f"{year:04d}-{mon:02d}-{day:02d}" if year else None,
+            "home": home, "away": away,
+            "ko": ko_raw, "ref": ref,
+        })
+    return out
+
+
 def parse(text, default_year=None):
     """The article as a list of {competition, date, home, away, ko, ref}.
 
@@ -475,12 +560,14 @@ def main():
                     help="Season year for date headings that carry none "
                          "(\"Saturday 22 August\"). Only used where the "
                          "article omits it; a heading with a year keeps it.")
-    ap.add_argument("--format", choices=["efl", "rfef", "aia"], default="efl",
+    ap.add_argument("--format", choices=["efl", "rfef", "aia", "pl"], default="efl",
                     help="efl: the EFL's weekly prose (default). "
                          "rfef: a Comité Técnico de Árbitros designation sheet. "
                          "aia: an AIA Serie A designations article; --year is "
                          "the season's START year, defaulting to the committed "
-                         "fixture file's heading.")
+                         "fixture file's heading. "
+                         "pl: a premierleague.com 'Match officials for "
+                         "Matchweek N' article, as rendered text.")
     args = ap.parse_args()
 
     text = Path(args.file).read_text(encoding="utf-8") if args.file else sys.stdin.read()
@@ -488,7 +575,19 @@ def main():
         sys.exit("ERROR: no article text on stdin (or --file was empty).")
 
     resolver = None
-    if args.format == "rfef":
+    if args.format == "pl":
+        # The article dates its fixtures "Sat 12 Sep" with no year, so the
+        # season comes from the committed fixture file's own heading rather
+        # than from the clock — a run on 1 January must not read a September
+        # fixture as this year's.
+        year = args.year or fixture_season("PL")
+        if not year:
+            sys.exit("ERROR: pl_fixtures.js carries no season heading and "
+                     "--year was not given, so 'Sat 12 Sep' cannot be dated.")
+        parsed, unknown, undated = parse_pl(text, default_year=year), [], []
+        expected = ("a 'Premier League\u2022Sat 12 Sep' line with the clubs "
+                    "and kick-off above it and 'Referee: Name.' below")
+    elif args.format == "rfef":
         parsed, unknown, undated = parse_rfef(text), [], []
         expected = ("a 'DD-MM-YYYY  Home  Away  HH:MM' row followed by "
                     "'Árbitro: Name'")

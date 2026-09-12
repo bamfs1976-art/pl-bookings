@@ -1001,4 +1001,106 @@ def _a_typo_in_the_headline_changes_nothing():
 t("the EFL's real round-7 article parses whole", _the_real_article_parses_whole)
 t("a typo in the headline changes nothing", _a_typo_in_the_headline_changes_nothing)
 
+# --- the Premier League's own matchweek article ----------------------------
+# THE SOURCE THE DESK GOT LAST, after API-Football stopped carrying Premier
+# League referees on 6 September 2026 and round 4 sat empty nineteen hours
+# before kick-off with Manchester United v Manchester City among it. The other
+# three leagues each read the body that appoints the officials; this is the
+# fourth. Verbatim, as premierleague.com renders it.
+PL_MW4 = """See all
+Aston Villa
+Aston Villa
+15:00
+Nott'm Forest
+Nottingham Forest
+Premier League\u2022Sat 12 Sep
+Referee: Andy Madley. Assistants: Constantine Hatzidakis, Richard West. Fourth official: Oliver Langford. VAR: Tim Wood. Assistant VAR: Will Finnie.
+
+
+See all
+Spurs
+Tottenham Hotspur
+17:30
+Everton
+Everton
+Premier League\u2022Sat 12 Sep
+Referee: Darren England. Assistants: Scott Ledger, Alex James. Fourth official: Gavin Ward. VAR: Paul Tierney. Assistant VAR: Adam Nunn.
+
+
+See all
+Man Utd
+Manchester United
+16:30
+Man City
+Manchester City
+Premier League\u2022Sun 13 Sep
+Referee: Michael Oliver (pictured). Assistants: Stuart Burt, Tim Wood. Fourth official: Paul Tierney. VAR: Matt Donohue. Assistant VAR: Blake Antrobus.
+"""
+
+
+def _the_pl_article_parses():
+    rows = I.parse_pl(PL_MW4, default_year=2026)
+    assert len(rows) == 3, f"expected 3, got {len(rows)}: {rows}"
+    first = rows[0]
+    # THE FULL NAME, not the site's abbreviation. Each club is printed twice,
+    # short then full, and only the full form is in the club map.
+    assert first["home"] == "Aston Villa", first
+    assert first["away"] == "Nottingham Forest", first
+    assert first["ref"] == "Andy Madley", first
+    assert first["date"] == "2026-09-12", first
+    assert rows[1]["home"] == "Tottenham Hotspur", rows[1]   # not "Spurs"
+    assert rows[2]["home"] == "Manchester United", rows[2]   # not "Man Utd"
+    assert rows[2]["date"] == "2026-09-13", rows[2]
+
+
+def _pictured_is_not_part_of_the_name():
+    """The article marks whoever it photographed. "Michael Oliver (pictured)"
+    resolving to nobody would silently price the season's biggest fixture at
+    the league average."""
+    rows = I.parse_pl(PL_MW4, default_year=2026)
+    assert rows[2]["ref"] == "Michael Oliver", rows[2]
+
+
+def _assistants_and_var_are_not_appointments():
+    """Six officials are named per fixture and this desk prices with one."""
+    rows = I.parse_pl(PL_MW4, default_year=2026)
+    named = {r["ref"] for r in rows}
+    for other in ("Constantine Hatzidakis", "Oliver Langford", "Tim Wood",
+                  "Will Finnie", "Stuart Burt", "Matt Donohue"):
+        assert other not in named, f"{other} was read as the referee"
+
+
+def _the_clubs_and_referees_resolve():
+    """End to end: the article's spellings reach real club codes and real card
+    records. premierleague.com writes "Bournemouth" and "Brighton and Hove
+    Albion" where the dataset writes "AFC Bournemouth" and "Brighton & Hove
+    Albion", so this is the check that the normalisation holds."""
+    rows = I.parse_pl(PL_MW4, default_year=2026)
+    entries, skipped, problems = I.to_entries(rows, "https://example.invalid/")
+    assert problems == [], problems
+    assert skipped == {}, skipped
+    assert len(entries) == 3, entries
+    assert {e["h"] for e in entries} == {"AVL", "TOT", "MUN"}, entries
+    assert all(e["league"] == "PL" for e in entries), entries
+
+
+def _a_block_of_the_wrong_shape_is_skipped():
+    """Read at a fixed offset from the date line, so anything else is dropped
+    rather than guessed at — a mis-read official is not reported downstream the
+    way a mis-split club is."""
+    broken = PL_MW4.replace("15:00", "kick-off to be confirmed")
+    rows = I.parse_pl(broken, default_year=2026)
+    assert len(rows) == 2, f"the malformed block was not skipped: {rows}"
+    assert all(r["home"] != "Aston Villa" for r in rows), rows
+
+
+t("the Premier League's matchweek article parses", _the_pl_article_parses)
+t("(pictured) is not part of the referee's name", _pictured_is_not_part_of_the_name)
+t("assistants, fourth officials and VARs are not appointments",
+  _assistants_and_var_are_not_appointments)
+t("the article's club spellings resolve to codes and card records",
+  _the_clubs_and_referees_resolve)
+t("a block of the wrong shape is skipped rather than guessed at",
+  _a_block_of_the_wrong_shape_is_skipped)
+
 print(f"\n{passed} tests passed")

@@ -29,6 +29,7 @@ separately. A league can have match records and still have no referees.
 import csv
 import io
 import json
+import re
 import sys
 import urllib.error
 import urllib.request
@@ -878,8 +879,43 @@ def canon_name(code, name):
     return n
 
 
+def pl_key(name):
+    """A Premier League club name flattened to what it is actually called.
+
+    Publishers disagree about ornament, not identity: premierleague.com writes
+    "Bournemouth" and "Brighton and Hove Albion" where build_pl_data writes
+    "AFC Bournemouth" and "Brighton & Hove Albion". Normalising the ampersand
+    and the club-type prefix handles both, and the next one, without a list of
+    special cases that has to be maintained by whoever notices it is wrong.
+    """
+    n = strip_accents(str(name or "")).lower().strip()
+    n = n.replace("&", " and ")
+    n = re.sub(r"^(?:afc|fc)\s+", "", n)
+    n = re.sub(r"\s+(?:afc|fc)$", "", n)
+    return re.sub(r"\s+", " ", n).strip()
+
+
+_PL_INDEX = {}
+
+
+def pl_short(name):
+    """A Premier League club name as its short code, or None.
+
+    The map is build_pl_data's own SHORT — the desk's single source of truth
+    about which clubs are in this division — read lazily because that module
+    imports this one.
+    """
+    global _PL_INDEX
+    if not _PL_INDEX:
+        import build_pl_data                             # noqa: PLC0415
+        _PL_INDEX = {pl_key(k): v for k, v in build_pl_data.SHORT.items()}
+    return _PL_INDEX.get(pl_key(name))
+
+
 def short_for(code, name, clubs=None):
     """A club name as its short code, for whichever league is asking."""
+    if str(code or "").upper() == "PL":
+        return pl_short(name)
     if is_discovered(code):
         return discovered_short(code, name, clubs=clubs)
     return eflc_short(name)

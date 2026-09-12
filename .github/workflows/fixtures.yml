@@ -183,8 +183,13 @@ jobs:
       - name: Published referee appointments
         continue-on-error: true
         run: |
-          for L in LL EFLC SA; do
-            case $L in LL) FMT=rfef ;; EFLC) FMT=efl ;; SA) FMT=aia ;; esac
+          for L in PL LL EFLC SA; do
+            case $L in
+              PL)   FMT=pl   ;;
+              LL)   FMT=rfef ;;
+              EFLC) FMT=efl  ;;
+              SA)   FMT=aia  ;;
+            esac
             if python3 data/fetch_appointments.py --league $L \
                  --out /tmp/$L.txt --source-out /tmp/$L.src --days 8; then
               python3 data/ingest_appointments.py --format $FMT \

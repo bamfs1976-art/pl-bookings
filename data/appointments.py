@@ -50,6 +50,20 @@ REF_TABLES = {
     "SA": "seriea_refs.json",
 }
 
+# THE PREMIER LEAGUE KEEPS ITS REFEREES SOMEWHERE ELSE, and this is not an
+# oversight to be tidied away. The other three desks read a raw
+# <league>_refs.json, which build_refs.py writes — but pl_refs.json is
+# gitignored as a harvest artefact, so it is absent from a fresh checkout and
+# from every CI runner. The Premier League's referee table is published inside
+# the shipped dataset instead, as pl_data.js's own REFS block, and that is the
+# copy the desk actually prices with.
+#
+# Reading the wrong one is not a crash, which is why it is worth naming: it
+# returns an empty list, every appointment is reported as having NO CARD
+# RECORD, and the desk quietly prices ten fixtures at the league average with
+# a named official on screen.
+PL_REF_DATASET = "pl_data.js"
+
 # ---------------------------------------------------------------------------
 # Name resolution
 # ---------------------------------------------------------------------------
@@ -336,9 +350,25 @@ def _by_initial(first, last, by_fold):
     return entries[0]
 
 
+def _pl_ref_names():
+    """The Premier League's referees, out of the shipped dataset."""
+    path = DATA / PL_REF_DATASET
+    if not path.exists():
+        return []
+    try:
+        import build_pl_data                              # noqa: PLC0415
+        rows = build_pl_data.js_array(path.read_text(encoding="utf-8"), "REFS")
+    except Exception:                                     # noqa: BLE001
+        return []
+    return [r.get("n") for r in rows if r.get("n")]
+
+
 def ref_names(code):
     """Every referee name the desk for `code` can price with."""
-    filename = REF_TABLES.get(str(code or "").upper())
+    code = str(code or "").upper()
+    if code == "PL":
+        return _pl_ref_names()
+    filename = REF_TABLES.get(code)
     if not filename:
         return []
     path = DATA / filename
