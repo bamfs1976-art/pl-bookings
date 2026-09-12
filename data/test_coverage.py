@@ -518,4 +518,90 @@ def _every_builder_emits_it():
 t("every dataset builder emits the photo, not just the Premier League one",
   _every_builder_emits_it)
 
+
+# ── The low-sample floor, and the form flip that broke it ────────────────────
+#
+# LOW_MIN is five matches of a 38-round season. The desks flip their form to
+# the season being PLAYED at round six (scripts/form-season.mjs), and against
+# a six-round season 450 minutes is 83% of all the football there has been.
+# La Liga flipped on 12 September 2026 and the rebuild came back with eleven
+# of twenty clubs carrying not one player over the floor — a complete harvest
+# that would have shipped a desk with four fifths of its candidates flagged
+# "we do not trust this number". These pin the floor to the football in the
+# source rather than to a constant about a season that has finished.
+
+def _feed(minutes):
+    """A source payload: one row a player, at the given minutes."""
+    return [{"team": "Arsenal", "n": f"p{i}", "pos": "Midfielder", "min": m,
+             "yc": 2, "fc90": 1.1} for i, m in enumerate(minutes)]
+
+
+def _completed_season_keeps_the_constant():
+    # An ever-present in a finished 38-round season, and a squad around him.
+    rows = _feed([3420, 2800, 1900, 900, 420, 80])
+    assert B.low_sample_floor(rows) == B.LOW_MIN, B.low_sample_floor(rows)
+    # A 46-round Championship season, cups included, does not raise it either.
+    assert B.low_sample_floor(_feed([4446, 3000])) == B.LOW_MIN
+
+
+t("a completed season still uses the 450-minute floor",
+  _completed_season_keeps_the_constant)
+
+
+def _six_rounds_does_not_flag_the_division():
+    """The measured failure, as a test. Six rounds played: the ever-present
+    has 540 minutes and a regular 400. Under the constant BOTH are a low
+    sample, which is how a full division came back looking empty."""
+    rows = _feed([540, 480, 400, 300, 120, 20])
+    floor = B.low_sample_floor(rows)
+    assert floor < B.LOW_MIN, floor
+    flagged = [B.mk(p, "LL", resolve=lambda n: "ARS", low_min=floor)["ls"]
+               for p in rows]
+    assert flagged == [False, False, False, False, False, True], flagged
+    # Under the constant only the two near-ever-presents survive, and that is
+    # the bug: four of the six are ordinary regulars six rounds into a season.
+    was = [B.mk(p, "LL", resolve=lambda n: "ARS")["ls"] for p in rows]
+    assert was == [False, False, True, True, True, True], was
+
+
+t("six rounds of a live season does not flag the whole division",
+  _six_rounds_does_not_flag_the_division)
+
+
+def _floor_rises_with_the_football_played():
+    """Monotonic in the season's length, and never under a match's worth —
+    below ninety minutes the flag means what it always meant."""
+    floors = [B.low_sample_floor(_feed([r * 90])) for r in (1, 6, 12, 24, 38)]
+    assert floors == sorted(floors), floors
+    assert floors[0] == 90, floors
+    assert floors[-1] == B.LOW_MIN, floors
+    assert B.low_sample_floor([]) == 90
+    assert B.low_sample_floor(_feed([0, 0])) == 90
+
+
+t("the floor tracks the football played and never falls under one match",
+  _floor_rises_with_the_football_played)
+
+
+def _each_source_gets_its_own_floor():
+    """The builders must not compute one floor for the build. A promoted
+    club's prior-tier form is a COMPLETED season by definition and arrives in
+    the same build as this season's live top-flight rows; one floor across
+    both would be wrong for one of them whichever way it fell."""
+    import re as _re
+    for name in ("build_eflc_data.py", "build_laliga_data.py"):
+        src = (DATA / name).read_text(encoding="utf-8")
+        assert "P.low_sample_floor(payload)" in src, \
+            f"{name} no longer computes the low-sample floor from its source"
+        assert _re.search(r"P\.mk\([^)]*low_min=floor", src), \
+            f"{name} computes a floor it does not pass to mk()"
+    pl = (DATA / "build_pl_data.py").read_text(encoding="utf-8")
+    assert "low_min=form_floor" in pl and "low_min=champ_floor" in pl, \
+        "build_pl_data.py no longer floors its two form sources separately"
+
+
+t("every builder floors each source on that source's own season",
+  _each_source_gets_its_own_floor)
+
+
 print(f"\n{passed} tests passed")

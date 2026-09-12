@@ -238,6 +238,12 @@ def rows_for(payload, keep, basis, unmapped, resolve):
     want, so "unmapped" here means only names that resolved to no club at all.
     """
     out = []
+    # ONE FLOOR PER SOURCE. This desk's own form flips to the season being
+    # played at round six while the Segunda rows behind the promoted clubs
+    # stay on a completed one, so the two arrive in the same build needing
+    # different answers about what counts as a low sample. See
+    # build_pl_data.low_sample_floor, and the La Liga flip that wrote it.
+    floor = P.low_sample_floor(payload)
     for p in payload or []:
         name = (p.get("team") or "").strip()
         short = resolve(name)
@@ -247,7 +253,7 @@ def rows_for(payload, keep, basis, unmapped, resolve):
             continue
         if short not in keep:
             continue
-        row = P.mk(p, basis, resolve=resolve)
+        row = P.mk(p, basis, resolve=resolve, low_min=floor)
         if row:
             out.append(row)
     return out

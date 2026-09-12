@@ -62,6 +62,7 @@ import leagues  # noqa: E402
 
 OUT = DATA / "pl_data.js"
 LOW_MIN = 450
+FULL_SEASON_MIN = 38 * 90   # the football one player can play in a 38-round season
 
 # The API-Football harvest of the Premier League, written every run by the
 # refresh workflow's "--league PL --out" step at the season scripts/
@@ -372,12 +373,21 @@ def build_players():
     shipped = shipped_rows()
     reused = []
     rows = []
-    for p in pl_form(shipped, reused):
+    # PER SOURCE, not once for the build: each feed is a different season's
+    # record and the floor is a share of the football in it. The Premier
+    # League form flips to the season being played at round six; the
+    # Championship rows behind the promoted clubs never do, because a promoted
+    # club's prior-tier form is last season's by definition.
+    form = pl_form(shipped, reused)
+    form_floor = low_sample_floor(form)
+    for p in form:
         if p.get("team") in DROP:
             continue
-        rows.append(mk(p, "PL"))
-    for p in source("champ_promoted.json", "EFL", shipped, reused):
-        rows.append(mk(p, "EFL"))
+        rows.append(mk(p, "PL", low_min=form_floor))
+    champ = source("champ_promoted.json", "EFL", shipped, reused)
+    champ_floor = low_sample_floor(champ)
+    for p in champ:
+        rows.append(mk(p, "EFL", low_min=champ_floor))
     # The promoted clubs' remaining squad, from the free FPL feed, with no form
     # attached. Loaded AFTER champ_promoted so the de-duplication below keeps
     # the Championship rate wherever one exists: a real number must never be
@@ -761,13 +771,51 @@ def load_transfers():
     return payload.get("transfers") or []
 
 
-def mk(p, basis, resolve=None):
+def low_sample_floor(rows, full=LOW_MIN):
+    """The minutes below which a rate from THESE rows is a low sample.
+
+    LOW_MIN is 450 — five matches of a 38-round season, about an eighth of the
+    football one player can play in it. Read against the season BEING PLAYED
+    it is not that quantity at all. Six rounds in, 450 minutes is 83% of every
+    minute there has been, so all but a handful of ever-presents fail it and
+    the desk flags the entire division "low sample".
+
+    That is not hypothetical. La Liga crossed round 6 on 12 September 2026 and
+    the form flipped to 2026-27 exactly as scripts/form-season.mjs intends.
+    The rebuild was complete — 20 clubs, 642 players, check-laliga green — and
+    eleven of the twenty clubs came out with not one player over 450 minutes.
+    check-lineup-pricing stopped the commit with "LALIGA_PLAYERS carries 9
+    clubs — a division has dropped out of the loop". Nothing had dropped out.
+    The floor was measuring a completed season against a fortnight of one, and
+    had it shipped, four fifths of the La Liga desk's candidates would have
+    vanished behind a flag that means "we do not trust this number".
+
+    So the floor is the same SHARE of whatever football the source contains,
+    measured off the source rather than plumbed through from the workflow:
+    Segunda rows from a completed season and La Liga rows from a live one
+    arrive in the same build and need different answers, and only the rows
+    know which is which. The busiest player is the yardstick because a
+    division's ever-present is a stable maximum over several hundred rows, not
+    a number any one harvest can move.
+
+    Never below ninety: under a match's worth of football, the flag means what
+    it always meant.
+    """
+    busiest = max((num(r.get("min")) or 0 for r in (rows or [])), default=0)
+    return max(90, min(full, int(round(busiest * full / FULL_SEASON_MIN))))
+
+
+def mk(p, basis, resolve=None, low_min=LOW_MIN):
     """One source row into a shipped player row.
 
     `resolve` maps a feed's club name to a short code; it defaults to this
     league's SHORT map. The Championship builder passes its own, so the risk
     formula, the per-90 conversions and the fouls-won key fallbacks are shared
     rather than reimplemented — the arithmetic here is the product.
+
+    `low_min` is the low-sample floor for the season THIS source covers — see
+    low_sample_floor. It defaults to the completed-season figure, which is the
+    right answer for a roster feed carrying no minutes at all.
     """
     club = p.get("team")
     short = (resolve or SHORT.get)(club)
@@ -793,7 +841,7 @@ def mk(p, basis, resolve=None):
         "rc": int(rc) if rc is not None else None,
         "y": yc90, "f": fc90, "fw": (round(fw90, 3) if fw90 is not None else None),
         "r": risk,
-        "ls": (mins < LOW_MIN), "b": basis,
+        "ls": (mins < low_min), "b": basis,
         # ph: the player's photograph. inj: injured/unavailable per the feed.
         # Both stay None when the source did not supply them, so a desk shows
         # a monogram and no flag rather than a broken image and a false "fit".

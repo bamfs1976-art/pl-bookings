@@ -40,10 +40,64 @@ function load(file, playersKey) {
 
 const DESKS = [
   { code: 'PL', name: 'Premier League', file: 'pl_data.js', key: 'PL_PLAYERS' },
-  { code: 'EFLC', name: 'EFL Championship', file: 'eflc_data.js', key: 'EFLC_PLAYERS' },
-  { code: 'LL', name: 'La Liga', file: 'laliga_data.js', key: 'LALIGA_PLAYERS' },
-  { code: 'SA', name: 'Serie A', file: 'seriea_data.js', key: 'SERIEA_PLAYERS' }
+  { code: 'EFLC', name: 'EFL Championship', file: 'eflc_data.js', key: 'EFLC_PLAYERS', page: 'eflc.html' },
+  { code: 'LL', name: 'La Liga', file: 'laliga_data.js', key: 'LALIGA_PLAYERS', page: 'laliga.html' },
+  { code: 'SA', name: 'Serie A', file: 'seriea_data.js', key: 'SERIEA_PLAYERS', page: 'seriea.html' }
 ];
+
+/* SHRINK THE WAY THE DESK SHRINKS, which for three of the four is not the way
+   the Premier League does.
+
+   index.html and assets/plmodel.js shrink toward data/model.js — priors fitted
+   on Premier League football. eflc.html, laliga.html and seriea.html each
+   build their own PRIOR instead: minutes-weighted, per position, from that
+   desk's own players, worth SHRINK_MATCHES of evidence. The guard used
+   model.shrink for all four, so it measured a desk against a prior that desk
+   does not use, and the error grew with how far the division sits from
+   England: on a completed season's form it read 0.971 for La Liga where the
+   desk itself reads 1.018.
+
+   That was survivable until a form flip made the shrinkage the dominant term.
+   La Liga crossed round 6 on 12 September 2026, the form became a six-round
+   sample, every player's own record stopped outweighing the prior — and the
+   guard failed the rebuild at 0.90 for pricing a Spanish division with
+   English priors. The desk it was judging would have priced it correctly.
+
+   So the prior is read off the page that uses it. SHRINK_MATCHES too: a guard
+   that keeps its own copy of a desk's constant is a guard that agrees with
+   yesterday's desk.
+
+   WHAT THIS COSTS, stated rather than glossed. A prior built from the desk's
+   own minutes-weighted league rate cannot be far from that league rate — so
+   for these three the ratio below no longer tests "is the prior the right
+   league", because it now is by construction. What it still tests is the part
+   that can go wrong: an unweighted mean of a concave transform of per-player
+   shrunk rates against a minutes-weighted league rate. Those agree only if
+   the shrinkage strength and the transform are right, and they move — La Liga
+   reads 1.017 here where the Premier League priors gave 0.971. The teeth
+   against a desk answering a different question are the shared pCardSeason,
+   the 0.55 ceiling, the cross-desk spread and the source assertions at the
+   foot of this file, all unchanged. */
+function deskPrior(players, page) {
+  const src = readFileSync(join(root, page), 'utf8');
+  const k = /var\s+SHRINK_MATCHES\s*=\s*(\d+)/.exec(src);
+  assert.ok(k, `${page} no longer declares SHRINK_MATCHES — this guard cannot ` +
+    'know what the desk weighs its prior at, and guessing is how it came to ' +
+    'measure a desk against a prior the desk does not use');
+  const acc = {};
+  let allY = 0, allYm = 0;
+  for (const p of players) {
+    const m = Number(p.min) || 0;
+    if (!(m > 0) || p.y == null) continue;
+    const a = acc[p.p] || (acc[p.p] = { yw: 0, ym: 0 });
+    a.yw += p.y * m; a.ym += m;
+    allY += p.y * m; allYm += m;
+  }
+  const league = allYm ? allY / allYm : 0.15;
+  const byPos = {};
+  for (const pos of Object.keys(acc)) byPos[pos] = acc[pos].yw / acc[pos].ym;
+  return { matches: Number(k[1]), league, of: (pos) => (byPos[pos] == null ? league : byPos[pos]) };
+}
 
 const S = model.shrink;
 const mpick = (o, k, fb) => (o && o[k] != null ? o[k] : fb);
@@ -65,11 +119,16 @@ for (const d of DESKS) {
   const rows = players.filter((p) => (Number(p.min) || 0) > 0 && p.yc != null);
   assert.ok(rows.length > 100, `${d.code}: only ${rows.length} rated players`);
 
+  /* The Premier League desk's prior is data/model.js; the other three build
+     their own from their own league. See deskPrior. */
+  const prior = d.page ? deskPrior(players, d.page) : null;
   const probs = [];
   let yc = 0, mins = 0;
   for (const p of rows) {
-    const y = C.shrinkRate(p.yc || 0, p.min || 0,
-      mpick(S.ycMean, p.p, S.ycLeague), S.strengthMatches);
+    const y = prior
+      ? C.shrinkRate(p.yc || 0, p.min || 0, prior.of(p.p), prior.matches)
+      : C.shrinkRate(p.yc || 0, p.min || 0,
+        mpick(S.ycMean, p.p, S.ycLeague), S.strengthMatches);
     probs.push(C.pCardSeason(y));
     yc += p.yc || 0;
     mins += p.min || 0;

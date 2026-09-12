@@ -91,6 +91,10 @@ def rows_for(payload, keep, basis, unmapped):
     and it looks exactly like a club that simply has no players.
     """
     out = []
+    # ONE FLOOR PER SOURCE, because the Championship form flips to the season
+    # being played at round six while the League One rows behind the promoted
+    # clubs stay on a completed one. See build_pl_data.low_sample_floor.
+    floor = P.low_sample_floor(payload)
     for p in payload or []:
         name = (p.get("team") or "").strip()
         short = resolve(name)
@@ -104,7 +108,7 @@ def rows_for(payload, keep, basis, unmapped):
             continue
         if short not in keep:
             continue
-        row = P.mk(p, basis, resolve=resolve)
+        row = P.mk(p, basis, resolve=resolve, low_min=floor)
         if row:
             out.append(row)
     return out
