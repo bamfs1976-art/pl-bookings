@@ -1,6 +1,6 @@
 {
   "note": "PROPOSALS from API-Football /transfers, for a person to read. data/transfers.json is the hand-curated overlay that is actually applied; this is not.",
-  "since": "2026-05-15",
+  "since": "2026-05-16",
   "moves": [
     {
       "n": "A. Barák",
@@ -11196,15 +11196,6 @@
       "fromCode": null,
       "toCode": "GEN",
       "date": "2026-05-23",
-      "type": "-"
-    },
-    {
-      "n": "M. Cassin",
-      "from": "Udinese",
-      "to": "Cremonese",
-      "fromCode": "UDI",
-      "toCode": null,
-      "date": "2026-05-15",
       "type": "-"
     }
   ]
