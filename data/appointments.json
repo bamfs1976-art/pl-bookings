@@ -10,6 +10,7 @@
   "https://rfef.es/sites/default/files/designaciones_1a_division_masculina_-_temp_2026-27_-_jornada_1_lunes17.pdf",
   "https://rfef.es/sites/default/files/designaciones_1a_division_masculina_-_temp_2026-27_-_jornada_1_sabado15.pdf",
   "https://rfef.es/sites/default/files/designaciones_1a_division_masculina_-_temp_2026-27_-_jornada_5_domingo.pdf",
+  "https://rfef.es/sites/default/files/designaciones_1a_division_masculina_-_temp_2026-27_-_jornada_5_lunes.pdf",
   "https://rfef.es/sites/default/files/designaciones_1a_division_masculina_-_temp_2026-27_-_jornada_5_sabado.pdf",
   "https://rfef.es/sites/default/files/designaciones_1a_division_masculina_-_temp_2026-27_-_jornada_5_viernes.pdf",
   "https://www.aia-figc.it/news/serie-a-enilive-designazioni-4a-giornata-27632/",
@@ -1304,6 +1305,17 @@
    "refResolved": "Juan Martinez Munuera",
    "resolvedBy": "run",
    "source": "https://rfef.es/sites/default/files/designaciones_1a_division_masculina_-_temp_2026-27_-_jornada_5_domingo.pdf"
+  },
+  {
+   "league": "LL",
+   "date": "2026-09-14",
+   "h": "VIL",
+   "a": "BET",
+   "ko": "21:00",
+   "ref": "Francisco José Hernández",
+   "refResolved": "Francisco Hernandez Maeso",
+   "resolvedBy": "given2",
+   "source": "https://rfef.es/sites/default/files/designaciones_1a_division_masculina_-_temp_2026-27_-_jornada_5_lunes.pdf"
   },
   {
    "league": "PL",
