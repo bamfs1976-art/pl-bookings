@@ -1,6 +1,6 @@
 {
   "note": "PROPOSALS from API-Football /transfers, for a person to read. data/transfers.json is the hand-curated overlay that is actually applied; this is not.",
-  "since": "2026-05-16",
+  "since": "2026-05-17",
   "moves": [
     {
       "n": "Matheus França",
@@ -399,6 +399,15 @@
       "type": "Loan"
     },
     {
+      "n": "L. Lynch",
+      "from": "Aston Villa",
+      "to": "Oxford United",
+      "fromCode": "AVL",
+      "toCode": null,
+      "date": "2026-08-31",
+      "type": "Loan"
+    },
+    {
       "n": "L. Kitching",
       "from": "Coventry",
       "to": "Sheffield Utd",
@@ -424,6 +433,15 @@
       "toCode": null,
       "date": "2026-08-31",
       "type": "Loan"
+    },
+    {
+      "n": "L. Bailey",
+      "from": "Aston Villa",
+      "to": "Olympiakos Piraeus",
+      "fromCode": "AVL",
+      "toCode": null,
+      "date": "2026-08-31",
+      "type": "Transfer"
     },
     {
       "n": "K. Takai",
@@ -759,6 +777,15 @@
       "type": "Loan"
     },
     {
+      "n": "Aidan Borland",
+      "from": "Aston Villa",
+      "to": "Accrington ST",
+      "fromCode": "AVL",
+      "toCode": null,
+      "date": "2026-08-31",
+      "type": "Loan"
+    },
+    {
       "n": "Abdulay Bah",
       "from": "Manchester City",
       "to": "FC Augsburg",
@@ -901,6 +928,15 @@
       "toCode": null,
       "date": "2026-08-30",
       "type": "Transfer"
+    },
+    {
+      "n": "L. Sousa",
+      "from": "Aston Villa",
+      "to": "Shrewsbury",
+      "fromCode": "AVL",
+      "toCode": null,
+      "date": "2026-08-30",
+      "type": "Loan"
     },
     {
       "n": "L. Kiaba Mounganga",

@@ -1,7 +1,34 @@
 {
   "note": "PROPOSALS from API-Football /transfers, for a person to read. data/transfers.json is the hand-curated overlay that is actually applied; this is not.",
-  "since": "2026-05-16",
+  "since": "2026-05-17",
   "moves": [
+    {
+      "n": "Xavi",
+      "from": "Levante",
+      "to": "Academica",
+      "fromCode": "LEV",
+      "toCode": null,
+      "date": "2026-09-03",
+      "type": "Free agent"
+    },
+    {
+      "n": "Xavi",
+      "from": "Levante",
+      "to": "Academica",
+      "fromCode": "LEV",
+      "toCode": null,
+      "date": "2026-09-02",
+      "type": "Free agent"
+    },
+    {
+      "n": "Carlos Álvarez",
+      "from": "Levante",
+      "to": "Club America",
+      "fromCode": "LEV",
+      "toCode": null,
+      "date": "2026-09-01",
+      "type": "Transfer"
+    },
     {
       "n": "Carlos Martín",
       "from": "Atletico Madrid",
@@ -363,6 +390,15 @@
       "type": "Loan"
     },
     {
+      "n": "Carlos Álvarez",
+      "from": "Levante",
+      "to": "Club America",
+      "fromCode": "LEV",
+      "toCode": null,
+      "date": "2026-08-31",
+      "type": "Transfer"
+    },
+    {
       "n": "André Almeida",
       "from": "Valencia",
       "to": "Racing Santander",
@@ -442,6 +478,15 @@
       "toCode": null,
       "date": "2026-08-30",
       "type": "Free agent"
+    },
+    {
+      "n": "R. Martin",
+      "from": "Levante",
+      "to": "Villarreal U19",
+      "fromCode": "LEV",
+      "toCode": null,
+      "date": "2026-08-30",
+      "type": "-"
     },
     {
       "n": "R. Del Castillo",
@@ -2608,6 +2653,15 @@
       "from": "Athletic Club",
       "to": "Almeria",
       "fromCode": "ATH",
+      "toCode": null,
+      "date": "2026-07-31",
+      "type": "Free agent"
+    },
+    {
+      "n": "Juanma",
+      "from": "Malaga",
+      "to": "Marbella",
+      "fromCode": "MAL",
       "toCode": null,
       "date": "2026-07-31",
       "type": "Free agent"
@@ -5404,21 +5458,21 @@
     },
     {
       "n": "Víctor Fernández",
-      "from": "Valencia",
-      "to": "Levante",
-      "fromCode": "VAL",
-      "toCode": "LEV",
-      "date": "2026-06-29",
-      "type": "Return from loan"
-    },
-    {
-      "n": "Víctor Fernández",
       "from": "Levante",
       "to": "Valencia",
       "fromCode": "LEV",
       "toCode": "VAL",
       "date": "2026-06-29",
       "type": "Transfer"
+    },
+    {
+      "n": "Víctor Fernández",
+      "from": "Valencia",
+      "to": "Levante",
+      "fromCode": "VAL",
+      "toCode": "LEV",
+      "date": "2026-06-29",
+      "type": "Return from loan"
     },
     {
       "n": "Víctor Chust",

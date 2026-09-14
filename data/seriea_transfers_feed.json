@@ -1,7 +1,16 @@
 {
   "note": "PROPOSALS from API-Football /transfers, for a person to read. data/transfers.json is the hand-curated overlay that is actually applied; this is not.",
-  "since": "2026-05-16",
+  "since": "2026-05-17",
   "moves": [
+    {
+      "n": "Diogo Leite",
+      "from": "Union Berlin",
+      "to": "Lazio",
+      "fromCode": null,
+      "toCode": "LAZ",
+      "date": "2026-09-07",
+      "type": "Free agent"
+    },
     {
       "n": "A. Barák",
       "from": "Fiorentina",
@@ -30,6 +39,15 @@
       "type": "Transfer"
     },
     {
+      "n": "A. Romagnoli",
+      "from": "Lazio",
+      "to": "Al Sadd",
+      "fromCode": "LAZ",
+      "toCode": null,
+      "date": "2026-09-02",
+      "type": "Transfer"
+    },
+    {
       "n": "S. El Shaarawy",
       "from": "AS Roma",
       "to": "Genoa",
@@ -46,6 +64,15 @@
       "toCode": null,
       "date": "2026-09-01",
       "type": "Loan"
+    },
+    {
+      "n": "Ivano Srdoc",
+      "from": "Juventus",
+      "to": "FC Sion",
+      "fromCode": "JUV",
+      "toCode": null,
+      "date": "2026-09-01",
+      "type": "Transfer"
     },
     {
       "n": "I. Koutsoupias",
@@ -399,6 +426,15 @@
       "type": "Loan"
     },
     {
+      "n": "Javier Gil",
+      "from": "Juventus",
+      "to": "Atlético Madrid II",
+      "fromCode": "JUV",
+      "toCode": null,
+      "date": "2026-08-31",
+      "type": "Loan"
+    },
+    {
       "n": "J. Rowe",
       "from": "Bologna",
       "to": "Atalanta",
@@ -451,6 +487,15 @@
       "toCode": null,
       "date": "2026-08-31",
       "type": "Loan"
+    },
+    {
+      "n": "Ivano Srdoc",
+      "from": "Juventus",
+      "to": "FC Sion",
+      "fromCode": "JUV",
+      "toCode": null,
+      "date": "2026-08-31",
+      "type": "Transfer"
     },
     {
       "n": "I. Sulemana",
@@ -901,6 +946,15 @@
       "toCode": "SAS",
       "date": "2026-08-30",
       "type": "Free agent"
+    },
+    {
+      "n": "Cristobal Muñoz López",
+      "from": "Lazio",
+      "to": "Real Betis II",
+      "fromCode": "LAZ",
+      "toCode": null,
+      "date": "2026-08-30",
+      "type": "-"
     },
     {
       "n": "C. Ekuban",
@@ -2665,6 +2719,15 @@
       "toCode": null,
       "date": "2026-08-12",
       "type": "Transfer"
+    },
+    {
+      "n": "K. Meola",
+      "from": "Genoa",
+      "to": "Ternana",
+      "fromCode": "GEN",
+      "toCode": null,
+      "date": "2026-08-12",
+      "type": "Loan"
     },
     {
       "n": "G. Altare",
@@ -9462,6 +9525,15 @@
       "type": "Return from loan"
     },
     {
+      "n": "Ivano Srdoc",
+      "from": "Siroki Brijeg",
+      "to": "Juventus",
+      "fromCode": null,
+      "toCode": "JUV",
+      "date": "2026-06-29",
+      "type": "Return from loan"
+    },
+    {
       "n": "Iker Bravo",
       "from": "Las Palmas",
       "to": "Udinese",
@@ -10198,6 +10270,15 @@
       "toCode": "JUV",
       "date": "2026-06-29",
       "type": "Return from loan"
+    },
+    {
+      "n": "Diogo Leite",
+      "from": "Union Berlin",
+      "to": "Lazio",
+      "fromCode": null,
+      "toCode": "LAZ",
+      "date": "2026-06-29",
+      "type": "Free agent"
     },
     {
       "n": "Diego Carlos",
