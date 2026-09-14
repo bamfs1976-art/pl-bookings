@@ -5,7 +5,7 @@
 // through PLDCore.matchSquadName. A fixture absent from here prices off
 // squad minute-weights exactly as it always has — that is the normal
 // state until about an hour before kick-off, not a failure.
-// Fetched 2026-09-13T20:37Z.
+// Fetched 2026-09-14T16:15Z.
 //
 // THE GLOBAL IS NOT CALLED `LINEUPS`, and that is deliberate. index.html
 // already declares a top-level `const LINEUPS` for assets/lineup.js (the
@@ -14,8 +14,7 @@
 // a parse error, not a shadow: the whole inline script fails and the desk
 // renders blank. Read `window.LINEUP_SHEETS`.
 var __LINEUP_SHEETS = {
-  "1550124":{"JUV":{start:["Guglielmo Vicario", "Pierre Kalulu", "Gleison Bremer", "Jhon Lucumí", "Zeki Çelik", "Douglas Luiz", "Teun Koopmeiners", "Francisco Conceição", "Nicolás González", "Kerim Alajbegović", "Randal Kolo Muani"],sub:["Lloyd Kelly", "Nick Woltemade", "Edon Zhegrova", "Pape Matar Sarr", "Justin Oboavwoduo", "Carlo Pinsoglio", "Kamil Grabara", "Federico Gatti", "Daniele Rugani", "Augusto Owusu", "Filippo Pagnucco"]},"SAS":{start:["Arijanet Murić", "Simone Cinquegrano", "Jay Idzes", "Fedde Leysen", "Josh Doig", "Nemanja Matić", "Luca Lipani", "Domenico Berardi", "Kristian Thorstvedt", "Armand Laurienté", "Sebastiano Esposito"],sub:["Darryl Bakola", "Benjamín Domínguez", "Vasilije Adžić", "Kieron Bowie", "Duje Ćaleta-Car", "Stefano Turati", "Lorenzo Nyarko", "Ignace Van der Brempt", "Cas Odenthal", "Andrea Ghion", "Rafael Obrador", "Ibrahim Sulemana", "Laurs Skjellerup", "Nicholas Pierini"]}},
-  "1570380":{"ATM":{start:["J. Oblak", "Marc Pubill", "C. Romero", "D. Hancko", "G. Simeone", "Marcos Llorente", "M. Hjulmand", "Álex Grimaldo", "Lee Kang-In", "Álex Baena", "A. Lookman"],sub:["J. Cardoso", "J. David", "J. Dominguez", "Salvador Esquivel", "Koke", "Robin Le Normand", "Rodrigo Mendoza", "J. Musso", "Arnau Ortiz", "O. Vargas", "Javier Gil", "Dani Martínez"]},"RSO":{start:["Álex Remiro", "J. Aramburu", "Luken Beitia", "M. Sarr", "Sergio Gómez", "Y. Herrera", "Carlos Soler", "Barrenetxea", "L. Sučić", "Gonçalo Guedes", "Mikel Oyarzabal"],sub:["Jon Gorrotxategi", "T. Kubo", "Héctor Fort", "Alex Garcia", "Unai Marrero", "Aihen Muñoz", "J. Ochieng", "Jon Pacheco", "Beñat Turrientes", "A. Zakharyan", "O. Óskarsson", "Gorka Carrera"]}},
+  "1550125":{"ROM":{start:["Mile Svilar", "Gianluca Mancini", "Leonardo Balerdi", "Mario Hermoso", "Nahuel Molina", "Niccolò Pisilli", "Bryan Cristante", "Emanuele Lulli", "Paulo Dybala", "Matías Soulé", "Donyell Malen"],sub:["Pierluigi Gollini", "Giorgio De Marzi", "Daniele Ghilardi", "Konstantinos Koulierakis", "Devyne Rensch", "Manu Koné", "Marten de Roon", "Wesley", "Rodrigo Mora", "Lorenzo Pellegrini", "Santiago Castro"]},"TOR":{start:["Lucas Perri", "Rafik Belghali", "Eray Cömert", "Saúl Coco", "Pietro Comuzzo", "Niccolò Fortini", "Gvidas Gineitis", "Rolando Mandragora", "Kian Fitz-Jim", "Giovanni Simeone", "Nikola Vlašić"],sub:["Lapo Siviero", "Diego Mascardi", "Ricardo Rodríguez", "Nathan Patterson", "Ardian Ismajli", "Cristiano Biraghi", "Daniel Bragança", "Emirhan İlkhan", "Gaetano Oristanio", "Alessio Cacciamani", "Zakaria Aboukhlal", "Sandro Kulenović", "Duván Zapata"]}},
 };
 if (typeof module !== "undefined" && module.exports) module.exports = __LINEUP_SHEETS;
 if (typeof window !== "undefined") window.LINEUP_SHEETS = __LINEUP_SHEETS;
