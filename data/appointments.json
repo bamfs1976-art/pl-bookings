@@ -14,6 +14,7 @@
   "https://rfef.es/sites/default/files/designaciones_1a_division_masculina_-_temp_2026-27_-_jornada_5_sabado.pdf",
   "https://rfef.es/sites/default/files/designaciones_1a_division_masculina_-_temp_2026-27_-_jornada_5_viernes.pdf",
   "https://rfef.es/sites/default/files/designaciones_1a_division_masculina_-_temp_2026-27_-_jornada_6_martes.pdf",
+  "https://rfef.es/sites/default/files/designaciones_1a_division_masculina_-_temp_2026-27_-_jornada_6_miercoles.pdf",
   "https://www.aia-figc.it/news/serie-a-enilive-designazioni-4a-giornata-27632/",
   "https://www.efl.com/news/2026/august/11/referee-appointments--14-20-august/",
   "https://www.premierleague.com/news/match-officials-matchweek-4",
@@ -1350,6 +1351,50 @@
    "refResolved": "Isidro Diaz de Mera Escuderos",
    "resolvedBy": "run",
    "source": "https://rfef.es/sites/default/files/designaciones_1a_division_masculina_-_temp_2026-27_-_jornada_6_martes.pdf"
+  },
+  {
+   "league": "LL",
+   "date": "2026-09-16",
+   "h": "ATM",
+   "a": "OSA",
+   "ko": "19:00",
+   "ref": "Francisco José Hernández",
+   "refResolved": "Francisco Hernandez Maeso",
+   "resolvedBy": "given2",
+   "source": "https://rfef.es/sites/default/files/designaciones_1a_division_masculina_-_temp_2026-27_-_jornada_6_miercoles.pdf"
+  },
+  {
+   "league": "LL",
+   "date": "2026-09-16",
+   "h": "BAR",
+   "a": "RAC",
+   "ko": "21:30",
+   "ref": "José Luis Munuera",
+   "refResolved": "José Luis Munuera Montero",
+   "resolvedBy": "run",
+   "source": "https://rfef.es/sites/default/files/designaciones_1a_division_masculina_-_temp_2026-27_-_jornada_6_miercoles.pdf"
+  },
+  {
+   "league": "LL",
+   "date": "2026-09-16",
+   "h": "DEP",
+   "a": "SEV",
+   "ko": "19:00",
+   "ref": "Alejandro José Hernández",
+   "refResolved": "Alejandro Hernandez",
+   "resolvedBy": "run",
+   "source": "https://rfef.es/sites/default/files/designaciones_1a_division_masculina_-_temp_2026-27_-_jornada_6_miercoles.pdf"
+  },
+  {
+   "league": "LL",
+   "date": "2026-09-16",
+   "h": "LEV",
+   "a": "ATH",
+   "ko": "21:30",
+   "ref": "Alejandro Quintero",
+   "refResolved": "Alejandro Quintero Gonzalez",
+   "resolvedBy": "run",
+   "source": "https://rfef.es/sites/default/files/designaciones_1a_division_masculina_-_temp_2026-27_-_jornada_6_miercoles.pdf"
   },
   {
    "league": "PL",
