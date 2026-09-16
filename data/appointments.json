@@ -13,9 +13,11 @@
   "https://rfef.es/sites/default/files/designaciones_1a_division_masculina_-_temp_2026-27_-_jornada_5_lunes.pdf",
   "https://rfef.es/sites/default/files/designaciones_1a_division_masculina_-_temp_2026-27_-_jornada_5_sabado.pdf",
   "https://rfef.es/sites/default/files/designaciones_1a_division_masculina_-_temp_2026-27_-_jornada_5_viernes.pdf",
+  "https://rfef.es/sites/default/files/designaciones_1a_division_masculina_-_temp_2026-27_-_jornada_6_jueves.pdf",
   "https://rfef.es/sites/default/files/designaciones_1a_division_masculina_-_temp_2026-27_-_jornada_6_martes.pdf",
   "https://rfef.es/sites/default/files/designaciones_1a_division_masculina_-_temp_2026-27_-_jornada_6_miercoles.pdf",
   "https://www.aia-figc.it/news/serie-a-enilive-designazioni-4a-giornata-27632/",
+  "https://www.aia-figc.it/news/serie-a-enilive-designazioni-5a-giornata-27667/",
   "https://www.efl.com/news/2026/august/11/referee-appointments--14-20-august/",
   "https://www.premierleague.com/news/match-officials-matchweek-4",
   "rfef.es — CTA designaciones, Primera División, jornada 4, 7 September 2026 (published sheet supplied; exact PDF URL not captured)",
@@ -1397,6 +1399,28 @@
    "source": "https://rfef.es/sites/default/files/designaciones_1a_division_masculina_-_temp_2026-27_-_jornada_6_miercoles.pdf"
   },
   {
+   "league": "LL",
+   "date": "2026-09-17",
+   "h": "BET",
+   "a": "GET",
+   "ko": "19:00",
+   "ref": "José María Sánchez",
+   "refResolved": "José María Sánchez Martínez",
+   "resolvedBy": "run",
+   "source": "https://rfef.es/sites/default/files/designaciones_1a_division_masculina_-_temp_2026-27_-_jornada_6_jueves.pdf"
+  },
+  {
+   "league": "LL",
+   "date": "2026-09-17",
+   "h": "MAL",
+   "a": "VIL",
+   "ko": "21:30",
+   "ref": "Miguel Ángel Ortiz",
+   "refResolved": "Miguel Angel Ortiz Arias",
+   "resolvedBy": "run",
+   "source": "https://rfef.es/sites/default/files/designaciones_1a_division_masculina_-_temp_2026-27_-_jornada_6_jueves.pdf"
+  },
+  {
    "league": "PL",
    "date": "2026-09-12",
    "h": "AVL",
@@ -1604,6 +1628,50 @@
    "refResolved": "Fabio Maresca",
    "resolvedBy": "surname",
    "source": "https://www.aia-figc.it/news/serie-a-enilive-designazioni-4a-giornata-27632/"
+  },
+  {
+   "league": "SA",
+   "date": "2026-09-18",
+   "h": "MON",
+   "a": "SAS",
+   "ko": "20:45",
+   "ref": "PERENZONI",
+   "refResolved": null,
+   "resolvedBy": null,
+   "source": "https://www.aia-figc.it/news/serie-a-enilive-designazioni-5a-giornata-27667/"
+  },
+  {
+   "league": "SA",
+   "date": "2026-09-19",
+   "h": "BGN",
+   "a": "TOR",
+   "ko": "15:00",
+   "ref": "GUIDA",
+   "refResolved": "Marco Guida",
+   "resolvedBy": "surname",
+   "source": "https://www.aia-figc.it/news/serie-a-enilive-designazioni-5a-giornata-27667/"
+  },
+  {
+   "league": "SA",
+   "date": "2026-09-19",
+   "h": "UDI",
+   "a": "CAG",
+   "ko": "15:00",
+   "ref": "MANGANIELLO",
+   "refResolved": "Gianluca Manganiello",
+   "resolvedBy": "surname",
+   "source": "https://www.aia-figc.it/news/serie-a-enilive-designazioni-5a-giornata-27667/"
+  },
+  {
+   "league": "SA",
+   "date": "2026-09-19",
+   "h": "VEN",
+   "a": "LAZ",
+   "ko": "20:45",
+   "ref": "SOZZA",
+   "refResolved": "Simone Sozza",
+   "resolvedBy": "surname",
+   "source": "https://www.aia-figc.it/news/serie-a-enilive-designazioni-5a-giornata-27667/"
   }
  ]
 }
