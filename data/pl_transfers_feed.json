@@ -1,6 +1,6 @@
 {
   "note": "PROPOSALS from API-Football /transfers, for a person to read. data/transfers.json is the hand-curated overlay that is actually applied; this is not.",
-  "since": "2026-05-19",
+  "since": "2026-05-20",
   "moves": [
     {
       "n": "D. Akintola",
@@ -1047,6 +1047,15 @@
       "type": "Loan"
     },
     {
+      "n": "José María Andrés Baixauli",
+      "from": "VfB Stuttgart",
+      "to": "Brighton",
+      "fromCode": null,
+      "toCode": "BHA",
+      "date": "2026-08-30",
+      "type": "Transfer"
+    },
+    {
       "n": "Joshua Feeney",
       "from": "Aston Villa",
       "to": "Peterborough",
@@ -1272,6 +1281,15 @@
       "type": "Loan"
     },
     {
+      "n": "M. Zetterer",
+      "from": "Eintracht Frankfurt",
+      "to": "Leeds",
+      "fromCode": null,
+      "toCode": "LEE",
+      "date": "2026-08-27",
+      "type": "Transfer"
+    },
+    {
       "n": "M. Sarr",
       "from": "Chelsea",
       "to": "Real Sociedad",
@@ -1466,6 +1484,15 @@
       "to": "Coventry",
       "fromCode": "BRE",
       "toCode": "COV",
+      "date": "2026-08-25",
+      "type": "Transfer"
+    },
+    {
+      "n": "E. Palacios",
+      "from": "Bayer Leverkusen",
+      "to": "Ipswich",
+      "fromCode": null,
+      "toCode": "IPS",
       "date": "2026-08-25",
       "type": "Transfer"
     },
@@ -1918,6 +1945,15 @@
       "toCode": "BHA",
       "date": "2026-08-17",
       "type": "Loan"
+    },
+    {
+      "n": "N. Elvedi",
+      "from": "Borussia Mönchengladbach",
+      "to": "Leeds",
+      "fromCode": null,
+      "toCode": "LEE",
+      "date": "2026-08-17",
+      "type": "Transfer"
     },
     {
       "n": "G. Vicario",
@@ -3531,6 +3567,15 @@
       "type": "Loan"
     },
     {
+      "n": "X. Schlager",
+      "from": "RB Leipzig",
+      "to": "Nottingham Forest",
+      "fromCode": null,
+      "toCode": "NFO",
+      "date": "2026-07-21",
+      "type": "Free agent"
+    },
+    {
       "n": "W. Lankshear",
       "from": "Tottenham",
       "to": "Middlesbrough",
@@ -3914,6 +3959,15 @@
       "to": "Crewe",
       "fromCode": "NEW",
       "toCode": null,
+      "date": "2026-07-15",
+      "type": "Transfer"
+    },
+    {
+      "n": "J. Manzambi",
+      "from": "SC Freiburg",
+      "to": "Aston Villa",
+      "fromCode": null,
+      "toCode": "AVL",
       "date": "2026-07-15",
       "type": "Transfer"
     },
@@ -6445,6 +6499,15 @@
       "toCode": null,
       "date": "2026-06-29",
       "type": "Return from loan"
+    },
+    {
+      "n": "J. Kusi-Asare",
+      "from": "Bayern München",
+      "to": "Fulham",
+      "fromCode": null,
+      "toCode": "FUL",
+      "date": "2026-06-29",
+      "type": "Transfer"
     },
     {
       "n": "J. Kiwior",

@@ -1,6 +1,6 @@
 {
   "note": "PROPOSALS from API-Football /transfers, for a person to read. data/transfers.json is the hand-curated overlay that is actually applied; this is not.",
-  "since": "2026-05-19",
+  "since": "2026-05-20",
   "moves": [
     {
       "n": "J. Karlsson",
@@ -892,6 +892,15 @@
       "toCode": null,
       "date": "2026-08-30",
       "type": "Free agent"
+    },
+    {
+      "n": "L. Jovanović",
+      "from": "VfB Stuttgart",
+      "to": "Udinese",
+      "fromCode": null,
+      "toCode": "UDI",
+      "date": "2026-08-30",
+      "type": "Transfer"
     },
     {
       "n": "K. Miranda",
@@ -2431,6 +2440,15 @@
       "toCode": null,
       "date": "2026-08-11",
       "type": "Free agent"
+    },
+    {
+      "n": "R. Schmid",
+      "from": "Werder Bremen",
+      "to": "Frosinone",
+      "fromCode": null,
+      "toCode": "FRO",
+      "date": "2026-08-10",
+      "type": "Transfer"
     },
     {
       "n": "R. Braschi",
@@ -4582,6 +4600,15 @@
       "toCode": null,
       "date": "2026-07-12",
       "type": "Loan"
+    },
+    {
+      "n": "D. Doekhi",
+      "from": "Union Berlin",
+      "to": "Lazio",
+      "fromCode": null,
+      "toCode": "LAZ",
+      "date": "2026-07-12",
+      "type": "Free agent"
     },
     {
       "n": "C. Sbaccanti",

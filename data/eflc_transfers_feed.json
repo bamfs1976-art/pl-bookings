@@ -1,6 +1,6 @@
 {
   "note": "PROPOSALS from API-Football /transfers, for a person to read. data/transfers.json is the hand-curated overlay that is actually applied; this is not.",
-  "since": "2026-05-19",
+  "since": "2026-05-20",
   "moves": [
     {
       "n": "L. Skinner",
@@ -1423,6 +1423,15 @@
       "toCode": null,
       "date": "2026-08-26",
       "type": "Free agent"
+    },
+    {
+      "n": "K. Schlotterbeck",
+      "from": "FC Augsburg",
+      "to": "Southampton",
+      "fromCode": null,
+      "toCode": "SOU",
+      "date": "2026-08-25",
+      "type": "Transfer"
     },
     {
       "n": "K. Bielik",
@@ -3682,6 +3691,15 @@
       "toCode": null,
       "date": "2026-07-20",
       "type": "Transfer"
+    },
+    {
+      "n": "F. Bilbija",
+      "from": "SC Paderborn 07",
+      "to": "Derby",
+      "fromCode": null,
+      "toCode": "DER",
+      "date": "2026-07-20",
+      "type": "Free agent"
     },
     {
       "n": "C. Dillon",

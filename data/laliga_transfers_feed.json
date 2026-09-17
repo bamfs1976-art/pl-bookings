@@ -1,6 +1,6 @@
 {
   "note": "PROPOSALS from API-Football /transfers, for a person to read. data/transfers.json is the hand-curated overlay that is actually applied; this is not.",
-  "since": "2026-05-19",
+  "since": "2026-05-20",
   "moves": [
     {
       "n": "Xavi",
@@ -1956,6 +1956,15 @@
       "type": "Transfer"
     },
     {
+      "n": "P. Gulácsi",
+      "from": "RB Leipzig",
+      "to": "Villarreal",
+      "fromCode": null,
+      "toCode": "VIL",
+      "date": "2026-08-01",
+      "type": "Transfer"
+    },
+    {
       "n": "Mikel Vesga",
       "from": "Athletic Club",
       "to": "Almeria",
@@ -2627,6 +2636,15 @@
       "to": "Burnley",
       "fromCode": "ESP",
       "toCode": null,
+      "date": "2026-07-11",
+      "type": "Transfer"
+    },
+    {
+      "n": "Jonathan Asp Jensen",
+      "from": "Bayern München",
+      "to": "Deportivo La Coruna",
+      "fromCode": null,
+      "toCode": "DEP",
       "date": "2026-07-11",
       "type": "Transfer"
     },
