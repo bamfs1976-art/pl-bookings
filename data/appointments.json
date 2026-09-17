@@ -6,6 +6,7 @@
   "efl.com — Championship referee appointments, 28 August - 2 September 2026 (supplied as text; exact article URL not captured)",
   "efl.com — Sky Bet Championship referee appointments, 5-9 September 2026 (supplied as text; exact article URL not captured)",
   "https://efl.com/news/2026/september/09/referee-appointments-12-17-september/",
+  "https://efl.com/news/2026/september/17/referee-appointments--18-20-september-2026/",
   "https://rfef.es/sites/default/files/designaciones_1a_division_masculina_-_temp_2026-27_-_jornada_1_domingo16.pdf",
   "https://rfef.es/sites/default/files/designaciones_1a_division_masculina_-_temp_2026-27_-_jornada_1_lunes17.pdf",
   "https://rfef.es/sites/default/files/designaciones_1a_division_masculina_-_temp_2026-27_-_jornada_1_sabado15.pdf",
@@ -16,6 +17,7 @@
   "https://rfef.es/sites/default/files/designaciones_1a_division_masculina_-_temp_2026-27_-_jornada_6_jueves.pdf",
   "https://rfef.es/sites/default/files/designaciones_1a_division_masculina_-_temp_2026-27_-_jornada_6_martes.pdf",
   "https://rfef.es/sites/default/files/designaciones_1a_division_masculina_-_temp_2026-27_-_jornada_6_miercoles.pdf",
+  "https://rfef.es/sites/default/files/designaciones_1a_division_masculina_-_temp_2026-27_-_jornada_7_viernes.pdf",
   "https://www.aia-figc.it/news/serie-a-enilive-designazioni-4a-giornata-27632/",
   "https://www.aia-figc.it/news/serie-a-enilive-designazioni-5a-giornata-27667/",
   "https://www.efl.com/news/2026/august/11/referee-appointments--14-20-august/",
@@ -783,6 +785,138 @@
    "source": "https://efl.com/news/2026/september/09/referee-appointments-12-17-september/"
   },
   {
+   "league": "EFLC",
+   "date": "2026-09-18",
+   "h": "BRC",
+   "a": "WAT",
+   "ko": "20:00",
+   "ref": "Oliver Langford Assistants: George Byrne and Matt Gunn-Smith Fourth Official: Simon Hooper",
+   "refResolved": null,
+   "resolvedBy": null,
+   "source": "https://efl.com/news/2026/september/17/referee-appointments--18-20-september-2026/"
+  },
+  {
+   "league": "EFLC",
+   "date": "2026-09-19",
+   "h": "BIR",
+   "a": "MID",
+   "ko": "15:00",
+   "ref": "David Webb Assistants: Andrew Fox and Alan Cresswell Fourth Official: Martin Coy",
+   "refResolved": null,
+   "resolvedBy": null,
+   "source": "https://efl.com/news/2026/september/17/referee-appointments--18-20-september-2026/"
+  },
+  {
+   "league": "EFLC",
+   "date": "2026-09-19",
+   "h": "BUR",
+   "a": "DER",
+   "ko": "15:00",
+   "ref": "Steve Martin Assistants: Conor Brown and Callum Gough Fourth Official: Michael Barlow",
+   "refResolved": null,
+   "resolvedBy": null,
+   "source": "https://efl.com/news/2026/september/17/referee-appointments--18-20-september-2026/"
+  },
+  {
+   "league": "EFLC",
+   "date": "2026-09-19",
+   "h": "CAR",
+   "a": "CHA",
+   "ko": "12:30",
+   "ref": "Elliot Bell Assistants: Darren Williams and Conall Bartlett Fourth Official: Lewis Sandoe",
+   "refResolved": null,
+   "resolvedBy": null,
+   "source": "https://efl.com/news/2026/september/17/referee-appointments--18-20-september-2026/"
+  },
+  {
+   "league": "EFLC",
+   "date": "2026-09-19",
+   "h": "LIN",
+   "a": "SWA",
+   "ko": "15:00",
+   "ref": "Anthony Backhouse Assistants: Richard Woodward and Daniel Woodward Fourth Official: Aaron Bannister",
+   "refResolved": null,
+   "resolvedBy": null,
+   "source": "https://efl.com/news/2026/september/17/referee-appointments--18-20-september-2026/"
+  },
+  {
+   "league": "EFLC",
+   "date": "2026-09-19",
+   "h": "MIL",
+   "a": "WHU",
+   "ko": "12:30",
+   "ref": "Paul Tierney Assistants: Richard West and Sam Lewis Fourth Official: Lewis Smith",
+   "refResolved": "Paul Tierney",
+   "resolvedBy": "run",
+   "source": "https://efl.com/news/2026/september/17/referee-appointments--18-20-september-2026/"
+  },
+  {
+   "league": "EFLC",
+   "date": "2026-09-19",
+   "h": "POR",
+   "a": "BLB",
+   "ko": "15:00",
+   "ref": "John Busby Assistants: John Bickerdike and Mark Dwyer Fourth Official: Richard Eley",
+   "refResolved": null,
+   "resolvedBy": null,
+   "source": "https://efl.com/news/2026/september/17/referee-appointments--18-20-september-2026/"
+  },
+  {
+   "league": "EFLC",
+   "date": "2026-09-19",
+   "h": "QPR",
+   "a": "PRE",
+   "ko": "15:00",
+   "ref": "Tom Parsons Assistants: Nigel Lugg and David Harrison Fourth Official: Matt Corlett",
+   "refResolved": null,
+   "resolvedBy": null,
+   "source": "https://efl.com/news/2026/september/17/referee-appointments--18-20-september-2026/"
+  },
+  {
+   "league": "EFLC",
+   "date": "2026-09-19",
+   "h": "STK",
+   "a": "SHU",
+   "ko": "12:30",
+   "ref": "Tim Robinson Assistants: Andrew Dallison and Hugh Gilroy Fourth Official: Ed Duckworth",
+   "refResolved": "Tim Robinson",
+   "resolvedBy": "run",
+   "source": "https://efl.com/news/2026/september/17/referee-appointments--18-20-september-2026/"
+  },
+  {
+   "league": "EFLC",
+   "date": "2026-09-19",
+   "h": "WRE",
+   "a": "SOU",
+   "ko": "15:00",
+   "ref": "Gavin Ward Assistants: Shaun Hudson and Jacob Lehane Fourth Official: Scott Oldham",
+   "refResolved": null,
+   "resolvedBy": null,
+   "source": "https://efl.com/news/2026/september/17/referee-appointments--18-20-september-2026/"
+  },
+  {
+   "league": "EFLC",
+   "date": "2026-09-20",
+   "h": "NOR",
+   "a": "BOL",
+   "ko": "15:00",
+   "ref": "Tom Nield Assistants: Bhups Singh Gill and Matthew Sowerby Fourth Official: Steve Martin",
+   "refResolved": null,
+   "resolvedBy": null,
+   "source": "https://efl.com/news/2026/september/17/referee-appointments--18-20-september-2026/"
+  },
+  {
+   "league": "EFLC",
+   "date": "2026-09-20",
+   "h": "WOL",
+   "a": "WBA",
+   "ko": "12:00",
+   "ref": "Josh Smith Assistants: Mark Stevens and Paul Hodskinson Fourth Official: Tom Kirk",
+   "refResolved": "Josh Smith",
+   "resolvedBy": "run",
+   "source": "https://efl.com/news/2026/september/17/referee-appointments--18-20-september-2026/"
+  },
+  {
    "league": "LL",
    "date": "2026-08-15",
    "h": "ALA",
@@ -1419,6 +1553,17 @@
    "refResolved": "Miguel Angel Ortiz Arias",
    "resolvedBy": "run",
    "source": "https://rfef.es/sites/default/files/designaciones_1a_division_masculina_-_temp_2026-27_-_jornada_6_jueves.pdf"
+  },
+  {
+   "league": "LL",
+   "date": "2026-09-18",
+   "h": "ESP",
+   "a": "ELC",
+   "ko": "21:00",
+   "ref": "Jon Ander González",
+   "refResolved": null,
+   "resolvedBy": null,
+   "source": "https://rfef.es/sites/default/files/designaciones_1a_division_masculina_-_temp_2026-27_-_jornada_7_viernes.pdf"
   },
   {
    "league": "PL",
