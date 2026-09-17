@@ -328,17 +328,52 @@ const accas = readFileSync(join(root, 'scripts', 'accas.mjs'), 'utf8');
      string comparison recorded for ever as a fact about football.
 
      Asserted on the OPEN ROUND of whichever league has appointments, so it
-     starts working the day they are published rather than needing a season. */
+     starts working the day they are published rather than needing a season.
+
+     ONLY OVER OFFICIALS WHO HAVE A CARD RECORD, which is the whole difficulty.
+     factor 1 means two different things: a name that failed to join (the bug
+     above) and a name that joined to nothing because the official has no
+     record to price off — candidatesFor says so itself, "priced without a
+     referee and priced with a referee we know nothing about are different
+     failures". Counting both as unpriced made this fire on correct data: on
+     17 September 2026 the RFEF handed a whole La Liga matchday to Manuel Jesús
+     Orellana, Carlos Muñiz, Jon Ander González and Luis Bestard — four
+     officials new to the top flight, so absent from a card table built on
+     2025-26 — and every row in the open round read factor 1. The guard failed
+     the run, the fixture workflow refused to commit, and nothing whatever was
+     wrong. Early in a season, after promotions, that is not a rare shape.
+
+     The teeth are unchanged, and sharper: the Championship's twelve openers
+     that this was written for arrived as "F. Hallam" against a table holding
+     "Farai Hallam" — officials WITH records, so they sit in the denominator
+     below and an exact-string lookup still fails it. */
   for (const L of A.LEAGUES) {
     const { pool } = A.candidatesFor(L);
     const appointed = (pool || []).filter((r) => r.referee);
     if (appointed.length < 4) continue;          // nothing named yet in this league
-    const priced = appointed.filter((r) => Number(r.ref_factor) !== 1).length;
-    assert.ok(priced * 2 >= appointed.length,
-      `${L.code}: ${priced} of ${appointed.length} forecast rows with a named ` +
-      'official carry a referee factor. The rest are logged as if nobody had ' +
-      'been appointed — the overlay and the card table spell officials ' +
-      'differently and this path is not going through PLDCore.matchRefName.');
+    const dctx = {};
+    vm.createContext(dctx);
+    vm.runInContext(readFileSync(join(root, L.data), 'utf8'), dctx);
+    const names = (vm.runInContext('typeof REFS !== "undefined" ? REFS : []', dctx) || [])
+      .map((r) => r.n);
+    const C = coreOf();
+    const known = appointed.filter((r) => C.matchRefName(r.referee, names));
+    /* Fewer than four of the round's officials have a record at all: there is
+       nothing here to catch a join failure with, and saying so beats asserting
+       over two rows. */
+    if (known.length < 4) {
+      console.log(`  note: ${L.code} — ${known.length} of ${appointed.length} `
+        + 'forecast rows name an official with a card record, too few to test '
+        + 'the join on this round');
+      continue;
+    }
+    const priced = known.filter((r) => Number(r.ref_factor) !== 1).length;
+    assert.ok(priced * 2 >= known.length,
+      `${L.code}: ${priced} of ${known.length} forecast rows name an official ` +
+      'who HAS a card record and still carry no referee factor. Those rows are ' +
+      'logged as if nobody had been appointed — the overlay and the card table ' +
+      'spell officials differently and this path is not going through ' +
+      'PLDCore.matchRefName.');
   }
 
   /* And the acca legs, which are the record of what was advised. */
