@@ -5,7 +5,7 @@
 // through PLDCore.matchSquadName. A fixture absent from here prices off
 // squad minute-weights exactly as it always has — that is the normal
 // state until about an hour before kick-off, not a failure.
-// Fetched 2026-09-16T18:46Z.
+// Fetched 2026-09-17T18:53Z.
 //
 // THE GLOBAL IS NOT CALLED `LINEUPS`, and that is deliberate. index.html
 // already declares a top-level `const LINEUPS` for assets/lineup.js (the
@@ -14,8 +14,7 @@
 // a parse error, not a shadow: the whole inline script fails and the desk
 // renders blank. Read `window.LINEUP_SHEETS`.
 var __LINEUP_SHEETS = {
-  "1570384":{"ATM":{start:["J. Oblak", "Marcos Llorente", "C. Romero", "Robin Le Normand", "Álex Grimaldo", "Lee Kang-In", "Koke", "J. Cardoso", "Álex Baena", "J. David", "A. Lookman"],sub:["Salvador Esquivel", "J. Musso", "Marc Pubill", "D. Hancko", "J. Dominguez", "G. Simeone", "M. Hjulmand", "O. Vargas", "Arnau Ortiz", "Rodrigo Mendoza", "J. Castillo", "Dani Martínez"]},"OSA":{start:["Aitor Fernández", "Íñigo Arguibide", "R. Yeboah", "F. Boyomo", "U. Santos", "Abel Bretones", "Jonathan Dubasin", "Lucas Torró", "Asier Osambela", "Raul Moro", "Raúl García"],sub:["Kike Barja", "Rubén García", "R. Del Castillo", "Iker Muñoz", "Mauro Echegoyen", "A. Budimir", "Moncayola", "Diego Rico", "Catena", "Sergio Herrera", "Asier Bonel", "Rafa Fernández"]}},
-  "1570387":{"DEP":{start:["Leo Román", "Adrià Alti", "J. Giménez", "Miguel Loureiro", "Angeliño", "Luismi Cruz", "L. Amatucci", "Riki Rodríguez", "Peke", "B. Nsongo", "P. Aubameyang"],sub:["Diego Villares", "Marc Casadó", "Z. Eddahchouri", "B. Ede", "Álvaro Fernández", "Jonathan Asp Jensen", "David Mella", "Ximo Navarro", "L. Noubi", "G. Quagliata", "Mario Soriano", "Adama Traoré"]},"SEV":{start:["O. Vlachodimos", "Juan Iglesias", "Andrés Castrín", "Kike Salas", "G. Suazo", "L. Agoumé", "Y. Fofana", "M. Sierra", "Jon Guridi", "Félix Correia", "L. Stassin"],sub:["José Ángel Carmona", "Julio Díaz del Romo", "C. Ejuke", "Peque Fernández", "Alfon González", "Fran González", "G. Kochorashvili", "Iker Ortín Muñoz", "Isaac", "R. Ure", "Marcão", "Manu Bueno"]}},
+  "1570386":{"BET":{start:["Álvaro Vallés", "Ángel Ortiz", "Natan", "V. Gómez", "Junior Firpo", "N. Deossa", "F. Bernal", "Antony", "Isco", "A. Ezzalzouli", "T. Parrott"],sub:["Dani Ceballos", "Héctor Bellerín", "Álvaro Fidalgo", "Pablo Fornals", "Fran García", "Manu González", "C. Hernández", "G. Lo Celso", "Iker Losada", "Rodrigo Riquelme", "Marc Roca", "Marc Bartra"]},"GET":{start:["David Soria", "Andrés García", "D. Dakonam", "Z. Romero", "Davinchi", "N. Gudelj", "Francho Serrano", "O. Mangala", "Mario Martín", "M. Satriano", "Iván Azón"],sub:["Alberto Risco", "S. Boselli", "Diego Ferrer", "M. Hamdoune", "Joselu", "J. Letáček", "Óscar López", "J. Mojica", "S. Sazonov", "E. Ünal", "J. Valou"]}},
 };
 if (typeof module !== "undefined" && module.exports) module.exports = __LINEUP_SHEETS;
 if (typeof window !== "undefined") window.LINEUP_SHEETS = __LINEUP_SHEETS;
