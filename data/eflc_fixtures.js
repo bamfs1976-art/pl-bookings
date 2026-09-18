@@ -95,7 +95,7 @@ const EFLC_FIXTURES = [
   {id:1563175,d:"2026-09-19T14:00:00+00:00",r:8,h:"QPR",a:"PRE",ref:"Thomas Parsons",st:"NS"},
   {id:1563178,d:"2026-09-19T14:00:00+00:00",r:8,h:"WRE",a:"SOU",ref:"Gavin Ward",st:"NS"},
   {id:1563177,d:"2026-09-20T11:00:00+00:00",r:8,h:"WOL",a:"WBA",ref:"Josh Smith",st:"NS"},
-  {id:1563173,d:"2026-09-20T12:30:00+00:00",r:8,h:"NOR",a:"BOL",ref:"Tom Nield Assistants: Bhups Singh Gill and Matthew Sowerby Fourth Official: Steve Martin",st:"NS"},
+  {id:1563173,d:"2026-09-20T12:30:00+00:00",r:8,h:"NOR",a:"BOL",ref:"Tom Nield",st:"NS"},
   {id:1563190,d:"2026-10-09T19:00:00+00:00",r:9,h:"WHU",a:"QPR",ref:null,st:"NS"},
   {id:1563181,d:"2026-10-10T11:30:00+00:00",r:9,h:"CHA",a:"BRC",ref:null,st:"NS"},
   {id:1563187,d:"2026-10-10T11:30:00+00:00",r:9,h:"SWA",a:"NOR",ref:null,st:"NS"},
