@@ -11,7 +11,7 @@
 //   comp  UCL, UEL, UECL, FAC (FA Cup), LCUP (League Cup)
 //   v     H or A — the away leg is what the 72-hour European flag needs
 //
-// LCUP 78, UCL 40, UECL 8, UEL 24
+// LCUP 89, UCL 40, UECL 8, UEL 24
 const PL_OTHER_FIXTURES = [
   {c:"BRC",d:"2026-08-06T18:45:00+00:00",comp:"LCUP",v:"H"},
   {c:"WOL",d:"2026-08-07T18:45:00+00:00",comp:"LCUP",v:"H"},
@@ -119,6 +119,17 @@ const PL_OTHER_FIXTURES = [
   {c:"SUN",d:"2026-10-22T16:45:00+00:00",comp:"UEL",v:"A"},
   {c:"BOU",d:"2026-10-22T19:00:00+00:00",comp:"UEL",v:"H"},
   {c:"CRY",d:"2026-10-22T19:00:00+00:00",comp:"UEL",v:"A"},
+  {c:"ARS",d:"2026-10-28T19:45:00+00:00",comp:"LCUP",v:"A"},
+  {c:"AVL",d:"2026-10-28T19:45:00+00:00",comp:"LCUP",v:"A"},
+  {c:"BOU",d:"2026-10-28T19:45:00+00:00",comp:"LCUP",v:"H"},
+  {c:"BRE",d:"2026-10-28T19:45:00+00:00",comp:"LCUP",v:"A"},
+  {c:"CHE",d:"2026-10-28T19:45:00+00:00",comp:"LCUP",v:"A"},
+  {c:"CRY",d:"2026-10-28T19:45:00+00:00",comp:"LCUP",v:"A"},
+  {c:"EVE",d:"2026-10-28T19:45:00+00:00",comp:"LCUP",v:"H"},
+  {c:"FUL",d:"2026-10-28T19:45:00+00:00",comp:"LCUP",v:"H"},
+  {c:"LIV",d:"2026-10-28T19:45:00+00:00",comp:"LCUP",v:"H"},
+  {c:"NEW",d:"2026-10-28T19:45:00+00:00",comp:"LCUP",v:"A"},
+  {c:"SUN",d:"2026-10-28T19:45:00+00:00",comp:"LCUP",v:"H"},
   {c:"AVL",d:"2026-11-03T20:00:00+00:00",comp:"UCL",v:"A"},
   {c:"MUN",d:"2026-11-03T20:00:00+00:00",comp:"UCL",v:"H"},
   {c:"LIV",d:"2026-11-04T17:45:00+00:00",comp:"UCL",v:"A"},
