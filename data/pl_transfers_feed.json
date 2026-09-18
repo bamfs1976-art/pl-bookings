@@ -1,6 +1,6 @@
 {
   "note": "PROPOSALS from API-Football /transfers, for a person to read. data/transfers.json is the hand-curated overlay that is actually applied; this is not.",
-  "since": "2026-05-20",
+  "since": "2026-05-21",
   "moves": [
     {
       "n": "D. Akintola",
@@ -4058,6 +4058,15 @@
       "to": "Millwall",
       "fromCode": "IPS",
       "toCode": "MIL",
+      "date": "2026-07-14",
+      "type": "Transfer"
+    },
+    {
+      "n": "A. Amenda",
+      "from": "Eintracht Frankfurt",
+      "to": "Coventry",
+      "fromCode": null,
+      "toCode": "COV",
       "date": "2026-07-14",
       "type": "Transfer"
     },
