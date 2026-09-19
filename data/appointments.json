@@ -17,6 +17,7 @@
   "https://rfef.es/sites/default/files/designaciones_1a_division_masculina_-_temp_2026-27_-_jornada_6_jueves.pdf",
   "https://rfef.es/sites/default/files/designaciones_1a_division_masculina_-_temp_2026-27_-_jornada_6_martes.pdf",
   "https://rfef.es/sites/default/files/designaciones_1a_division_masculina_-_temp_2026-27_-_jornada_6_miercoles.pdf",
+  "https://rfef.es/sites/default/files/designaciones_1a_division_masculina_-_temp_2026-27_-_jornada_7_domingo.pdf",
   "https://rfef.es/sites/default/files/designaciones_1a_division_masculina_-_temp_2026-27_-_jornada_7_sabado.pdf",
   "https://rfef.es/sites/default/files/designaciones_1a_division_masculina_-_temp_2026-27_-_jornada_7_viernes.pdf",
   "https://www.aia-figc.it/news/serie-a-enilive-designazioni-4a-giornata-27632/",
@@ -1609,6 +1610,61 @@
    "refResolved": "Juan Martinez Munuera",
    "resolvedBy": "run",
    "source": "https://rfef.es/sites/default/files/designaciones_1a_division_masculina_-_temp_2026-27_-_jornada_7_sabado.pdf"
+  },
+  {
+   "league": "LL",
+   "date": "2026-09-20",
+   "h": "ATM",
+   "a": "RMA",
+   "ko": "16:15",
+   "ref": "Miguel Ángel Ortiz",
+   "refResolved": "Miguel Angel Ortiz Arias",
+   "resolvedBy": "run",
+   "source": "https://rfef.es/sites/default/files/designaciones_1a_division_masculina_-_temp_2026-27_-_jornada_7_domingo.pdf"
+  },
+  {
+   "league": "LL",
+   "date": "2026-09-20",
+   "h": "DEP",
+   "a": "BET",
+   "ko": "18:30",
+   "ref": "César Soto",
+   "refResolved": "César Soto Grado",
+   "resolvedBy": "run",
+   "source": "https://rfef.es/sites/default/files/designaciones_1a_division_masculina_-_temp_2026-27_-_jornada_7_domingo.pdf"
+  },
+  {
+   "league": "LL",
+   "date": "2026-09-20",
+   "h": "GET",
+   "a": "MAL",
+   "ko": "14:00",
+   "ref": "Javier Alberola",
+   "refResolved": "Javier Alberola Rojas",
+   "resolvedBy": "run",
+   "source": "https://rfef.es/sites/default/files/designaciones_1a_division_masculina_-_temp_2026-27_-_jornada_7_domingo.pdf"
+  },
+  {
+   "league": "LL",
+   "date": "2026-09-20",
+   "h": "VAL",
+   "a": "RSO",
+   "ko": "21:00",
+   "ref": "José Luis Munuera",
+   "refResolved": "José Luis Munuera Montero",
+   "resolvedBy": "run",
+   "source": "https://rfef.es/sites/default/files/designaciones_1a_division_masculina_-_temp_2026-27_-_jornada_7_domingo.pdf"
+  },
+  {
+   "league": "LL",
+   "date": "2026-09-20",
+   "h": "VIL",
+   "a": "LEV",
+   "ko": "18:30",
+   "ref": "Mateo Busquets",
+   "refResolved": "Mateo Busquets Ferrer",
+   "resolvedBy": "run",
+   "source": "https://rfef.es/sites/default/files/designaciones_1a_division_masculina_-_temp_2026-27_-_jornada_7_domingo.pdf"
   },
   {
    "league": "PL",
