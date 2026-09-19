@@ -1,6 +1,6 @@
 {
   "note": "PROPOSALS from API-Football /transfers, for a person to read. data/transfers.json is the hand-curated overlay that is actually applied; this is not.",
-  "since": "2026-05-21",
+  "since": "2026-05-22",
   "moves": [
     {
       "n": "J. Karlsson",
@@ -3061,6 +3061,15 @@
       "toCode": null,
       "date": "2026-07-31",
       "type": "Free agent"
+    },
+    {
+      "n": "Kerim-Sam Alajbegović",
+      "from": "Bayer Leverkusen",
+      "to": "Juventus",
+      "fromCode": null,
+      "toCode": "JUV",
+      "date": "2026-07-31",
+      "type": "Transfer"
     },
     {
       "n": "K. Koulierakis",
