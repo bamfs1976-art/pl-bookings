@@ -214,7 +214,7 @@ Research and plans:
 - [docs/modelling-review.md](docs/modelling-review.md): the v1 model, what was wrong with it, and v2.
 - [docs/lineup-pricing.md](docs/lineup-pricing.md): pricing off a confirmed XI and the live card ticker.
 - [docs/desk-parity.md](docs/desk-parity.md): what the Premier League desk had that the others did not.
-- [docs/referee-sourcing.md](docs/referee-sourcing.md), [docs/free-data-sources.md](docs/free-data-sources.md), [docs/repo-scan.md](docs/repo-scan.md): where more data could come from, and what would change.
+- [docs/referee-sourcing.md](docs/referee-sourcing.md), [docs/free-data-sources.md](docs/free-data-sources.md), [docs/bsd-api-feasibility.md](docs/bsd-api-feasibility.md), [docs/repo-scan.md](docs/repo-scan.md): where more data could come from, and what would change. The BSD note re-counts the gaps and supersedes four rows of the free-data-sources table.
 - [docs/la-liga-feasibility.md](docs/la-liga-feasibility.md), [docs/scottish-premiership-feasibility.md](docs/scottish-premiership-feasibility.md), [docs/scottish-derbies.md](docs/scottish-derbies.md): other competitions.
 - [docs/suspension-rules.md](docs/suspension-rules.md) and [docs/spain-suspensions.md](docs/spain-suspensions.md): the three suspension schemes and how far each was verified.
 - [docs/SEASON_RESEARCH_2026-08.md](docs/SEASON_RESEARCH_2026-08.md): the pre-season research note.

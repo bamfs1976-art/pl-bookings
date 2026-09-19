@@ -6,6 +6,18 @@ The answer is shorter than the question suggests, because most of what the
 desks are missing is not available free from anyone — and the best free source
 on the list is one this repository already downloads and reads three columns of.
 
+> **FOUR ROWS OF §1 ARE NOW OVERTAKEN — 19 September 2026.** Availability,
+> Premier League photographs and the market benchmark have all been closed
+> since this was written, as well as the live-ticker row flagged below.
+> Re-counted from the files: `data/*_injuries.js` covers four leagues daily,
+> `check-photos` reports 424/661 on the Premier League and 100% on the other
+> three, and `data/*_odds.js` carries bookmakers' **card** lines for all four
+> leagues — a better benchmark than the 1x2 prices §2.1 proposes harvesting.
+> The two rows still open are referee allocations and model context.
+> **Do not plan work off §1's table without re-counting.**
+> [bsd-api-feasibility.md](bsd-api-feasibility.md) §1 has the current figures
+> and argues that what is left is supplier concentration, not missing data.
+
 > **ONE ROW OF §1 HAS SINCE BEEN OVERTAKEN — read this before §2.3 and §4.**
 > Merged 3 September 2026, a month after it was written. "Championship and La
 > Liga desks are static, no `fetch` call at all" was true on 9 August and is

@@ -1,0 +1,52 @@
+name: Probe BSD (sports.bzzoiro.com)
+
+# A diagnostic, not a data job. Same shape as probe-football-data.yml: it
+# fetches nothing into the repo, commits nothing and gates nothing. It prints
+# what a free BSD token is actually entitled to, so the question "can this
+# close the frozen-desk gap" gets an answer from a log rather than from
+# marketing copy.
+#
+# WHY IT HAS TO RUN HERE. The agent proxy denies sports.bzzoiro.com, so no
+# Claude Code session can call this API at all — neither the shell nor a web
+# fetch gets through. CI has open egress. Until the host is added to the
+# session's network policy, this workflow is the only way to test the claim.
+#
+# MANUAL ONLY, deliberately. The free-tier ceiling is not documented anywhere
+# reachable, this run spends about forty calls discovering it, and the answer
+# only changes when the plan does.
+#
+# WHEN TO RUN IT. During a round, with matches actually in play, and within an
+# hour of a kick-off. Out of season a healthy feed and a useless one look
+# identical: no live matches and no lineups either way. The probe says so in
+# its own output, but the run is still wasted.
+
+on:
+  workflow_dispatch:
+
+# No `contents: write`. This job has nothing to push and should not be able to.
+permissions:
+  contents: read
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    env:
+      BSD_API_KEY: ${{ secrets.BSD_API_KEY }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      # Same reasoning as the fixtures job: a green tick on a run that fetched
+      # nothing is how a data gap survives unnoticed.
+      - name: Refuse to run blind
+        if: ${{ env.BSD_API_KEY == '' }}
+        run: |
+          echo "::error::BSD_API_KEY is not set in this repository's Actions secrets."
+          echo "Add it under Settings → Secrets and variables → Actions. Note that Netlify"
+          echo "environment variables are a SEPARATE store — see docs/referee-sourcing.md §4."
+          exit 1
+
+      - name: What can this token see
+        run: node scripts/probe-bsd.mjs

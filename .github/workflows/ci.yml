@@ -61,6 +61,9 @@ jobs:
           # never run it — a syntax check is the only guard available, and
           # without it the script rots silently until someone dispatches it.
           node --check scripts/probe-football-data.mjs
+          # Same for the BSD probe: a key, a network and a live round are all
+          # required, so CI can only check that the file still parses.
+          node --check scripts/probe-bsd.mjs
           node scripts/check-inline.mjs
 
       - name: Model builder is reproducible (season prior regenerates cleanly)
