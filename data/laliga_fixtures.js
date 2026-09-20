@@ -70,7 +70,7 @@ const LALIGA_FIXTURES = [
   {id:1570394,d:"2026-09-20T14:15:00+00:00",r:7,h:"ATM",a:"RMA",ref:"Miguel Angel Ortiz Arias",st:"FT"},
   {id:1570396,d:"2026-09-20T16:30:00+00:00",r:7,h:"DEP",a:"BET",ref:"Cesar Soto Grado",st:"FT"},
   {id:1570402,d:"2026-09-20T16:30:00+00:00",r:7,h:"VIL",a:"LEV",ref:"Mateo Busquets Ferrer",st:"FT"},
-  {id:1570401,d:"2026-09-20T19:00:00+00:00",r:7,h:"VAL",a:"RSO",ref:"Jose Luis Munuera Montero",st:"1H"},
+  {id:1570401,d:"2026-09-20T19:00:00+00:00",r:7,h:"VAL",a:"RSO",ref:"Jose Luis Munuera Montero",st:"FT"},
   {id:1570408,d:"2026-10-09T19:00:00+00:00",r:8,h:"MAL",a:"ESP",ref:null,st:"NS"},
   {id:1570410,d:"2026-10-10T12:00:00+00:00",r:8,h:"RAY",a:"ATH",ref:null,st:"NS"},
   {id:1570403,d:"2026-10-10T14:15:00+00:00",r:8,h:"ALA",a:"ATM",ref:null,st:"NS"},
