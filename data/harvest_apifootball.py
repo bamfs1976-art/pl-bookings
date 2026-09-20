@@ -188,7 +188,7 @@ def map_player(entry, club_name, team_id):
     minutes = games.get("minutes") or 0
     return {
         "team": club_name,
-        "n": player.get("name"),
+        "n": leagues.clean_name(player.get("name")),
         "pos": games.get("position"),          # Goalkeeper/Defender/Midfielder/Attacker
         "min": minutes,
         "yc": cards.get("yellow"),
@@ -639,7 +639,7 @@ def map_fixture_player(entry, club_of):
         return None
     cards = stats.get("cards") or {}
     fouls = stats.get("fouls") or {}
-    name = ((entry.get("player") or {}).get("name") or "").strip()
+    name = leagues.clean_name((entry.get("player") or {}).get("name"))
     if not name:
         return None
     return {
@@ -1203,7 +1203,7 @@ def emit_roster(host, key, league, ids):
         got = 0
         for entry in (payload.get("response") or []):
             for pl in (entry.get("players") or []):
-                name = (pl.get("name") or "").strip()
+                name = leagues.clean_name(pl.get("name"))
                 if not name:
                     continue
                 rows.append({"team": club_name, "n": name,

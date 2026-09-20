@@ -201,7 +201,7 @@ def parse_injuries(payload, code):
             continue
         out.append({
             "c": short,
-            "n": (pl.get("name") or "").strip(),
+            "n": leagues.clean_name(pl.get("name")),
             "type": (pl.get("type") or "").strip() or None,
             "reason": (pl.get("reason") or "").strip() or None,
             "fx": ((r.get("fixture") or {}).get("id")),
@@ -245,7 +245,7 @@ def parse_card_leaders(payload, code, colour):
             games = st.get("games") or {}
             out.append({
                 "c": short,
-                "n": (pl.get("name") or "").strip(),
+                "n": leagues.clean_name(pl.get("name")),
                 "yc": int(num(cards.get("yellow")) or 0),
                 "yr": int(num(cards.get("yellowred")) or 0),
                 "rc": int(num(cards.get("red")) or 0),
@@ -315,7 +315,7 @@ def parse_events(payload, code, fixture_id):
         extra = num(t.get("extra")) or 0
         out.append({
             "c": short,
-            "n": ((r.get("player") or {}).get("name") or "").strip(),
+            "n": leagues.clean_name((r.get("player") or {}).get("name")),
             "m": None if minute is None else int(minute + extra),
             "k": kind,
         })
@@ -406,7 +406,7 @@ def parse_transfers(payload, code, since=None):
                 continue
             teams = t.get("teams") or {}
             out.append({
-                "n": (pl.get("name") or "").strip(),
+                "n": leagues.clean_name(pl.get("name")),
                 "from": ((teams.get("out") or {}).get("name") or "").strip(),
                 "to": ((teams.get("in") or {}).get("name") or "").strip(),
                 "fromCode": club_of(code, (teams.get("out") or {}).get("name")),

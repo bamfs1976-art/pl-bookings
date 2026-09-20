@@ -660,6 +660,36 @@ def strip_accents(text):
                    if not unicodedata.combining(c))
 
 
+def clean_name(text):
+    """A person's name as it should be WRITTEN, not as the feed escaped it.
+
+    API-Football returns apostrophes HTML-escaped: the dataset shipped
+    "A. N&apos;Diaye", "M. O&apos;Riley" and eight more across three
+    divisions. On an HTML page that is invisible — the browser decodes the
+    entity on its way into the DOM — so it survived every desk, every review
+    and every guard. The share cards are drawn on a CANVAS, and fillText has
+    no opinion about entities: it printed "A. N&apos;Diaye" on the Serie A
+    stat sheet, which is where this was finally noticed.
+
+    Ten players, all of them Irish or West African names carrying an
+    apostrophe, which is the part worth saying out loud: the bug fell entirely
+    on one group of names and nowhere else.
+
+    Applied where a name ENTERS from a feed, so every dataset built from it is
+    clean and stays clean. scripts/check-encoding.mjs fails the build if an
+    entity reaches a shipped file again.
+    """
+    import html
+    out = html.unescape(str(text or "")).strip()
+    # Unescape twice only if the feed double-escaped ("&amp;apos;"), which it
+    # has been seen to do on re-exported rows. A single pass leaves "&apos;".
+    if "&" in out and ";" in out:
+        again = html.unescape(out)
+        if again != out:
+            out = again.strip()
+    return out
+
+
 def auto_short(name, taken):
     """A three-letter code for a club the override table does not cover.
 

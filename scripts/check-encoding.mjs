@@ -92,14 +92,65 @@ for (const f of readdirSync(join(root, 'assets')).sort()) {
   if (/\.(js|css)$/.test(f)) files.push(join('assets', f));
 }
 
+/* THE OTHER WAY A FEED MISSPELLS A NAME: an HTML entity left as source text.
+ *
+ * API-Football escapes apostrophes, and the datasets shipped "A. N&apos;Diaye",
+ * "M. O&apos;Riley" and eight more across three divisions. This one hid even
+ * better than the mojibake above, because on an HTML page it is INVISIBLE —
+ * the browser decodes the entity on its way into the DOM, so every desk looked
+ * right. The share cards are drawn on a canvas, and fillText has no opinion
+ * about entities: it printed the raw "A. N&apos;Diaye" on a Serie A stat sheet,
+ * which is where it was finally caught.
+ *
+ * Worth saying plainly: all ten were Irish or West African names carrying an
+ * apostrophe. The defect fell on one group of names and nowhere else, and the
+ * only surface that showed it was the one that leaves the site.
+ *
+ * DATA FILES ONLY. An entity is legitimate in an HTML page and in a module
+ * that builds markup; in a generated dataset it is always a feed artefact. */
+const ENTITY = /&(?:[a-zA-Z][a-zA-Z0-9]{1,9}|#\d{1,6}|#[xX][0-9a-fA-F]{1,6});/;
+const ENTITY_TEXT = {
+  '&apos;': "'", '&quot;': '"', '&amp;': '&', '&lt;': '<', '&gt;': '>',
+  '&#39;': "'", '&nbsp;': ' ', '&rsquo;': '\u2019', '&lsquo;': '\u2018',
+};
+function entityOffenders(text) {
+  const out = [];
+  for (const m of text.match(LITERAL) || []) {
+    let val;
+    try { val = JSON.parse(m); } catch { continue; }
+    if (typeof val !== 'string' || !ENTITY.test(val)) continue;
+    let fix = val;
+    for (const [ent, ch] of Object.entries(ENTITY_TEXT)) fix = fix.split(ent).join(ch);
+    out.push([val, fix]);
+  }
+  return out;
+}
+
 let scanned = 0;
 let strings = 0;
 const bad = [];
+const entities = [];
 for (const rel of files) {
   const text = readFileSync(join(root, rel), 'utf8');
   scanned += 1;
   strings += (text.match(LITERAL) || []).length;
   for (const [was, fix] of offenders(text)) bad.push({ rel, was, fix });
+  if (rel.startsWith('data/')) {
+    for (const [was, fix] of entityOffenders(text)) entities.push({ rel, was, fix });
+  }
+}
+
+if (entities.length) {
+  const lines = entities.slice(0, 20).map(
+    (b) => `  ${b.rel}\n      is  ${JSON.stringify(b.was)}\n      want ${JSON.stringify(b.fix)}`);
+  assert.fail(
+    `${entities.length} HTML entit(y/ies) in shipped data:\n${lines.join('\n')}\n\n` +
+    'A generated dataset holds text, not markup. API-Football escapes ' +
+    'apostrophes and data/leagues.py clean_name() unescapes them where a name ' +
+    'enters, so a hit here means either that a new feed path bypassed it or ' +
+    'the helper regressed. It is invisible on the HTML desks and visible on ' +
+    'every share card, which is why it needs a guard rather than an eye. ' +
+    'Fix the harvester, not the generated file: the next refresh rewrites it.');
 }
 
 if (bad.length) {
@@ -115,4 +166,4 @@ if (bad.length) {
 }
 
 console.log(`check-encoding OK: ${scanned} files, ${strings} string literals, ` +
-  'no double-encoded names');
+  'no double-encoded names and no HTML entities in the shipped data');
