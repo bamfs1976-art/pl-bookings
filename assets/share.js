@@ -1566,34 +1566,6 @@
     });
   }
 
-  /* THE DIVISION'S OWN AVERAGE OFFICIAL, weighted by matches.
-   *
-   * ONE IMPLEMENTATION, FOUR CALLERS. Each desk holds its own REFS under its
-   * own global and none of them can see another's, so the obvious thing is a
-   * four-line reduce copied into each page — which is how this repository
-   * ended up with seven readings of the referee-name join. The desks pass
-   * their array in; the arithmetic lives here once.
-   *
-   * WEIGHTED, NOT A MEAN OF MEANS. An official with three matches and one with
-   * thirty are not equal evidence about a division, and averaging their rates
-   * flat lets a debutant with one busy afternoon move the line everybody else
-   * is measured against.
-   */
-  function refAverages(refs) {
-    var keys = ['fpg', 'ypg', 'cpf', 'red'], sum = {}, wt = {}, out = {};
-    (refs || []).forEach(function (r) {
-      var m = Number(r && r.matches) || 0;
-      if (m <= 0) return;
-      keys.forEach(function (k) {
-        if (r[k] == null || isNaN(Number(r[k]))) return;
-        sum[k] = (sum[k] || 0) + Number(r[k]) * m;
-        wt[k] = (wt[k] || 0) + m;
-      });
-    });
-    keys.forEach(function (k) { if (wt[k]) out[k] = sum[k] / wt[k]; });
-    return out;
-  }
-
   function deskStatSheetSpec(priced, ctx) {
     var n1 = function (v) { return v == null ? '—' : Number(v).toFixed(1); };
     var n2 = function (v) { return v == null ? '—' : Number(v).toFixed(2); };
@@ -1649,7 +1621,20 @@
     }
 
     var r = priced.ref && priced.ref.ref;
-    var rAvg = ctx.refs ? refAverages(ctx.refs) : (ctx.refAvgs || {});
+    /* THE DIVISION'S OWN AVERAGE OFFICIAL — from core.js, not from a loop in
+       here. The first cut of this wrote its own matches-weighted average and
+       got the rule wrong: it counted BORROWED officials, whose matches were
+       refereed in another division and are already in that division's
+       baseline. Counting them here moves the very average their borrowed rate
+       is then measured against, which is the circularity check-cross-refs
+       exists to prevent, and it made this the FIFTH copy of a loop that file's
+       own note says existed four times too often. PLDCore.leagueRates already
+       weights by matches and already skips borrowed rows. */
+    var core = root.PLDCore || (typeof PLDCore !== 'undefined' ? PLDCore : null);
+    var lr = (ctx.refs && core && core.leagueRates) ? core.leagueRates(ctx.refs) : null;
+    var rAvg = lr
+      ? { fpg: lr.avgFpg, ypg: lr.avgYpg, cpf: lr.avgCpf, red: lr.avgRed }
+      : (ctx.refAvgs || {});
     return {
       league: ctx.league,
       title: (ch.name || f.h) + '  v  ' + (ca.name || f.a),
@@ -2131,7 +2116,7 @@
     accaCard: accaCard, accaRowSpec: accaRowSpec, nineFoldSpec: nineFoldSpec,
     deskMatchSpec: deskMatchSpec, uclMatchSpec: uclMatchSpec,
     deskRoundSpec: deskRoundSpec,
-    deskStatSheetSpec: deskStatSheetSpec, refAverages: refAverages,
+    deskStatSheetSpec: deskStatSheetSpec,
     download: download, slug: slug,
     heatHex: heatHex, probHex: probHex, textOn: textOn,
     roundRect: roundRect, fit: fit, drawMark: drawMark

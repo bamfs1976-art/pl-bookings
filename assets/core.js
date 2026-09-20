@@ -1668,20 +1668,27 @@
      identical, and the exclusion above would have had to be remembered in
      every one of them. Three of the four are now callers. */
   function leagueRates(refs) {
-    let yW = 0, ym = 0, cW = 0, cm = 0, rW = 0, rm = 0;
+    let yW = 0, ym = 0, cW = 0, cm = 0, rW = 0, rm = 0, fW = 0, fm = 0;
     for (const r of (Array.isArray(refs) ? refs : [])) {
       if (!r || r.borrowed) continue;
       const g = Number(r.matches);
       if (!(isFinite(g) && g > 0)) continue;
-      const y = Number(r.ypg), c = Number(r.cpf), d = Number(r.red);
+      const y = Number(r.ypg), c = Number(r.cpf), d = Number(r.red), f = Number(r.fpg);
       if (isFinite(y)) { yW += y * g; ym += g; }
       if (isFinite(c)) { cW += c * g; cm += g; }
       if (isFinite(d) && d >= 0) { rW += d * g; rm += g; }
+      /* FOULS TOO, on the same terms as the other three. The stat sheet prints
+         each of a referee's four rates against his division's own, and fouls
+         was the one this function did not carry — which is how a fifth copy of
+         this loop nearly got written next door in share.js, borrowed rows and
+         all. Same sum, same exclusion, one place. */
+      if (isFinite(f) && f >= 0) { fW += f * g; fm += g; }
     }
     return {
       avgYpg: ym ? yW / ym : null,
       avgCpf: cm ? cW / cm : null,
       avgRed: rm ? rW / rm : 0,
+      avgFpg: fm ? fW / fm : null,
       matches: ym,
     };
   }

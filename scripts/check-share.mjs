@@ -99,6 +99,12 @@ function makeSandbox(drawn, placed) {
      A stub here would defeat the point — the assertions below about what a
      combo strip draws have to run against the real rule. */
   vm.runInContext(readFileSync(join(root, 'assets', 'accas.js'), 'utf8'), ctx);
+  /* core.js BEFORE share.js, the order every desk loads them in. The stat
+     sheet takes its league averages from PLDCore.leagueRates rather than
+     averaging the referee table itself, so a harness without core.js tests a
+     configuration no page ships — the averages come back null and the panel
+     quietly loses its comparison line. */
+  vm.runInContext(readFileSync(join(root, 'assets', 'core.js'), 'utf8'), ctx);
   vm.runInContext(readFileSync(join(root, 'assets', 'share.js'), 'utf8'), ctx);
   return ctx;
 }
@@ -332,9 +338,11 @@ const sheetSpec = S.deskStatSheetSpec(priced, {
   h2hRows: [{ left: 'Last 6 meetings', right: '4.8 cards avg' }],
   h2hMarks: [7, 2, 5, 3],
   /* Two officials with very different workloads, so the weighting below is
-     tested by a case where a flat mean would give a different answer. */
+     tested by a case where a flat mean would give a different answer — plus a
+     borrowed row that must not count at all. */
   refs: [{ n: 'Busy', matches: 30, fpg: 24, ypg: 5.0, cpf: 0.20, red: 0.20 },
-         { n: 'Quiet', matches: 2, fpg: 12, ypg: 1.0, cpf: 0.08, red: 0.00 }],
+         { n: 'Quiet', matches: 2, fpg: 12, ypg: 1.0, cpf: 0.08, red: 0.00 },
+         { n: 'Lent', matches: 50, fpg: 99, ypg: 99, cpf: 9, red: 9, borrowed: 'PL' }],
 });
 assert.equal(sheetSpec.home.short, 'CHA');
 assert.equal(sheetSpec.away.short, 'DER');
@@ -369,15 +377,37 @@ assert.ok(!refLabels.some((l) => /penalt|pens/i.test(l)),
     'the referee panel lost its league averages — a rate with nothing to ' +
     'compare it against is a number the reader has to go and look up');
   const ypg = sheetSpec.ref.stats.find((r) => r.label === 'yellows per game');
+  /* 4.75 is the matches-weighted answer over the two NATIVE officials. The
+     case is built so that every wrong way of computing it lands somewhere
+     else: a flat mean of means gives 3.0, and counting the borrowed row gives
+     about 56 — so this one number catches both mistakes at once. */
   assert.ok(Math.abs(ypg.avg - 4.75) < 1e-9,
-    `the league average is not matches-weighted: got ${ypg.avg}, expected ` +
-    '4.75 (30 matches at 5.0 and 2 at 1.0). A flat mean of means gives 3.0 ' +
-    'and lets a two-match official move the line for the whole division');
+    `the league average is wrong: got ${ypg.avg}, expected 4.75 (30 matches ` +
+    'at 5.0 and 2 at 1.0, with the borrowed row excluded). A flat mean of ' +
+    'means gives 3.0; counting the borrowed official gives about 56 and moves ' +
+    'the very baseline his borrowed rate is measured against — see ' +
+    'scripts/check-cross-refs.mjs');
+  /* The stat sheet must reach for the shared average rather than growing its
+     own. core.js already weights by matches and already skips borrowed rows;
+     a second loop in share.js is how the two come to disagree, and the first
+     cut of this feature was exactly that loop. */
+  const shareSrc = readFileSync(new URL('../assets/share.js', import.meta.url), 'utf8');
+  /* A CALL, not a mention. The first version of this line matched
+     `PLDCore` within 120 characters of `leagueRates`, which the explanatory
+     COMMENT above the call satisfies on its own — so the guard stayed green
+     with the call itself replaced by a local loop. */
+  assert.ok(/\bleagueRates\s*\(/.test(shareSrc.replace(/\/\*[\s\S]*?\*\//g, '')),
+    'assets/share.js no longer CALLS leagueRates — if it is averaging the ' +
+    'referee table itself, that is a fifth copy of a loop core.js already owns');
+  assert.ok(!/r\.matches[\s\S]{0,160}r\.ypg[\s\S]{0,160}borrowed/.test(shareSrc)
+            && !/function refAverages/.test(shareSrc),
+    'assets/share.js has grown its own matches-weighted referee average again');
 
   const unappointed = S.deskStatSheetSpec(
     { ...priced, ref: { ref: null, name: null } },
     { ...ctx, squadOf: () => [],
       refs: [{ n: 'Busy', matches: 30, fpg: 24, ypg: 5.0, cpf: 0.2, red: 0.2 }] });
+  void unappointed;
   assert.ok(unappointed.ref.stats.every((r) => r.avg == null),
     'an unappointed referee was given league averages to be compared against ' +
     '— there is nothing on the other side of that comparison');
