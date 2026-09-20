@@ -744,7 +744,15 @@
          multiplier this desk applies and the reason two identical squads price
          differently on two weekends. */
       var rf = spec.ref || {};
-      x.fillStyle = '#0c1322'; roundRect(x, centreX, cy, centreW, 132, 14); x.fill();
+      /* TALLER ONLY WHEN THERE IS A THIRD LINE TO PUT IN IT. A referee's raw
+         rate answers nothing on its own — 4.86 yellows a game is severe in
+         Serie A and unremarkable in the Championship — so where the desk knows
+         its division's own average the card prints it under the figure and the
+         reader gets the comparison rather than a number to look up. Desks that
+         do not supply one draw exactly the panel they always drew. */
+      var rHasAvg = (rf.stats || []).some(function (st) { return st && st.avg != null; });
+      var rfH = rHasAvg ? 152 : 132;
+      x.fillStyle = '#0c1322'; roundRect(x, centreX, cy, centreW, rfH, 14); x.fill();
       x.fillStyle = 'rgba(255,255,255,.6)'; x.font = '700 15px ' + BODY;
       x.textAlign = 'center';
       x.fillText('REFEREE', centreX + centreW / 2, cy + 28);
@@ -762,9 +770,29 @@
            ratio, and a blanket "per game" heading would be wrong about it. */
         x.fillStyle = 'rgba(255,255,255,.55)'; x.font = '600 12px ' + BODY;
         x.fillText(fit(x, st.label.toUpperCase(), rw - 8), sx, cy + 124);
+        /* THE DIVISION'S OWN AVERAGE, and which side of it he is on. Drawn in
+           the heat colours the rest of the card already uses for "more cards
+           than usual", so the referee panel and the expected-cards figure say
+           high and low the same way. A stat with no average leaves its slot
+           empty rather than printing a dash nobody asked a question about. */
+        if (st.avg != null) {
+          var av = Number(st.avg), vNum = parseFloat(st.value);
+          var hot = !isNaN(vNum) && vNum > av, cold = !isNaN(vNum) && vNum < av;
+          /* GREEN IS BUSY, the way heatHex has it everywhere else on this card.
+             The first cut of this line had it the other way about — red for
+             above average, on the reflex that red means bad — and it put a red
+             marker under a referee who cards more than his division beside
+             green chips saying the same thing about the fixture. On a bookings
+             desk more cards is the signal being looked for, not a warning. */
+          x.fillStyle = hot ? '#86efac' : cold ? 'rgba(255,255,255,.45)'
+                                               : 'rgba(255,255,255,.5)';
+          x.font = '700 12px ' + BODY;
+          x.fillText(fit(x, (hot ? '\u25b2 ' : cold ? '\u25bc ' : '') +
+            'LEAGUE ' + av.toFixed(av >= 1 ? 2 : 3), rw - 8), sx, cy + 142);
+        }
       });
       x.textAlign = 'left';
-      cy += 132 + 18;
+      cy += rfH + 18;
 
       /* ---- the match itself ---- */
       /* IT TAKES WHATEVER THE HEAD TO HEAD DOES NOT NEED. This was the other
@@ -777,8 +805,23 @@
          panel first and giving the surplus to the bigger one settles both. */
       var m = spec.match || {};
       var hRows = ((spec.h2h && spec.h2h.rows) || []).slice(0, 5);
-      var hasH2H = !!hRows.length;
-      var hh = hasH2H ? 46 + hRows.length * 34 : 0;
+      /* THE MEETINGS THEMSELVES, not only their average. The note above records
+         that every desk emitted h2h as one summary line and the panel sat at
+         the top of a box three hundred pixels tall. The card history the desks
+         already hold carries the per-meeting count, and a run of 5 5 2 3 3 8
+         says something an average of 4.4 hides: these two are volatile rather
+         than reliably busy.
+
+         NEWEST FIRST, because the form grid above it is. data/build_h2h.py
+         sorts its meetings newest first and recentCards() sorts its fixtures
+         the same way, so taking the head of the array keeps the two grids on
+         this card reading in one direction. Taking the tail would have put the
+         oldest meetings under a form row running the other way, and labelled
+         them wrongly into the bargain. */
+      var hMarks = ((spec.h2h && spec.h2h.marks) || []).slice(0, 8);
+      var hasMarks = !!hMarks.length;
+      var hasH2H = !!hRows.length || hasMarks;
+      var hh = hasH2H ? 46 + hRows.length * 34 + (hasMarks ? 52 : 0) : 0;
       /* THE FORM GRID takes a fixed height and the match panel gives it up.
          Same reasoning as the head to head above: size the fixed thing first
          and let the elastic one absorb what is left. The expected-cards figure
@@ -899,7 +942,8 @@
         x.fillText((h.label || 'HEAD TO HEAD').toUpperCase(), centreX + centreW / 2, cy + 26);
         x.textAlign = 'left';
         var hr = hRows;
-        var rh2 = Math.min(34, (hh - 40) / Math.max(1, hr.length));
+        var rowsH = hr.length * 34;
+        var rh2 = hr.length ? Math.min(34, rowsH / hr.length) : 0;
         hr.forEach(function (r, i) {
           var ry = cy + 36 + i * rh2 + rh2 - 10;
           x.fillStyle = '#586275'; x.font = '600 18px ' + BODY;
@@ -908,6 +952,30 @@
           x.textAlign = 'right'; x.fillText(String(r.right), centreX + centreW - 16, ry);
           x.textAlign = 'left';
         });
+
+        /* ONE CHIP A MEETING, in the heat colours the expected-cards figure
+           uses, so a busy meeting reads the same here as a busy fixture reads
+           above it. Sized to the room rather than to a constant: eight
+           meetings and three both have to fit the same width. */
+        if (hasMarks) {
+          var my = cy + 36 + rowsH + 6;
+          var avail = centreW - 32;
+          var cwd = Math.min(46, Math.floor((avail - (hMarks.length - 1) * 8) / hMarks.length));
+          var totalW = hMarks.length * cwd + (hMarks.length - 1) * 8;
+          var mx0 = centreX + (centreW - totalW) / 2;
+          x.textAlign = 'center';
+          hMarks.forEach(function (v, i) {
+            var bx = mx0 + i * (cwd + 8);
+            x.fillStyle = v == null ? '#cbd5e1' : heatHex(v, spec.heatMid, spec.heatHot);
+            roundRect(x, bx, my, cwd, 30, 8); x.fill();
+            x.fillStyle = '#ffffff'; x.font = '800 16px ' + DISP;
+            x.fillText(v == null ? '\u2013' : String(v), bx + cwd / 2, my + 21);
+          });
+          x.fillStyle = '#8b94a5'; x.font = '600 12px ' + BODY;
+          x.fillText('CARDS PER MEETING \u00b7 MOST RECENT FIRST',
+                     centreX + centreW / 2, my + 46);
+          x.textAlign = 'left';
+        }
       }
 
       /* WHAT THE NUMBERS ARE DRAWN FROM, on the card. The reference layouts
@@ -1498,6 +1566,34 @@
     });
   }
 
+  /* THE DIVISION'S OWN AVERAGE OFFICIAL, weighted by matches.
+   *
+   * ONE IMPLEMENTATION, FOUR CALLERS. Each desk holds its own REFS under its
+   * own global and none of them can see another's, so the obvious thing is a
+   * four-line reduce copied into each page — which is how this repository
+   * ended up with seven readings of the referee-name join. The desks pass
+   * their array in; the arithmetic lives here once.
+   *
+   * WEIGHTED, NOT A MEAN OF MEANS. An official with three matches and one with
+   * thirty are not equal evidence about a division, and averaging their rates
+   * flat lets a debutant with one busy afternoon move the line everybody else
+   * is measured against.
+   */
+  function refAverages(refs) {
+    var keys = ['fpg', 'ypg', 'cpf', 'red'], sum = {}, wt = {}, out = {};
+    (refs || []).forEach(function (r) {
+      var m = Number(r && r.matches) || 0;
+      if (m <= 0) return;
+      keys.forEach(function (k) {
+        if (r[k] == null || isNaN(Number(r[k]))) return;
+        sum[k] = (sum[k] || 0) + Number(r[k]) * m;
+        wt[k] = (wt[k] || 0) + m;
+      });
+    });
+    keys.forEach(function (k) { if (wt[k]) out[k] = sum[k] / wt[k]; });
+    return out;
+  }
+
   function deskStatSheetSpec(priced, ctx) {
     var n1 = function (v) { return v == null ? '—' : Number(v).toFixed(1); };
     var n2 = function (v) { return v == null ? '—' : Number(v).toFixed(2); };
@@ -1553,6 +1649,7 @@
     }
 
     var r = priced.ref && priced.ref.ref;
+    var rAvg = ctx.refs ? refAverages(ctx.refs) : (ctx.refAvgs || {});
     return {
       league: ctx.league,
       title: (ch.name || f.h) + '  v  ' + (ca.name || f.a),
@@ -1565,11 +1662,15 @@
            match records the referee table is built from, so that field is null
            for every official in all three divisions — and how readily a
            referee cards a foul is the better question for this desk anyway. */
+        /* The average rides along only where the desk handed one over, and
+           only beside a referee who has actually been appointed: a comparison
+           against "not yet appointed" compares nothing. */
         stats: [
-          { label: 'fouls per game', value: r ? n2(r.fpg) : '—' },
-          { label: 'yellows per game', value: r ? n2(r.ypg) : '—' },
-          { label: 'cards per foul', value: r && r.cpf != null ? Number(r.cpf).toFixed(3) : '—' },
-          { label: 'reds per game', value: r ? n2(r.red) : '—' }
+          { label: 'fouls per game', value: r ? n2(r.fpg) : '—', avg: r ? rAvg.fpg : null },
+          { label: 'yellows per game', value: r ? n2(r.ypg) : '—', avg: r ? rAvg.ypg : null },
+          { label: 'cards per foul', value: r && r.cpf != null ? Number(r.cpf).toFixed(3) : '—',
+            avg: r ? rAvg.cpf : null },
+          { label: 'reds per game', value: r ? n2(r.red) : '—', avg: r ? rAvg.red : null }
         ]
       },
       match: {
@@ -1581,8 +1682,11 @@
           { label: 'both 2+', value: pc(m.bothTwo) }
         ]
       },
-      h2h: ctx.h2hRows && ctx.h2hRows.length
-        ? { label: 'Head to head · cards', rows: ctx.h2hRows } : null,
+      /* The panel now survives on marks alone, so a pair with a recorded
+         history but no summary line still draws its meetings. */
+      h2h: (ctx.h2hRows && ctx.h2hRows.length) || (ctx.h2hMarks && ctx.h2hMarks.length)
+        ? { label: 'Head to head · cards', rows: ctx.h2hRows || [],
+            marks: ctx.h2hMarks || [] } : null,
       /* Absent unless the desk offers the history — a grid of five dashes says
          nothing and takes the room the expected-cards figure was using. */
       trends: ctx.recentFor
@@ -2027,7 +2131,7 @@
     accaCard: accaCard, accaRowSpec: accaRowSpec, nineFoldSpec: nineFoldSpec,
     deskMatchSpec: deskMatchSpec, uclMatchSpec: uclMatchSpec,
     deskRoundSpec: deskRoundSpec,
-    deskStatSheetSpec: deskStatSheetSpec,
+    deskStatSheetSpec: deskStatSheetSpec, refAverages: refAverages,
     download: download, slug: slug,
     heatHex: heatHex, probHex: probHex, textOn: textOn,
     roundRect: roundRect, fit: fit, drawMark: drawMark

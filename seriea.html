@@ -1657,6 +1657,11 @@
         return SERIEA_PLAYERS.filter(function (p) { return p.c === short; });
       },
       h2hRows: h2hRowsFor(fx),
+      h2hMarks: h2hMarksFor(fx),
+      /* This division's own referees, so the card prints each rate against the
+         average official here rather than leaving a reader to know whether
+         4.86 yellows a game is severe. assets/share.js does the weighting. */
+      refs: (typeof REFS !== 'undefined' && REFS) || null,
       recentFor: function (short) { return recentCards(short, 5); },
       basis: 'Serie A 2026-27 only'
     });
@@ -1697,7 +1702,23 @@
   function h2hRowsFor(fx) {
     var p = typeof h2hFor === 'function' ? h2hFor(fx.h, fx.a) : null;
     if (!p || p.n == null || p.n < 3) return [];
-    return [{ left: 'Last ' + p.n + ' meetings', right: p.avg.toFixed(1) + ' cards avg' }];
+    var rows = [{ left: 'Last ' + p.n + ' meetings', right: p.avg.toFixed(1) + ' cards avg' }];
+    /* THE RATE ALREADY IN THE FILE AND NEVER PRINTED. "4.4 cards avg" and
+       "over 4.5 in 40%" are different questions: one pair is reliably busy,
+       another averages the same off two quiet meetings and a sending-off. */
+    if (p.o45 != null) {
+      rows.push({ left: 'Over 4.5 cards', right: Math.round(p.o45 * 100) + '%' });
+    }
+    return rows;
+  }
+
+  /* The per-meeting counts behind that average, newest first — the order
+     build_h2h.py stores them in and the order the form grid beside them
+     reads. The card takes the first eight and colours each by the same heat
+     scale it prints the expected-cards figure in. */
+  function h2hMarksFor(fx) {
+    var p = typeof h2hFor === 'function' ? h2hFor(fx.h, fx.a) : null;
+    return (p && Array.isArray(p.last)) ? p.last.slice(0, 8) : [];
   }
 
   function shareMatch(id, btn) {

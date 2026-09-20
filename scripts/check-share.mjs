@@ -330,6 +330,11 @@ const sheetSpec = S.deskStatSheetSpec(priced, {
     { c: 'DER', n: 'A Two', y: 0.28, f: 1.0, fw: 0.6, ls: false },
   ].filter((p) => p.c === short),
   h2hRows: [{ left: 'Last 6 meetings', right: '4.8 cards avg' }],
+  h2hMarks: [7, 2, 5, 3],
+  /* Two officials with very different workloads, so the weighting below is
+     tested by a case where a flat mean would give a different answer. */
+  refs: [{ n: 'Busy', matches: 30, fpg: 24, ypg: 5.0, cpf: 0.20, red: 0.20 },
+         { n: 'Quiet', matches: 2, fpg: 12, ypg: 1.0, cpf: 0.08, red: 0.00 }],
 });
 assert.equal(sheetSpec.home.short, 'CHA');
 assert.equal(sheetSpec.away.short, 'DER');
@@ -344,6 +349,68 @@ assert.ok(!refLabels.some((l) => /penalt|pens/i.test(l)),
   'the stat sheet is asking for penalties per game, which is null for every ' +
   'referee in all three divisions — it would draw a column of dashes');
 
+/* 4. THE LEAGUE AVERAGE UNDER EACH REFEREE RATE.
+ *
+ * A rate on its own answers nothing — 4.86 yellows a game is severe in Serie A
+ * and ordinary in the Championship — so the card prints the division's own
+ * average beneath it. Two things have to hold and both have bitten already:
+ *
+ *   WEIGHTED BY MATCHES. A debutant with one busy afternoon must not move the
+ *   line thirty other officials are measured against. With 30 matches at 5.0
+ *   and 2 at 1.0 the weighted answer is 4.75; a flat mean of means is 3.0, so
+ *   this case tells the two apart rather than agreeing by coincidence.
+ *
+ *   NOT BESIDE AN UNAPPOINTED REFEREE. Comparing "Not yet appointed" against
+ *   an average compares nothing, and drew a green marker under a dash.
+ */
+{
+  const avgs = sheetSpec.ref.stats.map((r) => r.avg);
+  assert.ok(avgs.every((a) => a != null),
+    'the referee panel lost its league averages — a rate with nothing to ' +
+    'compare it against is a number the reader has to go and look up');
+  const ypg = sheetSpec.ref.stats.find((r) => r.label === 'yellows per game');
+  assert.ok(Math.abs(ypg.avg - 4.75) < 1e-9,
+    `the league average is not matches-weighted: got ${ypg.avg}, expected ` +
+    '4.75 (30 matches at 5.0 and 2 at 1.0). A flat mean of means gives 3.0 ' +
+    'and lets a two-match official move the line for the whole division');
+
+  const unappointed = S.deskStatSheetSpec(
+    { ...priced, ref: { ref: null, name: null } },
+    { ...ctx, squadOf: () => [],
+      refs: [{ n: 'Busy', matches: 30, fpg: 24, ypg: 5.0, cpf: 0.2, red: 0.2 }] });
+  assert.ok(unappointed.ref.stats.every((r) => r.avg == null),
+    'an unappointed referee was given league averages to be compared against ' +
+    '— there is nothing on the other side of that comparison');
+}
+
+/* 5. THE MEETINGS BEHIND THE AVERAGE, and the direction they read in.
+ *
+ * data/build_h2h.py sorts its meetings NEWEST FIRST and every desk's
+ * recentCards() sorts its fixtures the same way, so the chips and the form
+ * grid above them have to run in one direction. The first cut took the tail of
+ * the array — the OLDEST meetings — and labelled them oldest first under a
+ * form row running the other way.
+ */
+{
+  assert.deepEqual(sheetSpec.h2h.marks, [7, 2, 5, 3],
+    'the head-to-head meetings did not survive the spec builder');
+  const many = S.deskStatSheetSpec(priced, {
+    ...ctx, squadOf: () => [], h2hRows: [], h2hMarks: [9, 8, 7, 6, 5, 4, 3, 2, 1] });
+  assert.ok(many.h2h,
+    'a pair with meetings but no summary row lost its panel — the marks are ' +
+    'the panel now, not a decoration on the rows');
+  drawn.length = 0;
+  await S.statSheetCard(many);
+  const t = drawn.join('\n');
+  assert.ok(/MOST RECENT FIRST/.test(t),
+    'the meetings grid lost the label saying which way it reads');
+  assert.ok(!/OLDEST FIRST/.test(t),
+    'the meetings grid says oldest first, but build_h2h.py stores them ' +
+    'newest first and the form grid above reads newest first too');
+}
+
+drawn.length = 0;
+await S.statSheetCard(sheetSpec);
 const sheetMark = placed.length;
 const sheetBlob = await S.statSheetCard(sheetSpec);
 assert.ok(sheetBlob && sheetBlob.__blob, 'statSheetCard did not produce a blob');

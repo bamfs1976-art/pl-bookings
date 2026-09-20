@@ -4884,10 +4884,22 @@ function exportFixtureSheet(fid,btn){
        it is anecdote, and the card drops the panel rather than drawing one. */
     h2hRows:p?[
       { left:"Last "+p.n+" meetings", right:p.avg.toFixed(1)+" cards avg" },
-      { left:"5 or more cards", right:Math.round(p.o45*100)+"%" },
-      p.last&&p.last.length
-        ? { left:"Most recent first", right:p.last.slice(0,6).join("  ·  ") } : null
-    ].filter(Boolean):[]
+      /* "Over 4.5 cards" rather than "5 or more", which is what this row said
+         until the meetings moved into the panel below it. Same threshold —
+         o45 counts meetings of five or more — but the match panel two boxes
+         up already prints OVER 4.5, and one card calling one number two
+         things reads as two numbers. */
+      { left:"Over 4.5 cards", right:Math.round(p.o45*100)+"%" }
+    ]:[],
+    /* THE MEETINGS AS CHIPS rather than as a row of text. They were a string
+       of counts joined by dots in the right-hand column, which is a list
+       pretending to be a value: it could not be coloured, it crowded the
+       column, and nothing marked which of those numbers was a busy afternoon.
+       The card now draws one chip a meeting on the same heat scale it prints
+       the expected-cards figure in, so the run reads at a glance. */
+    h2hMarks:(p&&Array.isArray(p.last))?p.last.slice(0,8):[],
+    /* This division's referees, for the league average under each rate. */
+    refs:(typeof REFS!=="undefined"&&REFS)||null
   });
   const label=btn?btn.getAttribute("aria-label"):null;
   if(btn) btn.disabled=true;
