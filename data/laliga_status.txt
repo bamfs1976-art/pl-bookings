@@ -4,6 +4,6 @@ players: 641  by basis: LL=458, NEW=118, SEG=65
 form: LL=2026-27, SEG=2025-26
 clubs with players: 20 of 20
 club rates from match records: 17 of 20
-season cautions (2026-27): 536 players
+season cautions (2026-27): 538 players
 referees: 20
 RESULT: WRITTEN laliga_data.js
