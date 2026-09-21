@@ -57,7 +57,7 @@ for (const a of overlay.appointments) {
   (byLeague[a.league] ||= []).push(a);
 }
 
-let checked = 0, missingRecord = [], notApplied = [], changed = [];
+let checked = 0, missingRecord = [], notApplied = [], noFixture = [], changed = [];
 
 for (const [code, appts] of Object.entries(byLeague)) {
   const desk = DESKS[code];
@@ -124,9 +124,25 @@ for (const [code, appts] of Object.entries(byLeague)) {
     checked++;
     const fx = findFixture(a);
     if (!fx) {
-      /* Not a failure on its own: a postponement removes a fixture, and the
-         ingest reports an unmatched appointment when it runs. */
-      notApplied.push(`${code} ${a.h} v ${a.a} ${a.date} — no such fixture`);
+      /* A DIFFERENT THING FROM THE CASE BELOW, and it took a postponement to
+         make that matter. This comment already said "not a failure on its own:
+         a postponement removes a fixture", and the assertion at the foot of
+         the file then demanded there be none — so the note and the check
+         disagreed, and the check won.
+
+         On 21 September 2026 Levante v Athletic was postponed. It sits in the
+         committed file as st=PST on the 16th with its official; the 14:18 run
+         re-harvested, API-Football had moved it, and the overlay entry — which
+         is pinned to the published date — matched nothing a day either side.
+         One stale row out of 171, on a fixture nobody is pricing, took down
+         every commit of the day and with them the whole round's appointments.
+
+         The case BELOW is the one worth failing on: a fixture that exists,
+         with no referee on it, means the overlay did not apply and the desk
+         is pricing a known appointment at a neutral official. That is the
+         failure this guard was written for. A fixture that has gone is a
+         calendar change, and the only harm is a row left behind. */
+      noFixture.push(`${code} ${a.h} v ${a.a} ${a.date} — no such fixture`);
       continue;
     }
     if (!fx.ref) {
@@ -156,11 +172,24 @@ for (const [code, appts] of Object.entries(byLeague)) {
 
 for (const line of changed) console.log(`  note: ${line}`);
 for (const line of missingRecord) console.log(`  note: no card record for ${line} — prices at the league rate`);
+for (const line of noFixture) console.log(`  note: ${line} — postponed or rescheduled, overlay row now stale`);
 
 /* THE ASSERTIONS. */
 assert.equal(notApplied.length, 0,
   'appointments are not in the committed fixture list, so those fixtures ' +
   'price at a neutral referee:\n  - ' + notApplied.join('\n  - '));
+
+/* BOUNDED, NOT IGNORED. One or two are postponements. If the clubs' codes or
+   the date format ever change, every appointment stops matching at once — and
+   that must still fail, because then nothing is applied and every fixture in
+   the overlay prices at a neutral referee. Same shape as the card-record
+   assertion below it, at a tighter ratio because postponements are rarer than
+   officials without a record. */
+assert.ok(noFixture.length * 10 <= checked,
+  `${noFixture.length} of ${checked} appointments name a fixture that is not ` +
+  'in the file a day either side. A handful is postponements; this many means ' +
+  'the join itself is broken — club codes or the date format have moved and ' +
+  'NOTHING is being applied:\n  - ' + noFixture.join('\n  - '));
 
 assert.ok(missingRecord.length * 2 <= checked,
   `${missingRecord.length} of ${checked} appointed officials have no card record. ` +
