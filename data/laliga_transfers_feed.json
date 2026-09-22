@@ -1,6 +1,6 @@
 {
   "note": "PROPOSALS from API-Football /transfers, for a person to read. data/transfers.json is the hand-curated overlay that is actually applied; this is not.",
-  "since": "2026-05-24",
+  "since": "2026-05-25",
   "moves": [
     {
       "n": "T. Gijselhart",
@@ -18,6 +18,15 @@
       "fromCode": "LEV",
       "toCode": null,
       "date": "2026-09-03",
+      "type": "Free agent"
+    },
+    {
+      "n": "Xavi",
+      "from": "Levante",
+      "to": "Academica",
+      "fromCode": "LEV",
+      "toCode": null,
+      "date": "2026-09-02",
       "type": "Free agent"
     },
     {
@@ -273,6 +282,15 @@
       "type": "Loan"
     },
     {
+      "n": "Marco Sangalli",
+      "from": "Racing Santander",
+      "to": "Zaragoza",
+      "fromCode": "RAC",
+      "toCode": null,
+      "date": "2026-08-31",
+      "type": "Free agent"
+    },
+    {
       "n": "Marc Vidal",
       "from": "Celta Vigo",
       "to": "Sabadell",
@@ -516,6 +534,15 @@
       "type": "Transfer"
     },
     {
+      "n": "Carlos Álvarez",
+      "from": "Levante",
+      "to": "Club America",
+      "fromCode": "LEV",
+      "toCode": null,
+      "date": "2026-08-31",
+      "type": "Transfer"
+    },
+    {
       "n": "B. Martinez",
       "from": "Espanyol",
       "to": "Ucam Murcia",
@@ -606,6 +633,15 @@
       "type": "Transfer"
     },
     {
+      "n": "Pablo García",
+      "from": "Real Betis",
+      "to": "Racing Santander",
+      "fromCode": "BET",
+      "toCode": "RAC",
+      "date": "2026-08-30",
+      "type": "Transfer"
+    },
+    {
       "n": "K. Lomónaco",
       "from": "Independiente",
       "to": "Elche",
@@ -647,6 +683,24 @@
       "to": "Racing Santander",
       "fromCode": "ATM",
       "toCode": "RAC",
+      "date": "2026-08-30",
+      "type": "Transfer"
+    },
+    {
+      "n": "G. Puerta",
+      "from": "Racing Santander",
+      "to": "Olympiakos Piraeus",
+      "fromCode": "RAC",
+      "toCode": null,
+      "date": "2026-08-30",
+      "type": "Transfer"
+    },
+    {
+      "n": "G. Biladi",
+      "from": "Anderlecht U18",
+      "to": "Levante",
+      "fromCode": null,
+      "toCode": "LEV",
       "date": "2026-08-30",
       "type": "Transfer"
     },
@@ -721,6 +775,15 @@
       "toCode": "MAL",
       "date": "2026-08-30",
       "type": "Loan"
+    },
+    {
+      "n": "Aarón Martín",
+      "from": "Genoa",
+      "to": "Racing Santander",
+      "fromCode": null,
+      "toCode": "RAC",
+      "date": "2026-08-30",
+      "type": "Transfer"
     },
     {
       "n": "Oso",
@@ -937,6 +1000,15 @@
       "toCode": "RAC",
       "date": "2026-08-25",
       "type": "Loan"
+    },
+    {
+      "n": "K. Tunde",
+      "from": "Levante",
+      "to": "West Brom",
+      "fromCode": "LEV",
+      "toCode": null,
+      "date": "2026-08-25",
+      "type": "Transfer"
     },
     {
       "n": "Jesús Owono",
@@ -1344,6 +1416,15 @@
       "type": "Free agent"
     },
     {
+      "n": "Iván Martín",
+      "from": "Girona",
+      "to": "Racing Santander",
+      "fromCode": null,
+      "toCode": "RAC",
+      "date": "2026-08-18",
+      "type": "Transfer"
+    },
+    {
       "n": "Daniel Budesca",
       "from": "Villarreal",
       "to": "Cordoba",
@@ -1461,6 +1542,15 @@
       "type": "Loan"
     },
     {
+      "n": "K. Arriaga",
+      "from": "Levante",
+      "to": "AEK Athens FC",
+      "fromCode": "LEV",
+      "toCode": null,
+      "date": "2026-08-15",
+      "type": "Transfer"
+    },
+    {
       "n": "I. Voloshyn",
       "from": "Real Madrid",
       "to": "Real Madrid",
@@ -1576,6 +1666,15 @@
       "toCode": "ELC",
       "date": "2026-08-12",
       "type": "Transfer"
+    },
+    {
+      "n": "S. Franco",
+      "from": "Racing Santander",
+      "to": "Real Avilés",
+      "fromCode": "RAC",
+      "toCode": null,
+      "date": "2026-08-12",
+      "type": "Free agent"
     },
     {
       "n": "Pablo Busto",
@@ -2172,6 +2271,15 @@
       "type": "Free agent"
     },
     {
+      "n": "Unai Elgezabal",
+      "from": "Levante",
+      "to": "Eibar",
+      "fromCode": "LEV",
+      "toCode": null,
+      "date": "2026-08-03",
+      "type": "Free agent"
+    },
+    {
       "n": "Rafa Mir",
       "from": "Sevilla",
       "to": "Aris Thessalonikis",
@@ -2179,6 +2287,15 @@
       "toCode": null,
       "date": "2026-08-03",
       "type": "Loan"
+    },
+    {
+      "n": "Pablo Ramón",
+      "from": "Espanyol",
+      "to": "Racing Santander",
+      "fromCode": "ESP",
+      "toCode": "RAC",
+      "date": "2026-08-03",
+      "type": "Transfer"
     },
     {
       "n": "M. ter Stegen",
@@ -2278,6 +2395,15 @@
       "toCode": "LEV",
       "date": "2026-08-01",
       "type": "Transfer"
+    },
+    {
+      "n": "Suleiman Camara",
+      "from": "Racing Santander",
+      "to": "Slovan Bratislava",
+      "fromCode": "RAC",
+      "toCode": null,
+      "date": "2026-08-01",
+      "type": "-"
     },
     {
       "n": "P. Gulácsi",
@@ -2386,6 +2512,15 @@
       "toCode": null,
       "date": "2026-07-30",
       "type": "Transfer"
+    },
+    {
+      "n": "H. Perez",
+      "from": "Celta Vigo",
+      "to": "Racing Santander",
+      "fromCode": "CEL",
+      "toCode": "RAC",
+      "date": "2026-07-30",
+      "type": "Free agent"
     },
     {
       "n": "B. Iglesias Lois",
@@ -2631,6 +2766,15 @@
       "type": "Free agent"
     },
     {
+      "n": "Diego Pampín",
+      "from": "Levante",
+      "to": "Granada CF",
+      "fromCode": "LEV",
+      "toCode": null,
+      "date": "2026-07-23",
+      "type": "Free agent"
+    },
+    {
       "n": "Antoniu Roca",
       "from": "Espanyol",
       "to": "Mallorca",
@@ -2638,6 +2782,15 @@
       "toCode": null,
       "date": "2026-07-23",
       "type": "Loan"
+    },
+    {
+      "n": "Yeray Cabanzón",
+      "from": "Racing Santander",
+      "to": "Valladolid",
+      "fromCode": "RAC",
+      "toCode": null,
+      "date": "2026-07-22",
+      "type": "Free agent"
     },
     {
       "n": "S. Samuyiwa",
@@ -2800,6 +2953,15 @@
       "toCode": "MAL",
       "date": "2026-07-18",
       "type": "Loan"
+    },
+    {
+      "n": "A. Ca",
+      "from": "Levante",
+      "to": "Newcastle United U21",
+      "fromCode": "LEV",
+      "toCode": null,
+      "date": "2026-07-18",
+      "type": "-"
     },
     {
       "n": "T. Nianzou",
@@ -3243,6 +3405,15 @@
       "type": "Free agent"
     },
     {
+      "n": "Mario García",
+      "from": "Racing Santander",
+      "to": "Widzew Łódź",
+      "fromCode": "RAC",
+      "toCode": null,
+      "date": "2026-07-08",
+      "type": "Transfer"
+    },
+    {
       "n": "L. Amatucci",
       "from": "Fiorentina",
       "to": "Deportivo La Coruna",
@@ -3592,6 +3763,15 @@
       "toCode": null,
       "date": "2026-07-04",
       "type": "Loan"
+    },
+    {
+      "n": "Javi Castro",
+      "from": "Racing Santander",
+      "to": "Cadiz",
+      "fromCode": "RAC",
+      "toCode": null,
+      "date": "2026-07-04",
+      "type": "Transfer"
     },
     {
       "n": "D. Dumfries",
@@ -4917,6 +5097,15 @@
       "type": "Return from loan"
     },
     {
+      "n": "Sergio Canales",
+      "from": "Monterrey",
+      "to": "Racing Santander",
+      "fromCode": null,
+      "toCode": "RAC",
+      "date": "2026-06-29",
+      "type": "Free agent"
+    },
+    {
       "n": "Sergi Canós",
       "from": "Valladolid",
       "to": "Valencia",
@@ -4969,6 +5158,15 @@
       "toCode": "ATM",
       "date": "2026-06-29",
       "type": "Return from loan"
+    },
+    {
+      "n": "S. Calera",
+      "from": "Racing Santander",
+      "to": "Barakaldo",
+      "fromCode": "RAC",
+      "toCode": null,
+      "date": "2026-06-29",
+      "type": "Free agent"
     },
     {
       "n": "S. Boselli",
@@ -6699,6 +6897,15 @@
       "type": "Return from loan"
     },
     {
+      "n": "D. Fuentes",
+      "from": "Racing Santander",
+      "to": "Real Jaén",
+      "fromCode": "RAC",
+      "toCode": null,
+      "date": "2026-06-29",
+      "type": "Free agent"
+    },
+    {
       "n": "D. Brašanac",
       "from": "Malaga",
       "to": "Brasanac Darko",
@@ -7273,6 +7480,15 @@
       "toCode": "ELC",
       "date": "2026-06-29",
       "type": "Return from loan"
+    },
+    {
+      "n": "A. Murenzi",
+      "from": "KRC Genk II",
+      "to": "Levante",
+      "fromCode": null,
+      "toCode": "LEV",
+      "date": "2026-06-29",
+      "type": "Free agent"
     },
     {
       "n": "A. Mumin",
