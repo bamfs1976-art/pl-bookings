@@ -1,0 +1,40 @@
+name: Probe Reep referees
+
+# A DIAGNOSTIC, like probe-af-referees.yml. It downloads the Reep register's
+# referee identities (reep.football, CC0), compares them with the committed
+# card tables and appointments, and prints a report to the job summary. It
+# writes nothing and commits nothing.
+#
+# WHY: every referee join here is by name, with a hand-written alias list for
+# the cases the rules cannot reach. The question is whether Reep's alternate
+# names could take that list's place, and whether Reep ever disagrees with a
+# join already made. The script's docstring has the detail.
+#
+# WHY IT ALSO RUNS ON PUSH: workflow_dispatch only works once a workflow is on
+# the default branch, and this is a question asked from a feature branch. The
+# push trigger is limited to that branch and these two files.
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [claude/football-docs-evaluation-wyzsiu]
+    paths:
+      - scripts/probe-reep-referees.py
+      - .github/workflows/probe-reep-referees.yml
+
+# No contents: write. This job has nothing to push and must not be able to.
+permissions:
+  contents: read
+
+concurrency:
+  group: probe-reep-referees
+  cancel-in-progress: true
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Compare with Reep
+        run: python3 scripts/probe-reep-referees.py
