@@ -1,7 +1,16 @@
 {
   "note": "PROPOSALS from API-Football /transfers, for a person to read. data/transfers.json is the hand-curated overlay that is actually applied; this is not.",
-  "since": "2026-05-25",
+  "since": "2026-05-26",
   "moves": [
+    {
+      "n": "Y. Ibrahim",
+      "from": "Brighton",
+      "to": "Brighton",
+      "fromCode": "BHA",
+      "toCode": "BHA",
+      "date": "2026-09-11",
+      "type": "Raise"
+    },
     {
       "n": "D. Akintola",
       "from": "Hull City",
@@ -19,6 +28,15 @@
       "toCode": null,
       "date": "2026-09-08",
       "type": "Free agent"
+    },
+    {
+      "n": "Remy Rees-Dottin",
+      "from": "Bournemouth",
+      "to": "Cukaricki",
+      "fromCode": "BOU",
+      "toCode": null,
+      "date": "2026-09-06",
+      "type": "-"
     },
     {
       "n": "B. Traoré",
@@ -1128,15 +1146,6 @@
       "type": "Loan"
     },
     {
-      "n": "José María Andrés Baixauli",
-      "from": "VfB Stuttgart",
-      "to": "Brighton",
-      "fromCode": null,
-      "toCode": "BHA",
-      "date": "2026-08-30",
-      "type": "Transfer"
-    },
-    {
       "n": "Joshua Feeney",
       "from": "Aston Villa",
       "to": "Peterborough",
@@ -1614,6 +1623,15 @@
       "type": "Transfer"
     },
     {
+      "n": "Charlie Osborne",
+      "from": "Bournemouth",
+      "to": "AFC Bournemouth U21",
+      "fromCode": "BOU",
+      "toCode": null,
+      "date": "2026-08-26",
+      "type": "-"
+    },
+    {
       "n": "W. Dennis",
       "from": "Bournemouth",
       "to": "Milton Keynes Dons",
@@ -1675,6 +1693,15 @@
       "toCode": "HUL",
       "date": "2026-08-25",
       "type": "Transfer"
+    },
+    {
+      "n": "F. Tonks",
+      "from": "Bournemouth",
+      "to": "Coleraine FC",
+      "fromCode": "BOU",
+      "toCode": null,
+      "date": "2026-08-25",
+      "type": "-"
     },
     {
       "n": "Eric Emanuel da Silva Moreira",
@@ -4764,15 +4791,6 @@
       "type": "Transfer"
     },
     {
-      "n": "A. Amenda",
-      "from": "Eintracht Frankfurt",
-      "to": "Coventry",
-      "fromCode": null,
-      "toCode": "COV",
-      "date": "2026-07-14",
-      "type": "Transfer"
-    },
-    {
       "n": "Á. Rodríguez",
       "from": "Elche",
       "to": "Bournemouth",
@@ -6832,15 +6850,6 @@
       "toCode": null,
       "date": "2026-06-29",
       "type": "Return from loan"
-    },
-    {
-      "n": "M. Röhl",
-      "from": "SC Freiburg",
-      "to": "Everton",
-      "fromCode": null,
-      "toCode": "EVE",
-      "date": "2026-06-29",
-      "type": "Transfer"
     },
     {
       "n": "M. Rashford",
