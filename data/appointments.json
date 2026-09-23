@@ -792,9 +792,9 @@
    "h": "BRC",
    "a": "WAT",
    "ko": "20:00",
-   "ref": "Oliver Langford Assistants: George Byrne and Matt Gunn-Smith Fourth Official: Simon Hooper",
-   "refResolved": null,
-   "resolvedBy": null,
+   "ref": "Oliver Langford",
+   "refResolved": "O Langford",
+   "resolvedBy": "initial",
    "source": "https://efl.com/news/2026/september/17/referee-appointments--18-20-september-2026/"
   },
   {
@@ -803,9 +803,9 @@
    "h": "BIR",
    "a": "MID",
    "ko": "15:00",
-   "ref": "David Webb Assistants: Andrew Fox and Alan Cresswell Fourth Official: Martin Coy",
-   "refResolved": null,
-   "resolvedBy": null,
+   "ref": "David Webb",
+   "refResolved": "D Webb",
+   "resolvedBy": "initial",
    "source": "https://efl.com/news/2026/september/17/referee-appointments--18-20-september-2026/"
   },
   {
@@ -814,9 +814,9 @@
    "h": "BUR",
    "a": "DER",
    "ko": "15:00",
-   "ref": "Steve Martin Assistants: Conor Brown and Callum Gough Fourth Official: Michael Barlow",
-   "refResolved": null,
-   "resolvedBy": null,
+   "ref": "Steve Martin",
+   "refResolved": "S Martin",
+   "resolvedBy": "initial",
    "source": "https://efl.com/news/2026/september/17/referee-appointments--18-20-september-2026/"
   },
   {
@@ -825,9 +825,9 @@
    "h": "CAR",
    "a": "CHA",
    "ko": "12:30",
-   "ref": "Elliot Bell Assistants: Darren Williams and Conall Bartlett Fourth Official: Lewis Sandoe",
-   "refResolved": null,
-   "resolvedBy": null,
+   "ref": "Elliot Bell",
+   "refResolved": "E Bell",
+   "resolvedBy": "initial",
    "source": "https://efl.com/news/2026/september/17/referee-appointments--18-20-september-2026/"
   },
   {
@@ -836,9 +836,9 @@
    "h": "LIN",
    "a": "SWA",
    "ko": "15:00",
-   "ref": "Anthony Backhouse Assistants: Richard Woodward and Daniel Woodward Fourth Official: Aaron Bannister",
-   "refResolved": null,
-   "resolvedBy": null,
+   "ref": "Anthony Backhouse",
+   "refResolved": "A Backhouse",
+   "resolvedBy": "initial",
    "source": "https://efl.com/news/2026/september/17/referee-appointments--18-20-september-2026/"
   },
   {
@@ -847,9 +847,9 @@
    "h": "MIL",
    "a": "WHU",
    "ko": "12:30",
-   "ref": "Paul Tierney Assistants: Richard West and Sam Lewis Fourth Official: Lewis Smith",
+   "ref": "Paul Tierney",
    "refResolved": "Paul Tierney",
-   "resolvedBy": "run",
+   "resolvedBy": "exact",
    "source": "https://efl.com/news/2026/september/17/referee-appointments--18-20-september-2026/"
   },
   {
@@ -858,9 +858,9 @@
    "h": "POR",
    "a": "BLB",
    "ko": "15:00",
-   "ref": "John Busby Assistants: John Bickerdike and Mark Dwyer Fourth Official: Richard Eley",
-   "refResolved": null,
-   "resolvedBy": null,
+   "ref": "John Busby",
+   "refResolved": "J Busby",
+   "resolvedBy": "initial",
    "source": "https://efl.com/news/2026/september/17/referee-appointments--18-20-september-2026/"
   },
   {
@@ -869,7 +869,7 @@
    "h": "QPR",
    "a": "PRE",
    "ko": "15:00",
-   "ref": "Tom Parsons Assistants: Nigel Lugg and David Harrison Fourth Official: Matt Corlett",
+   "ref": "Tom Parsons",
    "refResolved": null,
    "resolvedBy": null,
    "source": "https://efl.com/news/2026/september/17/referee-appointments--18-20-september-2026/"
@@ -880,9 +880,9 @@
    "h": "STK",
    "a": "SHU",
    "ko": "12:30",
-   "ref": "Tim Robinson Assistants: Andrew Dallison and Hugh Gilroy Fourth Official: Ed Duckworth",
+   "ref": "Tim Robinson",
    "refResolved": "Tim Robinson",
-   "resolvedBy": "run",
+   "resolvedBy": "exact",
    "source": "https://efl.com/news/2026/september/17/referee-appointments--18-20-september-2026/"
   },
   {
@@ -891,9 +891,9 @@
    "h": "WRE",
    "a": "SOU",
    "ko": "15:00",
-   "ref": "Gavin Ward Assistants: Shaun Hudson and Jacob Lehane Fourth Official: Scott Oldham",
-   "refResolved": null,
-   "resolvedBy": null,
+   "ref": "Gavin Ward",
+   "refResolved": "G Ward",
+   "resolvedBy": "initial",
    "source": "https://efl.com/news/2026/september/17/referee-appointments--18-20-september-2026/"
   },
   {
@@ -902,9 +902,9 @@
    "h": "NOR",
    "a": "BOL",
    "ko": "15:00",
-   "ref": "Tom Nield Assistants: Bhups Singh Gill and Matthew Sowerby Fourth Official: Steve Martin",
-   "refResolved": null,
-   "resolvedBy": null,
+   "ref": "Tom Nield",
+   "refResolved": "T Nield",
+   "resolvedBy": "initial",
    "source": "https://efl.com/news/2026/september/17/referee-appointments--18-20-september-2026/"
   },
   {
@@ -913,9 +913,9 @@
    "h": "WOL",
    "a": "WBA",
    "ko": "12:00",
-   "ref": "Josh Smith Assistants: Mark Stevens and Paul Hodskinson Fourth Official: Tom Kirk",
+   "ref": "Josh Smith",
    "refResolved": "Josh Smith",
-   "resolvedBy": "run",
+   "resolvedBy": "exact",
    "source": "https://efl.com/news/2026/september/17/referee-appointments--18-20-september-2026/"
   },
   {

@@ -407,6 +407,29 @@ def _every_committed_appointment_still_resolves():
     assert not stale, f"committed appointments no longer match the card table: {stale}"
 
 
+def _officials_on_one_line_are_cut_from_the_referee():
+    """The 18-20 September 2026 article, as it really arrived: line breaks
+    gone, every official on the referee's line. The last fixture is the
+    dangerous shape — a fourth official sharing a surname with a colleague on
+    the card table, which the surname-run rule could have taken."""
+    text = """Saturday, 19th September 2026
+Sky Bet Championship
+Burnley v Derby County (15:00)
+Referee: Steve Martin Assistants: Conor Brown and Callum Gough Fourth Official: Michael Barlow
+Millwall v West Ham United (12:30)
+Referee: Paul Tierney. Assistant Referees: Richard West, Sam Lewis. Fourth official: Lewis Smith. VAR: Tim Wood.
+"""
+    rows, _, _ = I.parse(text)
+    assert [r["ref"] for r in rows] == ["Steve Martin", "Paul Tierney"], rows
+
+
+def _no_committed_appointment_carries_another_official():
+    """A referee name holding "Assistants:" or "Fourth Official:" is an
+    ingest that swallowed the line, whether or not it happened to resolve."""
+    bad = [e["ref"] for e in A.load() if I.OTHER_OFFICIAL_RE.search(e["ref"] or "")]
+    assert not bad, f"committed appointments carry other officials: {bad}"
+
+
 t("the article parses into fixtures", _the_article_parses_into_fixtures)
 t("assistants and fourth officials are ignored", _officials_who_are_not_the_referee_are_ignored)
 t("only modelled divisions are ingested", _only_modelled_divisions_are_ingested)
@@ -424,6 +447,10 @@ t("an appointment with no fixture is reported", _an_appointment_with_no_fixture_
 t("another league's entries are not applied", _another_leagues_entries_are_not_applied)
 t("the committed fixture file reads back", _the_committed_fixture_file_reads_back)
 t("every committed appointment still resolves", _every_committed_appointment_still_resolves)
+t("officials on the referee's line are cut from the name",
+  _officials_on_one_line_are_cut_from_the_referee)
+t("no committed appointment carries another official",
+  _no_committed_appointment_carries_another_official)
 
 
 # --- the RFEF designation sheet -------------------------------------------

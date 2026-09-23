@@ -278,6 +278,25 @@ BARE_FIXTURE_RE = re.compile(r"^(.+?)\s+v\s+(.+?)\s*$", re.I)
 BARE_KO_RE = re.compile(r"^(\d{1,2}):(\d{2})\s*(am|pm)?\s*$", re.I)
 REFEREE_RE = re.compile(r"^referee:\s*(.+?)\s*$", re.I)
 
+# THE WHOLE TEAM OF OFFICIALS ON ONE LINE. The EFL article for 18-20 September
+# 2026 arrived with its line breaks gone, so every "Referee:" line read
+# "Steve Martin Assistants: Conor Brown and Callum Gough Fourth Official:
+# Michael Barlow" — and the capture above took all of it as the referee's
+# name. Nine of twelve fixtures went unresolved. The other three resolved to
+# the right man by LUCK: the resolver's surname-run rule happened to land on
+# the first name in the string. Nothing stops it landing on the fourth
+# official instead, which is the failure this file exists to refuse. So the
+# name ends at the first label for another official, whatever the layout.
+OTHER_OFFICIAL_RE = re.compile(
+    r"[\s.,;]+(?:assistants?(?:\s+referees?)?|fourth\s+official|4th\s+official"
+    r"|assistant\s+var|var|avar|reserve(?:\s+(?:referee|assistant))?)\s*:",
+    re.I)
+
+
+def referee_only(name):
+    """The referee's name with any following officials cut off."""
+    return OTHER_OFFICIAL_RE.split(name or "", maxsplit=1)[0].strip(" .,;")
+
 
 def _ko24(hour, minute, meridiem):
     """A published kick-off as 24-hour HH:MM.
@@ -456,7 +475,7 @@ def parse(text, default_year=None):
 
         m = REFEREE_RE.match(line)
         if m and pending is not None:
-            pending["ref"] = m.group(1).strip()
+            pending["ref"] = referee_only(m.group(1))
             out.append(pending)
             pending = None
             continue
