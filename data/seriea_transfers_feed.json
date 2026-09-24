@@ -1,6 +1,6 @@
 {
   "note": "PROPOSALS from API-Football /transfers, for a person to read. data/transfers.json is the hand-curated overlay that is actually applied; this is not.",
-  "since": "2026-05-26",
+  "since": "2026-05-27",
   "moves": [
     {
       "n": "A. Salah-Eddine",
@@ -100,6 +100,15 @@
       "toCode": null,
       "date": "2026-09-06",
       "type": "Loan"
+    },
+    {
+      "n": "D. Hodzic",
+      "from": "AC Milan",
+      "to": "Istra 1961",
+      "fromCode": "ACM",
+      "toCode": null,
+      "date": "2026-09-05",
+      "type": "Transfer"
     },
     {
       "n": "A. Barák",
@@ -583,6 +592,15 @@
       "from": "Juventus",
       "to": "Atlético Madrid II",
       "fromCode": "JUV",
+      "toCode": null,
+      "date": "2026-08-31",
+      "type": "Loan"
+    },
+    {
+      "n": "J. Sardo",
+      "from": "AC Milan",
+      "to": "Pescara",
+      "fromCode": "ACM",
       "toCode": null,
       "date": "2026-08-31",
       "type": "Loan"
@@ -3099,15 +3117,6 @@
       "type": "Free agent"
     },
     {
-      "n": "Kerim-Sam Alajbegović",
-      "from": "Bayer Leverkusen",
-      "to": "Juventus",
-      "fromCode": null,
-      "toCode": "JUV",
-      "date": "2026-07-31",
-      "type": "Transfer"
-    },
-    {
       "n": "K. Koulierakis",
       "from": "VfL Wolfsburg",
       "to": "AS Roma",
@@ -3358,6 +3367,15 @@
       "toCode": null,
       "date": "2026-07-30",
       "type": "Loan"
+    },
+    {
+      "n": "D. Hodzic",
+      "from": "Orgryte IS",
+      "to": "AC Milan",
+      "fromCode": null,
+      "toCode": "ACM",
+      "date": "2026-07-30",
+      "type": "Return from loan"
     },
     {
       "n": "A. Gemello",
