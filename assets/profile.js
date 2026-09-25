@@ -256,6 +256,12 @@
       + '</div>';
 
     var extra = '';
+    /* "Booked in X of last 5", with a dot per appearance, most recent first.
+       The desk hands over PLDCore.bookedForm's answer; null (no ledger, or
+       fewer than three appearances) draws nothing. */
+    if (rec.form && root.PLDCore && root.PLDCore.bookedFormHtml) {
+      extra += '<p class="pp-line pp-form">' + root.PLDCore.bookedFormHtml(rec.form, true) + '</p>';
+    }
     if (rec.susp) {
       extra += '<p class="pp-line' + (rec.susp.urgent ? ' pp-urgent' : '') + '">'
         + esc(rec.susp.text) + '</p>';

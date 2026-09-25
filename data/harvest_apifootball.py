@@ -656,6 +656,39 @@ def map_fixture_player(entry, club_of):
     }
 
 
+def ledger_skip(path):
+    """The fixtures a shipped bookings ledger already holds, for --only-new.
+
+    THE LEDGER IS A SCRIPT, not a JSON file: comment lines and
+    `const X = {...};` around the object. Reading the whole file as JSON
+    failed on its first character, on every run, and froze all four ledgers
+    at the round they had reached. Same slice build_bookings.load_shipped uses.
+    """
+    if not path.exists():
+        return set()
+    try:
+        src = path.read_text(encoding="utf-8")
+        start, end = src.find("{"), src.rfind("}")
+        if start < 0 or end < 0:
+            raise ValueError("no object in the file")
+        prior = json.loads(src[start:end + 1])
+    except (ValueError, OSError) as e:
+        # A ledger that cannot be read must not silently become "nothing
+        # recorded" — that is a full-season re-walk and a spent quota,
+        # reported as a normal run.
+        sys.exit(f"ERROR: --only-new {path.name}: {e}")
+    # A LEDGER FROM BEFORE APPEARANCES has cards for its fixtures but not who
+    # played in them, and skipping them would leave the last-5 badge short for
+    # the rest of the season. Walk the season once; the merge does not
+    # re-count a card it already holds. EMPTY, not absent: the build runs
+    # even when the harvest fails and writes `apps: []`, and keying on the
+    # field's presence would then skip the re-walk for good.
+    if prior.get("fixtures") and not prior.get("apps"):
+        print(f"  {path.name} predates appearances — re-walking the season once")
+        return set()
+    return {int(f) for f in (prior.get("fixtures") or [])}
+
+
 def harvest_player_matches(host, key, league, season, limit=None, skip=None):
     """Every finished fixture of a season, one call each.
 
@@ -1369,18 +1402,8 @@ def main():
                      .strftime("%Y-%m-%dT%H:%MZ"))
         return
     if args.player_matches:
-        skip = set()
+        skip = ledger_skip(DATA / args.only_new) if args.only_new else set()
         if args.only_new:
-            path = DATA / args.only_new
-            if path.exists():
-                try:
-                    prior = json.loads(path.read_text(encoding="utf-8"))
-                except (ValueError, OSError) as e:
-                    # A ledger that cannot be read must not silently become
-                    # "nothing recorded" — that is a full-season re-walk and a
-                    # spent quota, reported as a normal run.
-                    sys.exit(f"ERROR: --only-new {args.only_new}: {e}")
-                skip = {int(f) for f in (prior.get("fixtures") or [])}
             print(f"  {len(skip)} fixture(s) already recorded in {args.only_new}")
         emit_player_matches(
             harvest_player_matches(host, key, league, season, args.limit, skip),

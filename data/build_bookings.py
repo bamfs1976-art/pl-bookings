@@ -30,6 +30,19 @@ following Monday's part of different windows depending on when the page was
 opened. `rounds` is the highest round the ledger has seen, and the window is
 the five rounds ending there.
 
+APPEARANCES, FOR "BOOKED IN X OF LAST 5". A card count alone cannot say
+how often a player is booked when he plays: two cards in five appearances and
+two in five rounds he mostly sat out read the same. So the ledger also keeps,
+for every player who got on the pitch, the rounds of his last five
+appearances (`apps`). Five, not the season: that is all the badge asks, and
+it keeps the file a few kilobytes rather than a few hundred. Rounds are a set,
+so a re-walked fixture adds nothing it has not already added.
+
+THE BADGE IS JOINED HERE, like the faces. `form` maps each squad player, as
+the desk's own dataset spells him, to his last appearances most recent first:
+"1" booked, "0" not. The page reads that string and does no name matching of
+its own. It is rebuilt from `apps` and `rds` every run.
+
 A SECOND YELLOW IS ONE DISMISSAL, NOT TWO CARDS — the same convention the
 match record uses (see scripts/accas.mjs outcomeTotals). API-Football reports
 it on the player line as yc=2, rc=1 for that match; counting the yellows and
@@ -69,6 +82,18 @@ DATA_FOR = {
 }
 
 
+# How many appearances the ledger keeps per player, and so the most the
+# badge can ever show. The page reads it back as the length of each string.
+APPS_KEEP = 5
+
+
+def played(row):
+    """Did he get on the pitch? Minutes say so; a card says so too, because a
+    player booked in the match was in it, and without that a booked row could
+    fall outside his own appearances and show as 3 of 2."""
+    return int(row.get("min") or 0) > 0 or cards_in(row) > 0
+
+
 def cards_in(row):
     """Cards shown to one player in one match, second yellow counted once.
 
@@ -88,7 +113,7 @@ def cards_in(row):
 def load_shipped(path):
     """The ledger already in the repository, or an empty one."""
     if not path.exists():
-        return {"season": None, "rounds": 0, "fixtures": [], "players": []}
+        return {"season": None, "rounds": 0, "fixtures": [], "players": [], "apps": []}
     src = path.read_text(encoding="utf-8")
     start = src.find("{")
     end = src.rfind("}")
@@ -109,6 +134,9 @@ def merge(shipped, rows, season):
             "rds": {int(k): int(v) for k, v in (p.get("rds") or {}).items()},
         }
     fixtures = {int(f) for f in (shipped.get("fixtures") or [])}
+    apps = {}
+    for a in shipped.get("apps") or []:
+        apps[(a["c"], a["n"])] = {int(x) for x in a.get("r") or []}
 
     seen_fixtures = set()
     for r in rows:
@@ -117,6 +145,11 @@ def merge(shipped, rows, season):
         if fid is None or rd is None:
             continue
         seen_fixtures.add(int(fid))
+        # Appearances before the card check, and before the already-recorded
+        # skip: a set of rounds cannot double, and the first run after this
+        # field arrived has to re-walk fixtures the cards already hold.
+        if played(r) and r.get("club") and r.get("player"):
+            apps.setdefault((r["club"], r["player"]), set()).add(int(rd))
         n = cards_in(r)
         if not n:
             continue
@@ -142,7 +175,64 @@ def merge(shipped, rows, season):
         "rounds": max(rounds, int(shipped.get("rounds") or 0)),
         "fixtures": sorted(fixtures),
         "players": players,
+        "apps": [{"c": c, "n": n, "r": sorted(rs)[-APPS_KEEP:]}
+                 for (c, n), rs in sorted(apps.items()) if rs],
     }
+
+
+def form_string(rounds, rds):
+    """His last appearances, most recent first: "1" booked, "0" not."""
+    return "".join("1" if int(rds.get(str(r), 0) or 0) > 0 else "0"
+                   for r in sorted(rounds, reverse=True)[:APPS_KEEP])
+
+
+def attach_form(led, league):
+    """Join each squad player to his appearances, the way attach_photos joins
+    a face, and write `form` keyed "club|name" as the DESK spells him.
+
+    AMBIGUITY IS REFUSED BOTH WAYS. A squad name that matches two feed
+    players, or a feed player claimed by two squad names, gets no badge: a
+    wrong one puts another man's bookings beside this man's price.
+
+    Returns (joined, squad players with an appearance to join to). Mutates
+    the ledger.
+    """
+    led["form"] = {}
+    name, konst = DATA_FOR[league]
+    src = DATA / name
+    if not src.exists() or not led.get("apps"):
+        return 0, 0
+    squad = P.js_array(src.read_text(encoding="utf-8"), konst, label=name)
+    rds = {(p["c"], p["n"]): p.get("rds") or {} for p in led.get("players") or []}
+    by_club = {}
+    for a in led["apps"]:
+        by_club.setdefault(a["c"], []).append((P.name_tokens(a["n"]), a))
+
+    # squad key -> the feed entries it matches; feed entry -> squad keys
+    hits, claims = {}, {}
+    for s in squad:
+        c, n = s.get("c"), s.get("n")
+        if not c or not n:
+            continue
+        toks = P.name_tokens(n)
+        found = [a for t, a in by_club.get(c, []) if P.same_tokens(toks, t)]
+        if not found:
+            continue
+        key = f"{c}|{n}"
+        hits[key] = found
+        for a in found:
+            claims.setdefault((a["c"], a["n"]), set()).add(key)
+
+    joined = 0
+    for key, found in hits.items():
+        if len(found) != 1:
+            continue
+        a = found[0]
+        if len(claims[(a["c"], a["n"])]) != 1:
+            continue
+        led["form"][key] = form_string(a["r"], rds.get((a["c"], a["n"]), {}))
+        joined += 1
+    return joined, len(hits)
 
 
 def attach_photos(led, league):
@@ -237,6 +327,7 @@ def main():
     # in August picks one up on the first build after it does, and a player
     # who has moved clubs loses one that is no longer his.
     faces, of = attach_photos(led, args.league)
+    formed, form_of = attach_form(led, args.league)
 
     total = sum(sum(int(v) for v in p["rds"].values()) for p in led["players"])
     print(f"{L.name}: {len(rows)} player-match rows folded in")
@@ -245,6 +336,8 @@ def main():
           f"{len(led['fixtures'])} fixture(s) recorded")
     print(f"  {faces} of {of} with a photograph"
           + (f" ({of - faces} draw a monogram)" if of > faces else ""))
+    print(f"  {len(led['apps'])} player(s) with an appearance; "
+          f"{formed} of {form_of} joined to the squad for the last-5 badge")
     if led["players"]:
         top = led["players"][0]
         print(f"  most booked: {top['n']} ({top['c']}) "
@@ -256,7 +349,8 @@ def main():
     stamp = dt.datetime.now(dt.timezone.utc).strftime("%Y-%m-%dT%H:%MZ")
     out.write_text(
         f"// Auto-generated by data/build_bookings.py. Do not hand-edit.\n"
-        f"// {L.name} {led['season']}: who has been booked and in which rounds.\n"
+        f"// {L.name} {led['season']}: who has been booked and in which rounds,\n"
+        f"// and each player's last {APPS_KEEP} appearances for the last-5 badge.\n"
         f"// {len(led['players'])} player(s), {total} card(s), "
         f"{len(led['fixtures'])} fixture(s) recorded. Built {stamp}.\n"
         f"//\n"

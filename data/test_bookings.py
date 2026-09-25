@@ -168,12 +168,127 @@ with tempfile.TemporaryDirectory() as d:
     check("a ledger that does not exist yet is empty, not an error",
           B.load_shipped(missing)["players"], [])
 
+# ---- appearances, for "booked in X of last 5" ----------------------------
+def app(fid, rd, club, player, mins=90, yc=0, rc=0):
+    r = row(fid, rd, club, player, yc=yc, rc=rc)
+    r["min"] = mins
+    return r
+
+
+ap1 = B.merge(EMPTY, [app(1, 1, "SEV", "A One", yc=1), app(2, 2, "SEV", "A One"),
+                      app(3, 3, "SEV", "A One", mins=0),
+                      app(4, 3, "SEV", "E Five", mins=0, yc=1)], "2026-27")
+apps = {a["n"]: a["r"] for a in ap1["apps"]}
+check("an unused substitute is not an appearance", apps["A One"], [1, 2])
+check("a player booked from the bench was in the match", apps["E Five"], [3])
+# A RE-WALK ADDS NOTHING. The first run after appearances arrived re-reads
+# fixtures whose cards are already in the ledger; that must fill in who played
+# without doubling a single card.
+re = B.merge(ap1, [app(1, 1, "SEV", "A One", yc=1), app(2, 2, "SEV", "A One")], "2026-27")
+check("a re-walk does not double appearances",
+      {a["n"]: a["r"] for a in re["apps"]}["A One"], [1, 2])
+check("nor the card it re-reads",
+      [p["rds"] for p in re["players"] if p["n"] == "A One"][0], {"1": 1})
+backfill = B.merge({"season": "2026-27", "rounds": 1, "fixtures": [1],
+                    "players": [{"n": "A One", "c": "SEV", "rds": {"1": 1}}]},
+                   [app(1, 1, "SEV", "A One", yc=1)], "2026-27")
+check("a ledger from before appearances picks them up on the re-walk",
+      backfill["apps"], [{"c": "SEV", "n": "A One", "r": [1]}])
+check("while its card stays at one",
+      backfill["players"][0]["rds"], {"1": 1})
+long = B.merge(EMPTY, [app(i, i, "SEV", "A One") for i in range(1, 9)], "2026-27")
+check("only the last five appearances are kept", long["apps"][0]["r"], [4, 5, 6, 7, 8])
+
+check("form reads most recent first",
+      B.form_string([1, 2, 3, 5, 6], {"6": 1, "2": 1}), "10010")
+check("a second yellow is one booked match, not two",
+      B.form_string([4], {"4": 2}), "1")
+check("fewer than five is fewer than five", B.form_string([2, 3], {}), "00")
+
+
+def form_with_squad(players, led):
+    """Run attach_form against a written-out squad file for one league."""
+    rows = ",\n".join('  {c:"%s",n:"%s"}' % (c, n) for c, n in players)
+    name, konst = B.DATA_FOR["LL"]
+    real = B.DATA / name
+    keep = real.read_text(encoding="utf-8") if real.exists() else None
+    try:
+        real.write_text(f"const {konst} = [\n{rows},\n];\n", encoding="utf-8")
+        B.attach_form(led, "LL")
+    finally:
+        if keep is None:
+            real.unlink()
+        else:
+            real.write_text(keep, encoding="utf-8")
+    return led["form"]
+
+
+def led_of(apps, players=()):
+    return {"season": "2026-27", "rounds": 3, "fixtures": [1], "players": list(players),
+            "apps": [{"c": c, "n": n, "r": r} for c, n, r in apps]}
+
+
+check("the badge is keyed the way the desk spells him",
+      form_with_squad([("BIR", "B. Osayi-Samuel")],
+                      led_of([("BIR", "Bright Osayi-Samuel", [1, 2, 3])],
+                             [{"n": "Bright Osayi-Samuel", "c": "BIR", "rds": {"3": 1}}])),
+      {"BIR|B. Osayi-Samuel": "100"})
+check("an unbooked regular reads all zeros, not missing",
+      form_with_squad([("SEV", "Isaac Romero")], led_of([("SEV", "Isaac Romero", [1, 2])])),
+      {"SEV|Isaac Romero": "00"})
+check("a squad name matching two men gets no badge",
+      form_with_squad([("TOT", "B. Johnson")],
+                      led_of([("TOT", "Brennan Johnson", [1]), ("TOT", "Ben Johnson", [2])])),
+      {})
+check("one feed player claimed by two squad names gets no badge",
+      form_with_squad([("TOT", "B. Johnson"), ("TOT", "Ben Johnson")],
+                      led_of([("TOT", "Ben Johnson", [1])])),
+      {})
+check("the same club, or no badge",
+      form_with_squad([("ATH", "Gorka Guruzeta")], led_of([("SEV", "Gorka Guruzeta", [1])])),
+      {})
+stale_form = led_of([("SEV", "Isaac Romero", [1])])
+stale_form["form"] = {"VAL|Gone": "11111"}
+check("form is rebuilt, never inherited",
+      form_with_squad([("SEV", "Isaac Romero")], stale_form), {"SEV|Isaac Romero": "0"})
+
+# ---- the harvest reads the ledger it is told to skip ---------------------
+# The ledger is a script, and the harvest read it as JSON: every run died on
+# the comment line and the ledgers stopped at round two or three.
+import harvest_apifootball as H  # noqa: E402
+with tempfile.TemporaryDirectory() as d:
+    led_js = Path(d) / "x_bookings.js"
+    led_js.write_text("// Auto-generated.\nconst X = " + json.dumps(
+        {"fixtures": [7, 8], "players": [],
+         "apps": [{"c": "SEV", "n": "A One", "r": [1]}]}) + ";\n", encoding="utf-8")
+    check("the harvest reads a shipped ledger", H.ledger_skip(led_js), {7, 8})
+    old_js = Path(d) / "y_bookings.js"
+    old_js.write_text("const Y = " + json.dumps({"fixtures": [7, 8], "players": []}) + ";\n",
+                      encoding="utf-8")
+    check("a ledger from before appearances is walked again", H.ledger_skip(old_js), set())
+    check("no ledger yet skips nothing", H.ledger_skip(Path(d) / "none.js"), set())
+    # The build runs when the harvest fails, and writes an empty `apps`. That
+    # ledger still has no appearances and must still be walked.
+    failed_js = Path(d) / "w_bookings.js"
+    failed_js.write_text("const W = " + json.dumps(
+        {"fixtures": [7, 8], "players": [], "apps": []}) + ";\n", encoding="utf-8")
+    check("an empty appearance list after a failed harvest is walked again",
+          H.ledger_skip(failed_js), set())
+    junk = Path(d) / "z_bookings.js"
+    junk.write_text("const Z = {not json};\n", encoding="utf-8")
+    try:
+        H.ledger_skip(junk)
+        FAIL.append("a corrupt ledger was read as empty by the harvest")
+    except SystemExit:
+        pass
+
 if FAIL:
     print("FAIL")
     for f in FAIL:
         print("  -", f)
     sys.exit(1)
-print(f"bookings ledger OK: {5 + 21} checks — second yellows counted once, the "
+print(f"bookings ledger OK: {5 + 21 + 21} checks — second yellows counted once, the "
       "merge keeps earlier rounds and never doubles a fixture, unbooked players "
-      "stay out, the last-five window slices on rounds, and a face is attached "
-      "only to the man it belongs to")
+      "stay out, the last-five window slices on rounds, a face is attached "
+      "only to the man it belongs to, appearances survive a re-walk, the "
+      "last-5 badge joins one man or none, and the harvest can read the ledger")

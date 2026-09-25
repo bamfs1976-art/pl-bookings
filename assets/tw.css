@@ -490,6 +490,7 @@ html[data-density="expert"] .combined-note{display:none}
 .pp-val{font-family:var(--mono);font-size:18px;font-weight:800;line-height:1.2;margin-top:2px}
 .pp-note{font-size:11px;color:var(--text-3);margin-top:1px}
 .pp-line{font-size:12.5px;color:var(--text-2);margin:11px 0 0;line-height:1.5}
+.pp-form{margin-top:12px}
 .pp-urgent{color:var(--danger-ink);font-weight:600}
 .pp-fx{background:var(--surface-2);border-radius:10px;padding:9px 11px;margin-top:11px}
 .pp-fxline{display:flex;align-items:center;gap:5px;flex-wrap:wrap;
@@ -935,6 +936,22 @@ input[type=checkbox],input[type=radio]{accent-color:var(--accent)}
 .conf-hi{background:var(--good)} .conf-mid{background:var(--warn)} .conf-lo{background:var(--border-2)}
 .form-arr{font-size:11px;font-weight:800;margin-left:5px}
 .form-up{color:var(--danger-ink)} .form-down{color:var(--good-ink)}
+/* "Booked in X of last 5", from the bookings ledger (PLDCore.bookedFormHtml).
+   A hit rate a casual reader takes in faster than a percentage. Neutral until
+   two bookings, amber from there: one card in five is ordinary for anybody
+   who tackles. The long form, with a dot per appearance, is the profile's. */
+.bform{display:inline-block;margin-left:6px;padding:1px 6px;border-radius:999px;white-space:nowrap;
+  font-size:11px;font-weight:700;line-height:1.5;vertical-align:1px;
+  background:var(--surface-3);color:var(--text-2)}
+.bform-hot{background:color-mix(in srgb,var(--warn) 22%,transparent);color:var(--warn-ink)}
+.bform-lg{margin-left:0;padding:3px 10px;font-size:13px}
+.bform-dots{display:inline-flex;gap:4px;margin-left:8px;vertical-align:-1px}
+.bform-dots i{width:9px;height:9px;border-radius:50%;display:inline-block;
+  border:1.5px solid currentColor}
+.bform-dots i.on{background:currentColor}
+.bform-dots i.off{background:transparent;opacity:.55}
+.bform-sr{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;
+  clip:rect(0,0,0,0);white-space:nowrap;border:0}
 /* High / Watch banding, at the thresholds every desk uses. A list of bare
    percentages makes the reader do the thresholding, and two desks thresholding
    differently is how "the same model" stops looking like the same model. */
