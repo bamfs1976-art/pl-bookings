@@ -523,7 +523,7 @@ const PL_PLAYERS = [
   {c:"MCI",n:"Max Alleyne",p:"DF",min:135,yc:0,rc:0,y:0.0,f:null,fw:null,r:null,ls:true,b:"PL",ph:"https://media.api-sports.io/football/players/293168.png"},
   {c:"MCI",n:"R. McAidoo",p:"FW",min:0,yc:0,rc:0,y:null,f:null,fw:null,r:null,ls:true,b:"PL",ph:"https://media.api-sports.io/football/players/442048.png"},
   {c:"MCI",n:"Vitor de Oliveira Nunes dos Reis",p:"DF",min:0,yc:null,rc:null,y:null,f:null,fw:null,r:null,ls:true,b:"NEW"},
-  {c:"MUN",n:"S. Lacey",p:"FW",min:51,yc:0,rc:0,y:0.0,f:3.529,fw:3.529,r:3.529,ls:true,b:"PL",ph:"https://media.api-sports.io/football/players/557462.png"},
+  {c:"MUN",n:"S. Lacey",p:"Forward",min:51,yc:0,rc:0,y:0.0,f:3.529,fw:3.529,r:3.529,ls:true,b:"PL",ph:"https://media.api-sports.io/football/players/557462.png"},
   {c:"MUN",n:"M. Ugarte",p:"MF",min:900,yc:1,rc:0,y:0.1,f:2.4,fw:1.5,r:2.6,ls:false,b:"PL",ph:"https://media.api-sports.io/football/players/51494.png"},
   {c:"MUN",n:"C. Baleba",p:"MF",min:1677,yc:5,rc:0,y:0.268,f:1.664,fw:1.288,r:2.2,ls:false,b:"PL",ph:"https://media.api-sports.io/football/players/356041.png"},
   {c:"MUN",n:"P. Dorgu",p:"MF",min:1461,yc:5,rc:0,y:0.308,f:1.417,fw:2.895,r:2.033,ls:false,b:"PL",ph:"https://media.api-sports.io/football/players/382452.png"},

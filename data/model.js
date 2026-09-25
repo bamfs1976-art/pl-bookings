@@ -19,7 +19,7 @@ const CARD_MODEL = {
       "GK": 0.051,
       "DF": 0.8778,
       "MF": 1.157,
-      "FW": 1.2454
+      "FW": 1.2444
     },
     "ycLeague": 0.1759,
     "foulLeague": 1.0076

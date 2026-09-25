@@ -543,7 +543,7 @@ const EFLC_PLAYERS = [
   {c:"SHU",n:"H. Choudhury",p:"MF",min:0,yc:null,rc:null,y:null,f:null,fw:null,r:null,ls:true,b:"NEW",sc:null,sm:null,ph:"https://media.api-sports.io/football/players/18779.png"},
   {c:"SHU",n:"H. McGlinchey",p:"MF",min:0,yc:0,rc:0,y:null,f:null,fw:null,r:null,ls:true,b:"EFLC",sc:null,sm:null,ph:"https://media.api-sports.io/football/players/585144.png"},
   {c:"SHU",n:"J. Ayew",p:"FW",min:0,yc:null,rc:null,y:null,f:null,fw:null,r:null,ls:true,b:"NEW",sc:null,sm:null,ph:"https://media.api-sports.io/football/players/3428.png"},
-  {c:"SHU",n:"J. Baptiste",p:"MF",min:0,yc:null,rc:null,y:null,f:null,fw:null,r:null,ls:true,b:"NEW",sc:null,sm:null,ph:"https://media.api-sports.io/football/players/171059.png"},
+  {c:"SHU",n:"J. Baptiste",p:"DF",min:0,yc:null,rc:null,y:null,f:null,fw:null,r:null,ls:true,b:"NEW",sc:null,sm:null,ph:"https://media.api-sports.io/football/players/171059.png"},
   {c:"SHU",n:"J. Shackleton",p:"DF",min:21,yc:0,rc:0,y:0.0,f:null,fw:null,r:null,ls:true,b:"EFLC",sc:null,sm:null,ph:"https://media.api-sports.io/football/players/19131.png"},
   {c:"SHU",n:"L. Kitching",p:"DF",min:0,yc:null,rc:null,y:null,f:null,fw:null,r:null,ls:true,b:"NEW",sc:null,sm:null,ph:"https://media.api-sports.io/football/players/18202.png"},
   {c:"SHU",n:"R. Donovan",p:"MF",min:0,yc:null,rc:null,y:null,f:null,fw:null,r:null,ls:true,b:"NEW",sc:null,sm:null,ph:"https://media.api-sports.io/football/players/402317.png"},
