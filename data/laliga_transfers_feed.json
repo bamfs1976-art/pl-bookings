@@ -1,6 +1,6 @@
 {
   "note": "PROPOSALS from API-Football /transfers, for a person to read. data/transfers.json is the hand-curated overlay that is actually applied; this is not.",
-  "since": "2026-05-27",
+  "since": "2026-05-28",
   "moves": [
     {
       "n": "T. Gijselhart",
@@ -10,6 +10,15 @@
       "toCode": null,
       "date": "2026-09-15",
       "type": "Loan"
+    },
+    {
+      "n": "Cristian David Perea Cajiao",
+      "from": "Real Madrid",
+      "to": "CFR 1907 Cluj",
+      "fromCode": "RMA",
+      "toCode": null,
+      "date": "2026-09-06",
+      "type": "Free agent"
     },
     {
       "n": "Xavi",
@@ -1803,15 +1812,6 @@
       "type": "Transfer"
     },
     {
-      "n": "Y. Diomande",
-      "from": "RB Leipzig",
-      "to": "Real Madrid",
-      "fromCode": null,
-      "toCode": "RMA",
-      "date": "2026-08-04",
-      "type": "Transfer"
-    },
-    {
       "n": "Vladimir Silva",
       "from": "Pacos Ferreira",
       "to": "Celta Vigo",
@@ -2332,15 +2332,6 @@
       "toCode": null,
       "date": "2026-07-22",
       "type": "-"
-    },
-    {
-      "n": "K. Adeyemi",
-      "from": "Borussia Dortmund",
-      "to": "Barcelona",
-      "fromCode": null,
-      "toCode": "BAR",
-      "date": "2026-07-21",
-      "type": "Transfer"
     },
     {
       "n": "Coba",
@@ -4630,21 +4621,21 @@
     },
     {
       "n": "Pablo Pérez",
-      "from": "Atlético Madrid II",
-      "to": "Atletico Madrid",
-      "fromCode": null,
-      "toCode": "ATM",
-      "date": "2026-06-29",
-      "type": "Free agent"
-    },
-    {
-      "n": "Pablo Pérez",
       "from": "Mirandes",
       "to": "Atletico Madrid",
       "fromCode": null,
       "toCode": "ATM",
       "date": "2026-06-29",
       "type": "Return from loan"
+    },
+    {
+      "n": "Pablo Pérez",
+      "from": "Atlético Madrid II",
+      "to": "Atletico Madrid",
+      "fromCode": null,
+      "toCode": "ATM",
+      "date": "2026-06-29",
+      "type": "Free agent"
     },
     {
       "n": "Pablo Martínez",

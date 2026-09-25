@@ -1,6 +1,6 @@
 {
   "note": "PROPOSALS from API-Football /transfers, for a person to read. data/transfers.json is the hand-curated overlay that is actually applied; this is not.",
-  "since": "2026-05-27",
+  "since": "2026-05-28",
   "moves": [
     {
       "n": "A. Salah-Eddine",
@@ -669,6 +669,15 @@
       "type": "Loan"
     },
     {
+      "n": "I. Kamate",
+      "from": "Inter",
+      "to": "Atlético Madrid II",
+      "fromCode": "INT",
+      "toCode": null,
+      "date": "2026-08-31",
+      "type": "-"
+    },
+    {
       "n": "H. Ahanor",
       "from": "Atalanta",
       "to": "Crystal Palace",
@@ -1009,15 +1018,6 @@
       "toCode": "MON",
       "date": "2026-08-30",
       "type": "Loan"
-    },
-    {
-      "n": "I. Kamate",
-      "from": "Inter",
-      "to": "Atlético Madrid II",
-      "fromCode": "INT",
-      "toCode": null,
-      "date": "2026-08-30",
-      "type": "-"
     },
     {
       "n": "F. Missori",

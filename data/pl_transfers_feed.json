@@ -1,7 +1,16 @@
 {
   "note": "PROPOSALS from API-Football /transfers, for a person to read. data/transfers.json is the hand-curated overlay that is actually applied; this is not.",
-  "since": "2026-05-27",
+  "since": "2026-05-28",
   "moves": [
+    {
+      "n": "Y. Bissouma",
+      "from": "Tottenham",
+      "to": "Ajax",
+      "fromCode": "TOT",
+      "toCode": null,
+      "date": "2026-09-15",
+      "type": "Free agent"
+    },
     {
       "n": "Y. Ibrahim",
       "from": "Brighton",
