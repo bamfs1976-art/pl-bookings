@@ -1324,12 +1324,17 @@
     return 'Referee: not yet appointed';
   }
 
-  function candidatesOf(priced, clubBy) {
+  /* `formOf`, when the desk passes one, is its PLDCore.bookedForm lookup:
+     "booked 2 of last 5" rides the sub-line, the one place on a fixed layout
+     with room for a few more words. A desk without a ledger passes nothing
+     and the line reads as it always has. */
+  function candidatesOf(priced, clubBy, formOf) {
     var out = [];
     ['home', 'away'].forEach(function (sideKey) {
       var side = priced[sideKey] || {}, short = priced.fx[sideKey === 'home' ? 'h' : 'a'];
       (side.top || []).forEach(function (t) {
         var club = (clubBy && clubBy[short]) || {};
+        var form = formOf ? formOf(t.p) : null;
         out.push({
           /* THE PLAYER ROW ITSELF travels with the candidate. Adapters need
              more than a name and a price — the stat sheet builds a portrait
@@ -1339,6 +1344,7 @@
           name: t.p.n, club: short, prob: t.prob, p: t.p,
           sub: (t.p.p || '') + ' · ' + (club.name || short)
              + (t.p.f != null ? ' · ' + t.p.f.toFixed(1) + ' fls/90' : '')
+             + (form ? ' · booked in ' + form.x + ' of last ' + form.n : '')
         });
       });
     });
@@ -1380,7 +1386,7 @@
       refLine: refLineOf(priced, n2),
       heat: m.expected, heatLabel: 'cards',
       heatMid: ctx.heatMid, heatHot: ctx.heatHot,
-      candidates: candidatesOf(priced, ctx.clubBy),
+      candidates: candidatesOf(priced, ctx.clubBy, ctx.formOf),
       palette: ctx.palette,
       markets: [
         { label: 'Home expected', value: n1(m.expectedHome) },

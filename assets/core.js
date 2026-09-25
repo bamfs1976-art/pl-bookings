@@ -2220,6 +2220,42 @@
       + (sep == null ? ', ' : sep) + clock(d, locale);
   }
 
+  /* ---- booked in X of last 5 ----
+     A card count cannot say how often a player is booked WHEN HE PLAYS: two
+     in five appearances and two in five rounds he mostly sat out read the
+     same. The bookings ledger answers it. Its `form` map is keyed "club|name"
+     the way the desk's own dataset spells him, and holds his last appearances
+     most recent first, "1" booked and "0" not. data/build_bookings.py does the
+     name join, once, in Python, so nothing here matches names.
+
+     BELOW FORM_MIN APPEARANCES THERE IS NO BADGE. "Booked in 1 of last 1" is a
+     coin toss dressed as form, and early in a season or after a transfer it
+     would be the loudest thing on the row. */
+  const FORM_MIN = 3;
+  function bookedForm(ledger, club, name) {
+    const s = ledger && ledger.form ? ledger.form[club + '|' + name] : null;
+    if (typeof s !== 'string' || !/^[01]{1,5}$/.test(s) || s.length < FORM_MIN) return null;
+    const dots = s.split('').map((ch) => ch === '1');
+    const x = dots.filter(Boolean).length, n = dots.length;
+    return { x, n, dots, short: x + ' of ' + n, text: 'Booked in ' + x + ' of last ' + n };
+  }
+  /* The badge as markup, so four desks draw one badge. Plain text in and out:
+     every character here is fixed or a digit, so nothing needs escaping.
+     `big` adds the words and a dot per appearance, for the player profile. */
+  function bookedFormHtml(f, big) {
+    if (!f) return '';
+    const trail = f.dots.map((d) => (d ? '\u25cf' : '\u25cb')).join('');
+    const words = f.text + ' appearances';
+    const body = big
+      ? f.text + '<span class="bform-dots" aria-hidden="true">'
+        + f.dots.map((d) => '<i class="' + (d ? 'on' : 'off') + '"></i>').join('') + '</span>'
+      /* The short form is "2 of 5" on screen and the whole sentence to a
+         screen reader, which would otherwise hear two bare numbers. */
+      : '<span aria-hidden="true">' + f.short + '</span><span class="bform-sr">' + words + '</span>';
+    return '<span class="bform' + (big ? ' bform-lg' : '') + (f.x >= 2 ? ' bform-hot' : '')
+      + '" title="' + words + ', most recent first: ' + trail + '">' + body + '</span>';
+  }
+
   const PLDCore = {
     clock, dayClock, dateClock, CLOCK,
     rotationRisk, rotationBand,
@@ -2244,6 +2280,7 @@
     gammaln, expectedFouls, nbTailProb, cardProbFromFouls, recencyWeight, refCardFactor,
     leagueRate90, twoStageHazard, leagueHazard, sumNegBin,
     matchLegOptions, simLegOptions, accaAllocate, accaPrice,
+    bookedForm, bookedFormHtml, FORM_MIN,
   };
 
   if (typeof module !== 'undefined' && module.exports) module.exports = PLDCore;

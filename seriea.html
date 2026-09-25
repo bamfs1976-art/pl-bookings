@@ -459,6 +459,9 @@
 </main>
 
 <script src="data/seriea_data.js"></script>
+<!-- Optional: the bookings ledger, for "booked in X of last 5". Without it
+     the badge is simply absent. -->
+<script src="data/seriea_bookings.js" onerror="void 0"></script>
 <!-- Optional. Absent until the fixture harvest has run, and a 404 on a script
      tag is harmless — the Fixtures tab says so rather than breaking. -->
 <script src="data/seriea_fixtures.js"></script>
@@ -493,6 +496,11 @@
   var CLUBLIST = (typeof CLUBS !== 'undefined' && CLUBS) || [];
   var REFLIST = (typeof REFS !== 'undefined' && REFS) || [];
   var C = window.PLDCore;
+  /* "Booked in X of last 5", from the bookings ledger. The name join was
+     done in data/build_bookings.py against this division's own squads, so
+     the key is the desk's own club|name and nothing here matches names. */
+  var LEDGER = (typeof SERIEA_BOOKINGS !== 'undefined' && SERIEA_BOOKINGS) || null;
+  function formOf(p) { return C.bookedForm(LEDGER, p.c, p.n); }
 
   var $ = function (s, r) { return (r || document).querySelector(s); };
   var $$ = function (s, r) { return Array.prototype.slice.call((r || document).querySelectorAll(s)); };
@@ -770,6 +778,7 @@
       photo: p.ph || null, injured: p.inj === true,
       minutes: p.min, yellows: p.yc, reds: p.rc,
       yc90: p.y, fouls90: p.f, foulsWon90: p.fw, risk: p.r,
+      form: formOf(p),
       forecast: foulForecast(p),
       prob: prob, odds: prob ? C.fairOdds(prob) : null,
       band: { label: b[1] || 'Low', colour: b[0] === 'hi' ? 'var(--danger-ink)'
@@ -836,7 +845,8 @@
         + '<span style="min-width:0;flex:1">'
         + '<span class="ap-nm">' + esc(p.n)
         + (notes[k] ? ' <span class="has-note">\u270e</span>' : '') + '</span>'
-        + '<span class="ap-sub">' + esc(c.name || p.c) + ' \u00b7 ' + esc(p.p || '') + '</span>'
+        + '<span class="ap-sub">' + esc(c.name || p.c) + ' \u00b7 ' + esc(p.p || '')
+        + C.bookedFormHtml(formOf(p)) + '</span>'
         + '</span>'
         + '<span class="star" aria-hidden="true">' + (starred[k] ? '\u2605' : '') + '</span>'
         + '</span>'
@@ -881,7 +891,7 @@
         + esc(p.c) + '</span></td>'
         + '<td>' + esc(p.p) + '</td>'
         + '<td class="num">' + confDot(p.min) + (p.min || 0) + '</td>'
-        + '<td class="num">' + (p.yc == null ? '—' : p.yc) + '</td>'
+        + '<td class="num">' + (p.yc == null ? '—' : p.yc) + C.bookedFormHtml(formOf(p)) + '</td>'
         + '<td class="num">' + n2(p.y) + '</td>'
         + '<td class="num">' + n2(p.f) + '</td>'
         + '<td class="num">' + n2(p.r) + '</td>'
@@ -1619,6 +1629,7 @@
      priceFixture() — the same objects the cards on screen are built from, so
      a share card can never disagree with the page that produced it. */
   var SHARE_CTX = {
+    formOf: formOf,
     league: 'SA',
     seasonLabel: 'Serie A 2026-27',
     roundWord: 'Matchday',

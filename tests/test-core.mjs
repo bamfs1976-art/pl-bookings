@@ -1867,4 +1867,46 @@ t('an unknown club falls back to the league mean rather than returning nothing',
   assert.ok(r && r.baseline === ROT.leagueMean);
 });
 
+/* ---- booked in X of last 5 ---- */
+console.log('bookedForm');
+const LED = { form: { 'ARS|Saka': '10010', 'ARS|New': '01', 'ARS|Clean': '000', 'ARS|Bad': '1x1' } };
+t('counts bookings over his last appearances, most recent first', () => {
+  const f = core.bookedForm(LED, 'ARS', 'Saka');
+  assert.equal(f.x, 2);
+  assert.equal(f.n, 5);
+  assert.deepEqual(f.dots, [true, false, false, true, false]);
+  assert.equal(f.text, 'Booked in 2 of last 5');
+  assert.equal(f.short, '2 of 5');
+});
+t('an unbooked regular reads 0 of N, not nothing', () => {
+  assert.equal(core.bookedForm(LED, 'ARS', 'Clean').text, 'Booked in 0 of last 3');
+});
+t('fewer than three appearances is no badge at all', () => {
+  assert.equal(core.bookedForm(LED, 'ARS', 'New'), null);
+  assert.equal(core.FORM_MIN, 3);
+});
+t('no ledger, no entry, or a malformed entry is no badge', () => {
+  assert.equal(core.bookedForm(null, 'ARS', 'Saka'), null);
+  assert.equal(core.bookedForm({}, 'ARS', 'Saka'), null);
+  assert.equal(core.bookedForm(LED, 'CHE', 'Saka'), null);
+  assert.equal(core.bookedForm(LED, 'ARS', 'Bad'), null);
+});
+t('the badge says the whole sentence to a screen reader', () => {
+  const html = core.bookedFormHtml(core.bookedForm(LED, 'ARS', 'Saka'));
+  assert.match(html, /<span aria-hidden="true">2 of 5<\/span>/);
+  assert.match(html, /class="bform-sr">Booked in 2 of last 5 appearances</);
+  assert.match(html, /bform-hot/);
+  assert.equal(core.bookedFormHtml(null), '');
+});
+t('one booking in five is not flagged hot', () => {
+  const html = core.bookedFormHtml(core.bookedForm({ form: { 'A|B': '00100' } }, 'A', 'B'));
+  assert.doesNotMatch(html, /bform-hot/);
+});
+t('the profile form draws a dot per appearance', () => {
+  const html = core.bookedFormHtml(core.bookedForm(LED, 'ARS', 'Saka'), true);
+  assert.equal((html.match(/<i class="on">/g) || []).length, 2);
+  assert.equal((html.match(/<i class="off">/g) || []).length, 3);
+  assert.match(html, /Booked in 2 of last 5/);
+});
+
 console.log(`\n${passed} tests passed`);

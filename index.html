@@ -1407,7 +1407,7 @@
       <p>It is deliberately kept <em>beside</em> the model rather than inside it. They are two independent reads of the same question — one from this season's player rates, one from what actually happened when these sides met — and the disagreement is the useful part. Across the 120 fixtures where both exist they differ by 0.61 cards on average, and by a full card or more in about one in five. Those are the fixtures worth a second look, so the H2H figure is highlighted when it diverges by a card or more.</p>
       <p>Treat it as context, not proof. Squads turn over, managers change, and ten meetings is a small sample — a fixture with a violent history and none of the same players is a coincidence, not a signal. Pairs that have not met enough show nothing at all, which is most of the promoted clubs. Data is the public-domain football-data.co.uk match record (1,118 meetings across 151 club pairs), the same source behind the referee figures and the home/away splits, so it adds no new dependency.</p>
       <h3>Matchup context</h3>
-      <p>Derby fixtures — the recognised rivalries among the 20 clubs, North London to Tyne–Wear, plus the promoted clubs' regional rivalries — get a booking-heat boost and a 🔥 derby chip on the Fixtures tab, since rivalry games run hotter with the referee. Once at least two finished gameweeks have been recorded, the players table adds a small ▲ card-form trend beside the yellow count: cards picked up over the recent recorded window (up to the last five gameweeks). Booking heat is also venue-aware: each club's cards-against is split into home and away rates (football-data.co.uk match data — away sides consistently pick up more cards), so the same two clubs read differently at each ground. Each player now carries both <strong>fouls committed</strong> and <strong>fouls won</strong> per 90 (shown on the player profile, in the share cards and the CSV) — committed feeds the risk score today; fouls won is a new data slot that populates on the next ScoutingStats refresh (it isn't in the live FPL feed), and will sharpen opponent-aggression matchup calls once it's in.</p>
+      <p>Derby fixtures — the recognised rivalries among the 20 clubs, North London to Tyne–Wear, plus the promoted clubs' regional rivalries — get a booking-heat boost and a 🔥 derby chip on the Fixtures tab, since rivalry games run hotter with the referee. Beside the yellow count, a small <strong>booked in X of last 5</strong> badge counts this season's league matches the player actually played, most recent first (none under three appearances); it comes from the bookings ledger, and where the ledger does not have a player the older ▲ card-form trend stands in, once this browser has recorded two finished gameweeks. Booking heat is also venue-aware: each club's cards-against is split into home and away rates (football-data.co.uk match data — away sides consistently pick up more cards), so the same two clubs read differently at each ground. Each player now carries both <strong>fouls committed</strong> and <strong>fouls won</strong> per 90 (shown on the player profile, in the share cards and the CSV) — committed feeds the risk score today; fouls won is a new data slot that populates on the next ScoutingStats refresh (it isn't in the live FPL feed), and will sharpen opponent-aggression matchup calls once it's in.</p>
       <h3>The match model (game state)</h3>
       <p>The desk models cards. It does not model football matches — so it borrowed one. <a href="https://plsimulation.netlify.app" target="_blank" rel="noopener">Plsimulator</a> fits a Dixon–Coles attack/defence model to three seasons of results each week and publishes the ratings; the desk vendors them and reproduces its arithmetic exactly, so both products quote the same match.</p>
       <p>It is used for one thing on your numbers: <strong>game state</strong>. A side being outplayed chases the game and fouls tactically; a comfortable favourite does not. Each fixture card shows the model's win probabilities, and every player's booking chance is scaled by <em>his own side's</em> expected result share — the underdog's players up, the favourite's down, on the log-odds scale like every other factor here. In practice it runs between about ×0.89 and ×1.11 and is clamped at ×0.85–×1.20; a level fixture is exactly neutral, and the two sides' factors are mirror images, so a mismatch <em>redistributes</em> risk between the sides rather than adding any to the league.</p>
@@ -1735,6 +1735,9 @@ License: MIT
 <!-- VENDOR:papaparse END -->
 
 <script src="data/pl_data.js"></script>
+<!-- Optional: the bookings ledger, for "booked in X of last 5". Without it
+     the badge is simply absent and the table keeps its ▲ trend. -->
+<script src="data/pl_bookings.js" onerror="void 0"></script>
 <!-- The harvested fixture list, for its `ref` field: the appointed official.
      /today and scripts/accas.mjs have read this file all along; this desk did
      not, so every fixture here was priced at refFactor = 1 unless somebody
@@ -1945,6 +1948,11 @@ function foulsLine(p){
 // v2 model (data/model.js): empirical-Bayes-shrunk rates through a logistic
 // GLM. See docs/modelling-review.md.
 const CALIB=PLDCore.calibrate(PL_PLAYERS);
+/* "Booked in X of last 5", from data/pl_bookings.js. The ledger is keyed
+   club|name the way pl_data.js spells him (the join is done in
+   data/build_bookings.py), so this is a lookup and not a match. */
+const PL_LEDGER=(typeof PL_BOOKINGS!=="undefined"&&PL_BOOKINGS)||null;
+function plForm(p){ return p?PLDCore.bookedForm(PL_LEDGER,p.c,p.n):null; }
 const MODEL=(typeof window!=="undefined"&&window.CARD_MODEL)||null;
 // Only use the v2 model if BOTH the parameters (data/model.js) AND the v2 pure
 // functions (assets/core.js) are present. Guards the case where a service
@@ -2112,7 +2120,7 @@ function renderPlayers(){
       `<td style="padding:.45rem .5rem" class="muted">${crest(p.c)} <span class="num" style="font-size:.85rem">${p.c}</span></td>`+
       `<td style="text-align:center" class="faint num">${esc(p.p||"")}</td>`+
       `<td style="text-align:right" class="num muted">${confDot(p.min)}${p.min}</td>`+
-      `<td style="text-align:right" class="num muted">${yc}${formBadge(p)}</td>`+
+      `<td style="text-align:right" class="num muted">${yc}${plForm(p)?PLDCore.bookedFormHtml(plForm(p)):formBadge(p)}</td>`+
       `<td style="text-align:right" class="num">${y==null?'—':y.toFixed(2)+liveDot}</td>`+
       `<td style="text-align:right" class="num">${fEff(p)==null?'—':fEff(p).toFixed(2)}</td>`+
       `<td style="text-align:right;padding:.45rem .6rem">${r==null?'<span class="faint">—</span>':`<span class="riskbadge display" style="font-size:1.05rem;color:${riskColour(r)}">${r.toFixed(2)}</span><div class="barwrap" style="width:60px;margin-left:auto"><div class="bar" style="width:${Math.min(100,Math.round(r/3.8*100))}%;background:${riskColour(r)}"></div></div>`}</td>`+
@@ -2600,7 +2608,13 @@ async function exportPNG(){
     let nm=p.n; while(x.measureText(nm).width>W-P-430) nm=nm.slice(0,-1);
     x.fillText(nm + (nm!==p.n?"…":""),P+108,y+50);
     x.fillStyle="#586275"; x.font=`600 19px ${body}`;
-    x.fillText(`${p.p||""}  ·  ${yEff(p)!=null?yEff(p).toFixed(2):"—"} yc  ·  ${fEff(p)!=null?fEff(p).toFixed(2):"—"} fouls${p.fw!=null?"  ·  "+p.fw.toFixed(2)+" won":""}`+(p.b==="EFL"?"  · EFL":""),P+108,y+78);
+    /* "booked 2 of last 5" leads the line when the ledger has it: it is the
+       figure a reader of a posted image takes in first. Trimmed from the end
+       so a long line never runs under the risk bar. */
+    const bf=plForm(p);
+    let meta=`${p.p||""}${bf?"  ·  booked in "+bf.x+" of last "+bf.n:""}  ·  ${yEff(p)!=null?yEff(p).toFixed(2):"—"} yc  ·  ${fEff(p)!=null?fEff(p).toFixed(2):"—"} fouls${p.fw!=null?"  ·  "+p.fw.toFixed(2)+" won":""}`+(p.b==="EFL"?"  · EFL":"");
+    while(x.measureText(meta).width>W-P-260-(P+108)) meta=meta.slice(0,-1);
+    x.fillText(meta,P+108,y+78);
     // risk number + bar
     const pr=rEff(p), rc=riskHexAbs(pr);
     x.fillStyle=rc; x.font=`800 44px ${disp}`; x.textAlign="right"; x.fillText(pr.toFixed(2),W-P,y+50); x.textAlign="left";
@@ -3228,6 +3242,10 @@ function openPlayerProfile(k){
     <div class="faint" style="font-size:.68rem;text-transform:uppercase;letter-spacing:.04em">Fouls (2025-26)</div>
     <div style="font-size:.85rem;margin-top:.25rem;line-height:1.5">${foulsLine(p)}</div>
   </div>`;
+  /* "Booked in X of last 5" with a dot per appearance, from the ledger:
+     this season's matches he actually played, most recent first. */
+  const bf=plForm(p);
+  if(bf) h+=`<p class="pp-form" style="margin:0 0 .7rem">${PLDCore.bookedFormHtml(bf,true)}</p>`;
   /* Card form as a shape rather than a delta. Drawn only from gameweeks this
      browser actually recorded, so it says "recorded" and not "season" — the
      desk cannot show a history it was not open for, and implying otherwise
@@ -3702,6 +3720,7 @@ function apCardHtml(p){
     +`<div class="ap-cards-line">`
       +`<span class="ap-pill yc">▮ ${p.yc} YC</span>`
       +(p.rc?`<span class="ap-pill rc">▮ ${p.rc} RC</span>`:"")
+      +(p.pk?PLDCore.bookedFormHtml(plForm(playerByKey(p.pk))):"")
       +(p.risk!=null?`<span class="faint" style="margin-left:auto;font-size:.68rem">risk ${p.risk.toFixed(2)}</span>`:"")
     +`</div>`
     +`<div class="ap-stats">`
