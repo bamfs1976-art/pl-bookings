@@ -348,7 +348,7 @@ const EFLC_PLAYERS = [
   {c:"MID",n:"K. Joseph",p:"FW",min:0,yc:null,rc:null,y:null,f:null,fw:null,r:null,ls:true,b:"NEW",sc:null,sm:null,ph:"https://media.api-sports.io/football/players/215797.png"},
   {c:"MID",n:"L. McCabe",p:"MF",min:0,yc:0,rc:0,y:null,f:null,fw:null,r:null,ls:true,b:"EFLC",sc:null,sm:null,ph:"https://media.api-sports.io/football/players/348815.png"},
   {c:"MID",n:"M. Arfsten",p:"MF",min:0,yc:null,rc:null,y:null,f:null,fw:null,r:null,ls:true,b:"NEW",sc:null,sm:null,ph:"https://media.api-sports.io/football/players/362400.png"},
-  {c:"MID",n:"M. Peart-Harris",p:"MF",min:0,yc:null,rc:null,y:null,f:null,fw:null,r:null,ls:true,b:"NEW",sc:null,sm:null,ph:"https://media.api-sports.io/football/players/180308.png"},
+  {c:"MID",n:"M. Peart-Harris",p:"FW",min:0,yc:null,rc:null,y:null,f:null,fw:null,r:null,ls:true,b:"NEW",sc:null,sm:null,ph:"https://media.api-sports.io/football/players/180308.png"},
   {c:"MID",n:"R. Pukštas",p:"MF",min:0,yc:null,rc:null,y:null,f:null,fw:null,r:null,ls:true,b:"NEW",sc:null,sm:null,ph:"https://media.api-sports.io/football/players/340571.png"},
   {c:"MID",n:"R. Vítek",p:"GK",min:3690,yc:2,rc:0,y:0.049,f:null,fw:0.39,r:null,ls:false,b:"EFLC",sc:null,sm:null,ph:"https://media.api-sports.io/football/players/284361.png"},
   {c:"MID",n:"S. Berhalter",p:"MF",min:0,yc:null,rc:null,y:null,f:null,fw:null,r:null,ls:true,b:"NEW",sc:null,sm:null,ph:"https://media.api-sports.io/football/players/201713.png"},
