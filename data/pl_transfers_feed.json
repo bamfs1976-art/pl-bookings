@@ -1,6 +1,6 @@
 {
   "note": "PROPOSALS from API-Football /transfers, for a person to read. data/transfers.json is the hand-curated overlay that is actually applied; this is not.",
-  "since": "2026-05-29",
+  "since": "2026-05-30",
   "moves": [
     {
       "n": "Y. Bissouma",
@@ -8397,24 +8397,6 @@
       "fromCode": "MID",
       "toCode": "SUN",
       "date": "2026-05-30",
-      "type": "Return from loan"
-    },
-    {
-      "n": "Tom Taylor",
-      "from": "Woking",
-      "to": "Ipswich",
-      "fromCode": null,
-      "toCode": "IPS",
-      "date": "2026-05-29",
-      "type": "Return from loan"
-    },
-    {
-      "n": "Finley Frank Barbrook",
-      "from": "Colchester",
-      "to": "Ipswich",
-      "fromCode": null,
-      "toCode": "IPS",
-      "date": "2026-05-29",
       "type": "Return from loan"
     }
   ]

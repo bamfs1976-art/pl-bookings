@@ -1,6 +1,6 @@
 {
   "note": "PROPOSALS from API-Football /transfers, for a person to read. data/transfers.json is the hand-curated overlay that is actually applied; this is not.",
-  "since": "2026-05-29",
+  "since": "2026-05-30",
   "moves": [
     {
       "n": "J. Panzo",
@@ -8829,24 +8829,6 @@
       "fromCode": null,
       "toCode": "MID",
       "date": "2026-05-30",
-      "type": "Return from loan"
-    },
-    {
-      "n": "R. Owen",
-      "from": "Caernarfon Town",
-      "to": "Wrexham",
-      "fromCode": null,
-      "toCode": "WRE",
-      "date": "2026-05-29",
-      "type": "Return from loan"
-    },
-    {
-      "n": "Felipe Rodriguez-Gentile",
-      "from": "AFC Fylde",
-      "to": "Preston",
-      "fromCode": null,
-      "toCode": "PRE",
-      "date": "2026-05-29",
       "type": "Return from loan"
     }
   ]
