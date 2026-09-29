@@ -7,7 +7,7 @@
 // drift from the registry.
 const SUSPENSION = {"kind": "ladder", "cumulative": true, "review": 20, "rungs": [{"at": 5, "ban": 1, "by": 19}, {"at": 10, "ban": 2, "by": 37}, {"at": 15, "ban": 3, "by": null}]};
 const CLUBS = [
-  {short:"DER",name:"Derby County",img:"https://media.api-sports.io/football/teams/69.png",basis:"EFLC",ca:2.43,caH:2.17,caA:2.7,fm:9.2,squad:38},
+  {short:"DER",name:"Derby County",img:"https://media.api-sports.io/football/teams/69.png",basis:"EFLC",ca:2.43,caH:2.17,caA:2.7,fm:9.2,squad:39},
   {short:"BLB",name:"Blackburn Rovers",img:"https://media.api-sports.io/football/teams/67.png",basis:"EFLC",ca:2.15,caH:2.0,caA:2.3,fm:7.1,squad:34},
   {short:"WAT",name:"Watford",img:"https://media.api-sports.io/football/teams/38.png",basis:"EFLC",ca:2.15,caH:1.87,caA:2.43,fm:5.7,squad:36},
   {short:"CHA",name:"Charlton Athletic",img:"https://media.api-sports.io/football/teams/1335.png",basis:"EFLC",ca:2.11,caH:2.17,caA:2.04,fm:8.9,squad:33},
@@ -277,6 +277,7 @@ const EFLC_PLAYERS = [
   {c:"DER",n:"M. Johnston",p:"MF",min:970,yc:1,rc:0,y:0.093,f:0.371,fw:null,r:0.557,ls:false,b:"EFLC",sc:null,sm:null,ph:"https://media.api-sports.io/football/players/268595.png"},
   {c:"DER",n:"J. Ward",p:"MF",min:2937,yc:3,rc:0,y:0.092,f:0.276,fw:0.644,r:0.46,ls:false,b:"EFLC",sc:null,sm:null,ph:"https://media.api-sports.io/football/players/19975.png"},
   {c:"DER",n:"A. Grout",p:"MF",min:0,yc:null,rc:null,y:null,f:null,fw:null,r:null,ls:true,b:"NEW",sc:null,sm:null,ph:"https://media.api-sports.io/football/players/630591.png"},
+  {c:"DER",n:"C. Allen",p:"MF",min:0,yc:null,rc:null,y:null,f:null,fw:null,r:null,ls:true,b:"NEW",sc:null,sm:null,ph:"https://media.api-sports.io/football/players/546625.png"},
   {c:"DER",n:"C. Smith",p:"MF",min:0,yc:0,rc:0,y:null,f:null,fw:null,r:null,ls:true,b:"EFLC",sc:null,sm:null,ph:"https://media.api-sports.io/football/players/613789.png"},
   {c:"DER",n:"D. Ozoh",p:"MF",min:0,yc:null,rc:null,y:null,f:null,fw:null,r:null,ls:true,b:"NEW",sc:null,sm:null,ph:"https://media.api-sports.io/football/players/304320.png"},
   {c:"DER",n:"E. Cashin",p:"DF",min:0,yc:null,rc:null,y:null,f:null,fw:null,r:null,ls:true,b:"NEW",sc:null,sm:null,ph:"https://media.api-sports.io/football/players/161663.png"},
