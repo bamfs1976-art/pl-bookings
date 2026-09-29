@@ -1,6 +1,6 @@
 {
   "note": "PROPOSALS from API-Football /transfers, for a person to read. data/transfers.json is the hand-curated overlay that is actually applied; this is not.",
-  "since": "2026-05-31",
+  "since": "2026-06-01",
   "moves": [
     {
       "n": "A. Jackson",
@@ -48,6 +48,15 @@
       "type": "Loan"
     },
     {
+      "n": "Brian Okonkwo",
+      "from": "West Brom",
+      "to": "Leamington",
+      "fromCode": "WBA",
+      "toCode": null,
+      "date": "2026-09-15",
+      "type": "Loan"
+    },
+    {
       "n": "J. Panzo",
       "from": "Birmingham",
       "to": "Levadiakos",
@@ -55,6 +64,15 @@
       "toCode": null,
       "date": "2026-09-14",
       "type": "Free agent"
+    },
+    {
+      "n": "P. Fearon",
+      "from": "West Ham",
+      "to": "Forest Green",
+      "fromCode": "WHU",
+      "toCode": null,
+      "date": "2026-09-13",
+      "type": "Loan"
     },
     {
       "n": "B. Bateman",
@@ -271,6 +289,15 @@
       "toCode": null,
       "date": "2026-09-03",
       "type": "Loan"
+    },
+    {
+      "n": "M. Clarke",
+      "from": "Watford",
+      "to": "Fulham U21",
+      "fromCode": "WAT",
+      "toCode": null,
+      "date": "2026-09-03",
+      "type": "-"
     },
     {
       "n": "Cole Deeming",
@@ -1335,6 +1362,15 @@
       "type": "Loan"
     },
     {
+      "n": "L. Bombino",
+      "from": "San Diego",
+      "to": "Stoke City",
+      "fromCode": null,
+      "toCode": "STK",
+      "date": "2026-08-30",
+      "type": "Transfer"
+    },
+    {
       "n": "Kieran Morgan",
       "from": "QPR",
       "to": "Bradford",
@@ -1461,6 +1497,15 @@
       "type": "Transfer"
     },
     {
+      "n": "Harry Ashfield",
+      "from": "Wrexham",
+      "to": "Peterborough",
+      "fromCode": "WRE",
+      "toCode": null,
+      "date": "2026-08-30",
+      "type": "Transfer"
+    },
+    {
       "n": "H. Matthews",
       "from": "Portsmouth",
       "to": "Bradford",
@@ -1533,6 +1578,15 @@
       "type": "Transfer"
     },
     {
+      "n": "D. Scarr",
+      "from": "Wrexham",
+      "to": "Salford City",
+      "fromCode": "WRE",
+      "toCode": null,
+      "date": "2026-08-30",
+      "type": "Transfer"
+    },
+    {
       "n": "D. Ozoh",
       "from": "Crystal Palace",
       "to": "Derby",
@@ -1583,6 +1637,15 @@
       "to": "Wrexham",
       "fromCode": "SHU",
       "toCode": "WRE",
+      "date": "2026-08-30",
+      "type": "Transfer"
+    },
+    {
+      "n": "B. Pereira",
+      "from": "NEC Nijmegen",
+      "to": "West Brom",
+      "fromCode": null,
+      "toCode": "WBA",
       "date": "2026-08-30",
       "type": "Transfer"
     },
@@ -1704,6 +1767,15 @@
       "type": "Transfer"
     },
     {
+      "n": "E. Austbö",
+      "from": "Viking",
+      "to": "West Ham",
+      "fromCode": null,
+      "toCode": "WHU",
+      "date": "2026-08-29",
+      "type": "Transfer"
+    },
+    {
       "n": "C. Coady",
       "from": "Wrexham",
       "to": "Coady Conor",
@@ -1729,6 +1801,15 @@
       "toCode": null,
       "date": "2026-08-28",
       "type": "Loan"
+    },
+    {
+      "n": "Tobias Christopher Collyer",
+      "from": "Manchester United",
+      "to": "West Brom",
+      "fromCode": null,
+      "toCode": "WBA",
+      "date": "2026-08-28",
+      "type": "Transfer"
     },
     {
       "n": "S. Kalajdzic",
@@ -2064,6 +2145,15 @@
       "type": "Transfer"
     },
     {
+      "n": "E. Diouf",
+      "from": "West Ham",
+      "to": "Brentford",
+      "fromCode": "WHU",
+      "toCode": null,
+      "date": "2026-08-26",
+      "type": "Transfer"
+    },
+    {
       "n": "C. O&apos;Riordan",
       "from": "Blackburn",
       "to": "Barnsley",
@@ -2109,6 +2199,15 @@
       "type": "Transfer"
     },
     {
+      "n": "K. Tunde",
+      "from": "Levante",
+      "to": "West Brom",
+      "fromCode": null,
+      "toCode": "WBA",
+      "date": "2026-08-25",
+      "type": "Transfer"
+    },
+    {
       "n": "K. Schlotterbeck",
       "from": "FC Augsburg",
       "to": "Southampton",
@@ -2136,11 +2235,29 @@
       "type": "Transfer"
     },
     {
+      "n": "J. Ekomié",
+      "from": "Angers",
+      "to": "Wrexham",
+      "fromCode": null,
+      "toCode": "WRE",
+      "date": "2026-08-25",
+      "type": "Transfer"
+    },
+    {
       "n": "I. Mohamed",
       "from": "Casa Pia",
       "to": "Portsmouth",
       "fromCode": null,
       "toCode": "POR",
+      "date": "2026-08-25",
+      "type": "Transfer"
+    },
+    {
+      "n": "I. Kaboré",
+      "from": "Manchester City",
+      "to": "Wrexham",
+      "fromCode": null,
+      "toCode": "WRE",
       "date": "2026-08-25",
       "type": "Transfer"
     },
@@ -2287,6 +2404,15 @@
       "toCode": null,
       "date": "2026-08-22",
       "type": "Transfer"
+    },
+    {
+      "n": "K. Mfuamba",
+      "from": "West Brom",
+      "to": "Reading U21",
+      "fromCode": "WBA",
+      "toCode": null,
+      "date": "2026-08-22",
+      "type": "-"
     },
     {
       "n": "U. Djedje",
@@ -2613,6 +2739,15 @@
       "type": "Transfer"
     },
     {
+      "n": "George Earthy",
+      "from": "West Ham",
+      "to": "Reading",
+      "fromCode": "WHU",
+      "toCode": null,
+      "date": "2026-08-17",
+      "type": "Transfer"
+    },
+    {
       "n": "G. Coudert",
       "from": "Stade Brestois 29",
       "to": "Burnley",
@@ -2629,6 +2764,15 @@
       "toCode": null,
       "date": "2026-08-17",
       "type": "Loan"
+    },
+    {
+      "n": "Tom Wooster",
+      "from": "West Ham",
+      "to": "Walsall",
+      "fromCode": "WHU",
+      "toCode": null,
+      "date": "2026-08-16",
+      "type": "Free agent"
     },
     {
       "n": "S. Dieng",
@@ -2946,6 +3090,15 @@
       "type": "Transfer"
     },
     {
+      "n": "A. Engels",
+      "from": "Celtic",
+      "to": "West Ham",
+      "fromCode": null,
+      "toCode": "WHU",
+      "date": "2026-08-13",
+      "type": "Transfer"
+    },
+    {
       "n": "Vernon Masara",
       "from": "Burnley",
       "to": "Peterborough",
@@ -3243,6 +3396,15 @@
       "type": "Transfer"
     },
     {
+      "n": "R. Nzingoula",
+      "from": "Strasbourg",
+      "to": "West Brom",
+      "fromCode": null,
+      "toCode": "WBA",
+      "date": "2026-08-09",
+      "type": "Transfer"
+    },
+    {
       "n": "N. Oyekunle",
       "from": "Southampton",
       "to": "Leyton Orient",
@@ -3297,12 +3459,30 @@
       "type": "Return from loan"
     },
     {
+      "n": "A. Patterson",
+      "from": "Sunderland",
+      "to": "Wrexham",
+      "fromCode": null,
+      "toCode": "WRE",
+      "date": "2026-08-09",
+      "type": "Transfer"
+    },
+    {
       "n": "A. Kamara",
       "from": "Hull City",
       "to": "Portsmouth",
       "fromCode": null,
       "toCode": "POR",
       "date": "2026-08-09",
+      "type": "Transfer"
+    },
+    {
+      "n": "M. Solomon",
+      "from": "Tottenham",
+      "to": "West Ham",
+      "fromCode": null,
+      "toCode": "WHU",
+      "date": "2026-08-08",
       "type": "Transfer"
     },
     {
@@ -3630,6 +3810,15 @@
       "type": "Free agent"
     },
     {
+      "n": "S. Mandey",
+      "from": "West Brom",
+      "to": "Grazer AK",
+      "fromCode": "WBA",
+      "toCode": null,
+      "date": "2026-08-04",
+      "type": "Transfer"
+    },
+    {
       "n": "M. Melia",
       "from": "Tottenham",
       "to": "Lincoln",
@@ -3837,6 +4026,15 @@
       "type": "Transfer"
     },
     {
+      "n": "F. Myhre",
+      "from": "Brann",
+      "to": "West Brom",
+      "fromCode": null,
+      "toCode": "WBA",
+      "date": "2026-08-03",
+      "type": "Transfer"
+    },
+    {
       "n": "D. Yongwa",
       "from": "Lorient",
       "to": "Norwich",
@@ -3952,6 +4150,15 @@
       "toCode": null,
       "date": "2026-08-02",
       "type": "-"
+    },
+    {
+      "n": "F. Potts",
+      "from": "West Ham",
+      "to": "Club Brugge KV",
+      "fromCode": "WHU",
+      "toCode": null,
+      "date": "2026-08-02",
+      "type": "Transfer"
     },
     {
       "n": "D. Yongwa",
@@ -4449,6 +4656,15 @@
       "type": "Loan"
     },
     {
+      "n": "C. Marshall",
+      "from": "West Ham",
+      "to": "Luton",
+      "fromCode": "WHU",
+      "toCode": null,
+      "date": "2026-07-28",
+      "type": "Transfer"
+    },
+    {
       "n": "U. Raghouber",
       "from": "Lille",
       "to": "Burnley",
@@ -4474,6 +4690,15 @@
       "toCode": "MID",
       "date": "2026-07-27",
       "type": "Transfer"
+    },
+    {
+      "n": "P. Mullin",
+      "from": "Wrexham",
+      "to": "Rotherham",
+      "fromCode": "WRE",
+      "toCode": null,
+      "date": "2026-07-27",
+      "type": "Free agent"
     },
     {
       "n": "N. Mawene",
@@ -4609,6 +4834,15 @@
       "toCode": null,
       "date": "2026-07-26",
       "type": "Loan"
+    },
+    {
+      "n": "N. Galves",
+      "from": "Rodez",
+      "to": "West Brom",
+      "fromCode": null,
+      "toCode": "WBA",
+      "date": "2026-07-26",
+      "type": "Transfer"
     },
     {
       "n": "L. Vázquez",
@@ -4994,6 +5228,15 @@
       "to": "Portsmouth",
       "fromCode": null,
       "toCode": "POR",
+      "date": "2026-07-22",
+      "type": "Transfer"
+    },
+    {
+      "n": "C. Summerville",
+      "from": "West Ham",
+      "to": "Al-Hilal Saudi FC",
+      "fromCode": "WHU",
+      "toCode": null,
       "date": "2026-07-22",
       "type": "Transfer"
     },
@@ -5655,6 +5898,15 @@
       "type": "Loan"
     },
     {
+      "n": "Eseosa Sule",
+      "from": "West Brom",
+      "to": "ST Mirren",
+      "fromCode": "WBA",
+      "toCode": null,
+      "date": "2026-07-12",
+      "type": "Transfer"
+    },
+    {
       "n": "A. Mayor",
       "from": "Millwall",
       "to": "Hibernian",
@@ -5668,6 +5920,15 @@
       "from": "Portsmouth",
       "to": "DC United",
       "fromCode": "POR",
+      "toCode": null,
+      "date": "2026-07-12",
+      "type": "Free agent"
+    },
+    {
+      "n": "A. Cannon",
+      "from": "Wrexham",
+      "to": "Fleetwood Town",
+      "fromCode": "WRE",
       "toCode": null,
       "date": "2026-07-12",
       "type": "Free agent"
@@ -5983,6 +6244,15 @@
       "from": "Derby",
       "to": "Stoke City U21",
       "fromCode": "DER",
+      "toCode": null,
+      "date": "2026-07-07",
+      "type": "Free agent"
+    },
+    {
+      "n": "C. Wilson",
+      "from": "West Ham",
+      "to": "Brentford",
+      "fromCode": "WHU",
       "toCode": null,
       "date": "2026-07-07",
       "type": "Free agent"
@@ -8166,6 +8436,15 @@
       "type": "Return from loan"
     },
     {
+      "n": "K. Lamadrid",
+      "from": "Deportivo La Guaira",
+      "to": "West Ham",
+      "fromCode": null,
+      "toCode": "WHU",
+      "date": "2026-06-29",
+      "type": "Transfer"
+    },
+    {
       "n": "K. Hegyi",
       "from": "MTK Budapest",
       "to": "West Ham",
@@ -8425,6 +8704,15 @@
       "toCode": null,
       "date": "2026-06-29",
       "type": "Return from loan"
+    },
+    {
+      "n": "J. Fisher",
+      "from": "Wrexham",
+      "to": "Llandudno",
+      "fromCode": "WRE",
+      "toCode": null,
+      "date": "2026-06-29",
+      "type": "Free agent"
     },
     {
       "n": "J. Cabezas",
