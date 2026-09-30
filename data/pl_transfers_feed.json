@@ -1,6 +1,6 @@
 {
   "note": "PROPOSALS from API-Football /transfers, for a person to read. data/transfers.json is the hand-curated overlay that is actually applied; this is not.",
-  "since": "2026-06-01",
+  "since": "2026-06-02",
   "moves": [
     {
       "n": "N. Valentine",
@@ -30,6 +30,15 @@
       "type": "Free agent"
     },
     {
+      "n": "C. Ismail",
+      "from": "Arsenal",
+      "to": "Peterborough United U21",
+      "fromCode": "ARS",
+      "toCode": null,
+      "date": "2026-09-13",
+      "type": "-"
+    },
+    {
       "n": "Y. Ibrahim",
       "from": "Brighton",
       "to": "Brighton",
@@ -45,6 +54,15 @@
       "fromCode": "HUL",
       "toCode": null,
       "date": "2026-09-09",
+      "type": "Free agent"
+    },
+    {
+      "n": "D. Akintola",
+      "from": "Hull City",
+      "to": "Omonia Nicosia",
+      "fromCode": "HUL",
+      "toCode": null,
+      "date": "2026-09-08",
       "type": "Free agent"
     },
     {
@@ -235,6 +253,24 @@
       "toCode": null,
       "date": "2026-09-01",
       "type": "Loan"
+    },
+    {
+      "n": "L. Bailey",
+      "from": "Aston Villa",
+      "to": "Olympiakos Piraeus",
+      "fromCode": "AVL",
+      "toCode": null,
+      "date": "2026-09-01",
+      "type": "Transfer"
+    },
+    {
+      "n": "Gabriel Martinelli",
+      "from": "Arsenal",
+      "to": "Al-Hilal Saudi FC",
+      "fromCode": "ARS",
+      "toCode": null,
+      "date": "2026-09-01",
+      "type": "Transfer"
     },
     {
       "n": "C. Echeverri",
@@ -516,6 +552,15 @@
       "type": "Loan"
     },
     {
+      "n": "M. Jacob",
+      "from": "Hull City",
+      "to": "Newport County",
+      "fromCode": "HUL",
+      "toCode": null,
+      "date": "2026-08-31",
+      "type": "Loan"
+    },
+    {
       "n": "M. Fofana",
       "from": "Lyon",
       "to": "Sunderland",
@@ -589,6 +634,15 @@
     },
     {
       "n": "L. Kiaba Mounganga",
+      "from": "Genk",
+      "to": "Liverpool",
+      "fromCode": null,
+      "toCode": "LIV",
+      "date": "2026-08-31",
+      "type": "Transfer"
+    },
+    {
+      "n": "L. Kiaba Mounganga",
       "from": "Liverpool",
       "to": "Genk",
       "fromCode": "LIV",
@@ -597,11 +651,11 @@
       "type": "Loan"
     },
     {
-      "n": "L. Kiaba Mounganga",
-      "from": "Genk",
-      "to": "Liverpool",
-      "fromCode": null,
-      "toCode": "LIV",
+      "n": "L. Bailey",
+      "from": "Aston Villa",
+      "to": "Olympiakos Piraeus",
+      "fromCode": "AVL",
+      "toCode": null,
       "date": "2026-08-31",
       "type": "Transfer"
     },
@@ -1119,6 +1173,24 @@
       "type": "Free agent"
     },
     {
+      "n": "T. Iroegbunam",
+      "from": "Everton",
+      "to": "Hull City",
+      "fromCode": "EVE",
+      "toCode": "HUL",
+      "date": "2026-08-30",
+      "type": "Transfer"
+    },
+    {
+      "n": "T. Harwood-Bellis",
+      "from": "Southampton",
+      "to": "Aston Villa",
+      "fromCode": "SOU",
+      "toCode": "AVL",
+      "date": "2026-08-30",
+      "type": "Transfer"
+    },
+    {
       "n": "T. Adarabioyo",
       "from": "Chelsea",
       "to": "Tottenham",
@@ -1144,6 +1216,15 @@
       "toCode": null,
       "date": "2026-08-30",
       "type": "Loan"
+    },
+    {
+      "n": "S. Thomas",
+      "from": "Stoke City",
+      "to": "Hull City",
+      "fromCode": "STK",
+      "toCode": "HUL",
+      "date": "2026-08-30",
+      "type": "Transfer"
     },
     {
       "n": "Q. Timber",
@@ -1173,11 +1254,29 @@
       "type": "Transfer"
     },
     {
+      "n": "N. Patterson",
+      "from": "Everton",
+      "to": "Torino",
+      "fromCode": "EVE",
+      "toCode": null,
+      "date": "2026-08-30",
+      "type": "Free agent"
+    },
+    {
       "n": "Marc Guiu",
       "from": "Chelsea",
       "to": "RB Leipzig",
       "fromCode": "CHE",
       "toCode": null,
+      "date": "2026-08-30",
+      "type": "Transfer"
+    },
+    {
+      "n": "Manuel Ángel",
+      "from": "Real Madrid",
+      "to": "Fulham",
+      "fromCode": null,
+      "toCode": "FUL",
       "date": "2026-08-30",
       "type": "Transfer"
     },
@@ -1191,11 +1290,29 @@
       "type": "Loan"
     },
     {
+      "n": "M. Fofana",
+      "from": "Lyon",
+      "to": "Sunderland",
+      "fromCode": null,
+      "toCode": "SUN",
+      "date": "2026-08-30",
+      "type": "Transfer"
+    },
+    {
       "n": "M. Fernandez-Pardo",
       "from": "Lille",
       "to": "Newcastle",
       "fromCode": null,
       "toCode": "NEW",
+      "date": "2026-08-30",
+      "type": "Transfer"
+    },
+    {
+      "n": "Luís Semedo",
+      "from": "Sunderland",
+      "to": "Clermont Foot",
+      "fromCode": "SUN",
+      "toCode": null,
       "date": "2026-08-30",
       "type": "Transfer"
     },
@@ -1207,6 +1324,15 @@
       "toCode": null,
       "date": "2026-08-30",
       "type": "Loan"
+    },
+    {
+      "n": "L. Kiaba Mounganga",
+      "from": "Genk",
+      "to": "Liverpool",
+      "fromCode": null,
+      "toCode": "LIV",
+      "date": "2026-08-30",
+      "type": "Transfer"
     },
     {
       "n": "José María Andrés Baixauli",
@@ -1245,11 +1371,65 @@
       "type": "Transfer"
     },
     {
+      "n": "J. Angulo",
+      "from": "Independiente del Valle",
+      "to": "Sunderland",
+      "fromCode": null,
+      "toCode": "SUN",
+      "date": "2026-08-30",
+      "type": "Transfer"
+    },
+    {
+      "n": "Ilyas  Ansah",
+      "from": "Union Berlin",
+      "to": "Hull City",
+      "fromCode": null,
+      "toCode": "HUL",
+      "date": "2026-08-30",
+      "type": "Transfer"
+    },
+    {
       "n": "Igor",
       "from": "Brighton",
       "to": "Burnley",
       "fromCode": "BHA",
       "toCode": "BUR",
+      "date": "2026-08-30",
+      "type": "Transfer"
+    },
+    {
+      "n": "I. Ndiaye",
+      "from": "Everton",
+      "to": "Manchester City",
+      "fromCode": "EVE",
+      "toCode": "MCI",
+      "date": "2026-08-30",
+      "type": "Transfer"
+    },
+    {
+      "n": "I. Mbaye",
+      "from": "Paris Saint Germain",
+      "to": "Aston Villa",
+      "fromCode": null,
+      "toCode": "AVL",
+      "date": "2026-08-30",
+      "type": "Transfer"
+    },
+    {
+      "n": "Gabriel Jesus",
+      "from": "Arsenal",
+      "to": "Barcelona",
+      "fromCode": "ARS",
+      "toCode": null,
+      "date": "2026-08-30",
+      "type": "Transfer"
+    },
+    {
+      "n": "Fábio Vieira",
+      "from": "Arsenal",
+      "to": "Hamburger SV",
+      "fromCode": "ARS",
+      "toCode": null,
       "date": "2026-08-30",
       "type": "Transfer"
     },
@@ -1317,6 +1497,15 @@
       "type": "Transfer"
     },
     {
+      "n": "D. Affengruber",
+      "from": "Elche",
+      "to": "Fulham",
+      "fromCode": null,
+      "toCode": "FUL",
+      "date": "2026-08-30",
+      "type": "Transfer"
+    },
+    {
       "n": "Caylan Vickers",
       "from": "Brighton",
       "to": "Burton Albion",
@@ -1326,11 +1515,56 @@
       "type": "Transfer"
     },
     {
+      "n": "C. Mouzakitis",
+      "from": "Olympiakos Piraeus",
+      "to": "Hull City",
+      "fromCode": null,
+      "toCode": "HUL",
+      "date": "2026-08-30",
+      "type": "Transfer"
+    },
+    {
+      "n": "C. Drameh",
+      "from": "Hull City",
+      "to": "Genoa",
+      "fromCode": "HUL",
+      "toCode": null,
+      "date": "2026-08-30",
+      "type": "Transfer"
+    },
+    {
+      "n": "Beto",
+      "from": "Everton",
+      "to": "Fiorentina",
+      "fromCode": "EVE",
+      "toCode": null,
+      "date": "2026-08-30",
+      "type": "Transfer"
+    },
+    {
+      "n": "B. Norton-Cuffy",
+      "from": "Genoa",
+      "to": "Hull City",
+      "fromCode": null,
+      "toCode": "HUL",
+      "date": "2026-08-30",
+      "type": "Transfer"
+    },
+    {
       "n": "B. Chilwell",
       "from": "Strasbourg",
       "to": "Crystal Palace",
       "fromCode": null,
       "toCode": "CRY",
+      "date": "2026-08-30",
+      "type": "Free agent"
+    },
+    {
+      "n": "B. Burrows",
+      "from": "Aston Villa",
+      "to": "Burrowes Bradley-Paul",
+      "fromCode": "AVL",
+      "toCode": null,
       "date": "2026-08-30",
       "type": "Free agent"
     },
@@ -1353,6 +1587,15 @@
       "type": "Transfer"
     },
     {
+      "n": "Aidan Borland",
+      "from": "Aston Villa",
+      "to": "Borland Aidan",
+      "fromCode": "AVL",
+      "toCode": null,
+      "date": "2026-08-30",
+      "type": "Free agent"
+    },
+    {
       "n": "Adam Aznou Ben Cheikh",
       "from": "Everton",
       "to": "Malaga",
@@ -1360,6 +1603,15 @@
       "toCode": null,
       "date": "2026-08-30",
       "type": "Loan"
+    },
+    {
+      "n": "A. Maitland-Niles",
+      "from": "Lyon",
+      "to": "Everton",
+      "fromCode": null,
+      "toCode": "EVE",
+      "date": "2026-08-30",
+      "type": "Transfer"
     },
     {
       "n": "Tyler Bindon",
@@ -1378,6 +1630,15 @@
       "toCode": "WBA",
       "date": "2026-08-29",
       "type": "Transfer"
+    },
+    {
+      "n": "Stefan Bajčetić",
+      "from": "Liverpool",
+      "to": "Celta de Vigo II",
+      "fromCode": "LIV",
+      "toCode": null,
+      "date": "2026-08-29",
+      "type": "-"
     },
     {
       "n": "S. Mfuni",
@@ -1488,11 +1749,38 @@
       "type": "Transfer"
     },
     {
+      "n": "B. Barcola",
+      "from": "Paris Saint Germain",
+      "to": "Liverpool",
+      "fromCode": null,
+      "toCode": "LIV",
+      "date": "2026-08-29",
+      "type": "Transfer"
+    },
+    {
+      "n": "Allan",
+      "from": "Palmeiras",
+      "to": "Manchester City",
+      "fromCode": null,
+      "toCode": "MCI",
+      "date": "2026-08-29",
+      "type": "Transfer"
+    },
+    {
       "n": "Tobias Christopher Collyer",
       "from": "Manchester United",
       "to": "West Brom",
       "fromCode": "MUN",
       "toCode": "WBA",
+      "date": "2026-08-28",
+      "type": "Transfer"
+    },
+    {
+      "n": "O. Watkins",
+      "from": "Aston Villa",
+      "to": "Al-Hilal Saudi FC",
+      "fromCode": "AVL",
+      "toCode": null,
       "date": "2026-08-28",
       "type": "Transfer"
     },
@@ -1632,6 +1920,15 @@
       "type": "Loan"
     },
     {
+      "n": "K. Miściur",
+      "from": "Liverpool",
+      "to": "Leek Town",
+      "fromCode": "LIV",
+      "toCode": null,
+      "date": "2026-08-27",
+      "type": "Loan"
+    },
+    {
       "n": "E. Diouf",
       "from": "West Ham",
       "to": "Brentford",
@@ -1684,6 +1981,15 @@
       "toCode": null,
       "date": "2026-08-26",
       "type": "Loan"
+    },
+    {
+      "n": "L. Goretzka",
+      "from": "Bayern München",
+      "to": "Aston Villa",
+      "fromCode": null,
+      "toCode": "AVL",
+      "date": "2026-08-26",
+      "type": "Free agent"
     },
     {
       "n": "L. Delap",
@@ -1819,6 +2125,24 @@
       "toCode": null,
       "date": "2026-08-25",
       "type": "Loan"
+    },
+    {
+      "n": "M. Cho",
+      "from": "Nice",
+      "to": "Hull City",
+      "fromCode": null,
+      "toCode": "HUL",
+      "date": "2026-08-25",
+      "type": "Transfer"
+    },
+    {
+      "n": "I. Kaboré",
+      "from": "Manchester City",
+      "to": "Wrexham",
+      "fromCode": "MCI",
+      "toCode": "WRE",
+      "date": "2026-08-25",
+      "type": "Transfer"
     },
     {
       "n": "F. Tonks",
@@ -1974,6 +2298,15 @@
       "type": "Transfer"
     },
     {
+      "n": "A. Bouaddi",
+      "from": "Lille",
+      "to": "Manchester City",
+      "fromCode": null,
+      "toCode": "MCI",
+      "date": "2026-08-24",
+      "type": "Transfer"
+    },
+    {
       "n": "Sávio",
       "from": "Manchester City",
       "to": "Tottenham",
@@ -2062,6 +2395,15 @@
       "toCode": "MID",
       "date": "2026-08-22",
       "type": "Free agent"
+    },
+    {
+      "n": "Jules Ahoka",
+      "from": "Antwerp",
+      "to": "Sunderland",
+      "fromCode": null,
+      "toCode": "SUN",
+      "date": "2026-08-22",
+      "type": "Transfer"
     },
     {
       "n": "J. Devaney",
@@ -2253,6 +2595,15 @@
       "type": "Transfer"
     },
     {
+      "n": "D. Methalie",
+      "from": "Toulouse",
+      "to": "Sunderland",
+      "fromCode": null,
+      "toCode": "SUN",
+      "date": "2026-08-19",
+      "type": "Transfer"
+    },
+    {
       "n": "D. Bentley",
       "from": "Wolves",
       "to": "Coventry",
@@ -2269,6 +2620,15 @@
       "toCode": null,
       "date": "2026-08-19",
       "type": "Loan"
+    },
+    {
+      "n": "C. Jones",
+      "from": "Liverpool",
+      "to": "Inter",
+      "fromCode": "LIV",
+      "toCode": null,
+      "date": "2026-08-19",
+      "type": "Transfer"
     },
     {
       "n": "Z. Suzuki",
@@ -2379,6 +2739,15 @@
       "type": "Transfer"
     },
     {
+      "n": "Z. Suzuki",
+      "from": "Parma",
+      "to": "Aston Villa",
+      "fromCode": null,
+      "toCode": "AVL",
+      "date": "2026-08-17",
+      "type": "Transfer"
+    },
+    {
       "n": "Z. Gozo",
       "from": "Real Salt Lake",
       "to": "Crystal Palace",
@@ -2395,6 +2764,15 @@
       "toCode": "LIN",
       "date": "2026-08-17",
       "type": "Loan"
+    },
+    {
+      "n": "T. Reijnders",
+      "from": "Manchester City",
+      "to": "Al-Qadisiyah FC",
+      "fromCode": "MCI",
+      "toCode": null,
+      "date": "2026-08-17",
+      "type": "Transfer"
     },
     {
       "n": "S. Cherif",
@@ -2429,6 +2807,24 @@
       "to": "Leeds",
       "fromCode": null,
       "toCode": "LEE",
+      "date": "2026-08-17",
+      "type": "Transfer"
+    },
+    {
+      "n": "M. Ruggeri",
+      "from": "Atletico Madrid",
+      "to": "Aston Villa",
+      "fromCode": null,
+      "toCode": "AVL",
+      "date": "2026-08-17",
+      "type": "Transfer"
+    },
+    {
+      "n": "Harvey Araujo",
+      "from": "Fulham",
+      "to": "Burton Albion",
+      "fromCode": "FUL",
+      "toCode": null,
       "date": "2026-08-17",
       "type": "Transfer"
     },
@@ -2491,6 +2887,15 @@
       "from": "Crystal Palace",
       "to": "Cercle Brugge",
       "fromCode": "CRY",
+      "toCode": null,
+      "date": "2026-08-16",
+      "type": "Transfer"
+    },
+    {
+      "n": "Rodri",
+      "from": "Manchester City",
+      "to": "Barcelona",
+      "fromCode": "MCI",
       "toCode": null,
       "date": "2026-08-16",
       "type": "Transfer"
@@ -2739,6 +3144,15 @@
       "type": "Loan"
     },
     {
+      "n": "L. Gourna-Douath",
+      "from": "Red Bull Salzburg",
+      "to": "Hull City",
+      "fromCode": null,
+      "toCode": "HUL",
+      "date": "2026-08-13",
+      "type": "Transfer"
+    },
+    {
       "n": "J. Gelhardt",
       "from": "Leeds",
       "to": "Hull City",
@@ -2887,6 +3301,15 @@
       "from": "Bournemouth",
       "to": "Getafe",
       "fromCode": "BOU",
+      "toCode": null,
+      "date": "2026-08-12",
+      "type": "Free agent"
+    },
+    {
+      "n": "E. Destan",
+      "from": "Hull City",
+      "to": "Konyaspor",
+      "fromCode": "HUL",
       "toCode": null,
       "date": "2026-08-12",
       "type": "Free agent"
@@ -3090,11 +3513,29 @@
       "type": "Transfer"
     },
     {
+      "n": "N. Mendy",
+      "from": "Rayo Vallecano",
+      "to": "Hull City",
+      "fromCode": null,
+      "toCode": "HUL",
+      "date": "2026-08-10",
+      "type": "Transfer"
+    },
+    {
       "n": "L. Hjelde",
       "from": "Sunderland",
       "to": "KV Mechelen",
       "fromCode": "SUN",
       "toCode": null,
+      "date": "2026-08-10",
+      "type": "Transfer"
+    },
+    {
+      "n": "L. Herrington",
+      "from": "Colorado Rapids",
+      "to": "Hull City",
+      "fromCode": null,
+      "toCode": "HUL",
       "date": "2026-08-10",
       "type": "Transfer"
     },
@@ -3108,6 +3549,15 @@
       "type": "Loan"
     },
     {
+      "n": "J. Esenga",
+      "from": "Fulham",
+      "to": "IF Elfsborg",
+      "fromCode": "FUL",
+      "toCode": null,
+      "date": "2026-08-10",
+      "type": "Transfer"
+    },
+    {
       "n": "I. Samuels-Smith",
       "from": "Chelsea",
       "to": "Notts County",
@@ -3115,6 +3565,15 @@
       "toCode": null,
       "date": "2026-08-10",
       "type": "Loan"
+    },
+    {
+      "n": "G. Rulli",
+      "from": "Marseille",
+      "to": "Manchester City",
+      "fromCode": null,
+      "toCode": "MCI",
+      "date": "2026-08-10",
+      "type": "Transfer"
     },
     {
       "n": "G. Hamer",
@@ -3162,6 +3621,15 @@
       "type": "Loan"
     },
     {
+      "n": "D. Cirkin",
+      "from": "Sunderland",
+      "to": "QPR",
+      "fromCode": "SUN",
+      "toCode": "QPR",
+      "date": "2026-08-10",
+      "type": "Free agent"
+    },
+    {
       "n": "B. Johnson",
       "from": "Crystal Palace",
       "to": "Everton",
@@ -3187,6 +3655,24 @@
       "toCode": null,
       "date": "2026-08-10",
       "type": "Loan"
+    },
+    {
+      "n": "S. Charles",
+      "from": "Southampton",
+      "to": "Fulham",
+      "fromCode": "SOU",
+      "toCode": "FUL",
+      "date": "2026-08-09",
+      "type": "Transfer"
+    },
+    {
+      "n": "Roman Dixon",
+      "from": "Everton",
+      "to": "Walsall",
+      "fromCode": "EVE",
+      "toCode": null,
+      "date": "2026-08-09",
+      "type": "Free agent"
     },
     {
       "n": "R. Araújo",
@@ -3216,6 +3702,15 @@
       "type": "Transfer"
     },
     {
+      "n": "L. Hjelde",
+      "from": "Sunderland",
+      "to": "KV Mechelen",
+      "fromCode": "SUN",
+      "toCode": null,
+      "date": "2026-08-09",
+      "type": "Transfer"
+    },
+    {
       "n": "J. Grante",
       "from": "Crystal Palace",
       "to": "St Albans City",
@@ -3239,6 +3734,15 @@
       "to": "Everton",
       "fromCode": "CRY",
       "toCode": "EVE",
+      "date": "2026-08-09",
+      "type": "Transfer"
+    },
+    {
+      "n": "A. Patterson",
+      "from": "Sunderland",
+      "to": "Wrexham",
+      "fromCode": "SUN",
+      "toCode": "WRE",
       "date": "2026-08-09",
       "type": "Transfer"
     },
@@ -3306,6 +3810,24 @@
       "type": "Transfer"
     },
     {
+      "n": "A. Masuaku",
+      "from": "Sunderland",
+      "to": "Konyaspor",
+      "fromCode": "SUN",
+      "toCode": null,
+      "date": "2026-08-08",
+      "type": "Free agent"
+    },
+    {
+      "n": "A. Kamara",
+      "from": "Hull City",
+      "to": "Portsmouth",
+      "fromCode": "HUL",
+      "toCode": "POR",
+      "date": "2026-08-08",
+      "type": "Transfer"
+    },
+    {
       "n": "S. Lukić",
       "from": "Fulham",
       "to": "Ipswich",
@@ -3358,6 +3880,15 @@
       "toCode": null,
       "date": "2026-08-07",
       "type": "Loan"
+    },
+    {
+      "n": "E. Stroud",
+      "from": "Mjallby AIF",
+      "to": "Hull City",
+      "fromCode": null,
+      "toCode": "HUL",
+      "date": "2026-08-07",
+      "type": "Transfer"
     },
     {
       "n": "Bruno Guimarães",
@@ -3459,6 +3990,15 @@
       "type": "Free agent"
     },
     {
+      "n": "J. Waters",
+      "from": "Sunderland",
+      "to": "Hebburn Town",
+      "fromCode": "SUN",
+      "toCode": null,
+      "date": "2026-08-06",
+      "type": "Free agent"
+    },
+    {
       "n": "J. Taylor",
       "from": "Newcastle",
       "to": "Hemel Hempstead Town",
@@ -3473,6 +4013,15 @@
       "to": "Shabab Al Ahli Dubai",
       "fromCode": "COV",
       "toCode": null,
+      "date": "2026-08-06",
+      "type": "Transfer"
+    },
+    {
+      "n": "J. Hjertø-Dahl",
+      "from": "Tromso",
+      "to": "Hull City",
+      "fromCode": null,
+      "toCode": "HUL",
       "date": "2026-08-06",
       "type": "Transfer"
     },
@@ -3563,6 +4112,15 @@
       "to": "Crystal Palace",
       "fromCode": null,
       "toCode": "CRY",
+      "date": "2026-08-05",
+      "type": "Free agent"
+    },
+    {
+      "n": "T. Onyango",
+      "from": "Everton",
+      "to": "Sheffield Wednesday",
+      "fromCode": "EVE",
+      "toCode": null,
       "date": "2026-08-05",
       "type": "Free agent"
     },
@@ -3666,6 +4224,15 @@
       "type": "Transfer"
     },
     {
+      "n": "C. Nørgaard",
+      "from": "Arsenal",
+      "to": "Everton",
+      "fromCode": "ARS",
+      "toCode": "EVE",
+      "date": "2026-08-05",
+      "type": "Transfer"
+    },
+    {
       "n": "Archie Harris",
       "from": "Bournemouth",
       "to": "Wigan",
@@ -3679,6 +4246,15 @@
       "from": "Ipswich",
       "to": "Leicester",
       "fromCode": "IPS",
+      "toCode": null,
+      "date": "2026-08-04",
+      "type": "Transfer"
+    },
+    {
+      "n": "R. Welch",
+      "from": "Everton",
+      "to": "Bradford",
+      "fromCode": "EVE",
       "toCode": null,
       "date": "2026-08-04",
       "type": "Transfer"
@@ -3756,6 +4332,15 @@
       "type": "Transfer"
     },
     {
+      "n": "R. Welch",
+      "from": "Everton",
+      "to": "Bradford",
+      "fromCode": "EVE",
+      "toCode": null,
+      "date": "2026-08-03",
+      "type": "Transfer"
+    },
+    {
       "n": "Mohamed Salah",
       "from": "Liverpool",
       "to": "Trabzonspor",
@@ -3772,6 +4357,15 @@
       "toCode": null,
       "date": "2026-08-03",
       "type": "Free agent"
+    },
+    {
+      "n": "K. Tzolakis",
+      "from": "Olympiakos Piraeus",
+      "to": "Hull City",
+      "fromCode": null,
+      "toCode": "HUL",
+      "date": "2026-08-03",
+      "type": "Transfer"
     },
     {
       "n": "Florentino",
@@ -3873,6 +4467,15 @@
       "type": "Transfer"
     },
     {
+      "n": "A. Abdullahi",
+      "from": "Sunderland",
+      "to": "Eyüpspor",
+      "fromCode": "SUN",
+      "toCode": null,
+      "date": "2026-08-02",
+      "type": "Transfer"
+    },
+    {
       "n": "V. Barco",
       "from": "Strasbourg",
       "to": "Chelsea",
@@ -3898,6 +4501,24 @@
       "toCode": null,
       "date": "2026-08-01",
       "type": "Free agent"
+    },
+    {
+      "n": "Gonzalo García",
+      "from": "Real Madrid",
+      "to": "Fulham",
+      "fromCode": null,
+      "toCode": "FUL",
+      "date": "2026-08-01",
+      "type": "Transfer"
+    },
+    {
+      "n": "César Palacios",
+      "from": "Real Madrid",
+      "to": "Fulham",
+      "fromCode": null,
+      "toCode": "FUL",
+      "date": "2026-08-01",
+      "type": "Transfer"
     },
     {
       "n": "Conor McManus",
@@ -4078,6 +4699,15 @@
       "toCode": null,
       "date": "2026-07-29",
       "type": "Transfer"
+    },
+    {
+      "n": "Oakley William Cannonier",
+      "from": "Liverpool",
+      "to": "Hougang United",
+      "fromCode": "LIV",
+      "toCode": null,
+      "date": "2026-07-29",
+      "type": "Free agent"
     },
     {
       "n": "M. Lacroix",
@@ -4431,6 +5061,15 @@
       "type": "Free agent"
     },
     {
+      "n": "H. Morita",
+      "from": "Sporting CP",
+      "to": "Hull City",
+      "fromCode": null,
+      "toCode": "HUL",
+      "date": "2026-07-22",
+      "type": "Free agent"
+    },
+    {
       "n": "Finley Taylor",
       "from": "Brighton",
       "to": "Blackburn Rovers U21",
@@ -4548,6 +5187,15 @@
       "type": "Free agent"
     },
     {
+      "n": "C. Tzolis",
+      "from": "Club Brugge KV",
+      "to": "Arsenal",
+      "fromCode": null,
+      "toCode": "ARS",
+      "date": "2026-07-21",
+      "type": "Transfer"
+    },
+    {
       "n": "Óscar Steven Zambrano Preciado",
       "from": "Maribor",
       "to": "Hull City",
@@ -4626,6 +5274,15 @@
       "fromCode": null,
       "toCode": "IPS",
       "date": "2026-07-20",
+      "type": "Transfer"
+    },
+    {
+      "n": "Óscar Steven Zambrano Preciado",
+      "from": "Maribor",
+      "to": "Hull City",
+      "fromCode": null,
+      "toCode": "HUL",
+      "date": "2026-07-19",
       "type": "Transfer"
     },
     {
@@ -4890,6 +5547,15 @@
       "type": "Free agent"
     },
     {
+      "n": "Alexei Rojas Fedorushchenko",
+      "from": "Arsenal",
+      "to": "Penafiel",
+      "fromCode": "ARS",
+      "toCode": null,
+      "date": "2026-07-16",
+      "type": "Free agent"
+    },
+    {
       "n": "Y. Mosquera",
       "from": "Aston Villa",
       "to": "Vitória SC",
@@ -4917,11 +5583,29 @@
       "type": "Free agent"
     },
     {
+      "n": "Kean Wren",
+      "from": "Everton",
+      "to": "Derby County U21",
+      "fromCode": "EVE",
+      "toCode": null,
+      "date": "2026-07-15",
+      "type": "-"
+    },
+    {
       "n": "J. White",
       "from": "Newcastle",
       "to": "Crewe",
       "fromCode": "NEW",
       "toCode": null,
+      "date": "2026-07-15",
+      "type": "Transfer"
+    },
+    {
+      "n": "J. Manzambi",
+      "from": "SC Freiburg",
+      "to": "Aston Villa",
+      "fromCode": null,
+      "toCode": "AVL",
       "date": "2026-07-15",
       "type": "Transfer"
     },
@@ -4942,6 +5626,15 @@
       "toCode": null,
       "date": "2026-07-15",
       "type": "Loan"
+    },
+    {
+      "n": "E. Moore",
+      "from": "Sunderland",
+      "to": "Kidderminster Harriers",
+      "fromCode": "SUN",
+      "toCode": null,
+      "date": "2026-07-15",
+      "type": "Free agent"
     },
     {
       "n": "D. Coppola",
@@ -4978,6 +5671,15 @@
       "toCode": "COV",
       "date": "2026-07-15",
       "type": "Transfer"
+    },
+    {
+      "n": "T. Pembélé",
+      "from": "Sunderland",
+      "to": "Le Havre",
+      "fromCode": "SUN",
+      "toCode": null,
+      "date": "2026-07-14",
+      "type": "Free agent"
     },
     {
       "n": "T. Meunier",
@@ -5102,6 +5804,15 @@
       "to": "Bournemouth",
       "fromCode": null,
       "toCode": "BOU",
+      "date": "2026-07-12",
+      "type": "Transfer"
+    },
+    {
+      "n": "L. Trossard",
+      "from": "Arsenal",
+      "to": "Beşiktaş",
+      "fromCode": "ARS",
+      "toCode": null,
       "date": "2026-07-12",
       "type": "Transfer"
     },
@@ -5349,6 +6060,15 @@
       "type": "Transfer"
     },
     {
+      "n": "R. Walsh",
+      "from": "Sunderland",
+      "to": "Glentoran",
+      "fromCode": "SUN",
+      "toCode": null,
+      "date": "2026-07-07",
+      "type": "Free agent"
+    },
+    {
       "n": "R. Drăgușin",
       "from": "Tottenham",
       "to": "Fiorentina",
@@ -5419,6 +6139,15 @@
       "toCode": "BRE",
       "date": "2026-07-07",
       "type": "Free agent"
+    },
+    {
+      "n": "C. Cliff",
+      "from": "Fulham",
+      "to": "Reading U21",
+      "fromCode": "FUL",
+      "toCode": null,
+      "date": "2026-07-07",
+      "type": "-"
     },
     {
       "n": "Tomas Galvez",
@@ -5556,6 +6285,15 @@
       "type": "Transfer"
     },
     {
+      "n": "Eliezer Mayenda",
+      "from": "Sunderland",
+      "to": "Rennes",
+      "fromCode": "SUN",
+      "toCode": null,
+      "date": "2026-07-03",
+      "type": "Transfer"
+    },
+    {
       "n": "B. Hammond",
       "from": "Nottingham Forest",
       "to": "Boston United",
@@ -5563,6 +6301,15 @@
       "toCode": null,
       "date": "2026-07-03",
       "type": "Free agent"
+    },
+    {
+      "n": "Oliver Mayer",
+      "from": "Fulham",
+      "to": "Brighton U21",
+      "fromCode": "FUL",
+      "toCode": null,
+      "date": "2026-07-02",
+      "type": "-"
     },
     {
       "n": "N. Aké",
@@ -5680,6 +6427,15 @@
       "toCode": null,
       "date": "2026-07-01",
       "type": "Transfer"
+    },
+    {
+      "n": "A. Akarakiri",
+      "from": "Everton",
+      "to": "Cagliari",
+      "fromCode": "EVE",
+      "toCode": null,
+      "date": "2026-07-01",
+      "type": "Free agent"
     },
     {
       "n": "Álex Jiménez",
@@ -6094,6 +6850,15 @@
       "toCode": null,
       "date": "2026-06-30",
       "type": "Transfer"
+    },
+    {
+      "n": "Jack Allan",
+      "from": "Aston Villa",
+      "to": "Aston Villa U21",
+      "fromCode": "AVL",
+      "toCode": null,
+      "date": "2026-06-30",
+      "type": "-"
     },
     {
       "n": "J. van Hecke",
@@ -6618,6 +7383,15 @@
       "type": "Free agent"
     },
     {
+      "n": "Víctor Muñoz",
+      "from": "Osasuna",
+      "to": "Liverpool",
+      "fromCode": null,
+      "toCode": "LIV",
+      "date": "2026-06-29",
+      "type": "Transfer"
+    },
+    {
       "n": "Vitor Nunes",
       "from": "Girona",
       "to": "Manchester City",
@@ -6969,6 +7743,15 @@
       "type": "Return from loan"
     },
     {
+      "n": "P. Charles",
+      "from": "Sheffield Wednesday",
+      "to": "Manchester City",
+      "fromCode": null,
+      "toCode": "MCI",
+      "date": "2026-06-29",
+      "type": "Transfer"
+    },
+    {
       "n": "O. Zych",
       "from": "Raków Częstochowa",
       "to": "Aston Villa",
@@ -7140,6 +7923,15 @@
       "type": "Return from loan"
     },
     {
+      "n": "M. Röhl",
+      "from": "SC Freiburg",
+      "to": "Everton",
+      "fromCode": null,
+      "toCode": "EVE",
+      "date": "2026-06-29",
+      "type": "Transfer"
+    },
+    {
       "n": "M. Rashford",
       "from": "Barcelona",
       "to": "Manchester United",
@@ -7183,6 +7975,24 @@
       "toCode": "FUL",
       "date": "2026-06-29",
       "type": "Return from loan"
+    },
+    {
+      "n": "M. Detourbet",
+      "from": "Estac Troyes",
+      "to": "Manchester City",
+      "fromCode": null,
+      "toCode": "MCI",
+      "date": "2026-06-29",
+      "type": "Transfer"
+    },
+    {
+      "n": "M. Cissé",
+      "from": "Lask Linz",
+      "to": "Aston Villa",
+      "fromCode": null,
+      "toCode": "AVL",
+      "date": "2026-06-29",
+      "type": "Transfer"
     },
     {
       "n": "M. Akanji",
@@ -7410,6 +8220,15 @@
       "type": "Return from loan"
     },
     {
+      "n": "Joshua Nichols",
+      "from": "Arsenal",
+      "to": "Kustosija",
+      "fromCode": "ARS",
+      "toCode": null,
+      "date": "2026-06-29",
+      "type": "Free agent"
+    },
+    {
       "n": "Joshua Feeney",
       "from": "Huddersfield",
       "to": "Aston Villa",
@@ -7561,6 +8380,15 @@
       "toCode": null,
       "date": "2026-06-29",
       "type": "Return from loan"
+    },
+    {
+      "n": "J. Kusi-Asare",
+      "from": "Bayern München",
+      "to": "Fulham",
+      "fromCode": null,
+      "toCode": "FUL",
+      "date": "2026-06-29",
+      "type": "Transfer"
     },
     {
       "n": "J. Kiwior",
@@ -8083,6 +8911,15 @@
       "toCode": "MCI",
       "date": "2026-06-29",
       "type": "Return from loan"
+    },
+    {
+      "n": "C. Ebere",
+      "from": "Everton",
+      "to": "Cukaricki",
+      "fromCode": "EVE",
+      "toCode": null,
+      "date": "2026-06-29",
+      "type": "Transfer"
     },
     {
       "n": "C. Chaplin",

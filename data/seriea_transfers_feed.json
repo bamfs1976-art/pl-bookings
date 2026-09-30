@@ -1,6 +1,6 @@
 {
   "note": "PROPOSALS from API-Football /transfers, for a person to read. data/transfers.json is the hand-curated overlay that is actually applied; this is not.",
-  "since": "2026-06-01",
+  "since": "2026-06-02",
   "moves": [
     {
       "n": "M. Bilac",
@@ -1209,6 +1209,24 @@
       "type": "Loan"
     },
     {
+      "n": "J. Enem",
+      "from": "FK Crvena Zvezda",
+      "to": "Bologna",
+      "fromCode": null,
+      "toCode": "BGN",
+      "date": "2026-08-30",
+      "type": "Transfer"
+    },
+    {
+      "n": "I. Kamate",
+      "from": "Inter",
+      "to": "Atlético Madrid II",
+      "fromCode": "INT",
+      "toCode": null,
+      "date": "2026-08-30",
+      "type": "-"
+    },
+    {
       "n": "F. Missori",
       "from": "Sassuolo",
       "to": "Avellino",
@@ -2379,6 +2397,15 @@
       "type": "Free agent"
     },
     {
+      "n": "C. Jones",
+      "from": "Liverpool",
+      "to": "Inter",
+      "fromCode": null,
+      "toCode": "INT",
+      "date": "2026-08-19",
+      "type": "Transfer"
+    },
+    {
       "n": "Arthur",
       "from": "Juventus",
       "to": "Arthur Melo",
@@ -2494,6 +2521,15 @@
       "toCode": "ACM",
       "date": "2026-08-18",
       "type": "Transfer"
+    },
+    {
+      "n": "C. Lykogiannis",
+      "from": "Bologna",
+      "to": "AEK Athens FC",
+      "fromCode": "BGN",
+      "toCode": null,
+      "date": "2026-08-18",
+      "type": "Free agent"
     },
     {
       "n": "C. Favasuli",
@@ -2784,6 +2820,15 @@
       "type": "-"
     },
     {
+      "n": "L. Kusic",
+      "from": "Radomlje",
+      "to": "Bologna",
+      "fromCode": null,
+      "toCode": "BGN",
+      "date": "2026-08-16",
+      "type": "Transfer"
+    },
+    {
       "n": "J. Lucumí",
       "from": "Bologna",
       "to": "Juventus",
@@ -2937,6 +2982,15 @@
       "type": "Loan"
     },
     {
+      "n": "D. Spence",
+      "from": "Tottenham",
+      "to": "Inter",
+      "fromCode": null,
+      "toCode": "INT",
+      "date": "2026-08-13",
+      "type": "Transfer"
+    },
+    {
       "n": "D. Romero",
       "from": "Tigre",
       "to": "Parma",
@@ -3025,6 +3079,15 @@
       "toCode": null,
       "date": "2026-08-12",
       "type": "Loan"
+    },
+    {
+      "n": "M. Motta",
+      "from": "Inter",
+      "to": "Pescara",
+      "fromCode": "INT",
+      "toCode": null,
+      "date": "2026-08-12",
+      "type": "Transfer"
     },
     {
       "n": "K. Meola",
@@ -3401,6 +3464,15 @@
       "to": "Cagliari",
       "fromCode": null,
       "toCode": "CAG",
+      "date": "2026-08-08",
+      "type": "Transfer"
+    },
+    {
+      "n": "D. Quieto",
+      "from": "Inter",
+      "to": "Cosenza",
+      "fromCode": "INT",
+      "toCode": null,
       "date": "2026-08-08",
       "type": "Transfer"
     },
@@ -4386,6 +4458,15 @@
       "type": "Transfer"
     },
     {
+      "n": "F. Ravaglia",
+      "from": "Bologna",
+      "to": "Watford",
+      "fromCode": "BGN",
+      "toCode": null,
+      "date": "2026-07-29",
+      "type": "Transfer"
+    },
+    {
       "n": "Cristian Cuzzarella",
       "from": "Lazio",
       "to": "Casarano",
@@ -4571,6 +4652,15 @@
       "to": "AC Milan",
       "fromCode": null,
       "toCode": "ACM",
+      "date": "2026-07-27",
+      "type": "Transfer"
+    },
+    {
+      "n": "M. Amondarain",
+      "from": "Estudiantes L.P.",
+      "to": "Bologna",
+      "fromCode": null,
+      "toCode": "BGN",
       "date": "2026-07-27",
       "type": "Transfer"
     },
@@ -4845,6 +4935,15 @@
       "type": "Transfer"
     },
     {
+      "n": "O. Nordvall",
+      "from": "Bologna",
+      "to": "IF Elfsborg",
+      "fromCode": "BGN",
+      "toCode": null,
+      "date": "2026-07-22",
+      "type": "Transfer"
+    },
+    {
       "n": "L. Kjerrumgaard",
       "from": "Udinese",
       "to": "Watford",
@@ -5068,6 +5167,15 @@
       "toCode": "UDI",
       "date": "2026-07-19",
       "type": "-"
+    },
+    {
+      "n": "R. Alhassane",
+      "from": "Oviedo",
+      "to": "Bologna",
+      "fromCode": null,
+      "toCode": "BGN",
+      "date": "2026-07-19",
+      "type": "Transfer"
     },
     {
       "n": "M. Zamarian",
@@ -5779,6 +5887,15 @@
       "toCode": null,
       "date": "2026-07-12",
       "type": "Loan"
+    },
+    {
+      "n": "A. Nenna",
+      "from": "Inter",
+      "to": "Arzignano Valchiampo",
+      "fromCode": "INT",
+      "toCode": null,
+      "date": "2026-07-12",
+      "type": "Transfer"
     },
     {
       "n": "A. El Azzouzi",
@@ -10972,6 +11089,15 @@
       "toCode": "CAG",
       "date": "2026-06-29",
       "type": "Return from loan"
+    },
+    {
+      "n": "A. Stanković",
+      "from": "Club Brugge KV",
+      "to": "Inter",
+      "fromCode": null,
+      "toCode": "INT",
+      "date": "2026-06-29",
+      "type": "Transfer"
     },
     {
       "n": "A. Sorrentino",
