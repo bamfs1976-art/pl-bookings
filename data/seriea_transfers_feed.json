@@ -1,6 +1,6 @@
 {
   "note": "PROPOSALS from API-Football /transfers, for a person to read. data/transfers.json is the hand-curated overlay that is actually applied; this is not.",
-  "since": "2026-06-02",
+  "since": "2026-06-03",
   "moves": [
     {
       "n": "M. Bilac",
@@ -1767,6 +1767,15 @@
       "type": "Transfer"
     },
     {
+      "n": "W. Cheddira",
+      "from": "Napoli",
+      "to": "Avellino",
+      "fromCode": "NAP",
+      "toCode": null,
+      "date": "2026-08-26",
+      "type": "Transfer"
+    },
+    {
       "n": "T. Bobček",
       "from": "Lechia Gdansk",
       "to": "Frosinone",
@@ -3036,6 +3045,15 @@
       "type": "Loan"
     },
     {
+      "n": "A. Cioffi",
+      "from": "Napoli",
+      "to": "Latina",
+      "fromCode": "NAP",
+      "toCode": null,
+      "date": "2026-08-13",
+      "type": "Transfer"
+    },
+    {
       "n": "T. Kristensen",
       "from": "Udinese",
       "to": "Atalanta",
@@ -3259,6 +3277,15 @@
       "toCode": null,
       "date": "2026-08-11",
       "type": "Free agent"
+    },
+    {
+      "n": "V. Gambardella",
+      "from": "Napoli",
+      "to": "Avellino",
+      "fromCode": "NAP",
+      "toCode": null,
+      "date": "2026-08-10",
+      "type": "Transfer"
     },
     {
       "n": "R. Schmid",
@@ -11458,15 +11485,6 @@
       "toCode": "SAS",
       "date": "2026-06-28",
       "type": "Return from loan"
-    },
-    {
-      "n": "K. N’Dri",
-      "from": "Lecce",
-      "to": "Ndri Konan",
-      "fromCode": "LEC",
-      "toCode": null,
-      "date": "2026-06-02",
-      "type": "Free agent"
     }
   ]
 }
