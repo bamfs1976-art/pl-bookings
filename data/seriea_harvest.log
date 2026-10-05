@@ -1,4 +1,4 @@
-Serie A harvest, run 187
+Serie A harvest, run 188
 == discover ==
 Serie A: API-Football league 135, season 2026
 
@@ -75,7 +75,7 @@ Serie A: API-Football league 135, season 2026
 
 sa_squads.json written (653 players from 20 clubs, API-Football current rosters)
 
-API-Football: 21 call(s) this run; 386 of 7500 used today (5%), 7114 left
+API-Football: 21 call(s) this run; 146 of 7500 used today (2%), 7354 left
 == season-cards ==
 Serie A: API-Football league 135, season 2026
   fetching 20 squads
@@ -102,7 +102,7 @@ Serie A: API-Football league 135, season 2026
 
 seriea_season_cards.json written (608 players from 20 clubs, API-Football, SA season 2026)
 
-API-Football: 41 call(s) this run; 191 of 7500 used today (3%), 7309 left
+API-Football: 41 call(s) this run; 187 of 7500 used today (2%), 7313 left
 == serie-b ==
 Serie B: API-Football league 136, season 2025
   not in this desk's club list (17): Avellino, Bari, Carrarese, Catanzaro, Cesena, Empoli, Juve Stabia, Mantova, Modena, Padova, Palermo, Pescara, Reggiana, Sampdoria, Spezia, Sudtirol, Virtus Entella
@@ -113,13 +113,13 @@ Serie B: API-Football league 136, season 2025
 
 serieb_players.json written (116 players from 3 clubs, API-Football, SERB season 2025)
 
-API-Football: 8 call(s) this run; 199 of 7500 used today (3%), 7301 left
+API-Football: 8 call(s) this run; 195 of 7500 used today (3%), 7305 left
 == ref-fixtures ==
 Serie A: API-Football league 135, season 2025
 
 seriea_ref_fixtures.js written (380 matches over 20 clubs, 380 with an official named)
 
-API-Football: 1 call(s) this run; 200 of 7500 used today (3%), 7300 left
+API-Football: 1 call(s) this run; 196 of 7500 used today (3%), 7304 left
 == fixtures ==
 Serie A: API-Football league 135, season 2026
   SA appointments overlay: 0 applied, 11 already harvested
@@ -130,7 +130,7 @@ Serie A: API-Football league 135, season 2026
 
 seriea_fixtures.js written (380 fixtures over 38 matchdays, 50 with a referee appointed)
 
-API-Football: 1 call(s) this run; 201 of 7500 used today (3%), 7299 left
+API-Football: 1 call(s) this run; 197 of 7500 used today (3%), 7303 left
 == build ==
 Division: 17 clubs were in it last season, 3 came up
   promoted: Frosinone, Monza, Venezia
@@ -200,7 +200,7 @@ players: 653  by basis: NEW=202, SA=402, SB=49
 form: SA=2025-26, SB=2025-26
 clubs with players: 20 of 20
 club rates from match records: 17 of 20
-season cautions (2026-27): 539 players
+season cautions (2026-27): 545 players
 referees: 32
 RESULT: WRITTEN seriea_data.js
 == referee-join ==
