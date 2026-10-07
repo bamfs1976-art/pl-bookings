@@ -1,6 +1,6 @@
 {
   "note": "PROPOSALS from API-Football /transfers, for a person to read. data/transfers.json is the hand-curated overlay that is actually applied; this is not.",
-  "since": "2026-06-08",
+  "since": "2026-06-09",
   "moves": [
     {
       "n": "S. Ashbee",
@@ -1119,15 +1119,6 @@
       "type": "Free agent"
     },
     {
-      "n": "T. Adarabioyo",
-      "from": "Chelsea",
-      "to": "Tottenham",
-      "fromCode": "CHE",
-      "toCode": "TOT",
-      "date": "2026-08-30",
-      "type": "Transfer"
-    },
-    {
       "n": "Stefan Bajčetić",
       "from": "Liverpool",
       "to": "Celta de Vigo II",
@@ -1207,15 +1198,6 @@
       "toCode": "MCI",
       "date": "2026-08-30",
       "type": "Transfer"
-    },
-    {
-      "n": "D. Scarlett",
-      "from": "Tottenham",
-      "to": "Leyton Orient",
-      "fromCode": "TOT",
-      "toCode": null,
-      "date": "2026-08-30",
-      "type": "Free agent"
     },
     {
       "n": "D. Obou",
@@ -2568,15 +2550,6 @@
       "type": "Free agent"
     },
     {
-      "n": "D. Spence",
-      "from": "Tottenham",
-      "to": "Inter",
-      "fromCode": "TOT",
-      "toCode": null,
-      "date": "2026-08-13",
-      "type": "Transfer"
-    },
-    {
       "n": "D. Satpaev",
       "from": "Chelsea",
       "to": "Burnley",
@@ -2584,24 +2557,6 @@
       "toCode": "BUR",
       "date": "2026-08-13",
       "type": "Loan"
-    },
-    {
-      "n": "C. Romero",
-      "from": "Tottenham",
-      "to": "Atletico Madrid",
-      "fromCode": "TOT",
-      "toCode": null,
-      "date": "2026-08-13",
-      "type": "Transfer"
-    },
-    {
-      "n": "A. Phillips",
-      "from": "Tottenham",
-      "to": "Middlesbrough",
-      "fromCode": "TOT",
-      "toCode": "MID",
-      "date": "2026-08-13",
-      "type": "Transfer"
     },
     {
       "n": "A. Loupalo-Bi",
@@ -2973,15 +2928,6 @@
       "type": "Transfer"
     },
     {
-      "n": "M. Solomon",
-      "from": "Tottenham",
-      "to": "West Ham",
-      "fromCode": "TOT",
-      "toCode": "WHU",
-      "date": "2026-08-08",
-      "type": "Transfer"
-    },
-    {
       "n": "L. Digne",
       "from": "Aston Villa",
       "to": "Paris Saint Germain",
@@ -3313,15 +3259,6 @@
       "toCode": null,
       "date": "2026-08-04",
       "type": "-"
-    },
-    {
-      "n": "M. Melia",
-      "from": "Tottenham",
-      "to": "Lincoln",
-      "fromCode": "TOT",
-      "toCode": "LIN",
-      "date": "2026-08-04",
-      "type": "Loan"
     },
     {
       "n": "K. Tzolakis",
@@ -4879,15 +4816,6 @@
       "toCode": null,
       "date": "2026-07-04",
       "type": "Loan"
-    },
-    {
-      "n": "S. Tonali",
-      "from": "Newcastle",
-      "to": "Tottenham",
-      "fromCode": "NEW",
-      "toCode": "TOT",
-      "date": "2026-07-04",
-      "type": "Transfer"
     },
     {
       "n": "Jimi Weikko Tauriainen",
