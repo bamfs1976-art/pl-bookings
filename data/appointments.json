@@ -22,6 +22,7 @@
   "https://rfef.es/sites/default/files/designaciones_1a_division_masculina_-_temp_2026-27_-_jornada_7_viernes.pdf",
   "https://www.aia-figc.it/news/serie-a-enilive-designazioni-4a-giornata-27632/",
   "https://www.aia-figc.it/news/serie-a-enilive-designazioni-5a-giornata-27667/",
+  "https://www.aia-figc.it/news/serie-a-enilive-designazioni-6a-giornata-28755/",
   "https://www.efl.com/news/2026/august/11/referee-appointments--14-20-august/",
   "https://www.premierleague.com/news/match-officials-matchweek-4",
   "rfef.es — CTA designaciones, Primera División, jornada 4, 7 September 2026 (published sheet supplied; exact PDF URL not captured)",
@@ -1918,6 +1919,105 @@
    "refResolved": "Simone Sozza",
    "resolvedBy": "surname",
    "source": "https://www.aia-figc.it/news/serie-a-enilive-designazioni-5a-giornata-27667/"
+  },
+  {
+   "league": "SA",
+   "date": "2026-10-10",
+   "h": "GEN",
+   "a": "FIO",
+   "ko": "15:00",
+   "ref": "MARESCA",
+   "refResolved": "Fabio Maresca",
+   "resolvedBy": "surname",
+   "source": "https://www.aia-figc.it/news/serie-a-enilive-designazioni-6a-giornata-28755/"
+  },
+  {
+   "league": "SA",
+   "date": "2026-10-10",
+   "h": "NAP",
+   "a": "FRO",
+   "ko": "20:45",
+   "ref": "FELICIANI",
+   "refResolved": "Ermanno Feliciani",
+   "resolvedBy": "surname",
+   "source": "https://www.aia-figc.it/news/serie-a-enilive-designazioni-6a-giornata-28755/"
+  },
+  {
+   "league": "SA",
+   "date": "2026-10-11",
+   "h": "CAG",
+   "a": "JUV",
+   "ko": "20:45",
+   "ref": "MARCENARO",
+   "refResolved": "Matteo Marcenaro",
+   "resolvedBy": "surname",
+   "source": "https://www.aia-figc.it/news/serie-a-enilive-designazioni-6a-giornata-28755/"
+  },
+  {
+   "league": "SA",
+   "date": "2026-10-11",
+   "h": "COM",
+   "a": "ROM",
+   "ko": "12:30",
+   "ref": "FABBRI",
+   "refResolved": "Michael Fabbri",
+   "resolvedBy": "surname",
+   "source": "https://www.aia-figc.it/news/serie-a-enilive-designazioni-6a-giornata-28755/"
+  },
+  {
+   "league": "SA",
+   "date": "2026-10-11",
+   "h": "LAZ",
+   "a": "MON",
+   "ko": "15:00",
+   "ref": "COLLU",
+   "refResolved": "Giuseppe Collu",
+   "resolvedBy": "surname",
+   "source": "https://www.aia-figc.it/news/serie-a-enilive-designazioni-6a-giornata-28755/"
+  },
+  {
+   "league": "SA",
+   "date": "2026-10-11",
+   "h": "LEC",
+   "a": "BGN",
+   "ko": "15:00",
+   "ref": "PAIRETTO",
+   "refResolved": "Luca Pairetto",
+   "resolvedBy": "surname",
+   "source": "https://www.aia-figc.it/news/serie-a-enilive-designazioni-6a-giornata-28755/"
+  },
+  {
+   "league": "SA",
+   "date": "2026-10-11",
+   "h": "SAS",
+   "a": "ACM",
+   "ko": "18:00",
+   "ref": "FOURNEAU",
+   "refResolved": "Francesco Fourneau",
+   "resolvedBy": "surname",
+   "source": "https://www.aia-figc.it/news/serie-a-enilive-designazioni-6a-giornata-28755/"
+  },
+  {
+   "league": "SA",
+   "date": "2026-10-12",
+   "h": "ATA",
+   "a": "VEN",
+   "ko": "18:30",
+   "ref": "TREMOLADA",
+   "refResolved": null,
+   "resolvedBy": null,
+   "source": "https://www.aia-figc.it/news/serie-a-enilive-designazioni-6a-giornata-28755/"
+  },
+  {
+   "league": "SA",
+   "date": "2026-10-12",
+   "h": "TOR",
+   "a": "UDI",
+   "ko": "20:45",
+   "ref": "CREZZINI",
+   "refResolved": "Valerio Crezzini",
+   "resolvedBy": "surname",
+   "source": "https://www.aia-figc.it/news/serie-a-enilive-designazioni-6a-giornata-28755/"
   }
  ]
 }
