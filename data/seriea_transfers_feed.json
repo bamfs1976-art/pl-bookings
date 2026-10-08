@@ -1,6 +1,6 @@
 {
   "note": "PROPOSALS from API-Football /transfers, for a person to read. data/transfers.json is the hand-curated overlay that is actually applied; this is not.",
-  "since": "2026-06-08",
+  "since": "2026-06-10",
   "moves": [
     {
       "n": "Patric",
@@ -10,6 +10,15 @@
       "toCode": null,
       "date": "2026-09-27",
       "type": "-"
+    },
+    {
+      "n": "Neto",
+      "from": "Botafogo",
+      "to": "Juventus",
+      "fromCode": null,
+      "toCode": "JUV",
+      "date": "2026-09-27",
+      "type": "Free agent"
     },
     {
       "n": "D. Alaba",
