@@ -193,7 +193,7 @@ backfill = B.merge({"season": "2026-27", "rounds": 1, "fixtures": [1],
                     "players": [{"n": "A One", "c": "SEV", "rds": {"1": 1}}]},
                    [app(1, 1, "SEV", "A One", yc=1)], "2026-27")
 check("a ledger from before appearances picks them up on the re-walk",
-      backfill["apps"], [{"c": "SEV", "n": "A One", "r": [1]}])
+      backfill["apps"], [{"c": "SEV", "n": "A One", "r": [1], "f": [0]}])
 check("while its card stays at one",
       backfill["players"][0]["rds"], {"1": 1})
 long = B.merge(EMPTY, [app(i, i, "SEV", "A One") for i in range(1, 9)], "2026-27")
@@ -252,6 +252,36 @@ stale_form["form"] = {"VAL|Gone": "11111"}
 check("form is rebuilt, never inherited",
       form_with_squad([("SEV", "Isaac Romero")], stale_form), {"SEV|Isaac Romero": "0"})
 
+# ---- fouls per appearance, for the "1+ fouls" strip ----------------------
+def fapp(fid, rd, player, fouls, mins=90):
+    r = app(fid, rd, "SEV", player, mins=mins)
+    r["fouls"] = fouls
+    return r
+
+
+fl = B.merge(EMPTY, [fapp(1, 1, "A One", 2), fapp(2, 2, "A One", None),
+                     fapp(3, 3, "A One", 1)], "2026-27")
+check("fouls ride with the rounds, null read as nought",
+      (fl["apps"][0]["r"], fl["apps"][0]["f"]), ([1, 2, 3], [2, 0, 1]))
+check("a first walk over every fixture completes the fouls", fl["apps_fouls"], True)
+partial = B.merge({"season": "2026-27", "rounds": 2, "fixtures": [1, 2, 9],
+                   "players": [], "apps": [{"c": "SEV", "n": "A One", "r": [1, 2]}]},
+                  [fapp(3, 3, "A One", 1)], "2026-27")
+check("an incremental run over an old ledger does not claim the fouls are complete",
+      partial["apps_fouls"], False)
+check("and keeps the unknown rounds unknown", partial["apps"][0]["f"], [None, None, 1])
+check("a strip with an unknown game is no strip", B.fouls_string([1, 2, 3], [None, 0, 1]), None)
+check("fouls read most recent first, capped at one digit",
+      B.fouls_string([1, 2, 3, 4], [12, 0, 3, 1]), "1309")
+done = B.merge(fl, [fapp(4, 4, "A One", 3)], "2026-27")
+check("once complete, an incremental run keeps it complete", done["apps_fouls"], True)
+
+foul_led = led_of([("SEV", "Isaac Romero", [1, 2, 3])])
+foul_led["apps"][0]["f"] = [2, 0, 1]
+form_with_squad([("SEV", "Isaac Romero")], foul_led)
+check("the fouls strip is keyed the way the desk spells him",
+      foul_led["fouls"], {"SEV|Isaac Romero": "102"})
+
 # ---- the harvest reads the ledger it is told to skip ---------------------
 # The ledger is a script, and the harvest read it as JSON: every run died on
 # the comment line and the ledgers stopped at round two or three.
@@ -259,8 +289,8 @@ import harvest_apifootball as H  # noqa: E402
 with tempfile.TemporaryDirectory() as d:
     led_js = Path(d) / "x_bookings.js"
     led_js.write_text("// Auto-generated.\nconst X = " + json.dumps(
-        {"fixtures": [7, 8], "players": [],
-         "apps": [{"c": "SEV", "n": "A One", "r": [1]}]}) + ";\n", encoding="utf-8")
+        {"fixtures": [7, 8], "players": [], "apps_fouls": True,
+         "apps": [{"c": "SEV", "n": "A One", "r": [1], "f": [2]}]}) + ";\n", encoding="utf-8")
     check("the harvest reads a shipped ledger", H.ledger_skip(led_js), {7, 8})
     old_js = Path(d) / "y_bookings.js"
     old_js.write_text("const Y = " + json.dumps({"fixtures": [7, 8], "players": []}) + ";\n",
@@ -274,6 +304,13 @@ with tempfile.TemporaryDirectory() as d:
         {"fixtures": [7, 8], "players": [], "apps": []}) + ";\n", encoding="utf-8")
     check("an empty appearance list after a failed harvest is walked again",
           H.ledger_skip(failed_js), set())
+    # Appearances without fouls per match: one more walk, then never again.
+    nofouls = Path(d) / "v_bookings.js"
+    nofouls.write_text("const V = " + json.dumps(
+        {"fixtures": [7, 8], "players": [],
+         "apps": [{"c": "SEV", "n": "A One", "r": [1]}]}) + ";\n", encoding="utf-8")
+    check("a ledger with appearances but no fouls is walked again",
+          H.ledger_skip(nofouls), set())
     junk = Path(d) / "z_bookings.js"
     junk.write_text("const Z = {not json};\n", encoding="utf-8")
     try:
@@ -287,7 +324,7 @@ if FAIL:
     for f in FAIL:
         print("  -", f)
     sys.exit(1)
-print(f"bookings ledger OK: {5 + 21 + 21} checks — second yellows counted once, the "
+print(f"bookings ledger OK: {5 + 21 + 30} checks — second yellows counted once, the "
       "merge keeps earlier rounds and never doubles a fixture, unbooked players "
       "stay out, the last-five window slices on rounds, a face is attached "
       "only to the man it belongs to, appearances survive a re-walk, the "

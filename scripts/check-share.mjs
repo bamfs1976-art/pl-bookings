@@ -371,6 +371,42 @@ const sheetMark = placed.length;
 const sheetBlob = await S.statSheetCard(sheetSpec);
 assert.ok(sheetBlob && sheetBlob.__blob, 'statSheetCard did not produce a blob');
 const sheetText = drawn.join('\n');
+
+/* ---- the stat sheet's last-5 strips, ranks and referee seasons ---------- */
+{
+  const clubBy = {
+    CHA: { name: 'Charlton Athletic', caH: 2.1, caA: 2.4 }, DER: { name: 'Derby County', caH: 1.5, caA: 2.9 },
+    AAA: { caH: 3.0, caA: 1.0 }, BBB: { caH: 1.0, caA: 1.2 }, NEW: { caH: null, caA: null },
+  };
+  const rich = S.deskStatSheetSpec(priced, {
+    ...ctx, clubBy, seasonLabel: 'EFL Championship 2026-27',
+    squadOf: (short) => [{ c: short, n: short + ' F', y: 0.4, f: 1.5, fw: 1, ls: false }],
+    formOf: () => ({ dots: [true, false, false, true, false] }),
+    foulsOf: () => ({ dots: [true, true, false, true, true] }),
+    refThisSeason: () => ({ n: 4, ypg: 3.25 }),
+  });
+  assert.equal(rich.home.rank, '2.10 cards a game at home · 2nd highest of 4',
+    'the home side is not ranked among home rates: ' + rich.home.rank);
+  assert.equal(rich.away.rank, '2.90 cards a game away · 1st highest of 4', rich.away.rank);
+  const fouls = rich.home.panels.find((p) => /fouls committed/i.test(p.label));
+  assert.deepEqual(fouls.rows[0].dots, [true, true, false, true, true], 'the fouls strip did not reach the row');
+  const booked = rich.home.panels.find((p) => /booked/i.test(p.label));
+  assert.ok(booked.rows.every((r) => r.dots), 'the booked strip did not reach the rows');
+  const r = priced.ref && priced.ref.ref;
+  if (r && r.ypg != null && r.matches) {
+    assert.deepEqual(rich.ref.seasons.map((z) => z.label), ['2026-27', '2025-26'],
+      'the referee box does not set this season against last');
+  }
+  drawn.length = 0;
+  await S.statSheetCard(rich);
+  const t = drawn.join('\n');
+  assert.ok(t.includes('2.10 cards a game at home'), 'the rank is in the spec but never drawn');
+  assert.ok(/LAST 5/.test(t), 'a panel with strips does not say what the dots are');
+  /* No strips, no ranks, no seasons: the sheet a desk without a ledger
+     shares is the sheet it always shared. */
+  const bare = S.deskStatSheetSpec(priced, { ...ctx });
+  assert.ok(!bare.home.rank && !bare.ref.seasons, 'a desk with no data still gets ranks or seasons');
+}
 assert.ok(/18\+/.test(sheetText) && /begambleaware/.test(sheetText),
   'the stat sheet went out without the 18+ / BeGambleAware line — the ' +
   'landscape canvas has its own dimensions and this is the line that must ' +

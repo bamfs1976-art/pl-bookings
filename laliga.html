@@ -775,6 +775,7 @@
       minutes: p.min, yellows: p.yc, reds: p.rc,
       yc90: p.y, fouls90: p.f, foulsWon90: p.fw, risk: p.r,
       form: formOf(p),
+      fouls: C.foulForm(LEDGER, p.c, p.n),
       forecast: foulForecast(p),
       prob: prob, odds: prob ? C.fairOdds(prob) : null,
       band: { label: b[1] || 'Low', colour: b[0] === 'hi' ? 'var(--danger-ink)'
@@ -1624,6 +1625,13 @@
      a share card can never disagree with the page that produced it. */
   var SHARE_CTX = {
     formOf: formOf,
+    foulsOf: function (p) { return C.foulForm(LEDGER, p.c, p.n); },
+    /* This season's record for the stat sheet's referee box, from the
+       fixture list and the feed's cards per fixture. */
+    refThisSeason: function (n) {
+      return C.refSeason(FIXTURES, typeof LALIGA_FXSTATS !== 'undefined' ? LALIGA_FXSTATS : null, n,
+                         REFLIST.map(function (r) { return r.n; }));
+    },
     league: 'LL',
     seasonLabel: 'La Liga 2026-27',
     roundWord: 'Matchday',

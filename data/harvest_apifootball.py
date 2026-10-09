@@ -686,6 +686,13 @@ def ledger_skip(path):
     if prior.get("fixtures") and not prior.get("apps"):
         print(f"  {path.name} predates appearances — re-walking the season once")
         return set()
+    # AND ONCE MORE FOR FOULS. Appearances arrived before fouls per match did,
+    # so a ledger can hold the rounds a player played without what he did in
+    # them. build_bookings sets `apps_fouls` after a run that re-read every
+    # recorded fixture; until then, walk the season.
+    if prior.get("fixtures") and not prior.get("apps_fouls"):
+        print(f"  {path.name} has no fouls per match yet — re-walking the season once")
+        return set()
     return {int(f) for f in (prior.get("fixtures") or [])}
 
 

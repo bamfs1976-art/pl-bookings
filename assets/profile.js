@@ -262,6 +262,10 @@
     if (rec.form && root.PLDCore && root.PLDCore.bookedFormHtml) {
       extra += '<p class="pp-line pp-form">' + root.PLDCore.bookedFormHtml(rec.form, true) + '</p>';
     }
+    /* And the same strip for fouls: a game with at least one foul is a dot. */
+    if (rec.fouls && root.PLDCore && root.PLDCore.bookedFormHtml) {
+      extra += '<p class="pp-line pp-form">' + root.PLDCore.bookedFormHtml(rec.fouls, true) + '</p>';
+    }
     if (rec.susp) {
       extra += '<p class="pp-line' + (rec.susp.urgent ? ' pp-urgent' : '') + '">'
         + esc(rec.susp.text) + '</p>';

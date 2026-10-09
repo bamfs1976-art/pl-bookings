@@ -655,9 +655,17 @@
 
     x.fillStyle = textOn(col);
     x.textAlign = 'center';
+    /* THE CLUB'S LEAGUE RANK rides under its name when the desk has one —
+       "2.53 cards a game at home · 14th". A rate alone asks the reader to
+       know the league; the rank says whether it is a lot. */
     var nm = fitFont(x, (side.name || side.short || '').toUpperCase(), nw - 16,
-                     '800', [30, 27, 24, 21], DISP);
-    x.fillText(nm, nx + nw / 2, cy + 42);
+                     '800', side.rank ? [26, 24, 22, 20] : [30, 27, 24, 21], DISP);
+    x.fillText(nm, nx + nw / 2, cy + (side.rank ? 33 : 42));
+    if (side.rank) {
+      x.globalAlpha = 0.86; x.font = '600 14px ' + BODY;
+      x.fillText(fit(x, side.rank, nw - 16), nx + nw / 2, cy + 53);
+      x.globalAlpha = 1;
+    }
     x.textAlign = 'left';
 
     var panels = (side.panels || []).slice(0, 4);
@@ -685,12 +693,13 @@
       panelIcon(x, pn.label, cx + 14, py + hh / 2, 15);
       x.font = '700 15px ' + BODY;
       x.fillText(pn.label.toUpperCase(), cx + 36, py + 21);
+      var hasDots = (pn.rows || []).some(function (r) { return r && r.dots; });
       if (pn.unit) {
         x.textAlign = 'right';
         /* The unit is a qualifier, not a heading — held back so "PER 90" does
            not read with the same weight as "FOULS COMMITTED". */
         x.globalAlpha = 0.72;
-        x.fillText(pn.unit.toUpperCase(), cx + cw - 14, py + 21);
+        x.fillText(((hasDots ? 'last 5 · ' : '') + pn.unit).toUpperCase(), cx + cw - 14, py + 21);
         x.globalAlpha = 1;
         x.textAlign = 'left';
       }
@@ -724,8 +733,22 @@
                tx, ry - fd + Math.round(fd * 0.22), fd);
           tx += fd + 8;
         }
+        /* THE LAST FIVE, as dots before the figure: filled for a game that
+           counted (booked, or at least one foul), hollow for one that did not,
+           most recent on the left. A row with no strip leaves the space blank
+           rather than drawing five hollow dots that would read as five clean
+           games. */
+        var dotsW = hasDots ? 5 * 9 + 4 * 4 + 12 : 0;
+        if (r.dots) {
+          var dx = cx + cw - 74 - dotsW + 6;
+          r.dots.slice(0, 5).forEach(function (on, k) {
+            x.beginPath(); x.arc(dx + k * 13 + 4.5, ry - 6, 4.5, 0, Math.PI * 2);
+            if (on) { x.fillStyle = pn.dotInk || th.ink; x.fill(); }
+            else { x.strokeStyle = '#c2c8d4'; x.lineWidth = 1.5; x.stroke(); }
+          });
+        }
         x.fillStyle = '#0c1322'; x.font = '600 19px ' + BODY;
-        x.fillText(fit(x, r.n, cx + cw - 74 - tx), tx, ry);
+        x.fillText(fit(x, r.n, cx + cw - 74 - dotsW - tx), tx, ry);
         x.fillStyle = th.ink; x.font = '800 19px ' + DISP;
         x.textAlign = 'right'; x.fillText(String(r.v), cx + cw - 14, ry);
         x.textAlign = 'left';
@@ -767,7 +790,9 @@
          multiplier this desk applies and the reason two identical squads price
          differently on two weekends. */
       var rf = spec.ref || {};
-      x.fillStyle = '#0c1322'; roundRect(x, centreX, cy, centreW, 132, 14); x.fill();
+      var seasons = (rf.seasons || []).filter(function (z) { return z && z.ypg != null; });
+      var rfH = seasons.length ? 164 : 132;
+      x.fillStyle = '#0c1322'; roundRect(x, centreX, cy, centreW, rfH, 14); x.fill();
       x.fillStyle = 'rgba(255,255,255,.6)'; x.font = '700 15px ' + BODY;
       x.textAlign = 'center';
       x.fillText('REFEREE', centreX + centreW / 2, cy + 28);
@@ -786,8 +811,20 @@
         x.fillStyle = 'rgba(255,255,255,.55)'; x.font = '600 12px ' + BODY;
         x.fillText(fit(x, st.label.toUpperCase(), rw - 8), sx, cy + 124);
       });
+      /* THIS SEASON NEXT TO LAST. The four figures above are last season's
+         full record; an official who has changed shows up only here. */
+      if (seasons.length) {
+        x.fillStyle = 'rgba(255,255,255,.12)';
+        x.fillRect(centreX + 20, cy + 138, centreW - 40, 1);
+        var sl = seasons.map(function (z) {
+          return z.label + ': ' + Number(z.ypg).toFixed(2) + ' yellows a game ('
+            + z.n + (z.n === 1 ? ' game' : ' games') + ')';
+        }).join('   ·   ');
+        x.fillStyle = 'rgba(255,255,255,.82)'; x.font = '600 14px ' + BODY;
+        x.fillText(fit(x, sl, centreW - 28), centreX + centreW / 2, cy + 156);
+      }
       x.textAlign = 'left';
-      cy += 132 + 18;
+      cy += rfH + 18;
 
       /* ---- the match itself ---- */
       /* IT TAKES WHATEVER THE HEAD TO HEAD DOES NOT NEED. This was the other
@@ -1584,8 +1621,10 @@
         .sort(function (a, b) { return b[key] - a[key]; })
         .slice(0, 5)
         .map(function (p) {
+          var f = key === 'f' && ctx.foulsOf ? ctx.foulsOf(p) : null;
           return { n: p.n, c: p.c || short, ph: photoUrl(p) || null,
-                   v: dp === 0 ? String(p[key]) : Number(p[key]).toFixed(dp) };
+                   v: dp === 0 ? String(p[key]) : Number(p[key]).toFixed(dp),
+                   dots: f ? f.dots : null };
         });
     }
     /* The desk's own read on THIS fixture, which is the panel a stats graphic
@@ -1596,15 +1635,29 @@
         .filter(function (c) { return c.club === short; })
         .slice(0, 5)
         .map(function (c) {
+          var f = ctx.formOf && c.p ? ctx.formOf(c.p) : null;
           return { n: c.name, c: short, ph: (c.p && photoUrl(c.p)) || null,
-                   v: (c.prob * 100).toFixed(0) + '%' };
+                   v: (c.prob * 100).toFixed(0) + '%', dots: f ? f.dots : null };
         });
     }
-    function side(short, club) {
+    /* The club's card rate at this venue, ranked against the league's at the
+       same venue: the home side among home rates, the away side among away. */
+    function rankOf(short, venue) {
+      var key = venue === 'home' ? 'caH' : 'caA';
+      var all = Object.keys(ctx.clubBy || {}).map(function (k) { return ctx.clubBy[k]; })
+        .filter(function (c) { return c && c[key] != null; });
+      var mine = ctx.clubBy && ctx.clubBy[short] && ctx.clubBy[short][key];
+      if (mine == null || all.length < 4) return null;
+      var pos = 1 + all.filter(function (c) { return c[key] > mine; }).length;
+      return Number(mine).toFixed(2) + ' cards a game ' + (venue === 'home' ? 'at home' : 'away')
+        + ' · ' + ordinal(pos) + ' highest of ' + all.length;
+    }
+    function side(short, club, venue) {
       return {
         short: short, name: club.name || short, img: crestUrl(short, club) || null,
+        rank: rankOf(short, venue),
         panels: [
-          { label: 'Booked tonight', unit: 'p(card)', rows: risk(short) },
+          { label: 'Booked tonight', unit: 'p(card)', rows: risk(short), dotInk: '#e0a800' },
           { label: 'Yellows', unit: 'per 90', rows: top(short, 'y', 2) },
           { label: 'Fouls committed', unit: 'per 90', rows: top(short, 'f', 2) },
           { label: 'Fouls won', unit: 'per 90', rows: top(short, 'fw', 2) }
@@ -1613,13 +1666,29 @@
     }
 
     var r = priced.ref && priced.ref.ref;
+    /* This season from the desk's own fixtures, last season from the table.
+       The table is the previous season's record, so its label is the season
+       before the one the card is for. */
+    function refSeasons(ref) {
+      if (!ref || !ctx.refThisSeason) return null;
+      var m = /(\d{4})-(\d{2})/.exec(ctx.seasonLabel || '');
+      if (!m) return null;
+      var y = Number(m[1]);
+      var last = (y - 1) + '-' + String(y % 100).padStart(2, '0');
+      var cur = ctx.refThisSeason(ref.n) || {};
+      var out = [];
+      if (cur.n) out.push({ label: m[0], ypg: cur.ypg, n: cur.n });
+      if (ref.ypg != null && ref.matches) out.push({ label: last, ypg: ref.ypg, n: ref.matches });
+      return out.length ? out : null;
+    }
     return {
       league: ctx.league,
       title: (ch.name || f.h) + '  v  ' + (ca.name || f.a),
       subtitle: [ctx.seasonLabel, f.r ? (ctx.roundWord || 'Matchday') + ' ' + f.r : null,
                  ctx.whenText ? ctx.whenText(f.d) : null].filter(Boolean).join(' · '),
-      home: side(f.h, ch), away: side(f.a, ca),
+      home: side(f.h, ch, 'home'), away: side(f.a, ca, 'away'),
       ref: {
+        seasons: refSeasons(r),
         line: refDisplay(r ? r.n : (priced.ref && priced.ref.name), ctx.league) || 'Not yet appointed',
         /* CARDS PER FOUL, not penalties per game. Penalties are not in the
            match records the referee table is built from, so that field is null
@@ -1697,6 +1766,11 @@
     a.href = u; a.download = name; a.click();
     setTimeout(function () { URL.revokeObjectURL(u); }, 2000);
     return name;
+  }
+
+  function ordinal(n) {
+    var t = n % 100, u = n % 10;
+    return n + (t >= 11 && t <= 13 ? 'th' : u === 1 ? 'st' : u === 2 ? 'nd' : u === 3 ? 'rd' : 'th');
   }
 
   function slug(s) {

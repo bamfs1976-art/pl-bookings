@@ -1909,4 +1909,34 @@ t('the profile form draws a dot per appearance', () => {
   assert.match(html, /Booked in 2 of last 5/);
 });
 
+t('fouls form counts games with at least one foul', () => {
+  const L = { fouls: { 'SEV|A': '21030', 'SEV|B': '12', 'SEV|C': '1111' } };
+  const f = core.foulForm(L, 'SEV', 'A');
+  assert.equal(f.x, 3); assert.equal(f.n, 5);
+  assert.deepEqual(f.dots, [true, true, false, true, false]);
+  assert.equal(f.text, '1+ fouls in 3 of last 5');
+  assert.equal(f.hot, false);
+  assert.equal(core.foulForm(L, 'SEV', 'C').hot, true);
+  assert.equal(core.foulForm(L, 'SEV', 'B'), null);
+  assert.equal(core.foulForm({}, 'SEV', 'A'), null);
+  assert.match(core.bookedFormHtml(core.foulForm(L, 'SEV', 'A'), true), /1\+ fouls in 3 of last 5/);
+});
+
+t('a referee\'s season counts only his finished games, joined by name', () => {
+  const fx = [
+    { id: 1, h: 'A', a: 'B', ref: 'F. Hernandez Maeso', st: 'FT' },
+    { id: 2, h: 'C', a: 'D', ref: 'Francisco Hernandez Maeso', st: 'FT' },
+    { id: 3, h: 'E', a: 'F', ref: 'Francisco Hernandez Maeso', st: 'NS' },
+    { id: 4, h: 'G', a: 'H', ref: 'Someone Else', st: 'FT' },
+  ];
+  const st = { 1: { A: { yc: 2 }, B: { yc: 1 } }, 2: { C: { yc: 0 }, D: { yc: 1 } },
+               4: { G: { yc: 5 }, H: { yc: 5 } } };
+  const r = core.refSeason(fx, st, 'Francisco Hernandez Maeso',
+                           ['Francisco Hernandez Maeso', 'Someone Else']);
+  assert.equal(r.n, 2);
+  assert.equal(r.ypg, 2);
+  assert.deepEqual(core.refSeason(fx, st, 'Nobody', ['Nobody']), { n: 0, ypg: null });
+  assert.equal(core.refSeason(fx, null, 'Francisco Hernandez Maeso'), null);
+});
+
 console.log(`\n${passed} tests passed`);
