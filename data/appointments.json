@@ -20,6 +20,7 @@
   "https://rfef.es/sites/default/files/designaciones_1a_division_masculina_-_temp_2026-27_-_jornada_7_domingo.pdf",
   "https://rfef.es/sites/default/files/designaciones_1a_division_masculina_-_temp_2026-27_-_jornada_7_sabado.pdf",
   "https://rfef.es/sites/default/files/designaciones_1a_division_masculina_-_temp_2026-27_-_jornada_7_viernes.pdf",
+  "https://rfef.es/sites/default/files/designaciones_1a_division_masculina_-_temp_2026-27_-_jornada_8_sabado.pdf",
   "https://rfef.es/sites/default/files/designaciones_1a_division_masculina_-_temp_2026-27_-_jornada_8_viernes.pdf",
   "https://www.aia-figc.it/news/serie-a-enilive-designazioni-4a-giornata-27632/",
   "https://www.aia-figc.it/news/serie-a-enilive-designazioni-5a-giornata-27667/",
@@ -1678,6 +1679,50 @@
    "refResolved": "Francisco Hernandez Maeso",
    "resolvedBy": "given2",
    "source": "https://rfef.es/sites/default/files/designaciones_1a_division_masculina_-_temp_2026-27_-_jornada_8_viernes.pdf"
+  },
+  {
+   "league": "LL",
+   "date": "2026-10-10",
+   "h": "ALA",
+   "a": "ATM",
+   "ko": "16:15",
+   "ref": "Alejandro Quintero",
+   "refResolved": "Alejandro Quintero Gonzalez",
+   "resolvedBy": "run",
+   "source": "https://rfef.es/sites/default/files/designaciones_1a_division_masculina_-_temp_2026-27_-_jornada_8_sabado.pdf"
+  },
+  {
+   "league": "LL",
+   "date": "2026-10-10",
+   "h": "BAR",
+   "a": "GET",
+   "ko": "18:30",
+   "ref": "Jesús Gil",
+   "refResolved": "Jesus Gil Manzano",
+   "resolvedBy": "run",
+   "source": "https://rfef.es/sites/default/files/designaciones_1a_division_masculina_-_temp_2026-27_-_jornada_8_sabado.pdf"
+  },
+  {
+   "league": "LL",
+   "date": "2026-10-10",
+   "h": "RAY",
+   "a": "ATH",
+   "ko": "14:00",
+   "ref": "José María Sánchez",
+   "refResolved": "José María Sánchez Martínez",
+   "resolvedBy": "run",
+   "source": "https://rfef.es/sites/default/files/designaciones_1a_division_masculina_-_temp_2026-27_-_jornada_8_sabado.pdf"
+  },
+  {
+   "league": "LL",
+   "date": "2026-10-10",
+   "h": "RMA",
+   "a": "VIL",
+   "ko": "21:00",
+   "ref": "Isidro Díaz De Mera",
+   "refResolved": "Isidro Diaz de Mera Escuderos",
+   "resolvedBy": "run",
+   "source": "https://rfef.es/sites/default/files/designaciones_1a_division_masculina_-_temp_2026-27_-_jornada_8_sabado.pdf"
   },
   {
    "league": "PL",
