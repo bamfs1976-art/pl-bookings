@@ -488,7 +488,8 @@ def build_clubs(players, rates, clubs, promoted):
         # LL whatever mix of player bases fills its squad.
         basis = CODE if ca is not None else (D["feeder"][1] if short in promoted else "NEW")
         out.append({
-            "short": short, "name": name_by_short.get(short, short),
+            "short": short,
+            "name": leagues.display_name(CODE, short, name_by_short.get(short, short)),
             "img": d["img"], "basis": basis, "ca": ca, "caH": ca_h, "caA": ca_a,
             "fm": round(d["fouls"] / MATCHES, 1) if ca is not None else None,
             "squad": d["players"],

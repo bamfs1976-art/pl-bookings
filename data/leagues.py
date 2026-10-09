@@ -624,6 +624,24 @@ DISCOVERED = {
            "published": "SERIEA_AIA_ALIASES", "suffixes": "SERIEA_LEGAL_SUFFIXES"},
 }
 
+# THE NAME A READER SEES, where it is not the canonical one. The canonical
+# names above are join keys and stay accent-free on purpose: every feed
+# spells them differently and the resolvers fold accents anyway. But the desk
+# and its share cards PRINT the club's name, and "Atletico Madrid" on a card
+# posted to Spanish football fans reads as a typo. Display only: nothing
+# joins on these, and discovered_short resolves them like any other spelling.
+DISPLAY_NAMES = {
+    "LL": {"ALA": "Deportivo Alavés", "ATM": "Atlético Madrid",
+           "DEP": "Deportivo La Coruña", "MAL": "Málaga", "CAD": "Cádiz",
+           "LEG": "Leganés", "ALM": "Almería", "SPG": "Sporting Gijón"},
+}
+
+
+def display_name(code, short, fallback):
+    """The printed name for a club: the display table's, else the feed's."""
+    return DISPLAY_NAMES.get(code, {}).get(short) or fallback
+
+
 # The AIA's own spellings on its designation pages, where they differ from
 # every table above. Empty until a live sheet shows one that does not resolve;
 # the same rule as Spain's table, which carries only spellings observed to
