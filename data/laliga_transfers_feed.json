@@ -1,6 +1,6 @@
 {
   "note": "PROPOSALS from API-Football /transfers, for a person to read. data/transfers.json is the hand-curated overlay that is actually applied; this is not.",
-  "since": "2026-06-10",
+  "since": "2026-06-11",
   "moves": [
     {
       "n": "D. Alaba",
@@ -43,15 +43,6 @@
       "from": "Barcelona",
       "to": "CFR 1907 Cluj",
       "fromCode": "BAR",
-      "toCode": null,
-      "date": "2026-09-06",
-      "type": "Free agent"
-    },
-    {
-      "n": "Cristian David Perea Cajiao",
-      "from": "Real Madrid",
-      "to": "CFR 1907 Cluj",
-      "fromCode": "RMA",
       "toCode": null,
       "date": "2026-09-06",
       "type": "Free agent"
@@ -651,15 +642,6 @@
       "type": "-"
     },
     {
-      "n": "Manuel Ángel",
-      "from": "Real Madrid",
-      "to": "Fulham",
-      "fromCode": "RMA",
-      "toCode": null,
-      "date": "2026-08-30",
-      "type": "Transfer"
-    },
-    {
       "n": "José Jurado",
       "from": "Deportivo La Coruna",
       "to": "Jurado Jose",
@@ -781,15 +763,6 @@
       "from": "Real Sociedad",
       "to": "IF Brommapojkarna",
       "fromCode": "RSO",
-      "toCode": null,
-      "date": "2026-08-29",
-      "type": "Transfer"
-    },
-    {
-      "n": "David Jiménez",
-      "from": "Real Madrid",
-      "to": "Oviedo",
-      "fromCode": "RMA",
       "toCode": null,
       "date": "2026-08-29",
       "type": "Transfer"
@@ -1902,15 +1875,6 @@
       "type": "Transfer"
     },
     {
-      "n": "Y. Diomande",
-      "from": "RB Leipzig",
-      "to": "Real Madrid",
-      "fromCode": null,
-      "toCode": "RMA",
-      "date": "2026-08-04",
-      "type": "Transfer"
-    },
-    {
       "n": "Vladimir Silva",
       "from": "Pacos Ferreira",
       "to": "Celta Vigo",
@@ -2118,29 +2082,11 @@
       "type": "Free agent"
     },
     {
-      "n": "Gonzalo García",
-      "from": "Real Madrid",
-      "to": "Fulham",
-      "fromCode": "RMA",
-      "toCode": null,
-      "date": "2026-08-01",
-      "type": "Transfer"
-    },
-    {
       "n": "Fran González",
       "from": "Real Madrid",
       "to": "Sevilla",
       "fromCode": "RMA",
       "toCode": "SEV",
-      "date": "2026-08-01",
-      "type": "Transfer"
-    },
-    {
-      "n": "César Palacios",
-      "from": "Real Madrid",
-      "to": "Fulham",
-      "fromCode": "RMA",
-      "toCode": null,
       "date": "2026-08-01",
       "type": "Transfer"
     },
@@ -2170,15 +2116,6 @@
       "toCode": "RAC",
       "date": "2026-07-31",
       "type": "Free agent"
-    },
-    {
-      "n": "Fran González",
-      "from": "Real Madrid",
-      "to": "Sevilla",
-      "fromCode": "RMA",
-      "toCode": "SEV",
-      "date": "2026-07-31",
-      "type": "Transfer"
     },
     {
       "n": "Damián Rodríguez",
@@ -2685,15 +2622,6 @@
       "type": "Free agent"
     },
     {
-      "n": "B. Galassi",
-      "from": "Real Madrid",
-      "to": "Lazio",
-      "fromCode": "RMA",
-      "toCode": null,
-      "date": "2026-07-15",
-      "type": "Transfer"
-    },
-    {
       "n": "Andrés García",
       "from": "Aston Villa",
       "to": "Getafe",
@@ -2725,15 +2653,6 @@
       "from": "Atletico Madrid",
       "to": "Iraklis 1908",
       "fromCode": "ATM",
-      "toCode": null,
-      "date": "2026-07-14",
-      "type": "Free agent"
-    },
-    {
-      "n": "Carlos Rodriguez",
-      "from": "Real Madrid",
-      "to": "Iraklis 1908",
-      "fromCode": "RMA",
       "toCode": null,
       "date": "2026-07-14",
       "type": "Free agent"
@@ -3142,15 +3061,6 @@
       "toCode": null,
       "date": "2026-07-06",
       "type": "Loan"
-    },
-    {
-      "n": "Fran García",
-      "from": "Real Madrid",
-      "to": "Real Betis",
-      "fromCode": "RMA",
-      "toCode": "BET",
-      "date": "2026-07-06",
-      "type": "Transfer"
     },
     {
       "n": "B. Ede",
@@ -3653,15 +3563,6 @@
       "to": "Getafe",
       "fromCode": "RMA",
       "toCode": "GET",
-      "date": "2026-06-30",
-      "type": "Transfer"
-    },
-    {
-      "n": "Marc Cucurella",
-      "from": "Chelsea",
-      "to": "Real Madrid",
-      "fromCode": null,
-      "toCode": "RMA",
       "date": "2026-06-30",
       "type": "Transfer"
     },
@@ -4996,15 +4897,6 @@
       "toCode": "RMA",
       "date": "2026-06-29",
       "type": "Return from loan"
-    },
-    {
-      "n": "Mario Martín",
-      "from": "Real Madrid",
-      "to": "Getafe",
-      "fromCode": "RMA",
-      "toCode": "GET",
-      "date": "2026-06-29",
-      "type": "Transfer"
     },
     {
       "n": "Marcos Fernández",

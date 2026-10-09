@@ -1,6 +1,6 @@
 {
   "note": "PROPOSALS from API-Football /transfers, for a person to read. data/transfers.json is the hand-curated overlay that is actually applied; this is not.",
-  "since": "2026-06-10",
+  "since": "2026-06-11",
   "moves": [
     {
       "n": "S. Ashbee",
@@ -616,21 +616,21 @@
     },
     {
       "n": "L. Kiaba Mounganga",
-      "from": "Genk",
-      "to": "Liverpool",
-      "fromCode": null,
-      "toCode": "LIV",
-      "date": "2026-08-31",
-      "type": "Transfer"
-    },
-    {
-      "n": "L. Kiaba Mounganga",
       "from": "Liverpool",
       "to": "Genk",
       "fromCode": "LIV",
       "toCode": null,
       "date": "2026-08-31",
       "type": "Loan"
+    },
+    {
+      "n": "L. Kiaba Mounganga",
+      "from": "Genk",
+      "to": "Liverpool",
+      "fromCode": null,
+      "toCode": "LIV",
+      "date": "2026-08-31",
+      "type": "Transfer"
     },
     {
       "n": "K. Takai",
@@ -1164,15 +1164,6 @@
       "type": "Loan"
     },
     {
-      "n": "L. Kiaba Mounganga",
-      "from": "Genk",
-      "to": "Liverpool",
-      "fromCode": null,
-      "toCode": "LIV",
-      "date": "2026-08-30",
-      "type": "Transfer"
-    },
-    {
       "n": "Joshua Feeney",
       "from": "Aston Villa",
       "to": "Peterborough",
@@ -1272,15 +1263,6 @@
       "type": "Transfer"
     },
     {
-      "n": "Stefan Bajčetić",
-      "from": "Liverpool",
-      "to": "Celta de Vigo II",
-      "fromCode": "LIV",
-      "toCode": null,
-      "date": "2026-08-29",
-      "type": "-"
-    },
-    {
       "n": "S. Mfuni",
       "from": "Manchester City",
       "to": "Coventry",
@@ -1362,24 +1344,6 @@
       "type": "Loan"
     },
     {
-      "n": "B. Barcola",
-      "from": "Paris Saint Germain",
-      "to": "Liverpool",
-      "fromCode": null,
-      "toCode": "LIV",
-      "date": "2026-08-29",
-      "type": "Transfer"
-    },
-    {
-      "n": "Tobias Christopher Collyer",
-      "from": "Manchester United",
-      "to": "West Brom",
-      "fromCode": "MUN",
-      "toCode": "WBA",
-      "date": "2026-08-28",
-      "type": "Transfer"
-    },
-    {
       "n": "M. Zetterer",
       "from": "Eintracht Frankfurt",
       "to": "Leeds",
@@ -1396,15 +1360,6 @@
       "toCode": null,
       "date": "2026-08-28",
       "type": "Loan"
-    },
-    {
-      "n": "Louis Jackson",
-      "from": "Manchester United",
-      "to": "ST Mirren",
-      "fromCode": "MUN",
-      "toCode": null,
-      "date": "2026-08-28",
-      "type": "Transfer"
     },
     {
       "n": "K. Miściur",
@@ -1483,15 +1438,6 @@
       "from": "Coventry",
       "to": "Oxford United",
       "fromCode": "COV",
-      "toCode": null,
-      "date": "2026-08-27",
-      "type": "Loan"
-    },
-    {
-      "n": "K. Miściur",
-      "from": "Liverpool",
-      "to": "Leek Town",
-      "fromCode": "LIV",
       "toCode": null,
       "date": "2026-08-27",
       "type": "Loan"
@@ -1839,15 +1785,6 @@
       "type": "Loan"
     },
     {
-      "n": "C. Baleba",
-      "from": "Brighton",
-      "to": "Manchester United",
-      "fromCode": "BHA",
-      "toCode": "MUN",
-      "date": "2026-08-23",
-      "type": "Transfer"
-    },
-    {
       "n": "J. Devaney",
       "from": "Manchester United",
       "to": "Hibernian",
@@ -2026,15 +1963,6 @@
       "toCode": null,
       "date": "2026-08-19",
       "type": "Loan"
-    },
-    {
-      "n": "C. Jones",
-      "from": "Liverpool",
-      "to": "Inter",
-      "fromCode": "LIV",
-      "toCode": null,
-      "date": "2026-08-19",
-      "type": "Transfer"
     },
     {
       "n": "Z. Suzuki",
@@ -2595,15 +2523,6 @@
       "type": "Transfer"
     },
     {
-      "n": "Ethan Williams",
-      "from": "Manchester United",
-      "to": "Peterborough",
-      "fromCode": "MUN",
-      "toCode": null,
-      "date": "2026-08-11",
-      "type": "Transfer"
-    },
-    {
       "n": "E. Guessand",
       "from": "Aston Villa",
       "to": "Crystal Palace",
@@ -2964,15 +2883,6 @@
       "type": "Free agent"
     },
     {
-      "n": "R. Vítek",
-      "from": "Manchester United",
-      "to": "Middlesbrough",
-      "fromCode": "MUN",
-      "toCode": "MID",
-      "date": "2026-08-06",
-      "type": "Transfer"
-    },
-    {
       "n": "R. Russell-Denny",
       "from": "Tottenham",
       "to": "Bristol Rovers",
@@ -3097,15 +3007,6 @@
       "toCode": null,
       "date": "2026-08-05",
       "type": "Loan"
-    },
-    {
-      "n": "Sonny Aljofree",
-      "from": "Manchester United",
-      "to": "Rotherham",
-      "fromCode": "MUN",
-      "toCode": null,
-      "date": "2026-08-05",
-      "type": "Free agent"
     },
     {
       "n": "R. Welch",
@@ -3475,15 +3376,6 @@
       "toCode": null,
       "date": "2026-07-29",
       "type": "Transfer"
-    },
-    {
-      "n": "Oakley William Cannonier",
-      "from": "Liverpool",
-      "to": "Hougang United",
-      "fromCode": "LIV",
-      "toCode": null,
-      "date": "2026-07-29",
-      "type": "Free agent"
     },
     {
       "n": "M. Lacroix",
@@ -5833,15 +5725,6 @@
       "toCode": null,
       "date": "2026-06-29",
       "type": "Free agent"
-    },
-    {
-      "n": "Víctor Muñoz",
-      "from": "Osasuna",
-      "to": "Liverpool",
-      "fromCode": null,
-      "toCode": "LIV",
-      "date": "2026-06-29",
-      "type": "Transfer"
     },
     {
       "n": "Vitor Nunes",
