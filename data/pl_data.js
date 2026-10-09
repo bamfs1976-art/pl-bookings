@@ -703,6 +703,7 @@ const REFS = [
   {n:"Tim Robinson",region:"",matches:9,ypg:4.0,red:0.11,pen:null,fpg:22.89,cpf:0.1748},
   {n:"Chris Kavanagh",region:"",matches:30,ypg:3.97,red:0.1,pen:null,fpg:22.47,cpf:0.1766},
   {n:"Anthony Taylor",region:"",matches:31,ypg:3.94,red:0.06,pen:null,fpg:20.48,cpf:0.1921},
+  {n:"Lewis Smith",region:"",matches:25,ypg:3.92,red:0.0,pen:null,fpg:19.4,cpf:0.2,borrowed:"EFLC"},
   {n:"Peter Bankes",region:"",matches:22,ypg:3.82,red:0.18,pen:null,fpg:22.45,cpf:0.17},
   {n:"Andrew Kitchen",region:"",matches:4,ypg:3.75,red:0.0,pen:null,fpg:23.25,cpf:0.1613},
   {n:"Samuel Barrott",region:"",matches:24,ypg:3.71,red:0.04,pen:0.29,fpg:19.33,cpf:0.1918},
