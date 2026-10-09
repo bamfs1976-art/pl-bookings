@@ -194,6 +194,17 @@ assert.ok(/\.png$/.test(spec.filename) && spec.filename.startsWith('eflc-booking
     'the lineup pill is in the spec but the card never draws it');
 }
 
+/* Spanish officials print with their accents, on La Liga cards only, and a
+   name that already has them is left alone. Display only: the tables keep
+   the feed's spelling because the pipeline joins on it. */
+assert.equal(S.refDisplay('Alejandro Quintero Gonzalez', 'LL'), 'Alejandro Quintero González');
+assert.equal(S.refDisplay('Miguel Angel Ortiz Arias', 'LL'), 'Miguel Ángel Ortiz Arias');
+assert.equal(S.refDisplay('José María Sánchez Martínez', 'LL'), 'José María Sánchez Martínez');
+assert.equal(S.refDisplay('Mateo Busquets Ferrer', 'LL'), 'Mateo Busquets Ferrer');
+assert.equal(S.refDisplay('Anthony Taylor', 'PL'), 'Anthony Taylor');
+assert.equal(S.refDisplay('Martin Atkinson', 'EFLC'), 'Martin Atkinson',
+  'an English official was given a Spanish accent');
+
 /* A fixture with no referee must say so rather than implying one. */
 const noRef = S.deskMatchSpec(
   { ...priced, ref: { ref: null, name: null, appointed: false } }, ctx);

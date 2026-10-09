@@ -1336,14 +1336,43 @@
    * priced = the object priceFixture() returns:
    *   { fx, ref:{ref, name, appointed}, factor, home:{ps,top}, away:{ps,top}, m }
    */
-  function refLineOf(priced, n2) {
+  /* SPANISH OFFICIALS WITH THEIR ACCENTS, on the card only. The referee
+     tables store names the way the match feeds write them, mostly without
+     diacritics, and those strings are join keys across the pipeline, so they
+     stay as they are. A card printed for Spanish football fans is where
+     "Gonzalez" reads as a typo, so the printed name is restored here, word
+     by word, from names whose accent Spanish spelling requires. Only for La
+     Liga, and never over a word that already carries one. */
+  var ES_ACCENTS = {
+    gonzalez: 'González', martinez: 'Martínez', sanchez: 'Sánchez',
+    hernandez: 'Hernández', garcia: 'García', lopez: 'López', perez: 'Pérez',
+    rodriguez: 'Rodríguez', fernandez: 'Fernández', gomez: 'Gómez', diaz: 'Díaz',
+    jimenez: 'Jiménez', ramirez: 'Ramírez', alvarez: 'Álvarez', gutierrez: 'Gutiérrez',
+    dominguez: 'Domínguez', vazquez: 'Vázquez', benitez: 'Benítez', mendez: 'Méndez',
+    velazquez: 'Velázquez', suarez: 'Suárez', marquez: 'Márquez', martin: 'Martín',
+    nunez: 'Núñez', ibanez: 'Ibáñez', guzman: 'Guzmán',
+    jose: 'José', maria: 'María', angel: 'Ángel', adrian: 'Adrián', victor: 'Víctor',
+    cesar: 'César', jesus: 'Jesús', ivan: 'Iván', alvaro: 'Álvaro', ruben: 'Rubén',
+    joaquin: 'Joaquín', sebastian: 'Sebastián', andres: 'Andrés', raul: 'Raúl',
+    oscar: 'Óscar', nicolas: 'Nicolás', tomas: 'Tomás', hector: 'Héctor',
+    ramon: 'Ramón', julian: 'Julián', fermin: 'Fermín', agustin: 'Agustín'
+  };
+  function refDisplay(name, league) {
+    if (league !== 'LL' || !name) return name;
+    return String(name).replace(/[A-Za-z]+/g, function (w) {
+      var a = ES_ACCENTS[w.toLowerCase()];
+      return a && w[0] === w[0].toUpperCase() ? a : w;
+    });
+  }
+
+  function refLineOf(priced, n2, league) {
     var r = priced.ref || {};
     if (r.ref) {
-      return 'Referee: ' + r.ref.n
+      return 'Referee: ' + refDisplay(r.ref.n, league)
         + (r.ref.ypg != null ? ' · ' + n2(r.ref.ypg) + ' y/g (×' + n2(priced.factor) + ')' : '')
         + (r.appointed ? ' · appointed' : '');
     }
-    if (r.appointed && r.name) return 'Referee: ' + r.name + ' · appointed, no card record yet';
+    if (r.appointed && r.name) return 'Referee: ' + refDisplay(r.name, league) + ' · appointed, no card record yet';
     return 'Referee: not yet appointed';
   }
 
@@ -1408,7 +1437,7 @@
       lineup: ctx.pricedOffXI === true ? { on: true, text: 'CONFIRMED XI' }
             : ctx.pricedOffXI === false ? { on: false, text: 'LINEUPS NOT OUT' }
             : null,
-      refLine: refLineOf(priced, n2),
+      refLine: refLineOf(priced, n2, ctx.league),
       heat: m.expected, heatLabel: 'cards',
       heatMid: ctx.heatMid, heatHot: ctx.heatHot,
       candidates: candidatesOf(priced, ctx.clubBy, ctx.formOf),
@@ -1591,7 +1620,7 @@
                  ctx.whenText ? ctx.whenText(f.d) : null].filter(Boolean).join(' · '),
       home: side(f.h, ch), away: side(f.a, ca),
       ref: {
-        line: r ? r.n : (priced.ref && priced.ref.name) || 'Not yet appointed',
+        line: refDisplay(r ? r.n : (priced.ref && priced.ref.name), ctx.league) || 'Not yet appointed',
         /* CARDS PER FOUL, not penalties per game. Penalties are not in the
            match records the referee table is built from, so that field is null
            for every official in all three divisions — and how readily a
@@ -2059,6 +2088,7 @@
     deskMatchSpec: deskMatchSpec, uclMatchSpec: uclMatchSpec,
     deskRoundSpec: deskRoundSpec,
     deskStatSheetSpec: deskStatSheetSpec,
+    refDisplay: refDisplay,
     download: download, slug: slug,
     heatHex: heatHex, probHex: probHex, textOn: textOn,
     roundRect: roundRect, fit: fit, drawMark: drawMark
