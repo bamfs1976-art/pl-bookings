@@ -186,7 +186,7 @@
      its own band and its own footer — would have put a second copy of the 18+
      line on the page. That line is the one piece of text on a share card that
      is not allowed to drift, so there is still exactly one of it. */
-  function brandBand(x, th, title, subtitle, w) {
+  function brandBand(x, th, title, subtitle, w, pill) {
     w = w || W;
     var g = x.createLinearGradient(0, 0, w, 0);
     g.addColorStop(0, th.from); g.addColorStop(1, th.to);
@@ -204,7 +204,23 @@
        price was computed on and the basis was the half that fell off. Every
        card shares this band, so every card had the same silent cut waiting
        for a long enough season label. */
-    x.fillText(fit(x, subtitle, w - 2 * P), P, 210);
+    /* THE LINEUP PILL, right-aligned on the subtitle row. Whether a price
+       rests on the confirmed team sheet or on expected minutes is the
+       condition every number on the card is computed under, and as a clause
+       at the end of the subtitle it was the part a reader skipped. A pill is
+       read first: green for the confirmed XI, amber while lineups are out. */
+    var room = w - 2 * P;
+    if (pill && pill.text) {
+      x.font = '800 17px ' + BODY;
+      var pw = x.measureText(pill.text).width + 32;
+      x.fillStyle = pill.on ? '#15803d' : '#b45309';
+      roundRect(x, w - P - pw, 210 - 26, pw, 36, 18); x.fill();
+      x.fillStyle = '#ffffff'; x.textAlign = 'center';
+      x.fillText(pill.text, w - P - pw / 2, 208); x.textAlign = 'left';
+      room -= pw + 20;
+      x.fillStyle = '#586275'; x.font = '600 22px ' + BODY;
+    }
+    x.fillText(fit(x, subtitle, room), P, 210);
   }
 
   function footer(x, th, note, w, h) {
@@ -226,9 +242,16 @@
     x.fillText(fixed, P, h - 50);
     var used = x.measureText(fixed + ' · ').width;
     var room = w - 2 * P - markW - 24 - used;
-    if (room > 60) {
-      x.fillStyle = '#a8b0be';
-      x.fillText(fit(x, note, room), P + used, h - 50);
+    /* A NOTE THAT WILL NOT FIT GETS ITS OWN LINE rather than an ellipsis.
+       The match card's "research, not a guarantee" was the half that fell
+       off, which is the half that matters. It moves up a line, full width,
+       a size smaller; only a note too long for that is trimmed. */
+    x.fillStyle = '#a8b0be';
+    if (note && x.measureText(note).width <= room) {
+      x.fillText(note, P + used, h - 50);
+    } else if (note) {
+      x.font = '600 16px ' + BODY;
+      x.fillText(fit(x, note, w - 2 * P), P, h - 78);
     }
     x.fillStyle = th.ink; x.font = '800 20px ' + DISP;
     x.textAlign = 'right'; x.fillText(th.mark, w - P, h - 50); x.textAlign = 'left';
@@ -442,7 +465,7 @@
   function matchCard(spec) {
     return ready().then(function () {
       var th = theme(spec.league), k = canvas(), x = k.x;
-      brandBand(x, th, spec.title, spec.subtitle);
+      brandBand(x, th, spec.title, spec.subtitle, W, spec.lineup);
 
       var ry = 256;
       x.fillStyle = '#0c1322'; x.font = '700 22px ' + BODY;
@@ -1364,9 +1387,9 @@
          see the desk it came from, so a probability posted without the
          condition it was computed under is a stronger claim than the model can
          support: unless a team sheet is out, these prices assume expected
-         minutes, which is a guess about who plays. Stated in the subtitle
-         rather than as a new element, because the layout is fixed and a
-         caption that overlaps the heat pill would be worse than no caption.
+         minutes, which is a guess about who plays. It was a clause at the
+         end of the subtitle and read as small print; it is now the `lineup`
+         pill on the subtitle row, clear of the heat pill below it.
 
          `pricedOffXI` REPLACED `lineupsConfirmed`, and the difference is who
          is answering. The old flag was the READER'S mark — a button on each
@@ -1378,11 +1401,13 @@
          `undefined` means the desk does not report a basis and the card says
          nothing, which is why this is an explicit true/false test. */
       subtitle: [ctx.seasonLabel, f.r ? (ctx.roundWord || 'Matchday') + ' ' + f.r : null,
-                 ctx.whenText ? ctx.whenText(f.d) : null,
-                 ctx.pricedOffXI === true ? 'priced off the confirmed XI'
-                   : ctx.pricedOffXI === false ? 'lineups not out — expected minutes'
-                   : null]
+                 ctx.whenText ? ctx.whenText(f.d) : null]
                 .filter(Boolean).join(' · '),
+      /* The basis as a pill rather than a clause (see brandBand). Three
+         states, because a desk that reports no basis gets no pill at all. */
+      lineup: ctx.pricedOffXI === true ? { on: true, text: 'CONFIRMED XI' }
+            : ctx.pricedOffXI === false ? { on: false, text: 'LINEUPS NOT OUT' }
+            : null,
       refLine: refLineOf(priced, n2),
       heat: m.expected, heatLabel: 'cards',
       heatMid: ctx.heatMid, heatHot: ctx.heatHot,

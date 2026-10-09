@@ -170,19 +170,28 @@ assert.ok(/\.png$/.test(spec.filename) && spec.filename.startsWith('eflc-booking
    Guarded here because the check that covered the old flag lived in the file
    that was removed with it. Three states, because silence is one of them. */
 {
+  /* The basis is a PILL now, on the subtitle row, not a clause at the end of
+     the subtitle where it read as small print. So the spec carries it as
+     `lineup` and the card must actually DRAW it. */
   const off = S.deskMatchSpec(priced, { ...ctx, pricedOffXI: false });
-  assert.ok(/lineups not out/i.test(off.subtitle),
-    `a card priced off expected minutes does not say so: ${off.subtitle}`);
+  assert.ok(off.lineup && !off.lineup.on && /lineups not out/i.test(off.lineup.text),
+    `a card priced off expected minutes does not say so: ${JSON.stringify(off.lineup)}`);
   const on = S.deskMatchSpec(priced, { ...ctx, pricedOffXI: true });
-  assert.ok(/confirmed XI/i.test(on.subtitle),
-    `a card priced off a real team sheet does not say so: ${on.subtitle}`);
-  assert.ok(!/lineups not out/i.test(on.subtitle),
+  assert.ok(on.lineup && on.lineup.on && /confirmed XI/i.test(on.lineup.text),
+    `a card priced off a real team sheet does not say so: ${JSON.stringify(on.lineup)}`);
+  assert.ok(!/lineups not out/i.test(on.lineup.text + on.subtitle),
     'a card priced off the XI still carries the expected-minutes caveat');
+  assert.ok(!/lineups|confirmed XI/i.test(off.subtitle + on.subtitle),
+    'the basis is stated twice: once in the pill and again in the subtitle');
   /* Silence when the desk reports no basis: saying "lineups not out" for a
      caller that never answered would be inventing the caveat. */
   const quiet = S.deskMatchSpec(priced, ctx);
-  assert.ok(!/lineups|confirmed XI/i.test(quiet.subtitle),
+  assert.ok(quiet.lineup == null && !/lineups|confirmed XI/i.test(quiet.subtitle),
     `a card whose desk reports no basis still claims one: ${quiet.subtitle}`);
+  drawn.length = 0;
+  await S.matchCard(off);
+  assert.ok(drawn.some((t) => /LINEUPS NOT OUT/.test(t)),
+    'the lineup pill is in the spec but the card never draws it');
 }
 
 /* A fixture with no referee must say so rather than implying one. */
@@ -286,7 +295,10 @@ assert.ok(blob && blob.__blob, 'matchCard did not produce a blob');
 const text = drawn.join('\n');
 for (const need of ['Charlton Athletic v Derby County', 'A One', 'H One',
                     'MOST LIKELY BOOKED', 'TEAM CARD MARKETS', '1.9', '2.1', '59%',
-                    'CHAMPIONSHIP BOOKINGS']) {
+                    'CHAMPIONSHIP BOOKINGS',
+                    /* The footer note in FULL. It was trimmed to "research…",
+                       losing the half that says what the card is not. */
+                    'research, not a guarantee']) {
   assert.ok(text.includes(need), `the match card never drew ${JSON.stringify(need)}`);
 }
 /* The probabilities on the card are the probabilities in the spec. */
