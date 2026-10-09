@@ -606,6 +606,29 @@
     return hits.length === 1 ? hits[0] : null;
   }
 
+  /* ---- a referee's record THIS season ----
+     The referee tables are last season's: a full sample, but one that cannot
+     show an official who has changed. This counts the finished league games
+     he has refereed this season, from the fixture list and the feed's cards
+     per fixture, so a card can print the two side by side. The fixture's
+     official is joined to the table's spelling through matchRefName, the
+     same rule the desks price with. */
+  function refSeason(fixtures, fxstats, refName, knownNames) {
+    if (!refName || !fxstats || !Array.isArray(fixtures)) return null;
+    const known = knownNames && knownNames.length ? knownNames : [refName];
+    let n = 0, yc = 0;
+    for (const f of fixtures) {
+      if (!f || f.st !== 'FT' || !f.ref) continue;
+      if (matchRefName(f.ref, known) !== refName) continue;
+      const st = fxstats[String(f.id)];
+      const h = st && st[f.h], a = st && st[f.a];
+      if (!h || !a) continue;
+      n++;
+      yc += Number(h.yc || 0) + Number(a.yc || 0);
+    }
+    return { n, ypg: n ? yc / n : null };
+  }
+
   /* ---- pick tracker money math ---- */
   function pickPL(p) {
     if (!p) return 0;
@@ -2237,7 +2260,20 @@
     if (typeof s !== 'string' || !/^[01]{1,5}$/.test(s) || s.length < FORM_MIN) return null;
     const dots = s.split('').map((ch) => ch === '1');
     const x = dots.filter(Boolean).length, n = dots.length;
-    return { x, n, dots, short: x + ' of ' + n, text: 'Booked in ' + x + ' of last ' + n };
+    return { x, n, dots, hot: x >= 2, short: x + ' of ' + n, text: 'Booked in ' + x + ' of last ' + n };
+  }
+  /* The same strip for FOULS: the ledger's `fouls` map holds his fouls in
+     each of his last appearances, most recent first, one digit each. A dot
+     is a game with at least one. Amber from four in five, because a foul in
+     a game is ordinary for a midfielder in a way a booking is not. */
+  function foulForm(ledger, club, name) {
+    const s = ledger && ledger.fouls ? ledger.fouls[club + '|' + name] : null;
+    if (typeof s !== 'string' || !/^[0-9]{1,5}$/.test(s) || s.length < FORM_MIN) return null;
+    const counts = s.split('').map(Number);
+    const dots = counts.map((c) => c >= 1);
+    const x = dots.filter(Boolean).length, n = counts.length;
+    return { x, n, dots, counts, hot: x >= 4, short: x + ' of ' + n,
+             text: '1+ fouls in ' + x + ' of last ' + n };
   }
   /* The badge as markup, so four desks draw one badge. Plain text in and out:
      every character here is fixed or a digit, so nothing needs escaping.
@@ -2252,7 +2288,8 @@
       /* The short form is "2 of 5" on screen and the whole sentence to a
          screen reader, which would otherwise hear two bare numbers. */
       : '<span aria-hidden="true">' + f.short + '</span><span class="bform-sr">' + words + '</span>';
-    return '<span class="bform' + (big ? ' bform-lg' : '') + (f.x >= 2 ? ' bform-hot' : '')
+    const hot = f.hot != null ? f.hot : f.x >= 2;
+    return '<span class="bform' + (big ? ' bform-lg' : '') + (hot ? ' bform-hot' : '')
       + '" title="' + words + ', most recent first: ' + trail + '">' + body + '</span>';
   }
 
@@ -2280,7 +2317,7 @@
     gammaln, expectedFouls, nbTailProb, cardProbFromFouls, recencyWeight, refCardFactor,
     leagueRate90, twoStageHazard, leagueHazard, sumNegBin,
     matchLegOptions, simLegOptions, accaAllocate, accaPrice,
-    bookedForm, bookedFormHtml, FORM_MIN,
+    bookedForm, bookedFormHtml, foulForm, FORM_MIN, refSeason,
   };
 
   if (typeof module !== 'undefined' && module.exports) module.exports = PLDCore;

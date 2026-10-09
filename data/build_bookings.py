@@ -134,9 +134,13 @@ def merge(shipped, rows, season):
             "rds": {int(k): int(v) for k, v in (p.get("rds") or {}).items()},
         }
     fixtures = {int(f) for f in (shipped.get("fixtures") or [])}
+    # round -> fouls committed in it, per player. None where the ledger was
+    # written before fouls were kept; a full re-walk fills those in.
     apps = {}
     for a in shipped.get("apps") or []:
-        apps[(a["c"], a["n"])] = {int(x) for x in a.get("r") or []}
+        fl = a.get("f") or [None] * len(a.get("r") or [])
+        apps[(a["c"], a["n"])] = {int(x): (None if v is None else int(v))
+                                  for x, v in zip(a.get("r") or [], fl)}
 
     seen_fixtures = set()
     for r in rows:
@@ -149,7 +153,10 @@ def merge(shipped, rows, season):
         # skip: a set of rounds cannot double, and the first run after this
         # field arrived has to re-walk fixtures the cards already hold.
         if played(r) and r.get("club") and r.get("player"):
-            apps.setdefault((r["club"], r["player"]), set()).add(int(rd))
+            # NULL FOULS ARE ZERO for this feed, measured rather than assumed:
+            # API-Football never writes an explicit 0 (see the verdict in
+            # data/player_matches_status.txt and build_match_history.py).
+            apps.setdefault((r["club"], r["player"]), {})[int(rd)] = int(r.get("fouls") or 0)
         n = cards_in(r)
         if not n:
             continue
@@ -164,6 +171,15 @@ def merge(shipped, rows, season):
             continue
         e["rds"][int(rd)] = e["rds"].get(int(rd), 0) + n
 
+    # FOULS ARE COMPLETE once one run has re-read every fixture the ledger
+    # holds. Until then the harvest keeps walking the season (ledger_skip in
+    # harvest_apifootball.py), and after it never needs to again.
+    # NINETY PER CENT, not all: a fixture the feed refuses is skipped by the
+    # harvest, and demanding every one would re-walk the whole season on
+    # every run while it kept refusing. An ordinary incremental run reads a
+    # round, nowhere near this.
+    apps_fouls = bool(shipped.get("apps_fouls")) or (
+        bool(seen_fixtures) and len(fixtures & seen_fixtures) >= 0.9 * len(fixtures))
     fixtures |= seen_fixtures
     players = sorted(
         ({"n": e["n"], "c": e["c"], "rds": {str(k): v for k, v in sorted(e["rds"].items())}}
@@ -175,8 +191,10 @@ def merge(shipped, rows, season):
         "rounds": max(rounds, int(shipped.get("rounds") or 0)),
         "fixtures": sorted(fixtures),
         "players": players,
-        "apps": [{"c": c, "n": n, "r": sorted(rs)[-APPS_KEEP:]}
+        "apps": [{"c": c, "n": n, "r": sorted(rs)[-APPS_KEEP:],
+                  "f": [rs[k] for k in sorted(rs)[-APPS_KEEP:]]}
                  for (c, n), rs in sorted(apps.items()) if rs],
+        "apps_fouls": apps_fouls,
     }
 
 
@@ -184,6 +202,16 @@ def form_string(rounds, rds):
     """His last appearances, most recent first: "1" booked, "0" not."""
     return "".join("1" if int(rds.get(str(r), 0) or 0) > 0 else "0"
                    for r in sorted(rounds, reverse=True)[:APPS_KEEP])
+
+
+def fouls_string(rounds, fouls):
+    """Fouls committed in his last appearances, most recent first, one digit
+    each (9 means nine or more). None if any of them is not known: a strip
+    with a gap in it would read the gap as a clean game."""
+    pairs = sorted(zip(rounds, fouls), reverse=True)[:APPS_KEEP]
+    if not pairs or any(f is None for _, f in pairs):
+        return None
+    return "".join(str(min(9, int(f))) for _, f in pairs)
 
 
 def attach_form(led, league):
@@ -198,6 +226,7 @@ def attach_form(led, league):
     the ledger.
     """
     led["form"] = {}
+    led["fouls"] = {}
     name, konst = DATA_FOR[league]
     src = DATA / name
     if not src.exists() or not led.get("apps"):
@@ -231,6 +260,9 @@ def attach_form(led, league):
         if len(claims[(a["c"], a["n"])]) != 1:
             continue
         led["form"][key] = form_string(a["r"], rds.get((a["c"], a["n"]), {}))
+        fs = fouls_string(a["r"], a.get("f") or [None] * len(a["r"]))
+        if fs:
+            led["fouls"][key] = fs
         joined += 1
     return joined, len(hits)
 

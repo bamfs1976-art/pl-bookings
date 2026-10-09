@@ -3246,6 +3246,8 @@ function openPlayerProfile(k){
      this season's matches he actually played, most recent first. */
   const bf=plForm(p);
   if(bf) h+=`<p class="pp-form" style="margin:0 0 .7rem">${PLDCore.bookedFormHtml(bf,true)}</p>`;
+  const ff=p?PLDCore.foulForm(PL_LEDGER,p.c,p.n):null;
+  if(ff) h+=`<p class="pp-form" style="margin:0 0 .7rem">${PLDCore.bookedFormHtml(ff,true)}</p>`;
   /* Card form as a shape rather than a delta. Drawn only from gameweeks this
      browser actually recorded, so it says "recorded" and not "season" — the
      desk cannot show a history it was not open for, and implying otherwise
@@ -4875,6 +4877,13 @@ function exportFixtureSheet(fid,btn){
   const p=h2hFor(h,a);
   const spec=S.deskStatSheetSpec(priced,{
     league:"PL",
+    /* The last-5 strips on the sheet's player rows, and this season's record
+       for the referee box. Both from the ledger and the harvested fixtures,
+       which carry API-Football ids like PL_FXSTATS does. */
+    formOf:plForm,
+    foulsOf:p=>p?PLDCore.foulForm(PL_LEDGER,p.c,p.n):null,
+    refThisSeason:n=>(typeof PL_FIXTURES!=="undefined"&&typeof PL_FXSTATS!=="undefined")
+      ?PLDCore.refSeason(PL_FIXTURES,PL_FXSTATS,n,REFS.map(r=>r.n)):null,
     seasonLabel:"Premier League "+SEASON,
     roundWord:"Gameweek",
     clubBy:CLUBMAP,
