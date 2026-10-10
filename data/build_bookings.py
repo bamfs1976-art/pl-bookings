@@ -254,13 +254,33 @@ def attach_form(led, league):
 
     joined = 0
     for key, found in hits.items():
-        if len(found) != 1:
+        # ONE MAN, TWO SPELLINGS. The player-match feed writes some players
+        # differently from one fixture to the next — "A. Stach" in two rounds,
+        # "Anton Stach" in three — so his appearances arrive as two records,
+        # and the squad name matched both and was refused. Refusing is right
+        # for two DIFFERENT men; it is wrong when every record names the same
+        # one. So the records are folded together when each matches each of
+        # the others, and refused, as before, when any pair does not.
+        if len(found) > 1 and not all(
+                P.same_tokens(P.name_tokens(x["n"]), P.name_tokens(y["n"]))
+                for i, x in enumerate(found) for y in found[i + 1:]):
             continue
-        a = found[0]
-        if len(claims[(a["c"], a["n"])]) != 1:
+        if any(len(claims[(a["c"], a["n"])]) != 1 for a in found):
             continue
-        led["form"][key] = form_string(a["r"], rds.get((a["c"], a["n"]), {}))
-        fs = fouls_string(a["r"], a.get("f") or [None] * len(a["r"]))
+        rounds, fouls_by, booked = set(), {}, {}
+        for a in found:
+            fl = a.get("f") or [None] * len(a["r"])
+            for r, f in zip(a["r"], fl):
+                rounds.add(int(r))
+                if fouls_by.get(int(r)) is None:
+                    fouls_by[int(r)] = f
+            for r, v in (rds.get((a["c"], a["n"])) or {}).items():
+                # max, not sum: a round is one match, so two spellings of it
+                # are the same booking seen twice, never two bookings.
+                booked[str(r)] = max(int(v or 0), int(booked.get(str(r), 0)))
+        keep = sorted(rounds)[-APPS_KEEP:]
+        led["form"][key] = form_string(keep, booked)
+        fs = fouls_string(keep, [fouls_by.get(r) for r in keep])
         if fs:
             led["fouls"][key] = fs
         joined += 1
