@@ -28,16 +28,26 @@ name: Confirmed team sheets
 
 on:
   schedule:
-    # Hourly at :05 through the football day. Kick-offs across the three
-    # divisions run from about 11:00 to 21:00 UTC, and a sheet lands an hour
-    # before its own, so the useful window starts at 10:00.
+    # Every twenty minutes through the football day, off the hour. Kick-offs
+    # across the divisions run from about 11:00 to 21:00 UTC, and a sheet
+    # lands an hour before its own, so the useful window starts at 10:00.
+    #
+    # IT WAS HOURLY AT :05, AND GITHUB DROPPED MOST OF IT. Scheduled runs are
+    # best effort, and the top of the hour is when every repository on the
+    # platform wants a runner. Over 27 Sep - 10 Oct this fired two or three
+    # times a day out of twelve, nearly always late afternoon or night: on
+    # 10 October the first run was 15:47 UTC, so all four 14:00 Premier League
+    # sheets landed after the matches had started and priced nothing. Three
+    # slots an hour at :17/:37/:57 triples the chances of a run inside each
+    # match's last hour and keeps clear of the :00 rush. Cost stays small:
+    # a fixture sits in the window for about nine runs, so a fifteen-match
+    # Saturday is roughly 135 calls against 7,500 a day, and most runs on most
+    # days are inside no window and make no call at all.
     #
     # NOT every hour of the day: outside this range there is nothing within
     # reach of any kick-off, so the runs would be pure noise in the actions
-    # log. Scheduled runs are also frequently delayed by GitHub — the
-    # three-hour window the harvester actually uses (now-2h to now+1h) is wide
-    # enough that a fifteen-minute slip costs nothing.
-    - cron: '5 10-21 * * *'
+    # log. The harvester's window (now-2h to now+1h) absorbs the usual delay.
+    - cron: '17,37,57 9-21 * * *'
   workflow_dispatch:
     inputs:
       within_hours:
@@ -136,7 +146,7 @@ jobs:
             exit 0
           fi
           git commit -m "Confirmed team sheets"
-          # RETRY ON A RACE. This runs twelve times a day and fixtures.yml
+          # RETRY ON A RACE. This runs up to 39 times a day and fixtures.yml
           # three, both pushing to main, so a rejected push is expected rather
           # than exceptional. Rebase and retry instead of failing the run and
           # losing a sheet that is only useful for the next hour.

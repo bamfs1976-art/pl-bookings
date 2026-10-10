@@ -1000,9 +1000,10 @@
      differently and this repository has been bitten by that join more than
      any other. Absent for every division until the first extra-feeds run
      lands, which is why L.injuries is allowed to be null. */
-  function availFlag(L, pl) {
+  function availFlag(L, pl, fxId) {
     if (!L || !L.injuries) return '';
-    var rec = C.unavailable(pl.n, pl.c, L.injuries);
+    /* THIS fixture's rows only: the file is every absence of the season. */
+    var rec = C.unavailable(pl.n, pl.c, L.injuries, fxId);
     var lab = C.availabilityLabel(rec);
     if (!lab) return '';
     return ' <span class="avail ' + (lab.out ? 'avail-out' : 'avail-doubt')
@@ -1041,7 +1042,7 @@
                probability: the feed says "Questionable" as readily as
                "Missing Fixture", and dropping a doubtful player would be the
                desk making the selection call the reader came here to make. */
-            + availFlag(p.L, t.p)
+            + availFlag(p.L, t.p, p.fx.id)
             + pipMeter(t.p) + '</span>'
             + '<span class="pc-wrap"><span class="pc band ' + b[0] + '">' + pct(t.prob) + '</span>'
             + (b[1] ? '<span class="sev">' + esc(b[1]) + '</span>' : '') + '</span>'

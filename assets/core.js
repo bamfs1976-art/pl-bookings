@@ -225,16 +225,24 @@
    * and a desk that silently zeroed a doubtful player would be making a
    * selection call the reader came here to make. Removing him from a board is
    * the reader's decision, and the flag is what lets them make it. */
-  function unavailable(name, club, list) {
+  /* THE FEED IS A SEASON OF ABSENCES, NOT TODAY'S LIST. Every row carries the
+     fixture he missed (fx), and the file holds every fixture the harvest has
+     seen. Two bugs came from reading it as one list:
+       - a player listed against several fixtures handed matchSquadName the
+         same name several times, its unique-or-nothing rule saw "two" players,
+         and he got NO flag: Kluivert, Wieffer and Diarra, all out, all unflagged;
+       - a player listed once, weeks ago, kept that row for every later match:
+         Cash read OUT on a day he started.
+     So: with a fixture id, only that fixture's rows count, and no row for it
+     means no flag. The names are de-duplicated before the join either way. */
+  function unavailable(name, club, list, fxId) {
     if (!name || !Array.isArray(list) || !list.length) return null;
-    const mine = list.filter((r) => r && (!club || r.c === club));
+    let mine = list.filter((r) => r && (!club || r.c === club));
+    if (fxId != null) mine = mine.filter((r) => r.fx === fxId);
     if (!mine.length) return null;
-    const hit = matchSquadName(name, mine.map((r) => r.n));
+    const hit = matchSquadName(name, Array.from(new Set(mine.map((r) => r.n))));
     if (!hit) return null;
-    const rows = mine.filter((r) => r.n === hit);
-    /* One man, one status. Two rows for one name is the feed listing him
-       against two fixtures; the first is this one. */
-    return rows[0] || null;
+    return mine.find((r) => r.n === hit) || null;
   }
 
   /* The words the feed uses, and what a reader should take from them. Kept as
