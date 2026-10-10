@@ -240,6 +240,21 @@ check("a squad name matching two men gets no badge",
       form_with_squad([("TOT", "B. Johnson")],
                       led_of([("TOT", "Brennan Johnson", [1]), ("TOT", "Ben Johnson", [2])])),
       {})
+split = led_of([("LEE", "A. Stach", [3, 4]), ("LEE", "Anton Stach", [1, 2, 5])],
+               [{"n": "A. Stach", "c": "LEE", "rds": {"4": 1}},
+                {"n": "Anton Stach", "c": "LEE", "rds": {"5": 1}}])
+split["apps"][0]["f"] = [3, 2]
+split["apps"][1]["f"] = [2, 0, 3]
+check("one man under two feed spellings is one record, not a refusal",
+      form_with_squad([("LEE", "A. Stach")], split), {"LEE|A. Stach": "11000"})
+check("and his fouls are joined across both spellings",
+      split["fouls"], {"LEE|A. Stach": "32302"})
+check("the same round under both spellings is one booking, not two",
+      form_with_squad([("LEE", "A. Stach")],
+                      led_of([("LEE", "A. Stach", [4]), ("LEE", "Anton Stach", [4, 5, 6])],
+                             [{"n": "A. Stach", "c": "LEE", "rds": {"4": 1}},
+                              {"n": "Anton Stach", "c": "LEE", "rds": {"4": 1}}])),
+      {"LEE|A. Stach": "001"})
 check("one feed player claimed by two squad names gets no badge",
       form_with_squad([("TOT", "B. Johnson"), ("TOT", "Ben Johnson")],
                       led_of([("TOT", "Ben Johnson", [1])])),
@@ -324,7 +339,7 @@ if FAIL:
     for f in FAIL:
         print("  -", f)
     sys.exit(1)
-print(f"bookings ledger OK: {5 + 21 + 30} checks — second yellows counted once, the "
+print(f"bookings ledger OK: {5 + 21 + 33} checks — second yellows counted once, the "
       "merge keeps earlier rounds and never doubles a fixture, unbooked players "
       "stay out, the last-five window slices on rounds, a face is attached "
       "only to the man it belongs to, appearances survive a re-walk, the "
