@@ -55,6 +55,10 @@ DATA = Path(__file__).resolve().parent
 # adding a desk is a one-line change here rather than a new parser.
 DIVISIONS = {
     "sky bet championship": "EFLC",
+    # THE SAME DIVISION UNDER ITS NEW HEADING. The EFL's article for 9-15
+    # October printed "EFL Championship", and all eleven of that week's
+    # appointments were read, then skipped as a division no desk models.
+    "efl championship": "EFLC",
     "primera división": "LL",
     "serie a enilive": "SA",
     "premier league": "PL",
@@ -236,6 +240,7 @@ def parse_aia(text, season_year, competition="serie a enilive"):
 
 KNOWN_HEADINGS = {
     "sky bet championship", "sky bet league one", "sky bet league two",
+    "efl championship", "efl league one", "efl league two",
     "efl trophy", "efl cup", "carabao cup", "papa johns trophy",
     "vertu trophy", "bristol street motors trophy",
 }

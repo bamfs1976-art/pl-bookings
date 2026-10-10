@@ -113,6 +113,18 @@ def _an_unknown_heading_is_reported_not_swallowed():
     assert skipped == {"sky bet league five": 1}, skipped
 
 
+def _the_efl_s_new_heading_is_still_the_championship():
+    # The 9-15 October 2026 article printed "EFL Championship" where every
+    # earlier one said "Sky Bet Championship"; all eleven appointments were
+    # read and then skipped as a division no desk models.
+    rows, _, _ = I.parse("Saturday, 10th October 2026\nEFL Championship\n"
+                      "Norwich City v Millwall (15:00)\nReferee: Lewis Smith\n")
+    assert rows and rows[0]["competition"] == "efl championship", rows
+    entries, skipped, _ = I.to_entries(rows, "x")
+    assert entries and entries[0]["league"] == "EFLC", (entries, skipped)
+    assert not skipped, skipped
+
+
 def _a_club_it_cannot_map_is_reported_not_guessed():
     rows, _, _ = I.parse("Saturday, 15th August 2026\nSky Bet Championship\n"
                       "Real Madrid v Millwall (15:00)\nReferee: Lewis Smith\n")
@@ -411,6 +423,7 @@ t("the article parses into fixtures", _the_article_parses_into_fixtures)
 t("assistants and fourth officials are ignored", _officials_who_are_not_the_referee_are_ignored)
 t("only modelled divisions are ingested", _only_modelled_divisions_are_ingested)
 t("an unknown competition heading is reported, not swallowed", _an_unknown_heading_is_reported_not_swallowed)
+t("the EFL's new heading is still the Championship", _the_efl_s_new_heading_is_still_the_championship)
 t("a club it cannot map is reported, not guessed", _a_club_it_cannot_map_is_reported_not_guessed)
 t("the four resolution rules", _the_four_resolution_rules)
 t("surname alone is never enough", _surname_alone_is_never_enough)
