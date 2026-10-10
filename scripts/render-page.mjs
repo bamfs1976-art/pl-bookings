@@ -19,7 +19,13 @@
  * or a Playwright bundle if one happens to be installed — and says so plainly
  * when it cannot find one, rather than silently producing nothing.
  *
- * Usage: node scripts/render-page.mjs <url> [--timeout ms] [--settle ms]
+ * Usage: node scripts/render-page.mjs <url> [--timeout ms] [--settle ms] [--links]
+ *
+ * --links appends every link on the page, one `href="..."` per line, after
+ * the text. An index page is read for its LINKS, not its words, and innerText
+ * carries none: premierleague.com's news listing rendered to ten thousand
+ * characters of headlines and not one address, so the fetcher found "0
+ * matching URLs" for a matchweek article that was sitting on the page.
  */
 import { existsSync } from 'node:fs';
 import { execFileSync } from 'node:child_process';
@@ -35,6 +41,7 @@ const TIMEOUT = opt('timeout', 45000);
 /* After the network goes quiet, a beat for the framework to paint. Without it
    a client-rendered article can be "loaded" and still be an empty <main>. */
 const SETTLE = opt('settle', 1500);
+const LINKS = args.includes('--links');
 
 if (!url || !/^https?:\/\//i.test(url)) {
   console.error('usage: node scripts/render-page.mjs <http(s) url> [--timeout ms] [--settle ms]');
@@ -183,6 +190,13 @@ try {
     return main ? main.innerText : '';
   });
   process.stdout.write(text);
+  if (LINKS) {
+    const hrefs = await page.evaluate(() =>
+      Array.from(new Set(Array.from(document.querySelectorAll('a[href]'))
+        .map((a) => a.href).filter((h) => /^https?:/i.test(h)))));
+    process.stdout.write('\n' + hrefs.map((h) => 'href="' + h + '"').join('\n') + '\n');
+    console.error(`  ${hrefs.length} link(s) listed`);
+  }
   /* The measurement that made the original diagnosis possible, kept on stderr
      so it never contaminates the text on stdout. */
   console.error(`  rendered ${url} -> ${text.length} chars`);

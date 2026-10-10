@@ -217,7 +217,7 @@ def fetch(url, binary=False):
 RENDERER = Path(__file__).resolve().parent.parent / "scripts" / "render-page.mjs"
 
 
-def render(url, timeout=90):
+def render(url, timeout=90, links=False):
     """The page as a browser would see it, or None with the reason printed.
 
     NEVER FATAL, and never the first thing tried. This exists for one failure:
@@ -231,7 +231,7 @@ def render(url, timeout=90):
         print(f"    no renderer at {RENDERER.name}; skipping the browser leg")
         return None
     try:
-        p = subprocess.run(["node", str(RENDERER), url],
+        p = subprocess.run(["node", str(RENDERER), url] + (["--links"] if links else []),
                            capture_output=True, text=True, timeout=timeout)
     except FileNotFoundError:
         print("    node is not installed, so the browser leg cannot run")
@@ -552,7 +552,9 @@ def find_pl(rounds, verbose):
         if not hits:
             # The listing is assembled in the browser; execute it rather than
             # concluding the articles are gone.
-            rendered = render(index)
+            # WITH ITS LINKS. The rendered listing's text is headlines only;
+            # the article addresses are in its anchors.
+            rendered = render(index, links=True)
             hits = PL_SLUG.findall(rendered or "")
             if rendered is not None:
                 print(f"    rendered -> {len(hits)} matching URL(s)")
