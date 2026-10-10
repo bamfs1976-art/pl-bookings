@@ -1939,4 +1939,21 @@ t('a referee\'s season counts only his finished games, joined by name', () => {
   assert.equal(core.refSeason(fx, null, 'Francisco Hernandez Maeso'), null);
 });
 
+t('unavailable: one fixture at a time, repeated rows still join', () => {
+  const inj = [
+    { c: 'BOU', n: 'J. Kluivert', type: 'Missing Fixture', reason: 'Muscle', fx: 10 },
+    { c: 'BOU', n: 'J. Kluivert', type: 'Missing Fixture', reason: 'Muscle', fx: 11 },
+    { c: 'AVL', n: 'M. Cash', type: 'Missing Fixture', reason: 'Hamstring', fx: 3 },
+    { c: 'BOU', n: 'D. Brooks', type: 'Questionable', reason: 'Injury', fx: 11 },
+  ];
+  // listed against two fixtures: used to match nothing at all
+  assert.equal(core.unavailable('Justin Kluivert', 'BOU', inj, 11).fx, 11);
+  assert.equal(core.availabilityLabel(core.unavailable('Justin Kluivert', 'BOU', inj, 11)).text, 'OUT');
+  assert.ok(core.unavailable('Justin Kluivert', 'BOU', inj));
+  // out weeks ago is not out today
+  assert.equal(core.unavailable('Matty Cash', 'AVL', inj, 11), null);
+  assert.equal(core.availabilityLabel(core.unavailable('David Brooks', 'BOU', inj, 11)).text, 'DOUBT');
+  assert.equal(core.unavailable('David Brooks', 'BOU', inj, 10), null);
+});
+
 console.log(`\n${passed} tests passed`);
