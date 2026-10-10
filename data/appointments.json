@@ -21,6 +21,7 @@
   "https://rfef.es/sites/default/files/designaciones_1a_division_masculina_-_temp_2026-27_-_jornada_7_domingo.pdf",
   "https://rfef.es/sites/default/files/designaciones_1a_division_masculina_-_temp_2026-27_-_jornada_7_sabado.pdf",
   "https://rfef.es/sites/default/files/designaciones_1a_division_masculina_-_temp_2026-27_-_jornada_7_viernes.pdf",
+  "https://rfef.es/sites/default/files/designaciones_1a_division_masculina_-_temp_2026-27_-_jornada_8_domingo.pdf",
   "https://rfef.es/sites/default/files/designaciones_1a_division_masculina_-_temp_2026-27_-_jornada_8_sabado.pdf",
   "https://rfef.es/sites/default/files/designaciones_1a_division_masculina_-_temp_2026-27_-_jornada_8_viernes.pdf",
   "https://www.aia-figc.it/news/serie-a-enilive-designazioni-4a-giornata-27632/",
@@ -1846,6 +1847,50 @@
    "refResolved": "Isidro Diaz de Mera Escuderos",
    "resolvedBy": "run",
    "source": "https://rfef.es/sites/default/files/designaciones_1a_division_masculina_-_temp_2026-27_-_jornada_8_sabado.pdf"
+  },
+  {
+   "league": "LL",
+   "date": "2026-10-11",
+   "h": "BET",
+   "a": "OSA",
+   "ko": "18:30",
+   "ref": "Carlos Muñiz",
+   "refResolved": null,
+   "resolvedBy": null,
+   "source": "https://rfef.es/sites/default/files/designaciones_1a_division_masculina_-_temp_2026-27_-_jornada_8_domingo.pdf"
+  },
+  {
+   "league": "LL",
+   "date": "2026-10-11",
+   "h": "ELC",
+   "a": "CEL",
+   "ko": "14:00",
+   "ref": "Javier Alberola",
+   "refResolved": "Javier Alberola Rojas",
+   "resolvedBy": "run",
+   "source": "https://rfef.es/sites/default/files/designaciones_1a_division_masculina_-_temp_2026-27_-_jornada_8_domingo.pdf"
+  },
+  {
+   "league": "LL",
+   "date": "2026-10-11",
+   "h": "RAC",
+   "a": "VAL",
+   "ko": "21:00",
+   "ref": "Luis Bestard",
+   "refResolved": null,
+   "resolvedBy": null,
+   "source": "https://rfef.es/sites/default/files/designaciones_1a_division_masculina_-_temp_2026-27_-_jornada_8_domingo.pdf"
+  },
+  {
+   "league": "LL",
+   "date": "2026-10-11",
+   "h": "RSO",
+   "a": "DEP",
+   "ko": "16:15",
+   "ref": "Miguel Sesma",
+   "refResolved": "Miguel Sesma Espinosa",
+   "resolvedBy": "run",
+   "source": "https://rfef.es/sites/default/files/designaciones_1a_division_masculina_-_temp_2026-27_-_jornada_8_domingo.pdf"
   },
   {
    "league": "PL",
