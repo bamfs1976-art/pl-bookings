@@ -1788,6 +1788,70 @@
    * spec: { league, title, subtitle, legs:[{player,club,prob,odds,carded}],
    *         stake, odds, status, pl, note }
    */
+  /* ---- the streaks card ------------------------------------------------
+   * "Booked in 3+ of last 5": the players booked most often in the games
+   * they actually played, across every desk, with what is next for each.
+   * The reference is a stats account's offside streaks; what this one adds
+   * is the price — the desk's chance of a card in that next match, with the
+   * referee who will take it — because a run of form without tonight's
+   * number is a tally, not a tip.
+   *
+   * spec = { title, subtitle, note, rows: [{ n, c, code, ph, dots:[bool],
+   *          hit:'4/5', season:'6 yc · 0.42 per 90',
+   *          next:'Sat v TOT (H) · Attwell', prob: 0.31|null }] }
+   */
+  function streakCard(spec) {
+    var rows0 = (spec.rows || []).slice(0, 10);
+    var wanted = rows0.map(function (r) { return r.ph; }).filter(Boolean);
+    return Promise.all([ready(), loadAll(wanted)]).then(function (got) {
+      var pics = got[1];
+      var th = theme(spec.league || 'ALL'), k = canvas(), x = k.x;
+      brandBand(x, th, spec.title, spec.subtitle);
+      var top = 286, bottom = H - 104;
+      x.fillStyle = '#8b94a5'; x.font = '700 15px ' + BODY;
+      x.fillText('PLAYER', P + 76, top - 18);
+      x.fillText('LAST 5', 566, top - 18);
+      x.fillText('HIT', 718, top - 18);
+      x.textAlign = 'right'; x.fillText('NEXT · P(CARD)', W - P, top - 18); x.textAlign = 'left';
+      if (!rows0.length) {
+        x.fillStyle = '#586275'; x.font = '600 24px ' + BODY;
+        x.fillText('No player is on a streak of three or more yet.', P, top + 60);
+      }
+      var rh = Math.min(100, (bottom - top) / Math.max(1, rows0.length));
+      rows0.forEach(function (r, i) {
+        var y = top + i * rh, mid = y + rh / 2;
+        if (i % 2 === 0) { x.fillStyle = '#f4f6fa'; roundRect(x, P - 16, y + 4, W - 2 * (P - 16), rh - 8, 14); x.fill(); }
+        x.fillStyle = '#c2c8d4'; x.font = '800 26px ' + DISP; x.textAlign = 'right';
+        x.fillText(String(i + 1), P + 14, mid + 9); x.textAlign = 'left';
+        var fd = Math.min(46, rh - 30);
+        face(x, pickImg(pics, r.ph), r.n, r.c, P + 26, mid - fd / 2, fd);
+        var tx = P + 26 + fd + 14;
+        x.fillStyle = '#0c1322'; x.font = '700 25px ' + DISP;
+        x.fillText(fit(x, r.n, 552 - tx), tx, mid - 4);
+        var sx = leagueChip(x, tx, mid + 22, r.code || '', null);
+        x.fillStyle = '#586275'; x.font = '600 16px ' + BODY;
+        x.fillText(fit(x, (r.c || '') + (r.season ? ' · ' + r.season : ''), 552 - sx), sx, mid + 28);
+        /* Five dots, most recent on the left, the badge's own reading. */
+        (r.dots || []).slice(0, 5).forEach(function (on, d) {
+          var cx = 574 + d * 24;
+          x.beginPath(); x.arc(cx, mid, 8, 0, Math.PI * 2);
+          if (on) { x.fillStyle = '#e0a800'; x.fill(); }
+          else { x.strokeStyle = '#c2c8d4'; x.lineWidth = 2; x.stroke(); }
+        });
+        x.fillStyle = '#0c1322'; x.font = '800 32px ' + DISP;
+        x.fillText(r.hit || '', 714, mid + 11);
+        x.textAlign = 'right';
+        x.fillStyle = r.prob != null ? probHex(r.prob) : '#8b94a5'; x.font = '800 30px ' + DISP;
+        x.fillText(r.prob != null ? Math.round(r.prob * 100) + '%' : '—', W - P, mid + 2);
+        x.fillStyle = '#586275'; x.font = '600 15px ' + BODY;
+        x.fillText(fit(x, r.next || 'no fixture yet', W - P - 790), W - P, mid + 28);
+        x.textAlign = 'left';
+      });
+      footer(x, th, spec.note || 'Booked in 3+ of the last 5 games played · P(card) is the desk\'s price for the next match · research, not a guarantee');
+      return toBlob(k.c);
+    });
+  }
+
   function accaCard(spec) {
     return ready().then(function () {
       var th = theme(spec.league), k = canvas(), x = k.x;
@@ -2157,7 +2221,7 @@
     matchCard: matchCard, roundCard: roundCard, calendarCard: calendarCard,
     statSheetCard: statSheetCard, SHEET_W: SW, SHEET_H: SH,
     trendRows: trendRows,
-    rankCard: rankCard,
+    rankCard: rankCard, streakCard: streakCard,
     accaCard: accaCard, accaRowSpec: accaRowSpec, nineFoldSpec: nineFoldSpec,
     deskMatchSpec: deskMatchSpec, uclMatchSpec: uclMatchSpec,
     deskRoundSpec: deskRoundSpec,

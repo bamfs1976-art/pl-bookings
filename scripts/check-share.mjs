@@ -1709,6 +1709,27 @@ for (const [page, needle] of [
     'assets/share.js has no badge branch for a club whose crest did not load');
 }
 
+/* ---- the booking streaks card ------------------------------------------- */
+{
+  drawn.length = 0;
+  const b = await S.streakCard({
+    title: 'Booking streaks', subtitle: 'Booked in 3+ of their last 5',
+    rows: [{ n: 'A Streak', c: 'SEV', code: 'LL', dots: [true, true, false, true, true],
+             hit: '4/5', season: '0.81 yellows per 90', next: 'Sat v BAR (A) · Gil Manzano', prob: 0.31 },
+           { n: 'No Fixture', c: 'GET', code: 'LL', dots: [true, false, true, true, false],
+             hit: '3/5', season: '', next: '', prob: null }],
+  });
+  assert.ok(b && b.__blob, 'the streaks card did not produce a blob');
+  const t = drawn.join('\n');
+  for (const need of ['A Streak', '4/5', '31%', 'Sat v BAR', 'no fixture yet', '18+', 'NEXT · P(CARD)']) {
+    assert.ok(t.includes(need), `the streaks card never drew ${JSON.stringify(need)}`);
+  }
+  drawn.length = 0;
+  await S.streakCard({ title: 'Booking streaks', subtitle: 'x', rows: [] });
+  assert.ok(drawn.some((x) => /No player is on a streak/.test(x)),
+    'an empty streaks card is a blank card rather than saying why');
+}
+
 console.log(
   `check-share OK: ${['PL', 'EFLC', 'LL', 'SA', 'ALL', 'UCL'].length} themes, match + round + ` +
   'combined cards render, adapters agree with the desks, every card carries 18+, ' +
