@@ -410,7 +410,12 @@ def build_players():
             continue
         rows.append(mk(p, "PL", low_min=form_floor))
     champ = source("champ_promoted.json", "EFL", shipped, reused)
-    champ_floor = low_sample_floor(champ)
+    # ALWAYS THE FULL FLOOR: this source is last season's Championship by
+    # definition (prior_eflc), a completed season. Measuring it off the rows
+    # gave a different floor when the build fell back to the 74 shipped
+    # promoted-club rows instead of the whole division, so a fallback quietly
+    # re-flagged players nobody had touched (test_fpl_squads round trip).
+    champ_floor = LOW_MIN
     for p in champ:
         rows.append(mk(p, "EFL", low_min=champ_floor))
     # The promoted clubs' remaining squad, from the free FPL feed, with no form

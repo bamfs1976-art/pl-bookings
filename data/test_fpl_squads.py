@@ -292,8 +292,13 @@ def _shipped_file_round_trips_exactly():
     original = {(p["c"], p["n"]): p for p in B.js_array(
         (DATA / "pl_data.js").read_text(encoding="utf-8"), "PL_PLAYERS")}
     for basis, rows in shipped.items():
+        # The floor the build itself uses: the full 450 for EFL rows (the
+        # promoted clubs' completed Championship season) and NEW rows (no form),
+        # and for the live PL form a share of the football in THESE rows
+        # (low_sample_floor), which was 180 on the first live-form build.
+        floor = B.low_sample_floor(rows) if basis == "PL" else B.LOW_MIN
         for r in rows:
-            built = B.mk(r, basis)
+            built = B.mk(r, basis, low_min=floor)
             was = original[(built["c"], built["n"])]
             for k in ("p", "min", "yc", "rc", "y", "f", "fw", "r", "ls", "b"):
                 assert built[k] == was[k], (built["n"], k, built[k], was[k])

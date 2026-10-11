@@ -212,8 +212,12 @@ t('a club with its own home/away split is priced on it', () => {
   assert.notEqual(h.factor, a.factor, 'the two venues must not price the same');
 });
 t('a promoted club with no split falls back to the league factors, flagged', () => {
-  const c = CLUBS.find((x) => x.basis !== 'PL');
-  assert.ok(c, 'the shipped clubs should include a promoted side');
+  /* By the split, not the basis: once the Premier League form flips to the
+     season being played, a promoted club is on PL form like anyone else, but
+     it still has no 2025-26 home/away record (build_club_splits leaves caH
+     and caA null), and that is the case this pins. */
+  const c = CLUBS.find((x) => x.caH == null || x.caA == null);
+  assert.ok(c, 'the shipped clubs should include a promoted side with no split');
   const h = model.venueContext(c.short, true), a = model.venueContext(c.short, false);
   assert.equal(h.source, 'league');
   assert.equal(h.factor, 0.95);
@@ -308,7 +312,11 @@ t('a Championship rate is discounted, not discarded', () => {
 
 console.log('\ncard model — the venue split column');
 t('the split is the venue factor and nothing else', () => {
-  const p = PL_PLAYERS.find((x) => x.c === 'ARS' && x.min > 900 && x.y > 0.2);
+  /* Arsenal's busiest carded player, not "over 900 minutes": six rounds into
+     a live-form season nobody has 900, and the find came back undefined. */
+  const p = PL_PLAYERS.filter((x) => x.c === 'ARS' && x.y > 0.2 && !x.ls)
+    .sort((a, b) => b.min - a.min)[0];
+  assert.ok(p, 'Arsenal should have a rated, carded player');
   const s = model.venueSplit(p);
   assert.ok(s.home != null && s.away != null);
   assert.ok(s.away > s.home, 'Arsenal concede more cards away; the split must show it');
