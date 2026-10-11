@@ -62,7 +62,14 @@ assert.equal(inconsistent.length, 0,
    So the threshold is applied where the sample can carry it — and every such
    row must be flagged low-sample, because that flag is what stops it topping
    a ranking it has not earned. */
-const unflagged = PL_PLAYERS.filter((p) => p.y != null && Number(p.y) >= 1 && !p.ls);
+/* FROM 450 MINUTES, not from the low-sample floor. The floor scales with the
+   season being played (180 minutes six rounds in), and a real player can card
+   more than once per 90 over that much football: on 11 October 2026 Matt Crooks
+   had 3 yellows in 204 minutes and Jacob Murphy 3 in 182, both confirmed round
+   by round in the bookings ledger. Five full matches at that rate is still the
+   parsing fault this exists to catch. */
+const unflagged = PL_PLAYERS.filter((p) => p.y != null && Number(p.y) >= 1 && !p.ls
+  && Number(p.min) >= 450);
 assert.equal(unflagged.length, 0,
   `${unflagged.length} player(s) card more than once per 90 without a ` +
   'low-sample flag — either the rate is wrong or the flag is (' +
