@@ -11,7 +11,10 @@ WHERE THE FORM COMES FROM. The Championship desk is the mirror image of the
 Premier League one. Most of its clubs were in the division last season; the
 interesting minority were not:
 
-  18 clubs  2025-26 Championship form   basis EFLC   champ_promoted.json
+  18 clubs  2025-26 Championship form   basis EFLC   eflc_players.json
+            (at the Championship's form season: once it flips to the season
+            being played, every club's rows come from here, the relegated
+            and promoted ones included)
    3 clubs  2025-26 Premier League form basis PL     pl_af_players.json
             (Burnley, West Ham, Wolves — relegated, so last season's record is
             from a higher division. Flagged, because a foul rate earned in the
@@ -22,7 +25,7 @@ interesting minority were not:
 
 All three come from data/harvest_apifootball.py, one division per run:
 
-    python3 data/harvest_apifootball.py --league EFLC
+    python3 data/harvest_apifootball.py --league EFLC --out eflc_players.json
     python3 data/harvest_apifootball.py --league L1
     python3 data/harvest_apifootball.py --league PL --out pl_af_players.json
 
@@ -140,14 +143,23 @@ def build_players():
     unmapped, reused = {}, []
     shipped = shipped_rows()
     all_shorts = set(leagues.EFLC_CLUBS.values())
-    continuing = all_shorts - leagues.EFLC_FROM_PL - leagues.EFLC_FROM_L1
 
     rows = []
     # Order matters: the de-duplication below keeps the FIRST row for a
     # (club, name), so the better-evidenced basis has to be loaded first. A
     # real rate must never be overwritten by a blank one.
     for payload, keep, basis, src in (
-        (source("champ_promoted.json", "EFLC", shipped, reused), continuing, "EFLC", "Championship"),
+        # THE CHAMPIONSHIP'S OWN FORM FILE, harvested at form_eflc, and taken
+        # for EVERY club, not just the continuing ones. Before the flip it is
+        # last season's Championship, which holds none of the relegated or
+        # promoted clubs, so nothing changes. After it, it is this season's,
+        # and Burnley, West Ham and Wolves have their own Championship record
+        # in it. Reading only the continuing clubs here (and champ_promoted.json,
+        # which is the Premier League's promoted-club file) left those three
+        # with no rated player once the Premier League flipped too: their PL
+        # file became 2026-27 and they are not in it. 11 October 2026,
+        # "EFLC WRE v BUR: a side with no rated players was priced".
+        (source("eflc_players.json", "EFLC", shipped, reused), all_shorts, "EFLC", "Championship"),
         # Burnley, West Ham and Wolves were in the Premier League last season,
         # so their form is a PL record. pl_af_players.json is the API-Football
         # harvest of that division, kept SEPARATE from pl_players.json on

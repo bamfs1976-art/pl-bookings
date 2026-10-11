@@ -557,7 +557,8 @@ def _six_rounds_does_not_flag_the_division():
     assert floor < B.LOW_MIN, floor
     flagged = [B.mk(p, "LL", resolve=lambda n: "ARS", low_min=floor)["ls"]
                for p in rows]
-    assert flagged == [False, False, False, False, False, True], flagged
+    # 120 minutes is under two matches, so it stays flagged (MIN_FLOOR).
+    assert flagged == [False, False, False, False, True, True], flagged
     # Under the constant only the two near-ever-presents survive, and that is
     # the bug: four of the six are ordinary regulars six rounds into a season.
     was = [B.mk(p, "LL", resolve=lambda n: "ARS")["ls"] for p in rows]
@@ -569,17 +570,23 @@ t("six rounds of a live season does not flag the whole division",
 
 
 def _floor_rises_with_the_football_played():
-    """Monotonic in the season's length, and never under a match's worth —
-    below ninety minutes the flag means what it always meant."""
+    """Monotonic in the season's length, and never under two matches —
+    one booking in one match is not a rate (MIN_FLOOR)."""
     floors = [B.low_sample_floor(_feed([r * 90])) for r in (1, 6, 12, 24, 38)]
     assert floors == sorted(floors), floors
-    assert floors[0] == 90, floors
+    assert floors[0] == B.MIN_FLOOR == 180, floors
     assert floors[-1] == B.LOW_MIN, floors
-    assert B.low_sample_floor([]) == 90
-    assert B.low_sample_floor(_feed([0, 0])) == 90
+    assert B.low_sample_floor([]) == 180
+    assert B.low_sample_floor(_feed([0, 0])) == 180
+    # The 11 October failure: booked once in ~100 minutes, six rounds in.
+    row = _feed([540, 100])[1]
+    row["yc"] = 1
+    got = B.mk(row, "PL", resolve=lambda n: "ARS",
+               low_min=B.low_sample_floor(_feed([540, 100])))
+    assert got["y"] >= 0.9 and got["ls"] is True, got
 
 
-t("the floor tracks the football played and never falls under one match",
+t("the floor tracks the football played and never falls under two matches",
   _floor_rises_with_the_football_played)
 
 

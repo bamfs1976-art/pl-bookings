@@ -182,6 +182,15 @@ if (process.argv.includes('--github')) {
     if (r.form == null) continue;
     console.log(`form_${r.code.toLowerCase()}=${r.form}`);
   }
+  /* THE LAST COMPLETED SEASON, which never flips. A promoted club's prior-tier
+     form is last season's by definition, so the harvest behind it must not
+     follow form_<code>: on 11 October 2026 the Championship harvest followed
+     form_eflc to 2026, found no Coventry, Hull or Ipswich in it, and refused
+     to write the file the Premier League desk needs for them. */
+  for (const r of rows) {
+    if (r.current == null) continue;
+    console.log(`prior_${r.code.toLowerCase()}=${r.current - 1}`);
+  }
   for (const r of rows) {
     console.error(r.error
       ? `${r.name}: ${r.error} — no answer emitted, the workflow default stands`

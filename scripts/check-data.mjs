@@ -62,10 +62,18 @@ assert.equal(inconsistent.length, 0,
    So the threshold is applied where the sample can carry it — and every such
    row must be flagged low-sample, because that flag is what stops it topping
    a ranking it has not earned. */
-const unflagged = PL_PLAYERS.filter((p) => p.y != null && Number(p.y) >= 1 && !p.ls);
+/* FROM 450 MINUTES, not from the low-sample floor. The floor scales with the
+   season being played (180 minutes six rounds in), and a real player can card
+   more than once per 90 over that much football: on 11 October 2026 Matt Crooks
+   had 3 yellows in 204 minutes and Jacob Murphy 3 in 182, both confirmed round
+   by round in the bookings ledger. Five full matches at that rate is still the
+   parsing fault this exists to catch. */
+const unflagged = PL_PLAYERS.filter((p) => p.y != null && Number(p.y) >= 1 && !p.ls
+  && Number(p.min) >= 450);
 assert.equal(unflagged.length, 0,
   `${unflagged.length} player(s) card more than once per 90 without a ` +
-  'low-sample flag — either the rate is wrong or the flag is');
+  'low-sample flag — either the rate is wrong or the flag is (' +
+  unflagged.slice(0, 5).map((p) => `${p.c} ${p.n}: ${p.yc} yc in ${p.min} min, y ${p.y}`).join('; ') + ')');
 
 /* And the same shape of fault in minutes: a rate computed from zero minutes is
    not a rate. */
@@ -192,12 +200,33 @@ assert.equal(missingFw, 0, `${missingFw} player rows missing the fw (fouls won) 
 // means "not on Premier League data", which stays true once most of the squad
 // is NEW — the club aggregate is withheld either way, and the EFL/NEW
 // distinction lives on the player row where it changes what to believe.
+//
+// UNTIL THE FORM FLIPS. From round six the Premier League form is the season
+// being played, and the promoted clubs have a Premier League record of their
+// own in it; the build then labels a club PL when its rated rows are mostly PL
+// (club_basis). So the rule is the one that holds both sides of the flip: a
+// promoted club is PL only when most of its rated players are, and whichever
+// label it carries, the club aggregate follows it.
 for (const short of PROMOTED) {
   const club = CLUBS.find((c) => c.short === short);
-  assert.ok(club && club.basis === 'EFL', `promoted club ${short} must be flagged EFL`);
-  assert.equal(club.ca, null, `promoted club ${short} must not ship a team cards-against rate`);
-  assert.equal(club.fm, null, `promoted club ${short} must not ship a team fouls-per-match rate`);
+  assert.ok(club, `promoted club ${short} is missing from CLUBS`);
+  const rows = PL_PLAYERS.filter((p) => p.c === short && (p.b === 'PL' || p.b === 'EFL'));
+  const pl = rows.filter((p) => p.b === 'PL').length;
+  const want = pl && pl >= rows.length - pl ? 'PL' : 'EFL';
+  assert.equal(club.basis, want,
+    `promoted club ${short} is flagged ${club.basis} with ${pl} of ${rows.length} rated rows on PL form`);
+  if (club.basis === 'EFL') {
+    assert.equal(club.ca, null, `promoted club ${short} must not ship a team cards-against rate`);
+    assert.equal(club.fm, null, `promoted club ${short} must not ship a team fouls-per-match rate`);
+  }
 }
+
+// EVERY PL-basis club's cards-against is a per-GAME rate. Dividing a few
+// weeks' yellows by 38 (the completed-season divisor) produced 0.21 for
+// Arsenal on 11 October 2026; the real range is about 1 to 3.
+const oddCa = CLUBS.filter((c) => c.basis === 'PL' && !(c.ca >= 0.7 && c.ca <= 4));
+assert.equal(oddCa.length, 0,
+  `club cards-against outside 0.7-4 a game: ${oddCa.map((c) => `${c.short} ${c.ca}`).join(', ')}`);
 
 const histSrc = readFileSync(join(root, 'data', 'ref_history.js'), 'utf8');
 const hctx = {};

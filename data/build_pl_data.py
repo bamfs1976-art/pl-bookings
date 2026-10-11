@@ -63,6 +63,7 @@ import leagues  # noqa: E402
 
 OUT = DATA / "pl_data.js"
 LOW_MIN = 450
+MIN_FLOOR = 180   # two full matches: the least the low-sample flag will vouch for
 FULL_SEASON_MIN = 38 * 90   # the football one player can play in a 38-round season
 
 # The API-Football harvest of the Premier League, written every run by the
@@ -86,17 +87,21 @@ AF_FILL = "pl_af_players.json"
 # complaining that the form had not moved.
 SS_FORM = "pl_players.json"
 
-# THE FORM SOURCES, IN PREFERENCE ORDER. The API-Football harvest is second
-# rather than first so that restoring the cookie restores the old basis
-# exactly; it is in the list at all so that the desk has a live source when the
-# cookie is not there, which is the state it has actually been in.
+# THE FORM SOURCE: API-Football only, by decision on 11 October 2026.
+#
+# ScoutingStats used to come first so that restoring the cookie restored the
+# old basis exactly. The cookie expired (the harvest answered 403), the
+# Premier League flipped to 2026-27 form the same day, and the owner chose to
+# move the desk to API-Football for good rather than keep a basis that needs a
+# browser session renewed by hand. A pl_players.json left on disk is now
+# ignored: a file appearing must not silently change what every published
+# number is computed from, in either direction.
 #
 # map_player() in harvest_apifootball.py already emits mk()'s shape — minutes,
 # yellows, reds, fouls committed and drawn per 90, position, crest, photograph
 # — and says so in its own docstring. Nothing is converted here and no extra
-# call is made: this is the file the refresh has been paying for all along,
-# read for the other nine fields it was already carrying.
-FORM_SOURCES = (SS_FORM, AF_FILL)
+# call is made.
+FORM_SOURCES = (AF_FILL,)
 
 # The season the shipped FORM describes, in API-Football's vocabulary (a season
 # named by its starting year, so 2025 is 2025-26). NOT the season being played:
@@ -377,28 +382,10 @@ def pl_form(shipped, reused):
         if not fresh:
             continue
         _, season = stamp(name)
-        if name != SS_FORM:
-            # Named on stdout every run. A desk changing the basis of every
-            # number it publishes is not something to discover from a diff.
-            print(f"Premier League form: {SS_FORM} did not harvest, so the "
-                  f"form is {name}"
-                  + (f", season {season}." if season else " (no season stamp)."))
-            _FORM_SEASON_USED = season
-        else:
-            # THE ONE BASIS THAT CANNOT BE MEASURED, said out loud rather than
-            # assumed. ScoutingStats names seasons by an internal id, so the
-            # only thing that can say which season these rows are is
-            # FORM_SEASON — and everything downstream, the fouls-won join
-            # included, is checked against that belief. Printing where the
-            # belief came from is the difference between a wrong season being
-            # visible in the log and being visible only in the odds.
-            print(f"Premier League form: {SS_FORM} harvested, and it stamps no "
-                  f"season of its own — this build takes it as {FORM_SEASON}"
-                  + (", from PL_FORM_SEASON."
-                     if os.environ.get("PL_FORM_SEASON", "").strip()
-                     else f", the declared fallback (PL_FORM_SEASON is not set, "
-                          f"so this is a local run or the workflow has stopped "
-                          f"passing it)."))
+        # Named on stdout every run, with the season read off the file.
+        print(f"Premier League form: {name} (API-Football)"
+              + (f", season {season}." if season else " (no season stamp)."))
+        _FORM_SEASON_USED = season
         return fresh
     kept = shipped.get("PL", [])
     if kept:
@@ -423,7 +410,12 @@ def build_players():
             continue
         rows.append(mk(p, "PL", low_min=form_floor))
     champ = source("champ_promoted.json", "EFL", shipped, reused)
-    champ_floor = low_sample_floor(champ)
+    # ALWAYS THE FULL FLOOR: this source is last season's Championship by
+    # definition (prior_eflc), a completed season. Measuring it off the rows
+    # gave a different floor when the build fell back to the 74 shipped
+    # promoted-club rows instead of the whole division, so a fallback quietly
+    # re-flagged players nobody had touched (test_fpl_squads round trip).
+    champ_floor = LOW_MIN
     for p in champ:
         rows.append(mk(p, "EFL", low_min=champ_floor))
     # The promoted clubs' remaining squad, from the free FPL feed, with no form
@@ -836,11 +828,15 @@ def low_sample_floor(rows, full=LOW_MIN):
     division's ever-present is a stable maximum over several hundred rows, not
     a number any one harvest can move.
 
-    Never below ninety: under a match's worth of football, the flag means what
-    it always meant.
+    Never below MIN_FLOOR, two full matches. It was one match, and the
+    Premier League's first live-form build on 11 October 2026 showed why that
+    is too few: a player booked once in his ninety-odd minutes came out at a
+    card per 90 with no flag, and check-data stopped two such rows topping
+    the division. One booking in one match is a coin landing heads, not a
+    rate; two matches is the least football the flag should vouch for.
     """
     busiest = max((num(r.get("min")) or 0 for r in (rows or [])), default=0)
-    return max(90, min(full, int(round(busiest * full / FULL_SEASON_MIN))))
+    return max(MIN_FLOOR, min(full, int(round(busiest * full / FULL_SEASON_MIN))))
 
 
 def mk(p, basis, resolve=None, low_min=LOW_MIN):
@@ -1348,7 +1344,35 @@ def club_basis(bases):
     return "PL" if pl and pl >= efl else "EFL"
 
 
-def build_clubs(players):
+def club_games(season=None):
+    """Matches each club has finished in the FORM season, or None.
+
+    None means the form is a completed season, so every club played 38. Once
+    the Premier League flips to the season being played (round six), the form
+    is a few weeks of football and dividing a club's yellows by 38 shrank every
+    club's cards-against rate about six-fold: Arsenal came out at 0.21 a game
+    in the first live-form build on 11 October 2026. Counted off the committed
+    fixture file, finished matches only."""
+    season = str(season or form_season())
+    path = DATA / "pl_fixtures.js"
+    if not path.exists():
+        return None
+    try:
+        fx = js_array(path.read_text(encoding="utf-8"), "PL_FIXTURES", label=path.name)
+    except SystemExit:
+        return None
+    dates = sorted(f["d"] for f in fx if f.get("d"))
+    if not dates or dates[0][:4] != season:
+        return None
+    games = Counter()
+    for f in fx:
+        if f.get("st") == "FT":
+            games[f["h"]] += 1
+            games[f["a"]] += 1
+    return games
+
+
+def build_clubs(players, games=None):
     by = {}
     for p in players:
         c = p["c"]
@@ -1362,17 +1386,23 @@ def build_clubs(players):
         if d["img"] is None and p["_img"]:
             d["img"] = p["_img"]
         d["bases"].append(p["b"])
-        d["yc"] += (p["yc"] or 0)
-        d["fouls"] += p["_fouls"]
+        # Premier League rows only. A promoted club on PL basis after the flip
+        # still carries Championship rows for players yet to play, and their
+        # yellows are a 46-game season's — not this club's games so far.
+        if p["b"] == "PL":
+            d["yc"] += (p["yc"] or 0)
+            d["fouls"] += p["_fouls"]
         d["players"] += 1
     for d in by.values():
         d["basis"] = club_basis(d["bases"])
     clubs = []
     for c, d in by.items():
-        if d["basis"] == "PL":
-            # PL minutes are league-only, so team per-game rates are reliable
-            ca = round(d["yc"] / 38, 2)
-            fm = round(d["fouls"] / 38, 1)
+        played = 38 if games is None else games.get(c, 0)
+        if d["basis"] == "PL" and played:
+            # PL minutes are league-only, so team per-game rates are reliable.
+            # Per game PLAYED in the form season, not per 38 (club_games).
+            ca = round(d["yc"] / played, 2)
+            fm = round(d["fouls"] / played, 1)
         else:
             # Championship minutes include cup games, so the team per-game
             # aggregate is not comparable; a NEW club has no minutes at all.
@@ -1476,7 +1506,7 @@ def main():
               "key, and writes promoted_squads.json. Those rows carry no form by "
               "design — they fill in as Premier League minutes accumulate."
         )
-    clubs = build_clubs(players)
+    clubs = build_clubs(players, club_games())
     refs = build_refs()
 
     lines = ["// Auto-generated by build_pl_data.py. ScoutingStats 2025-26 form.",

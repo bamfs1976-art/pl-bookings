@@ -617,16 +617,15 @@ AF_ROW = {"team": "Arsenal", "n": "Declan Rice", "min": 450, "yc": 1,
           "fc90": 0.8, "fd90": 1.1, "pos": "Midfielder"}
 
 
-def _scoutingstats_still_wins_when_it_harvests():
-    """Restoring the cookie restores the old basis exactly. A live desk does
-    not change what every published number is computed from as a side effect
-    of a file appearing."""
+def _a_scoutingstats_file_is_ignored():
+    """The desk moved to API-Football on 11 October 2026. A pl_players.json
+    left on disk (a manual harvest, a restored cookie) must not quietly move
+    every published number back to the old basis."""
     def go():
         reused = []
         rows = B.pl_form({}, reused)
-        assert rows and rows[0]["min"] == 900, rows
-        assert B._FORM_SEASON_USED is None, B._FORM_SEASON_USED
-        assert B.form_season() == B.FORM_SEASON
+        assert rows and rows[0]["min"] == 450, rows
+        assert B.form_season() == "2026", B.form_season()
         assert reused == [], reused
     _with_files({B.SS_FORM: [SS_ROW],
                  B.AF_FILL: _stamped("2026", [AF_ROW])}, go)
@@ -657,18 +656,9 @@ def _the_fill_agrees_with_the_form_it_was_given():
     _with_files({B.SS_FORM: None, B.AF_FILL: _stamped("2026", [AF_ROW])},
                 coherent)
 
-    def mixed():
-        B.pl_form({}, [])            # ScoutingStats present, so form is 2025-26
-        rows = [{"c": "ARS", "n": "Declan Rice", "fw": None, "ph": None}]
-        try:
-            B.fill_fouls_won(rows)
-        except SystemExit as e:
-            assert "season 2026" in str(e), str(e)
-            return
-        raise AssertionError(
-            "a 2026 harvest joined onto a frozen 2025-26 form must stop the build")
+    # A ScoutingStats file beside it changes nothing now: same coherent join.
     _with_files({B.SS_FORM: [SS_ROW], B.AF_FILL: _stamped("2026", [AF_ROW])},
-                mixed)
+                coherent)
 
 
 def _neither_harvest_keeps_the_shipped_rows():
@@ -685,8 +675,8 @@ def _neither_harvest_keeps_the_shipped_rows():
     _with_files({B.SS_FORM: None, B.AF_FILL: None}, go)
 
 
-t("ScoutingStats remains the form wherever it harvests",
-  _scoutingstats_still_wins_when_it_harvests)
+t("a ScoutingStats file on disk no longer changes the form",
+  _a_scoutingstats_file_is_ignored)
 t("API-Football becomes the form when ScoutingStats does not harvest",
   _api_football_is_the_form_when_scoutingstats_does_not_harvest)
 t("the season check follows the form it was actually given",
@@ -740,46 +730,10 @@ t("the workflow's season moves FORM_SEASON, and a local run still has one",
   _the_workflow_moves_it_and_a_local_run_still_builds)
 
 
-def _after_the_flip_scoutingstats_is_taken_as_this_season():
-    """THE DAY THE PREMIER LEAGUE REACHES ROUND SIX, with the cookie restored.
-    ScoutingStats stamps no season anyone can convert, so the build can only
-    believe what it is told — and what it is told is now the same season the
-    harvest fetched. Under the old literal it would have believed 2025 while
-    the workflow harvested 2026, and fill_fouls_won would have stopped the
-    build on a pairing that was in fact coherent."""
-    def go():
-        B.pl_form({}, [])
-        assert B._FORM_SEASON_USED is None          # unmeasurable, as before
-        assert B.form_season() == "2026", B.form_season()
-        rows = [{"c": "ARS", "n": "Declan Rice", "fw": None, "ph": None}]
-        assert B.fill_fouls_won(rows) == 1, rows    # 2026 fouls on 2026 form
-    _with_env("2026", lambda: _with_files(
-        {B.SS_FORM: [SS_ROW], B.AF_FILL: _stamped("2026", [AF_ROW])}, go))
-
-
-t("after the flip a ScoutingStats form is taken as the season harvested",
-  _after_the_flip_scoutingstats_is_taken_as_this_season)
-
-
-def _a_mis_join_is_still_refused_after_the_flip():
-    """And the guard does not become a rubber stamp. Told 2026 while the fill
-    carries 2025, it still refuses — the check is that the two agree, not that
-    the variable exists."""
-    def go():
-        B.pl_form({}, [])
-        rows = [{"c": "ARS", "n": "Declan Rice", "fw": None, "ph": None}]
-        try:
-            B.fill_fouls_won(rows)
-        except SystemExit as e:
-            assert "season 2025" in str(e) and "PL season 2026" in str(e), str(e)
-            return
-        raise AssertionError("a 2025 fill on a 2026 form must stop the build")
-    _with_env("2026", lambda: _with_files(
-        {B.SS_FORM: [SS_ROW], B.AF_FILL: _stamped("2025", [AF_ROW])}, go))
-
-
-t("a season mis-join is still refused once the constant is variable",
-  _a_mis_join_is_still_refused_after_the_flip)
+# The two ScoutingStats flip tests that stood here (an unstamped form taken as
+# PL_FORM_SEASON, and a 2025 fill refused against it) went with the
+# ScoutingStats basis on 11 October 2026: form and fill are now one stamped
+# file, so they cannot disagree about the season.
 
 
 print(f"\n{passed} tests passed")
