@@ -22,6 +22,7 @@
   "https://rfef.es/sites/default/files/designaciones_1a_division_masculina_-_temp_2026-27_-_jornada_7_sabado.pdf",
   "https://rfef.es/sites/default/files/designaciones_1a_division_masculina_-_temp_2026-27_-_jornada_7_viernes.pdf",
   "https://rfef.es/sites/default/files/designaciones_1a_division_masculina_-_temp_2026-27_-_jornada_8_domingo.pdf",
+  "https://rfef.es/sites/default/files/designaciones_1a_division_masculina_-_temp_2026-27_-_jornada_8_lunes.pdf",
   "https://rfef.es/sites/default/files/designaciones_1a_division_masculina_-_temp_2026-27_-_jornada_8_sabado.pdf",
   "https://rfef.es/sites/default/files/designaciones_1a_division_masculina_-_temp_2026-27_-_jornada_8_viernes.pdf",
   "https://www.aia-figc.it/news/serie-a-enilive-designazioni-4a-giornata-27632/",
@@ -1891,6 +1892,17 @@
    "refResolved": "Miguel Sesma Espinosa",
    "resolvedBy": "run",
    "source": "https://rfef.es/sites/default/files/designaciones_1a_division_masculina_-_temp_2026-27_-_jornada_8_domingo.pdf"
+  },
+  {
+   "league": "LL",
+   "date": "2026-10-12",
+   "h": "LEV",
+   "a": "SEV",
+   "ko": "21:00",
+   "ref": "Adrián Cordero",
+   "refResolved": "Adrian Cordero Vega",
+   "resolvedBy": "run",
+   "source": "https://rfef.es/sites/default/files/designaciones_1a_division_masculina_-_temp_2026-27_-_jornada_8_lunes.pdf"
   },
   {
    "league": "PL",
