@@ -65,7 +65,8 @@ assert.equal(inconsistent.length, 0,
 const unflagged = PL_PLAYERS.filter((p) => p.y != null && Number(p.y) >= 1 && !p.ls);
 assert.equal(unflagged.length, 0,
   `${unflagged.length} player(s) card more than once per 90 without a ` +
-  'low-sample flag — either the rate is wrong or the flag is');
+  'low-sample flag — either the rate is wrong or the flag is (' +
+  unflagged.slice(0, 5).map((p) => `${p.c} ${p.n}: ${p.yc} yc in ${p.min} min, y ${p.y}`).join('; ') + ')');
 
 /* And the same shape of fault in minutes: a rate computed from zero minutes is
    not a rate. */
