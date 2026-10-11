@@ -1353,7 +1353,14 @@ def main():
 
     league = leagues.get(codes[0])
     MUST_COVER["L1"] = leagues.EFLC_FROM_L1
-    wanted = MUST_COVER.get(league.code) or set()
+    # ONLY THE FILE THE RULE EXISTS FOR. MUST_COVER names the clubs a league's
+    # DEFAULT file is harvested to guarantee — champ_promoted.json is the
+    # promoted three's prior-tier form. A run writing elsewhere (--out) is a
+    # different file with a different job: the Championship desk's own form
+    # at its form season, or this season's cautions. Holding those to
+    # Coventry, Hull and Ipswich failed both on 11 October 2026, because the
+    # 2026-27 Championship rightly does not contain them.
+    wanted = (MUST_COVER.get(league.code) or set()) if not args.out else set()
     season = (args.season or env_or("API_FOOTBALL_SEASON", DEFAULT_SEASON)).strip()
     if not season.isdigit() or len(season) != 4:
         sys.exit(f"ERROR: season is {season!r}. API-Football names a season by "

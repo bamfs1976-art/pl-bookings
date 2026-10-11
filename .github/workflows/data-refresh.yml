@@ -197,16 +197,12 @@ jobs:
       # is the case that cannot pass. continue-on-error accordingly — the
       # Championship must not be blocked by a Premier League leg that was
       # always going to need running by hand.
-      - name: Harvest players from ScoutingStats (legacy, PL only)
-        if: ${{ env.SS_COOKIE != '' }}
-        continue-on-error: true
-        env:
-          SS_SEASON_PL: ${{ inputs.season_pl }}
-          SS_SEASON_CH: ${{ inputs.season_ch }}
-        run: python3 data/harvest.py
+      # The ScoutingStats harvest step that stood here was removed on
+      # 11 October 2026: its cookie had expired (403) and the Premier League
+      # desk moved to API-Football for good (build_pl_data.FORM_SOURCES).
+      # data/harvest.py is kept for a manual run, and nothing reads its output.
 
-      # THE squad route now, not a fallback. Runs AFTER the ScoutingStats step
-      # so it overwrites champ_promoted.json rather than the other way round.
+      # THE squad route now, not a fallback.
       # The ScoutingStats endpoint was
       # retired from this pipeline after producing six distinct ways of
       # returning a partial league that looked complete — page-one-as-league,
@@ -280,6 +276,22 @@ jobs:
           # while API-Football names a season by its starting year.
           # FORM, so it transitions — see "Decide which season's form" above.
           API_FOOTBALL_SEASON: ${{ inputs.season_af || steps.form.outputs.form_eflc || '2025' }}
+        # ITS OWN FILE. This used to write champ_promoted.json, which is ALSO
+        # the Premier League's promoted-club form — two jobs, one file. Once
+        # form_eflc flipped to 2026 the harvest could not contain Coventry,
+        # Hull and Ipswich, refused to write, and both desks quietly reused an
+        # old copy until the Premier League flipped too (11 October 2026).
+        run: python3 data/harvest_apifootball.py --league EFLC --out eflc_players.json
+
+      # The Premier League's promoted clubs, on LAST season's Championship.
+      # prior_eflc never flips: a promoted club's prior-tier form is the
+      # season before it went up, by definition. Writes champ_promoted.json
+      # and is still held to covering COV/IPS/HUL (MUST_COVER).
+      - name: Harvest last season's Championship (the Premier League's promoted clubs)
+        if: ${{ env.API_FOOTBALL_KEY != '' }}
+        continue-on-error: true
+        env:
+          API_FOOTBALL_SEASON: ${{ steps.form.outputs.prior_eflc || '2025' }}
         run: python3 data/harvest_apifootball.py --league EFLC
 
       # WHO IS AT EACH CLUB NOW, which the form harvest above cannot answer.
