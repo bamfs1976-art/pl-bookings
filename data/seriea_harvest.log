@@ -1,4 +1,4 @@
-Serie A harvest, run 193
+Serie A harvest, run 198
 == discover ==
 Serie A: API-Football league 135, season 2026
 
@@ -24,32 +24,34 @@ seriea_clubs.json written (20 clubs)
     UDI  Udinese
     VEN  Venezia
 
-API-Football: 1 call(s) this run; 421 of 7500 used today (6%), 7079 left
+API-Football: 1 call(s) this run; 2234 of 7500 used today (30%), 5266 left
 == squads ==
-Serie A: API-Football league 135, season 2025
-  not in this desk's club list (3): Cremonese, Hellas Verona, Pisa
-  fetching 17 squads
-    AC Milan                    39 players
-    AS Roma                     43 players
-    Atalanta                    37 players
-    Bologna                     44 players
-    Cagliari                    46 players
-    Como                        44 players
-    Fiorentina                  47 players
-    Genoa                       49 players
-    Inter                       44 players
-    Juventus                    41 players
-    Lazio                       38 players
-    Lecce                       39 players
-    Napoli                      39 players
-    Parma                       50 players
-    Sassuolo                    47 players
-    Torino                      44 players
-    Udinese                     40 players
+Serie A: API-Football league 135, season 2026
+  fetching 20 squads
+    AC Milan                    28 players
+    AS Roma                     27 players
+    Atalanta                    28 players
+    Bologna                     29 players
+    Cagliari                    33 players
+    Como                        32 players
+    Fiorentina                  31 players
+    Frosinone                   28 players
+    Genoa                       33 players
+    Inter                       27 players
+    Juventus                    36 players
+    Lazio                       31 players
+    Lecce                       30 players
+    Monza                       30 players
+    Napoli                      27 players
+    Parma                       30 players
+    Sassuolo                    34 players
+    Torino                      34 players
+    Udinese                     31 players
+    Venezia                     33 players
 
-seriea_players.json written (731 players from 17 clubs, API-Football, SA season 2025)
+seriea_players.json written (612 players from 20 clubs, API-Football, SA season 2026)
 
-API-Football: 46 call(s) this run; 467 of 7500 used today (6%), 7033 left
+API-Football: 41 call(s) this run; 2275 of 7500 used today (30%), 5225 left
 == rosters ==
 Serie A: API-Football league 135, season 2026
     AC Milan                    31 players
@@ -75,7 +77,7 @@ Serie A: API-Football league 135, season 2026
 
 sa_squads.json written (652 players from 20 clubs, API-Football current rosters)
 
-API-Football: 21 call(s) this run; 488 of 7500 used today (7%), 7012 left
+API-Football: 21 call(s) this run; 2072 of 7500 used today (28%), 5428 left
 == season-cards ==
 Serie A: API-Football league 135, season 2026
   fetching 20 squads
@@ -87,22 +89,22 @@ Serie A: API-Football league 135, season 2026
     Como                        32 players
     Fiorentina                  31 players
     Frosinone                   28 players
-    Genoa                       31 players
-    Inter                       26 players
+    Genoa                       33 players
+    Inter                       27 players
     Juventus                    36 players
     Lazio                       31 players
     Lecce                       30 players
     Monza                       30 players
-    Napoli                      26 players
+    Napoli                      27 players
     Parma                       30 players
     Sassuolo                    34 players
     Torino                      34 players
     Udinese                     31 players
     Venezia                     33 players
 
-seriea_season_cards.json written (608 players from 20 clubs, API-Football, SA season 2026)
+seriea_season_cards.json written (612 players from 20 clubs, API-Football, SA season 2026)
 
-API-Football: 41 call(s) this run; 292 of 7500 used today (4%), 7208 left
+API-Football: 41 call(s) this run; 2277 of 7500 used today (30%), 5223 left
 == serie-b ==
 Serie B: API-Football league 136, season 2025
   not in this desk's club list (17): Avellino, Bari, Carrarese, Catanzaro, Cesena, Empoli, Juve Stabia, Mantova, Modena, Padova, Palermo, Pescara, Reggiana, Sampdoria, Spezia, Sudtirol, Virtus Entella
@@ -113,97 +115,71 @@ Serie B: API-Football league 136, season 2025
 
 serieb_players.json written (116 players from 3 clubs, API-Football, SERB season 2025)
 
-API-Football: 8 call(s) this run; 300 of 7500 used today (4%), 7200 left
+API-Football: 8 call(s) this run; 2285 of 7500 used today (30%), 5215 left
 == ref-fixtures ==
 Serie A: API-Football league 135, season 2025
 
 seriea_ref_fixtures.js written (380 matches over 20 clubs, 380 with an official named)
 
-API-Football: 1 call(s) this run; 301 of 7500 used today (4%), 7199 left
+API-Football: 1 call(s) this run; 2286 of 7500 used today (30%), 5214 left
 == fixtures ==
 Serie A: API-Football league 135, season 2026
-  SA appointments overlay: 2 applied, 16 already harvested
+  SA appointments overlay: 0 applied, 17 already harvested
   CHANGED: SAS v JUV: harvested 'Juan Luca Sacchi', published 'SACCHI J. L.' — the harvested name stands
   CHANGED: MON v SAS: harvested 'Daniele Perenzoni', published 'PERENZONI' — the harvested name stands
   CHANGED: LAZ v MON: harvested 'Guiseppe Collu', published 'Giuseppe Collu' — the harvested name stands
   CHANGED: LEC v BGN: harvested 'Luca J. Pairetto', published 'Luca Pairetto' — the harvested name stands
+  CHANGED: ATA v VEN: harvested 'Paride Tremolada', published 'TREMOLADA' — the harvested name stands
   NOTE: no card record for SACCHI J. L. (SAS v JUV) — priced at the league rate
   NOTE: no card record for PERENZONI (MON v SAS) — priced at the league rate
   NOTE: no card record for TREMOLADA (ATA v VEN) — priced at the league rate
 
 seriea_fixtures.js written (380 fixtures over 38 matchdays, 60 with a referee appointed)
 
-API-Football: 1 call(s) this run; 302 of 7500 used today (4%), 7198 left
+API-Football: 1 call(s) this run; 2287 of 7500 used today (30%), 5213 left
 == build ==
 Division: 17 clubs were in it last season, 3 came up
   promoted: Frosinone, Monza, Venezia
-  SA    731 players from the Serie A feed, 2025-26 form
+  SA    521 players from the Serie A feed, 2026-27 form
   SB    116 players from the Serie B feed, 2025-26 form
   NEW   200 players from the squad fill feed
 Reusing the previous build for sources that did not harvest:
   - seriea_squads.json (200 players kept from the previous build)
-    32 duplicate row(s) collapsed after the moves, keeping the row with a rate on it
-Squads reconciled against the FPL feed: 96 moved, 0 joined, 363 left the division, 11 left alone as ambiguous (1047 rows in, 652 out).
-    A. Atta UDI -> FIO
+    15 duplicate row(s) collapsed after the moves, keeping the row with a rate on it
+Squads reconciled against the FPL feed: 17 moved, 48 joined, 101 left the division, 8 left alone as ambiguous (717 rows in, 649 out).
     A. Dembélé TOR -> LEC
-    A. Dossena CAG -> COM
-    A. Dovbyk ROM -> BGN
-    A. Fadera COM -> CAG
-    A. Fadera SAS -> CAG
     A. Guðmundsson FIO -> LAZ
     A. Njie TOR -> FIO
-    A. Pinamonti SAS -> LAZ
-    A. Raimondo BGN -> FRO
-    A. Romano ROM -> CAG
     A. Sherri FRO -> CAG
-    A. Zanoli NAP -> UDI
-    A. Zerbin NAP -> FRO
-    B. Domínguez BGN -> SAS
-    C. Ngonge TOR -> MON
-    D. Frattesi INT -> LAZ
-    D. Maldini ATA -> CAG
-    D. Maldini LAZ -> CAG
-    D. Rugani FIO -> JUV
-    Diego Carlos COM -> PAR
-    E. Akinsanmiro INT -> MON
-    E. Ebosse TOR -> UDI
-    E. Elmas NAP -> ATA
-    E. Holm JUV -> BGN
-    E. Kouadio FIO -> MON
-    E. Touré ATA -> PAR
-    F. Camarda LEC -> ACM
-    G. Fabbian BGN -> PAR
     G. Fabbian FIO -> PAR
-    G. Gaetano CAG -> ATA
-    G. Oristanio PAR -> TOR
     G. Oristanio VEN -> TOR
-    Giacomo Giacomone LAZ -> BGN
-    H. Nicolussi FIO -> PAR
     H. Nicolussi VEN -> PAR
-    I. Ilić TOR -> LEC
-    I. Provedel LAZ -> INT
     I. Sulemana ATA -> SAS
-    I. Sulemana BGN -> SAS
-    ... and 56 more
-    AMBIGUOUS, left at ACM: L. Colombo
+    J. Rowe BGN -> ATA
+    J. Ziółkowski ROM -> MON
+    M. Kean FIO -> COM
+    M. de Roon ATA -> ROM
+    N. Törnqvist COM -> MON
+    R. Ciervo SAS -> CAG
+    R. Mandragora FIO -> TOR
+    S. Goglichidze UDI -> MON
+    S. Ricci ACM -> COM
     AMBIGUOUS, left at ROM: L. Pellegrini
     AMBIGUOUS, left at BGN: M. Pessina
     AMBIGUOUS, left at CAG: J. Rodríguez
     AMBIGUOUS, left at COM: Jesús Rodríguez
     AMBIGUOUS, left at GEN: L. Colombo
-    AMBIGUOUS, left at LAZ: Pedro
-    AMBIGUOUS, left at LAZ: L. Pellegrini
     AMBIGUOUS, left at NAP: Amir Rrahmani
     AMBIGUOUS, left at MON: M. Pessina
     AMBIGUOUS, left at MON: L. Colombo
-Photographs: filled 0 from sa_squads.json; 652 of 652 rows carry a face.
+Photographs: filled 48 from sa_squads.json; 649 of 649 rows carry a face.
 
 club rates from mirror (380 matches)
-players: 652  by basis: NEW=200, SA=403, SB=49
-form: SA=2025-26, SB=2025-26
+players: 649  by basis: NEW=126, SA=472, SB=51
+form: SA=2026-27, SB=2025-26
 clubs with players: 20 of 20
 club rates from match records: 17 of 20
-season cautions (2026-27): 545 players
+season cautions (2026-27): 553 players
 referees: 32
 RESULT: WRITTEN seriea_data.js
 == referee-join ==
