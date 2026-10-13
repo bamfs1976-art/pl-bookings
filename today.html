@@ -555,6 +555,10 @@
      JavaScript. Loaded flat rather than through a frame because it declares
      one global nothing else uses and it is a few hundred bytes. -->
 <script src="data/ucl_ties.js" onerror="void 0"></script>
+<!-- The European referee record (data/ucl_refs.py): UCL_REFS and the
+     competition average UCL_REF_BASE. Flat for the same reason as the line
+     above, and optional: without it every tie prices at a neutral official. -->
+<script src="data/ucl_refs.js" onerror="void 0"></script>
 <script src="assets/profile.js"></script>
 <!-- Every desk's committed dataset, each in its OWN GLOBAL SCOPE.
 
@@ -1843,12 +1847,13 @@
    * own data files. This does it a third time, because the harvest ran
    * yesterday and a club can leave a dataset between two runs.
    *
-   * NO REFEREE FACTOR. A referee's cards per foul is competition-specific and
-   * these desks hold DOMESTIC records, so Michael Oliver's Premier League rate
-   * is not his Champions League rate. Every tie is priced at a neutral
-   * official and the card says so. Passing `null` here rather than a factor of
-   * one is deliberate: it is the same argument sideProbs takes when no
-   * referee is known, so this path and that one cannot drift.
+   * THE REFEREE ON HIS EUROPEAN RECORD. A referee's cards per foul is
+   * competition-specific, so Michael Oliver's Premier League rate is not his
+   * Champions League rate. data/ucl_refs.js carries each official's UCL
+   * record and the competition's own average; the factor is the desks' rule
+   * (PLDCore.refCardFactor, clamped 0.75-1.30) against THAT average. An
+   * official with no European record prices neutral and the card says so,
+   * passing `null` exactly as sideProbs takes when no referee is known.
    *
    * NO SUSPENSION LADDER and no derby boost: neither is evidenced for this
    * competition, and this project does not draw a rung it has not read.
@@ -1870,21 +1875,42 @@
    * failed to price and the page showed the thirteen that were left as though
    * that were the list.
    *
-   * THREE TERMS ARE DELIBERATELY OFF on both paths. No referee factor, because
-   * a referee's cards per foul is competition-specific and these desks hold
-   * domestic records. No derby boost, because a European tie is not a derby.
+   * TWO TERMS ARE DELIBERATELY OFF on both paths, and the referee is the
+   * European one (see uclRef). No derby boost, because a European tie is not a derby.
    * No game-state term, because that is a simulation of a domestic fixture and
    * there is none for this one; `null` is passed rather than letting simFor()
    * look up two clubs that never meet in a league.
    */
-  function europeSide(L, short, isHome) {
+  /* The appointed official's European record and his factor, or a neutral
+     official. Matched through the desks' one name rule (C.matchRefName), so
+     "G. Nyberg" and "Glenn Nyberg" are the same man and an ambiguous
+     abbreviation rates nobody rather than the wrong referee. */
+  var UREF = null;
+  function uclRef(name) {
+    if (typeof UCL_REFS === 'undefined' || !UCL_REFS || !UCL_REFS.length || !name) {
+      return { ref: null, factor: 1 };
+    }
+    if (!UREF) {
+      UREF = { by: {}, names: [] };
+      UCL_REFS.forEach(function (r) { UREF.by[r.n] = r; UREF.names.push(r.n); });
+      UREF.base = (typeof UCL_REF_BASE !== 'undefined' && UCL_REF_BASE && UCL_REF_BASE.avgYpg)
+        ? UCL_REF_BASE : C.leagueRates(UCL_REFS);
+    }
+    var hit = C.matchRefName(name, UREF.names);
+    var ref = hit ? UREF.by[hit] : null;
+    if (!ref || ref.ypg == null) return { ref: null, factor: 1 };
+    return { ref: ref, factor: C.refCardFactor(ref, UREF.base) };
+  }
+
+  function europeSide(L, short, isHome, factor) {
+    var f = (typeof factor === 'number' && factor !== 1) ? factor : null;
     if (L.pl) {
       /* candidates(h, a, ...) filters to the two clubs named and prices each
          as home or away by which one he is in. The opponent is on another
          desk, so naming it here yields nobody: the filter widens, it never
          invents. */
       var cands = L.pl.candidates(isHome ? short : null, isHome ? null : short,
-                                  null, false, null)
+                                  f ? { factor: f } : null, false, null)
         .filter(function (c) { return c.p.c === short; });
       if (!cands.length) return null;
       return {
@@ -1893,7 +1919,15 @@
         top: cands.slice(0, 4)
       };
     }
-    return sideProbs(L, short, null, null);
+    return sideProbs(L, short, f, null);
+  }
+
+  function uclTitle(r) {
+    var x = r && r.uref;
+    if (!x) return '';
+    return x.ypg + ' cards a game in ' + x.matches + ' Champions League match'
+      + (x.matches === 1 ? '' : 'es') + ', priced \u00d7' + (Math.round(r.factor * 100) / 100)
+      + ' against the competition average';
   }
 
   function tieRows() {
@@ -1906,7 +1940,9 @@
       /* A desk whose dataset did not load is a tie missing from this list,
          never half a tie priced against a stranger. */
       if (!Lh || !La) return;
-      var home = europeSide(Lh, t.h, true), away = europeSide(La, t.a, false);
+      var ur = uclRef(t.ref);
+      var home = europeSide(Lh, t.h, true, ur.factor),
+          away = europeSide(La, t.a, false, ur.factor);
       if (!home || !away) return;
       var m = C.teamCardMarkets(home.ps, away.ps, [3.5, 4.5, 5.5]);
       /* Neither side was priced off a team sheet: European lineups are not
@@ -1916,8 +1952,8 @@
       out.push({
         t: t, Lh: Lh, La: La,
         fx: { id: t.id, d: t.d, r: t.r, h: t.h, a: t.a, ref: t.ref },
-        ref: { ref: null, name: t.ref || null, appointed: !!t.ref },
-        factor: 1, home: home, away: away, m: m
+        ref: { ref: ur.ref, name: t.ref || null, appointed: !!t.ref },
+        uref: ur.ref, factor: ur.factor, home: home, away: away, m: m
       });
     });
     /* Dated ties first in kick-off order, then the ones UEFA has not
@@ -1990,13 +2026,12 @@
       + '<div class="fx-when">' + esc((r.fx.r ? r.fx.r + ' · ' : '') + when) + '</div>'
       + '</div>'
       + '<div class="fx-topr">'
-      /* THE SHARED RULE, not a local ternary: PLDCore.refLabel already has the
-         state this needs. An appointed European official is exactly its
-         "unrated" case, because there is no European card record in this app
-         and there is not meant to be. Its title says the match prices at the
-         league rate; the note under this list says which league rate, and the
-         share card says it again on its face. */
-      + '<div class="fx-refline"' + (rl.title ? ' title="' + esc(rl.title) + '"' : '')
+      /* THE SHARED RULE, not a local ternary: PLDCore.refLabel has the states.
+         A referee with a European record is "rated", and the title says what
+         the record is, because it is NOT the domestic rate a reader might
+         assume; one without is "unrated" and prices at a neutral official. */
+      + '<div class="fx-refline"' + (uclTitle(r) || rl.title
+          ? ' title="' + esc(uclTitle(r) || rl.title) + '"' : '')
       + '>' + esc(rl.text) + '</div>'
       + (S ? '<button class="fx-shareico" type="button"'
            + ' data-share-ucl="' + esc(String(r.fx.id)) + '"'
@@ -2052,8 +2087,9 @@
     $('#uclNote').textContent = 'Each side is priced off its own domestic league, '
       + 'on 2025-26 form, because eight European matches is not a sample and this '
       + 'season is four games old. The share card says so on its face. '
-      + 'No referee rate: a referee’s cards per foul is competition-specific and these '
-      + 'desks hold domestic records. No suspension strip: UEFA runs its own accumulation '
+      + 'Referees are rated on their Champions League record against the competition’s '
+      + 'own average, not their domestic one; an official with no European record is '
+      + 'priced neutral (*). No suspension strip: UEFA runs its own accumulation '
       + 'rules and none of them is evidenced here. '
       + (dated < TIES.length
           ? (TIES.length - dated) + ' tie' + (TIES.length - dated === 1 ? '' : 's')

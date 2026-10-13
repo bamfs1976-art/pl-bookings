@@ -127,14 +127,53 @@ for (const [key, n] of slots) {
    writing. A header that stops saying so is a file somebody has started
    trusting for the wrong thing. */
 const head = readFileSync(tiesPath, 'utf8').split('const ')[0];
-for (const phrase of ['DOMESTIC', 'No referee rate', 'suspension ladder']) {
+for (const phrase of ['DOMESTIC', 'EUROPEAN record', 'suspension ladder']) {
   assert.ok(head.includes(phrase),
     `data/ucl_ties.js no longer states "${phrase}" in its header: the file's ` +
     'own account of what it does and does not carry has drifted');
+}
+
+/* THE EUROPEAN REFEREE RECORD (data/ucl_refs.py). Optional until the first
+   --refs run lands it; once it exists it must be a European record of the
+   competition proper, and the officials the ties name must mostly resolve
+   into it through the same name rule the page uses. */
+let refNote = 'no European referee record yet';
+const refsPath = join(root, 'data', 'ucl_refs.js');
+if (existsSync(refsPath)) {
+  const rc = {};
+  vm.createContext(rc);
+  vm.runInContext(readFileSync(refsPath, 'utf8') +
+    '\n;this.R = UCL_REFS; this.B = UCL_REF_BASE;', rc);
+  const R = rc.R, B = rc.B;
+  assert.ok(Array.isArray(R) && R.length, 'data/ucl_refs.js carries no referees');
+  assert.ok(B && B.matches > 0 && B.avgYpg > 1 && B.avgYpg < 8,
+    `UCL_REF_BASE is not a plausible competition average: ${JSON.stringify(B)}`);
+  let sum = 0;
+  for (const r of R) {
+    assert.ok(r.n && r.matches >= 3, `UCL referee row under the 3-match floor: ${JSON.stringify(r)}`);
+    assert.ok(Number.isFinite(r.ypg) && r.ypg >= 0 && r.ypg < 12, `implausible ypg: ${JSON.stringify(r)}`);
+    assert.ok(!r.borrowed, `a UCL record is never borrowed: ${r.n}`);
+    sum += r.matches;
+  }
+  assert.ok(B.matches >= sum, 'UCL_REF_BASE counts fewer matches than its own rated referees');
+  const recPath = join(root, 'data', 'ucl_ref_fixtures.js');
+  if (existsSync(recPath)) {
+    const src = readFileSync(recPath, 'utf8');
+    const doc = JSON.parse(src.slice(src.indexOf('{'), src.lastIndexOf('}') + 1));
+    const qual = Object.values(doc).filter((x) => /qualif|preliminary|^play-offs/i.test(x.r || ''));
+    assert.equal(qual.length, 0, `qualifying rounds in the referee record: ${qual.length}`);
+  }
+  const C = (await import('file://' + join(root, 'assets', 'core.js'))).default
+    || globalThis.PLDCore;
+  const names = R.map((r) => r.n);
+  const named = [...new Set(TIES.map((t) => t.ref).filter(Boolean))];
+  const hit = C && C.matchRefName ? named.filter((n) => C.matchRefName(n, names)).length : named.length;
+  refNote = `${R.length} European referees rated over ${B.matches} matches ` +
+    `(${B.avgYpg} yellows a game); ${hit} of ${named.length} appointed officials resolve`;
 }
 
 const dated = TIES.filter((t) => t.d).length;
 const pairs = [...new Set(TIES.map((t) => `${t.hl}v${t.al}`))].sort();
 console.log(`check-ucl OK: ${TIES.length} priceable ties (${pairs.join(', ') || 'none'}), ` +
   `${checked} club references confirmed against the desks' own data files, ` +
-  `${dated} with a kick-off, ${TIES.length - dated} awaiting UEFA's calendar`);
+  `${dated} with a kick-off, ${TIES.length - dated} awaiting UEFA's calendar; ${refNote}`);

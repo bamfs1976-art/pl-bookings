@@ -601,7 +601,11 @@ jobs:
         continue-on-error: true
         env:
           API_FOOTBALL_SEASON: ${{ inputs.season_fixtures || '2026' }}
-        run: python3 data/harvest_ucl.py
+        # --refs keeps the EUROPEAN referee record (data/ucl_refs.py): new
+        # finished ties only, twenty a /fixtures?ids= call, so a matchday is
+        # one call. --backfill lists a past season only while it has no
+        # records, so after the first run it costs nothing.
+        run: python3 data/harvest_ucl.py --refs --backfill 2023,2024,2025
 
       # League One, for the three clubs promoted into the Championship. Only
       # the Championship desk needs it, so it never blocks the Premier League.
@@ -868,7 +872,7 @@ jobs:
                    data/laliga_status.txt data/laliga_fixtures.js data/laliga_ref_fixtures.js \
                    data/seriea_clubs.json data/seriea_refs.json data/seriea_data.js \
                    data/seriea_status.txt data/seriea_fixtures.js data/seriea_ref_fixtures.js \
-                   data/ucl_ties.js \
+                   data/ucl_ties.js data/ucl_refs.js data/ucl_ref_fixtures.js \
                    data/player_matches_status.txt data/fit_report.txt \
                    docs/scottish-derbies.md \
                    backtest_report.md; do

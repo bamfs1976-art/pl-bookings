@@ -4,7 +4,7 @@
      of this file is that every number in it came out of a real run. -->
 
 **Premier League** · 617 out-of-sample predictions over 6 rounds
-· source `data/match_history.json` · generated 2026-10-13T12:38:38.886Z
+· source `data/match_history.json` · generated 2026-10-13T18:31:04.399Z
 
 ## Headline
 
@@ -39,8 +39,8 @@ score suggests.
 
 | predicted band | n | mean predicted | actual | gap |
 |---|---:|---:|---:|---:|
-| 0–10% | 62 | 4.7% | 8.1% | +3.3pp |
-| 10–20% | 553 | 12.9% | 12.7% | -0.3pp |
+| 0–10% | 61 | 4.7% | 6.6% | +1.9pp |
+| 10–20% | 554 | 12.9% | 12.8% | -0.1pp |
 | 20–30% | 2 | 21.5% | 0.0% | -21.5pp |
 | 30–40% | 0 | — | — | — |
 | 40–50% | 0 | — | — | — |

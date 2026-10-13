@@ -267,6 +267,13 @@ assert.ok(/not yet appointed/i.test(noRef.refLine), noRef.refLine);
   assert.ok(!u.refLine.includes('4.86'),
     `the European card printed the referee's DOMESTIC rate: ${u.refLine}`);
   assert.ok(/no European card record/i.test(u.refLine), u.refLine);
+  /* 3b. A EUROPEAN RECORD, when the page attached one, is printed and named
+        as such; the domestic one on the same row still never is. */
+  const rated = S.uclMatchSpec({ ...tie, uref: { n: 'A Referee', ypg: 2.61, matches: 13 },
+    factor: 0.75 }, uclCtx);
+  assert.ok(rated.refLine.includes('2.61') && /UCL/.test(rated.refLine)
+    && rated.refLine.includes('0.75'), rated.refLine);
+  assert.ok(!rated.refLine.includes('4.86'), rated.refLine);
   /* 4. NO KICK-OFF INVENTED. A tie whose date the feed has not published says
         so rather than printing a placeholder somebody would diarise. */
   const undated = S.uclMatchSpec(

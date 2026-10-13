@@ -217,6 +217,7 @@ def budget(shapes, day):
         + divisions                              # --fixtures, one a division
         + 2                                      # cup/European dates, 2 seasons
         + 1                                      # the Champions League tie list
+        + (2 if day == "peak" else 1)            # UCL referee record: /fixtures?ids=, 20 a call, new ties only
     )
     rows.append(("data-refresh.yml", n, daily,
                  "season form: /players is per club and paged 20", None, None))
