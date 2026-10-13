@@ -40,6 +40,7 @@ def entry(fid, ref, rnd="League Stage - 2", st="FT", hy=2, ay=3, hr=0, ar=0,
 def _rounds():
     assert U.in_phase("League Stage - 3")
     assert U.in_phase("Group Stage - 1")
+    assert U.in_phase("Group A - 1") and U.in_phase("Group H - 6")
     assert U.in_phase("Knockout Round Play-offs")
     assert U.in_phase("Round of 16") and U.in_phase("Final")
     assert U.in_phase("Quarter-finals") and U.in_phase("Semi-finals")
@@ -125,7 +126,23 @@ def _write_and_reload_round_trip():
             raise AssertionError("a corrupt record must stop the run")
 
 
+def _a_knockout_round_does_not_complete_a_season():
+    recs = {str(i): {"s": 2023, "r": "Round of 16"} for i in range(29)}
+    recs.update({str(100 + i): {"s": 2024, "r": "League Stage - 1"} for i in range(150)})
+    assert U.seasons_recorded(recs) == {2024}, U.seasons_recorded(recs)
+
+
+def _skipped_rounds_are_reported():
+    es = [entry(1, "A B", rnd="Play-offs"), entry(2, "A B", rnd="3rd Qualifying Round"),
+          entry(3, "A B", rnd="3rd Qualifying Round"), entry(4, "A B"),
+          entry(5, "A B", rnd="Play-offs", st="NS")]
+    assert U.skipped_rounds(es) == {"Play-offs": 1, "3rd Qualifying Round": 2}, U.skipped_rounds(es)
+
+
 print("ucl_refs")
+t("a knockout round alone does not mark a past season done",
+  _a_knockout_round_does_not_complete_a_season)
+t("finished rounds the filter rejects are counted for the log", _skipped_rounds_are_reported)
 t("the league phase and knockouts count, qualifying does not", _rounds)
 t("a record reads cards and fouls from the statistics block", _record_from_statistics)
 t("the events fallback counts a second yellow and its red once",

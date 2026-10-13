@@ -51,9 +51,18 @@ FINISHED = {"FT", "AET", "PEN"}
 
 # League phase / group stage and the knockouts. "Play-offs" on its own is the
 # QUALIFYING play-off; the league-phase one is "Knockout Round Play-offs".
+#
+# ANY ROUND THAT STARTS "Group", not just "Group Stage". The first backfill
+# recorded 2023-24's 29 knockout matches and none of its 96 group games: the
+# feed labels that season's group rounds per group, and "group stage" alone
+# rejected every one. Qualifying rounds never start with "Group".
 IN_PHASE = re.compile(
-    r"^(league stage|group stage|knockout round play-offs|round of 16|"
+    r"^(league stage|group\b|knockout round play-offs|round of 16|"
     r"quarter-finals|semi-finals|final)\b", re.I)
+
+# A past season counts as recorded once it holds this many matches. A single
+# knockout round must not mark a season done (2023-24 sat at 29 of 125).
+SEASON_COMPLETE = 100
 
 
 def in_phase(round_name):
@@ -64,6 +73,20 @@ def referee_name(raw):
     """'Glenn Nyberg, Sweden' -> 'Glenn Nyberg'; blank -> None."""
     name = (raw or "").split(",")[0].strip()
     return name or None
+
+
+def skipped_rounds(entries):
+    """{round: count} of FINISHED fixtures the phase filter rejected. Printed
+    every run, so a round label the filter does not know is visible in the
+    log the day it appears instead of a season quietly missing its group games."""
+    out = {}
+    for e in entries or []:
+        fx = (e or {}).get("fixture") or {}
+        rnd = (((e or {}).get("league") or {}).get("round") or "").strip()
+        if ((fx.get("status") or {}).get("short")) in FINISHED and not in_phase(rnd):
+            key = re.sub(r"\s*-\s*\d+$", " - n", rnd) or "(none)"
+            out[key] = out.get(key, 0) + 1
+    return out
 
 
 def wanted(entries, seen):
@@ -275,6 +298,10 @@ def update(host, key, entries_by_season):
         got = wanted(entries, seen)
         print(f"  UCL referee record: season {season}, {len(got)} new finished "
               "match(es) to fetch")
+        skip = skipped_rounds(entries)
+        if skip:
+            print("    finished but not counted (qualifying etc.): "
+                  + ", ".join(f"{k} x{v}" for k, v in sorted(skip.items())))
         ids += got
     fresh = fetch(host, key, ids) if ids else {}
     records.update(fresh)
@@ -289,6 +316,11 @@ def update(host, key, entries_by_season):
     return len(fresh)
 
 
-def seasons_recorded(records=None):
+def seasons_recorded(records=None, complete=SEASON_COMPLETE):
+    """Seasons holding at least `complete` matches: the ones a backfill skips."""
     records = load_records() if records is None else records
-    return {int(r["s"]) for r in records.values() if r.get("s")}
+    n = {}
+    for r in records.values():
+        if r.get("s"):
+            n[int(r["s"])] = n.get(int(r["s"]), 0) + 1
+    return {s for s, c in n.items() if c >= complete}
