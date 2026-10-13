@@ -223,10 +223,12 @@ for (const short of PROMOTED) {
 
 // EVERY PL-basis club's cards-against is a per-GAME rate. Dividing a few
 // weeks' yellows by 38 (the completed-season divisor) produced 0.21 for
-// Arsenal on 11 October 2026; the real range is about 1 to 3.
-const oddCa = CLUBS.filter((c) => c.basis === 'PL' && !(c.ca >= 0.7 && c.ca <= 4));
+// Arsenal on 11 October 2026. The floor is 0.4, not 0.7: six games in, a
+// real club can be quiet (Coventry 0.67 on 13 October, with cards following
+// players who moved), while the /38 fault lands near 0.2.
+const oddCa = CLUBS.filter((c) => c.basis === 'PL' && !(c.ca >= 0.4 && c.ca <= 4));
 assert.equal(oddCa.length, 0,
-  `club cards-against outside 0.7-4 a game: ${oddCa.map((c) => `${c.short} ${c.ca}`).join(', ')}`);
+  `club cards-against outside 0.4-4 a game: ${oddCa.map((c) => `${c.short} ${c.ca}`).join(', ')}`);
 
 const histSrc = readFileSync(join(root, 'data', 'ref_history.js'), 'utf8');
 const hctx = {};
