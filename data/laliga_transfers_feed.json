@@ -1,6 +1,6 @@
 {
   "note": "PROPOSALS from API-Football /transfers, for a person to read. data/transfers.json is the hand-curated overlay that is actually applied; this is not.",
-  "since": "2026-06-14",
+  "since": "2026-06-15",
   "moves": [
     {
       "n": "D. Alaba",
@@ -525,6 +525,15 @@
       "type": "Transfer"
     },
     {
+      "n": "G. Spina",
+      "from": "Atletico Madrid",
+      "to": "Jong Ajax",
+      "fromCode": "ATM",
+      "toCode": null,
+      "date": "2026-08-31",
+      "type": "Transfer"
+    },
+    {
       "n": "G. Puerta",
       "from": "Racing Santander",
       "to": "Olympiakos Piraeus",
@@ -991,6 +1000,15 @@
       "toCode": null,
       "date": "2026-08-27",
       "type": "Free agent"
+    },
+    {
+      "n": "Javier Boñar",
+      "from": "Atletico Madrid",
+      "to": "Girona",
+      "fromCode": "ATM",
+      "toCode": null,
+      "date": "2026-08-27",
+      "type": "Transfer"
     },
     {
       "n": "Javi Muñoz",
@@ -1668,6 +1686,15 @@
       "type": "Transfer"
     },
     {
+      "n": "M. Ruggeri",
+      "from": "Atletico Madrid",
+      "to": "Aston Villa",
+      "fromCode": "ATM",
+      "toCode": null,
+      "date": "2026-08-17",
+      "type": "Transfer"
+    },
+    {
       "n": "M. Gibelalde",
       "from": "Athletic Club",
       "to": "Grasshoppers",
@@ -2127,6 +2154,15 @@
       "type": "Transfer"
     },
     {
+      "n": "N. Molina",
+      "from": "Atletico Madrid",
+      "to": "AS Roma",
+      "fromCode": "ATM",
+      "toCode": null,
+      "date": "2026-08-10",
+      "type": "Transfer"
+    },
+    {
       "n": "N. Mendy",
       "from": "Rayo Vallecano",
       "to": "Hull City",
@@ -2311,6 +2347,15 @@
       "from": "Villarreal",
       "to": "Burgos",
       "fromCode": "VIL",
+      "toCode": null,
+      "date": "2026-08-06",
+      "type": "Transfer"
+    },
+    {
+      "n": "T. Almada",
+      "from": "Atletico Madrid",
+      "to": "River Plate",
+      "fromCode": "ATM",
       "toCode": null,
       "date": "2026-08-06",
       "type": "Transfer"
@@ -2890,6 +2935,15 @@
       "toCode": null,
       "date": "2026-07-29",
       "type": "Free agent"
+    },
+    {
+      "n": "I. Kostis",
+      "from": "Atletico Madrid",
+      "to": "Castellón",
+      "fromCode": "ATM",
+      "toCode": null,
+      "date": "2026-07-29",
+      "type": "Transfer"
     },
     {
       "n": "D. Ferrer Saez",
@@ -3869,6 +3923,15 @@
       "to": "Widzew Łódź",
       "fromCode": "RAC",
       "toCode": null,
+      "date": "2026-07-09",
+      "type": "Transfer"
+    },
+    {
+      "n": "M. Hjulmand",
+      "from": "Sporting CP",
+      "to": "Atletico Madrid",
+      "fromCode": null,
+      "toCode": "ATM",
       "date": "2026-07-09",
       "type": "Transfer"
     },
