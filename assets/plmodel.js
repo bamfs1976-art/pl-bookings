@@ -110,6 +110,10 @@
     }
 
     function refFactor(ref) {
+      /* A factor computed elsewhere, against ANOTHER competition's average:
+         the /europe page rates a Champions League referee on his European
+         record against the UCL mean, not the Premier League's. */
+      if (ref && typeof ref.factor === 'number' && isFinite(ref.factor)) return ref.factor;
       if (!ref || ref.ypg == null) return 1;
       if (typeof C.refCardFactor === 'function') {
         return C.refCardFactor(ref, { avgYpg: avgYpg, avgCpf: avgCpf });

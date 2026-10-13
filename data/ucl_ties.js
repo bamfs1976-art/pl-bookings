@@ -2,7 +2,8 @@
 // UEFA Champions League 2026-27: 18 of 234 ties have BOTH clubs on a desk this app holds
 // (LL v PL, LL v SA, PL v LL, PL v SA, SA v LL, SA v PL); 6 with an official named, 0 with no kick-off known.
 // Player rates are each club's DOMESTIC season, which is what the card
-// says: eight European matches is not a sample. No referee rate and no
+// says: eight European matches is not a sample. Referees are rated on
+// their EUROPEAN record (data/ucl_refs.js), not a domestic one. No UEFA
 // suspension ladder - see docs/champions-league-feasibility.md.
 // A null date is a tie whose kick-off the feed has NOT published: the
 // draw is made, the calendar is not ingested, and every fixture in the

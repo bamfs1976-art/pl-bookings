@@ -1548,9 +1548,18 @@
       when || 'kick-off not published yet',
       (ctx.formSeason || '2025-26') + ' domestic form'
     ].filter(Boolean).join(' · ');
-    base.refLine = r.name
-      ? 'Referee: ' + r.name + ' · no European card record, priced neutral'
-      : 'Referee: not yet appointed';
+    /* His EUROPEAN record when there is one, said as such: a reader would
+       otherwise take the rate for his domestic one. */
+    /* priced.uref ONLY: the European record the /europe page attached. Never
+       r.ref, which on any other row is a DOMESTIC record (check-share pins
+       that a domestic 4.86 cannot reach this card). */
+    var u = priced.uref;
+    base.refLine = u && u.ypg != null && r.name
+      ? 'Referee: ' + r.name + ' · ' + u.ypg + ' cards a game in ' + u.matches
+        + ' UCL matches (\u00d7' + (Math.round((priced.factor || 1) * 100) / 100) + ')'
+      : r.name
+        ? 'Referee: ' + r.name + ' · no European card record, priced neutral'
+        : 'Referee: not yet appointed';
     base.filename = theme('UCL').slug + '-' + slug(f.h) + '-' + slug(f.a) + '.png';
     return base;
   }

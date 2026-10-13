@@ -117,6 +117,9 @@ jobs:
       - name: Squads follow the feed, rates follow the player
         run: python3 data/test_reconcile.py
 
+      - name: Champions League referee record (pure, no network)
+        run: python3 data/test_ucl_refs.py
+
       # The bookings ledger is built from an INCREMENTAL harvest, and both of
       # its failure modes come from that: a rebuild that replaced rather than
       # merged would throw away every earlier round, and a re-walk that

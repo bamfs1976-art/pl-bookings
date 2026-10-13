@@ -28,13 +28,12 @@ player.
 
 WHAT IT DELIBERATELY DOES NOT DO.
 
-  * NO REFEREE RATE. A referee's card rate is competition-specific, and the
-    desks hold domestic records. Michael Oliver's Premier League rate is not
-    his Champions League rate: different instructions, different tempo, and
-    cards-per-foul is precisely the quantity that moves. The official's NAME
-    is carried so a card can say who it is; his rate is not, and the page
-    prices these ties at a neutral referee until a European record exists.
-    See §4 of the feasibility note.
+  * NO DOMESTIC REFEREE RATE. A referee's card rate is competition-specific.
+    Michael Oliver's Premier League rate is not his Champions League rate:
+    different instructions, different tempo, and cards-per-foul is precisely
+    the quantity that moves. With --refs this script also keeps a EUROPEAN
+    record (data/ucl_refs.py -> data/ucl_refs.js) and the page prices the
+    referee off that; an official with no European record is priced neutral.
 
   * NO SUSPENSION LADDER. UEFA runs its own accumulation rules and this
     repository does not encode a rung it has not evidenced. The registry is
@@ -193,7 +192,8 @@ def emit(rows, season, seen, unheld_names, cleared):
         f"// ({', '.join(a + ' v ' + b for a, b in pairs) or 'none'}); "
         f"{withref} with an official named, {undated} with no kick-off known.",
         "// Player rates are each club's DOMESTIC season, which is what the card",
-        "// says: eight European matches is not a sample. No referee rate and no",
+        "// says: eight European matches is not a sample. Referees are rated on",
+        "// their EUROPEAN record (data/ucl_refs.js), not a domestic one. No UEFA",
         "// suspension ladder - see docs/champions-league-feasibility.md.",
         "// A null date is a tie whose kick-off the feed has NOT published: the",
         "// draw is made, the calendar is not ingested, and every fixture in the",
@@ -230,6 +230,11 @@ def emit(rows, season, seen, unheld_names, cleared):
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--season", help="season START year, e.g. 2026 for 2026-27")
+    ap.add_argument("--refs", action="store_true",
+                    help="also update the European referee record (data/ucl_refs.py)")
+    ap.add_argument("--backfill", default="",
+                    help="past seasons for the referee record, e.g. 2023,2024,2025; "
+                         "each is listed only while it has no records (implies --refs)")
     args = ap.parse_args()
 
     key = af.env_or("API_FOOTBALL_KEY", "")
@@ -270,6 +275,20 @@ def main():
     cleared = null_placeholders(rows, bad, names_by_id)
 
     emit(rows, season, len(entries), unheld_names, cleared)
+
+    if args.refs or args.backfill:
+        import ucl_refs
+        by_season = {int(season): entries}
+        have = ucl_refs.seasons_recorded()
+        for s in [x.strip() for x in args.backfill.split(",") if x.strip()]:
+            if int(s) in by_season or int(s) in have:
+                continue
+            past = af._get(host, key, "fixtures", {"league": UCL_LEAGUE_ID, "season": s})
+            perr = af.api_errors(past)
+            if perr:
+                sys.exit(f"ERROR: the feed refused season {s}: {perr}")
+            by_season[int(s)] = (past or {}).get("response") or []
+        ucl_refs.update(host, key, by_season)
     af.report_usage()
     return 0
 
