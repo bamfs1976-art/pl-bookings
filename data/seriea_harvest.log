@@ -1,4 +1,4 @@
-Serie A harvest, run 202
+Serie A harvest, run 203
 == discover ==
 Serie A: API-Football league 135, season 2026
 
@@ -24,7 +24,7 @@ seriea_clubs.json written (20 clubs)
     UDI  Udinese
     VEN  Venezia
 
-API-Football: 1 call(s) this run; 1453 of 7500 used today (19%), 6047 left
+API-Football: 1 call(s) this run; 1910 of 7500 used today (25%), 5590 left
 == squads ==
 Serie A: API-Football league 135, season 2026
   fetching 20 squads
@@ -51,7 +51,7 @@ Serie A: API-Football league 135, season 2026
 
 seriea_players.json written (624 players from 20 clubs, API-Football, SA season 2026)
 
-API-Football: 41 call(s) this run; 1494 of 7500 used today (20%), 6006 left
+API-Football: 41 call(s) this run; 1951 of 7500 used today (26%), 5549 left
 == rosters ==
 Serie A: API-Football league 135, season 2026
     AC Milan                    31 players
@@ -60,7 +60,7 @@ Serie A: API-Football league 135, season 2026
     Bologna                     61 players
     Cagliari                    72 players
     Como                        69 players
-    Fiorentina                  27 players
+    Fiorentina                  68 players
     Frosinone                   79 players
     Genoa                       82 players
     Inter                       68 players
@@ -71,13 +71,13 @@ Serie A: API-Football league 135, season 2026
     Napoli                      67 players
     Parma                       76 players
     Sassuolo                    80 players
-    Torino                      33 players
+    Torino                      77 players
     Udinese                     32 players
     Venezia                     35 players
 
-sa_squads.json written (1174 players from 20 clubs, API-Football current rosters)
+sa_squads.json written (1259 players from 20 clubs, API-Football current rosters)
 
-API-Football: 21 call(s) this run; 1515 of 7500 used today (20%), 5985 left
+API-Football: 21 call(s) this run; 1972 of 7500 used today (26%), 5528 left
 == season-cards ==
 Serie A: API-Football league 135, season 2026
   fetching 20 squads
@@ -104,7 +104,7 @@ Serie A: API-Football league 135, season 2026
 
 seriea_season_cards.json written (624 players from 20 clubs, API-Football, SA season 2026)
 
-API-Football: 41 call(s) this run; 1515 of 7500 used today (20%), 5985 left
+API-Football: 41 call(s) this run; 2013 of 7500 used today (27%), 5487 left
 == serie-b ==
 Serie B: API-Football league 136, season 2025
   not in this desk's club list (17): Avellino, Bari, Carrarese, Catanzaro, Cesena, Empoli, Juve Stabia, Mantova, Modena, Padova, Palermo, Pescara, Reggiana, Sampdoria, Spezia, Sudtirol, Virtus Entella
@@ -115,13 +115,13 @@ Serie B: API-Football league 136, season 2025
 
 serieb_players.json written (116 players from 3 clubs, API-Football, SERB season 2025)
 
-API-Football: 8 call(s) this run; 1523 of 7500 used today (20%), 5977 left
+API-Football: 8 call(s) this run; 2256 of 7500 used today (30%), 5244 left
 == ref-fixtures ==
 Serie A: API-Football league 135, season 2025
 
 seriea_ref_fixtures.js written (380 matches over 20 clubs, 380 with an official named)
 
-API-Football: 1 call(s) this run; 1524 of 7500 used today (20%), 5976 left
+API-Football: 1 call(s) this run; 2257 of 7500 used today (30%), 5243 left
 == fixtures ==
 Serie A: API-Football league 135, season 2026
   SA appointments overlay: 0 applied, 17 already harvested
@@ -136,7 +136,7 @@ Serie A: API-Football league 135, season 2026
 
 seriea_fixtures.js written (380 fixtures over 38 matchdays, 60 with a referee appointed)
 
-API-Football: 1 call(s) this run; 1525 of 7500 used today (20%), 5975 left
+API-Football: 1 call(s) this run; 2258 of 7500 used today (30%), 5242 left
 == build ==
 Division: 17 clubs were in it last season, 3 came up
   promoted: Frosinone, Monza, Venezia
