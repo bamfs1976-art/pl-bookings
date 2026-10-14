@@ -106,6 +106,16 @@ def _abbreviations_fold_into_one_career():
     assert [r["n"] for r in refs] == ["Glenn Nyberg"] and refs[0]["matches"] == 3, refs
 
 
+def _accents_fold_into_one_career():
+    recs = {str(i): U.record(entry(i, "I. Kružliak", hy=3, ay=3)) for i in range(3)}
+    recs.update({str(10 + i): U.record(entry(10 + i, "I. Kruzliak", hy=1, ay=1)) for i in range(3)})
+    refs, _ = U.build(recs)
+    assert [r["n"] for r in refs] == ["I. Kružliak"], refs
+    assert refs[0]["matches"] == 6 and refs[0]["ypg"] == 4.0, refs
+    # Different officials who only share a surname are NOT folded.
+    assert U.unaccent_variants({"1": {"ref": "A. Smith"}, "2": {"ref": "B. Smith"}}) == {}
+
+
 def _write_and_reload_round_trip():
     recs = {str(i): U.record(entry(i, "Glenn Nyberg")) for i in range(5)}
     refs, base = U.build(recs)
@@ -152,5 +162,6 @@ t("only finished, in-phase, refereed, unrecorded ties are fetched",
 t("rates use the desks' own arithmetic, and the baseline counts every match",
   _build_matches_the_desks_arithmetic)
 t("an abbreviated spelling folds into the full name", _abbreviations_fold_into_one_career)
+t("spellings that differ only by accents are one referee", _accents_fold_into_one_career)
 t("the record round-trips, and a corrupt one stops the run", _write_and_reload_round_trip)
 print(f"\n{passed} tests passed")

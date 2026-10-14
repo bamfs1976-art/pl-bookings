@@ -38,6 +38,7 @@ season is listed only by --backfill, and only while it has no records.
 
 import json
 import re
+import unicodedata
 from pathlib import Path
 
 DATA = Path(__file__).resolve().parent
@@ -183,16 +184,49 @@ def as_football_data(records):
     return rows
 
 
+def fold(name):
+    """Accents and case off: 'I. Kružliak' and 'I. Kruzliak' are one key."""
+    nk = unicodedata.normalize("NFKD", name or "")
+    return "".join(c for c in nk if not unicodedata.combining(c)).casefold().strip()
+
+
+def unaccent_variants(records):
+    """{spelling: kept spelling} for names that differ only by accents.
+
+    THE FEED SPELLS AN OFFICIAL BOTH WAYS. On 14 October 2026 the record held
+    "I. Kružliak" (6 matches, 4.83 yellows a game) and "I. Kruzliak" (6, 3.33)
+    as two referees; canonical_referees compares letters exactly and missed
+    it. The spelling KEPT is the accented one (the name as written), then the
+    more frequent, then the first alphabetically, so the choice is stable."""
+    count = {}
+    for r in records.values():
+        count[r["ref"]] = count.get(r["ref"], 0) + 1
+    groups = {}
+    for n in count:
+        groups.setdefault(fold(n), []).append(n)
+    out = {}
+    for names in groups.values():
+        keep = sorted(names, key=lambda n: (n == fold(n) or n.isascii(), -count[n], n))[0]
+        for n in names:
+            if n != keep:
+                out[n] = keep
+    return out
+
+
 def canonicalise(records):
-    """Fold spelling variants of one official ("G. Nyberg" / "Glenn Nyberg")
-    with the desks' own rule, so a career is not split across two rows."""
+    """Fold spelling variants of one official ("G. Nyberg" / "Glenn Nyberg",
+    "Kružliak" / "Kruzliak") with the desks' own rule, so a career is not split
+    across two rows. Accents first, then the abbreviation rule."""
     import build_refs
-    names = sorted({r["ref"] for r in records.values()})
+    accent = unaccent_variants(records)
+    names = sorted({accent.get(r["ref"], r["ref"]) for r in records.values()})
     mapping, merges, _ = build_refs.canonical_referees(names)
+    merges = [f"{a} -> {b}" for a, b in sorted(accent.items())] + list(merges)
     out = {}
     for fid, r in records.items():
         r = dict(r)
-        r["ref"] = mapping.get(r["ref"], r["ref"])
+        n = accent.get(r["ref"], r["ref"])
+        r["ref"] = mapping.get(n, n)
         out[fid] = r
     return out, merges
 
