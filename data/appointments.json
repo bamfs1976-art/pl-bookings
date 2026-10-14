@@ -28,6 +28,7 @@
   "https://www.aia-figc.it/news/serie-a-enilive-designazioni-4a-giornata-27632/",
   "https://www.aia-figc.it/news/serie-a-enilive-designazioni-5a-giornata-27667/",
   "https://www.aia-figc.it/news/serie-a-enilive-designazioni-6a-giornata-28755/",
+  "https://www.aia-figc.it/news/serie-a-enilive-designazioni-7a-giornata-28778/",
   "https://www.efl.com/news/2026/august/11/referee-appointments--14-20-august/",
   "https://www.premierleague.com/en/news/4729629/match-officials-for-matchweek-6",
   "https://www.premierleague.com/news/match-officials-matchweek-4",
@@ -1044,6 +1045,17 @@
    "ref": "Gavin Ward",
    "refResolved": "G Ward",
    "resolvedBy": "initial",
+   "source": "https://efl.com/news/2026/october/07/referee-appointments--9---15-october/"
+  },
+  {
+   "league": "EFLC",
+   "date": "2026-10-14",
+   "h": "LIN",
+   "a": "WHU",
+   "ko": null,
+   "ref": "Andrew Kitchen",
+   "refResolved": "Andrew Kitchen",
+   "resolvedBy": "exact",
    "source": "https://efl.com/news/2026/october/07/referee-appointments--9---15-october/"
   },
   {
@@ -2266,6 +2278,105 @@
    "refResolved": "Valerio Crezzini",
    "resolvedBy": "surname",
    "source": "https://www.aia-figc.it/news/serie-a-enilive-designazioni-6a-giornata-28755/"
+  },
+  {
+   "league": "SA",
+   "date": "2026-10-16",
+   "h": "FRO",
+   "a": "SAS",
+   "ko": "20:45",
+   "ref": "MARCHETTI",
+   "refResolved": "Matteo Marchetti",
+   "resolvedBy": "surname",
+   "source": "https://www.aia-figc.it/news/serie-a-enilive-designazioni-7a-giornata-28778/"
+  },
+  {
+   "league": "SA",
+   "date": "2026-10-17",
+   "h": "BGN",
+   "a": "INT",
+   "ko": "18:00",
+   "ref": "DOVERI",
+   "refResolved": "Daniele Doveri",
+   "resolvedBy": "surname",
+   "source": "https://www.aia-figc.it/news/serie-a-enilive-designazioni-7a-giornata-28778/"
+  },
+  {
+   "league": "SA",
+   "date": "2026-10-17",
+   "h": "ROM",
+   "a": "GEN",
+   "ko": "20:45",
+   "ref": "ABISSO",
+   "refResolved": "Rosario Abisso",
+   "resolvedBy": "surname",
+   "source": "https://www.aia-figc.it/news/serie-a-enilive-designazioni-7a-giornata-28778/"
+  },
+  {
+   "league": "SA",
+   "date": "2026-10-17",
+   "h": "VEN",
+   "a": "NAP",
+   "ko": "15:00",
+   "ref": "SACCHI J.L.",
+   "refResolved": null,
+   "resolvedBy": null,
+   "source": "https://www.aia-figc.it/news/serie-a-enilive-designazioni-7a-giornata-28778/"
+  },
+  {
+   "league": "SA",
+   "date": "2026-10-18",
+   "h": "ACM",
+   "a": "ATA",
+   "ko": "18:00",
+   "ref": "CHIFFI",
+   "refResolved": "Daniele Chiffi",
+   "resolvedBy": "surname",
+   "source": "https://www.aia-figc.it/news/serie-a-enilive-designazioni-7a-giornata-28778/"
+  },
+  {
+   "league": "SA",
+   "date": "2026-10-18",
+   "h": "FIO",
+   "a": "COM",
+   "ko": "15:00",
+   "ref": "DI BELLO",
+   "refResolved": "Marco Di Bello",
+   "resolvedBy": "surname",
+   "source": "https://www.aia-figc.it/news/serie-a-enilive-designazioni-7a-giornata-28778/"
+  },
+  {
+   "league": "SA",
+   "date": "2026-10-18",
+   "h": "UDI",
+   "a": "LEC",
+   "ko": "12:30",
+   "ref": "GUIDA",
+   "refResolved": "Marco Guida",
+   "resolvedBy": "surname",
+   "source": "https://www.aia-figc.it/news/serie-a-enilive-designazioni-7a-giornata-28778/"
+  },
+  {
+   "league": "SA",
+   "date": "2026-10-19",
+   "h": "MON",
+   "a": "CAG",
+   "ko": "18:30",
+   "ref": "CALZAVARA",
+   "refResolved": "Andrea Calzavara",
+   "resolvedBy": "surname",
+   "source": "https://www.aia-figc.it/news/serie-a-enilive-designazioni-7a-giornata-28778/"
+  },
+  {
+   "league": "SA",
+   "date": "2026-10-19",
+   "h": "PAR",
+   "a": "TOR",
+   "ko": "20:45",
+   "ref": "AYROLDI",
+   "refResolved": "Giovanni Ayroldi",
+   "resolvedBy": "surname",
+   "source": "https://www.aia-figc.it/news/serie-a-enilive-designazioni-7a-giornata-28778/"
   }
  ]
 }
