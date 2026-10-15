@@ -14,7 +14,7 @@ const UCL_TIES = [
   {id:1635698,d:"2026-09-09T19:00:00+00:00",r:"League Stage - 1",h:"NAP",hl:"SA",a:"ARS",al:"PL",ref:"Glenn Nyberg",st:"FT"},
   {id:1635623,d:"2026-10-13T19:00:00+00:00",r:"League Stage - 2",h:"ATM",hl:"LL",a:"MUN",al:"PL",ref:"Glenn Nyberg",st:"FT"},
   {id:1635748,d:"2026-10-13T19:00:00+00:00",r:"League Stage - 2",h:"VIL",hl:"LL",a:"NAP",al:"SA",ref:"Daniel Siebert",st:"FT"},
-  {id:1635614,d:"2026-10-14T19:00:00+00:00",r:"League Stage - 2",h:"ROM",hl:"SA",a:"RMA",al:"LL",ref:"Francois Letexier",st:"NS"},
+  {id:1635614,d:"2026-10-14T19:00:00+00:00",r:"League Stage - 2",h:"ROM",hl:"SA",a:"RMA",al:"LL",ref:"Francois Letexier",st:"FT"},
   {id:1635688,d:"2026-10-20T19:00:00+00:00",r:"League Stage - 3",h:"LIV",hl:"PL",a:"VIL",al:"LL",ref:null,st:"NS"},
   {id:1635647,d:"2026-10-21T16:45:00+00:00",r:"League Stage - 3",h:"COM",hl:"SA",a:"MUN",al:"PL",ref:null,st:"NS"},
   {id:1635627,d:"2026-11-03T20:00:00+00:00",r:"League Stage - 4",h:"BAR",hl:"LL",a:"AVL",al:"PL",ref:null,st:"NS"},
