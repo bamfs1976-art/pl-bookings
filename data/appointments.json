@@ -26,6 +26,7 @@
   "https://rfef.es/sites/default/files/designaciones_1a_division_masculina_-_temp_2026-27_-_jornada_8_lunes.pdf",
   "https://rfef.es/sites/default/files/designaciones_1a_division_masculina_-_temp_2026-27_-_jornada_8_sabado.pdf",
   "https://rfef.es/sites/default/files/designaciones_1a_division_masculina_-_temp_2026-27_-_jornada_8_viernes.pdf",
+  "https://rfef.es/sites/default/files/designaciones_1a_division_masculina_-_temp_2026-27_-_jornada_9_viernes.pdf",
   "https://www.aia-figc.it/news/serie-a-enilive-designazioni-4a-giornata-27632/",
   "https://www.aia-figc.it/news/serie-a-enilive-designazioni-5a-giornata-27667/",
   "https://www.aia-figc.it/news/serie-a-enilive-designazioni-6a-giornata-28755/",
@@ -2048,6 +2049,17 @@
    "refResolved": "Adrian Cordero Vega",
    "resolvedBy": "run",
    "source": "https://rfef.es/sites/default/files/designaciones_1a_division_masculina_-_temp_2026-27_-_jornada_8_lunes.pdf"
+  },
+  {
+   "league": "LL",
+   "date": "2026-10-16",
+   "h": "DEP",
+   "a": "LEV",
+   "ko": "21:00",
+   "ref": "Manuel Jesús Orellana",
+   "refResolved": null,
+   "resolvedBy": null,
+   "source": "https://rfef.es/sites/default/files/designaciones_1a_division_masculina_-_temp_2026-27_-_jornada_9_viernes.pdf"
   },
   {
    "league": "PL",
