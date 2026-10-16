@@ -120,7 +120,7 @@ const EFLC_FIXTURES = [
   {id:1563201,d:"2026-10-14T18:45:00+00:00",r:10,h:"POR",a:"SHU",ref:"Oliver Langford",st:"FT"},
   {id:1563202,d:"2026-10-14T18:45:00+00:00",r:10,h:"QPR",a:"DER",ref:"Matthew Corlett",st:"FT"},
   {id:1563199,d:"2026-10-14T19:00:00+00:00",r:10,h:"LIN",a:"WHU",ref:"Andrew Kitchen",st:"FT"},
-  {id:1563205,d:"2026-10-16T19:00:00+00:00",r:11,h:"BUR",a:"WOL",ref:"Lewis Smith",st:"NS"},
+  {id:1563205,d:"2026-10-16T19:00:00+00:00",r:11,h:"BUR",a:"WOL",ref:"Lewis Smith",st:"HT"},
   {id:1563207,d:"2026-10-17T11:30:00+00:00",r:11,h:"MID",a:"CAR",ref:"Tom Nield",st:"NS"},
   {id:1563208,d:"2026-10-17T11:30:00+00:00",r:11,h:"MIL",a:"LIN",ref:"Ruebyn Ricardo",st:"NS"},
   {id:1563212,d:"2026-10-17T11:30:00+00:00",r:11,h:"WAT",a:"CHA",ref:"Thomas Bramall",st:"NS"},
