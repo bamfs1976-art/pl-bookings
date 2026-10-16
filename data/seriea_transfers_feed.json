@@ -1,6 +1,6 @@
 {
   "note": "PROPOSALS from API-Football /transfers, for a person to read. data/transfers.json is the hand-curated overlay that is actually applied; this is not.",
-  "since": "2026-06-17",
+  "since": "2026-06-18",
   "moves": [
     {
       "n": "M. Darmian",
@@ -1290,6 +1290,15 @@
       "type": "Transfer"
     },
     {
+      "n": "I. Kamate",
+      "from": "Inter",
+      "to": "Atlético Madrid II",
+      "fromCode": "INT",
+      "toCode": null,
+      "date": "2026-08-30",
+      "type": "-"
+    },
+    {
       "n": "F. Missori",
       "from": "Sassuolo",
       "to": "Avellino",
@@ -2514,6 +2523,15 @@
       "type": "Free agent"
     },
     {
+      "n": "C. Jones",
+      "from": "Liverpool",
+      "to": "Inter",
+      "fromCode": null,
+      "toCode": "INT",
+      "date": "2026-08-19",
+      "type": "Transfer"
+    },
+    {
       "n": "Arthur",
       "from": "Juventus",
       "to": "Arthur Melo",
@@ -3081,6 +3099,15 @@
       "type": "Loan"
     },
     {
+      "n": "D. Spence",
+      "from": "Tottenham",
+      "to": "Inter",
+      "fromCode": null,
+      "toCode": "INT",
+      "date": "2026-08-13",
+      "type": "Transfer"
+    },
+    {
       "n": "D. Romero",
       "from": "Tigre",
       "to": "Parma",
@@ -3178,6 +3205,15 @@
       "toCode": null,
       "date": "2026-08-12",
       "type": "Loan"
+    },
+    {
+      "n": "M. Motta",
+      "from": "Inter",
+      "to": "Pescara",
+      "fromCode": "INT",
+      "toCode": null,
+      "date": "2026-08-12",
+      "type": "Transfer"
     },
     {
       "n": "K. Meola",
@@ -3563,6 +3599,15 @@
       "to": "Cagliari",
       "fromCode": null,
       "toCode": "CAG",
+      "date": "2026-08-08",
+      "type": "Transfer"
+    },
+    {
+      "n": "D. Quieto",
+      "from": "Inter",
+      "to": "Cosenza",
+      "fromCode": "INT",
+      "toCode": null,
       "date": "2026-08-08",
       "type": "Transfer"
     },
@@ -5977,6 +6022,15 @@
       "toCode": null,
       "date": "2026-07-12",
       "type": "Loan"
+    },
+    {
+      "n": "A. Nenna",
+      "from": "Inter",
+      "to": "Arzignano Valchiampo",
+      "fromCode": "INT",
+      "toCode": null,
+      "date": "2026-07-12",
+      "type": "Transfer"
     },
     {
       "n": "A. El Azzouzi",
@@ -11143,6 +11197,15 @@
       "toCode": "CAG",
       "date": "2026-06-29",
       "type": "Return from loan"
+    },
+    {
+      "n": "A. Stanković",
+      "from": "Club Brugge KV",
+      "to": "Inter",
+      "fromCode": null,
+      "toCode": "INT",
+      "date": "2026-06-29",
+      "type": "Transfer"
     },
     {
       "n": "A. Sorrentino",
