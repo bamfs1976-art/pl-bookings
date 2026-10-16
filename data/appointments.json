@@ -26,6 +26,7 @@
   "https://rfef.es/sites/default/files/designaciones_1a_division_masculina_-_temp_2026-27_-_jornada_8_lunes.pdf",
   "https://rfef.es/sites/default/files/designaciones_1a_division_masculina_-_temp_2026-27_-_jornada_8_sabado.pdf",
   "https://rfef.es/sites/default/files/designaciones_1a_division_masculina_-_temp_2026-27_-_jornada_8_viernes.pdf",
+  "https://rfef.es/sites/default/files/designaciones_1a_division_masculina_-_temp_2026-27_-_jornada_9_sabado.pdf",
   "https://rfef.es/sites/default/files/designaciones_1a_division_masculina_-_temp_2026-27_-_jornada_9_viernes.pdf",
   "https://www.aia-figc.it/news/serie-a-enilive-designazioni-4a-giornata-27632/",
   "https://www.aia-figc.it/news/serie-a-enilive-designazioni-5a-giornata-27667/",
@@ -2060,6 +2061,50 @@
    "refResolved": null,
    "resolvedBy": null,
    "source": "https://rfef.es/sites/default/files/designaciones_1a_division_masculina_-_temp_2026-27_-_jornada_9_viernes.pdf"
+  },
+  {
+   "league": "LL",
+   "date": "2026-10-17",
+   "h": "BET",
+   "a": "BAR",
+   "ko": "18:30",
+   "ref": "Ricardo De Burgos",
+   "refResolved": "Ricardo De Burgos Bengoetxea",
+   "resolvedBy": "run",
+   "source": "https://rfef.es/sites/default/files/designaciones_1a_division_masculina_-_temp_2026-27_-_jornada_9_sabado.pdf"
+  },
+  {
+   "league": "LL",
+   "date": "2026-10-17",
+   "h": "ESP",
+   "a": "ATM",
+   "ko": "14:00",
+   "ref": "Alejandro José Hernández",
+   "refResolved": "Alejandro Hernandez",
+   "resolvedBy": "run",
+   "source": "https://rfef.es/sites/default/files/designaciones_1a_division_masculina_-_temp_2026-27_-_jornada_9_sabado.pdf"
+  },
+  {
+   "league": "LL",
+   "date": "2026-10-17",
+   "h": "VAL",
+   "a": "ATH",
+   "ko": "21:00",
+   "ref": "Adrián Cordero",
+   "refResolved": "Adrian Cordero Vega",
+   "resolvedBy": "run",
+   "source": "https://rfef.es/sites/default/files/designaciones_1a_division_masculina_-_temp_2026-27_-_jornada_9_sabado.pdf"
+  },
+  {
+   "league": "LL",
+   "date": "2026-10-17",
+   "h": "VIL",
+   "a": "ELC",
+   "ko": "16:15",
+   "ref": "Víctor García",
+   "refResolved": "Victor Garcia Verdura",
+   "resolvedBy": "run",
+   "source": "https://rfef.es/sites/default/files/designaciones_1a_division_masculina_-_temp_2026-27_-_jornada_9_sabado.pdf"
   },
   {
    "league": "PL",
