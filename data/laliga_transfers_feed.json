@@ -1,6 +1,6 @@
 {
   "note": "PROPOSALS from API-Football /transfers, for a person to read. data/transfers.json is the hand-curated overlay that is actually applied; this is not.",
-  "since": "2026-06-21",
+  "since": "2026-06-22",
   "moves": [
     {
       "n": "D. Alaba",
@@ -2620,6 +2620,15 @@
       "toCode": "CEL",
       "date": "2026-08-04",
       "type": "Loan"
+    },
+    {
+      "n": "Vicente",
+      "from": "Celta Vigo",
+      "to": "Trofense",
+      "fromCode": "CEL",
+      "toCode": null,
+      "date": "2026-08-04",
+      "type": "Free agent"
     },
     {
       "n": "Unai Elgezabal",
