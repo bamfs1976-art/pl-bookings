@@ -5,7 +5,7 @@
 // through PLDCore.matchSquadName. A fixture absent from here prices off
 // squad minute-weights exactly as it always has — that is the normal
 // state until about an hour before kick-off, not a failure.
-// Fetched 2026-10-19T16:29Z.
+// Fetched 2026-10-20T18:40Z.
 //
 // THE GLOBAL IS NOT CALLED `LINEUPS`, and that is deliberate. index.html
 // already declares a top-level `const LINEUPS` for assets/lineup.js (the
@@ -14,7 +14,7 @@
 // a parse error, not a shadow: the whole inline script fails and the desk
 // renders blank. Read `window.LINEUP_SHEETS`.
 var __LINEUP_SHEETS = {
-  "1550153":{"CAG":{start:["E. Caprile", "Zé Pedro", "Y. Mina", "J. Rodríguez", "A. Obert", "M. Adopo", "H. Winks", "A. Romano", "D. Maldini", "P. Mendy", "M&apos;Bala Nzola"],sub:["Y. Sugawara", "Ivan Stoyanov Sulev", "A. Deiola", "A. Sherri", "B. Radunović", "Y. Massolin", "J. Liteta", "R. Kofler", "Kevin Carlos", "R. Gagliardini", "J. Fazzini", "A. Fadera", "R. Ciervo", "G. Aurelio"]},"MON":{start:["N. Törnqvist", "E. Kouadio", "S. Goglichidze", "A. Carboni", "S. Birindelli", "M. Ondoa", "E. Akinsanmiro", "Ricardo Mangas", "Dany Mota", "Jay Robinson", "Gustavo Varela"],sub:["V. Antov", "A. Bakoune", "P. Ciurria", "L. Colombo", "A. Colpani", "P. Cutrone", "M. Folorunsho", "O. Forson", "M. Mout", "C. Ngonge", "A. Strajnar", "D. Thiam"]}},
+  "1563150":{"POR":{start:["N. Schmid", "T. Devlin", "R. Poole", "M. Dia", "J. Meghoma", "R. Shein", "E. Adams", "A. Kamara", "A. Segecic", "I. Mohamed", "T. Shade"],sub:["T. Waddingham", "O. Bailey", "D. Bielica", "R. Kavuma McQueen", "E. Kenny", "B. Killip", "M. Milovanović", "M. Pack", "Z. Swanson"]},"WOL":{start:["José Sá", "J. Tchatchoua", "N. Djiga", "L. Krejčí", "Hugo Bueno", "André", "M. Munetsi", "R. Saïd", "Fer López", "M. Mane", "S. Neave"],sub:["J. Ruddy", "Y. Mosquera", "G. Konan", "J. James", "T. Doyle", "T. Chirewa", "J. Bellegarde", "Toti Gomes", "João Virgínia"]}},
 };
 if (typeof module !== "undefined" && module.exports) module.exports = __LINEUP_SHEETS;
 if (typeof window !== "undefined") window.LINEUP_SHEETS = __LINEUP_SHEETS;
