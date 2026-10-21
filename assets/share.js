@@ -139,16 +139,29 @@
     return fit(x, t, max);
   }
 
-  /* The brand mark: a fanned red and yellow card. Drawn rather than loaded,
-     so a card never waits on an image that may not arrive. */
+  /* The brand mark: the Risk Card logo (Oct 2026). A Card Yellow card tilted
+     15 degrees, cut by three rising bars. The bars are HOLES, filled with the
+     even-odd rule, so the band's own gradient shows through them exactly as
+     the reversed logo shows the page behind it. Drawn rather than loaded, so a
+     card never waits on an image that may not arrive. Geometry is the logo
+     kit's, in its own units: card 116 x 168, radius 14, bars 20 wide. */
   function drawMark(x, cx, cy, h) {
-    var w = h * 0.66, rr = h * 0.15;
-    x.save(); x.translate(cx, cy);
-    x.save(); x.rotate(16 * Math.PI / 180); x.fillStyle = '#e11d48';
-    roundRect(x, -w * 0.15, -h / 2, w, h, rr); x.fill(); x.restore();
-    x.save(); x.rotate(-10 * Math.PI / 180); x.fillStyle = '#f7c600';
-    x.strokeStyle = 'rgba(35,16,58,.55)'; x.lineWidth = 2.5;
-    roundRect(x, -w * 0.85, -h / 2, w, h, rr); x.fill(); x.stroke(); x.restore();
+    var s = h / 192.3;  /* 192.3 = the tilted card's height in kit units */
+    var CW = 116 * s, CH = 168 * s;
+    var bars = [[18, 112, 20, 36], [48, 86, 20, 62], [78, 56, 20, 92]];
+    function sub(a, b, w, hh, r) {
+      x.moveTo(a + r, b);
+      x.arcTo(a + w, b, a + w, b + hh, r); x.arcTo(a + w, b + hh, a, b + hh, r);
+      x.arcTo(a, b + hh, a, b, r); x.arcTo(a, b, a + w, b, r); x.closePath();
+    }
+    /* Scaled by hand rather than with ctx.scale(), so the card draws the same
+       through every canvas the share adapters and their guard use. */
+    x.save(); x.translate(cx, cy); x.rotate(15 * Math.PI / 180);
+    x.beginPath(); sub(-CW / 2, -CH / 2, CW, CH, 14 * s);
+    for (var i = 0; i < bars.length; i++) {
+      sub(-CW / 2 + bars[i][0] * s, -CH / 2 + bars[i][1] * s, bars[i][2] * s, bars[i][3] * s, 4 * s);
+    }
+    x.fillStyle = '#FFC72C'; x.fill('evenodd');
     x.restore();
   }
 

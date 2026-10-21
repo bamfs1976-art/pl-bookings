@@ -54,9 +54,14 @@
     var side = el('aside', 'as-sidebar');
     side.id = 'asSidebar';
     side.setAttribute('aria-label', 'App areas');
+    /* The Risk Card mark and the outlined wordmark, from the shared sprite.
+       The league is the tag underneath; cfg.code and cfg.accent drove the old
+       lettered badge and are no longer drawn here. */
     side.appendChild(el('div', 'as-brand',
-      '<span class="as-brand-dot" style="background:' + (cfg.accent || '#0e7490') + '">'
-      + (cfg.code || '') + '</span><div><div class="as-brand-name">Bookings Desk</div>'
+      '<svg class="bd-mark bd-mark-lg" aria-hidden="true" focusable="false">'
+      + '<use href="/icons/brand.svg#bd-mark"/></svg>'
+      + '<div class="brand-lockup"><svg class="bd-word" role="img" aria-label="Bookings Desk"'
+      + ' focusable="false"><use href="/icons/brand.svg#bd-word"/></svg>'
       + '<div class="as-brand-tag">' + (cfg.name || '') + '</div></div>'));
     var nav = el('nav', 'as-nav');
     side.appendChild(nav);
