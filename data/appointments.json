@@ -34,6 +34,7 @@
   "https://www.aia-figc.it/news/serie-a-enilive-designazioni-5a-giornata-27667/",
   "https://www.aia-figc.it/news/serie-a-enilive-designazioni-6a-giornata-28755/",
   "https://www.aia-figc.it/news/serie-a-enilive-designazioni-7a-giornata-28778/",
+  "https://www.aia-figc.it/news/serie-a-enilive-designazioni-8a-giornata-28785/",
   "https://www.efl.com/news/2026/august/11/referee-appointments--14-20-august/",
   "https://www.efl.com/news/2026/october/20/referee-appointments--16-20-october/",
   "https://www.premierleague.com/en/news/4729629/match-officials-for-matchweek-6",
@@ -2757,6 +2758,105 @@
    "refResolved": "Giovanni Ayroldi",
    "resolvedBy": "surname",
    "source": "https://www.aia-figc.it/news/serie-a-enilive-designazioni-7a-giornata-28778/"
+  },
+  {
+   "league": "SA",
+   "date": "2026-10-23",
+   "h": "TOR",
+   "a": "MON",
+   "ko": "20:45",
+   "ref": "ZANOTTI",
+   "refResolved": null,
+   "resolvedBy": null,
+   "source": "https://www.aia-figc.it/news/serie-a-enilive-designazioni-8a-giornata-28785/"
+  },
+  {
+   "league": "SA",
+   "date": "2026-10-24",
+   "h": "CAG",
+   "a": "BGN",
+   "ko": "15:00",
+   "ref": "BONACINA",
+   "refResolved": "Kevin Bonacina",
+   "resolvedBy": "surname",
+   "source": "https://www.aia-figc.it/news/serie-a-enilive-designazioni-8a-giornata-28785/"
+  },
+  {
+   "league": "SA",
+   "date": "2026-10-24",
+   "h": "COM",
+   "a": "SAS",
+   "ko": "15:00",
+   "ref": "DI MARCO",
+   "refResolved": "Davide Di Marco",
+   "resolvedBy": "surname",
+   "source": "https://www.aia-figc.it/news/serie-a-enilive-designazioni-8a-giornata-28785/"
+  },
+  {
+   "league": "SA",
+   "date": "2026-10-24",
+   "h": "LAZ",
+   "a": "PAR",
+   "ko": "20:45",
+   "ref": "ARENA",
+   "refResolved": "Alberto Ruben Arena",
+   "resolvedBy": "surname",
+   "source": "https://www.aia-figc.it/news/serie-a-enilive-designazioni-8a-giornata-28785/"
+  },
+  {
+   "league": "SA",
+   "date": "2026-10-25",
+   "h": "ATA",
+   "a": "FRO",
+   "ko": "15:00",
+   "ref": "MARINELLI",
+   "refResolved": "Livio Marinelli",
+   "resolvedBy": "surname",
+   "source": "https://www.aia-figc.it/news/serie-a-enilive-designazioni-8a-giornata-28785/"
+  },
+  {
+   "league": "SA",
+   "date": "2026-10-25",
+   "h": "GEN",
+   "a": "VEN",
+   "ko": "15:00",
+   "ref": "SOZZA",
+   "refResolved": "Simone Sozza",
+   "resolvedBy": "surname",
+   "source": "https://www.aia-figc.it/news/serie-a-enilive-designazioni-8a-giornata-28785/"
+  },
+  {
+   "league": "SA",
+   "date": "2026-10-25",
+   "h": "INT",
+   "a": "FIO",
+   "ko": "12:30",
+   "ref": "MARIANI",
+   "refResolved": "Maurizio Mariani",
+   "resolvedBy": "surname",
+   "source": "https://www.aia-figc.it/news/serie-a-enilive-designazioni-8a-giornata-28785/"
+  },
+  {
+   "league": "SA",
+   "date": "2026-10-25",
+   "h": "LEC",
+   "a": "JUV",
+   "ko": "18:00",
+   "ref": "MARESCA",
+   "refResolved": "Fabio Maresca",
+   "resolvedBy": "surname",
+   "source": "https://www.aia-figc.it/news/serie-a-enilive-designazioni-8a-giornata-28785/"
+  },
+  {
+   "league": "SA",
+   "date": "2026-10-25",
+   "h": "UDI",
+   "a": "ACM",
+   "ko": "20:45",
+   "ref": "MARCENARO",
+   "refResolved": "Matteo Marcenaro",
+   "resolvedBy": "surname",
+   "source": "https://www.aia-figc.it/news/serie-a-enilive-designazioni-8a-giornata-28785/"
   }
  ]
 }
