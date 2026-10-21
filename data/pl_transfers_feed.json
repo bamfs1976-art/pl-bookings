@@ -1,6 +1,6 @@
 {
   "note": "PROPOSALS from API-Football /transfers, for a person to read. data/transfers.json is the hand-curated overlay that is actually applied; this is not.",
-  "since": "2026-06-22",
+  "since": "2026-06-23",
   "moves": [
     {
       "n": "S. Ashbee",
@@ -5147,6 +5147,15 @@
       "to": "FC Schalke 04",
       "fromCode": "LEE",
       "toCode": null,
+      "date": "2026-07-21",
+      "type": "Free agent"
+    },
+    {
+      "n": "M. Targett",
+      "from": "Newcastle",
+      "to": "Hull City",
+      "fromCode": "NEW",
+      "toCode": "HUL",
       "date": "2026-07-21",
       "type": "Free agent"
     },

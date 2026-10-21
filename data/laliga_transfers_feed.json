@@ -1,7 +1,16 @@
 {
   "note": "PROPOSALS from API-Football /transfers, for a person to read. data/transfers.json is the hand-curated overlay that is actually applied; this is not.",
-  "since": "2026-06-22",
+  "since": "2026-06-23",
   "moves": [
+    {
+      "n": "Dani Carvajal",
+      "from": "Real Madrid",
+      "to": "Getafe",
+      "fromCode": "RMA",
+      "toCode": "GET",
+      "date": "2026-10-12",
+      "type": "Free agent"
+    },
     {
       "n": "D. Alaba",
       "from": "Real Madrid",
@@ -3198,6 +3207,15 @@
       "type": "Transfer"
     },
     {
+      "n": "Jesús",
+      "from": "Valladolid",
+      "to": "Getafe",
+      "fromCode": null,
+      "toCode": "GET",
+      "date": "2026-07-27",
+      "type": "Free agent"
+    },
+    {
       "n": "Fer Niño",
       "from": "Burgos",
       "to": "Elche",
@@ -5529,6 +5547,15 @@
       "type": "Free agent"
     },
     {
+      "n": "Ander Sánchez",
+      "from": "Alaves",
+      "to": "Real Unión",
+      "fromCode": "ALA",
+      "toCode": null,
+      "date": "2026-06-30",
+      "type": "Free agent"
+    },
+    {
       "n": "Alejandro Ramos",
       "from": "Atzeneta",
       "to": "Elche",
@@ -5854,7 +5881,7 @@
     },
     {
       "n": "Unai Ropero",
-      "from": "Hércules",
+      "from": "Hercules",
       "to": "Alaves",
       "fromCode": null,
       "toCode": "ALA",
@@ -5863,7 +5890,7 @@
     },
     {
       "n": "Unai Ropero",
-      "from": "Hercules",
+      "from": "Hércules",
       "to": "Alaves",
       "fromCode": null,
       "toCode": "ALA",
@@ -8164,6 +8191,15 @@
       "toCode": "ALA",
       "date": "2026-06-29",
       "type": "Return from loan"
+    },
+    {
+      "n": "Ander Sánchez",
+      "from": "Alaves",
+      "to": "Real Unión",
+      "fromCode": "ALA",
+      "toCode": null,
+      "date": "2026-06-29",
+      "type": "Free agent"
     },
     {
       "n": "Ander Astralaga",
