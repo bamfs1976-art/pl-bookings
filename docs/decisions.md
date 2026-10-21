@@ -718,3 +718,34 @@ product name and `bookingsdesk.netlify.app` is its address; the old app's
 repository. The mentions of the old name in this file are historical and stay.
 The absolute `og:image` URL the July notes deferred "until the domain is
 settled" was set the same day.
+
+---
+
+## Logo (2026-10-21)
+
+**The Risk Card logo replaces the purple fanned-cards mark.** Bookings Desk is
+aimed at a public launch, so the identity was designed from scratch rather than
+built on the earlier assets: a card cut by three rising bars, tilted 15
+degrees, with BOOKINGS DESK in Inter Display Black Italic, outlined. Desk Ink
+`#0E1A2B` and Card Yellow `#FFC72C` are the brand colours.
+
+- **One sprite, both themes.** `icons/brand.svg` holds the mark, a two-bar
+  small mark for anything under 32px, and the wordmark. The card and bar
+  colours read `--bd-card` and `--bd-bars` from `assets/tw.css`, so light mode
+  shows an ink card with yellow bars and dark mode a yellow card with
+  see-through bars. The wordmark fills with the text colour.
+- **The two-letter league badge is gone from the header.** Every page shows the
+  mark and wordmark with the league as a tag underneath, as the Premier League
+  page already did. `shell.js` still accepts `code` and `accent` but no longer
+  draws them.
+- **Per-league theme colours stay.** `check-palette` ties each page's
+  `theme-color` to its share card's opening colour; only the artwork changed.
+- **Share cards draw the new mark** in `share.js`, with the bars cut through so
+  the band gradient shows.
+- **Icons are committed artwork,** not generated in the repo: tile favicons
+  (16, 32, 48 and `favicon.ico`), full-bleed app icons (180, 192, 512) with the
+  card inside the maskable safe zone, `logo.svg` and a new `og.png`.
+  `gen-favicons.mjs` and `gen-icons.mjs` now refuse to run, because running
+  them would restore the old mark.
+- **Not yet done:** a UK IPO trademark search on the name and the mark.
+
