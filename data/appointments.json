@@ -7,6 +7,7 @@
   "efl.com — Sky Bet Championship referee appointments, 5-9 September 2026 (supplied as text; exact article URL not captured)",
   "https://efl.com/news/2026/october/07/referee-appointments--9---15-october/",
   "https://efl.com/news/2026/october/14/referee-appointments--/",
+  "https://efl.com/news/2026/october/20/referee-appointments--16-20-october/",
   "https://efl.com/news/2026/september/09/referee-appointments-12-17-september/",
   "https://efl.com/news/2026/september/17/referee-appointments--18-20-september-2026/",
   "https://rfef.es/sites/default/files/designaciones_1a_division_masculina_-_temp_2026-27_-_jornada_1_domingo16.pdf",
@@ -36,7 +37,6 @@
   "https://www.aia-figc.it/news/serie-a-enilive-designazioni-7a-giornata-28778/",
   "https://www.aia-figc.it/news/serie-a-enilive-designazioni-8a-giornata-28785/",
   "https://www.efl.com/news/2026/august/11/referee-appointments--14-20-august/",
-  "https://www.efl.com/news/2026/october/20/referee-appointments--16-20-october/",
   "https://www.premierleague.com/en/news/4729629/match-officials-for-matchweek-6",
   "https://www.premierleague.com/news/match-officials-matchweek-4",
   "rfef.es — CTA designaciones, Primera División, jornada 4, 7 September 2026 (published sheet supplied; exact PDF URL not captured)",
@@ -1206,7 +1206,7 @@
    "ref": "Simon Hooper",
    "refResolved": null,
    "resolvedBy": null,
-   "source": "https://www.efl.com/news/2026/october/20/referee-appointments--16-20-october/"
+   "source": "https://efl.com/news/2026/october/20/referee-appointments--16-20-october/"
   },
   {
    "league": "EFLC",
@@ -1217,7 +1217,7 @@
    "ref": "Matt Corlett",
    "refResolved": null,
    "resolvedBy": null,
-   "source": "https://www.efl.com/news/2026/october/20/referee-appointments--16-20-october/"
+   "source": "https://efl.com/news/2026/october/20/referee-appointments--16-20-october/"
   },
   {
    "league": "EFLC",
@@ -1228,7 +1228,7 @@
    "ref": "Tim Robinson",
    "refResolved": "Tim Robinson",
    "resolvedBy": "exact",
-   "source": "https://www.efl.com/news/2026/october/20/referee-appointments--16-20-october/"
+   "source": "https://efl.com/news/2026/october/20/referee-appointments--16-20-october/"
   },
   {
    "league": "EFLC",
@@ -1239,7 +1239,7 @@
    "ref": "John Busby",
    "refResolved": "J Busby",
    "resolvedBy": "initial",
-   "source": "https://www.efl.com/news/2026/october/20/referee-appointments--16-20-october/"
+   "source": "https://efl.com/news/2026/october/20/referee-appointments--16-20-october/"
   },
   {
    "league": "EFLC",
@@ -1250,7 +1250,7 @@
    "ref": "Tom Parsons",
    "refResolved": null,
    "resolvedBy": null,
-   "source": "https://www.efl.com/news/2026/october/20/referee-appointments--16-20-october/"
+   "source": "https://efl.com/news/2026/october/20/referee-appointments--16-20-october/"
   },
   {
    "league": "EFLC",
@@ -1261,7 +1261,7 @@
    "ref": "Tom Reeves",
    "refResolved": "T Reeves",
    "resolvedBy": "initial",
-   "source": "https://www.efl.com/news/2026/october/20/referee-appointments--16-20-october/"
+   "source": "https://efl.com/news/2026/october/20/referee-appointments--16-20-october/"
   },
   {
    "league": "EFLC",
@@ -1272,7 +1272,7 @@
    "ref": "Elliot Bell",
    "refResolved": "E Bell",
    "resolvedBy": "initial",
-   "source": "https://www.efl.com/news/2026/october/20/referee-appointments--16-20-october/"
+   "source": "https://efl.com/news/2026/october/20/referee-appointments--16-20-october/"
   },
   {
    "league": "EFLC",
@@ -1283,7 +1283,7 @@
    "ref": "Sam Allison",
    "refResolved": "Sam Allison",
    "resolvedBy": "exact",
-   "source": "https://www.efl.com/news/2026/october/20/referee-appointments--16-20-october/"
+   "source": "https://efl.com/news/2026/october/20/referee-appointments--16-20-october/"
   },
   {
    "league": "EFLC",
@@ -1294,7 +1294,7 @@
    "ref": "Steve Martin",
    "refResolved": "S Martin",
    "resolvedBy": "initial",
-   "source": "https://www.efl.com/news/2026/october/20/referee-appointments--16-20-october/"
+   "source": "https://efl.com/news/2026/october/20/referee-appointments--16-20-october/"
   },
   {
    "league": "EFLC",
@@ -1305,7 +1305,7 @@
    "ref": "James Bell",
    "refResolved": "J Bell",
    "resolvedBy": "initial",
-   "source": "https://www.efl.com/news/2026/october/20/referee-appointments--16-20-october/"
+   "source": "https://efl.com/news/2026/october/20/referee-appointments--16-20-october/"
   },
   {
    "league": "EFLC",
@@ -1316,7 +1316,7 @@
    "ref": "Michael Salisbury",
    "refResolved": "Michael Salisbury",
    "resolvedBy": "exact",
-   "source": "https://www.efl.com/news/2026/october/20/referee-appointments--16-20-october/"
+   "source": "https://efl.com/news/2026/october/20/referee-appointments--16-20-october/"
   },
   {
    "league": "EFLC",
@@ -1327,7 +1327,7 @@
    "ref": "Bobby Madley",
    "refResolved": "R Madley",
    "resolvedBy": "alias",
-   "source": "https://www.efl.com/news/2026/october/20/referee-appointments--16-20-october/"
+   "source": "https://efl.com/news/2026/october/20/referee-appointments--16-20-october/"
   },
   {
    "league": "LL",
