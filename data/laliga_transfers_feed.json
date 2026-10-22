@@ -1,6 +1,6 @@
 {
   "note": "PROPOSALS from API-Football /transfers, for a person to read. data/transfers.json is the hand-curated overlay that is actually applied; this is not.",
-  "since": "2026-06-23",
+  "since": "2026-06-24",
   "moves": [
     {
       "n": "Dani Carvajal",
@@ -9,6 +9,15 @@
       "fromCode": "RMA",
       "toCode": "GET",
       "date": "2026-10-12",
+      "type": "Free agent"
+    },
+    {
+      "n": "David Silva",
+      "from": "Real Sociedad",
+      "to": "Shatin",
+      "fromCode": "RSO",
+      "toCode": null,
+      "date": "2026-10-06",
       "type": "Free agent"
     },
     {
@@ -6331,21 +6340,21 @@
     },
     {
       "n": "Pablo Pérez",
-      "from": "Mirandes",
-      "to": "Atletico Madrid",
-      "fromCode": null,
-      "toCode": "ATM",
-      "date": "2026-06-29",
-      "type": "Return from loan"
-    },
-    {
-      "n": "Pablo Pérez",
       "from": "Atlético Madrid II",
       "to": "Atletico Madrid",
       "fromCode": null,
       "toCode": "ATM",
       "date": "2026-06-29",
       "type": "Free agent"
+    },
+    {
+      "n": "Pablo Pérez",
+      "from": "Mirandes",
+      "to": "Atletico Madrid",
+      "fromCode": null,
+      "toCode": "ATM",
+      "date": "2026-06-29",
+      "type": "Return from loan"
     },
     {
       "n": "Pablo Martínez",

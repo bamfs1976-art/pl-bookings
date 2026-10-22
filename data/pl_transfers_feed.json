@@ -1,7 +1,25 @@
 {
   "note": "PROPOSALS from API-Football /transfers, for a person to read. data/transfers.json is the hand-curated overlay that is actually applied; this is not.",
-  "since": "2026-06-23",
+  "since": "2026-06-24",
   "moves": [
+    {
+      "n": "M. Dike",
+      "from": "Horsham",
+      "to": "Brighton",
+      "fromCode": null,
+      "toCode": "BHA",
+      "date": "2026-10-15",
+      "type": "Return from loan"
+    },
+    {
+      "n": "Alfie Harrison",
+      "from": "Newcastle",
+      "to": "Dundee",
+      "fromCode": "NEW",
+      "toCode": null,
+      "date": "2026-10-06",
+      "type": "Free agent"
+    },
     {
       "n": "S. Ashbee",
       "from": "Scunthorpe",
@@ -30,6 +48,24 @@
       "type": "Free agent"
     },
     {
+      "n": "S. Keogh",
+      "from": "Brighton",
+      "to": "Southend",
+      "fromCode": "BHA",
+      "toCode": null,
+      "date": "2026-09-23",
+      "type": "Loan"
+    },
+    {
+      "n": "T. Malacia",
+      "from": "Manchester United",
+      "to": "FC Cincinnati",
+      "fromCode": "MUN",
+      "toCode": null,
+      "date": "2026-09-18",
+      "type": "Free agent"
+    },
+    {
       "n": "N. Valentine",
       "from": "Ipswich",
       "to": "Billericay Town",
@@ -52,6 +88,15 @@
       "from": "Manchester United",
       "to": "Hednesford Town",
       "fromCode": "MUN",
+      "toCode": null,
+      "date": "2026-09-17",
+      "type": "Loan"
+    },
+    {
+      "n": "M. Dike",
+      "from": "Brighton",
+      "to": "Horsham",
+      "fromCode": "BHA",
       "toCode": null,
       "date": "2026-09-17",
       "type": "Loan"
@@ -1299,6 +1344,15 @@
       "type": "Loan"
     },
     {
+      "n": "O. Azeez",
+      "from": "Millwall",
+      "to": "Brighton",
+      "fromCode": "MIL",
+      "toCode": "BHA",
+      "date": "2026-08-30",
+      "type": "Transfer"
+    },
+    {
       "n": "N. Patterson",
       "from": "Everton",
       "to": "Torino",
@@ -1812,6 +1866,15 @@
       "type": "Transfer"
     },
     {
+      "n": "Tobias Christopher Collyer",
+      "from": "Manchester United",
+      "to": "West Brom",
+      "fromCode": "MUN",
+      "toCode": "WBA",
+      "date": "2026-08-28",
+      "type": "Transfer"
+    },
+    {
       "n": "O. Watkins",
       "from": "Aston Villa",
       "to": "Al-Hilal Saudi FC",
@@ -1837,6 +1900,15 @@
       "toCode": null,
       "date": "2026-08-28",
       "type": "Loan"
+    },
+    {
+      "n": "Louis Jackson",
+      "from": "Manchester United",
+      "to": "ST Mirren",
+      "fromCode": "MUN",
+      "toCode": null,
+      "date": "2026-08-28",
+      "type": "Transfer"
     },
     {
       "n": "K. Miściur",
@@ -2451,7 +2523,7 @@
       "type": "Loan"
     },
     {
-      "n": "IfeanyiIfeanyi Ndukwe",
+      "n": "Ifeanyi Ndukwe",
       "from": "Liverpool",
       "to": "Levante",
       "fromCode": "LIV",
@@ -3423,6 +3495,15 @@
       "type": "Transfer"
     },
     {
+      "n": "Ethan Williams",
+      "from": "Manchester United",
+      "to": "Peterborough",
+      "fromCode": "MUN",
+      "toCode": null,
+      "date": "2026-08-11",
+      "type": "Transfer"
+    },
+    {
       "n": "E. Ünal",
       "from": "Bournemouth",
       "to": "Getafe",
@@ -3475,6 +3556,15 @@
       "toCode": null,
       "date": "2026-08-11",
       "type": "Free agent"
+    },
+    {
+      "n": "A. Harrison",
+      "from": "Newcastle",
+      "to": "Wolves U21",
+      "fromCode": "NEW",
+      "toCode": null,
+      "date": "2026-08-11",
+      "type": "-"
     },
     {
       "n": "S. Charles",
@@ -3972,6 +4062,15 @@
       "type": "Transfer"
     },
     {
+      "n": "R. Vítek",
+      "from": "Manchester United",
+      "to": "Middlesbrough",
+      "fromCode": "MUN",
+      "toCode": "MID",
+      "date": "2026-08-06",
+      "type": "Transfer"
+    },
+    {
       "n": "R. Russell-Denny",
       "from": "Tottenham",
       "to": "Bristol Rovers",
@@ -4080,6 +4179,15 @@
       "type": "Transfer"
     },
     {
+      "n": "Bruno Guimarães",
+      "from": "Newcastle",
+      "to": "Arsenal",
+      "fromCode": "NEW",
+      "toCode": "ARS",
+      "date": "2026-08-06",
+      "type": "Transfer"
+    },
+    {
       "n": "Alfie Merritt",
       "from": "Bournemouth",
       "to": "Newport County",
@@ -4132,6 +4240,15 @@
       "toCode": null,
       "date": "2026-08-05",
       "type": "Loan"
+    },
+    {
+      "n": "Sonny Aljofree",
+      "from": "Manchester United",
+      "to": "Rotherham",
+      "fromCode": "MUN",
+      "toCode": null,
+      "date": "2026-08-05",
+      "type": "Free agent"
     },
     {
       "n": "R. Welch",
@@ -4809,6 +4926,15 @@
       "type": "Loan"
     },
     {
+      "n": "Tommy Pilling",
+      "from": "Liverpool",
+      "to": "Zemplín Michalovce",
+      "fromCode": "LIV",
+      "toCode": null,
+      "date": "2026-07-27",
+      "type": "Free agent"
+    },
+    {
       "n": "S. Boniface",
       "from": "Ipswich",
       "to": "Leyton Orient",
@@ -5169,6 +5295,15 @@
       "type": "Transfer"
     },
     {
+      "n": "Ciaran Thompson",
+      "from": "Newcastle",
+      "to": "Darlington 1883",
+      "fromCode": "NEW",
+      "toCode": null,
+      "date": "2026-07-21",
+      "type": "Free agent"
+    },
+    {
       "n": "Casemiro",
       "from": "Manchester United",
       "to": "Inter Miami",
@@ -5340,7 +5475,7 @@
       "type": "Raise"
     },
     {
-      "n": "IfeanyiIfeanyi Ndukwe",
+      "n": "Ifeanyi Ndukwe",
       "from": "Liverpool U21",
       "to": "Liverpool",
       "fromCode": null,
@@ -5349,7 +5484,7 @@
       "type": "Free agent"
     },
     {
-      "n": "IfeanyiIfeanyi Ndukwe",
+      "n": "Ifeanyi Ndukwe",
       "from": "Austria Vienna",
       "to": "Liverpool",
       "fromCode": null,
@@ -5696,6 +5831,15 @@
       "to": "Southampton",
       "fromCode": "AVL",
       "toCode": "SOU",
+      "date": "2026-07-14",
+      "type": "Transfer"
+    },
+    {
+      "n": "J. White",
+      "from": "Newcastle",
+      "to": "Crewe",
+      "fromCode": "NEW",
+      "toCode": null,
       "date": "2026-07-14",
       "type": "Transfer"
     },
@@ -6211,6 +6355,15 @@
       "toCode": null,
       "date": "2026-07-04",
       "type": "Loan"
+    },
+    {
+      "n": "S. Tonali",
+      "from": "Newcastle",
+      "to": "Tottenham",
+      "fromCode": "NEW",
+      "toCode": "TOT",
+      "date": "2026-07-04",
+      "type": "Transfer"
     },
     {
       "n": "Jimi Weikko Tauriainen",
@@ -8445,7 +8598,7 @@
       "type": "Return from loan"
     },
     {
-      "n": "IfeanyiIfeanyi Ndukwe",
+      "n": "Ifeanyi Ndukwe",
       "from": "Austria Vienna",
       "to": "Liverpool",
       "fromCode": null,
