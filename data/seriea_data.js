@@ -13,7 +13,7 @@ const SUSPENSION = {"kind": "ladder", "cumulative": true, "review": null, "rungs
 // from the previous build, which is 'cannot tell', not 'no season'.
 const FORM = {"SA": "2026-27", "SB": "2025-26"};
 const CLUBS = [
-  {short:"SAS",name:"Sassuolo",img:"https://media.api-sports.io/football/teams/488.png",basis:"SA",ca:2.32,caH:2.21,caA:2.42,fm:1.8,squad:35},
+  {short:"SAS",name:"Sassuolo",img:"https://media.api-sports.io/football/teams/488.png",basis:"SA",ca:2.32,caH:2.21,caA:2.42,fm:1.8,squad:36},
   {short:"LAZ",name:"Lazio",img:"https://media.api-sports.io/football/teams/487.png",basis:"SA",ca:2.29,caH:2.53,caA:2.05,fm:2.2,squad:35},
   {short:"FIO",name:"Fiorentina",img:"https://media.api-sports.io/football/teams/502.png",basis:"SA",ca:2.24,caH:2.05,caA:2.42,fm:1.9,squad:28},
   {short:"CAG",name:"Cagliari",img:"https://media.api-sports.io/football/teams/490.png",basis:"SA",ca:2.18,caH:1.84,caA:2.53,fm:1.8,squad:30},
@@ -581,6 +581,7 @@ const SERIEA_PLAYERS = [
   {c:"SAS",n:"A. Ghion",p:"MF",min:10,yc:0,rc:0,y:0.0,f:null,fw:null,r:null,ls:true,b:"SA",sc:0,sm:10,ph:"https://media.api-sports.io/football/players/68407.png"},
   {c:"SAS",n:"A. Murić",p:"GK",min:630,yc:0,rc:0,y:0.0,f:null,fw:0.286,r:null,ls:false,b:"SA",sc:0,sm:630,ph:"https://media.api-sports.io/football/players/616.png"},
   {c:"SAS",n:"C. Frangella",p:"MF",min:0,yc:null,rc:null,y:null,f:null,fw:null,r:null,ls:true,b:"NEW",sc:null,sm:null,ph:"https://media.api-sports.io/football/players/584501.png"},
+  {c:"SAS",n:"E. Pieragnolo",p:"DF",min:0,yc:0,rc:0,y:null,f:null,fw:null,r:null,ls:true,b:"SA",sc:0,sm:0,ph:"https://media.api-sports.io/football/players/342055.png"},
   {c:"SAS",n:"Fali Candé",p:"DF",min:0,yc:0,rc:0,y:null,f:null,fw:null,r:null,ls:true,b:"SA",sc:0,sm:0,ph:"https://media.api-sports.io/football/players/41371.png"},
   {c:"SAS",n:"G. Kulla",p:"FW",min:2,yc:0,rc:0,y:0.0,f:null,fw:null,r:null,ls:true,b:"SA",sc:0,sm:2,ph:"https://media.api-sports.io/football/players/494325.png"},
   {c:"SAS",n:"G. Satalino",p:"GK",min:0,yc:0,rc:0,y:null,f:null,fw:null,r:null,ls:true,b:"SA",sc:0,sm:0,ph:"https://media.api-sports.io/football/players/30518.png"},
