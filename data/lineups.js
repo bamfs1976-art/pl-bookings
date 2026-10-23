@@ -5,7 +5,7 @@
 // through PLDCore.matchSquadName. A fixture absent from here prices off
 // squad minute-weights exactly as it always has — that is the normal
 // state until about an hour before kick-off, not a failure.
-// Fetched 2026-10-21T18:51Z.
+// Fetched 2026-10-23T18:26Z.
 //
 // THE GLOBAL IS NOT CALLED `LINEUPS`, and that is deliberate. index.html
 // already declares a top-level `const LINEUPS` for assets/lineup.js (the
@@ -14,7 +14,7 @@
 // a parse error, not a shadow: the whole inline script fails and the desk
 // renders blank. Read `window.LINEUP_SHEETS`.
 var __LINEUP_SHEETS = {
-  "1570389":{"ATH":{start:["Unai Simón", "Hugo Rincón", "Yeray", "Aymeric Laporte", "Yuri", "Ruíz de Galarreta", "Mikel Jauregizar", "Álex Berenguer", "Robert Navarro", "J. Louis-Jean", "Maroan Sannadi"],sub:["Álex Padilla", "Beñat Prados", "Alejandro Rego", "Beñat Gerenabarrena", "Nico Serrano", "I. Williams", "Nico Williams", "Jesús Areso", "Aitor Paredes", "Dani Vivian", "Peio Canales", "Christian Imga"]},"LEV":{start:["M. Ryan", "J. Toljan", "A. Mandi", "Ifeanyi Ndukwe", "Manu Sánchez", "Brugui", "Jon Ander Olasagasti", "Reque", "T. Fernández", "P. Ratkov", "Iván Romero"],sub:["Jorge Cabello", "Oriol Rey", "Paco Cortés", "Pablo Cuñat", "Víctor García", "Yanis Musuayi", "M. Santos", "A. Tape", "Nacho Pérez", "Etta Eyong", "Primo", "Hugo Sotelo"]}},
+  "1550165":{"MON":{start:["N. Törnqvist", "S. Goglichidze", "L. Lucchesi", "A. Carboni", "S. Birindelli", "M. Ondoa", "E. Akinsanmiro", "Ricardo Mangas", "Dany Mota", "Jay Robinson", "Gustavo Varela"],sub:["P. Ciurria", "L. Colombo", "P. Cutrone", "M. Folorunsho", "O. Forson", "E. Kouadio", "M. Mout", "C. Ngonge", "A. Strajnar", "D. Thiam", "I. Touré", "E. Zeballos", "A. Bakoune", "V. Antov", "A. Colpani"]},"TOR":{start:["Lucas Perri", "P. Comuzzo", "A. Ismajli", "Saúl Coco", "R. Belghali", "R. Mandragora", "K. Fitz-Jim", "A. Cacciamani", "N. Vlašić", "C. Adams", "G. Simeone"],sub:["C. Biraghi", "E. Cömert", "C. Casadei", "Z. Aboukhlal", "G. Gineitis", "S. Kulenović", "D. Mascardi", "G. Oristanio", "N. Patterson", "P. Pellegri", "L. Siviero", "D. Zapata", "Daniel Bragança"]}},
 };
 if (typeof module !== "undefined" && module.exports) module.exports = __LINEUP_SHEETS;
 if (typeof window !== "undefined") window.LINEUP_SHEETS = __LINEUP_SHEETS;
