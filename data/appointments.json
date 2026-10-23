@@ -10,6 +10,7 @@
   "https://efl.com/news/2026/october/20/referee-appointments--16-20-october/",
   "https://efl.com/news/2026/september/09/referee-appointments-12-17-september/",
   "https://efl.com/news/2026/september/17/referee-appointments--18-20-september-2026/",
+  "https://rfef.es/sites/default/files/designaciones_1a_division_masculina_-_temp_2026-27_-_jornada_10_sabado.pdf",
   "https://rfef.es/sites/default/files/designaciones_1a_division_masculina_-_temp_2026-27_-_jornada_10_viernes.pdf",
   "https://rfef.es/sites/default/files/designaciones_1a_division_masculina_-_temp_2026-27_-_jornada_1_domingo16.pdf",
   "https://rfef.es/sites/default/files/designaciones_1a_division_masculina_-_temp_2026-27_-_jornada_1_lunes17.pdf",
@@ -2308,6 +2309,50 @@
    "refResolved": null,
    "resolvedBy": null,
    "source": "https://rfef.es/sites/default/files/designaciones_1a_division_masculina_-_temp_2026-27_-_jornada_10_viernes.pdf"
+  },
+  {
+   "league": "LL",
+   "date": "2026-10-24",
+   "h": "ATM",
+   "a": "DEP",
+   "ko": "21:00",
+   "ref": "José María Sánchez",
+   "refResolved": "José María Sánchez Martínez",
+   "resolvedBy": "run",
+   "source": "https://rfef.es/sites/default/files/designaciones_1a_division_masculina_-_temp_2026-27_-_jornada_10_sabado.pdf"
+  },
+  {
+   "league": "LL",
+   "date": "2026-10-24",
+   "h": "RAC",
+   "a": "ESP",
+   "ko": "16:15",
+   "ref": "Jesús Gil",
+   "refResolved": "Jesus Gil Manzano",
+   "resolvedBy": "run",
+   "source": "https://rfef.es/sites/default/files/designaciones_1a_division_masculina_-_temp_2026-27_-_jornada_10_sabado.pdf"
+  },
+  {
+   "league": "LL",
+   "date": "2026-10-24",
+   "h": "RAY",
+   "a": "ELC",
+   "ko": "14:00",
+   "ref": "Miguel Sesma",
+   "refResolved": "Miguel Sesma Espinosa",
+   "resolvedBy": "run",
+   "source": "https://rfef.es/sites/default/files/designaciones_1a_division_masculina_-_temp_2026-27_-_jornada_10_sabado.pdf"
+  },
+  {
+   "league": "LL",
+   "date": "2026-10-24",
+   "h": "VAL",
+   "a": "VIL",
+   "ko": "18:30",
+   "ref": "Alejandro Quintero",
+   "refResolved": "Alejandro Quintero Gonzalez",
+   "resolvedBy": "run",
+   "source": "https://rfef.es/sites/default/files/designaciones_1a_division_masculina_-_temp_2026-27_-_jornada_10_sabado.pdf"
   },
   {
    "league": "PL",
