@@ -12,7 +12,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: "20"       # global fetch available
+          node-version: "24"       # global fetch available
       - name: Rebuild data/sim_model.js from the published bundle
         run: node scripts/build-sim-model.mjs
 
