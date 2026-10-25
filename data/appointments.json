@@ -11,6 +11,7 @@
   "https://efl.com/news/2026/september/09/referee-appointments-12-17-september/",
   "https://efl.com/news/2026/september/17/referee-appointments--18-20-september-2026/",
   "https://rfef.es/sites/default/files/designaciones_1a_division_masculina_-_temp_2026-27_-_jornada_10_domingo.pdf",
+  "https://rfef.es/sites/default/files/designaciones_1a_division_masculina_-_temp_2026-27_-_jornada_10_lunes.pdf",
   "https://rfef.es/sites/default/files/designaciones_1a_division_masculina_-_temp_2026-27_-_jornada_10_sabado.pdf",
   "https://rfef.es/sites/default/files/designaciones_1a_division_masculina_-_temp_2026-27_-_jornada_10_viernes.pdf",
   "https://rfef.es/sites/default/files/designaciones_1a_division_masculina_-_temp_2026-27_-_jornada_1_domingo16.pdf",
@@ -2398,6 +2399,17 @@
    "refResolved": "Javier Alberola Rojas",
    "resolvedBy": "run",
    "source": "https://rfef.es/sites/default/files/designaciones_1a_division_masculina_-_temp_2026-27_-_jornada_10_domingo.pdf"
+  },
+  {
+   "league": "LL",
+   "date": "2026-10-26",
+   "h": "SEV",
+   "a": "OSA",
+   "ko": "21:00",
+   "ref": "Miguel Ángel Ortiz",
+   "refResolved": "Miguel Angel Ortiz Arias",
+   "resolvedBy": "run",
+   "source": "https://rfef.es/sites/default/files/designaciones_1a_division_masculina_-_temp_2026-27_-_jornada_10_lunes.pdf"
   },
   {
    "league": "PL",
