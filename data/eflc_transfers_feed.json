@@ -1,6 +1,6 @@
 {
   "note": "PROPOSALS from API-Football /transfers, for a person to read. data/transfers.json is the hand-curated overlay that is actually applied; this is not.",
-  "since": "2026-06-27",
+  "since": "2026-06-28",
   "moves": [
     {
       "n": "Brian Okonkwo",
@@ -8209,6 +8209,15 @@
       "toCode": "BUR",
       "date": "2026-06-29",
       "type": "Return from loan"
+    },
+    {
+      "n": "O. Bailey",
+      "from": "Stockport County",
+      "to": "Portsmouth",
+      "fromCode": null,
+      "toCode": "POR",
+      "date": "2026-06-29",
+      "type": "Free agent"
     },
     {
       "n": "O. Adewumi",

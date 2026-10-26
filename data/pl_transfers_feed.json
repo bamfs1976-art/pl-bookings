@@ -1,6 +1,6 @@
 {
   "note": "PROPOSALS from API-Football /transfers, for a person to read. data/transfers.json is the hand-curated overlay that is actually applied; this is not.",
-  "since": "2026-06-27",
+  "since": "2026-06-28",
   "moves": [
     {
       "n": "M. Dike",
@@ -30,6 +30,15 @@
       "type": "Return from loan"
     },
     {
+      "n": "Zyan Blake",
+      "from": "Nottingham Forest",
+      "to": "Truro City",
+      "fromCode": "NFO",
+      "toCode": null,
+      "date": "2026-09-29",
+      "type": "Loan"
+    },
+    {
       "n": "T. Mendel-Idowu",
       "from": "Luton",
       "to": "Ipswich",
@@ -46,6 +55,15 @@
       "toCode": null,
       "date": "2026-09-29",
       "type": "Free agent"
+    },
+    {
+      "n": "Max Thompson",
+      "from": "Newcastle",
+      "to": "Hartlepool",
+      "fromCode": "NEW",
+      "toCode": null,
+      "date": "2026-09-28",
+      "type": "-"
     },
     {
       "n": "S. Keogh",
