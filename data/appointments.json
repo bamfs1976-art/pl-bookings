@@ -40,6 +40,7 @@
   "https://www.aia-figc.it/news/serie-a-enilive-designazioni-6a-giornata-28755/",
   "https://www.aia-figc.it/news/serie-a-enilive-designazioni-7a-giornata-28778/",
   "https://www.aia-figc.it/news/serie-a-enilive-designazioni-8a-giornata-28785/",
+  "https://www.aia-figc.it/news/serie-a-enilive-designazioni-9a-giornata-28800/",
   "https://www.efl.com/news/2026/august/11/referee-appointments--14-20-august/",
   "https://www.premierleague.com/en/news/4729629/match-officials-for-matchweek-6",
   "https://www.premierleague.com/news/match-officials-matchweek-4",
@@ -2971,6 +2972,105 @@
    "refResolved": "Matteo Marcenaro",
    "resolvedBy": "surname",
    "source": "https://www.aia-figc.it/news/serie-a-enilive-designazioni-8a-giornata-28785/"
+  },
+  {
+   "league": "SA",
+   "date": "2026-10-27",
+   "h": "SAS",
+   "a": "LAZ",
+   "ko": "18:30",
+   "ref": "ZUFFERLI",
+   "refResolved": "Luca Zufferli",
+   "resolvedBy": "surname",
+   "source": "https://www.aia-figc.it/news/serie-a-enilive-designazioni-9a-giornata-28800/"
+  },
+  {
+   "league": "SA",
+   "date": "2026-10-27",
+   "h": "TOR",
+   "a": "COM",
+   "ko": "20:45",
+   "ref": "COLLU",
+   "refResolved": "Giuseppe Collu",
+   "resolvedBy": "surname",
+   "source": "https://www.aia-figc.it/news/serie-a-enilive-designazioni-9a-giornata-28800/"
+  },
+  {
+   "league": "SA",
+   "date": "2026-10-28",
+   "h": "ACM",
+   "a": "BGN",
+   "ko": "18:30",
+   "ref": "SACCHI",
+   "refResolved": null,
+   "resolvedBy": null,
+   "source": "https://www.aia-figc.it/news/serie-a-enilive-designazioni-9a-giornata-28800/"
+  },
+  {
+   "league": "SA",
+   "date": "2026-10-28",
+   "h": "GEN",
+   "a": "JUV",
+   "ko": "20:45",
+   "ref": "DOVERI",
+   "refResolved": "Daniele Doveri",
+   "resolvedBy": "surname",
+   "source": "https://www.aia-figc.it/news/serie-a-enilive-designazioni-9a-giornata-28800/"
+  },
+  {
+   "league": "SA",
+   "date": "2026-10-28",
+   "h": "MON",
+   "a": "NAP",
+   "ko": "20:45",
+   "ref": "AYROLDI",
+   "refResolved": "Giovanni Ayroldi",
+   "resolvedBy": "surname",
+   "source": "https://www.aia-figc.it/news/serie-a-enilive-designazioni-9a-giornata-28800/"
+  },
+  {
+   "league": "SA",
+   "date": "2026-10-28",
+   "h": "PAR",
+   "a": "UDI",
+   "ko": "18:30",
+   "ref": "MASSA",
+   "refResolved": "Davide Massa",
+   "resolvedBy": "surname",
+   "source": "https://www.aia-figc.it/news/serie-a-enilive-designazioni-9a-giornata-28800/"
+  },
+  {
+   "league": "SA",
+   "date": "2026-10-28",
+   "h": "VEN",
+   "a": "INT",
+   "ko": "18:30",
+   "ref": "PAIRETTO",
+   "refResolved": "Luca Pairetto",
+   "resolvedBy": "surname",
+   "source": "https://www.aia-figc.it/news/serie-a-enilive-designazioni-9a-giornata-28800/"
+  },
+  {
+   "league": "SA",
+   "date": "2026-10-29",
+   "h": "FIO",
+   "a": "ATA",
+   "ko": "20:45",
+   "ref": "LA PENNA",
+   "refResolved": "Federico La Penna",
+   "resolvedBy": "surname",
+   "source": "https://www.aia-figc.it/news/serie-a-enilive-designazioni-9a-giornata-28800/"
+  },
+  {
+   "league": "SA",
+   "date": "2026-10-29",
+   "h": "FRO",
+   "a": "LEC",
+   "ko": "18:30",
+   "ref": "ABISSO",
+   "refResolved": "Rosario Abisso",
+   "resolvedBy": "surname",
+   "source": "https://www.aia-figc.it/news/serie-a-enilive-designazioni-9a-giornata-28800/"
   }
  ]
 }
