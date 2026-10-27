@@ -1,6 +1,6 @@
 {
   "note": "PROPOSALS from API-Football /transfers, for a person to read. data/transfers.json is the hand-curated overlay that is actually applied; this is not.",
-  "since": "2026-06-16",
+  "since": "2026-06-28",
   "moves": [
     {
       "n": "M. Darmian",
@@ -8,6 +8,15 @@
       "to": "Bologna",
       "fromCode": "INT",
       "toCode": "BGN",
+      "date": "2026-10-07",
+      "type": "Free agent"
+    },
+    {
+      "n": "M. Bakker",
+      "from": "Atalanta",
+      "to": "NEC Nijmegen",
+      "fromCode": "ATA",
+      "toCode": null,
       "date": "2026-10-07",
       "type": "Free agent"
     },
@@ -1209,6 +1218,15 @@
       "type": "Free agent"
     },
     {
+      "n": "M. Bakker",
+      "from": "Atalanta",
+      "to": "NEC Nijmegen",
+      "fromCode": "ATA",
+      "toCode": null,
+      "date": "2026-08-30",
+      "type": "Free agent"
+    },
+    {
       "n": "M&apos;Bala Nzola",
       "from": "Fiorentina",
       "to": "Cagliari",
@@ -1288,6 +1306,15 @@
       "toCode": "BGN",
       "date": "2026-08-30",
       "type": "Transfer"
+    },
+    {
+      "n": "I. Kamate",
+      "from": "Inter",
+      "to": "Atlético Madrid II",
+      "fromCode": "INT",
+      "toCode": null,
+      "date": "2026-08-30",
+      "type": "-"
     },
     {
       "n": "F. Missori",
@@ -1609,6 +1636,15 @@
       "from": "Parma",
       "to": "Vasteras SK FK",
       "fromCode": "PAR",
+      "toCode": null,
+      "date": "2026-08-28",
+      "type": "Transfer"
+    },
+    {
+      "n": "Mario David",
+      "from": "Sassuolo",
+      "to": "Dinamo Bucuresti",
+      "fromCode": "SAS",
       "toCode": null,
       "date": "2026-08-28",
       "type": "Transfer"
@@ -2514,6 +2550,15 @@
       "type": "Free agent"
     },
     {
+      "n": "C. Jones",
+      "from": "Liverpool",
+      "to": "Inter",
+      "fromCode": null,
+      "toCode": "INT",
+      "date": "2026-08-19",
+      "type": "Transfer"
+    },
+    {
       "n": "Arthur",
       "from": "Juventus",
       "to": "Arthur Melo",
@@ -3081,6 +3126,15 @@
       "type": "Loan"
     },
     {
+      "n": "D. Spence",
+      "from": "Tottenham",
+      "to": "Inter",
+      "fromCode": null,
+      "toCode": "INT",
+      "date": "2026-08-13",
+      "type": "Transfer"
+    },
+    {
       "n": "D. Romero",
       "from": "Tigre",
       "to": "Parma",
@@ -3178,6 +3232,15 @@
       "toCode": null,
       "date": "2026-08-12",
       "type": "Loan"
+    },
+    {
+      "n": "M. Motta",
+      "from": "Inter",
+      "to": "Pescara",
+      "fromCode": "INT",
+      "toCode": null,
+      "date": "2026-08-12",
+      "type": "Transfer"
     },
     {
       "n": "K. Meola",
@@ -3563,6 +3626,15 @@
       "to": "Cagliari",
       "fromCode": null,
       "toCode": "CAG",
+      "date": "2026-08-08",
+      "type": "Transfer"
+    },
+    {
+      "n": "D. Quieto",
+      "from": "Inter",
+      "to": "Cosenza",
+      "fromCode": "INT",
+      "toCode": null,
       "date": "2026-08-08",
       "type": "Transfer"
     },
@@ -4944,6 +5016,15 @@
       "type": "-"
     },
     {
+      "n": "Marco Pirro",
+      "from": "Monza",
+      "to": "Monza",
+      "fromCode": "MON",
+      "toCode": "MON",
+      "date": "2026-07-23",
+      "type": "Free agent"
+    },
+    {
       "n": "L. Kjerrumgaard",
       "from": "Udinese",
       "to": "Watford",
@@ -5977,6 +6058,15 @@
       "toCode": null,
       "date": "2026-07-12",
       "type": "Loan"
+    },
+    {
+      "n": "A. Nenna",
+      "from": "Inter",
+      "to": "Arzignano Valchiampo",
+      "fromCode": "INT",
+      "toCode": null,
+      "date": "2026-07-12",
+      "type": "Transfer"
     },
     {
       "n": "A. El Azzouzi",
@@ -11143,6 +11233,15 @@
       "toCode": "CAG",
       "date": "2026-06-29",
       "type": "Return from loan"
+    },
+    {
+      "n": "A. Stanković",
+      "from": "Club Brugge KV",
+      "to": "Inter",
+      "fromCode": null,
+      "toCode": "INT",
+      "date": "2026-06-29",
+      "type": "Transfer"
     },
     {
       "n": "A. Sorrentino",

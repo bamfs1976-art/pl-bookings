@@ -20,6 +20,11 @@
    the palette is the one that goes stale with nothing on screen looking wrong.
    ------------------------------------------------------------------------ */
 :root{
+  /* Brand mark colours (Risk Card logo, Oct 2026). The sprite in
+     icons/brand.svg reads these, so one file serves both themes: Desk Ink
+     card with Card Yellow bars on light, Card Yellow card with see-through
+     bars on dark. */
+  --bd-card:#0E1A2B; --bd-bars:#FFC72C;
   --bg:#eef1f6; --surface:#ffffff; --surface-2:#f4f6fa; --surface-3:#eaedf3;
   --text:#0c1322; --text-2:#586275; --text-3:#7d8595;
   --border:#e3e7ee; --border-2:#d7dce6;
@@ -73,6 +78,7 @@ html.lg-sa  {--accent:#14532d;--accent-2:var(--sa);  --accent-ink:var(--sa-ink);
 html.lg-all {--accent:#0e7490;--accent-2:var(--all); --accent-ink:var(--all-ink); --ring:var(--accent)}
 
 html[data-theme="dark"]{
+  --bd-card:#FFC72C; --bd-bars:transparent;
   --bg:#0b0f1a; --surface:#141b2c; --surface-2:#1b2336; --surface-3:#232c42;
   --text:#eef1f7; --text-2:#9aa6bb; --text-3:#6b7790;
   --border:#283248; --border-2:#33405a;
@@ -309,9 +315,6 @@ html[data-theme="dark"].lg-all {--accent:#22d3ee;--ring:var(--accent)}
   display:flex;flex-direction:column;position:fixed;left:0;top:0;bottom:0;z-index:200;
   padding-top:env(safe-area-inset-top);transition:transform .22s ease}
 .as-brand{display:flex;align-items:center;gap:11px;padding:18px 18px 16px;border-bottom:1px solid var(--border)}
-.as-brand-dot{width:38px;height:38px;border-radius:11px;flex:none;display:grid;place-items:center;
-  font-weight:800;font-size:13px;color:#fff}
-.as-brand-name{font-family:'Bricolage Grotesque',sans-serif;font-size:1.04rem;letter-spacing:-.02em;font-weight:800;margin:0}
 .as-brand-tag{font-size:.62rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--accent);margin-top:3px}
 .as-nav{flex:1;overflow-y:auto;padding:8px 10px 16px}
 .as-area{margin-bottom:2px}
@@ -867,6 +870,20 @@ a{color:var(--accent-ink);text-decoration:none}
 @media (max-width:420px){ .brand .bname{font-size:14px} }
 .brand .dot{width:26px;height:26px;border-radius:8px;background:var(--accent);
   color:var(--on-accent);display:grid;place-items:center;font-size:12px;font-weight:800}
+
+/* ─── Brand lockup ──────────────────────────────────────────────────────────
+   One mark and one wordmark for every page, drawn from icons/brand.svg.
+   The mark is sized by height and keeps the card's 0.80 aspect; the wordmark
+   is outlined artwork (Inter Display Black Italic) whose fill follows the
+   text colour, so it needs no dark-mode rule of its own. The league name sits
+   underneath as live text, which replaces the old two-letter league badge. */
+.bd-mark{display:block;flex:none;height:30px;width:24px}
+.bd-mark-lg{height:38px;width:31px}
+.bd-word{display:block;height:13px;width:153px;max-width:100%;color:var(--text)}
+.brand-lockup{display:flex;flex-direction:column;gap:4px;min-width:0}
+.brand-lockup .btag{font-size:.6rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;
+  color:var(--accent-ink);line-height:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+@media (max-width:420px){ .brand .bd-word{height:11px;width:130px} }
 
 .btn{font:inherit;font-size:13px;font-weight:600;padding:7px 12px;
   border-radius:9px;border:1px solid var(--border-2);background:var(--surface);

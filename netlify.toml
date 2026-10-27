@@ -5,6 +5,9 @@
   command = ""
 
 [build.environment]
+  # Node 24 LTS, supported to April 2028. Also sets the Functions runtime.
+  NODE_VERSION = "24"
+
   # The Supabase project URL is public client configuration — it ships in
   # index.html by design (Supabase's model: RLS + anon key in the client),
   # so the secrets scanner must not fail the build on it. Real secrets

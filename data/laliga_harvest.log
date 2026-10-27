@@ -1,4 +1,4 @@
-La Liga harvest — run 204
+La Liga harvest — run 216
 == discover ==
 La Liga: API-Football league 140, season 2026
 
@@ -24,87 +24,87 @@ laliga_clubs.json written (20 clubs)
     VAL  Valencia
     VIL  Villarreal
 
-API-Football: 1 call(s) this run; 274 of 7500 used today (4%), 7226 left
+API-Football: 1 call(s) this run; 261 of 7500 used today (3%), 7239 left
 == squads ==
 La Liga: API-Football league 140, season 2026
   fetching 20 squads
-    Athletic Club               29 players
+    Athletic Club               30 players
     Atletico Madrid             29 players
-    Barcelona                   28 players
-    Celta Vigo                  28 players
-    Deportivo Alaves            28 players
-    Deportivo La Coruna         30 players
+    Barcelona                   29 players
+    Celta Vigo                  29 players
+    Deportivo Alaves            29 players
+    Deportivo La Coruna         31 players
     Elche                       29 players
-    Espanyol                    28 players
+    Espanyol                    29 players
     Getafe                      30 players
-    Levante                     29 players
+    Levante                     30 players
     Malaga                      29 players
     Osasuna                     28 players
     Racing Santander            33 players
     Rayo Vallecano              32 players
     Real Betis                  28 players
-    Real Madrid                 29 players
+    Real Madrid                 31 players
     Real Sociedad               29 players
-    Sevilla                     32 players
+    Sevilla                     33 players
     Valencia                    32 players
     Villarreal                  28 players
 
-laliga_players.json written (588 players from 20 clubs, API-Football, LL season 2026)
+laliga_players.json written (598 players from 20 clubs, API-Football, LL season 2026)
 
-API-Football: 41 call(s) this run; 81 of 7500 used today (1%), 7419 left
+API-Football: 41 call(s) this run; 66 of 7500 used today (1%), 7434 left
 == rosters ==
 La Liga: API-Football league 140, season 2026
-    Athletic Club               52 players
-    Atletico Madrid             67 players
-    Barcelona                   72 players
-    Celta Vigo                  74 players
-    Deportivo Alaves            44 players
-    Deportivo La Coruna         56 players
-    Elche                       59 players
-    Espanyol                    54 players
-    Getafe                      75 players
+    Athletic Club               31 players
+    Atletico Madrid             28 players
+    Barcelona                   33 players
+    Celta Vigo                  34 players
+    Deportivo Alaves            24 players
+    Deportivo La Coruna         34 players
+    Elche                       36 players
+    Espanyol                    31 players
+    Getafe                      37 players
     Levante                     30 players
-    Malaga                      57 players
-    Osasuna                     27 players
-    Racing Santander            55 players
-    Rayo Vallecano              57 players
-    Real Betis                  69 players
-    Real Madrid                 73 players
-    Real Sociedad               75 players
-    Sevilla                     32 players
+    Malaga                      33 players
+    Osasuna                     28 players
+    Racing Santander            32 players
+    Rayo Vallecano              33 players
+    Real Betis                  30 players
+    Real Madrid                 38 players
+    Real Sociedad               34 players
+    Sevilla                     33 players
     Valencia                    35 players
-    Villarreal                  69 players
+    Villarreal                  30 players
 
-ll_squads.json written (1132 players from 20 clubs, API-Football current rosters)
+ll_squads.json written (644 players from 20 clubs, API-Football current rosters)
 
-API-Football: 21 call(s) this run; 102 of 7500 used today (1%), 7398 left
+API-Football: 21 call(s) this run; 87 of 7500 used today (1%), 7413 left
 == season-cards ==
 La Liga: API-Football league 140, season 2026
   fetching 20 squads
-    Athletic Club               29 players
+    Athletic Club               30 players
     Atletico Madrid             29 players
-    Barcelona                   28 players
-    Celta Vigo                  28 players
-    Deportivo Alaves            28 players
-    Deportivo La Coruna         30 players
+    Barcelona                   29 players
+    Celta Vigo                  29 players
+    Deportivo Alaves            29 players
+    Deportivo La Coruna         31 players
     Elche                       29 players
-    Espanyol                    28 players
+    Espanyol                    29 players
     Getafe                      30 players
-    Levante                     29 players
+    Levante                     30 players
     Malaga                      29 players
     Osasuna                     28 players
     Racing Santander            33 players
     Rayo Vallecano              32 players
     Real Betis                  28 players
-    Real Madrid                 29 players
+    Real Madrid                 31 players
     Real Sociedad               29 players
-    Sevilla                     32 players
+    Sevilla                     33 players
     Valencia                    32 players
     Villarreal                  28 players
 
-laliga_season_cards.json written (588 players from 20 clubs, API-Football, LL season 2026)
+laliga_season_cards.json written (598 players from 20 clubs, API-Football, LL season 2026)
 
-API-Football: 41 call(s) this run; 143 of 7500 used today (2%), 7357 left
+API-Football: 41 call(s) this run; 128 of 7500 used today (2%), 7372 left
 == segunda ==
 Segunda División: API-Football league 141, season 2025
   not in this desk's club list (19): AD Ceuta FC, Albacete, Almeria, Burgos, Cadiz, Castellón, Cordoba, Cultural Leonesa, Eibar, FC Andorra, Granada CF, Huesca, Las Palmas, Leganes, Mirandes, Real Sociedad II, Sporting Gijon, Valladolid, Zaragoza
@@ -115,92 +115,36 @@ Segunda División: API-Football league 141, season 2025
 
 segunda_players.json written (110 players from 3 clubs, API-Football, SEG season 2025)
 
-API-Football: 7 call(s) this run; 150 of 7500 used today (2%), 7350 left
+API-Football: 7 call(s) this run; 135 of 7500 used today (2%), 7365 left
 == ref-fixtures ==
 La Liga: API-Football league 140, season 2025
 
 laliga_ref_fixtures.js written (380 matches over 20 clubs, 380 with an official named)
 
-API-Football: 1 call(s) this run; 151 of 7500 used today (2%), 7349 left
+API-Football: 1 call(s) this run; 136 of 7500 used today (2%), 7364 left
 == fixtures ==
 La Liga: API-Football league 140, season 2026
-  LL appointments overlay: 0 applied, 1 already harvested
-  CLARIFIED: RAY v ALA: harvested 'J. Munuera' is the same official as 'José Luis Munuera Montero', which the card table carries — the published spelling stands
-  CLARIFIED: GET v RAC: harvested 'J. Martinez' is the same official as 'Juan Martinez Munuera', which the card table carries — the published spelling stands
-  CLARIFIED: RMA v MAL: harvested 'J. Martinez' is the same official as 'Juan Martinez Munuera', which the card table carries — the published spelling stands
-  CLARIFIED: ATH v ATM: harvested 'J. Munuera' is the same official as 'José Luis Munuera Montero', which the card table carries — the published spelling stands
-  CLARIFIED: RSO v ATM: harvested 'J. Martinez' is the same official as 'Juan Martinez Munuera', which the card table carries — the published spelling stands
-  CLARIFIED: BAR v RAC: harvested 'J. Munuera' is the same official as 'José Luis Munuera Montero', which the card table carries — the published spelling stands
-  CLARIFIED: SEV v BAR: harvested 'J. Martinez' is the same official as 'Juan Martinez Munuera', which the card table carries — the published spelling stands
-  CLARIFIED: VAL v RSO: harvested 'J. Munuera' is the same official as 'José Luis Munuera Montero', which the card table carries — the published spelling stands
-  CHANGED: ALA v GET: harvested 'M. Orellana', published 'Manuel Jesús Orellana' — the harvested name stands
-  CHANGED: SEV v RAY: harvested 'R. De Burgos', published 'Ricardo De Burgos Bengoetxea' — the harvested name stands
-  CHANGED: ESP v LEV: harvested 'C. Muniz', published 'Carlos Muñiz' — the harvested name stands
-  CHANGED: RAC v VIL: harvested 'M. Sesma', published 'Miguel Sesma Espinosa' — the harvested name stands
-  CHANGED: DEP v ELC: harvested 'F. Maeso', published 'Francisco Hernandez Maeso' — the harvested name stands
-  CHANGED: ATM v MAL: harvested 'A. Cordero', published 'Adrian Cordero Vega' — the harvested name stands
-  CHANGED: BET v RSO: harvested 'I. Diaz', published 'Isidro Diaz de Mera Escuderos' — the harvested name stands
-  CHANGED: ATH v SEV: harvested 'C. Soto Grado', published 'César Soto Grado' — the harvested name stands
-  CHANGED: ESP v RMA: harvested 'J. Sanchez', published 'José María Sánchez Martínez' — the harvested name stands
-  CHANGED: VAL v CEL: harvested 'J. Manzano', published 'Jesus Gil Manzano' — the harvested name stands
-  CHANGED: ATM v VIL: harvested 'A. Hernandez', published 'Alejandro Hernandez' — the harvested name stands
-  CHANGED: ELC v BAR: harvested 'A. Quintero', published 'Alejandro Quintero Gonzalez' — the harvested name stands
-  CHANGED: MAL v DEP: harvested 'J. Alberola', published 'Javier Alberola Rojas' — the harvested name stands
-  CHANGED: OSA v LEV: harvested 'V. Garcia', published 'Victor Garcia Verdura' — the harvested name stands
-  CHANGED: BAR v ATH: harvested 'M. Ortiz', published 'Miguel Angel Ortiz Arias' — the harvested name stands
-  CHANGED: CEL v OSA: harvested 'M. Sesma', published 'Miguel Sesma Espinosa' — the harvested name stands
-  CHANGED: ALA v VIL: harvested 'I. Diaz', published 'Isidro Diaz de Mera Escuderos' — the harvested name stands
-  CHANGED: RAC v ELC: harvested 'C. Muniz', published 'Carlos Muñiz' — the harvested name stands
-  CHANGED: LEV v BET: harvested 'R. De Burgos', published 'Ricardo De Burgos Bengoetxea' — the harvested name stands
-  CHANGED: RSO v ESP: harvested 'M. Orellana', published 'Manuel Jesús Orellana' — the harvested name stands
-  CHANGED: SEV v ATM: harvested 'J. Alberola', published 'Javier Alberola Rojas' — the harvested name stands
-  CHANGED: CEL v ATH: harvested 'M. Busquets', published 'Mateo Busquets Ferrer' — the harvested name stands
-  CHANGED: DEP v VAL: harvested 'M. Ortiz', published 'Miguel Angel Ortiz Arias' — the harvested name stands
-  CHANGED: BAR v RAY: harvested 'F. Maeso', published 'Francisco Hernandez Maeso' — the harvested name stands
-  CHANGED: OSA v GET: harvested 'J. A. Gonzalez Esteban', published 'Jon Ander González' — the harvested name stands
-  CHANGED: RSO v CEL: harvested 'V. Garcia', published 'Victor Garcia Verdura' — the harvested name stands
-  CHANGED: BET v RMA: harvested 'A. Hernandez', published 'Alejandro Hernandez' — the harvested name stands
-  CHANGED: RAY v RAC: harvested 'A. Quintero', published 'Alejandro Quintero Gonzalez' — the harvested name stands
-  CHANGED: VIL v DEP: harvested 'J. Manzano', published 'Jesus Gil Manzano' — the harvested name stands
-  CHANGED: ALA v OSA: harvested 'J. Sanchez', published 'José María Sánchez Martínez' — the harvested name stands
-  CHANGED: ESP v SEV: harvested 'M. Sesma', published 'Miguel Sesma Espinosa' — the harvested name stands
-  CHANGED: MAL v LEV: harvested 'L. Bestard Servera', published 'Luis Bestard' — the harvested name stands
-  CHANGED: VAL v BAR: harvested 'I. Diaz', published 'Isidro Diaz de Mera Escuderos' — the harvested name stands
-  CHANGED: ELC v RSO: harvested 'M. Ortiz', published 'Miguel Angel Ortiz Arias' — the harvested name stands
-  CHANGED: GET v CEL: harvested 'C. Soto Grado', published 'César Soto Grado' — the harvested name stands
-  CHANGED: SEV v VAL: harvested 'M. Busquets', published 'Mateo Busquets Ferrer' — the harvested name stands
-  CHANGED: ATH v ELC: harvested 'M. Orellana', published 'Manuel Jesús Orellana' — the harvested name stands
-  CHANGED: OSA v ESP: harvested 'L. Bestard Servera', published 'Luis Bestard' — the harvested name stands
-  CHANGED: RAC v ALA: harvested 'J. Alberola', published 'Javier Alberola Rojas' — the harvested name stands
-  CHANGED: RMA v RAY: harvested 'V. Garcia', published 'Victor Garcia Verdura' — the harvested name stands
-  CHANGED: CEL v MAL: harvested 'C. Muniz', published 'Carlos Muñiz' — the harvested name stands
-  CHANGED: GET v DEP: harvested 'R. De Burgos', published 'Ricardo De Burgos Bengoetxea' — the harvested name stands
-  CHANGED: LEV v BAR: harvested 'J. A. Gonzalez Esteban', published 'Jon Ander González' — the harvested name stands
-  CHANGED: VIL v BET: harvested 'F. Maeso', published 'Francisco Hernandez Maeso' — the harvested name stands
-  CHANGED: ALA v VAL: harvested 'M. Sesma', published 'Miguel Sesma Espinosa' — the harvested name stands
-  CHANGED: ELC v RMA: harvested 'J. Manzano', published 'Jesus Gil Manzano' — the harvested name stands
-  CHANGED: RAY v ESP: harvested 'I. Diaz', published 'Isidro Diaz de Mera Escuderos' — the harvested name stands
-  CHANGED: ATM v OSA: harvested 'F. Maeso', published 'Francisco Hernandez Maeso' — the harvested name stands
-  CHANGED: DEP v SEV: harvested 'A. Hernandez', published 'Alejandro Hernandez' — the harvested name stands
-  CHANGED: BET v GET: harvested 'J. Sanchez', published 'José María Sánchez Martínez' — the harvested name stands
-  CHANGED: MAL v VIL: harvested 'M. Ortiz', published 'Miguel Angel Ortiz Arias' — the harvested name stands
-  CHANGED: ESP v ELC: harvested 'J. A. Gonzalez Esteban', published 'Jon Ander González' — the harvested name stands
-  CHANGED: ATH v ALA: harvested 'V. Garcia', published 'Victor Garcia Verdura' — the harvested name stands
-  CHANGED: CEL v RAC: harvested 'R. De Burgos', published 'Ricardo De Burgos Bengoetxea' — the harvested name stands
-  CHANGED: OSA v RAY: harvested 'M. Orellana', published 'Manuel Jesús Orellana' — the harvested name stands
-  CHANGED: ATM v RMA: harvested 'M. Ortiz', published 'Miguel Angel Ortiz Arias' — the harvested name stands
-  CHANGED: DEP v BET: harvested 'C. Soto Grado', published 'César Soto Grado' — the harvested name stands
-  CHANGED: GET v MAL: harvested 'J. Alberola', published 'Javier Alberola Rojas' — the harvested name stands
-  CHANGED: VIL v LEV: harvested 'M. Busquets', published 'Mateo Busquets Ferrer' — the harvested name stands
-  CHANGED: MAL v ESP: harvested 'F. Maeso', published 'Francisco Hernandez Maeso' — the harvested name stands
-  CHANGED: ALA v ATM: harvested 'A. Quintero', published 'Alejandro Quintero Gonzalez' — the harvested name stands
-  CHANGED: BAR v GET: harvested 'J. Manzano', published 'Jesus Gil Manzano' — the harvested name stands
+  LL appointments overlay: 0 applied, 77 already harvested
+  CHANGED: ALA v GET: harvested 'Manuel Jesus Orellana Cid', published 'Manuel Jesús Orellana' — the harvested name stands
+  CHANGED: ESP v LEV: harvested 'Carlos Muniz Munoz', published 'Carlos Muñiz' — the harvested name stands
+  CHANGED: RAC v ELC: harvested 'Carlos Muniz Munoz', published 'Carlos Muñiz' — the harvested name stands
+  CHANGED: RSO v ESP: harvested 'Manuel Jesus Orellana Cid', published 'Manuel Jesús Orellana' — the harvested name stands
+  CHANGED: OSA v GET: harvested 'Jon Ander Gonzalez Esteban', published 'Jon Ander González' — the harvested name stands
+  CHANGED: MAL v LEV: harvested 'Luis Bestard Servera', published 'Luis Bestard' — the harvested name stands
+  CHANGED: ATH v ELC: harvested 'Manuel Jesus Orellana Cid', published 'Manuel Jesús Orellana' — the harvested name stands
+  CHANGED: OSA v ESP: harvested 'Luis Bestard Servera', published 'Luis Bestard' — the harvested name stands
+  CHANGED: CEL v MAL: harvested 'Carlos Muniz Munoz', published 'Carlos Muñiz' — the harvested name stands
+  CHANGED: LEV v BAR: harvested 'Jon Ander Gonzalez Esteban', published 'Jon Ander González' — the harvested name stands
+  CHANGED: ESP v ELC: harvested 'Jon Ander Gonzalez Esteban', published 'Jon Ander González' — the harvested name stands
+  CHANGED: OSA v RAY: harvested 'Manuel Jesus Orellana Cid', published 'Manuel Jesús Orellana' — the harvested name stands
   CHANGED: RAY v ATH: harvested 'J. Sanchez', published 'José María Sánchez Martínez' — the harvested name stands
-  CHANGED: RMA v VIL: harvested 'I. Diaz', published 'Isidro Diaz de Mera Escuderos' — the harvested name stands
-  CHANGED: BET v OSA: harvested 'C. Muniz', published 'Carlos Muñiz' — the harvested name stands
-  CHANGED: ELC v CEL: harvested 'J. Alberola', published 'Javier Alberola Rojas' — the harvested name stands
-  CHANGED: RAC v VAL: harvested 'L. Bestard Servera', published 'Luis Bestard' — the harvested name stands
-  CHANGED: RSO v DEP: harvested 'M. Sesma', published 'Miguel Sesma Espinosa' — the harvested name stands
+  CHANGED: BET v OSA: harvested 'Carlos Muniz Munoz', published 'Carlos Muñiz' — the harvested name stands
+  CHANGED: RAC v VAL: harvested 'Luis Bestard Servera', published 'Luis Bestard' — the harvested name stands
+  CHANGED: DEP v LEV: harvested 'Manuel Jesus Orellana Cid', published 'Manuel Jesús Orellana' — the harvested name stands
+  CHANGED: MAL v RSO: harvested 'Luis Bestard Servera', published 'Luis Bestard' — the harvested name stands
+  CHANGED: GET v RAY: harvested 'Jon Ander Gonzalez Esteban', published 'Jon Ander González' — the harvested name stands
+  CHANGED: ALA v MAL: harvested 'Carlos Muñiz Muñoz', published 'Carlos Muñiz' — the harvested name stands
+  CHANGED: ATH v GET: harvested 'Francisco Jose Hernandez Maeso', published 'Francisco Hernandez Maeso' — the harvested name stands
   WARNING: appointment matches no fixture — LEV v ATH 2026-09-16
   NOTE: no card record for Manuel Jesús Orellana (ALA v GET) — priced at the league rate
   NOTE: no card record for Carlos Muñiz (ESP v LEV) — priced at the league rate
@@ -216,20 +160,24 @@ La Liga: API-Football league 140, season 2026
   NOTE: no card record for Manuel Jesús Orellana (OSA v RAY) — priced at the league rate
   NOTE: no card record for Carlos Muñiz (BET v OSA) — priced at the league rate
   NOTE: no card record for Luis Bestard (RAC v VAL) — priced at the league rate
+  NOTE: no card record for Manuel Jesús Orellana (DEP v LEV) — priced at the league rate
+  NOTE: no card record for Luis Bestard (MAL v RSO) — priced at the league rate
+  NOTE: no card record for Jon Ander González (GET v RAY) — priced at the league rate
+  NOTE: no card record for Carlos Muñiz (ALA v MAL) — priced at the league rate
 
-laliga_fixtures.js written (380 fixtures over 38 matchdays, 80 with a referee appointed)
+laliga_fixtures.js written (380 fixtures over 38 matchdays, 100 with a referee appointed)
 
-API-Football: 1 call(s) this run; 152 of 7500 used today (2%), 7348 left
+API-Football: 1 call(s) this run; 137 of 7500 used today (2%), 7363 left
 == build ==
 Division: 17 clubs were in it last season, 3 came up
   promoted: Deportivo La Coruna, Malaga, Racing Santander
-  LL    496 players from the La Liga feed, 2026-27 form
+  LL    505 players from the La Liga feed, 2026-27 form
   SEG   110 players from the Segunda feed, 2025-26 form
-  NEW   105 players from the squad fill feed
+  NEW   106 players from the squad fill feed
 Reusing the previous build for sources that did not harvest:
-  - laliga_squads.json (105 players kept from the previous build)
+  - laliga_squads.json (106 players kept from the previous build)
     6 duplicate row(s) collapsed after the moves, keeping the row with a rate on it
-Squads reconciled against the FPL feed: 11 moved, 1 joined, 65 left the division, 21 left alone as ambiguous (711 rows in, 641 out).
+Squads reconciled against the FPL feed: 11 moved, 0 joined, 69 left the division, 20 left alone as ambiguous (720 rows in, 645 out).
     D. Diaz RAC -> RSO
     J. Giménez ATM -> DEP
     José Ángel ESP -> SEV
@@ -254,22 +202,21 @@ Squads reconciled against the FPL feed: 11 moved, 1 joined, 65 left the division
     AMBIGUOUS, left at RAY: M. Roman
     AMBIGUOUS, left at RMA: Álvaro Fernández
     AMBIGUOUS, left at SEV: I. Munoz
+    AMBIGUOUS, left at SEV: J. Cruz
     AMBIGUOUS, left at VAL: André Almeida
     AMBIGUOUS, left at VAL: Jesús Vázquez
-    AMBIGUOUS, left at VIL: Carlos Romero
     AMBIGUOUS, left at DEP: Rubén
     AMBIGUOUS, left at DEP: Álvaro Fernández
-    AMBIGUOUS, left at MAL: Rafa Rodríguez
     AMBIGUOUS, left at CEL: J. Lopez
     AMBIGUOUS, left at RMA: Jesús Fortea
-Photographs: filled 1 from ll_squads.json; 641 of 641 rows carry a face.
+Photographs: filled 0 from ll_squads.json; 645 of 645 rows carry a face.
 
 club rates from mirror (380 matches)
-players: 641  by basis: LL=470, NEW=106, SEG=65
+players: 645  by basis: LL=475, NEW=105, SEG=65
 form: LL=2026-27, SEG=2025-26
 clubs with players: 20 of 20
 club rates from match records: 17 of 20
-season cautions (2026-27): 552 players
+season cautions (2026-27): 558 players
 referees: 20
 RESULT: WRITTEN laliga_data.js
 == referee-join ==

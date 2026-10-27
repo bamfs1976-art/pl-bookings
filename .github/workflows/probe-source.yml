@@ -41,7 +41,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 24
 
       # No secret to guard: every request is an unauthenticated GET for a page
       # a reader could open in a browser.
