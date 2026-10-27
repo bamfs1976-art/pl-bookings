@@ -83,7 +83,7 @@ const SERIEA_FIXTURES = [
   {id:1550166,d:"2026-10-25T19:45:00+00:00",r:8,h:"UDI",a:"ACM",ref:"Matteo Marcenaro",st:"FT"},
   {id:1550174,d:"2026-10-27T17:30:00+00:00",r:9,h:"SAS",a:"LAZ",ref:"Luca Zufferli",st:"NS"},
   {id:1550168,d:"2026-10-27T19:45:00+00:00",r:9,h:"ROM",a:"CAG",ref:null,st:"NS"},
-  {id:1550175,d:"2026-10-27T19:45:00+00:00",r:9,h:"TOR",a:"COM",ref:"Giuseppe Collu",st:"NS"},
+  {id:1550175,d:"2026-10-27T19:45:00+00:00",r:9,h:"TOR",a:"COM",ref:"Guiseppe Collu",st:"NS"},
   {id:1550167,d:"2026-10-28T17:30:00+00:00",r:9,h:"ACM",a:"BGN",ref:"SACCHI",st:"NS"},
   {id:1550173,d:"2026-10-28T17:30:00+00:00",r:9,h:"PAR",a:"UDI",ref:"Davide Massa",st:"NS"},
   {id:1550176,d:"2026-10-28T17:30:00+00:00",r:9,h:"VEN",a:"INT",ref:"Luca Pairetto",st:"NS"},
