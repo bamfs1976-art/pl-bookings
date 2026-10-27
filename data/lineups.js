@@ -5,7 +5,7 @@
 // through PLDCore.matchSquadName. A fixture absent from here prices off
 // squad minute-weights exactly as it always has — that is the normal
 // state until about an hour before kick-off, not a failure.
-// Fetched 2026-10-26T21:01Z.
+// Fetched 2026-10-27T20:13Z.
 //
 // THE GLOBAL IS NOT CALLED `LINEUPS`, and that is deliberate. index.html
 // already declares a top-level `const LINEUPS` for assets/lineup.js (the
@@ -14,7 +14,8 @@
 // a parse error, not a shadow: the whole inline script fails and the desk
 // renders blank. Read `window.LINEUP_SHEETS`.
 var __LINEUP_SHEETS = {
-  "1570431":{"OSA":{start:["Aitor Fernández", "V. Rosier", "Catena", "F. Boyomo", "Abel Bretones", "Moncayola", "Lucas Torró", "Moi Gómez", "Rubén García", "A. Budimir", "Jonathan Dubasin"],sub:["Sergio Herrera", "Rafa Fernández", "Íñigo Arguibide", "U. Santos", "Asier Osambela", "R. Yeboah", "Diego Rico", "Mauro Echegoyen", "Raul Moro", "Iker Muñoz", "Raúl García", "Kike Barja"]},"SEV":{start:["O. Vlachodimos", "Juan Iglesias", "Andrés Castrín", "Kike Salas", "G. Suazo", "C. Ejuke", "L. Agoumé", "Y. Fofana", "Félix Correia", "Isaac", "L. Stassin"],sub:["José Ángel Carmona", "Julio Díaz del Romo", "Peque Fernández", "Alfon González", "Fran González", "Jon Guridi", "G. Kochorashvili", "Fábio Cardoso", "A. Sangante", "R. Ure", "R. Vargas", "Manu Bueno"]}},
+  "1550168":{"CAG":{start:["E. Caprile", "Zé Pedro", "Y. Mina", "J. Rodríguez", "Y. Sugawara", "A. Romano", "A. Deiola", "M. Adopo", "A. Obert", "A. Fadera", "M&apos;Bala Nzola"],sub:["J. Fazzini", "Y. Trepy", "R. Gagliardini", "Kevin Carlos", "R. Kofler", "J. Liteta", "D. Maldini", "Y. Massolin", "P. Mendy", "B. Radunović", "A. Sherri", "Ivan Stoyanov Sulev", "R. Ciervo", "G. Aurelio"]},"ROM":{start:["P. Gollini", "G. Mancini", "E. Ndicka", "K. Koulierakis", "E. Lulli", "B. Cristante", "M. de Roon", "N. Pisilli", "N. Molina", "M. Soulé", "S. Castro"],sub:["Wesley", "D. Vásquez", "D. Rensch", "D. Malen", "Hermoso", "D. Ghilardi", "Alessandro Di Nunzio", "G. De Marzi", "Mandjou Camara", "L. Balerdi", "Rodrigo Mora"]}},
+  "1550175":{"COM":{start:["Robert Sánchez", "Yan Couto", "Jacobo Ramón Naveros", "M. Kempf", "Álex Valle", "M. Perrone", "Luis Milla", "L. da Cunha", "N. Paz", "M. Caqueret", "T. Douvikas"],sub:["E. Goldaniga", "Kaiki", "M. Vigorito", "S. Ricci", "J. Addai", "Matteo Oliveira Papaccioli", "A. Lahdo", "Willy Kambwala Ndengushi", "A. Dossena", "J. Butez", "M. Baturina"]},"TOR":{start:["Lucas Perri", "Saúl Coco", "A. Ismajli", "P. Comuzzo", "R. Belghali", "N. Vlašić", "Daniel Bragança", "K. Fitz-Jim", "A. Cacciamani", "G. Simeone", "C. Adams"],sub:["D. Mascardi", "C. Biraghi", "C. Casadei", "E. Cömert", "G. Gineitis", "S. Kulenović", "E. İlkhan", "D. Zapata", "L. Siviero", "P. Pellegri", "N. Patterson", "G. Oristanio", "Z. Aboukhlal"]}},
 };
 if (typeof module !== "undefined" && module.exports) module.exports = __LINEUP_SHEETS;
 if (typeof window !== "undefined") window.LINEUP_SHEETS = __LINEUP_SHEETS;
