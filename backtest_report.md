@@ -4,7 +4,7 @@
      of this file is that every number in it came out of a real run. -->
 
 **Premier League** · 1225 out-of-sample predictions over 8 rounds
-· source `data/match_history.json` · generated 2026-10-26T10:04:41.763Z
+· source `data/match_history.json` · generated 2026-10-27T09:56:52.962Z
 
 ## Headline
 
@@ -13,7 +13,7 @@ The refit is **indistinguishable** from the naive base rate — on this sample t
 | model | Brier | log loss |
 |---|---|---|
 | base | 0.1124 | 0.3847 |
-| prior | 0.1106 | 0.3762 |
+| prior | 0.1106 | 0.3761 |
 | fit | 0.1111 | 0.3785 |
 
 Lower is better. `base` is the league base rate for every player — the naive
@@ -23,8 +23,8 @@ is what a live model would have known at the time.
 
 ## Is the difference real?
 
-- fit vs base: **is indistinguishable from** — mean Brier difference -0.00132 ± 0.00144 (2 s.e.)
-- fit vs prior: **is WORSE than** — mean Brier difference 0.00045 ± 0.00040 (2 s.e.)
+- fit vs base: **is indistinguishable from** — mean Brier difference -0.00131 ± 0.00142 (2 s.e.)
+- fit vs prior: **is WORSE than** — mean Brier difference 0.00046 ± 0.00041 (2 s.e.)
 
 The predictions are paired — same rows, same order — so the difference in
 squared error has a standard error of its own, and an interval spanning zero
@@ -39,15 +39,15 @@ score suggests.
 
 | predicted band | n | mean predicted | actual | gap |
 |---|---:|---:|---:|---:|
-| 0–10% | 127 | 4.9% | 3.9% | -1.0pp |
-| 10–20% | 1094 | 13.1% | 13.9% | +0.8pp |
-| 20–30% | 2 | 23.8% | 0.0% | -23.8pp |
-| 30–40% | 1 | 30.7% | 0.0% | -30.7pp |
+| 0–10% | 122 | 4.8% | 4.1% | -0.7pp |
+| 10–20% | 1099 | 13.1% | 13.8% | +0.8pp |
+| 20–30% | 2 | 22.9% | 0.0% | -22.9pp |
+| 30–40% | 1 | 30.1% | 0.0% | -30.1pp |
 | 40–50% | 0 | — | — | — |
 | 50–60% | 0 | — | — | — |
 | 60–70% | 0 | — | — | — |
 | 70–80% | 0 | — | — | — |
-| 80–90% | 1 | 85.4% | 100.0% | +14.6pp |
+| 80–90% | 1 | 83.9% | 100.0% | +16.1pp |
 | 90–100% | 0 | — | — | — |
 
 A positive gap means the model was too cautious in that band; a negative gap
