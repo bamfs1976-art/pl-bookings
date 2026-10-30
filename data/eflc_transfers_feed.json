@@ -1,6 +1,6 @@
 {
   "note": "PROPOSALS from API-Football /transfers, for a person to read. data/transfers.json is the hand-curated overlay that is actually applied; this is not.",
-  "since": "2026-07-01",
+  "since": "2026-07-02",
   "moves": [
     {
       "n": "T. Adeyemo",
@@ -28,6 +28,15 @@
       "toCode": "BIR",
       "date": "2026-10-13",
       "type": "Return from loan"
+    },
+    {
+      "n": "W. Keane",
+      "from": "Preston",
+      "to": "Doncaster",
+      "fromCode": "PRE",
+      "toCode": null,
+      "date": "2026-10-12",
+      "type": "Free agent"
     },
     {
       "n": "Finley Woodham",
@@ -210,6 +219,15 @@
       "type": "Loan"
     },
     {
+      "n": "Marley Leuluai",
+      "from": "Burnley",
+      "to": "Auckland",
+      "fromCode": "BUR",
+      "toCode": null,
+      "date": "2026-09-14",
+      "type": "Free agent"
+    },
+    {
       "n": "J. Panzo",
       "from": "Birmingham",
       "to": "Levadiakos",
@@ -244,6 +262,15 @@
       "toCode": null,
       "date": "2026-09-13",
       "type": "-"
+    },
+    {
+      "n": "Marley Leuluai",
+      "from": "Burnley",
+      "to": "Auckland",
+      "fromCode": "BUR",
+      "toCode": null,
+      "date": "2026-09-13",
+      "type": "Free agent"
     },
     {
       "n": "B. Bateman",
@@ -2550,6 +2577,15 @@
       "type": "-"
     },
     {
+      "n": "K. Mfuamba",
+      "from": "West Brom",
+      "to": "Reading",
+      "fromCode": "WBA",
+      "toCode": null,
+      "date": "2026-08-23",
+      "type": "Free agent"
+    },
+    {
       "n": "K. Hoever",
       "from": "Wolves",
       "to": "Sparta Praha",
@@ -2856,6 +2892,15 @@
       "type": "Loan"
     },
     {
+      "n": "Isaac Irwin",
+      "from": "Crewe",
+      "to": "Preston",
+      "fromCode": null,
+      "toCode": "PRE",
+      "date": "2026-08-18",
+      "type": "Transfer"
+    },
+    {
       "n": "George Earthy",
       "from": "West Ham",
       "to": "Reading",
@@ -2942,6 +2987,15 @@
       "to": "Stevenage",
       "fromCode": "BUR",
       "toCode": null,
+      "date": "2026-08-17",
+      "type": "Transfer"
+    },
+    {
+      "n": "Isaac Irwin",
+      "from": "Crewe",
+      "to": "Preston",
+      "fromCode": null,
+      "toCode": "PRE",
       "date": "2026-08-17",
       "type": "Transfer"
     },
@@ -6814,87 +6868,6 @@
       "toCode": null,
       "date": "2026-07-02",
       "type": "Free agent"
-    },
-    {
-      "n": "Noah McCann",
-      "from": "QPR",
-      "to": "Central Coast Mariners",
-      "fromCode": "QPR",
-      "toCode": null,
-      "date": "2026-07-01",
-      "type": "Free agent"
-    },
-    {
-      "n": "N. Baxter",
-      "from": "Watford",
-      "to": "Leyton Orient",
-      "fromCode": "WAT",
-      "toCode": null,
-      "date": "2026-07-01",
-      "type": "Transfer"
-    },
-    {
-      "n": "Mateus Fernandes",
-      "from": "West Ham",
-      "to": "Tottenham",
-      "fromCode": "WHU",
-      "toCode": null,
-      "date": "2026-07-01",
-      "type": "Transfer"
-    },
-    {
-      "n": "M. Langstaff",
-      "from": "Millwall",
-      "to": "Salford City",
-      "fromCode": "MIL",
-      "toCode": null,
-      "date": "2026-07-01",
-      "type": "Transfer"
-    },
-    {
-      "n": "Luca Stephenson",
-      "from": "Liverpool",
-      "to": "Bolton",
-      "fromCode": null,
-      "toCode": "BOL",
-      "date": "2026-07-01",
-      "type": "Transfer"
-    },
-    {
-      "n": "L. Graham",
-      "from": "Dundee",
-      "to": "Stoke City",
-      "fromCode": null,
-      "toCode": "STK",
-      "date": "2026-07-01",
-      "type": "Transfer"
-    },
-    {
-      "n": "Kieron Willox",
-      "from": "Stoke City",
-      "to": "Elgin City",
-      "fromCode": "STK",
-      "toCode": null,
-      "date": "2026-07-01",
-      "type": "Free agent"
-    },
-    {
-      "n": "D. Fry",
-      "from": "Middlesbrough",
-      "to": "Birmingham",
-      "fromCode": "MID",
-      "toCode": "BIR",
-      "date": "2026-07-01",
-      "type": "Free agent"
-    },
-    {
-      "n": "Alex Matos",
-      "from": "Sheffield Utd",
-      "to": "Göztepe",
-      "fromCode": "SHU",
-      "toCode": null,
-      "date": "2026-07-01",
-      "type": "Loan"
     }
   ]
 }

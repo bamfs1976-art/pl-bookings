@@ -1,6 +1,6 @@
 {
   "note": "PROPOSALS from API-Football /transfers, for a person to read. data/transfers.json is the hand-curated overlay that is actually applied; this is not.",
-  "since": "2026-07-01",
+  "since": "2026-07-02",
   "moves": [
     {
       "n": "Dani Carvajal",
@@ -1146,6 +1146,15 @@
       "type": "Free agent"
     },
     {
+      "n": "Yayo",
+      "from": "Cultural Leonesa",
+      "to": "Deportivo La Coruna",
+      "fromCode": null,
+      "toCode": "DEP",
+      "date": "2026-08-26",
+      "type": "Free agent"
+    },
+    {
       "n": "K. Tunde",
       "from": "Levante",
       "to": "West Brom",
@@ -1234,6 +1243,15 @@
       "toCode": "ATM",
       "date": "2026-08-26",
       "type": "Loan"
+    },
+    {
+      "n": "Yayo",
+      "from": "Cultural Leonesa",
+      "to": "Deportivo La Coruna",
+      "fromCode": null,
+      "toCode": "DEP",
+      "date": "2026-08-25",
+      "type": "Free agent"
     },
     {
       "n": "Willy Kambwala Ndengushi",
@@ -4788,87 +4806,6 @@
       "fromCode": "ESP",
       "toCode": null,
       "date": "2026-07-02",
-      "type": "Free agent"
-    },
-    {
-      "n": "Álex Calatrava",
-      "from": "Castellon",
-      "to": "Espanyol",
-      "fromCode": null,
-      "toCode": "ESP",
-      "date": "2026-07-01",
-      "type": "Transfer"
-    },
-    {
-      "n": "Álex Calatrava",
-      "from": "Castellón",
-      "to": "Espanyol",
-      "fromCode": null,
-      "toCode": "ESP",
-      "date": "2026-07-01",
-      "type": "Transfer"
-    },
-    {
-      "n": "Marc Cucurella",
-      "from": "Chelsea",
-      "to": "Real Madrid",
-      "fromCode": null,
-      "toCode": "RMA",
-      "date": "2026-07-01",
-      "type": "€ 55M"
-    },
-    {
-      "n": "Leo Román",
-      "from": "Mallorca",
-      "to": "Deportivo La Coruna",
-      "fromCode": null,
-      "toCode": "DEP",
-      "date": "2026-07-01",
-      "type": "Transfer"
-    },
-    {
-      "n": "L. Pétrot",
-      "from": "Elche",
-      "to": "Anderlecht",
-      "fromCode": "ELC",
-      "toCode": null,
-      "date": "2026-07-01",
-      "type": "Free agent"
-    },
-    {
-      "n": "Ibon Badiola",
-      "from": "Malaga",
-      "to": "Arenas Getxo",
-      "fromCode": "MAL",
-      "toCode": null,
-      "date": "2026-07-01",
-      "type": "Free agent"
-    },
-    {
-      "n": "Dani Rodríguez",
-      "from": "Barcelona",
-      "to": "Dinamo Zagreb",
-      "fromCode": "BAR",
-      "toCode": null,
-      "date": "2026-07-01",
-      "type": "Free agent"
-    },
-    {
-      "n": "Adrián Corral",
-      "from": "Atletico Madrid",
-      "to": "FC Cartagena",
-      "fromCode": "ATM",
-      "toCode": null,
-      "date": "2026-07-01",
-      "type": "Free agent"
-    },
-    {
-      "n": "A. Espino",
-      "from": "Rayo Vallecano",
-      "to": "Racing Club",
-      "fromCode": "RAY",
-      "toCode": null,
-      "date": "2026-07-01",
       "type": "Free agent"
     }
   ]

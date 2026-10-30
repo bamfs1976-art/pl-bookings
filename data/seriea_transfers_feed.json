@@ -1,6 +1,6 @@
 {
   "note": "PROPOSALS from API-Football /transfers, for a person to read. data/transfers.json is the hand-curated overlay that is actually applied; this is not.",
-  "since": "2026-07-01",
+  "since": "2026-07-02",
   "moves": [
     {
       "n": "A. Di Nunzio",
@@ -6705,42 +6705,6 @@
       "fromCode": null,
       "toCode": "CAG",
       "date": "2026-07-02",
-      "type": "Free agent"
-    },
-    {
-      "n": "L. Consiglio",
-      "from": "Genoa",
-      "to": "Modena",
-      "fromCode": "GEN",
-      "toCode": null,
-      "date": "2026-07-01",
-      "type": "Free agent"
-    },
-    {
-      "n": "Kaiki",
-      "from": "Cruzeiro",
-      "to": "Como",
-      "fromCode": null,
-      "toCode": "COM",
-      "date": "2026-07-01",
-      "type": "Loan"
-    },
-    {
-      "n": "F. Carboni",
-      "from": "Inter",
-      "to": "Parma",
-      "fromCode": "INT",
-      "toCode": "PAR",
-      "date": "2026-07-01",
-      "type": "Transfer"
-    },
-    {
-      "n": "A. Akarakiri",
-      "from": "Everton",
-      "to": "Cagliari",
-      "fromCode": null,
-      "toCode": "CAG",
-      "date": "2026-07-01",
       "type": "Free agent"
     }
   ]
