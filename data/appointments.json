@@ -14,6 +14,7 @@
   "https://rfef.es/sites/default/files/designaciones_1a_division_masculina_-_temp_2026-27_-_jornada_10_lunes.pdf",
   "https://rfef.es/sites/default/files/designaciones_1a_division_masculina_-_temp_2026-27_-_jornada_10_sabado.pdf",
   "https://rfef.es/sites/default/files/designaciones_1a_division_masculina_-_temp_2026-27_-_jornada_10_viernes.pdf",
+  "https://rfef.es/sites/default/files/designaciones_1a_division_masculina_-_temp_2026-27_-_jornada_11_domingo.pdf",
   "https://rfef.es/sites/default/files/designaciones_1a_division_masculina_-_temp_2026-27_-_jornada_11_sabado.pdf",
   "https://rfef.es/sites/default/files/designaciones_1a_division_masculina_-_temp_2026-27_-_jornada_11_viernes.pdf",
   "https://rfef.es/sites/default/files/designaciones_1a_division_masculina_-_temp_2026-27_-_jornada_1_domingo16.pdf",
@@ -2469,6 +2470,50 @@
    "refResolved": null,
    "resolvedBy": null,
    "source": "https://rfef.es/sites/default/files/designaciones_1a_division_masculina_-_temp_2026-27_-_jornada_11_sabado.pdf"
+  },
+  {
+   "league": "LL",
+   "date": "2026-11-01",
+   "h": "ATH",
+   "a": "RSO",
+   "ko": "21:00",
+   "ref": "Alejandro José Hernández",
+   "refResolved": "Alejandro Hernandez",
+   "resolvedBy": "run",
+   "source": "https://rfef.es/sites/default/files/designaciones_1a_division_masculina_-_temp_2026-27_-_jornada_11_domingo.pdf"
+  },
+  {
+   "league": "LL",
+   "date": "2026-11-01",
+   "h": "ELC",
+   "a": "VAL",
+   "ko": "18:30",
+   "ref": "Luis Bestard",
+   "refResolved": null,
+   "resolvedBy": null,
+   "source": "https://rfef.es/sites/default/files/designaciones_1a_division_masculina_-_temp_2026-27_-_jornada_11_domingo.pdf"
+  },
+  {
+   "league": "LL",
+   "date": "2026-11-01",
+   "h": "GET",
+   "a": "SEV",
+   "ko": "14:00",
+   "ref": "Víctor García",
+   "refResolved": "Victor Garcia Verdura",
+   "resolvedBy": "run",
+   "source": "https://rfef.es/sites/default/files/designaciones_1a_division_masculina_-_temp_2026-27_-_jornada_11_domingo.pdf"
+  },
+  {
+   "league": "LL",
+   "date": "2026-11-01",
+   "h": "RAC",
+   "a": "RMA",
+   "ko": "16:15",
+   "ref": "José Luis Munuera",
+   "refResolved": "José Luis Munuera Montero",
+   "resolvedBy": "run",
+   "source": "https://rfef.es/sites/default/files/designaciones_1a_division_masculina_-_temp_2026-27_-_jornada_11_domingo.pdf"
   },
   {
    "league": "PL",
