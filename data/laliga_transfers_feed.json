@@ -1,6 +1,6 @@
 {
   "note": "PROPOSALS from API-Football /transfers, for a person to read. data/transfers.json is the hand-curated overlay that is actually applied; this is not.",
-  "since": "2026-07-02",
+  "since": "2026-07-03",
   "moves": [
     {
       "n": "Dani Carvajal",
@@ -4753,60 +4753,6 @@
       "toCode": "VIL",
       "date": "2026-07-03",
       "type": "Transfer"
-    },
-    {
-      "n": "Leo Román",
-      "from": "Peña Deportiva",
-      "to": "Deportivo La Coruna",
-      "fromCode": null,
-      "toCode": "DEP",
-      "date": "2026-07-02",
-      "type": "Transfer"
-    },
-    {
-      "n": "Leo Román",
-      "from": "Mallorca",
-      "to": "Deportivo La Coruna",
-      "fromCode": null,
-      "toCode": "DEP",
-      "date": "2026-07-02",
-      "type": "Transfer"
-    },
-    {
-      "n": "Ibon Badiola",
-      "from": "Malaga",
-      "to": "Arenas Getxo",
-      "fromCode": "MAL",
-      "toCode": null,
-      "date": "2026-07-02",
-      "type": "Free agent"
-    },
-    {
-      "n": "D. Kochen",
-      "from": "Barcelona",
-      "to": "Lyngby",
-      "fromCode": "BAR",
-      "toCode": null,
-      "date": "2026-07-02",
-      "type": "Loan"
-    },
-    {
-      "n": "A. Kaares",
-      "from": "Flora Tallinn",
-      "to": "Villarreal",
-      "fromCode": null,
-      "toCode": "VIL",
-      "date": "2026-07-02",
-      "type": "Transfer"
-    },
-    {
-      "n": "A. Almansa",
-      "from": "Espanyol",
-      "to": "Gimnastic",
-      "fromCode": "ESP",
-      "toCode": null,
-      "date": "2026-07-02",
-      "type": "Free agent"
     }
   ]
 }

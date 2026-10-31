@@ -1,6 +1,6 @@
 {
   "note": "PROPOSALS from API-Football /transfers, for a person to read. data/transfers.json is the hand-curated overlay that is actually applied; this is not.",
-  "since": "2026-07-02",
+  "since": "2026-07-03",
   "moves": [
     {
       "n": "A. Di Nunzio",
@@ -6688,24 +6688,6 @@
       "toCode": null,
       "date": "2026-07-03",
       "type": "Transfer"
-    },
-    {
-      "n": "K. Mutandwa",
-      "from": "Ried",
-      "to": "Cagliari",
-      "fromCode": null,
-      "toCode": "CAG",
-      "date": "2026-07-02",
-      "type": "Transfer"
-    },
-    {
-      "n": "A. Akarakiri",
-      "from": "Everton",
-      "to": "Cagliari",
-      "fromCode": null,
-      "toCode": "CAG",
-      "date": "2026-07-02",
-      "type": "Free agent"
     }
   ]
 }
