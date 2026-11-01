@@ -1,6 +1,6 @@
 {
   "note": "PROPOSALS from API-Football /transfers, for a person to read. data/transfers.json is the hand-curated overlay that is actually applied; this is not.",
-  "since": "2026-07-03",
+  "since": "2026-07-04",
   "moves": [
     {
       "n": "Dani Carvajal",
@@ -4699,60 +4699,6 @@
       "toCode": null,
       "date": "2026-07-04",
       "type": "Free agent"
-    },
-    {
-      "n": "Toni Tamarit",
-      "from": "Villarreal",
-      "to": "Alverca",
-      "fromCode": "VIL",
-      "toCode": null,
-      "date": "2026-07-03",
-      "type": "Transfer"
-    },
-    {
-      "n": "S. El Jebari",
-      "from": "Atletico Madrid",
-      "to": "Cordoba",
-      "fromCode": "ATM",
-      "toCode": null,
-      "date": "2026-07-03",
-      "type": "Transfer"
-    },
-    {
-      "n": "Jon de Luis",
-      "from": "Athletic Club",
-      "to": "Kifisia",
-      "fromCode": "ATH",
-      "toCode": null,
-      "date": "2026-07-03",
-      "type": "Free agent"
-    },
-    {
-      "n": "D. Caceres",
-      "from": "Getafe",
-      "to": "Cordoba",
-      "fromCode": "GET",
-      "toCode": null,
-      "date": "2026-07-03",
-      "type": "Free agent"
-    },
-    {
-      "n": "Alberto Dadie",
-      "from": "Real Sociedad",
-      "to": "Burgos",
-      "fromCode": "RSO",
-      "toCode": null,
-      "date": "2026-07-03",
-      "type": "Free agent"
-    },
-    {
-      "n": "A. Kaares",
-      "from": "Flora Tallinn",
-      "to": "Villarreal",
-      "fromCode": null,
-      "toCode": "VIL",
-      "date": "2026-07-03",
-      "type": "Transfer"
     }
   ]
 }

@@ -1,6 +1,6 @@
 {
   "note": "PROPOSALS from API-Football /transfers, for a person to read. data/transfers.json is the hand-curated overlay that is actually applied; this is not.",
-  "since": "2026-07-03",
+  "since": "2026-07-04",
   "moves": [
     {
       "n": "T. Adeyemo",
@@ -6715,33 +6715,6 @@
       "toCode": "POR",
       "date": "2026-07-04",
       "type": "Transfer"
-    },
-    {
-      "n": "M. Reindorf",
-      "from": "Cardiff",
-      "to": "Farnborough",
-      "fromCode": "CAR",
-      "toCode": null,
-      "date": "2026-07-03",
-      "type": "Free agent"
-    },
-    {
-      "n": "E. Ring",
-      "from": "Lincoln",
-      "to": "Kilmarnock",
-      "fromCode": "LIN",
-      "toCode": null,
-      "date": "2026-07-03",
-      "type": "Transfer"
-    },
-    {
-      "n": "D. Barlaser",
-      "from": "Middlesbrough",
-      "to": "Milton Keynes Dons",
-      "fromCode": "MID",
-      "toCode": null,
-      "date": "2026-07-03",
-      "type": "Free agent"
     }
   ]
 }
