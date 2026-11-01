@@ -81,7 +81,11 @@ for (const p of EFLC_PLAYERS) {
   a.w += p.y * m;
   a.m += m;
 }
-const prior = (pos) => (acc[pos] && acc[pos].m ? acc[pos].w / acc[pos].m : 0.15);
+/* A blank position prices from the league, as the desk's priorFor does:
+   on 1 Nov 2026 the feed left one Swansea forward unplaced, his bucket held
+   only his own 0 yellows, and he priced at exactly 0. */
+const leagueY = (() => { let w = 0, m = 0; for (const a of Object.values(acc)) { w += a.w; m += a.m; } return m ? w / m : 0.15; })();
+const prior = (pos) => (pos && acc[pos] && acc[pos].m ? acc[pos].w / acc[pos].m : leagueY);
 
 const probs = [];
 for (const p of EFLC_PLAYERS) {

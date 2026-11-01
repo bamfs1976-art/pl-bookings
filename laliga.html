@@ -570,7 +570,9 @@
   })();
 
   function priorFor(pos) {
-    var p = PRIOR[pos] || {};
+    /* A blank position is no position: its bucket holds whoever the feed
+       failed to place, so it prices from the league, never from itself. */
+    var p = (pos && PRIOR[pos]) || {};
     return { y: p.y == null ? PRIOR._league.y : p.y, f: p.f == null ? PRIOR._league.f : p.f };
   }
 
