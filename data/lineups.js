@@ -5,7 +5,7 @@
 // through PLDCore.matchSquadName. A fixture absent from here prices off
 // squad minute-weights exactly as it always has — that is the normal
 // state until about an hour before kick-off, not a failure.
-// Fetched 2026-11-01T16:02Z.
+// Fetched 2026-11-01T20:30Z.
 //
 // THE GLOBAL IS NOT CALLED `LINEUPS`, and that is deliberate. index.html
 // already declares a top-level `const LINEUPS` for assets/lineup.js (the
@@ -14,8 +14,8 @@
 // a parse error, not a shadow: the whole inline script fails and the desk
 // renders blank. Read `window.LINEUP_SHEETS`.
 var __LINEUP_SHEETS = {
-  "1557453":{"ARS":{start:["David Raya", "J. Timber", "E. Konsa", "Gabriel Magalhães", "R. Calafiori", "D. Rice", "Bruno Guimarães", "N. Madueke", "M. Ødegaard", "C. Tzolis", "K. Havertz"],sub:["Martín Zubimendi", "V. Gyökeres", "Kepa", "Cristhian Mosquera", "B. White", "P. Hincapié", "M. Lewis-Skelly", "E. Eze", "Mikel Merino"]},"LIV":{start:["Alisson Becker", "R. Araújo", "J. Jacquet", "V. van Dijk", "M. Kerkez", "A. Mac Allister", "T. Nyoni", "B. Barcola", "F. Wirtz", "C. Gakpo", "A. Isak"],sub:["R. Ngumoha", "L. Koumas", "Víctor Muñoz", "D. Szoboszlai", "R. Gravenberch", "W. Endo", "K. Tsimikas", "J. Gomez", "G. Mamardashvili"]}},
-  "1570440":{"RAC":{start:["Julen Agirrezabala", "Álvaro Mantilla", "Pablo Ramón", "J. Belocian", "Aarón Martín", "Iván Martín", "M. Prati", "Iker Luque", "Sergio Canales", "Iñigo Vicente", "M. Zabiri"],sub:["André Almeida", "Juan Carlos Arana", "Pablo García", "Facundo González", "M. Gueye", "G. Guliashvili", "Manu Hernando", "Pedro Felipe", "Íñigo Sainz-Maza", "Asier Villalibre", "S. Eriksson"]},"RMA":{start:["T. Courtois", "T. Alexander-Arnold", "D. Huijsen", "I. Konaté", "Marc Cucurella", "A. Tchouaméni", "Bernardo Silva", "A. Güler", "J. Bellingham", "Y. Diomande", "Kylian Mbappé"],sub:["Álvaro Fernández", "Brahim Díaz", "D. Dumfries", "Éder Militão", "Endrick", "Carlos Espí", "A. Lunin", "Sergio Mestre", "Thiago Pitarch", "A. Rüdiger", "E. Camavinga"]}},
+  "1550182":{"JUV":{start:["G. Vicario", "P. Kalulu", "Bremer", "J. Lucumí", "J. Cabal", "W. McKennie", "Douglas Luiz", "T. Koopmeiners", "Kerim-Sam Alajbegović", "R. Kolo Muani", "N. Woltemade"],sub:["J. Ekhator", "A. Cambiaso", "J. Boga", "F. Gatti", "L. Kelly", "Neto", "C. Pinsoglio", "D. Rugani", "P. Sarr", "E. Zhegrova"]},"NAP":{start:["A. Meret", "G. Di Lorenzo", "Luca Marianucci", "Rafa Marín", "M. Olivera", "K. De Bruyne", "A. Zambo Anguissa", "S. McTominay", "M. Politano", "L. Lucca", "N. Lang"],sub:["A. Vergara", "N. Contini", "B. Gilmour", "Giovane", "Amir Rrahmani", "S. Beukema", "D. Spinelli", "F. Barido", "A. Chiummariello", "C. Lieto", "Nikita Melnyk", "Milton Agustín Pereyra"]}},
+  "1570433":{"ATH":{start:["Unai Simón", "Hugo Rincón", "Dani Vivian", "Aymeric Laporte", "Yuri", "Álex Berenguer", "Peio Canales", "Beñat Gerenabarrena", "Nico Williams", "Maroan Sannadi", "I. Williams"],sub:["J. Louis-Jean", "Mikel Jauregizar", "Jesús Vizcay Hurtado", "Yeray", "Nico Serrano", "Jesús Areso", "Álex Padilla", "Aitor Paredes", "Beñat Prados", "Robert Navarro", "Alejandro Rego", "Oihan Sancet"]},"RSO":{start:["Álex Remiro", "J. Aramburu", "Jon Martín", "M. Sarr", "Sergio Gómez", "Gonçalo Guedes", "Jon Gorrotxategi", "Carlos Soler", "Barrenetxea", "L. Sučić", "Mikel Oyarzabal"],sub:["Héctor Fort", "Aitor Fraga", "Y. Herrera", "T. Kubo", "Unai Marrero", "Pablo Marín", "Aihen Muñoz", "J. Ochieng", "Jon Pacheco", "Beñat Turrientes", "Zubeldia", "O. Óskarsson"]}},
 };
 if (typeof module !== "undefined" && module.exports) module.exports = __LINEUP_SHEETS;
 if (typeof window !== "undefined") window.LINEUP_SHEETS = __LINEUP_SHEETS;
