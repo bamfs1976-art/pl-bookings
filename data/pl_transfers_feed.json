@@ -1,6 +1,6 @@
 {
   "note": "PROPOSALS from API-Football /transfers, for a person to read. data/transfers.json is the hand-curated overlay that is actually applied; this is not.",
-  "since": "2026-07-04",
+  "since": "2026-07-05",
   "moves": [
     {
       "n": "N. Valentine",
@@ -6372,51 +6372,6 @@
       "fromCode": "NEW",
       "toCode": "TOT",
       "date": "2026-07-05",
-      "type": "Transfer"
-    },
-    {
-      "n": "Yoon Do-Yong",
-      "from": "Brighton",
-      "to": "1. FC Magdeburg",
-      "fromCode": "BHA",
-      "toCode": null,
-      "date": "2026-07-04",
-      "type": "Loan"
-    },
-    {
-      "n": "S. Tonali",
-      "from": "Newcastle",
-      "to": "Tottenham",
-      "fromCode": "NEW",
-      "toCode": "TOT",
-      "date": "2026-07-04",
-      "type": "Transfer"
-    },
-    {
-      "n": "Jimi Weikko Tauriainen",
-      "from": "Chelsea",
-      "to": "AC Horsens",
-      "fromCode": "CHE",
-      "toCode": null,
-      "date": "2026-07-04",
-      "type": "Free agent"
-    },
-    {
-      "n": "Eliezer Mayenda",
-      "from": "Sunderland",
-      "to": "Rennes",
-      "fromCode": "SUN",
-      "toCode": null,
-      "date": "2026-07-04",
-      "type": "Transfer"
-    },
-    {
-      "n": "B. Touré",
-      "from": "1899 Hoffenheim",
-      "to": "Newcastle",
-      "fromCode": null,
-      "toCode": "NEW",
-      "date": "2026-07-04",
       "type": "Transfer"
     }
   ]
