@@ -90,7 +90,7 @@ const PL_FIXTURES = [
   {id:1557456,d:"2026-10-31T17:30:00+00:00",r:9,h:"TOT",a:"CRY",ref:"Michael Oliver",st:"FT"},
   {id:1557447,d:"2026-10-31T20:00:00+00:00",r:9,h:"AVL",a:"FUL",ref:"Samuel Barrott",st:"FT"},
   {id:1557453,d:"2026-11-01T16:30:00+00:00",r:9,h:"LIV",a:"ARS",ref:"Andrew Madley",st:"FT"},
-  {id:1557455,d:"2026-11-02T20:00:00+00:00",r:9,h:"NEW",a:"EVE",ref:"John Brooks",st:"NS"},
+  {id:1557455,d:"2026-11-02T20:00:00+00:00",r:9,h:"NEW",a:"EVE",ref:"John Brooks",st:"FT"},
   {id:1557460,d:"2026-11-06T20:00:00+00:00",r:10,h:"EVE",a:"COV",ref:null,st:"NS"},
   {id:1557463,d:"2026-11-07T12:30:00+00:00",r:10,h:"LEE",a:"TOT",ref:null,st:"NS"},
   {id:1557457,d:"2026-11-07T15:00:00+00:00",r:10,h:"ARS",a:"HUL",ref:null,st:"NS"},
