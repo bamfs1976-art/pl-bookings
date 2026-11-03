@@ -1,6 +1,6 @@
 {
   "note": "PROPOSALS from API-Football /transfers, for a person to read. data/transfers.json is the hand-curated overlay that is actually applied; this is not.",
-  "since": "2026-07-05",
+  "since": "2026-07-06",
   "moves": [
     {
       "n": "Dani Carvajal",
@@ -4035,6 +4035,15 @@
       "type": "-"
     },
     {
+      "n": "J. Castellanos",
+      "from": "Racing Santander II",
+      "to": "Racing Santander",
+      "fromCode": null,
+      "toCode": "RAC",
+      "date": "2026-07-12",
+      "type": "-"
+    },
+    {
       "n": "Fernando Calero",
       "from": "Espanyol",
       "to": "Malaga",
@@ -4572,60 +4581,6 @@
       "fromCode": null,
       "toCode": "VAL",
       "date": "2026-07-06",
-      "type": "Free agent"
-    },
-    {
-      "n": "Mario Sesè",
-      "from": "Levante",
-      "to": "Teruel",
-      "fromCode": "LEV",
-      "toCode": null,
-      "date": "2026-07-05",
-      "type": "Free agent"
-    },
-    {
-      "n": "M. Cuellar",
-      "from": "Getafe",
-      "to": "Atlético Madrid II",
-      "fromCode": "GET",
-      "toCode": null,
-      "date": "2026-07-05",
-      "type": "-"
-    },
-    {
-      "n": "Luis Chacón",
-      "from": "Deportivo La Coruna",
-      "to": "Valladolid",
-      "fromCode": "DEP",
-      "toCode": null,
-      "date": "2026-07-05",
-      "type": "Transfer"
-    },
-    {
-      "n": "Javi Castro",
-      "from": "Racing Santander",
-      "to": "Cadiz",
-      "fromCode": "RAC",
-      "toCode": null,
-      "date": "2026-07-05",
-      "type": "Transfer"
-    },
-    {
-      "n": "F. Bernal",
-      "from": "Fluminense",
-      "to": "Real Betis",
-      "fromCode": null,
-      "toCode": "BET",
-      "date": "2026-07-05",
-      "type": "Transfer"
-    },
-    {
-      "n": "A. Perez",
-      "from": "Real Betis",
-      "to": "Kalamata",
-      "fromCode": "BET",
-      "toCode": null,
-      "date": "2026-07-05",
       "type": "Free agent"
     }
   ]

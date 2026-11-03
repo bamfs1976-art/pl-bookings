@@ -1,7 +1,16 @@
 {
   "note": "PROPOSALS from API-Football /transfers, for a person to read. data/transfers.json is the hand-curated overlay that is actually applied; this is not.",
-  "since": "2026-07-05",
+  "since": "2026-07-06",
   "moves": [
+    {
+      "n": "S. Keogh",
+      "from": "Southend",
+      "to": "Brighton",
+      "fromCode": null,
+      "toCode": "BHA",
+      "date": "2026-10-21",
+      "type": "Return from loan"
+    },
     {
       "n": "N. Valentine",
       "from": "Billericay Town",
@@ -28,6 +37,15 @@
       "toCode": null,
       "date": "2026-10-06",
       "type": "Free agent"
+    },
+    {
+      "n": "A. Nallo",
+      "from": "HJK Helsinki",
+      "to": "Liverpool",
+      "fromCode": null,
+      "toCode": "LIV",
+      "date": "2026-10-04",
+      "type": "Return from loan"
     },
     {
       "n": "S. Ashbee",
@@ -6354,24 +6372,6 @@
       "fromCode": "TOT",
       "toCode": "PRE",
       "date": "2026-07-06",
-      "type": "Transfer"
-    },
-    {
-      "n": "Tyrique George",
-      "from": "Chelsea",
-      "to": "Everton",
-      "fromCode": "CHE",
-      "toCode": "EVE",
-      "date": "2026-07-05",
-      "type": "Transfer"
-    },
-    {
-      "n": "S. Tonali",
-      "from": "Newcastle",
-      "to": "Tottenham",
-      "fromCode": "NEW",
-      "toCode": "TOT",
-      "date": "2026-07-05",
       "type": "Transfer"
     }
   ]

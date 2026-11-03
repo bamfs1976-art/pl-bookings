@@ -1,6 +1,6 @@
 {
   "note": "PROPOSALS from API-Football /transfers, for a person to read. data/transfers.json is the hand-curated overlay that is actually applied; this is not.",
-  "since": "2026-07-05",
+  "since": "2026-07-06",
   "moves": [
     {
       "n": "A. Di Nunzio",
@@ -5439,6 +5439,15 @@
       "type": "Loan"
     },
     {
+      "n": "D. Pugno",
+      "from": "Juventus",
+      "to": "Ajax",
+      "fromCode": "JUV",
+      "toCode": null,
+      "date": "2026-07-19",
+      "type": "Loan"
+    },
+    {
       "n": "M. Elia",
       "from": "Fiorentina",
       "to": "Bari",
@@ -6571,51 +6580,6 @@
       "toCode": null,
       "date": "2026-07-06",
       "type": "Loan"
-    },
-    {
-      "n": "M. Mena",
-      "from": "Parma",
-      "to": "Arezzo",
-      "fromCode": "PAR",
-      "toCode": null,
-      "date": "2026-07-05",
-      "type": "Loan"
-    },
-    {
-      "n": "Hernani",
-      "from": "Monza",
-      "to": "Palermo",
-      "fromCode": "MON",
-      "toCode": null,
-      "date": "2026-07-05",
-      "type": "Transfer"
-    },
-    {
-      "n": "G. De Pieri",
-      "from": "Inter",
-      "to": "Ascoli",
-      "fromCode": "INT",
-      "toCode": null,
-      "date": "2026-07-05",
-      "type": "Loan"
-    },
-    {
-      "n": "G. Chakvetadze",
-      "from": "Watford",
-      "to": "Udinese",
-      "fromCode": null,
-      "toCode": "UDI",
-      "date": "2026-07-05",
-      "type": "Transfer"
-    },
-    {
-      "n": "A. Longoni",
-      "from": "AC Milan",
-      "to": "Paris Saint Germain",
-      "fromCode": "ACM",
-      "toCode": null,
-      "date": "2026-07-05",
-      "type": "Free agent"
     }
   ]
 }
