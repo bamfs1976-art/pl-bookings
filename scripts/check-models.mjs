@@ -96,7 +96,7 @@ function deskPrior(players, page) {
   const league = allYm ? allY / allYm : 0.15;
   const byPos = {};
   for (const pos of Object.keys(acc)) byPos[pos] = acc[pos].yw / acc[pos].ym;
-  return { matches: Number(k[1]), league, of: (pos) => (byPos[pos] == null ? league : byPos[pos]) };
+  return { matches: Number(k[1]), league, of: (pos) => (!pos || byPos[pos] == null ? league : byPos[pos]) };
 }
 
 const S = model.shrink;

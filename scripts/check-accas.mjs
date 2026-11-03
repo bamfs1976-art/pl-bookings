@@ -502,13 +502,31 @@ group('the card nine-fold: built across three divisions, from real data');
   const winCodes = new Set(got.groups.find((g) => g.key === 'WIN').options.map((o) => o.code));
   assert.deepStrictEqual([...winCodes], ['PL'],
     `win legs came from ${[...winCodes]} — only the Premier League is rated for a result`);
-  /* And the card legs must NOT be Premier League only, or the move to
-     today.html bought nothing. */
+  /* And the card legs must be DRAWN from every division, or the move to
+     today.html bought nothing. Drawn from, not landed in: the allocator
+     returns the best nine, and a week whose six strongest card legs are all
+     La Liga is a correct answer, not a broken pool. That week arrived on
+     27 Oct 2026 (a La Liga midweek round) and failed the refresh when this
+     asserted the picks' spread instead. What proves the pool is cross-league
+     is that it beats, or equals, every single-division pool on its own. */
+  const cardPool = [...pool.BTC, ...pool['O2.5']];
+  const poolCodes = new Set(cardPool.map((o) => o.code));
+  assert.ok(poolCodes.size >= 2,
+    `every card option came from ${[...poolCodes]} — the pool is not drawing across divisions`);
+  const logScore = (r) => r.picks.reduce((s, o) => s + Math.log(o.prob), 0);
+  for (const code of poolCodes) {
+    const solo = C.accaAllocate([
+      { key: 'WIN', need: 3, options: pool.WIN },
+      { key: 'BTC', need: 3, options: pool.BTC.filter((o) => o.code === code) },
+      { key: 'O2.5', need: 3, options: pool['O2.5'].filter((o) => o.code === code) },
+    ]);
+    if (solo) assert.ok(logScore(got) >= logScore(solo) - 1e-9,
+      `the cross-league acca scores below a ${code}-only one — the pool is not being searched as one`);
+  }
   const cardCodes = new Set(got.groups.filter((g) => g.key !== 'WIN')
     .flatMap((g) => g.options).map((o) => o.code));
-  assert.ok(cardCodes.size >= 2,
-    `every card leg came from ${[...cardCodes]} — the acca is not drawing across divisions`);
-  ok(`nine legs, eighteen different clubs, card legs from ${[...cardCodes].sort().join(' + ')}`);
+  ok(`nine legs, eighteen different clubs, drawn from ${[...poolCodes].sort().join(' + ')}, ` +
+    `landing in ${[...cardCodes].sort().join(' + ')}, and no single division beats it`);
   assert.ok(C.accaPrice(got.picks, C.TYPICAL_CARD_MARGIN).legs === 9);
   ok('the cross-league nine-fold prices as nine legs at the card margin');
 }

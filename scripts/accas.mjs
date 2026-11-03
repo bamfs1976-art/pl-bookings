@@ -131,7 +131,7 @@ function priors(players) {
 function shrunk(p, pr) {
   const m = Number(p.min) || 0;
   if (!(m > 0) || p.yc == null) return null;
-  const prior = pr[p.p] == null ? pr._league : pr[p.p];
+  const prior = !p.p || pr[p.p] == null ? pr._league : pr[p.p];   // blank position: league, as the desks
   return C.shrinkRate(p.yc, m, prior, SHRINK_MATCHES);
 }
 
