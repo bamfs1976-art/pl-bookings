@@ -4,7 +4,7 @@
      of this file is that every number in it came out of a real run. -->
 
 **Premier League** · 1535 out-of-sample predictions over 9 rounds
-· source `data/match_history.json` · generated 2026-11-03T11:55:00.369Z
+· source `data/match_history.json` · generated 2026-11-04T12:03:57.467Z
 
 ## Headline
 
@@ -23,7 +23,7 @@ is what a live model would have known at the time.
 
 ## Is the difference real?
 
-- fit vs base: **is indistinguishable from** — mean Brier difference -0.00094 ± 0.00117 (2 s.e.)
+- fit vs base: **is indistinguishable from** — mean Brier difference -0.00094 ± 0.00116 (2 s.e.)
 - fit vs prior: **is WORSE than** — mean Brier difference 0.00047 ± 0.00041 (2 s.e.)
 
 The predictions are paired — same rows, same order — so the difference in
@@ -39,14 +39,14 @@ score suggests.
 
 | predicted band | n | mean predicted | actual | gap |
 |---|---:|---:|---:|---:|
-| 0–10% | 136 | 4.4% | 5.1% | +0.8pp |
-| 10–20% | 1393 | 13.1% | 13.8% | +0.7pp |
-| 20–30% | 3 | 24.3% | 0.0% | -24.3pp |
-| 30–40% | 2 | 33.6% | 0.0% | -33.6pp |
+| 0–10% | 132 | 4.3% | 5.3% | +1.0pp |
+| 10–20% | 1398 | 13.1% | 13.7% | +0.6pp |
+| 20–30% | 2 | 26.1% | 0.0% | -26.1pp |
+| 30–40% | 2 | 33.2% | 0.0% | -33.2pp |
 | 40–50% | 0 | — | — | — |
 | 50–60% | 0 | — | — | — |
 | 60–70% | 0 | — | — | — |
-| 70–80% | 1 | 72.0% | 100.0% | +28.0pp |
+| 70–80% | 1 | 70.6% | 100.0% | +29.4pp |
 | 80–90% | 0 | — | — | — |
 | 90–100% | 0 | — | — | — |
 
