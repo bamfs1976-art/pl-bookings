@@ -40,6 +40,7 @@
   "https://rfef.es/sites/default/files/designaciones_1a_division_masculina_-_temp_2026-27_-_jornada_9_sabado.pdf",
   "https://rfef.es/sites/default/files/designaciones_1a_division_masculina_-_temp_2026-27_-_jornada_9_viernes.pdf",
   "https://www.aia-figc.it/news/serie-a-enilive-designazioni-10a-giornata-28806/",
+  "https://www.aia-figc.it/news/serie-a-enilive-designazioni-11a-giornata-28822/",
   "https://www.aia-figc.it/news/serie-a-enilive-designazioni-4a-giornata-27632/",
   "https://www.aia-figc.it/news/serie-a-enilive-designazioni-5a-giornata-27667/",
   "https://www.aia-figc.it/news/serie-a-enilive-designazioni-6a-giornata-28755/",
@@ -3230,6 +3231,105 @@
    "refResolved": "Matteo Marcenaro",
    "resolvedBy": "surname",
    "source": "https://www.aia-figc.it/news/serie-a-enilive-designazioni-10a-giornata-28806/"
+  },
+  {
+   "league": "SA",
+   "date": "2026-11-06",
+   "h": "VEN",
+   "a": "UDI",
+   "ko": "20:45",
+   "ref": "SACCHI J.L.",
+   "refResolved": null,
+   "resolvedBy": null,
+   "source": "https://www.aia-figc.it/news/serie-a-enilive-designazioni-11a-giornata-28822/"
+  },
+  {
+   "league": "SA",
+   "date": "2026-11-07",
+   "h": "CAG",
+   "a": "FRO",
+   "ko": "15:00",
+   "ref": "AYROLDI",
+   "refResolved": "Giovanni Ayroldi",
+   "resolvedBy": "surname",
+   "source": "https://www.aia-figc.it/news/serie-a-enilive-designazioni-11a-giornata-28822/"
+  },
+  {
+   "league": "SA",
+   "date": "2026-11-07",
+   "h": "PAR",
+   "a": "BGN",
+   "ko": "18:00",
+   "ref": "ZUFFERLI",
+   "refResolved": "Luca Zufferli",
+   "resolvedBy": "surname",
+   "source": "https://www.aia-figc.it/news/serie-a-enilive-designazioni-11a-giornata-28822/"
+  },
+  {
+   "league": "SA",
+   "date": "2026-11-07",
+   "h": "TOR",
+   "a": "LEC",
+   "ko": "15:00",
+   "ref": "FELICIANI",
+   "refResolved": "Ermanno Feliciani",
+   "resolvedBy": "surname",
+   "source": "https://www.aia-figc.it/news/serie-a-enilive-designazioni-11a-giornata-28822/"
+  },
+  {
+   "league": "SA",
+   "date": "2026-11-08",
+   "h": "FIO",
+   "a": "JUV",
+   "ko": "20:45",
+   "ref": "COLOMBO",
+   "refResolved": "Andrea Colombo",
+   "resolvedBy": "surname",
+   "source": "https://www.aia-figc.it/news/serie-a-enilive-designazioni-11a-giornata-28822/"
+  },
+  {
+   "league": "SA",
+   "date": "2026-11-08",
+   "h": "GEN",
+   "a": "ACM",
+   "ko": "15:00",
+   "ref": "MASSA",
+   "refResolved": "Davide Massa",
+   "resolvedBy": "surname",
+   "source": "https://www.aia-figc.it/news/serie-a-enilive-designazioni-11a-giornata-28822/"
+  },
+  {
+   "league": "SA",
+   "date": "2026-11-08",
+   "h": "INT",
+   "a": "COM",
+   "ko": "18:00",
+   "ref": "CHIFFI",
+   "refResolved": "Daniele Chiffi",
+   "resolvedBy": "surname",
+   "source": "https://www.aia-figc.it/news/serie-a-enilive-designazioni-11a-giornata-28822/"
+  },
+  {
+   "league": "SA",
+   "date": "2026-11-08",
+   "h": "MON",
+   "a": "ATA",
+   "ko": "15:00",
+   "ref": "ALLEGRETTA",
+   "refResolved": null,
+   "resolvedBy": null,
+   "source": "https://www.aia-figc.it/news/serie-a-enilive-designazioni-11a-giornata-28822/"
+  },
+  {
+   "league": "SA",
+   "date": "2026-11-08",
+   "h": "NAP",
+   "a": "LAZ",
+   "ko": "12:30",
+   "ref": "PAIRETTO",
+   "refResolved": "Luca Pairetto",
+   "resolvedBy": "surname",
+   "source": "https://www.aia-figc.it/news/serie-a-enilive-designazioni-11a-giornata-28822/"
   }
  ]
 }
