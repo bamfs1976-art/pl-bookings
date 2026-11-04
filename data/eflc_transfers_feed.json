@@ -1,7 +1,16 @@
 {
   "note": "PROPOSALS from API-Football /transfers, for a person to read. data/transfers.json is the hand-curated overlay that is actually applied; this is not.",
-  "since": "2026-07-06",
+  "since": "2026-07-07",
   "moves": [
+    {
+      "n": "Ephrahim Yeboah",
+      "from": "Southend",
+      "to": "Bristol City",
+      "fromCode": null,
+      "toCode": "BRC",
+      "date": "2026-10-23",
+      "type": "Return from loan"
+    },
     {
       "n": "T. Adeyemo",
       "from": "Watford",
@@ -6571,69 +6580,6 @@
       "toCode": null,
       "date": "2026-07-07",
       "type": "Free agent"
-    },
-    {
-      "n": "T. Steward",
-      "from": "Portsmouth",
-      "to": "ST Johnstone",
-      "fromCode": "POR",
-      "toCode": null,
-      "date": "2026-07-06",
-      "type": "Loan"
-    },
-    {
-      "n": "Sydney Agina",
-      "from": "Stoke City",
-      "to": "Forest Green",
-      "fromCode": "STK",
-      "toCode": null,
-      "date": "2026-07-06",
-      "type": "Loan"
-    },
-    {
-      "n": "Q. Hartman",
-      "from": "Burnley",
-      "to": "Espanyol",
-      "fromCode": "BUR",
-      "toCode": null,
-      "date": "2026-07-06",
-      "type": "Loan"
-    },
-    {
-      "n": "K. Dong",
-      "from": "FC Augsburg",
-      "to": "Bolton",
-      "fromCode": null,
-      "toCode": "BOL",
-      "date": "2026-07-06",
-      "type": "Loan"
-    },
-    {
-      "n": "J. Anthony",
-      "from": "Burnley",
-      "to": "Brentford",
-      "fromCode": "BUR",
-      "toCode": null,
-      "date": "2026-07-06",
-      "type": "Transfer"
-    },
-    {
-      "n": "Aidan James Bridge",
-      "from": "Norwich",
-      "to": "Airdrie United",
-      "fromCode": "NOR",
-      "toCode": null,
-      "date": "2026-07-06",
-      "type": "Free agent"
-    },
-    {
-      "n": "A. Devine",
-      "from": "Tottenham",
-      "to": "Preston",
-      "fromCode": null,
-      "toCode": "PRE",
-      "date": "2026-07-06",
-      "type": "Transfer"
     }
   ]
 }

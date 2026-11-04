@@ -1,6 +1,6 @@
 {
   "note": "PROPOSALS from API-Football /transfers, for a person to read. data/transfers.json is the hand-curated overlay that is actually applied; this is not.",
-  "since": "2026-07-06",
+  "since": "2026-07-07",
   "moves": [
     {
       "n": "S. Keogh",
@@ -6319,60 +6319,6 @@
       "toCode": null,
       "date": "2026-07-07",
       "type": "-"
-    },
-    {
-      "n": "Tomas Galvez",
-      "from": "Manchester City",
-      "to": "GO Ahead Eagles",
-      "fromCode": "MCI",
-      "toCode": null,
-      "date": "2026-07-06",
-      "type": "Transfer"
-    },
-    {
-      "n": "J. Anthony",
-      "from": "Burnley",
-      "to": "Brentford",
-      "fromCode": "BUR",
-      "toCode": "BRE",
-      "date": "2026-07-06",
-      "type": "Transfer"
-    },
-    {
-      "n": "Isaac Moore",
-      "from": "Coventry",
-      "to": "Walsall",
-      "fromCode": "COV",
-      "toCode": null,
-      "date": "2026-07-06",
-      "type": "Loan"
-    },
-    {
-      "n": "H. Gray",
-      "from": "Leeds",
-      "to": "Sheffield Wednesday",
-      "fromCode": "LEE",
-      "toCode": null,
-      "date": "2026-07-06",
-      "type": "Loan"
-    },
-    {
-      "n": "Cole Ramsey",
-      "from": "Aston Villa",
-      "to": "Tottenham Hotspur U21",
-      "fromCode": "AVL",
-      "toCode": null,
-      "date": "2026-07-06",
-      "type": "-"
-    },
-    {
-      "n": "A. Devine",
-      "from": "Tottenham",
-      "to": "Preston",
-      "fromCode": "TOT",
-      "toCode": "PRE",
-      "date": "2026-07-06",
-      "type": "Transfer"
     }
   ]
 }

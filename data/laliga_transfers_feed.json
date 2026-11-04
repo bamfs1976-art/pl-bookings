@@ -1,6 +1,6 @@
 {
   "note": "PROPOSALS from API-Football /transfers, for a person to read. data/transfers.json is the hand-curated overlay that is actually applied; this is not.",
-  "since": "2026-07-06",
+  "since": "2026-07-07",
   "moves": [
     {
       "n": "Dani Carvajal",
@@ -1135,6 +1135,15 @@
       "toCode": "RSO",
       "date": "2026-08-27",
       "type": "Transfer"
+    },
+    {
+      "n": "Didac Castellá",
+      "from": "Elche",
+      "to": "Castellonense",
+      "fromCode": "ELC",
+      "toCode": null,
+      "date": "2026-08-27",
+      "type": "Free agent"
     },
     {
       "n": "Cristian Herrera",
@@ -4438,150 +4447,6 @@
       "toCode": null,
       "date": "2026-07-07",
       "type": "Transfer"
-    },
-    {
-      "n": "Unai Gómez",
-      "from": "Athletic Club",
-      "to": "Udinese",
-      "fromCode": "ATH",
-      "toCode": null,
-      "date": "2026-07-06",
-      "type": "Transfer"
-    },
-    {
-      "n": "Raúl Fernández",
-      "from": "Alaves",
-      "to": "Leganes",
-      "fromCode": "ALA",
-      "toCode": null,
-      "date": "2026-07-06",
-      "type": "Free agent"
-    },
-    {
-      "n": "Ramón Terrats",
-      "from": "Villarreal",
-      "to": "Getafe",
-      "fromCode": "VIL",
-      "toCode": "GET",
-      "date": "2026-07-06",
-      "type": "Transfer"
-    },
-    {
-      "n": "R. Sato",
-      "from": "FC Tokyo",
-      "to": "Valencia",
-      "fromCode": null,
-      "toCode": "VAL",
-      "date": "2026-07-06",
-      "type": "Transfer"
-    },
-    {
-      "n": "Q. Hartman",
-      "from": "Burnley",
-      "to": "Espanyol",
-      "fromCode": null,
-      "toCode": "ESP",
-      "date": "2026-07-06",
-      "type": "Loan"
-    },
-    {
-      "n": "Luis Chacón",
-      "from": "Deportivo La Coruna",
-      "to": "Valladolid",
-      "fromCode": "DEP",
-      "toCode": null,
-      "date": "2026-07-06",
-      "type": "Transfer"
-    },
-    {
-      "n": "José de León",
-      "from": "Alaves",
-      "to": "Ponferradina",
-      "fromCode": "ALA",
-      "toCode": null,
-      "date": "2026-07-06",
-      "type": "Free agent"
-    },
-    {
-      "n": "Jaime Vázquez",
-      "from": "Celta Vigo",
-      "to": "Cultural Leonesa",
-      "fromCode": "CEL",
-      "toCode": null,
-      "date": "2026-07-06",
-      "type": "Free agent"
-    },
-    {
-      "n": "J. Valou",
-      "from": "Villarreal",
-      "to": "Getafe",
-      "fromCode": "VIL",
-      "toCode": "GET",
-      "date": "2026-07-06",
-      "type": "Loan"
-    },
-    {
-      "n": "J. Smith",
-      "from": "Espanyol",
-      "to": "Eldense",
-      "fromCode": "ESP",
-      "toCode": null,
-      "date": "2026-07-06",
-      "type": "Free agent"
-    },
-    {
-      "n": "I. Sanz",
-      "from": "Athletic Club",
-      "to": "Cordoba",
-      "fromCode": "ATH",
-      "toCode": null,
-      "date": "2026-07-06",
-      "type": "Loan"
-    },
-    {
-      "n": "Fran García",
-      "from": "Real Madrid",
-      "to": "Real Betis",
-      "fromCode": "RMA",
-      "toCode": "BET",
-      "date": "2026-07-06",
-      "type": "Transfer"
-    },
-    {
-      "n": "F. Urzain",
-      "from": "Deportivo La Coruna",
-      "to": "Zamora",
-      "fromCode": "DEP",
-      "toCode": null,
-      "date": "2026-07-06",
-      "type": "Free agent"
-    },
-    {
-      "n": "B. Ede",
-      "from": "Motor Lublin",
-      "to": "Deportivo La Coruna",
-      "fromCode": null,
-      "toCode": "DEP",
-      "date": "2026-07-06",
-      "type": "Transfer"
-    },
-    {
-      "n": "Aimar Duñabeitia",
-      "from": "Athletic Club",
-      "to": "Sporting Gijon",
-      "fromCode": "ATH",
-      "toCode": null,
-      "date": "2026-07-06",
-      "type": "Transfer"
-    },
-    {
-      "n": "A. Dieng",
-      "from": "Al Ahly",
-      "to": "Valencia",
-      "fromCode": null,
-      "toCode": "VAL",
-      "date": "2026-07-06",
-      "type": "Free agent"
     }
   ]
 }

@@ -1,6 +1,6 @@
 {
   "note": "PROPOSALS from API-Football /transfers, for a person to read. data/transfers.json is the hand-curated overlay that is actually applied; this is not.",
-  "since": "2026-07-06",
+  "since": "2026-07-07",
   "moves": [
     {
       "n": "A. Di Nunzio",
@@ -6552,33 +6552,6 @@
       "fromCode": "INT",
       "toCode": null,
       "date": "2026-07-07",
-      "type": "Loan"
-    },
-    {
-      "n": "W. Amey",
-      "from": "Bologna",
-      "to": "Frosinone",
-      "fromCode": "BGN",
-      "toCode": "FRO",
-      "date": "2026-07-06",
-      "type": "Loan"
-    },
-    {
-      "n": "Unai Gómez",
-      "from": "Athletic Club",
-      "to": "Udinese",
-      "fromCode": null,
-      "toCode": "UDI",
-      "date": "2026-07-06",
-      "type": "Transfer"
-    },
-    {
-      "n": "E. Meconi",
-      "from": "Genoa",
-      "to": "Gubbio",
-      "fromCode": "GEN",
-      "toCode": null,
-      "date": "2026-07-06",
       "type": "Loan"
     }
   ]
