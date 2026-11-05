@@ -1,6 +1,6 @@
 {
   "note": "PROPOSALS from API-Football /transfers, for a person to read. data/transfers.json is the hand-curated overlay that is actually applied; this is not.",
-  "since": "2026-07-07",
+  "since": "2026-07-08",
   "moves": [
     {
       "n": "A. Di Nunzio",
@@ -6463,96 +6463,6 @@
       "toCode": "VEN",
       "date": "2026-07-08",
       "type": "Transfer"
-    },
-    {
-      "n": "Unai Gómez",
-      "from": "Athletic Club",
-      "to": "Udinese",
-      "fromCode": null,
-      "toCode": "UDI",
-      "date": "2026-07-07",
-      "type": "Transfer"
-    },
-    {
-      "n": "R. Marchizza",
-      "from": "Frosinone",
-      "to": "Vicenza Virtus",
-      "fromCode": "FRO",
-      "toCode": null,
-      "date": "2026-07-07",
-      "type": "Free agent"
-    },
-    {
-      "n": "R. Drăgușin",
-      "from": "Tottenham",
-      "to": "Fiorentina",
-      "fromCode": null,
-      "toCode": "FIO",
-      "date": "2026-07-07",
-      "type": "Loan"
-    },
-    {
-      "n": "M. Ladisa",
-      "from": "Venezia",
-      "to": "Trento",
-      "fromCode": "VEN",
-      "toCode": null,
-      "date": "2026-07-07",
-      "type": "Loan"
-    },
-    {
-      "n": "L. Gagliardi",
-      "from": "Genoa",
-      "to": "Team Altamura",
-      "fromCode": "GEN",
-      "toCode": null,
-      "date": "2026-07-07",
-      "type": "Loan"
-    },
-    {
-      "n": "I. Provedel",
-      "from": "Lazio",
-      "to": "Inter",
-      "fromCode": "LAZ",
-      "toCode": "INT",
-      "date": "2026-07-07",
-      "type": "Transfer"
-    },
-    {
-      "n": "Giuseppe Mazzaglia",
-      "from": "Como",
-      "to": "Folgore Caratese",
-      "fromCode": "COM",
-      "toCode": null,
-      "date": "2026-07-07",
-      "type": "Transfer"
-    },
-    {
-      "n": "F. Presta",
-      "from": "Fiorentina",
-      "to": "Gavorrano",
-      "fromCode": "FIO",
-      "toCode": null,
-      "date": "2026-07-07",
-      "type": "Free agent"
-    },
-    {
-      "n": "E. Kouadio",
-      "from": "Fiorentina",
-      "to": "Monza",
-      "fromCode": "FIO",
-      "toCode": "MON",
-      "date": "2026-07-07",
-      "type": "Loan"
-    },
-    {
-      "n": "C. Alexiou",
-      "from": "Inter",
-      "to": "AEK Athens FC",
-      "fromCode": "INT",
-      "toCode": null,
-      "date": "2026-07-07",
-      "type": "Loan"
     }
   ]
 }
