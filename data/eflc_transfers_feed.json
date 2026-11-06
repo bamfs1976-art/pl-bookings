@@ -1,6 +1,6 @@
 {
   "note": "PROPOSALS from API-Football /transfers, for a person to read. data/transfers.json is the hand-curated overlay that is actually applied; this is not.",
-  "since": "2026-07-08",
+  "since": "2026-07-09",
   "moves": [
     {
       "n": "Ephrahim Yeboah",
@@ -82,6 +82,15 @@
       "toCode": null,
       "date": "2026-10-12",
       "type": "Free agent"
+    },
+    {
+      "n": "D. Isichei",
+      "from": "Birmingham",
+      "to": "Worthing",
+      "fromCode": "BIR",
+      "toCode": null,
+      "date": "2026-10-12",
+      "type": "-"
     },
     {
       "n": "R. Clayton",
@@ -6499,87 +6508,6 @@
       "toCode": null,
       "date": "2026-07-09",
       "type": "Free agent"
-    },
-    {
-      "n": "Ty Ewens-Findlay",
-      "from": "Charlton",
-      "to": "Crawley Town",
-      "fromCode": "CHA",
-      "toCode": null,
-      "date": "2026-07-08",
-      "type": "Loan"
-    },
-    {
-      "n": "S. Davis",
-      "from": "Southampton",
-      "to": "Bedford Town",
-      "fromCode": "SOU",
-      "toCode": null,
-      "date": "2026-07-08",
-      "type": "Free agent"
-    },
-    {
-      "n": "M. Sykes",
-      "from": "Bristol City",
-      "to": "Millwall",
-      "fromCode": "BRC",
-      "toCode": "MIL",
-      "date": "2026-07-08",
-      "type": "Free agent"
-    },
-    {
-      "n": "L. Pearce",
-      "from": "Cardiff",
-      "to": "Sligo Rovers",
-      "fromCode": "CAR",
-      "toCode": null,
-      "date": "2026-07-08",
-      "type": "Free agent"
-    },
-    {
-      "n": "J. Walsh",
-      "from": "QPR",
-      "to": "Wigan",
-      "fromCode": "QPR",
-      "toCode": null,
-      "date": "2026-07-08",
-      "type": "Loan"
-    },
-    {
-      "n": "C. Wilson",
-      "from": "West Ham",
-      "to": "Brentford",
-      "fromCode": "WHU",
-      "toCode": null,
-      "date": "2026-07-08",
-      "type": "Free agent"
-    },
-    {
-      "n": "C. Ward",
-      "from": "Motherwell",
-      "to": "QPR",
-      "fromCode": null,
-      "toCode": "QPR",
-      "date": "2026-07-08",
-      "type": "Transfer"
-    },
-    {
-      "n": "Ben Drake",
-      "from": "Millwall",
-      "to": "Eastleigh",
-      "fromCode": "MIL",
-      "toCode": null,
-      "date": "2026-07-08",
-      "type": "Free agent"
-    },
-    {
-      "n": "B. Bannan",
-      "from": "Millwall",
-      "to": "Sheffield Wednesday",
-      "fromCode": "MIL",
-      "toCode": null,
-      "date": "2026-07-08",
-      "type": "Transfer"
     }
   ]
 }

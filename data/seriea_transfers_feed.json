@@ -1,6 +1,6 @@
 {
   "note": "PROPOSALS from API-Football /transfers, for a person to read. data/transfers.json is the hand-curated overlay that is actually applied; this is not.",
-  "since": "2026-07-08",
+  "since": "2026-07-09",
   "moves": [
     {
       "n": "A. Di Nunzio",
@@ -6364,105 +6364,6 @@
       "toCode": null,
       "date": "2026-07-09",
       "type": "Loan"
-    },
-    {
-      "n": "S. Perciun",
-      "from": "Torino",
-      "to": "Ascoli",
-      "fromCode": "TOR",
-      "toCode": null,
-      "date": "2026-07-08",
-      "type": "Loan"
-    },
-    {
-      "n": "Petar Markovic",
-      "from": "Bologna",
-      "to": "Grazer AK",
-      "fromCode": "BGN",
-      "toCode": null,
-      "date": "2026-07-08",
-      "type": "Transfer"
-    },
-    {
-      "n": "P. Pinelli",
-      "from": "Lazio",
-      "to": "Carrarese",
-      "fromCode": "LAZ",
-      "toCode": null,
-      "date": "2026-07-08",
-      "type": "Loan"
-    },
-    {
-      "n": "O. Traoré",
-      "from": "1. FC Heidenheim",
-      "to": "Udinese",
-      "fromCode": null,
-      "toCode": "UDI",
-      "date": "2026-07-08",
-      "type": "Free agent"
-    },
-    {
-      "n": "L. Amatucci",
-      "from": "Fiorentina",
-      "to": "Deportivo La Coruna",
-      "fromCode": "FIO",
-      "toCode": null,
-      "date": "2026-07-08",
-      "type": "Transfer"
-    },
-    {
-      "n": "G. Stabile",
-      "from": "Inter",
-      "to": "Sudtirol",
-      "fromCode": "INT",
-      "toCode": null,
-      "date": "2026-07-08",
-      "type": "Loan"
-    },
-    {
-      "n": "G. Oristanio",
-      "from": "Venezia",
-      "to": "Torino",
-      "fromCode": "VEN",
-      "toCode": "TOR",
-      "date": "2026-07-08",
-      "type": "Loan"
-    },
-    {
-      "n": "G. Gaetano",
-      "from": "Cagliari",
-      "to": "Atalanta",
-      "fromCode": "CAG",
-      "toCode": "ATA",
-      "date": "2026-07-08",
-      "type": "Transfer"
-    },
-    {
-      "n": "E. Havel",
-      "from": "TSV Hartberg",
-      "to": "Genoa",
-      "fromCode": null,
-      "toCode": "GEN",
-      "date": "2026-07-08",
-      "type": "Transfer"
-    },
-    {
-      "n": "A. Rrahmani",
-      "from": "Sparta Praha",
-      "to": "Venezia",
-      "fromCode": null,
-      "toCode": "VEN",
-      "date": "2026-07-08",
-      "type": "Transfer"
-    },
-    {
-      "n": "A. Gomes",
-      "from": "Zaragoza",
-      "to": "Venezia",
-      "fromCode": null,
-      "toCode": "VEN",
-      "date": "2026-07-08",
-      "type": "Transfer"
     }
   ]
 }

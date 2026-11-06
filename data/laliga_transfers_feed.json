@@ -1,6 +1,6 @@
 {
   "note": "PROPOSALS from API-Football /transfers, for a person to read. data/transfers.json is the hand-curated overlay that is actually applied; this is not.",
-  "since": "2026-07-08",
+  "since": "2026-07-09",
   "moves": [
     {
       "n": "Dani Carvajal",
@@ -4239,69 +4239,6 @@
       "fromCode": "DEP",
       "toCode": null,
       "date": "2026-07-09",
-      "type": "Free agent"
-    },
-    {
-      "n": "Óscar Mingueza",
-      "from": "Celta Vigo",
-      "to": "Crystal Palace",
-      "fromCode": "CEL",
-      "toCode": null,
-      "date": "2026-07-08",
-      "type": "Free agent"
-    },
-    {
-      "n": "Mario García",
-      "from": "Racing Santander",
-      "to": "Widzew Łódź",
-      "fromCode": "RAC",
-      "toCode": null,
-      "date": "2026-07-08",
-      "type": "Transfer"
-    },
-    {
-      "n": "L. Amatucci",
-      "from": "Fiorentina",
-      "to": "Deportivo La Coruna",
-      "fromCode": null,
-      "toCode": "DEP",
-      "date": "2026-07-08",
-      "type": "Transfer"
-    },
-    {
-      "n": "Germán García",
-      "from": "Real Betis",
-      "to": "Cacereño",
-      "fromCode": "BET",
-      "toCode": null,
-      "date": "2026-07-08",
-      "type": "Free agent"
-    },
-    {
-      "n": "D. Ramirez",
-      "from": "Real Sociedad",
-      "to": "Gimnastic",
-      "fromCode": "RSO",
-      "toCode": null,
-      "date": "2026-07-08",
-      "type": "Free agent"
-    },
-    {
-      "n": "Aritz Aldasoro",
-      "from": "Racing Santander",
-      "to": "Oviedo",
-      "fromCode": "RAC",
-      "toCode": null,
-      "date": "2026-07-08",
-      "type": "Loan"
-    },
-    {
-      "n": "Alex Petxarroman",
-      "from": "Deportivo La Coruna",
-      "to": "AD Ceuta FC",
-      "fromCode": "DEP",
-      "toCode": null,
-      "date": "2026-07-08",
       "type": "Free agent"
     }
   ]
