@@ -18,6 +18,7 @@
   "https://rfef.es/sites/default/files/designaciones_1a_division_masculina_-_temp_2026-27_-_jornada_11_lunes.pdf",
   "https://rfef.es/sites/default/files/designaciones_1a_division_masculina_-_temp_2026-27_-_jornada_11_sabado.pdf",
   "https://rfef.es/sites/default/files/designaciones_1a_division_masculina_-_temp_2026-27_-_jornada_11_viernes.pdf",
+  "https://rfef.es/sites/default/files/designaciones_1a_division_masculina_-_temp_2026-27_-_jornada_12_sabado.pdf",
   "https://rfef.es/sites/default/files/designaciones_1a_division_masculina_-_temp_2026-27_-_jornada_12_viernes.pdf",
   "https://rfef.es/sites/default/files/designaciones_1a_division_masculina_-_temp_2026-27_-_jornada_1_domingo16.pdf",
   "https://rfef.es/sites/default/files/designaciones_1a_division_masculina_-_temp_2026-27_-_jornada_1_lunes17.pdf",
@@ -2539,6 +2540,50 @@
    "refResolved": null,
    "resolvedBy": null,
    "source": "https://rfef.es/sites/default/files/designaciones_1a_division_masculina_-_temp_2026-27_-_jornada_12_viernes.pdf"
+  },
+  {
+   "league": "LL",
+   "date": "2026-11-07",
+   "h": "ESP",
+   "a": "DEP",
+   "ko": "16:15",
+   "ref": "Alejandro Quintero",
+   "refResolved": "Alejandro Quintero Gonzalez",
+   "resolvedBy": "run",
+   "source": "https://rfef.es/sites/default/files/designaciones_1a_division_masculina_-_temp_2026-27_-_jornada_12_sabado.pdf"
+  },
+  {
+   "league": "LL",
+   "date": "2026-11-07",
+   "h": "MAL",
+   "a": "RAC",
+   "ko": "14:00",
+   "ref": "Isidro Díaz De Mera",
+   "refResolved": "Isidro Diaz de Mera Escuderos",
+   "resolvedBy": "run",
+   "source": "https://rfef.es/sites/default/files/designaciones_1a_division_masculina_-_temp_2026-27_-_jornada_12_sabado.pdf"
+  },
+  {
+   "league": "LL",
+   "date": "2026-11-07",
+   "h": "OSA",
+   "a": "ATH",
+   "ko": "18:30",
+   "ref": "Miguel Sesma",
+   "refResolved": "Miguel Sesma Espinosa",
+   "resolvedBy": "run",
+   "source": "https://rfef.es/sites/default/files/designaciones_1a_division_masculina_-_temp_2026-27_-_jornada_12_sabado.pdf"
+  },
+  {
+   "league": "LL",
+   "date": "2026-11-07",
+   "h": "VAL",
+   "a": "RMA",
+   "ko": "21:00",
+   "ref": "Francisco José Hernández",
+   "refResolved": "Francisco Hernandez Maeso",
+   "resolvedBy": "given2",
+   "source": "https://rfef.es/sites/default/files/designaciones_1a_division_masculina_-_temp_2026-27_-_jornada_12_sabado.pdf"
   },
   {
    "league": "PL",
