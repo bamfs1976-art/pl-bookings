@@ -1,6 +1,6 @@
 {
   "note": "PROPOSALS from API-Football /transfers, for a person to read. data/transfers.json is the hand-curated overlay that is actually applied; this is not.",
-  "since": "2026-07-09",
+  "since": "2026-07-10",
   "moves": [
     {
       "n": "Ephrahim Yeboah",
@@ -6444,69 +6444,6 @@
       "fromCode": "SHU",
       "toCode": null,
       "date": "2026-07-10",
-      "type": "Free agent"
-    },
-    {
-      "n": "R. Swann",
-      "from": "Portsmouth",
-      "to": "Braintree",
-      "fromCode": "POR",
-      "toCode": null,
-      "date": "2026-07-09",
-      "type": "Free agent"
-    },
-    {
-      "n": "R. Saïd",
-      "from": "Standard Liege",
-      "to": "Wolves",
-      "fromCode": null,
-      "toCode": "WOL",
-      "date": "2026-07-09",
-      "type": "Transfer"
-    },
-    {
-      "n": "P. Charles",
-      "from": "Manchester City",
-      "to": "QPR",
-      "fromCode": null,
-      "toCode": "QPR",
-      "date": "2026-07-09",
-      "type": "Loan"
-    },
-    {
-      "n": "K. Joseph",
-      "from": "Hull City",
-      "to": "Middlesbrough",
-      "fromCode": null,
-      "toCode": "MID",
-      "date": "2026-07-09",
-      "type": "Transfer"
-    },
-    {
-      "n": "J. Stokes",
-      "from": "Bristol City",
-      "to": "Reading",
-      "fromCode": "BRC",
-      "toCode": null,
-      "date": "2026-07-09",
-      "type": "Loan"
-    },
-    {
-      "n": "J. Lumley",
-      "from": "Bristol City",
-      "to": "Sheffield Wednesday",
-      "fromCode": "BRC",
-      "toCode": null,
-      "date": "2026-07-09",
-      "type": "Free agent"
-    },
-    {
-      "n": "I. Hayden",
-      "from": "QPR",
-      "to": "Leyton Orient",
-      "fromCode": "QPR",
-      "toCode": null,
-      "date": "2026-07-09",
       "type": "Free agent"
     }
   ]

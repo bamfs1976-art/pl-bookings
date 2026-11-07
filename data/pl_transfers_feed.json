@@ -1,6 +1,6 @@
 {
   "note": "PROPOSALS from API-Football /transfers, for a person to read. data/transfers.json is the hand-curated overlay that is actually applied; this is not.",
-  "since": "2026-07-09",
+  "since": "2026-07-10",
   "moves": [
     {
       "n": "B. Williams",
@@ -6102,51 +6102,6 @@
       "fromCode": "CHE",
       "toCode": null,
       "date": "2026-07-10",
-      "type": "Loan"
-    },
-    {
-      "n": "P. Charles",
-      "from": "Manchester City",
-      "to": "QPR",
-      "fromCode": "MCI",
-      "toCode": "QPR",
-      "date": "2026-07-09",
-      "type": "Loan"
-    },
-    {
-      "n": "O. Bevan",
-      "from": "Bournemouth",
-      "to": "Dundee",
-      "fromCode": "BOU",
-      "toCode": null,
-      "date": "2026-07-09",
-      "type": "Transfer"
-    },
-    {
-      "n": "K. Samuels",
-      "from": "Brentford",
-      "to": "Brora Rangers",
-      "fromCode": "BRE",
-      "toCode": null,
-      "date": "2026-07-09",
-      "type": "Free agent"
-    },
-    {
-      "n": "K. Joseph",
-      "from": "Hull City",
-      "to": "Middlesbrough",
-      "fromCode": "HUL",
-      "toCode": "MID",
-      "date": "2026-07-09",
-      "type": "Transfer"
-    },
-    {
-      "n": "Harrison Murray-Campbell",
-      "from": "Chelsea",
-      "to": "Kortrijk",
-      "fromCode": "CHE",
-      "toCode": null,
-      "date": "2026-07-09",
       "type": "Loan"
     }
   ]

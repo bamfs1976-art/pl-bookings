@@ -1,6 +1,6 @@
 {
   "note": "PROPOSALS from API-Football /transfers, for a person to read. data/transfers.json is the hand-curated overlay that is actually applied; this is not.",
-  "since": "2026-07-09",
+  "since": "2026-07-10",
   "moves": [
     {
       "n": "Dani Carvajal",
@@ -4177,69 +4177,6 @@
       "toCode": null,
       "date": "2026-07-10",
       "type": "Transfer"
-    },
-    {
-      "n": "Víctor Moreno",
-      "from": "Villarreal",
-      "to": "Tenerife",
-      "fromCode": "VIL",
-      "toCode": null,
-      "date": "2026-07-09",
-      "type": "Transfer"
-    },
-    {
-      "n": "Urko Izeta",
-      "from": "Athletic Club",
-      "to": "Cadiz",
-      "fromCode": "ATH",
-      "toCode": null,
-      "date": "2026-07-09",
-      "type": "-"
-    },
-    {
-      "n": "T. Ojeda",
-      "from": "Villarreal",
-      "to": "Valladolid",
-      "fromCode": "VIL",
-      "toCode": null,
-      "date": "2026-07-09",
-      "type": "Transfer"
-    },
-    {
-      "n": "Peter",
-      "from": "Getafe",
-      "to": "Gornik Zabrze",
-      "fromCode": "GET",
-      "toCode": null,
-      "date": "2026-07-09",
-      "type": "Transfer"
-    },
-    {
-      "n": "Mario García",
-      "from": "Racing Santander",
-      "to": "Widzew Łódź",
-      "fromCode": "RAC",
-      "toCode": null,
-      "date": "2026-07-09",
-      "type": "Transfer"
-    },
-    {
-      "n": "M. Hjulmand",
-      "from": "Sporting CP",
-      "to": "Atletico Madrid",
-      "fromCode": null,
-      "toCode": "ATM",
-      "date": "2026-07-09",
-      "type": "Transfer"
-    },
-    {
-      "n": "Alex Petxarroman",
-      "from": "Deportivo La Coruna",
-      "to": "AD Ceuta FC",
-      "fromCode": "DEP",
-      "toCode": null,
-      "date": "2026-07-09",
-      "type": "Free agent"
     }
   ]
 }

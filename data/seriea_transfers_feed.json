@@ -1,6 +1,6 @@
 {
   "note": "PROPOSALS from API-Football /transfers, for a person to read. data/transfers.json is the hand-curated overlay that is actually applied; this is not.",
-  "since": "2026-07-09",
+  "since": "2026-07-10",
   "moves": [
     {
       "n": "A. Di Nunzio",
@@ -6265,105 +6265,6 @@
       "toCode": "FIO",
       "date": "2026-07-10",
       "type": "Transfer"
-    },
-    {
-      "n": "Vitaly Palamarchuk",
-      "from": "Sporting CP",
-      "to": "Lecce",
-      "fromCode": null,
-      "toCode": "LEC",
-      "date": "2026-07-09",
-      "type": "Transfer"
-    },
-    {
-      "n": "T. Martinelli",
-      "from": "Fiorentina",
-      "to": "Avellino",
-      "fromCode": "FIO",
-      "toCode": null,
-      "date": "2026-07-09",
-      "type": "Loan"
-    },
-    {
-      "n": "Roberto D'Intino",
-      "from": "Parma",
-      "to": "Trento",
-      "fromCode": "PAR",
-      "toCode": null,
-      "date": "2026-07-09",
-      "type": "Loan"
-    },
-    {
-      "n": "Paulo Azzi",
-      "from": "Monza",
-      "to": "Modena",
-      "fromCode": "MON",
-      "toCode": null,
-      "date": "2026-07-09",
-      "type": "Transfer"
-    },
-    {
-      "n": "Mario Gila",
-      "from": "Lazio",
-      "to": "AC Milan",
-      "fromCode": "LAZ",
-      "toCode": "ACM",
-      "date": "2026-07-09",
-      "type": "Transfer"
-    },
-    {
-      "n": "L. Romani",
-      "from": "Fiorentina",
-      "to": "Carrarese",
-      "fromCode": "FIO",
-      "toCode": null,
-      "date": "2026-07-09",
-      "type": "Loan"
-    },
-    {
-      "n": "G. Di Biase",
-      "from": "Juventus",
-      "to": "Crawley Town",
-      "fromCode": "JUV",
-      "toCode": null,
-      "date": "2026-07-09",
-      "type": "Transfer"
-    },
-    {
-      "n": "Francesco Gatto",
-      "from": "Reggina",
-      "to": "Lazio",
-      "fromCode": null,
-      "toCode": "LAZ",
-      "date": "2026-07-09",
-      "type": "Free agent"
-    },
-    {
-      "n": "E. Sadotti",
-      "from": "Fiorentina",
-      "to": "Alcione",
-      "fromCode": "FIO",
-      "toCode": null,
-      "date": "2026-07-09",
-      "type": "Loan"
-    },
-    {
-      "n": "E. Havel",
-      "from": "TSV Hartberg",
-      "to": "Genoa",
-      "fromCode": null,
-      "toCode": "GEN",
-      "date": "2026-07-09",
-      "type": "Transfer"
-    },
-    {
-      "n": "A. Plizzari",
-      "from": "Venezia",
-      "to": "Sudtirol",
-      "fromCode": "VEN",
-      "toCode": null,
-      "date": "2026-07-09",
-      "type": "Loan"
     }
   ]
 }
