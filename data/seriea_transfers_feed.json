@@ -1,6 +1,6 @@
 {
   "note": "PROPOSALS from API-Football /transfers, for a person to read. data/transfers.json is the hand-curated overlay that is actually applied; this is not.",
-  "since": "2026-07-10",
+  "since": "2026-07-11",
   "moves": [
     {
       "n": "A. Di Nunzio",
@@ -6175,96 +6175,6 @@
       "toCode": "FRO",
       "date": "2026-07-11",
       "type": "Free agent"
-    },
-    {
-      "n": "Stefano Minelli",
-      "from": "Venezia",
-      "to": "Desenzano Calvina",
-      "fromCode": "VEN",
-      "toCode": null,
-      "date": "2026-07-10",
-      "type": "Free agent"
-    },
-    {
-      "n": "S. Korač",
-      "from": "Venezia",
-      "to": "Hellas Verona",
-      "fromCode": "VEN",
-      "toCode": null,
-      "date": "2026-07-10",
-      "type": "Loan"
-    },
-    {
-      "n": "Paulo Azzi",
-      "from": "Monza",
-      "to": "Modena",
-      "fromCode": "MON",
-      "toCode": null,
-      "date": "2026-07-10",
-      "type": "Transfer"
-    },
-    {
-      "n": "N. Leali",
-      "from": "Genoa",
-      "to": "Hellas Verona",
-      "fromCode": "GEN",
-      "toCode": null,
-      "date": "2026-07-10",
-      "type": "Free agent"
-    },
-    {
-      "n": "L. Barani",
-      "from": "Sassuolo",
-      "to": "Gubbio",
-      "fromCode": "SAS",
-      "toCode": null,
-      "date": "2026-07-10",
-      "type": "Loan"
-    },
-    {
-      "n": "Edoardo Tigani",
-      "from": "Parma",
-      "to": "Ospitaletto",
-      "fromCode": "PAR",
-      "toCode": null,
-      "date": "2026-07-10",
-      "type": "Loan"
-    },
-    {
-      "n": "Abdoulie Ndow",
-      "from": "Frosinone",
-      "to": "Spezia",
-      "fromCode": "FRO",
-      "toCode": null,
-      "date": "2026-07-10",
-      "type": "Transfer"
-    },
-    {
-      "n": "A. Pozzi",
-      "from": "Vis Pesaro",
-      "to": "Venezia",
-      "fromCode": null,
-      "toCode": "VEN",
-      "date": "2026-07-10",
-      "type": "Transfer"
-    },
-    {
-      "n": "A. Cardascio",
-      "from": "Sassuolo",
-      "to": "Gubbio",
-      "fromCode": "SAS",
-      "toCode": null,
-      "date": "2026-07-10",
-      "type": "Transfer"
-    },
-    {
-      "n": "A. Atta",
-      "from": "Udinese",
-      "to": "Fiorentina",
-      "fromCode": "UDI",
-      "toCode": "FIO",
-      "date": "2026-07-10",
-      "type": "Transfer"
     }
   ]
 }

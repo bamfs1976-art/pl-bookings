@@ -1,6 +1,6 @@
 {
   "note": "PROPOSALS from API-Football /transfers, for a person to read. data/transfers.json is the hand-curated overlay that is actually applied; this is not.",
-  "since": "2026-07-10",
+  "since": "2026-07-11",
   "moves": [
     {
       "n": "Dani Carvajal",
@@ -4123,60 +4123,6 @@
       "toCode": null,
       "date": "2026-07-11",
       "type": "Loan"
-    },
-    {
-      "n": "Víctor Moreno",
-      "from": "Villarreal",
-      "to": "Tenerife",
-      "fromCode": "VIL",
-      "toCode": null,
-      "date": "2026-07-10",
-      "type": "Transfer"
-    },
-    {
-      "n": "Urko Izeta",
-      "from": "Athletic Club",
-      "to": "Cadiz",
-      "fromCode": "ATH",
-      "toCode": null,
-      "date": "2026-07-10",
-      "type": "-"
-    },
-    {
-      "n": "T. Ojeda",
-      "from": "Villarreal",
-      "to": "Valladolid",
-      "fromCode": "VIL",
-      "toCode": null,
-      "date": "2026-07-10",
-      "type": "Transfer"
-    },
-    {
-      "n": "Peter",
-      "from": "Getafe",
-      "to": "Gornik Zabrze",
-      "fromCode": "GET",
-      "toCode": null,
-      "date": "2026-07-10",
-      "type": "Transfer"
-    },
-    {
-      "n": "M. Hjulmand",
-      "from": "Sporting CP",
-      "to": "Atletico Madrid",
-      "fromCode": null,
-      "toCode": "ATM",
-      "date": "2026-07-10",
-      "type": "Transfer"
-    },
-    {
-      "n": "L. Castell",
-      "from": "Espanyol",
-      "to": "Burnley",
-      "fromCode": "ESP",
-      "toCode": null,
-      "date": "2026-07-10",
-      "type": "Transfer"
     }
   ]
 }

@@ -1,6 +1,6 @@
 {
   "note": "PROPOSALS from API-Football /transfers, for a person to read. data/transfers.json is the hand-curated overlay that is actually applied; this is not.",
-  "since": "2026-07-10",
+  "since": "2026-07-11",
   "moves": [
     {
       "n": "Ephrahim Yeboah",
@@ -6390,60 +6390,6 @@
       "fromCode": "POR",
       "toCode": null,
       "date": "2026-07-11",
-      "type": "Free agent"
-    },
-    {
-      "n": "R. Saïd",
-      "from": "Standard Liege",
-      "to": "Wolves",
-      "fromCode": null,
-      "toCode": "WOL",
-      "date": "2026-07-10",
-      "type": "Transfer"
-    },
-    {
-      "n": "L. Tchaouna",
-      "from": "Burnley",
-      "to": "Coventry",
-      "fromCode": "BUR",
-      "toCode": null,
-      "date": "2026-07-10",
-      "type": "Transfer"
-    },
-    {
-      "n": "L. Eissat",
-      "from": "Maccabi Haifa",
-      "to": "Bristol City",
-      "fromCode": null,
-      "toCode": "BRC",
-      "date": "2026-07-10",
-      "type": "Transfer"
-    },
-    {
-      "n": "L. Castell",
-      "from": "Espanyol",
-      "to": "Burnley",
-      "fromCode": null,
-      "toCode": "BUR",
-      "date": "2026-07-10",
-      "type": "Transfer"
-    },
-    {
-      "n": "J. Lumley",
-      "from": "Bristol City",
-      "to": "Sheffield Wednesday",
-      "fromCode": "BRC",
-      "toCode": null,
-      "date": "2026-07-10",
-      "type": "Free agent"
-    },
-    {
-      "n": "E. Easton",
-      "from": "Sheffield Utd",
-      "to": "Airdrie United",
-      "fromCode": "SHU",
-      "toCode": null,
-      "date": "2026-07-10",
       "type": "Free agent"
     }
   ]
