@@ -1,6 +1,6 @@
 {
   "note": "PROPOSALS from API-Football /transfers, for a person to read. data/transfers.json is the hand-curated overlay that is actually applied; this is not.",
-  "since": "2026-07-11",
+  "since": "2026-07-12",
   "moves": [
     {
       "n": "B. Williams",
@@ -6048,15 +6048,6 @@
       "fromCode": "CRY",
       "toCode": null,
       "date": "2026-07-12",
-      "type": "Free agent"
-    },
-    {
-      "n": "B. Collins",
-      "from": "Coventry",
-      "to": "Bristol City",
-      "fromCode": "COV",
-      "toCode": "BRC",
-      "date": "2026-07-11",
       "type": "Free agent"
     }
   ]

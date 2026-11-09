@@ -1,6 +1,6 @@
 {
   "note": "PROPOSALS from API-Football /transfers, for a person to read. data/transfers.json is the hand-curated overlay that is actually applied; this is not.",
-  "since": "2026-07-11",
+  "since": "2026-07-12",
   "moves": [
     {
       "n": "Ephrahim Yeboah",
@@ -6318,78 +6318,6 @@
       "fromCode": "WRE",
       "toCode": null,
       "date": "2026-07-12",
-      "type": "Free agent"
-    },
-    {
-      "n": "R. Wintle",
-      "from": "Cardiff",
-      "to": "Milton Keynes Dons",
-      "fromCode": "CAR",
-      "toCode": null,
-      "date": "2026-07-11",
-      "type": "Free agent"
-    },
-    {
-      "n": "R. Shein",
-      "from": "Fredrikstad",
-      "to": "Portsmouth",
-      "fromCode": null,
-      "toCode": "POR",
-      "date": "2026-07-11",
-      "type": "Transfer"
-    },
-    {
-      "n": "M. Smith",
-      "from": "Preston",
-      "to": "Mansfield Town",
-      "fromCode": "PRE",
-      "toCode": null,
-      "date": "2026-07-11",
-      "type": "Free agent"
-    },
-    {
-      "n": "L. Castell",
-      "from": "Espanyol",
-      "to": "Burnley",
-      "fromCode": null,
-      "toCode": "BUR",
-      "date": "2026-07-11",
-      "type": "Transfer"
-    },
-    {
-      "n": "J. Lawson",
-      "from": "Watford",
-      "to": "FF Jaro",
-      "fromCode": "WAT",
-      "toCode": null,
-      "date": "2026-07-11",
-      "type": "Free agent"
-    },
-    {
-      "n": "J. Boggan",
-      "from": "Blackburn",
-      "to": "Livingston",
-      "fromCode": "BLB",
-      "toCode": null,
-      "date": "2026-07-11",
-      "type": "Free agent"
-    },
-    {
-      "n": "B. Collins",
-      "from": "Coventry",
-      "to": "Bristol City",
-      "fromCode": null,
-      "toCode": "BRC",
-      "date": "2026-07-11",
-      "type": "Free agent"
-    },
-    {
-      "n": "A. Dozzell",
-      "from": "Portsmouth",
-      "to": "DC United",
-      "fromCode": "POR",
-      "toCode": null,
-      "date": "2026-07-11",
       "type": "Free agent"
     }
   ]

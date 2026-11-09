@@ -1,6 +1,6 @@
 {
   "note": "PROPOSALS from API-Football /transfers, for a person to read. data/transfers.json is the hand-curated overlay that is actually applied; this is not.",
-  "since": "2026-07-11",
+  "since": "2026-07-12",
   "moves": [
     {
       "n": "A. Di Nunzio",
@@ -6120,60 +6120,6 @@
       "fromCode": null,
       "toCode": "FRO",
       "date": "2026-07-12",
-      "type": "Free agent"
-    },
-    {
-      "n": "S. Fini",
-      "from": "Genoa",
-      "to": "Frosinone",
-      "fromCode": "GEN",
-      "toCode": "FRO",
-      "date": "2026-07-11",
-      "type": "Loan"
-    },
-    {
-      "n": "P. Tornaghi",
-      "from": "Atalanta",
-      "to": "Giana Erminio",
-      "fromCode": "ATA",
-      "toCode": null,
-      "date": "2026-07-11",
-      "type": "Loan"
-    },
-    {
-      "n": "G. Cittadini",
-      "from": "Atalanta",
-      "to": "Frosinone",
-      "fromCode": "ATA",
-      "toCode": "FRO",
-      "date": "2026-07-11",
-      "type": "Loan"
-    },
-    {
-      "n": "G. Calvani",
-      "from": "Genoa",
-      "to": "Frosinone",
-      "fromCode": "GEN",
-      "toCode": "FRO",
-      "date": "2026-07-11",
-      "type": "Loan"
-    },
-    {
-      "n": "E. Muhameti",
-      "from": "Atalanta",
-      "to": "Giana Erminio",
-      "fromCode": "ATA",
-      "toCode": null,
-      "date": "2026-07-11",
-      "type": "Loan"
-    },
-    {
-      "n": "A. El Azzouzi",
-      "from": "Fortuna Düsseldorf",
-      "to": "Frosinone",
-      "fromCode": null,
-      "toCode": "FRO",
-      "date": "2026-07-11",
       "type": "Free agent"
     }
   ]

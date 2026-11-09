@@ -1,6 +1,6 @@
 {
   "note": "PROPOSALS from API-Football /transfers, for a person to read. data/transfers.json is the hand-curated overlay that is actually applied; this is not.",
-  "since": "2026-07-11",
+  "since": "2026-07-12",
   "moves": [
     {
       "n": "Dani Carvajal",
@@ -4078,51 +4078,6 @@
       "toCode": null,
       "date": "2026-07-12",
       "type": "Free agent"
-    },
-    {
-      "n": "L. Castell",
-      "from": "Espanyol",
-      "to": "Burnley",
-      "fromCode": "ESP",
-      "toCode": null,
-      "date": "2026-07-11",
-      "type": "Transfer"
-    },
-    {
-      "n": "Jonathan Asp Jensen",
-      "from": "Bayern München",
-      "to": "Deportivo La Coruna",
-      "fromCode": null,
-      "toCode": "DEP",
-      "date": "2026-07-11",
-      "type": "Transfer"
-    },
-    {
-      "n": "Brais Méndez",
-      "from": "Real Sociedad",
-      "to": "Columbus Crew",
-      "fromCode": "RSO",
-      "toCode": null,
-      "date": "2026-07-11",
-      "type": "Transfer"
-    },
-    {
-      "n": "B. Santamaría",
-      "from": "Valencia",
-      "to": "PAOK",
-      "fromCode": "VAL",
-      "toCode": null,
-      "date": "2026-07-11",
-      "type": "Free agent"
-    },
-    {
-      "n": "A. Werner",
-      "from": "Elche",
-      "to": "Rosario Central",
-      "fromCode": "ELC",
-      "toCode": null,
-      "date": "2026-07-11",
-      "type": "Loan"
     }
   ]
 }
