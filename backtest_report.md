@@ -4,17 +4,17 @@
      of this file is that every number in it came out of a real run. -->
 
 **Premier League** · 1848 out-of-sample predictions over 10 rounds
-· source `data/match_history.json` · generated 2026-11-09T12:48:55.373Z
+· source `data/match_history.json` · generated 2026-11-10T12:33:17.978Z
 
 ## Headline
 
-The refit is **indistinguishable** from the naive base rate — on this sample there is no demonstrated gain, and nothing should ship on the strength of it.
+The refit **beats** the naive base rate.
 
 | model | Brier | log loss |
 |---|---|---|
 | base | 0.1155 | 0.3926 |
-| prior | 0.1141 | 0.3859 |
-| fit | 0.1146 | 0.3883 |
+| prior | 0.1141 | 0.3857 |
+| fit | 0.1146 | 0.3881 |
 
 Lower is better. `base` is the league base rate for every player — the naive
 baseline the model has to beat to justify itself. `prior` is the shipped
@@ -23,8 +23,8 @@ is what a live model would have known at the time.
 
 ## Is the difference real?
 
-- fit vs base: **is indistinguishable from** — mean Brier difference -0.00083 ± 0.00100 (2 s.e.)
-- fit vs prior: **is WORSE than** — mean Brier difference 0.00055 ± 0.00047 (2 s.e.)
+- fit vs base: **BEATS** — mean Brier difference -0.00091 ± 0.00085 (2 s.e.)
+- fit vs prior: **is WORSE than** — mean Brier difference 0.00047 ± 0.00043 (2 s.e.)
 
 The predictions are paired — same rows, same order — so the difference in
 squared error has a standard error of its own, and an interval spanning zero
@@ -39,13 +39,13 @@ score suggests.
 
 | predicted band | n | mean predicted | actual | gap |
 |---|---:|---:|---:|---:|
-| 0–10% | 170 | 4.8% | 5.9% | +1.1pp |
-| 10–20% | 1672 | 13.2% | 14.1% | +0.9pp |
-| 20–30% | 3 | 24.6% | 0.0% | -24.6pp |
-| 30–40% | 1 | 33.1% | 0.0% | -33.1pp |
-| 40–50% | 0 | — | — | — |
-| 50–60% | 1 | 53.5% | 100.0% | +46.5pp |
-| 60–70% | 1 | 64.5% | 0.0% | -64.5pp |
+| 0–10% | 171 | 4.8% | 5.8% | +1.1pp |
+| 10–20% | 1671 | 13.2% | 14.1% | +0.9pp |
+| 20–30% | 2 | 24.7% | 0.0% | -24.7pp |
+| 30–40% | 2 | 33.4% | 0.0% | -33.4pp |
+| 40–50% | 2 | 41.2% | 50.0% | +8.8pp |
+| 50–60% | 0 | — | — | — |
+| 60–70% | 0 | — | — | — |
 | 70–80% | 0 | — | — | — |
 | 80–90% | 0 | — | — | — |
 | 90–100% | 0 | — | — | — |
