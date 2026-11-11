@@ -1,6 +1,6 @@
 {
   "note": "PROPOSALS from API-Football /transfers, for a person to read. data/transfers.json is the hand-curated overlay that is actually applied; this is not.",
-  "since": "2026-07-13",
+  "since": "2026-07-14",
   "moves": [
     {
       "n": "Ephrahim Yeboah",
@@ -93,6 +93,15 @@
       "type": "-"
     },
     {
+      "n": "C. Agu",
+      "from": "Portsmouth",
+      "to": "Basingstoke Town",
+      "fromCode": "POR",
+      "toCode": null,
+      "date": "2026-10-09",
+      "type": "Loan"
+    },
+    {
       "n": "R. Clayton",
       "from": "West Ham",
       "to": "Scunthorpe",
@@ -153,15 +162,6 @@
       "fromCode": "SWA",
       "toCode": null,
       "date": "2026-09-30",
-      "type": "Free agent"
-    },
-    {
-      "n": "I. Jones",
-      "from": "Swansea",
-      "to": "Briton Ferry",
-      "fromCode": "SWA",
-      "toCode": null,
-      "date": "2026-09-29",
       "type": "Free agent"
     },
     {
@@ -793,15 +793,6 @@
       "toCode": null,
       "date": "2026-09-01",
       "type": "Free agent"
-    },
-    {
-      "n": "J. Cotterill",
-      "from": "Swansea",
-      "to": "ST Johnstone",
-      "fromCode": "SWA",
-      "toCode": null,
-      "date": "2026-09-01",
-      "type": "Transfer"
     },
     {
       "n": "D. Downs",
@@ -1551,15 +1542,6 @@
       "type": "Loan"
     },
     {
-      "n": "Tom Wright",
-      "from": "Swansea",
-      "to": "Ammanford AFC",
-      "fromCode": "SWA",
-      "toCode": null,
-      "date": "2026-08-30",
-      "type": "-"
-    },
-    {
       "n": "Tom Iorpenda",
       "from": "Huddersfield",
       "to": "Swansea",
@@ -1576,15 +1558,6 @@
       "toCode": null,
       "date": "2026-08-30",
       "type": "Free agent"
-    },
-    {
-      "n": "T. Shade",
-      "from": "Burton Albion",
-      "to": "Portsmouth",
-      "fromCode": null,
-      "toCode": "POR",
-      "date": "2026-08-30",
-      "type": "Transfer"
     },
     {
       "n": "T. Harwood-Bellis",
@@ -1954,15 +1927,6 @@
       "toCode": "CHA",
       "date": "2026-08-29",
       "type": "Loan"
-    },
-    {
-      "n": "Tom Iorpenda",
-      "from": "Huddersfield",
-      "to": "Swansea",
-      "fromCode": null,
-      "toCode": "SWA",
-      "date": "2026-08-29",
-      "type": "Transfer"
     },
     {
       "n": "Tobias Christopher Collyer",
@@ -2496,15 +2460,6 @@
       "type": "Transfer"
     },
     {
-      "n": "S. Eustáquio",
-      "from": "FC Porto",
-      "to": "Swansea",
-      "fromCode": null,
-      "toCode": "SWA",
-      "date": "2026-08-25",
-      "type": "Transfer"
-    },
-    {
       "n": "K. Tunde",
       "from": "Levante",
       "to": "West Brom",
@@ -2546,15 +2501,6 @@
       "to": "Wrexham",
       "fromCode": null,
       "toCode": "WRE",
-      "date": "2026-08-25",
-      "type": "Transfer"
-    },
-    {
-      "n": "I. Mohamed",
-      "from": "Casa Pia",
-      "to": "Portsmouth",
-      "fromCode": null,
-      "toCode": "POR",
       "date": "2026-08-25",
       "type": "Transfer"
     },
@@ -3783,15 +3729,6 @@
       "type": "Transfer"
     },
     {
-      "n": "A. Kamara",
-      "from": "Hull City",
-      "to": "Portsmouth",
-      "fromCode": null,
-      "toCode": "POR",
-      "date": "2026-08-08",
-      "type": "Transfer"
-    },
-    {
       "n": "Ruben Curly",
       "from": "Stoke City",
       "to": "Morecambe",
@@ -4215,15 +4152,6 @@
       "type": "Free agent"
     },
     {
-      "n": "Conal McDermott",
-      "from": "Portsmouth",
-      "to": "Derry City",
-      "fromCode": "POR",
-      "toCode": null,
-      "date": "2026-08-04",
-      "type": "Free agent"
-    },
-    {
       "n": "B. Whiteman",
       "from": "Preston",
       "to": "Wrexham",
@@ -4269,29 +4197,11 @@
       "type": "Transfer"
     },
     {
-      "n": "Kyrell Wilson",
-      "from": "Swansea",
-      "to": "Gent",
-      "fromCode": "SWA",
-      "toCode": null,
-      "date": "2026-08-03",
-      "type": "Transfer"
-    },
-    {
       "n": "J. Moylan",
       "from": "Lincoln",
       "to": "Cardiff",
       "fromCode": "LIN",
       "toCode": "CAR",
-      "date": "2026-08-03",
-      "type": "Transfer"
-    },
-    {
-      "n": "I. Bowat",
-      "from": "Portsmouth",
-      "to": "Huddersfield",
-      "fromCode": "POR",
-      "toCode": null,
       "date": "2026-08-03",
       "type": "Transfer"
     },
@@ -4534,15 +4444,6 @@
       "from": "Bolton",
       "to": "Hednesford Town",
       "fromCode": "BOL",
-      "toCode": null,
-      "date": "2026-08-01",
-      "type": "Transfer"
-    },
-    {
-      "n": "C. Congreve",
-      "from": "Swansea",
-      "to": "KVC Westerlo",
-      "fromCode": "SWA",
       "toCode": null,
       "date": "2026-08-01",
       "type": "Transfer"
@@ -4791,13 +4692,13 @@
       "type": "Transfer"
     },
     {
-      "n": "L. Cullen",
-      "from": "Swansea",
-      "to": "Leicester",
-      "fromCode": "SWA",
+      "n": "K. Sylvanus",
+      "from": "Portsmouth",
+      "to": "Sylvanus Kyran",
+      "fromCode": "POR",
       "toCode": null,
       "date": "2026-07-29",
-      "type": "Transfer"
+      "type": "Free agent"
     },
     {
       "n": "K. Lund",
@@ -5214,15 +5115,6 @@
       "type": "Transfer"
     },
     {
-      "n": "Kit Margetson",
-      "from": "Swansea",
-      "to": "Manchester United U21",
-      "fromCode": "SWA",
-      "toCode": null,
-      "date": "2026-07-25",
-      "type": "-"
-    },
-    {
       "n": "K. Lisbie",
       "from": "Peterborough",
       "to": "Millwall",
@@ -5466,15 +5358,6 @@
       "type": "Free agent"
     },
     {
-      "n": "D. Bielica",
-      "from": "NAC Breda",
-      "to": "Portsmouth",
-      "fromCode": null,
-      "toCode": "POR",
-      "date": "2026-07-22",
-      "type": "Transfer"
-    },
-    {
       "n": "C. Summerville",
       "from": "West Ham",
       "to": "Al-Hilal Saudi FC",
@@ -5529,29 +5412,11 @@
       "type": "Free agent"
     },
     {
-      "n": "M. Milovanović",
-      "from": "Almeria",
-      "to": "Portsmouth",
-      "fromCode": null,
-      "toCode": "POR",
-      "date": "2026-07-21",
-      "type": "Transfer"
-    },
-    {
       "n": "L. Sealey",
       "from": "Norwich",
       "to": "Schwarz-Weiß Bregenz",
       "fromCode": "NOR",
       "toCode": null,
-      "date": "2026-07-21",
-      "type": "Transfer"
-    },
-    {
-      "n": "Joseph Okopu",
-      "from": "Zulte Waregem",
-      "to": "Swansea",
-      "fromCode": null,
-      "toCode": "SWA",
       "date": "2026-07-21",
       "type": "Transfer"
     },
@@ -5707,15 +5572,6 @@
       "toCode": "DER",
       "date": "2026-07-20",
       "type": "Free agent"
-    },
-    {
-      "n": "E. Just",
-      "from": "Motherwell",
-      "to": "Swansea",
-      "fromCode": null,
-      "toCode": "SWA",
-      "date": "2026-07-20",
-      "type": "Transfer"
     },
     {
       "n": "C. Dillon",
@@ -5952,6 +5808,15 @@
       "type": "Free agent"
     },
     {
+      "n": "Max Hammond",
+      "from": "Portsmouth",
+      "to": "Hammond Max",
+      "fromCode": "POR",
+      "toCode": null,
+      "date": "2026-07-14",
+      "type": "Free agent"
+    },
+    {
       "n": "M. Polendakov",
       "from": "Sheffield Utd",
       "to": "Ludogorets",
@@ -5997,66 +5862,12 @@
       "type": "Transfer"
     },
     {
-      "n": "O. Ellis",
-      "from": "Birmingham",
-      "to": "Brackley Town",
-      "fromCode": "BIR",
+      "n": "Ben Phillipson",
+      "from": "Portsmouth",
+      "to": "Phillipson Ben",
+      "fromCode": "POR",
       "toCode": null,
-      "date": "2026-07-13",
-      "type": "Free agent"
-    },
-    {
-      "n": "N. Lowe",
-      "from": "Stoke City",
-      "to": "Hibernian",
-      "fromCode": "STK",
-      "toCode": null,
-      "date": "2026-07-13",
-      "type": "Loan"
-    },
-    {
-      "n": "M. Mahoney",
-      "from": "QPR",
-      "to": "Plymouth",
-      "fromCode": "QPR",
-      "toCode": null,
-      "date": "2026-07-13",
-      "type": "Transfer"
-    },
-    {
-      "n": "Eseosa Sule",
-      "from": "West Brom",
-      "to": "ST Mirren",
-      "fromCode": "WBA",
-      "toCode": null,
-      "date": "2026-07-13",
-      "type": "Transfer"
-    },
-    {
-      "n": "C. Taylor",
-      "from": "Southampton",
-      "to": "Derby",
-      "fromCode": "SOU",
-      "toCode": "DER",
-      "date": "2026-07-13",
-      "type": "Free agent"
-    },
-    {
-      "n": "A. Mayor",
-      "from": "Millwall",
-      "to": "Hibernian",
-      "fromCode": "MIL",
-      "toCode": null,
-      "date": "2026-07-13",
-      "type": "Transfer"
-    },
-    {
-      "n": "A. Cannon",
-      "from": "Wrexham",
-      "to": "Fleetwood Town",
-      "fromCode": "WRE",
-      "toCode": null,
-      "date": "2026-07-13",
+      "date": "2026-07-14",
       "type": "Free agent"
     }
   ]
