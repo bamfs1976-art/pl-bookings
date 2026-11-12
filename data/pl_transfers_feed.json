@@ -1,6 +1,6 @@
 {
   "note": "PROPOSALS from API-Football /transfers, for a person to read. data/transfers.json is the hand-curated overlay that is actually applied; this is not.",
-  "since": "2026-07-14",
+  "since": "2026-07-15",
   "moves": [
     {
       "n": "B. Williams",
@@ -1272,15 +1272,6 @@
       "type": "Transfer"
     },
     {
-      "n": "Y. Gboho",
-      "from": "Toulouse",
-      "to": "Coventry",
-      "fromCode": null,
-      "toCode": "COV",
-      "date": "2026-08-30",
-      "type": "Transfer"
-    },
-    {
       "n": "T. Mendel-Idowu",
       "from": "Ipswich",
       "to": "Mendel-Idowu Tudor",
@@ -1677,15 +1668,6 @@
       "type": "Loan"
     },
     {
-      "n": "G. Sandiford",
-      "from": "Coventry",
-      "to": "Larne",
-      "fromCode": "COV",
-      "toCode": null,
-      "date": "2026-08-28",
-      "type": "Free agent"
-    },
-    {
       "n": "C. Wilson",
       "from": "Everton",
       "to": "Flint Town United",
@@ -2055,15 +2037,6 @@
       "type": "Transfer"
     },
     {
-      "n": "E. Pinnock",
-      "from": "Brentford",
-      "to": "Coventry",
-      "fromCode": "BRE",
-      "toCode": "COV",
-      "date": "2026-08-24",
-      "type": "Transfer"
-    },
-    {
       "n": "C. Ramsay",
       "from": "Liverpool",
       "to": "ST Mirren",
@@ -2325,15 +2298,6 @@
       "type": "Transfer"
     },
     {
-      "n": "D. Bentley",
-      "from": "Wolves",
-      "to": "Coventry",
-      "fromCode": "WOL",
-      "toCode": "COV",
-      "date": "2026-08-19",
-      "type": "Free agent"
-    },
-    {
       "n": "Charlie Gray",
       "from": "Manchester City",
       "to": "Wigan",
@@ -2469,15 +2433,6 @@
       "type": "Loan"
     },
     {
-      "n": "S. Cherif",
-      "from": "Fenerbahçe",
-      "to": "Coventry",
-      "fromCode": null,
-      "toCode": "COV",
-      "date": "2026-08-17",
-      "type": "Transfer"
-    },
-    {
       "n": "Rodri",
       "from": "Manchester City",
       "to": "Barcelona",
@@ -2611,15 +2566,6 @@
       "toCode": null,
       "date": "2026-08-16",
       "type": "Loan"
-    },
-    {
-      "n": "T. Awoniyi",
-      "from": "Nottingham Forest",
-      "to": "Coventry",
-      "fromCode": "NFO",
-      "toCode": "COV",
-      "date": "2026-08-15",
-      "type": "Transfer"
     },
     {
       "n": "T. Adaramola",
@@ -3162,15 +3108,6 @@
       "type": "Loan"
     },
     {
-      "n": "G. Hamer",
-      "from": "Sheffield Utd",
-      "to": "Coventry",
-      "fromCode": "SHU",
-      "toCode": "COV",
-      "date": "2026-08-10",
-      "type": "Transfer"
-    },
-    {
       "n": "F. Jörgensen",
       "from": "Chelsea",
       "to": "Strasbourg",
@@ -3531,15 +3468,6 @@
       "type": "Free agent"
     },
     {
-      "n": "J. Markelo",
-      "from": "Coventry",
-      "to": "Shabab Al Ahli Dubai",
-      "fromCode": "COV",
-      "toCode": null,
-      "date": "2026-08-06",
-      "type": "Transfer"
-    },
-    {
       "n": "J. Hjertø-Dahl",
       "from": "Tromso",
       "to": "Hull City",
@@ -3689,15 +3617,6 @@
       "to": "Leeds",
       "fromCode": "MCI",
       "toCode": "LEE",
-      "date": "2026-08-05",
-      "type": "Transfer"
-    },
-    {
-      "n": "Caleb Marfo Yirenkyi",
-      "from": "FC Nordsjaelland",
-      "to": "Coventry",
-      "fromCode": null,
-      "toCode": "COV",
       "date": "2026-08-05",
       "type": "Transfer"
     },
@@ -4959,60 +4878,6 @@
       "fromCode": null,
       "toCode": "COV",
       "date": "2026-07-15",
-      "type": "Transfer"
-    },
-    {
-      "n": "T. Meunier",
-      "from": "Lille",
-      "to": "Sunderland",
-      "fromCode": null,
-      "toCode": "SUN",
-      "date": "2026-07-14",
-      "type": "Free agent"
-    },
-    {
-      "n": "O. Zych",
-      "from": "Aston Villa",
-      "to": "Vitória SC",
-      "fromCode": "AVL",
-      "toCode": null,
-      "date": "2026-07-14",
-      "type": "Loan"
-    },
-    {
-      "n": "L. Dobbin",
-      "from": "Aston Villa",
-      "to": "Southampton",
-      "fromCode": "AVL",
-      "toCode": "SOU",
-      "date": "2026-07-14",
-      "type": "Transfer"
-    },
-    {
-      "n": "I. Schmidt",
-      "from": "Leeds",
-      "to": "BSC Young Boys",
-      "fromCode": "LEE",
-      "toCode": null,
-      "date": "2026-07-14",
-      "type": "Transfer"
-    },
-    {
-      "n": "E. Baggott",
-      "from": "Ipswich",
-      "to": "Millwall",
-      "fromCode": "IPS",
-      "toCode": "MIL",
-      "date": "2026-07-14",
-      "type": "Transfer"
-    },
-    {
-      "n": "A. Amenda",
-      "from": "Eintracht Frankfurt",
-      "to": "Coventry",
-      "fromCode": null,
-      "toCode": "COV",
-      "date": "2026-07-14",
       "type": "Transfer"
     }
   ]
