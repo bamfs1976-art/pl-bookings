@@ -1,6 +1,6 @@
 {
   "note": "PROPOSALS from API-Football /transfers, for a person to read. data/transfers.json is the hand-curated overlay that is actually applied; this is not.",
-  "since": "2026-07-15",
+  "since": "2026-07-16",
   "moves": [
     {
       "n": "Dani Carvajal",
@@ -81,15 +81,6 @@
       "fromCode": "BAR",
       "toCode": null,
       "date": "2026-09-06",
-      "type": "Free agent"
-    },
-    {
-      "n": "L. Saca",
-      "from": "Barcelona",
-      "to": "CFR 1907 Cluj",
-      "fromCode": "BAR",
-      "toCode": null,
-      "date": "2026-09-05",
       "type": "Free agent"
     },
     {
@@ -678,24 +669,6 @@
       "type": "Loan"
     },
     {
-      "n": "Álvaro Cortés Moyano",
-      "from": "Barcelona",
-      "to": "Antwerp",
-      "fromCode": "BAR",
-      "toCode": null,
-      "date": "2026-08-30",
-      "type": "Transfer"
-    },
-    {
-      "n": "Unai Vencedor",
-      "from": "Athletic Club",
-      "to": "Burgos",
-      "fromCode": "ATH",
-      "toCode": null,
-      "date": "2026-08-30",
-      "type": "Free agent"
-    },
-    {
       "n": "S. Martinez",
       "from": "Racing Santander",
       "to": "Real Madrid II",
@@ -705,24 +678,6 @@
       "type": "-"
     },
     {
-      "n": "Rubén Sánchez",
-      "from": "Espanyol",
-      "to": "Elche",
-      "fromCode": "ESP",
-      "toCode": "ELC",
-      "date": "2026-08-30",
-      "type": "Transfer"
-    },
-    {
-      "n": "R. Núñez",
-      "from": "Elche",
-      "to": "CD Coria",
-      "fromCode": "ELC",
-      "toCode": null,
-      "date": "2026-08-30",
-      "type": "Free agent"
-    },
-    {
       "n": "R. Martin",
       "from": "Levante",
       "to": "Villarreal U19",
@@ -730,15 +685,6 @@
       "toCode": null,
       "date": "2026-08-30",
       "type": "-"
-    },
-    {
-      "n": "Juan Berrocal",
-      "from": "Getafe",
-      "to": "Malaga",
-      "fromCode": "GET",
-      "toCode": "MAL",
-      "date": "2026-08-30",
-      "type": "Free agent"
     },
     {
       "n": "José Jurado",
@@ -768,24 +714,6 @@
       "type": "Transfer"
     },
     {
-      "n": "Guille Fernández",
-      "from": "Barcelona",
-      "to": "Mallorca",
-      "fromCode": "BAR",
-      "toCode": null,
-      "date": "2026-08-30",
-      "type": "Transfer"
-    },
-    {
-      "n": "Gabriel Jesus",
-      "from": "Arsenal",
-      "to": "Barcelona",
-      "fromCode": null,
-      "toCode": "BAR",
-      "date": "2026-08-30",
-      "type": "Transfer"
-    },
-    {
       "n": "G. Biladi",
       "from": "Anderlecht U18",
       "to": "Levante",
@@ -808,15 +736,6 @@
       "from": "Real Madrid",
       "to": "Oviedo",
       "fromCode": "RMA",
-      "toCode": null,
-      "date": "2026-08-30",
-      "type": "Transfer"
-    },
-    {
-      "n": "D. Affengruber",
-      "from": "Elche",
-      "to": "Fulham",
-      "fromCode": "ELC",
       "toCode": null,
       "date": "2026-08-30",
       "type": "Transfer"
@@ -955,15 +874,6 @@
       "toCode": null,
       "date": "2026-08-27",
       "type": "Free agent"
-    },
-    {
-      "n": "Héctor Fort",
-      "from": "Barcelona",
-      "to": "Real Sociedad",
-      "fromCode": "BAR",
-      "toCode": "RSO",
-      "date": "2026-08-27",
-      "type": "Transfer"
     },
     {
       "n": "Didac Castellá",
@@ -1114,24 +1024,6 @@
       "from": "Alaves",
       "to": "FC Andorra",
       "fromCode": "ALA",
-      "toCode": null,
-      "date": "2026-08-25",
-      "type": "Free agent"
-    },
-    {
-      "n": "D. Livaković",
-      "from": "Fenerbahçe",
-      "to": "Barcelona",
-      "fromCode": null,
-      "toCode": "BAR",
-      "date": "2026-08-25",
-      "type": "Transfer"
-    },
-    {
-      "n": "C. Mbondi",
-      "from": "Espanyol",
-      "to": "Amiens",
-      "fromCode": "ESP",
       "toCode": null,
       "date": "2026-08-25",
       "type": "Free agent"
@@ -1290,15 +1182,6 @@
       "type": "Free agent"
     },
     {
-      "n": "Juanpe",
-      "from": "Malaga",
-      "to": "Gamba Osaka",
-      "fromCode": "MAL",
-      "toCode": null,
-      "date": "2026-08-21",
-      "type": "Transfer"
-    },
-    {
       "n": "Ifeanyi Ndukwe",
       "from": "Liverpool",
       "to": "Levante",
@@ -1353,15 +1236,6 @@
       "type": "Free agent"
     },
     {
-      "n": "Miguel Rubio",
-      "from": "Espanyol",
-      "to": "Valladolid",
-      "fromCode": "ESP",
-      "toCode": null,
-      "date": "2026-08-20",
-      "type": "Free agent"
-    },
-    {
       "n": "Manu Fernández",
       "from": "Celta Vigo",
       "to": "Cadiz",
@@ -1395,24 +1269,6 @@
       "fromCode": null,
       "toCode": "SEV",
       "date": "2026-08-20",
-      "type": "Transfer"
-    },
-    {
-      "n": "David Oduro",
-      "from": "Barcelona",
-      "to": "Annecy",
-      "fromCode": "BAR",
-      "toCode": null,
-      "date": "2026-08-20",
-      "type": "Transfer"
-    },
-    {
-      "n": "Tomás Marqués",
-      "from": "Barcelona",
-      "to": "SC Braga",
-      "fromCode": "BAR",
-      "toCode": null,
-      "date": "2026-08-19",
       "type": "Transfer"
     },
     {
@@ -1506,15 +1362,6 @@
       "type": "Transfer"
     },
     {
-      "n": "João Cancelo",
-      "from": "Al-Hilal Saudi FC",
-      "to": "Barcelona",
-      "fromCode": null,
-      "toCode": "BAR",
-      "date": "2026-08-18",
-      "type": "Free agent"
-    },
-    {
       "n": "Josué Dorrio",
       "from": "Malaga",
       "to": "Mirandes",
@@ -1560,15 +1407,6 @@
       "type": "Transfer"
     },
     {
-      "n": "Josué Dorrio",
-      "from": "Malaga",
-      "to": "Mirandes",
-      "fromCode": "MAL",
-      "toCode": null,
-      "date": "2026-08-17",
-      "type": "Free agent"
-    },
-    {
       "n": "Francho Serrano",
       "from": "Zaragoza",
       "to": "Getafe",
@@ -1594,15 +1432,6 @@
       "toCode": null,
       "date": "2026-08-17",
       "type": "Free agent"
-    },
-    {
-      "n": "Rodri",
-      "from": "Manchester City",
-      "to": "Barcelona",
-      "fromCode": null,
-      "toCode": "BAR",
-      "date": "2026-08-16",
-      "type": "Transfer"
     },
     {
       "n": "K. Arriaga",
@@ -1639,15 +1468,6 @@
       "toCode": "VIL",
       "date": "2026-08-16",
       "type": "Loan"
-    },
-    {
-      "n": "Jofre Torrents",
-      "from": "Barcelona",
-      "to": "Ajax",
-      "fromCode": "BAR",
-      "toCode": null,
-      "date": "2026-08-15",
-      "type": "Free agent"
     },
     {
       "n": "I. Voloshyn",
@@ -1740,15 +1560,6 @@
       "type": "Transfer"
     },
     {
-      "n": "Ferran Torres",
-      "from": "Barcelona",
-      "to": "Paris Saint Germain",
-      "fromCode": "BAR",
-      "toCode": null,
-      "date": "2026-08-13",
-      "type": "Transfer"
-    },
-    {
       "n": "E. Ponce",
       "from": "Houston Dynamo",
       "to": "Elche",
@@ -1819,24 +1630,6 @@
       "toCode": "GET",
       "date": "2026-08-12",
       "type": "Free agent"
-    },
-    {
-      "n": "E. Ponce",
-      "from": "Houston Dynamo",
-      "to": "Elche",
-      "fromCode": null,
-      "toCode": "ELC",
-      "date": "2026-08-12",
-      "type": "Transfer"
-    },
-    {
-      "n": "Tiziano Perrota",
-      "from": "Banfield",
-      "to": "Elche",
-      "fromCode": null,
-      "toCode": "ELC",
-      "date": "2026-08-11",
-      "type": "Transfer"
     },
     {
       "n": "R. Yeboah",
@@ -2026,15 +1819,6 @@
       "toCode": null,
       "date": "2026-08-09",
       "type": "Free agent"
-    },
-    {
-      "n": "Julen Agirrezabala",
-      "from": "Athletic Club",
-      "to": "Racing Santander",
-      "fromCode": "ATH",
-      "toCode": "RAC",
-      "date": "2026-08-08",
-      "type": "Transfer"
     },
     {
       "n": "T. Almada",
@@ -2253,15 +2037,6 @@
       "type": "Free agent"
     },
     {
-      "n": "J. Morcillo",
-      "from": "Atletico Madrid",
-      "to": "Elche",
-      "fromCode": "ATM",
-      "toCode": "ELC",
-      "date": "2026-08-04",
-      "type": "Transfer"
-    },
-    {
       "n": "Gorka Rivera",
       "from": "Getafe",
       "to": "Unionistas de Salamanca",
@@ -2307,15 +2082,6 @@
       "type": "Loan"
     },
     {
-      "n": "Pablo Ramón",
-      "from": "Espanyol",
-      "to": "Racing Santander",
-      "fromCode": "ESP",
-      "toCode": "RAC",
-      "date": "2026-08-03",
-      "type": "Transfer"
-    },
-    {
       "n": "M. ter Stegen",
       "from": "Barcelona",
       "to": "Ajax",
@@ -2338,15 +2104,6 @@
       "from": "Levante",
       "to": "Atlético Madrid II",
       "fromCode": "LEV",
-      "toCode": null,
-      "date": "2026-08-03",
-      "type": "-"
-    },
-    {
-      "n": "Alexis Olmedo",
-      "from": "Barcelona",
-      "to": "Celta de Vigo II",
-      "fromCode": "BAR",
       "toCode": null,
       "date": "2026-08-03",
       "type": "-"
@@ -2433,15 +2190,6 @@
       "type": "Transfer"
     },
     {
-      "n": "Mikel Vesga",
-      "from": "Athletic Club",
-      "to": "Almeria",
-      "fromCode": "ATH",
-      "toCode": null,
-      "date": "2026-07-31",
-      "type": "Free agent"
-    },
-    {
       "n": "Juanma",
       "from": "Malaga",
       "to": "Marbella",
@@ -2478,6 +2226,15 @@
       "type": "Loan"
     },
     {
+      "n": "D. Ferrer Saez",
+      "from": "Barcelona",
+      "to": "Manresa",
+      "fromCode": "BAR",
+      "toCode": null,
+      "date": "2026-07-31",
+      "type": "Free agent"
+    },
+    {
       "n": "V. Valdepenas",
       "from": "Real Madrid",
       "to": "Fiorentina",
@@ -2503,15 +2260,6 @@
       "toCode": null,
       "date": "2026-07-30",
       "type": "Free agent"
-    },
-    {
-      "n": "J. Bisiwu",
-      "from": "Club Brugge II",
-      "to": "Barcelona",
-      "fromCode": null,
-      "toCode": "BAR",
-      "date": "2026-07-30",
-      "type": "Transfer"
     },
     {
       "n": "I. Kostis",
@@ -2611,15 +2359,6 @@
       "toCode": "GET",
       "date": "2026-07-27",
       "type": "Free agent"
-    },
-    {
-      "n": "Fer Niño",
-      "from": "Burgos",
-      "to": "Elche",
-      "fromCode": null,
-      "toCode": "ELC",
-      "date": "2026-07-27",
-      "type": "Transfer"
     },
     {
       "n": "Alberto Moreno",
@@ -2766,6 +2505,15 @@
       "type": "Free agent"
     },
     {
+      "n": "Oier Gastesi",
+      "from": "Athletic Club",
+      "to": "Tenerife II",
+      "fromCode": "ATH",
+      "toCode": null,
+      "date": "2026-07-22",
+      "type": "-"
+    },
+    {
       "n": "K. Adeyemi",
       "from": "Borussia Dortmund",
       "to": "Barcelona",
@@ -2800,15 +2548,6 @@
       "toCode": null,
       "date": "2026-07-22",
       "type": "-"
-    },
-    {
-      "n": "K. Adeyemi",
-      "from": "Borussia Dortmund",
-      "to": "Barcelona",
-      "fromCode": null,
-      "toCode": "BAR",
-      "date": "2026-07-21",
-      "type": "Transfer"
     },
     {
       "n": "Coba",
@@ -2989,69 +2728,6 @@
       "toCode": null,
       "date": "2026-07-16",
       "type": "Transfer"
-    },
-    {
-      "n": "Pau López",
-      "from": "Real Betis",
-      "to": "Lopez Pau",
-      "fromCode": "BET",
-      "toCode": null,
-      "date": "2026-07-15",
-      "type": "Free agent"
-    },
-    {
-      "n": "Mikel Rodríguez",
-      "from": "Real Sociedad",
-      "to": "Alaves",
-      "fromCode": "RSO",
-      "toCode": "ALA",
-      "date": "2026-07-15",
-      "type": "Transfer"
-    },
-    {
-      "n": "Iker Varela",
-      "from": "Athletic Club",
-      "to": "Ibiza",
-      "fromCode": "ATH",
-      "toCode": null,
-      "date": "2026-07-15",
-      "type": "Transfer"
-    },
-    {
-      "n": "D. de la Iglesia",
-      "from": "Celta Vigo",
-      "to": "Mirandes",
-      "fromCode": "CEL",
-      "toCode": null,
-      "date": "2026-07-15",
-      "type": "Free agent"
-    },
-    {
-      "n": "Carlos Rodriguez",
-      "from": "Real Madrid",
-      "to": "Iraklis 1908",
-      "fromCode": "RMA",
-      "toCode": null,
-      "date": "2026-07-15",
-      "type": "Free agent"
-    },
-    {
-      "n": "Andrés García",
-      "from": "Aston Villa",
-      "to": "Getafe",
-      "fromCode": null,
-      "toCode": "GET",
-      "date": "2026-07-15",
-      "type": "Loan"
-    },
-    {
-      "n": "A. Mandi",
-      "from": "Lille",
-      "to": "Levante",
-      "fromCode": null,
-      "toCode": "LEV",
-      "date": "2026-07-15",
-      "type": "Free agent"
     }
   ]
 }
