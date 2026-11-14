@@ -1,6 +1,6 @@
 {
   "note": "PROPOSALS from API-Football /transfers, for a person to read. data/transfers.json is the hand-curated overlay that is actually applied; this is not.",
-  "since": "2026-07-16",
+  "since": "2026-07-17",
   "moves": [
     {
       "n": "Sydney Agina",
@@ -4645,78 +4645,6 @@
       "toCode": null,
       "date": "2026-07-18",
       "type": "Free agent"
-    },
-    {
-      "n": "Ž. Celar",
-      "from": "QPR",
-      "to": "FC Basel 1893",
-      "fromCode": "QPR",
-      "toCode": null,
-      "date": "2026-07-16",
-      "type": "Transfer"
-    },
-    {
-      "n": "M. Estève",
-      "from": "Burnley",
-      "to": "RB Leipzig",
-      "fromCode": "BUR",
-      "toCode": null,
-      "date": "2026-07-16",
-      "type": "Transfer"
-    },
-    {
-      "n": "M. Davies",
-      "from": "Blackburn",
-      "to": "Southport",
-      "fromCode": "BLB",
-      "toCode": null,
-      "date": "2026-07-16",
-      "type": "Loan"
-    },
-    {
-      "n": "K. Wagner",
-      "from": "Birmingham",
-      "to": "Philadelphia Union",
-      "fromCode": "BIR",
-      "toCode": null,
-      "date": "2026-07-16",
-      "type": "Transfer"
-    },
-    {
-      "n": "J. Wahling",
-      "from": "Derby",
-      "to": "Hibernians",
-      "fromCode": "DER",
-      "toCode": null,
-      "date": "2026-07-16",
-      "type": "Free agent"
-    },
-    {
-      "n": "H. Foulkes",
-      "from": "Derby",
-      "to": "Worthing",
-      "fromCode": "DER",
-      "toCode": null,
-      "date": "2026-07-16",
-      "type": "Free agent"
-    },
-    {
-      "n": "D. Dike",
-      "from": "West Brom",
-      "to": "Orlando City SC",
-      "fromCode": "WBA",
-      "toCode": null,
-      "date": "2026-07-16",
-      "type": "Free agent"
-    },
-    {
-      "n": "B. McKenzie",
-      "from": "Swansea",
-      "to": "Waterford",
-      "fromCode": "SWA",
-      "toCode": null,
-      "date": "2026-07-16",
-      "type": "Loan"
     }
   ]
 }

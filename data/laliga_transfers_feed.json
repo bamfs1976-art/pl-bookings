@@ -1,6 +1,6 @@
 {
   "note": "PROPOSALS from API-Football /transfers, for a person to read. data/transfers.json is the hand-curated overlay that is actually applied; this is not.",
-  "since": "2026-07-16",
+  "since": "2026-07-17",
   "moves": [
     {
       "n": "Dani Carvajal",
@@ -2673,60 +2673,6 @@
       "fromCode": "VAL",
       "toCode": null,
       "date": "2026-07-17",
-      "type": "Transfer"
-    },
-    {
-      "n": "Reque",
-      "from": "Villarreal",
-      "to": "Levante",
-      "fromCode": "VIL",
-      "toCode": "LEV",
-      "date": "2026-07-16",
-      "type": "Loan"
-    },
-    {
-      "n": "Pau López",
-      "from": "Real Betis",
-      "to": "FC Andorra",
-      "fromCode": "BET",
-      "toCode": null,
-      "date": "2026-07-16",
-      "type": "Free agent"
-    },
-    {
-      "n": "P. Aubameyang",
-      "from": "Marseille",
-      "to": "Deportivo La Coruna",
-      "fromCode": null,
-      "toCode": "DEP",
-      "date": "2026-07-16",
-      "type": "Transfer"
-    },
-    {
-      "n": "Iker Varela",
-      "from": "Athletic Club",
-      "to": "Ibiza",
-      "fromCode": "ATH",
-      "toCode": null,
-      "date": "2026-07-16",
-      "type": "Transfer"
-    },
-    {
-      "n": "Diego Sanchez",
-      "from": "Elche",
-      "to": "Elche",
-      "fromCode": "ELC",
-      "toCode": "ELC",
-      "date": "2026-07-16",
-      "type": "Raise"
-    },
-    {
-      "n": "B. Galassi",
-      "from": "Real Madrid",
-      "to": "Lazio",
-      "fromCode": "RMA",
-      "toCode": null,
-      "date": "2026-07-16",
       "type": "Transfer"
     }
   ]

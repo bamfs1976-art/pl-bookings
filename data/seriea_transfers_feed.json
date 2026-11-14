@@ -1,6 +1,6 @@
 {
   "note": "PROPOSALS from API-Football /transfers, for a person to read. data/transfers.json is the hand-curated overlay that is actually applied; this is not.",
-  "since": "2026-07-16",
+  "since": "2026-07-17",
   "moves": [
     {
       "n": "T. De Nipoti",
@@ -4699,96 +4699,6 @@
       "toCode": null,
       "date": "2026-07-17",
       "type": "Loan"
-    },
-    {
-      "n": "T. Muharemović",
-      "from": "Sassuolo",
-      "to": "Leeds",
-      "fromCode": "SAS",
-      "toCode": null,
-      "date": "2026-07-16",
-      "type": "Transfer"
-    },
-    {
-      "n": "R. Gosens",
-      "from": "Fiorentina",
-      "to": "FC Schalke 04",
-      "fromCode": "FIO",
-      "toCode": null,
-      "date": "2026-07-16",
-      "type": "Loan"
-    },
-    {
-      "n": "Marco Litti",
-      "from": "AS Roma",
-      "to": "Lecco",
-      "fromCode": "ROM",
-      "toCode": null,
-      "date": "2026-07-16",
-      "type": "Loan"
-    },
-    {
-      "n": "M. Rosetti",
-      "from": "Bologna",
-      "to": "Forli",
-      "fromCode": "BGN",
-      "toCode": null,
-      "date": "2026-07-16",
-      "type": "Transfer"
-    },
-    {
-      "n": "L. Menegazzo",
-      "from": "Bologna",
-      "to": "Lumezzane",
-      "fromCode": "BGN",
-      "toCode": null,
-      "date": "2026-07-16",
-      "type": "Loan"
-    },
-    {
-      "n": "L. Caccavo",
-      "from": "Bologna",
-      "to": "Juve Stabia",
-      "fromCode": "BGN",
-      "toCode": null,
-      "date": "2026-07-16",
-      "type": "Loan"
-    },
-    {
-      "n": "H. Traorè",
-      "from": "Marseille",
-      "to": "Genoa",
-      "fromCode": null,
-      "toCode": "GEN",
-      "date": "2026-07-16",
-      "type": "Loan"
-    },
-    {
-      "n": "Federico Tavernaro",
-      "from": "Vis Pesaro",
-      "to": "Venezia",
-      "fromCode": null,
-      "toCode": "VEN",
-      "date": "2026-07-16",
-      "type": "Free agent"
-    },
-    {
-      "n": "B. Galassi",
-      "from": "Real Madrid",
-      "to": "Lazio",
-      "fromCode": null,
-      "toCode": "LAZ",
-      "date": "2026-07-16",
-      "type": "Transfer"
-    },
-    {
-      "n": "A. Partipilo",
-      "from": "Parma",
-      "to": "Barletta",
-      "fromCode": "PAR",
-      "toCode": null,
-      "date": "2026-07-16",
-      "type": "Transfer"
     }
   ]
 }
