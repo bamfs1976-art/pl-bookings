@@ -338,6 +338,10 @@
         + '<div class="pp-note" id="pp-note-said" aria-live="polite"></div>'
         + '</div>';
     }
+    /* The keyboard route to the price breakdown: a real button, where the
+       percentages in the lists are tap targets inside a row button. */
+    if (rec.whyKey) extra += '<p class="pp-line"><button class="btn" type="button" data-why="'
+      + esc(rec.whyKey) + '">Why this price</button></p>';
     if (rec.note) extra += '<p class="pp-foot">' + esc(rec.note) + '</p>';
 
     d.innerHTML = '<div class="pp-panel">' + head + grid + extra + '</div>';

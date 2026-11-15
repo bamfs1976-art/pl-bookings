@@ -456,6 +456,7 @@
 <script src="assets/statpack.js"></script>
 <script src="assets/linelog.js"></script>
 <script src="assets/inplay.js"></script>
+<script src="assets/why.js"></script>
 <script src="assets/suspension.js"></script>
 <script src="assets/a11y.js"></script>
 <script src="assets/price.js"></script>
@@ -756,6 +757,7 @@
       fouls: C.foulForm(LEDGER, p.c, p.n),
       forecast: foulForecast(p),
       prob: prob, odds: prob ? C.fairOdds(prob) : null,
+      whyKey: prob != null ? 'pl|' + keyOf(p) : null,
       band: { label: b[1] || 'Low', colour: b[0] === 'hi' ? 'var(--danger-ink)'
               : b[0] === 'mid' ? 'var(--warn-ink)' : '' },
       lowSample: (Number(p.min) || 0) < 450,
@@ -825,7 +827,7 @@
         + '</span>'
         + '<span class="star" aria-hidden="true">' + (starred[k] ? '\u2605' : '') + '</span>'
         + '</span>'
-        + '<span class="pc band ' + b[0] + '" style="font-size:20px;font-family:var(--mono);font-weight:800">'
+        + '<span class="pc band ' + b[0] + '" data-why="pl|' + esc(keyOf(row.p)) + '" title="Why this price" style="font-size:20px;font-family:var(--mono);font-weight:800">'
         + pct(row.prob) + (b[1] ? ' <span class="sev" style="display:inline">' + b[1] + '</span>' : '')
         + '</span>'
         + '<span class="ap-stats">'
@@ -870,7 +872,7 @@
         + '<td class="num">' + n2(p.y) + '</td>'
         + '<td class="num">' + n2(p.f) + '</td>'
         + '<td class="num">' + n2(p.r) + '</td>'
-        + '<td class="num band ' + b[0] + '">' + pct(row.prob) + (b[1] ? ' <span class="faint">' + b[1] + '</span>' : '') + '</td>'
+        + '<td class="num band ' + b[0] + '"><span data-why="pl|' + esc(keyOf(row.p)) + '" title="Why this price">' + pct(row.prob) + '</span>' + (b[1] ? ' <span class="faint">' + b[1] + '</span>' : '') + '</td>'
         + '<td class="num">' + (row.odds ? n2(row.odds) : '—') + '</td>'
         + '<td><span class="pill ' + esc(String(p.b || '').toLowerCase()) + '">' + esc(p.b) + '</span></td>'
         + '</tr>';
@@ -1172,7 +1174,7 @@
     var rows = squad.map(function (p, i) {
       var expMin = Math.max(0, w[i]) * 90;
       var lam = C.cardLambda(p._y90, expMin, { ref: factor });
-      return { p: p, prob: C.pCardFromLambda(lam) || 0 };
+      return { p: p, prob: C.pCardFromLambda(lam) || 0, expMin: expMin };
     });
     return {
       ps: rows.map(function (r) { return r.prob; }),
@@ -1355,6 +1357,56 @@
       updatedAt: LIVE.at
     };
   }
+  /* WHY THIS PRICE. A key from a data-why attribute back to the inputs the
+     price was made from: 'fx|fixture|player' for a fixture price (expected
+     minutes, the fixture's referee and derby), 'pl|player' for the full-match
+     price in the players list and record (the referee picked above it).
+     PLDCore.priceSteps rebuilds it and checks it against the printed figure. */
+  function posWord(pos) {
+    var c = String(pos || '').charAt(0).toUpperCase();
+    return c === 'G' ? 'goalkeeper' : c === 'D' ? 'defender' : c === 'M' ? 'midfielder'
+      : (c === 'F' || c === 'A') ? 'forward' : 'league';
+  }
+  function whyRate(p) {
+    return { yc: p.yc, minutes: p.min, prior: priorFor(p.p).y,
+             priorLabel: (p.p && PRIOR[p.p] && PRIOR[p.p].y != null) ? posWord(p.p) : 'league', strength: SHRINK_MATCHES };
+  }
+  function whyFor(key) {
+    var parts = String(key || '').split('|');
+    var find = function (k) { return PLAYERS.filter(function (p) { return keyOf(p) === k; })[0]; };
+    if (parts[0] === 'fx') {
+      var f = FIXTURES.filter(function (z) { return String(z.id) === parts[1]; })[0];
+      if (!f) return null;
+      var x = priceFixture(f), k = parts.slice(2).join('|');
+      var row = (x.home.all || []).concat(x.away.all || []).filter(function (r) { return keyOf(r.p) === k; })[0];
+      if (!row) return null;
+      var refName = x.ref.ref ? x.ref.ref.n : (x.ref.appointed ? x.ref.name : null);
+      return {
+        player: row.p.n + ' (' + row.p.c + ')',
+        context: f.h + ' v ' + f.a + (f.d ? ' \u00b7 ' + whenText(f.d) : '') + ' \u00b7 price for this match',
+        spec: { engine: 'lambda', rate: whyRate(row.p), expMin: row.expMin,
+                minutesSource: x.m.xi ? 'sheet' : 'share',
+                factors: [{ key: 'referee', value: x.factor, name: refName },
+                          { key: 'derby', value: x.derby ? DERBY_BOOST : 1 }],
+                price: row.prob, leagueRate: PRIOR._league.y }
+      };
+    }
+    if (parts[0] === 'pl') {
+      var p = find(parts.slice(1).join('|'));
+      if (!p) return null;
+      var ref = currentRef();
+      return {
+        player: p.n + ' (' + p.c + ')',
+        context: 'Full-match price' + (ref ? ' with referee ' + ref.n : ', no referee picked'),
+        spec: { engine: 'lambda', rate: whyRate(p), expMin: null,
+                factors: [{ key: 'referee', value: ref ? refFactor(ref) : 1, name: ref ? ref.n : null }],
+                price: probFor(p, ref), leagueRate: PRIOR._league.y }
+      };
+    }
+    return null;
+  }
+  if (window.PLDWhy) window.PLDWhy.setResolver(whyFor);
+
   function openInPlay(id) {
     if (!window.PLDInPlay) return;
     window.PLDInPlay.open({ league: 'EFLC', build: function () { return inPlayState(id); } });
@@ -1491,7 +1543,7 @@
         + '<span class="nm">' + esc(t.p.n)
         + ' <span class="faint">' + esc(t.p.p) + '</span>'
         + pipMeter(t.p) + '</span>'
-        + '<span class="pc-wrap"><span class="pc band ' + b[0] + '">' + pct(t.prob) + '</span>'
+        + '<span class="pc-wrap"><span class="pc band ' + b[0] + '" data-why="fx|' + esc(String(x.fx.id)) + '|' + esc(keyOf(t.p)) + '" title="Why this price">' + pct(t.prob) + '</span>'
         + (b[1] ? '<span class="sev">' + esc(b[1]) + '</span>' : '') + '</span>'
         + '</button>';
     }).join('');
@@ -1533,7 +1585,7 @@
                 + '<span class="nm">' + esc(t.p.n)
                 + ' <span class="faint">' + esc(t.p.p) + '</span>'
                 + pipMeter(t.p) + '</span>'
-                + '<span class="pc-wrap"><span class="pc band ' + b[0] + '">' + pct(t.prob) + '</span>'
+                + '<span class="pc-wrap"><span class="pc band ' + b[0] + '" data-why="fx|' + esc(String(f.id)) + '|' + esc(keyOf(t.p)) + '" title="Why this price">' + pct(t.prob) + '</span>'
                 + (b[1] ? '<span class="sev">' + esc(b[1]) + '</span>' : '') + '</span>'
                 + '</button>';
             }).join('') : '<div class="faint" style="font-size:12.5px">No rated players.</div>')
