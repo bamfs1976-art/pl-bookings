@@ -5,7 +5,7 @@
 // through PLDCore.matchSquadName. A fixture absent from here prices off
 // squad minute-weights exactly as it always has — that is the normal
 // state until about an hour before kick-off, not a failure.
-// Fetched 2026-11-02T19:29Z.
+// Fetched 2026-11-08T20:29Z.
 //
 // THE GLOBAL IS NOT CALLED `LINEUPS`, and that is deliberate. index.html
 // already declares a top-level `const LINEUPS` for assets/lineup.js (the
@@ -14,8 +14,8 @@
 // a parse error, not a shadow: the whole inline script fails and the desk
 // renders blank. Read `window.LINEUP_SHEETS`.
 var __LINEUP_SHEETS = {
-  "1550178":{"ATA":{start:["M. Carnesecchi", "D. Zappacosta", "G. Scalvini", "R. Obrić", "L. Bernasconi", "Éderson", "Mario Pasalic", "N. Zalewski", "C. De Ketelaere", "J. Rowe", "N. Krstović"],sub:["E. Elmas", "J. Idele", "M. Plaia", "L. Samardžić", "M. Sonzogni", "M. Sportiello", "K. Sulemana", "Sergej Levak"]},"PAR":{start:["G. Daffara", "E. Del Prato", "M. Troilo", "D. Drobnic", "S. Britschgi", "G. Fabbian", "V. Sierro", "M. Keita", "E. Valeri", "S. Lontani", "E. Touré"],sub:["B. Cremaschi", "D. Romero", "C. Ordoñez", "H. Nicolussi", "A. N&apos;Diaye", "Abdou Konate", "S. Ghidotti", "M. Frigan", "N. Elphege", "Diego Carlos", "Ousmane Diallo", "E. Corvi", "F. Carboni", "P. Almqvist"]}},
-  "1550185":{"FIO":{start:["David de Gea", "Álex Jiménez", "R. Drăgușin", "Viery", "João Mário", "C. Ndour", "N. Fagioli", "M. Brescianini", "Franco Mastantuono", "Mateo Pellegrino", "A. Njie"],sub:["Valde", "Pote", "L. Lezzerini", "C. Inao Oulaï", "W. Gnonto", "Dodô", "F. Croci", "O. Christensen", "Beto", "D. Beldenti", "Salvatore Cianciulli"]},"SAS":{start:["S. Turati", "S. Walukiewicz", "J. Idzes", "Fali Candé", "J. Doig", "Vasilije Adžić", "N. Matić", "I. Sulemana", "D. Berardi", "S. Esposito", "A. Laurienté"],sub:["I. Van der Brempt", "K. Bowie", "G. Satalino", "D. Bakola", "D. Ćaleta-Car", "S. Cinquegrano", "B. Domínguez", "A. Ghion", "G. Kulla", "L. Lipani", "A. Murić", "Rafael Obrador", "C. Odenthal", "E. Pieragnolo", "N. Pierini"]}},
+  "1550189":{"FIO":{start:["David de Gea", "Álex Jiménez", "R. Drăgușin", "Viery", "João Mário", "C. Ndour", "C. Inao Oulaï", "Franco Mastantuono", "Pote", "A. Njie", "Mateo Pellegrino"],sub:["Beto", "Valde", "M. Brescianini", "O. Christensen", "Dodô", "N. Fagioli", "W. Gnonto", "L. Lezzerini", "L. Ranieri", "D. Beldenti", "Antonio Pirrò", "B. Mazzeo"]},"JUV":{start:["G. Vicario", "P. Kalulu", "Bremer", "J. Lucumí", "J. Cabal", "W. McKennie", "T. Koopmeiners", "Douglas Luiz", "J. Boga", "R. Kolo Muani", "N. Woltemade"],sub:["L. Kelly", "D. Rugani", "C. Pinsoglio", "F. Gatti", "Neto", "Kerim-Sam Alajbegović", "Z. Çelik", "P. Sarr", "J. Ekhator", "E. Zhegrova"]}},
+  "1570443":{"ATM":{start:["J. Oblak", "Marcos Llorente", "Marc Pubill", "D. Hancko", "Álex Grimaldo", "G. Simeone", "Koke", "Pablo Barrios", "Álex Baena", "Lee Kang-In", "J. Álvarez"],sub:["M. Hjulmand", "A. Lookman", "J. David", "J. Dominguez", "R. Hueso", "Robin Le Normand", "Dani Martínez", "Rodrigo Mendoza", "J. Musso", "Arnau Ortiz", "A. Sørloth", "J. Cardoso"]},"BAR":{start:["Joan García", "B. Farinas", "Pau Cubarsí Paredes", "Gerard Martín", "João Cancelo", "Marc Bernal", "Lamine Yamal", "Fermín", "Pedri", "A. Gordon", "Raphinha"],sub:["Gabriel Jesus", "E. Tunkara", "W. Szczęsny", "H. Abdelkarim", "Gavi", "D. Livaković", "Eric García", "A. Campos", "A. Christensen", "Alejandro Balde", "K. Adeyemi", "F. de Jong"]}},
 };
 if (typeof module !== "undefined" && module.exports) module.exports = __LINEUP_SHEETS;
 if (typeof window !== "undefined") window.LINEUP_SHEETS = __LINEUP_SHEETS;
