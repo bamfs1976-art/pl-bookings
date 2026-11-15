@@ -283,6 +283,11 @@ jobs:
       - name: In-play view
         run: node scripts/check-inplay.mjs
 
+      # Why this price: every rated player's price, rebuilt step by step,
+      # lands exactly on the figure the desk prints, in all four divisions.
+      - name: Why this price
+        run: node scripts/check-why.mjs
+
       # Are the three desks pricing the same thing? A calibration check, not a
       # same-numbers check: each must land within a tenth of the card rate its
       # own division produced. They answered different questions for a year,

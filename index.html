@@ -1763,6 +1763,7 @@ License: MIT
 <script src="assets/statpack.js"></script>
 <script src="assets/linelog.js"></script>
 <script src="assets/inplay.js"></script>
+<script src="assets/why.js"></script>
 <script src="assets/rotation.js"></script>
 <script src="assets/core.js"></script>
 <script src="assets/save.js"></script>
@@ -3227,6 +3228,7 @@ function openPlayerProfile(k){
     ${statCell("Fouls / 90",fEff(p)==null?"—":fEff(p).toFixed(2),p.liveFouls?"live rate":"2025-26 rate")}
     ${statCell("Fouls won / 90",foulsWon90(p)==null?"—":foulsWon90(p).toFixed(2),foulsWon90(p)==null?"awaiting refresh":"2025-26 form")}
   </div>
+  ${pc!=null?`<p style="margin:0 0 .7rem"><button class="btn" type="button" data-why="pl|${esc(k)}">Why this price</button></p>`:""}
   <div class="surface-2" style="border-radius:10px;padding:.55rem .8rem;margin-bottom:.7rem">
     <div class="faint" style="font-size:.68rem;text-transform:uppercase;letter-spacing:.04em">Fouls (2025-26)</div>
     <div style="font-size:.85rem;margin-top:.25rem;line-height:1.5">${foulsLine(p)}</div>
@@ -5018,7 +5020,7 @@ function pipMeter(p){
   const note=`${y.toFixed(2)} yellows per 90`+(mins?`, over ${Math.round(mins/90)} matches of football`:"");
   return PLDMetric.confidence(n,5,note,"Card rate");
 }
-function candRowHtml(c,ref,isNew){
+function candRowHtml(c,ref,isNew,fid){
   const p=c.p, prob=c.prob, sev=severity(prob), conf=confidence(p);
   const live=(p.liveRate||p.liveFouls)?' <span title="'+rateBasis(p)+'" style="color:var(--good)">●</span>':'';
   /* ONCE IT HAS HAPPENED IT IS NOT A CHANCE ANY MORE. This desk spent every
@@ -5046,7 +5048,7 @@ function candRowHtml(c,ref,isNew){
     const mins=played&&played.min>0?`<div class="sev faint mono" title="Minutes played so far. The percentage is a full-match forecast and is not rescaled.">${played.min}' played</div>`:
       `<div class="sev" style="color:${sev.col}"><span aria-hidden="true">${sev.icon}</span> ${sev.label}</div>`;
     right=`<span style="text-align:right">
-        <span class="cand2-prob" data-num="p-${esc(watchKey(p))}" style="color:${sev.col}">${(prob*100).toFixed(0)}%</span>
+        <span class="cand2-prob" data-num="p-${esc(watchKey(p))}"${fid!=null?` data-why="fx|${esc(String(fid))}|${esc(watchKey(p))}" title="Why this price"`:""} style="color:${sev.col}">${(prob*100).toFixed(0)}%</span>
         ${mins}
       </span>`;
   }
@@ -5171,6 +5173,49 @@ function liveTickerHtml(M){
     <button class="btn fx-live-view" type="button" data-inplay="${esc(String(M.f.id))}" title="Live view: the forecast against the cards so far. 18+ research, not advice.">Live view</button>
   </div>`;
 }
+/* WHY THIS PRICE. A data-why key back to the inputs a price was made from:
+   'fx|fixture|player' for a fixture price (fixtureProb: the base chance, then
+   referee, derby, venue and game state on the odds scale), 'pl|player' for the
+   season base chance in the profile. PLDCore.priceSteps rebuilds it through
+   the same functions and checks it against the printed figure. */
+function plPosWord(pos){
+  const c=String(pos||"").charAt(0).toUpperCase();
+  return c==="G"?"goalkeeper":c==="D"?"defender":c==="M"?"midfielder":c==="F"?"forward":"league";
+}
+function plWhyRate(p){
+  if(!MODEL_OK) return null;
+  const S=MODEL.shrink, own=S.ycMean&&S.ycMean[p.p]!=null;
+  return {yc:effYc(p),minutes:effMin(p),prior:mpick(S.ycMean,p.p,S.ycLeague),
+    priorLabel:own?plPosWord(p.p):"league",strength:S.strengthMatches};
+}
+function plWhyFor(key){
+  const parts=String(key||"").split("|");
+  const leagueRate=MODEL_OK?MODEL.shrink.ycLeague:null;
+  if(parts[0]==="fx"){
+    const f=LIVE&&(LIVE.fixtures||[]).find(x=>String(x.id)===parts[1]);
+    const M=f&&fixtureMeta(f); if(!M) return null;
+    const p=playerByKey(parts.slice(2).join("|")); if(!p) return null;
+    const isHome=p.c===M.h;
+    const price=fixtureProb(p,M.ref,M.derby,isHome,M.sim); if(price==null) return null;
+    return {
+      player:`${p.n} (${p.c})`,
+      context:`${M.h} v ${M.a} · price for this match, assuming a full match`,
+      spec:{engine:"odds",rate:plWhyRate(p),base:pImp(p),price,leagueRate,factors:[
+        {key:"referee",value:M.ref?refFactor(M.ref):1,name:M.ref?M.ref.n:null},
+        {key:"derby",value:M.derby?1.08:1},
+        {key:"venue",value:PLDCore.venueFactor(isHome),isHome},
+        {key:"gameState",value:chaseFor(M.sim,isHome)}]}
+    };
+  }
+  if(parts[0]==="pl"){
+    const p=playerByKey(parts.slice(1).join("|")); if(!p) return null;
+    const base=pImp(p); if(base==null) return null;
+    return {player:`${p.n} (${p.c})`,context:"Season base chance over a full match, before any fixture",
+      spec:{engine:"odds",rate:plWhyRate(p),base,price:base,leagueRate,factors:[]}};
+  }
+  return null;
+}
+if(window.PLDWhy) window.PLDWhy.setResolver(plWhyFor);
 /* THE IN-PLAY VIEW for one fixture: the board's own per-player chances, the
    FPL live cards and the season foul averages, handed to assets/inplay.js,
    which adds only the league's card clock. Each player row shows the chance
@@ -5246,7 +5291,7 @@ function fixtureCardHtml(f,opts){
        four to forty separate controls to a screen reader, with no "list of 12"
        to say how far this goes or where it ends. */
     body='<ul class="cand-list" aria-label="Booking candidates, highest chance first">'
-      +shown.map((c,i)=>'<li>'+candRowHtml(c,ref,opts.expanded&&i>=DEF_SHOW)+'</li>').join("")
+      +shown.map((c,i)=>'<li>'+candRowHtml(c,ref,opts.expanded&&i>=DEF_SHOW,f.id)+'</li>').join("")
       +'</ul>'
       /* The price check covers the candidates ON SCREEN, so it answers a
          question about what is shown rather than a private shortlist. */

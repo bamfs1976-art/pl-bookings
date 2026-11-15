@@ -2767,6 +2767,126 @@
     };
   }
 
+  /* ---- why this price: the same price, rebuilt one step at a time --------
+   *
+   * Every desk price is a season yellow rate run through a few adjustments.
+   * This rebuilds it through the SAME functions the desk prices with, one
+   * adjustment at a time, and says in a sentence what each one did. The last
+   * running chance must equal the price the desk printed; when it does not,
+   * `ok` is false and the view says so rather than showing sums that do not
+   * add up.
+   *
+   * Two engines, because the desks combine adjustments two ways:
+   *   'lambda' (Championship, La Liga, Serie A): the rate is scaled by
+   *     expected minutes and each factor, then 1 - e^-rate (cardLambda);
+   *   'odds' (Premier League): each factor scales the ODDS of a booking
+   *     (contextProb), so a factor moves a long shot more than a near-cert.
+   *
+   * spec: { engine, rate: {yc, minutes, prior, priorLabel, strength} | null,
+   *         base (odds: the desk's starting chance), expMin (lambda, null =
+   *         full match), minutesSource ('sheet' | 'share'),
+   *         factors: [{ key: 'referee'|'derby'|'venue'|'gameState', value,
+   *                     name, appointed, isHome }],
+   *         price (what the desk printed), leagueRate (league yellows per 90) } */
+  const WHY_KEYS = ['base', 'shrink', 'minutes', 'referee', 'derby', 'venue', 'gameState'];
+  function whyPct(v) { return v == null ? '—' : (v * 100).toFixed(1) + '%'; }
+  function whyX(v) { return '×' + Number(v).toFixed(2); }
+
+  function factorSentence(f, chance) {
+    const v = Number(f.value), at = ': ' + whyPct(chance) + '.';
+    if (f.key === 'referee') {
+      if (!f.name) return 'No referee appointed yet, so the league’s average referee is used: no change.';
+      if (!isFinite(v) || v === 1) return 'Referee ' + f.name
+        + ' has no card record that moves the price, so the league average is used: no change.';
+      return 'Referee ' + f.name + ' shows ' + (v > 1 ? 'more' : 'fewer')
+        + ' yellow cards than the league average (' + whyX(v) + ')' + at;
+    }
+    if (f.key === 'derby') return 'This is a derby, which raises card rates (' + whyX(v) + ')' + at;
+    if (f.key === 'venue') return (f.isHome ? 'Playing at home lowers' : 'Playing away raises')
+      + ' card rates (' + whyX(v) + ')' + at;
+    if (f.key === 'gameState') return 'The match model expects this side to '
+      + (v > 1 ? 'be on the back foot, which raises' : 'have the upper hand, which lowers')
+      + ' card rates (' + whyX(v) + ')' + at;
+    return f.key + ' (' + whyX(v) + ')' + at;
+  }
+
+  function priceSteps(spec) {
+    const s = spec || {};
+    const steps = [];
+    const push = (key, label, chance, sentence) => steps.push({ key, label, chance, sentence });
+    const r = s.rate;
+    let y90 = null;
+    if (r && Number(r.minutes) > 0 && r.yc != null) {
+      const mins = Number(r.minutes), yc = Number(r.yc);
+      const raw = yc / (mins / 90);
+      push('base', 'Season rate', pCardSeason(raw), 'This season: ' + yc + ' yellow card' + (yc === 1 ? '' : 's')
+        + ' in ' + Math.round(mins) + ' minutes, ' + raw.toFixed(2) + ' per 90 minutes. Over a full match that is '
+        + whyPct(pCardSeason(raw)) + '.');
+      y90 = shrinkRate(yc, mins, r.prior, r.strength);
+      const games = Math.round(mins / 90);
+      push('shrink', 'Weighted to the average', pCardSeason(y90), 'With about ' + games + ' full match'
+        + (games === 1 ? '' : 'es') + ' played, the rate is weighted towards the ' + (r.priorLabel || 'league')
+        + ' average of ' + Number(r.prior).toFixed(2) + ' per 90, giving ' + y90.toFixed(2) + ' per 90: '
+        + whyPct(pCardSeason(y90)) + '.');
+    }
+    const factors = (s.factors || []).filter((f) => f && WHY_KEYS.indexOf(f.key) >= 0);
+    let final = null, note = null;
+
+    if (s.engine === 'lambda') {
+      if (y90 == null) return { ok: false, final: null, price: s.price, steps, versus: null, note: null };
+      const m = s.expMin == null ? 90 : Number(s.expMin);
+      if (s.expMin != null) {
+        const c = pCardFromLambda(cardLambda(y90, m, {}));
+        push('minutes', 'Expected minutes', c, 'Expected to play ' + Math.round(m) + ' minutes'
+          + (s.minutesSource === 'sheet' ? ', from the published team sheet'
+            : ', from this player’s share of the club’s minutes') + ': ' + whyPct(c) + '.');
+      }
+      let cum = 1;
+      for (const f of factors) {
+        const v = Number(f.value);
+        if (f.key !== 'referee' && (!isFinite(v) || v === 1)) continue;
+        if (isFinite(v) && v > 0) cum *= v;
+        const c = pCardFromLambda(cardLambda(y90, m, { ref: cum }));
+        push(f.key, f.key, c, factorSentence(f, c));
+      }
+      final = pCardFromLambda(cardLambda(y90, m, { ref: cum }));
+    } else {
+      let base = s.base;
+      if (base == null && y90 != null) base = pCardSeason(y90);
+      if (base == null) return { ok: false, final: null, price: s.price, steps, versus: null, note: null };
+      if (y90 == null || Math.abs(pCardSeason(y90) - base) > 1e-12) {
+        steps.length = 0;
+        push('base', 'Risk score', base, 'No usable yellow-card rate yet, so the price starts from the player’s '
+          + 'risk score: ' + whyPct(base) + '.');
+      }
+      const val = {};
+      for (const f of factors) val[f.key] = f.value;
+      const ctx = (upto) => {
+        const on = (k) => (factors.findIndex((f) => f.key === k) <= upto && val[k] != null ? val[k] : 1);
+        return contextProb(base, on('referee'), on('derby'), on('venue'), on('gameState'));
+      };
+      factors.forEach((f, i) => {
+        const v = Number(f.value);
+        if (f.key !== 'referee' && (!isFinite(v) || v === 1)) return;
+        const c = ctx(i);
+        push(f.key, f.key, c, factorSentence(f, c));
+      });
+      final = contextProb(base, val.referee == null ? 1 : val.referee, val.derby == null ? 1 : val.derby,
+        val.venue == null ? 1 : val.venue, val.gameState == null ? 1 : val.gameState);
+      note = 'On this desk each adjustment scales the odds of a booking rather than the chance itself, '
+        + 'and a price stays between 0.5% and 95%.';
+    }
+    const ok = final != null && s.price != null && Math.abs(final - Number(s.price)) < 1e-9;
+    let versus = null;
+    if (ok && Number(s.leagueRate) > 0) {
+      const typical = pCardSeason(Number(s.leagueRate));
+      const ratio = final / typical;
+      versus = { typical, ratio, sentence: 'A typical player in this league carries ' + whyPct(typical)
+        + ' over a full match, so this price is about ' + ratio.toFixed(1) + ' times that.' };
+    }
+    return { ok, final, price: s.price, steps, versus, note };
+  }
+
   const PLDCore = {
     clock, dayClock, dateClock, CLOCK,
     rotationRisk, rotationBand,
@@ -2796,6 +2916,7 @@
     statPackCardRows, packAvgLine, packTitle, PACK_PER_CARD, PACK_TOP, DISCORD_LIMIT, PACK_FOOTER,
     lineEntry, settleLine, lineSummary, LINE_STATUSES,
     cardClock, clockShare, inPlayChance, inPlayStates, inPlayFixture, CLOCK_MIN_CARDS,
+    priceSteps,
   };
 
   if (typeof module !== 'undefined' && module.exports) module.exports = PLDCore;

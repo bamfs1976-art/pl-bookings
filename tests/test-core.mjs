@@ -2208,4 +2208,50 @@ console.log('in play');
   });
 }
 
+/* ---- why this price ---- */
+console.log('why this price');
+{
+  const rate = { yc: 4, minutes: 900, prior: 0.17, priorLabel: 'midfielder', strength: 6 };
+  const y90 = core.shrinkRate(4, 900, 0.17, 6);
+  t('lambda engine rebuilds the desk price exactly', () => {
+    const price = core.pCardFromLambda(core.cardLambda(y90, 78, { ref: 1.12 * 1.08 }));
+    const r = core.priceSteps({ engine: 'lambda', rate, expMin: 78, minutesSource: 'share',
+      factors: [{ key: 'referee', value: 1.12, name: 'A' }, { key: 'derby', value: 1.08 }], price, leagueRate: 0.17 });
+    assert.equal(r.ok, true);
+    assert.deepEqual(r.steps.map((s) => s.key), ['base', 'shrink', 'minutes', 'referee', 'derby']);
+    assert.equal(r.steps[r.steps.length - 1].chance, price);
+    assert.ok(Math.abs(r.versus.ratio - price / core.pCardSeason(0.17)) < 1e-12);
+  });
+  t('lambda engine: a season price with no referee says so and changes nothing', () => {
+    const price = core.pCardSeason(y90, { ref: 1 });
+    const r = core.priceSteps({ engine: 'lambda', rate, expMin: null, factors: [{ key: 'referee', value: 1 }], price });
+    assert.equal(r.ok, true);
+    assert.match(r.steps[r.steps.length - 1].sentence, /No referee appointed/);
+    assert.ok(!r.steps.some((s) => s.key === 'minutes'));
+  });
+  t('odds engine follows contextProb, factor by factor', () => {
+    const base = core.pCardSeason(y90);
+    const price = core.contextProb(base, 1.1, 1.08, 0.95, 0.97);
+    const r = core.priceSteps({ engine: 'odds', rate, base, price, factors: [
+      { key: 'referee', value: 1.1, name: 'R' }, { key: 'derby', value: 1.08 },
+      { key: 'venue', value: 0.95, isHome: true }, { key: 'gameState', value: 0.97 }] });
+    assert.equal(r.ok, true);
+    assert.equal(r.steps[2].chance, core.contextProb(base, 1.1, 1, 1, 1));
+    assert.match(r.steps.find((s) => s.key === 'venue').sentence, /at home lowers/);
+    assert.match(r.steps.find((s) => s.key === 'gameState').sentence, /upper hand/);
+    assert.ok(r.note);
+  });
+  t('odds engine: a risk-score fallback starts from the desk base', () => {
+    const r = core.priceSteps({ engine: 'odds', rate: null, base: 0.2, price: core.contextProb(0.2, 1, 1, 1.08, 1),
+      factors: [{ key: 'venue', value: 1.08, isHome: false }] });
+    assert.equal(r.ok, true);
+    assert.match(r.steps[0].sentence, /risk score/);
+  });
+  t('a price the steps do not reach is flagged, not shown as adding up', () => {
+    const r = core.priceSteps({ engine: 'lambda', rate, expMin: null, factors: [], price: 0.5 });
+    assert.equal(r.ok, false);
+    assert.equal(r.versus, null);
+  });
+}
+
 console.log(`\n${passed} tests passed`);
