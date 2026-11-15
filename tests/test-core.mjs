@@ -2070,4 +2070,80 @@ console.log('stat pack');
   });
 }
 
+/* ---- model v line: the comparison log ---- */
+console.log('model v line');
+{
+  const base = { ts: 1, league: 'EFLC', fixture: { id: 50, r: 7, h: 'AAA', a: 'BBB', d: '2026-10-01T14:00:00Z' },
+    player: { n: 'J. Smith', c: 'AAA' } };
+  t('an entry freezes the odds, the model and what the odds implied', () => {
+    const e = core.lineEntry({ ...base, prob: 0.34, odds: 3.4 });
+    const v = core.valuePoint(0.34, 3.4);
+    assert.equal(e.implied, v.market);
+    assert.equal(e.impliedFair, v.fair);
+    assert.equal(e.edge, v.edge);
+    assert.equal(e.verdict, 'beats the price');
+    assert.equal(e.status, 'pending');
+    assert.equal(e.round, 7);
+  });
+  t('the verdict uses the price check\'s own three cases', () => {
+    assert.equal(core.lineEntry({ ...base, prob: 0.2, odds: 3.4 }).verdict, 'below the price');
+    const fair = core.valuePoint(0.5, 2).fair;
+    assert.equal(core.lineEntry({ ...base, prob: (fair + 0.5) / 2, odds: 2 }).verdict, 'inside the margin');
+  });
+  t('no entry from a bad price, a bad chance or a missing player', () => {
+    assert.equal(core.lineEntry({ ...base, prob: 0.3, odds: 1 }), null);
+    assert.equal(core.lineEntry({ ...base, prob: 0, odds: 3 }), null);
+    assert.equal(core.lineEntry({ ...base, player: {}, prob: 0.3, odds: 3 }), null);
+  });
+  const LEDGER = {
+    fixtures: [50, 51],
+    players: [{ n: 'J. Smith', c: 'AAA', rds: { 7: 1 } }, { n: 'K. Jones', c: 'BBB', rds: { 2: 1 } }],
+    apps: [{ n: 'J. Smith', c: 'AAA', r: [5, 6, 7] }, { n: 'K. Jones', c: 'BBB', r: [3, 4, 5, 6, 7] },
+           { n: 'L. Old', c: 'AAA', r: [8, 9, 10, 11, 12] }],
+  };
+  const mk = (n, c, r, id) => core.lineEntry({ ...base, fixture: { ...base.fixture, id: id || 50, r },
+    player: { n, c }, prob: 0.3, odds: 4 });
+  t('settles booked, not booked and void from the ledger', () => {
+    assert.equal(core.settleLine(mk('J. Smith', 'AAA', 7), LEDGER).status, 'booked');
+    assert.equal(core.settleLine(mk('K. Jones', 'BBB', 7), LEDGER).status, 'not booked');
+    assert.equal(core.settleLine(mk('Nobody', 'AAA', 7), LEDGER).status, 'void');
+    assert.equal(core.settleLine(mk('J. Smith', 'AAA', 7), LEDGER).settledBy, 'ledger');
+  });
+  t('one player under two spellings settles from both rows', () => {
+    const L2 = { fixtures: [50], players: [{ n: 'Ruben Rodrigues', c: 'AAA', rds: { 14: 1 } }],
+      apps: [{ n: 'Ruben Rodrigues', c: 'AAA', r: [11, 12, 13, 14, 15] },
+             { n: 'Rúben Rodrigues', c: 'AAA', r: [4, 5, 6, 7, 8] }] };
+    assert.equal(core.settleLine(mk('Rúben Rodrigues', 'AAA', 6), L2).status, 'not booked');
+    assert.equal(core.settleLine(mk('Rúben Rodrigues', 'AAA', 14), L2).status, 'booked');
+  });
+  t('a fixture the ledger has not recorded stays pending', () => {
+    assert.equal(core.settleLine(mk('J. Smith', 'AAA', 7, 99), LEDGER).status, 'pending');
+  });
+  t('a round older than the five appearances the ledger keeps is unknown, not void', () => {
+    assert.equal(core.settleLine(mk('L. Old', 'AAA', 7), LEDGER).status, 'unknown');
+  });
+  t('a settled or hand-set entry is never re-settled', () => {
+    const hand = { ...mk('J. Smith', 'AAA', 7), status: 'not booked', settledBy: 'hand' };
+    assert.equal(core.settleLine(hand, LEDGER), hand);
+  });
+  t('the summary counts at level stakes, only on the comparisons that beat the price', () => {
+    const e = (prob, odds, status) => ({ ...core.lineEntry({ ...base, prob, odds }), status });
+    const S = core.lineSummary([
+      e(0.4, 3, 'booked'),        // beats: +2
+      e(0.4, 3, 'not booked'),    // beats: -1
+      e(0.2, 3, 'booked'),        // below the price: not in the units
+      e(0.4, 3, 'pending'), e(0.4, 3, 'void'),
+    ]);
+    assert.equal(S.logged, 5);
+    assert.equal(S.settled, 3);
+    assert.equal(S.pending, 1);
+    assert.equal(S.voided, 1);
+    assert.equal(S.beats.n, 2);
+    assert.equal(S.beats.units, 1);
+    assert.equal(S.beats.roi, 0.5);
+    assert.ok(Math.abs(S.observed - 2 / 3) < 1e-12);
+    assert.equal(S.buckets.reduce((a, b) => a + b.n, 0), 3);
+  });
+}
+
 console.log(`\n${passed} tests passed`);

@@ -161,6 +161,7 @@
         <span class="faint" id="mdWhen" style="font-size:12.5px"></span>
         <span class="spacer"></span>
         <button class="btn primary" id="mdShareBtn" type="button">&#8681; Share matchday</button>
+        <button class="btn" id="mdLineBtn" type="button" title="Your logged bookmaker prices against the model, settled after each match">Model v line</button>
         <button class="btn" id="mdPackBtn" type="button" title="Stats pack for this matchday: image cards plus text for Reddit and Discord">Stats pack</button>
       </div>
       <div id="mdList"></div>
@@ -483,6 +484,7 @@
 <script src="assets/clubcolours.js"></script>
 <script src="assets/share.js"></script>
 <script src="assets/statpack.js"></script>
+<script src="assets/linelog.js"></script>
 <script src="assets/suspension.js"></script>
 <script src="assets/a11y.js"></script>
 <script src="assets/price.js"></script>
@@ -1133,7 +1135,10 @@
 
   /* Paste a bookmaker price, see the edge. The maths has been in core.js
      since the beginning with nowhere to type a number into. */
-  var PRICES = (typeof PLDPrice !== 'undefined' && PLDPrice) ? PLDPrice.create({}) : null;
+  /* Log hands a frozen comparison to the model-v-line log (assets/linelog.js). */
+  var PRICES = (typeof PLDPrice !== 'undefined' && PLDPrice) ? PLDPrice.create({
+    onLog: function (x) { return window.PLDLineLog ? !!window.PLDLineLog.add(x) : false; }
+  }) : null;
 
   var REF_KEY = 'laliga_desk_refs_v1';
   var myRefs = {};
@@ -1448,7 +1453,9 @@
     var all = (x.home.top || []).concat(x.away.top || [])
       .sort(function (a, b) { return b.prob - a.prob; }).slice(0, 5);
     return PRICES.block(all.map(function (t, i) {
-      return { key: x.fx.id + '-' + i, label: t.p.n, prob: t.prob };
+      return { key: x.fx.id + '-' + i, label: t.p.n, prob: t.prob,
+               meta: { league: 'LL', fixture: { id: x.fx.id, r: x.fx.r, h: x.fx.h, a: x.fx.a, d: x.fx.d },
+                       player: { n: t.p.n, c: t.p.c } } };
     }));
   }
 
@@ -2076,6 +2083,8 @@
 
     var b = $('#mdShareBtn');
     if (b && !b._wired) { b._wired = true; b.addEventListener('click', function () { shareRound(r, b); }); }
+    var lk = $('#mdLineBtn');
+    if (lk) lk.onclick = function () { if (window.PLDLineLog) window.PLDLineLog.open(); };
     var pk = $('#mdPackBtn');
     if (pk) pk.onclick = function () { openPack(r); };
   }

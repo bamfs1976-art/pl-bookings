@@ -271,6 +271,12 @@ jobs:
       - name: Stats pack
         run: node scripts/check-statpack.mjs
 
+      # Model v line: logged comparisons settle correctly against every real
+      # bookings ledger, every desk logs with its own league and fixture ids,
+      # and the log stays stake-free and on the device.
+      - name: Model v line
+        run: node scripts/check-linelog.mjs
+
       # Are the three desks pricing the same thing? A calibration check, not a
       # same-numbers check: each must land within a tenth of the card rate its
       # own division produced. They answered different questions for a year,

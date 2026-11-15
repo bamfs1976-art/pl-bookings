@@ -726,6 +726,12 @@ button.mkt:hover{background:var(--surface-3);color:var(--accent)}
 .px-head{font-size:10px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;
   color:var(--text-3);padding:4px 0 2px}
 .px-row{padding:3px 0}
+/* With the comparison log on, a fifth column holds the Log button. */
+.px-head.px-logs,.px-row.px-logs{grid-template-columns:minmax(0,1.3fr) 46px 64px minmax(0,1.5fr) 48px}
+.px-log{font:inherit;font-size:11px;font-weight:700;min-height:32px;padding:2px 6px;border-radius:6px;
+  border:1px solid var(--border-2);background:var(--surface);color:var(--text);cursor:pointer}
+.px-log:disabled{opacity:.45;cursor:default}
+.px-log:focus-visible{outline:2px solid var(--ring);outline-offset:1px}
 .px-name{font-size:12px;font-weight:600;color:var(--text);overflow:hidden;
   text-overflow:ellipsis;white-space:nowrap}
 .px-model{font-size:12px;font-weight:700;color:var(--text-2);text-align:right}

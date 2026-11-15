@@ -2559,6 +2559,90 @@
     return parts.map((p, i) => (parts.length > 1 ? `(${i + 1}/${parts.length}) ` : '') + p + '\n\n' + foot);
   }
 
+  /* ---- model v line: the comparison log --------------------------------
+   *
+   * A reader types a bookmaker's odds into a desk's price check and logs it.
+   * The entry is a FROZEN snapshot: the odds, the model's chance and what the
+   * odds implied at that moment. Nothing live is stored, which keeps the price
+   * check's rule that a price is only true for minutes. After the match the
+   * bookings ledger settles it, and the summary answers one question: when the
+   * model said it beat the price, did it?
+   *
+   * Stake-free on purpose. Results are counted at level stakes, one unit a
+   * comparison, so the record measures the model, not anyone's staking.
+   */
+  const LINE_STATUSES = ['pending', 'booked', 'not booked', 'void', 'unknown'];
+
+  function lineEntry(input) {
+    const o = input || {}, fx = o.fixture || {}, pl = o.player || {};
+    const odds = Number(o.odds), prob = Number(o.prob);
+    if (!(odds > 1) || !(prob > 0 && prob < 1) || !fx.id || !pl.n || !pl.c) return null;
+    const v = valuePoint(prob, odds, o.margin);
+    if (!v) return null;
+    return {
+      id: o.id || ('l' + Number(o.ts || 0).toString(36) + Math.random().toString(36).slice(2, 7)),
+      ts: o.ts || null, league: o.league || null,
+      fixtureId: fx.id, round: fx.r != null ? fx.r : null, kickoff: fx.d || null,
+      home: fx.h || null, away: fx.a || null,
+      player: pl.n, club: pl.c,
+      odds, model: prob, implied: v.market, impliedFair: v.fair, edge: v.edge,
+      verdict: v.beatsPrice ? 'beats the price' : (v.insideMargin ? 'inside the margin' : 'below the price'),
+      status: 'pending', settledBy: null,
+    };
+  }
+
+  /* Settle one entry against a division's bookings ledger.
+     booked:     he has a card in that round;
+     not booked: he appeared in that round with no card;
+     void:       the fixture is recorded and he did not appear;
+     unknown:    the ledger no longer holds that round of his appearances
+                 (it keeps the last five), so it cannot say: settle by hand;
+     pending:    the fixture is not recorded yet.
+     A settled entry is never re-settled here; a hand setting always stands. */
+  function settleLine(entry, ledger) {
+    if (!entry || entry.status !== 'pending' || !ledger) return entry;
+    const fixtures = (ledger.fixtures || []).map(String);
+    if (fixtures.indexOf(String(entry.fixtureId)) < 0) return entry;
+    const same = (row) => row && row.c === entry.club
+      && (row.n === entry.player || normName(row.n) === normName(entry.player));
+    const done = (status) => Object.assign({}, entry, { status, settledBy: 'ledger' });
+    /* EVERY matching row, not the first: the feed can spell one player two
+       ways ("Rúben" and "Ruben"), and the ledger then splits his appearances
+       across two rows. Reading only the first settled a game he played as
+       "unknown". */
+    const pls = (ledger.players || []).filter(same);
+    if (pls.some((pl) => pl.rds && Number(pl.rds[String(entry.round)]) > 0)) return done('booked');
+    const rounds = [];
+    (ledger.apps || []).filter(same).forEach((a) => (Array.isArray(a.r) ? a.r : []).forEach((x) => rounds.push(Number(x))));
+    if (rounds.indexOf(Number(entry.round)) >= 0) return done('not booked');
+    if (rounds.length >= 5 && Math.min.apply(null, rounds) > Number(entry.round)) return done('unknown');
+    return done('void');
+  }
+
+  function lineSummary(entries) {
+    const all = (entries || []).filter(Boolean);
+    const settled = all.filter((e) => e.status === 'booked' || e.status === 'not booked');
+    const booked = settled.filter((e) => e.status === 'booked').length;
+    const mean = (a, k) => (a.length ? a.reduce((t, e) => t + e[k], 0) / a.length : null);
+    const beats = settled.filter((e) => e.verdict === 'beats the price');
+    const beatsBooked = beats.filter((e) => e.status === 'booked').length;
+    const units = beats.reduce((a, e) => a + (e.status === 'booked' ? e.odds - 1 : -1), 0);
+    return {
+      logged: all.length,
+      pending: all.filter((e) => e.status === 'pending').length,
+      voided: all.filter((e) => e.status === 'void').length,
+      unknown: all.filter((e) => e.status === 'unknown').length,
+      settled: settled.length, booked,
+      observed: settled.length ? booked / settled.length : null,
+      meanModel: mean(settled, 'model'), meanImplied: mean(settled, 'implied'),
+      beats: { n: beats.length, booked: beatsBooked,
+               observed: beats.length ? beatsBooked / beats.length : null,
+               meanModel: mean(beats, 'model'), meanImplied: mean(beats, 'implied'),
+               units, roi: beats.length ? units / beats.length : null },
+      buckets: reliability(settled.map((e) => ({ p: e.model, y: e.status === 'booked' ? 1 : 0 })), 5),
+    };
+  }
+
   const PLDCore = {
     clock, dayClock, dateClock, CLOCK,
     rotationRisk, rotationBand,
@@ -2586,6 +2670,7 @@
     bookedForm, bookedFormHtml, foulForm, FORM_MIN, refSeason,
     statPack, packTeamForm, packLeagueAvg, statPackMarkdown, statPackDiscord, packKickoff,
     statPackCardRows, packAvgLine, packTitle, PACK_PER_CARD, PACK_TOP, DISCORD_LIMIT, PACK_FOOTER,
+    lineEntry, settleLine, lineSummary, LINE_STATUSES,
   };
 
   if (typeof module !== 'undefined' && module.exports) module.exports = PLDCore;

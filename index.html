@@ -958,6 +958,7 @@
       <div style="display:flex;align-items:center;justify-content:space-between;gap:.6rem;margin-bottom:.55rem;flex-wrap:wrap">
         <div class="gw-seclabel">Top probabilities <span style="color:var(--text-3);text-transform:none;letter-spacing:0">· hottest first</span></div>
         <button class="btn btn-primary" id="gwShareBtn" style="padding:.32rem .75rem;font-size:.78rem" type="button" title="Download a shareable card of this gameweek's fixtures by booking heat">⬇ Share gameweek</button>
+        <button class="btn" id="gwLineBtn" style="padding:.32rem .75rem;font-size:.78rem" type="button" title="Your logged bookmaker prices against the model, settled after each match">Model v line</button>
         <button class="btn" id="gwPackBtn" style="padding:.32rem .75rem;font-size:.78rem" type="button" title="Stats pack for this gameweek: image cards plus text for Reddit and Discord">Stats pack</button>
       </div>
       <!-- STICKY. Ten near-identical cards and the only control was
@@ -1760,6 +1761,7 @@ License: MIT
      button and is what lets the stat sheet reach this desk at all. -->
 <script src="assets/share.js"></script>
 <script src="assets/statpack.js"></script>
+<script src="assets/linelog.js"></script>
 <script src="assets/rotation.js"></script>
 <script src="assets/core.js"></script>
 <script src="assets/save.js"></script>
@@ -5201,7 +5203,7 @@ function fixtureCardHtml(f,opts){
       +'</ul>'
       /* The price check covers the candidates ON SCREEN, so it answers a
          question about what is shown rather than a private shortlist. */
-      +(PRICES?PRICES.block(shown.slice(0,5).map((c,i)=>({key:f.id+"-"+i,label:c.p.n,prob:c.prob}))):"");
+      +(PRICES?PRICES.block(shown.slice(0,5).map((c,i)=>({key:f.id+"-"+i,label:c.p.n,prob:c.prob,meta:plLineMeta(f,h,a,c.p)}))):"");
     /* HOW MANY ARE WORTH IT. "Show 35 more candidates" says nothing about
        whether any of the 35 clears the Watch band, so the honest answer to
        "is this worth expanding" was to expand it and find out. */
@@ -5667,7 +5669,17 @@ function gwReport(fx){
 /* Paste a bookmaker price, see the edge. impliedProb, marketProbDeVig and
    valuePoint have been in core.js since the beginning with nowhere on any
    page to type a number into. Session-only: a price is true for minutes. */
-const PRICES=(typeof PLDPrice!=="undefined"&&PLDPrice)?PLDPrice.create({}):null;
+/* Log hands a frozen comparison to the model-v-line log (assets/linelog.js). */
+const PRICES=(typeof PLDPrice!=="undefined"&&PLDPrice)?PLDPrice.create({
+  onLog:x=>window.PLDLineLog?!!window.PLDLineLog.add(x):false
+}):null;
+/* The ledger settles by the feed's own fixture id and round (PL_FIXTURES),
+   not the FPL ones this page draws from; a season holds each home-away pair
+   once, so the pair finds it. No match, no meta, and Log stays disabled. */
+function plLineMeta(f,h,a,p){
+  const x=typeof PL_FIXTURES!=="undefined"?PL_FIXTURES.find(y=>y.h===h&&y.a===a):null;
+  return x?{league:"PL",fixture:{id:x.id,r:x.r,h:h,a:a,d:x.d||f.kickoff_time},player:{n:p.n,c:p.c}}:null;
+}
 
 /* Referee appointment alerts. The watchlist is local-first and works signed
    out, so the server cannot know who follows whom — a copy of the keys rides
@@ -5925,6 +5937,7 @@ $("gwPosSeg").addEventListener("click",e=>{
 $("gwShareBtn").addEventListener("click",()=>{ if(LIVE) exportGameweekPNG(LIVE.currentGW); });
 $("fxShareBtn").addEventListener("click",()=>{ const gw=Number($("gwSelect").value); if(LIVE&&gw) exportGameweekPNG(gw); });
 $("gwPackBtn").addEventListener("click",()=>{ if(LIVE) openStatPack(LIVE.currentGW); });
+$("gwLineBtn").addEventListener("click",()=>{ if(window.PLDLineLog) window.PLDLineLog.open(); });
 $("fxPackBtn").addEventListener("click",()=>{ const gw=Number($("gwSelect").value); if(LIVE&&gw) openStatPack(gw); });
 
 // ═══════════════════════════════════════════════════════════
