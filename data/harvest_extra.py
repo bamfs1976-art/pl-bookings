@@ -313,12 +313,19 @@ def parse_events(payload, code, fixture_id):
         t = r.get("time") or {}
         minute = num(t.get("elapsed"))
         extra = num(t.get("extra")) or 0
-        out.append({
+        card = {
             "c": short,
             "n": ((r.get("player") or {}).get("name") or "").strip(),
             "m": None if minute is None else int(minute + extra),
             "k": kind,
-        })
+        }
+        # The added minutes on their own, so a 45+3 card can be told from a
+        # 48th-minute one. The in-play card clock files a first-half stoppage
+        # card at 45, when it happened on the live clock. "m" keeps its old
+        # meaning (minute plus added time), so nothing that reads it changes.
+        if minute is not None and extra:
+            card["x"] = int(extra)
+        out.append(card)
     return collapse_second_yellow(out)
 
 

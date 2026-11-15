@@ -2070,4 +2070,142 @@ console.log('stat pack');
   });
 }
 
+/* ---- model v line: the comparison log ---- */
+console.log('model v line');
+{
+  const base = { ts: 1, league: 'EFLC', fixture: { id: 50, r: 7, h: 'AAA', a: 'BBB', d: '2026-10-01T14:00:00Z' },
+    player: { n: 'J. Smith', c: 'AAA' } };
+  t('an entry freezes the odds, the model and what the odds implied', () => {
+    const e = core.lineEntry({ ...base, prob: 0.34, odds: 3.4 });
+    const v = core.valuePoint(0.34, 3.4);
+    assert.equal(e.implied, v.market);
+    assert.equal(e.impliedFair, v.fair);
+    assert.equal(e.edge, v.edge);
+    assert.equal(e.verdict, 'beats the price');
+    assert.equal(e.status, 'pending');
+    assert.equal(e.round, 7);
+  });
+  t('the verdict uses the price check\'s own three cases', () => {
+    assert.equal(core.lineEntry({ ...base, prob: 0.2, odds: 3.4 }).verdict, 'below the price');
+    const fair = core.valuePoint(0.5, 2).fair;
+    assert.equal(core.lineEntry({ ...base, prob: (fair + 0.5) / 2, odds: 2 }).verdict, 'inside the margin');
+  });
+  t('no entry from a bad price, a bad chance or a missing player', () => {
+    assert.equal(core.lineEntry({ ...base, prob: 0.3, odds: 1 }), null);
+    assert.equal(core.lineEntry({ ...base, prob: 0, odds: 3 }), null);
+    assert.equal(core.lineEntry({ ...base, player: {}, prob: 0.3, odds: 3 }), null);
+  });
+  const LEDGER = {
+    fixtures: [50, 51],
+    players: [{ n: 'J. Smith', c: 'AAA', rds: { 7: 1 } }, { n: 'K. Jones', c: 'BBB', rds: { 2: 1 } }],
+    apps: [{ n: 'J. Smith', c: 'AAA', r: [5, 6, 7] }, { n: 'K. Jones', c: 'BBB', r: [3, 4, 5, 6, 7] },
+           { n: 'L. Old', c: 'AAA', r: [8, 9, 10, 11, 12] }],
+  };
+  const mk = (n, c, r, id) => core.lineEntry({ ...base, fixture: { ...base.fixture, id: id || 50, r },
+    player: { n, c }, prob: 0.3, odds: 4 });
+  t('settles booked, not booked and void from the ledger', () => {
+    assert.equal(core.settleLine(mk('J. Smith', 'AAA', 7), LEDGER).status, 'booked');
+    assert.equal(core.settleLine(mk('K. Jones', 'BBB', 7), LEDGER).status, 'not booked');
+    assert.equal(core.settleLine(mk('Nobody', 'AAA', 7), LEDGER).status, 'void');
+    assert.equal(core.settleLine(mk('J. Smith', 'AAA', 7), LEDGER).settledBy, 'ledger');
+  });
+  t('one player under two spellings settles from both rows', () => {
+    const L2 = { fixtures: [50], players: [{ n: 'Ruben Rodrigues', c: 'AAA', rds: { 14: 1 } }],
+      apps: [{ n: 'Ruben Rodrigues', c: 'AAA', r: [11, 12, 13, 14, 15] },
+             { n: 'Rúben Rodrigues', c: 'AAA', r: [4, 5, 6, 7, 8] }] };
+    assert.equal(core.settleLine(mk('Rúben Rodrigues', 'AAA', 6), L2).status, 'not booked');
+    assert.equal(core.settleLine(mk('Rúben Rodrigues', 'AAA', 14), L2).status, 'booked');
+  });
+  t('a fixture the ledger has not recorded stays pending', () => {
+    assert.equal(core.settleLine(mk('J. Smith', 'AAA', 7, 99), LEDGER).status, 'pending');
+  });
+  t('a round older than the five appearances the ledger keeps is unknown, not void', () => {
+    assert.equal(core.settleLine(mk('L. Old', 'AAA', 7), LEDGER).status, 'unknown');
+  });
+  t('a settled or hand-set entry is never re-settled', () => {
+    const hand = { ...mk('J. Smith', 'AAA', 7), status: 'not booked', settledBy: 'hand' };
+    assert.equal(core.settleLine(hand, LEDGER), hand);
+  });
+  t('the summary counts at level stakes, only on the comparisons that beat the price', () => {
+    const e = (prob, odds, status) => ({ ...core.lineEntry({ ...base, prob, odds }), status });
+    const S = core.lineSummary([
+      e(0.4, 3, 'booked'),        // beats: +2
+      e(0.4, 3, 'not booked'),    // beats: -1
+      e(0.2, 3, 'booked'),        // below the price: not in the units
+      e(0.4, 3, 'pending'), e(0.4, 3, 'void'),
+    ]);
+    assert.equal(S.logged, 5);
+    assert.equal(S.settled, 3);
+    assert.equal(S.pending, 1);
+    assert.equal(S.voided, 1);
+    assert.equal(S.beats.n, 2);
+    assert.equal(S.beats.units, 1);
+    assert.equal(S.beats.roi, 0.5);
+    assert.ok(Math.abs(S.observed - 2 / 3) < 1e-12);
+    assert.equal(S.buckets.reduce((a, b) => a + b.n, 0), 3);
+  });
+}
+
+/* ---- in play ---- */
+console.log('in play');
+{
+  const ev = (mins) => ({ 1: mins.map((m) => (typeof m === 'object' ? m : { m })) });
+  const even = ev(Array.from({ length: 90 }, (_, i) => i + 1));
+  t('card clock: share of cards after each minute', () => {
+    const k = core.cardClock(even);
+    assert.equal(k.n, 90);
+    assert.equal(k.after[0], 1);
+    assert.equal(k.after[45], 0.5);
+    assert.equal(k.after[90], 0);
+  });
+  t('card clock: too few cards is no clock', () => {
+    assert.equal(core.cardClock(ev([10, 20, 30])), null);
+  });
+  t('card clock: a first-half added-time card counts at 45', () => {
+    const k = core.cardClock(ev([...Array.from({ length: 59 }, () => 80), { m: 48, x: 3 }]));
+    assert.equal(k.after[45], 59 / 60);
+    const old = core.cardClock(ev([...Array.from({ length: 59 }, () => 80), { m: 48 }]));
+    assert.equal(old.after[45], 1);
+  });
+  t('chance from here equals the pre-match price at kick-off and 0 at full time', () => {
+    const k = core.cardClock(even);
+    assert.equal(core.inPlayChance(0.3, core.clockShare(k, 0, false)), 0.3);
+    assert.ok(Math.abs(core.inPlayChance(0.3, core.clockShare(k, null, false)) - 0.3) < 1e-12);
+    assert.equal(core.inPlayChance(0.3, core.clockShare(k, 60, true)), 0);
+    const half = core.inPlayChance(0.3, core.clockShare(k, 45, false));
+    assert.ok(Math.abs(half - (1 - Math.sqrt(0.7))) < 1e-12);
+  });
+  t('live states join feed names to the squad, unique or nothing', () => {
+    const idx = { 'BUR|J. Laurent': { yc: 1, rc: 0 }, 'BUR|A. Smith': { yc: 1, rc: 0 }, 'BUR|K. Off': { yc: 2, rc: 0, off: true } };
+    const elClub = { 'BUR|J. Laurent': 'BUR', 'BUR|A. Smith': 'BUR', 'BUR|K. Off': 'BUR' };
+    const s = core.inPlayStates(idx, elClub, { BUR: ['Josh Laurent', 'Adam Smith', 'Alan Smith', 'Kai Off'] });
+    assert.equal(s['BUR|Josh Laurent'], 'booked');
+    assert.equal(s['BUR|Kai Off'], 'sent-off');
+    assert.equal(Object.keys(s).length, 2);
+  });
+  t('fixture in play: kick-off reproduces the desk, booked players leave the sums', () => {
+    const k = core.cardClock(even);
+    const players = [{ name: 'A', club: 'H', pre: 0.3 }, { name: 'B', club: 'H', pre: 0.2 },
+      { name: 'C', club: 'X', pre: 0.25 }, { name: 'D', club: 'X', pre: 0.1 }];
+    const desk = core.teamCardMarkets([0.3, 0.2], [0.25, 0.1], [3.5]);
+    const k0 = core.inPlayFixture({ home: 'H', away: 'X', players, minute: null, clock: k });
+    assert.equal(k0.expected.pre, desk.expected);
+    assert.equal(k0.over[3.5].pre, desk.over[3.5]);
+    assert.ok(Math.abs(k0.over[3.5].now - desk.over[3.5]) < 1e-12);
+    const live = core.inPlayFixture({ home: 'H', away: 'X', players, minute: 45, clock: k,
+      cards: { home: { yc: 1 }, away: { yc: 2 } },
+      state: (c, n) => (n === 'A' ? 'booked' : null) });
+    assert.equal(live.cards.total, 3);
+    assert.equal(live.players[0].name, 'A');
+    assert.equal(live.players[0].now, null);
+    const rest = [0.2, 0.25, 0.1].map((p) => 1 - Math.sqrt(1 - p));
+    assert.ok(Math.abs(live.over[3.5].now - core.probOverCards(rest, 0.5)) < 1e-12);
+    const five = core.inPlayFixture({ home: 'H', away: 'X', players, minute: 45, clock: k,
+      cards: { home: { yc: 3 }, away: { yc: 1 } } });
+    assert.equal(five.over[3.5].now, 1);
+    const ft = core.inPlayFixture({ home: 'H', away: 'X', players, minute: 90, finished: true, clock: k });
+    assert.equal(ft.expected.rest, 0);
+  });
+}
+
 console.log(`\n${passed} tests passed`);

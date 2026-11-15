@@ -2559,6 +2559,214 @@
     return parts.map((p, i) => (parts.length > 1 ? `(${i + 1}/${parts.length}) ` : '') + p + '\n\n' + foot);
   }
 
+  /* ---- model v line: the comparison log --------------------------------
+   *
+   * A reader types a bookmaker's odds into a desk's price check and logs it.
+   * The entry is a FROZEN snapshot: the odds, the model's chance and what the
+   * odds implied at that moment. Nothing live is stored, which keeps the price
+   * check's rule that a price is only true for minutes. After the match the
+   * bookings ledger settles it, and the summary answers one question: when the
+   * model said it beat the price, did it?
+   *
+   * Stake-free on purpose. Results are counted at level stakes, one unit a
+   * comparison, so the record measures the model, not anyone's staking.
+   */
+  const LINE_STATUSES = ['pending', 'booked', 'not booked', 'void', 'unknown'];
+
+  function lineEntry(input) {
+    const o = input || {}, fx = o.fixture || {}, pl = o.player || {};
+    const odds = Number(o.odds), prob = Number(o.prob);
+    if (!(odds > 1) || !(prob > 0 && prob < 1) || !fx.id || !pl.n || !pl.c) return null;
+    const v = valuePoint(prob, odds, o.margin);
+    if (!v) return null;
+    return {
+      id: o.id || ('l' + Number(o.ts || 0).toString(36) + Math.random().toString(36).slice(2, 7)),
+      ts: o.ts || null, league: o.league || null,
+      fixtureId: fx.id, round: fx.r != null ? fx.r : null, kickoff: fx.d || null,
+      home: fx.h || null, away: fx.a || null,
+      player: pl.n, club: pl.c,
+      odds, model: prob, implied: v.market, impliedFair: v.fair, edge: v.edge,
+      verdict: v.beatsPrice ? 'beats the price' : (v.insideMargin ? 'inside the margin' : 'below the price'),
+      status: 'pending', settledBy: null,
+    };
+  }
+
+  /* Settle one entry against a division's bookings ledger.
+     booked:     he has a card in that round;
+     not booked: he appeared in that round with no card;
+     void:       the fixture is recorded and he did not appear;
+     unknown:    the ledger no longer holds that round of his appearances
+                 (it keeps the last five), so it cannot say: settle by hand;
+     pending:    the fixture is not recorded yet.
+     A settled entry is never re-settled here; a hand setting always stands. */
+  function settleLine(entry, ledger) {
+    if (!entry || entry.status !== 'pending' || !ledger) return entry;
+    const fixtures = (ledger.fixtures || []).map(String);
+    if (fixtures.indexOf(String(entry.fixtureId)) < 0) return entry;
+    const same = (row) => row && row.c === entry.club
+      && (row.n === entry.player || normName(row.n) === normName(entry.player));
+    const done = (status) => Object.assign({}, entry, { status, settledBy: 'ledger' });
+    /* EVERY matching row, not the first: the feed can spell one player two
+       ways ("Rúben" and "Ruben"), and the ledger then splits his appearances
+       across two rows. Reading only the first settled a game he played as
+       "unknown". */
+    const pls = (ledger.players || []).filter(same);
+    if (pls.some((pl) => pl.rds && Number(pl.rds[String(entry.round)]) > 0)) return done('booked');
+    const rounds = [];
+    (ledger.apps || []).filter(same).forEach((a) => (Array.isArray(a.r) ? a.r : []).forEach((x) => rounds.push(Number(x))));
+    if (rounds.indexOf(Number(entry.round)) >= 0) return done('not booked');
+    if (rounds.length >= 5 && Math.min.apply(null, rounds) > Number(entry.round)) return done('unknown');
+    return done('void');
+  }
+
+  function lineSummary(entries) {
+    const all = (entries || []).filter(Boolean);
+    const settled = all.filter((e) => e.status === 'booked' || e.status === 'not booked');
+    const booked = settled.filter((e) => e.status === 'booked').length;
+    const mean = (a, k) => (a.length ? a.reduce((t, e) => t + e[k], 0) / a.length : null);
+    const beats = settled.filter((e) => e.verdict === 'beats the price');
+    const beatsBooked = beats.filter((e) => e.status === 'booked').length;
+    const units = beats.reduce((a, e) => a + (e.status === 'booked' ? e.odds - 1 : -1), 0);
+    return {
+      logged: all.length,
+      pending: all.filter((e) => e.status === 'pending').length,
+      voided: all.filter((e) => e.status === 'void').length,
+      unknown: all.filter((e) => e.status === 'unknown').length,
+      settled: settled.length, booked,
+      observed: settled.length ? booked / settled.length : null,
+      meanModel: mean(settled, 'model'), meanImplied: mean(settled, 'implied'),
+      beats: { n: beats.length, booked: beatsBooked,
+               observed: beats.length ? beatsBooked / beats.length : null,
+               meanModel: mean(beats, 'model'), meanImplied: mean(beats, 'implied'),
+               units, roi: beats.length ? units / beats.length : null },
+      buckets: reliability(settled.map((e) => ({ p: e.model, y: e.status === 'booked' ? 1 : 0 })), 5),
+    };
+  }
+
+  /* ---- in play: the forecast with part of the match gone ----------------
+   *
+   * A pre-match chance is a chance over ninety minutes. At the 60th minute a
+   * player who is still clean has a third of the match left, but NOT a third
+   * of the cards: cards bunch late. So the share of the match still to come is
+   * read off the league's own card clock, built from the minute of every card
+   * this season (data/*_cardevents.js), not from the minutes on the clock.
+   *
+   * THE ARITHMETIC. A pre-match chance p is a Poisson chance, p = 1 - e^-L.
+   * If a share S of the league's cards are still to come, the rate still to
+   * come is L*S, so the chance from here is 1 - (1 - p)^S. At kick-off S = 1
+   * and the price is the desk's own, to the digit; at full time S = 0.
+   *
+   * ADDED TIME. A first-half stoppage card is stored with its added minutes
+   * (45+3 files as 48) and, from the harvest that added it, the added part in
+   * `x`. With `x` a 45+3 card counts at 45, which is when it happened on the
+   * live clock. Without it (older rows) it counts at 48: a small overstatement
+   * of what is left at half-time, stated on the panel. */
+  const CLOCK_MIN_CARDS = 50;
+  function cardClock(events) {
+    const mins = [];
+    for (const id of Object.keys(events || {})) {
+      for (const c of events[id] || []) {
+        const m = Number(c && c.m);
+        if (!isFinite(m) || m < 0) continue;
+        const x = Number(c.x) || 0;
+        const base = m - x;
+        mins.push(x > 0 && base <= 45 ? 45 : m);
+      }
+    }
+    if (mins.length < CLOCK_MIN_CARDS) return null;
+    const after = [];
+    for (let t = 0; t <= 90; t++) {
+      let k = 0;
+      for (const m of mins) if (m > t) k++;
+      after.push(k / mins.length);
+    }
+    return { n: mins.length, after };
+  }
+
+  function clockShare(clock, minute, finished) {
+    if (finished) return 0;
+    if (minute == null || !isFinite(Number(minute))) return 1;
+    const t = Math.max(0, Math.min(90, Math.floor(Number(minute))));
+    return clock && clock.after ? clock.after[t] : null;
+  }
+
+  function inPlayChance(pre, share) {
+    const p = Number(pre);
+    if (!isFinite(p) || p <= 0 || share == null) return share == null ? null : 0;
+    if (share >= 1) return p;
+    return 1 - Math.pow(1 - Math.min(0.999, p), Math.max(0, Math.min(1, share)));
+  }
+
+  /* A player's state from a live index row: counts as {yc, rc, off}. */
+  function liveState(s) {
+    if (!s) return null;
+    if (s.rc > 0 || s.off) return 'sent-off';
+    if (s.yc > 0) return 'booked';
+    return null;
+  }
+
+  /* The events feed spells a player its own way; the desk spells him the
+     squad's way. The join is matchSquadName, unique or nothing, so a feed
+     name that fits two squad players marks neither. Returns
+     { 'CLUB|desk name': 'booked' | 'sent-off' }. */
+  function inPlayStates(idx, elClub, squads) {
+    const out = {};
+    for (const key of Object.keys(idx || {})) {
+      const club = elClub && elClub[key];
+      const st = liveState(idx[key]);
+      if (!club || !st) continue;
+      const feed = key.slice(key.indexOf('|') + 1);
+      const desk = matchSquadName(feed, (squads && squads[club]) || []);
+      if (!desk) continue;
+      const k = club + '|' + desk;
+      if (out[k] !== 'sent-off') out[k] = st;
+    }
+    return out;
+  }
+
+  /* One fixture in play.
+     input: { home, away (club codes), players: [{ name, club, pre, match? }],
+              minute, finished, cards: { home: {yc, rc}, away: {yc, rc} },
+              state(club, name) -> 'booked' | 'sent-off' | null,
+              clock, lines }
+     `pre` is the chance the desk prints for the player; `match` (default
+     `pre`) is the chance the desk folds into its match lines, which on the
+     Premier League desk is weighted by expected minutes. Booked and sent-off
+     players leave the remaining-cards sums: a second yellow is not priced. */
+  function inPlayFixture(input) {
+    const o = input || {};
+    const lines = Array.isArray(o.lines) && o.lines.length ? o.lines : [3.5];
+    const share = clockShare(o.clock, o.minute, o.finished);
+    const tally = (s) => ({ yc: Number(s && s.yc) || 0, rc: Number(s && s.rc) || 0 });
+    const ch = tally(o.cards && o.cards.home), ca = tally(o.cards && o.cards.away);
+    const sofar = ch.yc + ch.rc + ca.yc + ca.rc;
+    const preH = [], preA = [], remH = [], remA = [];
+    const players = (o.players || []).map((p) => {
+      const state = (typeof o.state === 'function' && o.state(p.club, p.name)) || null;
+      const m = p.match != null ? p.match : p.pre;
+      (p.club === o.home ? preH : preA).push(m);
+      if (!state) (p.club === o.home ? remH : remA).push(inPlayChance(m, share));
+      return { name: p.name, club: p.club, pre: p.pre, state,
+               now: state ? null : inPlayChance(p.pre, share) };
+    });
+    players.sort((a, b) => (a.state ? 0 : 1) - (b.state ? 0 : 1)
+      || (b.now == null ? -1 : b.now) - (a.now == null ? -1 : a.now) || b.pre - a.pre);
+    const pre = teamCardMarkets(preH, preA, lines);
+    const over = {};
+    for (const l of lines) {
+      const need = l - sofar;
+      over[l] = { pre: pre.over[l],
+        now: share == null ? null : need < 0 ? 1 : probOverCards(remH.concat(remA), need) };
+    }
+    const rest = share == null ? null : Math.round(expectedCards(remH.concat(remA)) * 100) / 100;
+    return {
+      minute: o.minute == null ? null : Number(o.minute), finished: !!o.finished, share,
+      cards: { home: ch, away: ca, total: sofar },
+      expected: { pre: pre.expected, rest, total: rest == null ? null : Math.round((sofar + rest) * 100) / 100 },
+      over, players,
+    };
+  }
+
   const PLDCore = {
     clock, dayClock, dateClock, CLOCK,
     rotationRisk, rotationBand,
@@ -2586,6 +2794,8 @@
     bookedForm, bookedFormHtml, foulForm, FORM_MIN, refSeason,
     statPack, packTeamForm, packLeagueAvg, statPackMarkdown, statPackDiscord, packKickoff,
     statPackCardRows, packAvgLine, packTitle, PACK_PER_CARD, PACK_TOP, DISCORD_LIMIT, PACK_FOOTER,
+    lineEntry, settleLine, lineSummary, LINE_STATUSES,
+    cardClock, clockShare, inPlayChance, inPlayStates, inPlayFixture, CLOCK_MIN_CARDS,
   };
 
   if (typeof module !== 'undefined' && module.exports) module.exports = PLDCore;

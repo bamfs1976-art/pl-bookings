@@ -161,6 +161,7 @@
         <span class="faint" id="mdWhen" style="font-size:12.5px"></span>
         <span class="spacer"></span>
         <button class="btn primary" id="mdShareBtn" type="button">&#8681; Share matchday</button>
+        <button class="btn" id="mdLineBtn" type="button" title="Your logged bookmaker prices against the model, settled after each match">Model v line</button>
         <button class="btn" id="mdPackBtn" type="button" title="Stats pack for this matchday: image cards plus text for Reddit and Discord">Stats pack</button>
       </div>
       <div id="mdList"></div>
@@ -483,6 +484,8 @@
 <script src="assets/clubcolours.js"></script>
 <script src="assets/share.js"></script>
 <script src="assets/statpack.js"></script>
+<script src="assets/linelog.js"></script>
+<script src="assets/inplay.js"></script>
 <script src="assets/suspension.js"></script>
 <script src="assets/a11y.js"></script>
 <script src="assets/price.js"></script>
@@ -1133,7 +1136,10 @@
 
   /* Paste a bookmaker price, see the edge. The maths has been in core.js
      since the beginning with nowhere to type a number into. */
-  var PRICES = (typeof PLDPrice !== 'undefined' && PLDPrice) ? PLDPrice.create({}) : null;
+  /* Log hands a frozen comparison to the model-v-line log (assets/linelog.js). */
+  var PRICES = (typeof PLDPrice !== 'undefined' && PLDPrice) ? PLDPrice.create({
+    onLog: function (x) { return window.PLDLineLog ? !!window.PLDLineLog.add(x) : false; }
+  }) : null;
 
   var REF_KEY = 'laliga_desk_refs_v1';
   var myRefs = {};
@@ -1200,7 +1206,9 @@
     });
     return {
       ps: rows.map(function (r) { return r.prob; }),
-      top: rows.slice().sort(function (a, b) { return b.prob - a.prob; }).slice(0, 4)
+      top: rows.slice().sort(function (a, b) { return b.prob - a.prob; }).slice(0, 4),
+      /* Every priced player, in the order of ps: the live view lists them all. */
+      all: rows
     };
   }
 
@@ -1342,8 +1350,51 @@
       + t.reds + ' red, ' + esc(clock)
       + ' — from the match events feed, refreshed about once a minute">'
       + '<span class="fx-live-dot"></span>' + esc(clock) + ' · ' + esc(label)
-      + '</span>';
+      + '</span>'
+      + '<button class="btn fx-live-view" type="button" data-inplay="' + esc(String(f.id)) + '"'
+      + ' title="Live view: the forecast against the cards so far. 18+ research, not advice.">Live view</button>';
   }
+
+  /* THE IN-PLAY VIEW for one fixture: this desk's own priced players, its own
+     live cards and its season foul averages, handed to assets/inplay.js,
+     which adds only the league's card clock. Rebuilt on every poll. */
+  function inPlayState(id) {
+    var f = FIXTURES.filter(function (x) { return String(x.id) === String(id); })[0];
+    if (!f || !LIVE.fixtures) return null;
+    var row = LIVE.fixtures[String(f.id)];
+    if (!row) return null;
+    var t = liveFor(f);
+    if (!t) return null;
+    var got = LiveCards.indexApiLive(row, liveResolve);
+    var x = priceFixture(f);
+    var squads = {};
+    [f.h, f.a].forEach(function (c) {
+      squads[c] = PLAYERS.filter(function (p) { return p.c === c; }).map(function (p) { return p.n; });
+    });
+    var states = C.inPlayStates(got.idx, got.elClub, squads);
+    var fx = typeof LALIGA_FXSTATS !== 'undefined' ? LALIGA_FXSTATS : {};
+    var name = function (c) { return (clubBy[c] || {}).name || c; };
+    return {
+      home: f.h, away: f.a, homeName: name(f.h), awayName: name(f.a),
+      players: x.home.all.concat(x.away.all).map(function (r) {
+        return { name: r.p.n, club: r.p.c, pre: r.prob }; }),
+      minute: t.minute, finished: t.finished, scope: t.scope,
+      cards: { home: t.home, away: t.away },
+      state: function (c, n) { return states[c + '|' + n] || null; },
+      form: { home: C.packTeamForm(FIXTURES, fx, f.h), away: C.packTeamForm(FIXTURES, fx, f.a) },
+      updatedAt: LIVE.at
+    };
+  }
+  function openInPlay(id) {
+    if (!window.PLDInPlay) return;
+    window.PLDInPlay.open({ league: 'LL', build: function () { return inPlayState(id); } });
+  }
+  document.addEventListener('click', function (e) {
+    var b = e.target.closest && e.target.closest('[data-inplay]');
+    if (!b) return;
+    e.preventDefault(); e.stopPropagation();
+    openInPlay(b.getAttribute('data-inplay'));
+  });
 
   function liveApply(d) {
     /* A FAILED POLL IS NOT NEWS THAT THE CARDS WERE RESCINDED — the previous
@@ -1351,6 +1402,7 @@
     if (d && d.live === false) { LIVE.fixtures = null; }
     else if (d && d.fixtures) { LIVE.fixtures = d.fixtures; LIVE.at = Date.now(); }
     renderFixtures();
+    if (window.PLDInPlay) window.PLDInPlay.refresh();
   }
 
   function liveStart() {
@@ -1448,7 +1500,9 @@
     var all = (x.home.top || []).concat(x.away.top || [])
       .sort(function (a, b) { return b.prob - a.prob; }).slice(0, 5);
     return PRICES.block(all.map(function (t, i) {
-      return { key: x.fx.id + '-' + i, label: t.p.n, prob: t.prob };
+      return { key: x.fx.id + '-' + i, label: t.p.n, prob: t.prob,
+               meta: { league: 'LL', fixture: { id: x.fx.id, r: x.fx.r, h: x.fx.h, a: x.fx.a, d: x.fx.d },
+                       player: { n: t.p.n, c: t.p.c } } };
     }));
   }
 
@@ -2076,6 +2130,8 @@
 
     var b = $('#mdShareBtn');
     if (b && !b._wired) { b._wired = true; b.addEventListener('click', function () { shareRound(r, b); }); }
+    var lk = $('#mdLineBtn');
+    if (lk) lk.onclick = function () { if (window.PLDLineLog) window.PLDLineLog.open(); };
     var pk = $('#mdPackBtn');
     if (pk) pk.onclick = function () { openPack(r); };
   }

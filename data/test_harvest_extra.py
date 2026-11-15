@@ -127,6 +127,9 @@ check("events: a second yellow is its own kind", [e["k"] for e in ev],
 check("events: stoppage time is added to the minute",
       [e["m"] for e in ev if e["k"] == "Y2"], [93])
 check("events: both clubs resolve", [e["c"] for e in ev], ["ARS", "CHE", "ARS"])
+# The added minutes on their own, only where there are some: the in-play card
+# clock needs to tell a 45+3 card from a 48th-minute one.
+check("events: added minutes are kept apart", [e.get("x") for e in ev], [None, None, 3])
 # AN UNKNOWN CARD LABEL MUST STOP THE HARVEST. Dropping it silently shrinks
 # every count that reads this file, and the count still looks plausible.
 refuses("events: an unrecognised card detail", lambda: X.parse_events(

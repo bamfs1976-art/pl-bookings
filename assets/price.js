@@ -57,6 +57,12 @@
     var o = opts || {};
     var C = o.core || root.PLDCore;
     var prices = {};                 /* session only, by design */
+    /* What each row is ABOUT — league, fixture and player — kept beside the
+       row so the Log button can hand a whole comparison to opts.onLog. The
+       odds themselves are still never stored here; logging is the reader's
+       explicit act of freezing one, and the log owns that copy. */
+    var meta = {};
+    var logOn = typeof o.onLog === 'function';
 
     function verdict(prob, odds) {
       if (!C || typeof C.valuePoint !== 'function') return null;
@@ -101,10 +107,11 @@
       /* One row of the price-check block. The output is a live region so the
          edge is announced as it is typed, and it is linked to the input by
          aria-describedby so the field is not just an unlabelled box. */
-      row: function (key, label, prob) {
+      row: function (key, label, prob, m) {
         var k = esc(String(key));
         var held = api.get(key);
-        return '<div class="px-row">'
+        if (m) meta[String(key)] = m;
+        return '<div class="px-row' + (logOn ? ' px-logs' : '') + '">'
           + '<span class="px-name">' + esc(label) + '</span>'
           + '<span class="px-model">' + (prob == null ? '—' : pct(prob)) + '</span>'
           + '<input class="px-in" type="text" inputmode="decimal" autocomplete="off"'
@@ -114,17 +121,22 @@
           + ' aria-describedby="pxo-' + k + '">'
           + '<span class="px-out ' + esc(api.cls(prob, held)) + '" id="pxo-' + k + '"'
           + ' role="status">' + esc(api.readout(prob, held)) + '</span>'
+          + (logOn ? '<button class="px-log" type="button" data-log="' + k + '"'
+            + (held == null || !m ? ' disabled' : '')
+            + ' aria-label="Log this comparison for ' + esc(label) + '">Log</button>' : '')
           + '</div>';
       },
 
       block: function (rows) {
         if (!rows || !rows.length) return '';
         return '<details class="px-block"><summary>Price check</summary>'
-          + '<div class="px-head"><span>Player</span><span>Model</span><span>Your price</span><span>Verdict</span></div>'
-          + rows.map(function (r) { return api.row(r.key, r.label, r.prob); }).join('')
+          + '<div class="px-head' + (logOn ? ' px-logs' : '') + '"><span>Player</span><span>Model</span>'
+          + '<span>Your price</span><span>Verdict</span>' + (logOn ? '<span></span>' : '') + '</div>'
+          + rows.map(function (r) { return api.row(r.key, r.label, r.prob, r.meta); }).join('')
           + '<p class="px-note">Decimal or fractional. The fair price strips the '
           + 'card-market margin out of the bookmaker’s number; value means the '
-          + 'model beats the price you were actually offered.</p>'
+          + 'model beats the price you were actually offered.'
+          + (logOn ? ' Log freezes the comparison so it settles after the match.' : '') + '</p>'
           + '</details>';
       },
 
@@ -143,6 +155,20 @@
           if (!out) return;
           out.textContent = api.readout(isFinite(prob) ? prob : null, el.value);
           out.className = 'px-out ' + api.cls(isFinite(prob) ? prob : null, el.value);
+          var lb = host.querySelector('[data-log="' + cssEscape(key) + '"]');
+          if (lb) { lb.disabled = api.get(key) == null || !meta[key]; lb.textContent = 'Log'; }
+        });
+        if (logOn) host.addEventListener('click', function (e) {
+          var b = e.target && e.target.closest && e.target.closest('[data-log]');
+          if (!b || b.disabled) return;
+          var key = b.getAttribute('data-log');
+          var inp = host.querySelector('[data-price="' + cssEscape(key) + '"]');
+          var prob = inp ? parseFloat(inp.getAttribute('data-prob')) : NaN;
+          var odds = api.get(key);
+          if (odds == null || !isFinite(prob) || !meta[key]) return;
+          var ok = o.onLog({ meta: meta[key], prob: prob, odds: odds });
+          b.textContent = ok === false ? 'Not logged' : 'Logged';
+          b.disabled = true;
         });
       }
     };

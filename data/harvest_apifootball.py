@@ -43,6 +43,7 @@ moved will stop the harvest and name itself rather than write a plausible file.
 import argparse
 import atexit
 import datetime as dt
+import html
 import json
 import re
 import os
@@ -388,6 +389,30 @@ def _get(host, key, path, params):
     return payload
 
 
+# A complete character reference: a named one or a numeric one, always with
+# its semicolon. Requiring the semicolon keeps "AT&T" or "Brighton & Hove"
+# exactly as written.
+_ENTITY = re.compile(r"&(?:#[0-9]{1,7}|#[xX][0-9a-fA-F]{1,6}|[A-Za-z][A-Za-z0-9]{1,31});")
+
+
+def unentity(s):
+    """HTML character references in a feed string, as the characters they name.
+
+    THE FEED SENDS SOME NAMES HTML-ENCODED. API-Football's player names arrive
+    with the apostrophe as "&apos;": "L. O&apos;Nien", "C. O&apos;Hare",
+    "D. O&apos;Shea". Stored like that, the name prints its code on every card
+    and share image, and it cannot join to the same man spelled with a real
+    apostrophe by FPL or the line-ups. Decoded here, at the one point every
+    response passes through, so no consumer has to know.
+
+    Only complete references (with the semicolon) are touched, and a reference
+    html.unescape does not know is left exactly as it came.
+    """
+    if not isinstance(s, str) or "&" not in s:
+        return s
+    return _ENTITY.sub(lambda m: html.unescape(m.group(0)), s)
+
+
 def unmangle(s):
     """One round of UTF-8-read-as-Latin-1 undone, or the string untouched.
 
@@ -410,7 +435,10 @@ def unmangle(s):
     A NO-OP ON ASCII, cheaply. isascii() is a C-level scan, so the common case
     costs one pass and no exception.
     """
-    if not isinstance(s, str) or s.isascii():
+    if not isinstance(s, str):
+        return s
+    s = unentity(s)
+    if s.isascii():
         return s
     try:
         out = s.encode("latin-1").decode("utf-8")

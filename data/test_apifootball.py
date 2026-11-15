@@ -13,6 +13,7 @@ about pages.
 Everything here runs against fixtures. The live API is not reachable from CI
 and needs a key, so these prove the MAPPING and the WALK, not the endpoint.
 """
+import os
 import json
 import re
 import sys
@@ -664,5 +665,42 @@ def _relegated_clubs_still_resolve():
 
 t("a Premier League season names clubs that have since been relegated",
   _relegated_clubs_still_resolve)
+
+
+# THE FEED HTML-ENCODES SOME NAMES: "L. O&apos;Nien". Decoded at the one point
+# every response passes through, and only complete references, so an
+# ampersand in a club or sponsor name is left alone.
+def _entities_decoded_at_source():
+    assert A.unmangle("L. O&apos;Nien") == "L. O'Nien"
+    assert A.unmangle("A&#39;b") == "A'b"
+    assert A.unmangle("Mart&iacute;nez") == "Martínez"
+    assert A.unmangle("Brighton & Hove Albion") == "Brighton & Hove Albion"
+    assert A.unmangle("AT&T") == "AT&T"
+    assert A.unmangle("&bogus;") == "&bogus;"
+    body = A.unmangle_all({"response": [{"player": {"name": "C. O&apos;Hare"}}]})
+    assert body["response"][0]["player"]["name"] == "C. O'Hare"
+
+
+t("HTML character references in feed names are decoded at the source",
+  _entities_decoded_at_source)
+
+
+# AND NONE IS STORED. A name kept with its code would print "O&apos;Nien" on
+# a card and fail to join the same man spelled with a real apostrophe, which
+# splits his ledger rows in two. Every shipped data file is checked.
+def _no_entities_in_shipped_data():
+    import glob
+    bad = []
+    here = os.path.dirname(os.path.abspath(__file__))
+    for path in sorted(glob.glob(os.path.join(here, "*.js")) + glob.glob(os.path.join(here, "*.json"))):
+        with open(path, encoding="utf-8") as fh:
+            hits = A._ENTITY.findall(fh.read())
+        if hits:
+            bad.append(f"{os.path.basename(path)}: {sorted(set(hits))}")
+    assert not bad, "HTML character references stored in data files: " + "; ".join(bad)
+
+
+t("no shipped data file stores an HTML character reference",
+  _no_entities_in_shipped_data)
 
 print(f"\n{passed} tests passed")
