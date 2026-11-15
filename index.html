@@ -958,6 +958,7 @@
       <div style="display:flex;align-items:center;justify-content:space-between;gap:.6rem;margin-bottom:.55rem;flex-wrap:wrap">
         <div class="gw-seclabel">Top probabilities <span style="color:var(--text-3);text-transform:none;letter-spacing:0">· hottest first</span></div>
         <button class="btn btn-primary" id="gwShareBtn" style="padding:.32rem .75rem;font-size:.78rem" type="button" title="Download a shareable card of this gameweek's fixtures by booking heat">⬇ Share gameweek</button>
+        <button class="btn" id="gwPackBtn" style="padding:.32rem .75rem;font-size:.78rem" type="button" title="Stats pack for this gameweek: image cards plus text for Reddit and Discord">Stats pack</button>
       </div>
       <!-- STICKY. Ten near-identical cards and the only control was
            ALL/DEF/MID/FWD, which does not answer "which of these 200 players
@@ -1302,6 +1303,7 @@
       </label>
       <span id="gwDeadline" class="faint" style="font-size:.8rem"></span>
       <button class="btn btn-primary" id="fxShareBtn" style="padding:.4rem .8rem;font-size:.82rem;margin-left:auto" type="button" title="Download a shareable card of this gameweek's fixtures by booking heat">⬇ Share gameweek</button>
+      <button class="btn" id="fxPackBtn" style="padding:.4rem .8rem;font-size:.82rem" type="button" title="Stats pack for this gameweek: image cards plus text for Reddit and Discord">Stats pack</button>
     </div>
     <div id="fixtureList"></div>
     <p class="faint" style="font-size:.78rem;margin-top:.6rem">Booking heat is the model's <strong>expected cards</strong> for the match — every rated available player's own chance of a booking, added up, with the referee's card rate and the derby boost already applied. It is the same number the card's Model detail panel shows, and the same one the combined <a href="/">Today's matches</a> view prices with. Hot is 4.0 plus, warm 3.5 plus. Each club's home/away cards-against split (2025-26 form; promoted clubs use the league median) is still shown in the heat tooltip as the two sides' own record. The flame marks a combustible side; recognised derbies get a ×1.15 heat boost and a derby chip. Each card also carries the match model's read: win probabilities, the fitted chance the game finishes within one goal (“tight”), and the game-state factor each side's players are scaled by. Top risks are each fixture's highest-risk available players. Referee appointments are not published in the FPL feed — once the PGMOL announcement is out, assign the official with each fixture's Ref control (saved in this browser) and the booking heat scales to his card rate, clamped. Schedule via the official FPL API.</p>
@@ -1757,6 +1759,7 @@ License: MIT
      nothing on this page had ever defined it. Loading it here revives that
      button and is what lets the stat sheet reach this desk at all. -->
 <script src="assets/share.js"></script>
+<script src="assets/statpack.js"></script>
 <script src="assets/rotation.js"></script>
 <script src="assets/core.js"></script>
 <script src="assets/save.js"></script>
@@ -4838,25 +4841,50 @@ function recentCards(short,n){
   return out;
 }
 
+/* The `priced` row the shared adapters read — the stat sheet and the weekly
+   stats pack both. `board` is null for a fixture with no rated players —
+   early season, or a squad the join missed — and the row then carries the
+   cards-against heat with no market numbers rather than refusing to build. */
+function plPricedRow(f,M){
+  M=M||fixtureMeta(f);
+  if(!M) return null;
+  const {h,a,ref,rf,board,heat,sim,derby}=M;
+  const cands=gwCandidates(h,a,ref,derby,sim);
+  return {
+    fx:{ id:f.id, h:h, a:a, r:f.event, d:f.kickoff_time },
+    m:board||{ expected:heat, over:{}, bothCarded:null, bothTwo:null },
+    ref:{ ref:ref||null, name:ref?ref.n:null },
+    factor:rf,
+    home:{ top:cands.filter(c=>c.p.c===h) },
+    away:{ top:cands.filter(c=>c.p.c===a) }
+  };
+}
+
+/* THE WEEKLY STATS PACK for one gameweek: the rows above, plus the season's
+   per-game averages from the feed's per-fixture counts (PL_FIXTURES and
+   PL_FXSTATS carry the same API-Football ids). Every price is this page's. */
+function openStatPack(gw){
+  if(!LIVE||!window.PLDStatPack||!window.PLDShare||!window.PLDShare.statPackCard) return;
+  const rows=LIVE.fixtures.filter(f=>f.event===gw).map(f=>plPricedRow(f)).filter(Boolean);
+  if(!rows.length){ toast("No fixtures to build a stats pack from"); return; }
+  const names={}; Object.keys(CLUBMAP).forEach(k=>names[k]=clubName(k));
+  const pack=PLDCore.statPack({
+    league:"PL", leagueName:"Premier League", round:gw, roundWord:"Gameweek",
+    season:"Premier League "+SEASON, rows,
+    fixtures:typeof PL_FIXTURES!=="undefined"?PL_FIXTURES:[],
+    fxstats:typeof PL_FXSTATS!=="undefined"?PL_FXSTATS:{}, clubName:names
+  });
+  window.PLDStatPack.open({pack, C:PLDCore, S:window.PLDShare, palette:CLUB_COLOURS});
+}
+
 function exportFixtureSheet(fid,btn){
   if(!SHEET_OK) return;
   if(!LIVE){ toast("Live data needed to build a stat sheet"); return; }
   const S=window.PLDShare;
   const f=LIVE.fixtures.find(x=>x.id===fid), M=f&&fixtureMeta(f);
   if(!M){ toast("Couldn't build that stat sheet"); return; }
-  const {h,a,ref,derby,board,heat,sim}=M;
-  const cands=gwCandidates(h,a,ref,derby,sim);
-  /* The `priced` row the shared adapter reads. `board` is null for a fixture
-     with no rated players — early season, or a squad the join missed — and the
-     sheet then prints the cards-against heat with dashes in the market cells
-     rather than refusing to build. */
-  const priced={
-    fx:{ id:f.id, h:h, a:a, r:f.event, d:f.kickoff_time },
-    m:board||{ expected:heat, over:{}, bothCarded:null, bothTwo:null },
-    ref:{ ref:ref||null, name:ref?ref.n:null },
-    home:{ top:cands.filter(c=>c.p.c===h) },
-    away:{ top:cands.filter(c=>c.p.c===a) }
-  };
+  const {h,a,ref,derby}=M;
+  const priced=plPricedRow(f,M);
   const p=h2hFor(h,a);
   const spec=S.deskStatSheetSpec(priced,{
     league:"PL",
@@ -5896,6 +5924,8 @@ $("gwPosSeg").addEventListener("click",e=>{
 // Gameweek share cards: the current GW from the landing view, the selected GW from the Fixtures tab.
 $("gwShareBtn").addEventListener("click",()=>{ if(LIVE) exportGameweekPNG(LIVE.currentGW); });
 $("fxShareBtn").addEventListener("click",()=>{ const gw=Number($("gwSelect").value); if(LIVE&&gw) exportGameweekPNG(gw); });
+$("gwPackBtn").addEventListener("click",()=>{ if(LIVE) openStatPack(LIVE.currentGW); });
+$("fxPackBtn").addEventListener("click",()=>{ const gw=Number($("gwSelect").value); if(LIVE&&gw) openStatPack(gw); });
 
 // ═══════════════════════════════════════════════════════════
 // ACCOUNTS (Supabase)

@@ -27,7 +27,7 @@ happens to offer.
     teamstats     /teams/statistics: a club's cards by minute band.
     standings     league position, for context the card model does not have.
     predictions   the API's own forecast, to grade against on /record.
-    fxstats       /fixtures/statistics: fouls and cards as the feed counted
+    fxstats       /fixtures/statistics: fouls, cards and corners as the feed counted
                   them, to check the desk's own arithmetic against.
     h2h           /fixtures/headtohead.
     odds          the market. /record grades the desk against its own rating;
@@ -565,14 +565,30 @@ def harvest_predictions(host, key, fixture_ids):
 
 
 # ─────────────────────────────────────────────────────────────────────────
-# 8. fxstats — the feed's own fouls and cards, to check our arithmetic
+# 8. fxstats — the feed's own fouls, cards and corners
 # ─────────────────────────────────────────────────────────────────────────
 
 WANTED_STATS = {"Fouls": "fouls", "Yellow Cards": "yc", "Red Cards": "rc"}
 
+# CORNERS ARE COLLECTED FOR THE WEEKLY STAT PACK, which shows them as plain
+# averages beside the card numbers. Nothing prices off them. They come in the
+# same /fixtures/statistics response, so they cost no extra call. Unlike the
+# card counts, a corner count the feed did not send stays None: a missing
+# corner figure is not zero corners, and the pack prints it as unknown.
+CORNER_STAT = "Corner Kicks"
+
+# How many already-recorded fixtures per league one run may re-fetch to add
+# their corners. Rows recorded before corners were collected have no
+# "corners" key; this backfills them a slice at a time rather than spending a
+# whole season's calls in one run. 120 a league, four leagues, is 480 calls a
+# run, and the backlog clears in about a day of the four scheduled runs.
+CORNER_BACKFILL_PER_RUN = 120
+
 
 def parse_fixture_stats(payload, code, fixture_id):
-    """{c: {fouls, yc, rc}} for one fixture, both sides."""
+    """{c: {fouls, yc, rc, corners}} for one fixture, both sides.
+
+    `corners` is always present, and None when the feed sent no corner count."""
     rows = expect(payload.get("response") or [],
                   ["team.name", "statistics"], "/fixtures/statistics")
     out = {}
@@ -580,11 +596,14 @@ def parse_fixture_stats(payload, code, fixture_id):
         short = club_of(code, (side.get("team") or {}).get("name"))
         if not short:
             continue
-        cell = {}
+        cell = {"corners": None}
         for s in (side.get("statistics") or []):
-            key = WANTED_STATS.get((s.get("type") or "").strip())
+            kind = (s.get("type") or "").strip()
+            key = WANTED_STATS.get(kind)
             if key:
                 cell[key] = int(num(s.get("value")) or 0)
+            elif kind == CORNER_STAT and num(s.get("value")) is not None:
+                cell["corners"] = int(num(s.get("value")))
         out[short] = cell
     return out
 
@@ -977,6 +996,27 @@ def already_recorded(path, const):
     return set(doc) if isinstance(doc, dict) else set()
 
 
+def without_corners(path, const):
+    """Recorded fixture ids whose rows predate corner collection.
+
+    A row counts as done once every side carries a "corners" key, even a None
+    one: a fixture the feed has no corner count for is fetched once, not on
+    every run."""
+    if not path.exists():
+        return set()
+    src = path.read_text(encoding="utf-8")
+    start, end = src.find("{"), src.rfind("}")
+    try:
+        doc = json.loads(src[start:end + 1]) if start >= 0 and end >= 0 else {}
+    except ValueError:
+        return set()     # already_recorded has refused this file already
+    if not isinstance(doc, dict):
+        return set()
+    return {fid for fid, sides in doc.items()
+            if isinstance(sides, dict)
+            and any(isinstance(c, dict) and "corners" not in c for c in sides.values())}
+
+
 def merge_by_fixture(path, const, fresh):
     """Old rows plus new ones, keyed by fixture id."""
     out = {}
@@ -1144,9 +1184,13 @@ def run_one(host, key, L, season, want, args):
         path = out_path(L, "fxstats.js")
         const = OUT_FOR[L.code].upper() + "_FXSTATS"
         seen = already_recorded(path, const)
+        # Rows recorded before corners were collected are re-fetched, a
+        # capped slice per run, so the stat pack's corner averages fill in.
+        stale = sorted(without_corners(path, const))[:CORNER_BACKFILL_PER_RUN]
+        seen -= set(stale)
         fin = finished_ids(L, limit=args.limit, skip=seen)
-        print(f"  fixture stats: {len(fin)} new fixture(s) "
-              f"({len(seen)} already recorded)")
+        print(f"  fixture stats: {len(fin)} fixture(s) to fetch "
+              f"({len(seen)} already recorded, {len(stale)} re-fetched for corners)")
         rows = merge_by_fixture(path, const, harvest_fixture_stats(host, key, L, fin))
         if not args.dry_run and (fin or not path.exists()):
             write_js(path, const, rows,

@@ -2237,6 +2237,77 @@
     };
   }
 
+  /* ---- the weekly stat pack card -------------------------------------- */
+  /*
+   * Five fixtures a card, as many cards as the matchday needs. Every string
+   * on it is built by PLDCore.statPackCardRows from the same pack as the
+   * Reddit and Discord text, so the card only lays out; it formats nothing.
+   *
+   * spec = { league, title, subtitle, rows: [statPackCardRows row],
+   *          page, pages, palette, filename }
+   */
+  function statPackCard(spec) {
+    return ready().then(function () {
+      var th = theme(spec.league), k = canvas(), x = k.x;
+      brandBand(x, th, spec.title,
+        spec.subtitle + (spec.pages > 1 ? ' · card ' + spec.page + ' of ' + spec.pages : ''));
+      var top = 244, bh = 184, rows = (spec.rows || []).slice(0, 5);
+      rows.forEach(function (r, i) {
+        var y = top + i * bh;
+        if (i % 2 === 0) {
+          x.fillStyle = '#f4f6fa';
+          roundRect(x, P - 16, y, W - 2 * (P - 16), bh - 10, 14); x.fill();
+        }
+        var mid = y + 30;
+        badge(x, P, mid, r.home, spec.palette, th);
+        x.fillStyle = '#586275'; x.font = '600 18px ' + BODY; x.fillText('v', P + 54, mid + 6);
+        badge(x, P + 72, mid, r.away, spec.palette, th);
+        x.fillStyle = '#0c1322'; x.font = '800 24px ' + DISP;
+        x.fillText(fit(x, r.homeName + ' v ' + r.awayName, 520), P + 134, mid + 8);
+        x.fillStyle = '#586275'; x.font = '600 17px ' + BODY;
+        x.fillText(fit(x, r.kickoff, 230), P + 134, mid + 34);
+        x.fillStyle = '#0c1322'; x.font = '800 40px ' + DISP; x.textAlign = 'right';
+        x.fillText(r.expected, W - P, mid + 12);
+        x.fillStyle = '#586275'; x.font = '700 14px ' + BODY;
+        x.fillText('EXPECTED CARDS', W - P, mid + 34); x.textAlign = 'left';
+        x.fillStyle = '#334155'; x.font = '600 17px ' + BODY;
+        x.fillText(fit(x, r.ref, W - 2 * P - 260), P + 380, mid + 34);
+        x.font = '600 17px ' + BODY; x.fillStyle = '#334155';
+        x.fillText(fit(x, r.homeLine, W - 2 * P), P, y + 92);
+        x.fillText(fit(x, r.awayLine, W - 2 * P), P, y + 116);
+        x.fillStyle = th.ink; x.font = '700 17px ' + BODY;
+        x.fillText(fit(x, r.model, W - 2 * P), P, y + 142);
+        x.fillStyle = '#0c1322'; x.font = '600 17px ' + BODY;
+        x.fillText(fit(x, 'Highest-priced: ' + r.top, W - 2 * P), P, y + 164);
+      });
+      if (!rows.length) {
+        x.fillStyle = '#586275'; x.font = '600 24px ' + BODY;
+        x.fillText('No fixtures to show.', P, top + 40);
+      }
+      footer(x, th, spec.note || 'Research, not advice · averages are per game, for / against');
+      return toBlob(k.c);
+    });
+  }
+
+  /* One spec per card, five fixtures each. `C` is PLDCore, passed in because
+     this file is also loaded on its own inside the guard's VM. */
+  function statPackSpecs(pack, C, ctx) {
+    var rows = C.statPackCardRows(pack), per = C.PACK_PER_CARD || 5;
+    var pages = Math.max(1, Math.ceil(rows.length / per)), out = [];
+    var base = theme(pack.league).slug + '-' + slug((pack.roundWord || 'matchday') + '-' + pack.round) + '-pack';
+    for (var i = 0; i < pages; i++) {
+      out.push({
+        league: pack.league,
+        title: (pack.roundWord || 'Matchday') + ' ' + pack.round + ' · Stats pack',
+        subtitle: C.packAvgLine(pack),
+        rows: rows.slice(i * per, (i + 1) * per),
+        page: i + 1, pages: pages, palette: ctx && ctx.palette,
+        filename: base + (pages > 1 ? '-' + (i + 1) : '') + '.png'
+      });
+    }
+    return out;
+  }
+
   root.PLDShare = {
     W: W, H: H, PAD: P,
     THEMES: THEMES, theme: theme,
@@ -2247,6 +2318,7 @@
     accaCard: accaCard, accaRowSpec: accaRowSpec, nineFoldSpec: nineFoldSpec,
     deskMatchSpec: deskMatchSpec, uclMatchSpec: uclMatchSpec,
     deskRoundSpec: deskRoundSpec,
+    statPackCard: statPackCard, statPackSpecs: statPackSpecs,
     deskStatSheetSpec: deskStatSheetSpec,
     refDisplay: refDisplay,
     download: download, slug: slug,

@@ -2301,6 +2301,264 @@
       + '" title="' + words + ', most recent first: ' + trail + '">' + body + '</span>';
   }
 
+  /* ---- the weekly stat pack ------------------------------------------
+   *
+   * One matchday of one league, as a plain object: each club's yellows,
+   * fouls and corners for and against per game, the appointed referee's
+   * record, and the desk's own prices for the match and its highest-priced
+   * players. The image card and both text formats read ONLY from this
+   * object, so they cannot disagree with each other — and the prices in it
+   * are the desk's own priced rows, passed in, never recomputed here.
+   *
+   * Averages are whole-season, over the finished fixtures the per-fixture
+   * stats file holds. A venue split was considered and rejected: ten games
+   * in, it rests on about five games a side. Every average carries its
+   * sample, and a corner figure the feed did not send stays null rather
+   * than counting as zero. Nothing here prices off corners.
+   */
+  const PACK_TOP = 3;
+  const DISCORD_LIMIT = 2000;
+  const PACK_FOOTER = '18+ only. Research, not advice: a modelled chance is not a certainty. '
+    + 'Help: BeGambleAware.org. bookingsdesk.netlify.app';
+
+  /* The feed hands some names over HTML-encoded ("O&apos;Nien"). A page
+     that sets them through innerHTML shows the apostrophe; a canvas card and
+     a pasted text block print the code. The pack is plain text, so it decodes. */
+  const PACK_ENTITIES = { '&apos;': "'", '&#39;': "'", '&quot;': '"', '&amp;': '&', '&lt;': '<', '&gt;': '>' };
+  function packPlain(s) {
+    return s == null ? s : String(s).replace(/&(apos|#39|quot|amp|lt|gt);/g, (m) => PACK_ENTITIES[m]);
+  }
+
+  function packCount(st, code) {
+    const c = st && st[code];
+    return c && typeof c === 'object' ? c : null;
+  }
+
+  /* Whole-season per-game averages for one club, for and against. */
+  function packTeamForm(fixtures, fxstats, code) {
+    let n = 0, yf = 0, ya = 0, ff = 0, fa = 0, cn = 0, cf = 0, ca = 0;
+    for (const f of fixtures || []) {
+      if (!f || f.st !== 'FT' || (f.h !== code && f.a !== code)) continue;
+      const st = fxstats && fxstats[String(f.id)];
+      const opp = f.h === code ? f.a : f.h;
+      const me = packCount(st, code), them = packCount(st, opp);
+      if (!me || !them) continue;
+      n++;
+      yf += Number(me.yc) || 0; ya += Number(them.yc) || 0;
+      ff += Number(me.fouls) || 0; fa += Number(them.fouls) || 0;
+      if (me.corners != null && them.corners != null) {
+        cn++; cf += Number(me.corners); ca += Number(them.corners);
+      }
+    }
+    return {
+      played: n,
+      yellowsFor: n ? yf / n : null, yellowsAgainst: n ? ya / n : null,
+      foulsFor: n ? ff / n : null, foulsAgainst: n ? fa / n : null,
+      cornersPlayed: cn,
+      cornersFor: cn ? cf / cn : null, cornersAgainst: cn ? ca / cn : null,
+    };
+  }
+
+  /* League per-game totals, both sides added, over the same fixtures. */
+  function packLeagueAvg(fixtures, fxstats) {
+    let n = 0, y = 0, fl = 0, cn = 0, c = 0, last = null;
+    for (const f of fixtures || []) {
+      if (!f || f.st !== 'FT') continue;
+      const st = fxstats && fxstats[String(f.id)];
+      const h = packCount(st, f.h), a = packCount(st, f.a);
+      if (!h || !a) continue;
+      n++;
+      y += (Number(h.yc) || 0) + (Number(a.yc) || 0);
+      fl += (Number(h.fouls) || 0) + (Number(a.fouls) || 0);
+      if (h.corners != null && a.corners != null) { cn++; c += Number(h.corners) + Number(a.corners); }
+      if (f.d && (!last || f.d > last)) last = f.d;
+    }
+    return {
+      matches: n, yellows: n ? y / n : null, fouls: n ? fl / n : null,
+      cornerMatches: cn, corners: cn ? c / cn : null,
+      dataTo: last ? String(last).slice(0, 10) : null,
+    };
+  }
+
+  /* The pack itself. `rows` are the desk's priced fixtures — the same objects
+     its match cards are built from: { fx, m, ref, factor, home:{top}, away:{top} }. */
+  function statPack(input) {
+    const o = input || {};
+    const fixtures = o.fixtures || [], fxstats = o.fxstats || {};
+    const nameOf = (c) => packPlain((o.clubName && o.clubName[c]) || c);
+    const top = Math.max(1, o.topN || PACK_TOP);
+    const rows = (o.rows || []).filter((r) => r && r.fx && r.fx.h && r.fx.a).slice()
+      .sort((x, y) => String(x.fx.d || '').localeCompare(String(y.fx.d || ''))
+        || String(x.fx.h).localeCompare(String(y.fx.h)));
+    const avg = packLeagueAvg(fixtures, fxstats);
+    return {
+      v: 1,
+      league: o.league || null, leagueName: o.leagueName || o.league || '',
+      round: o.round != null ? o.round : null, roundWord: o.roundWord || 'Matchday',
+      season: o.season || null,
+      dataTo: avg.dataTo,
+      leagueAvg: { matches: avg.matches, yellows: avg.yellows, fouls: avg.fouls,
+                   cornerMatches: avg.cornerMatches, corners: avg.corners },
+      fixtures: rows.map((r) => {
+        const fx = r.fx, m = r.m || {}, rr = r.ref || {};
+        const rec = rr.ref || null;
+        const referee = rec
+          ? { name: packPlain(rec.n), matches: rec.matches != null ? rec.matches : null,
+              yellowsPerGame: rec.ypg != null ? Number(rec.ypg) : null,
+              factor: r.factor != null && isFinite(r.factor) ? Number(r.factor) : null,
+              appointed: !!rr.appointed }
+          : (rr.name ? { name: packPlain(rr.name), matches: null, yellowsPerGame: null, factor: null,
+                         appointed: !!rr.appointed } : null);
+        const cands = [];
+        for (const side of ['home', 'away']) {
+          const club = side === 'home' ? fx.h : fx.a;
+          for (const t of ((r[side] || {}).top || [])) {
+            if (t && t.p && t.prob != null && isFinite(t.prob)) {
+              cands.push({ name: packPlain(t.p.n), club: club, prob: Number(t.prob) });
+            }
+          }
+        }
+        cands.sort((a, b) => b.prob - a.prob);
+        return {
+          id: fx.id != null ? fx.id : null, kickoff: fx.d || null,
+          home: fx.h, away: fx.a, homeName: nameOf(fx.h), awayName: nameOf(fx.a),
+          teams: { home: packTeamForm(fixtures, fxstats, fx.h),
+                   away: packTeamForm(fixtures, fxstats, fx.a) },
+          referee,
+          model: { expectedCards: m.expected != null ? Number(m.expected) : null,
+                   over35: m.over && m.over[3.5] != null ? Number(m.over[3.5]) : null,
+                   bothCarded: m.bothCarded != null ? Number(m.bothCarded) : null },
+          top: cands.slice(0, top),
+        };
+      }),
+      footer: PACK_FOOTER,
+    };
+  }
+
+  /* ---- formatting, shared by every pack output ---- */
+  const packN1 = (v) => (v == null || !isFinite(v) ? '—' : Number(v).toFixed(1));
+  const packN2 = (v) => (v == null || !isFinite(v) ? '—' : Number(v).toFixed(2));
+  const packPct = (v) => (v == null || !isFinite(v) ? '—' : (Number(v) * 100).toFixed(1) + '%');
+  /* Kick-off in UK time, whatever the reader's device says: a pasted pack is
+     read by people in other zones, and "UK" on the label says which clock. */
+  function packKickoff(iso) {
+    if (!iso) return '';
+    const d = new Date(iso);
+    if (isNaN(d)) return '';
+    const parts = new Intl.DateTimeFormat('en-GB', {
+      timeZone: 'Europe/London', weekday: 'short', day: 'numeric', month: 'short',
+      hour: '2-digit', minute: '2-digit', hourCycle: 'h23',
+    }).formatToParts(d);
+    const g = (t) => (parts.find((p) => p.type === t) || {}).value || '';
+    return `${g('weekday')} ${g('day')} ${g('month')} ${g('hour')}:${g('minute')} UK`;
+  }
+  function packTitle(pack) {
+    return `${pack.leagueName} · ${pack.roundWord} ${pack.round} · card stats pack`;
+  }
+  function packAvgLine(pack) {
+    const a = pack.leagueAvg || {};
+    return `League average a game: ${packN1(a.yellows)} yellows, ${packN1(a.fouls)} fouls`
+      + (a.corners != null ? `, ${packN1(a.corners)} corners` : '')
+      + ` (${a.matches || 0} matches${pack.dataTo ? ', to ' + pack.dataTo : ''})`;
+  }
+  function packRefLine(f) {
+    const r = f.referee;
+    if (!r) return 'Referee: not yet appointed';
+    if (r.yellowsPerGame == null) return `Referee: ${r.name} · no card record yet`;
+    return `Referee: ${r.name} · ${packN2(r.yellowsPerGame)} yellows a game`
+      + (r.matches != null ? ` over ${r.matches} matches` : '')
+      + (r.factor != null ? ` · priced ×${packN2(r.factor)}` : '');
+  }
+  function packModelLine(f) {
+    const m = f.model || {};
+    return `Model: ${packN1(m.expectedCards)} expected cards · over 3.5 cards ${packPct(m.over35)}`
+      + ` · both teams carded ${packPct(m.bothCarded)}`;
+  }
+  function packTopLine(f) {
+    if (!f.top || !f.top.length) return 'Highest-priced players: —';
+    return 'Highest-priced players: ' + f.top.map((t) => `${t.name} (${t.club}) ${packPct(t.prob)}`).join(' · ');
+  }
+  const packFA = (a, b) => `${packN1(a)} / ${packN1(b)}`;
+
+  /* The image card's text, line for line. Built here so the card draws only
+     strings that came out of the same pack and the same formatting as the two
+     text blocks, and so the guard can check the card without a canvas. */
+  function statPackCardRows(pack) {
+    const side = (code, t) => `${code}  yellows ${packFA(t.yellowsFor, t.yellowsAgainst)}`
+      + ` · fouls ${packFA(t.foulsFor, t.foulsAgainst)}`
+      + ` · corners ${packFA(t.cornersFor, t.cornersAgainst)}  (${t.played} games)`;
+    return (pack.fixtures || []).map((f) => {
+      const r = f.referee, m = f.model || {};
+      return {
+        home: f.home, away: f.away, homeName: f.homeName, awayName: f.awayName,
+        kickoff: packKickoff(f.kickoff),
+        ref: !r ? 'Referee not yet appointed'
+          : r.yellowsPerGame == null ? `Ref ${r.name} · no card record yet`
+            : `Ref ${r.name} · ${packN2(r.yellowsPerGame)} yellows a game`
+              + (r.matches != null ? ` (${r.matches})` : '')
+              + (r.factor != null ? ` · ×${packN2(r.factor)}` : ''),
+        homeLine: side(f.home, f.teams.home),
+        awayLine: side(f.away, f.teams.away),
+        expected: packN1(m.expectedCards),
+        model: `Over 3.5 cards ${packPct(m.over35)} · both carded ${packPct(m.bothCarded)}`,
+        top: f.top && f.top.length
+          ? f.top.map((t) => `${t.name} (${t.club}) ${packPct(t.prob)}`).join(' · ')
+          : 'No priced players',
+      };
+    });
+  }
+  const PACK_PER_CARD = 5;
+
+  /* Reddit: one table per fixture. */
+  function statPackMarkdown(pack) {
+    const out = [`## ${packTitle(pack)}`, '', packAvgLine(pack), ''];
+    for (const f of pack.fixtures || []) {
+      const h = f.teams.home, a = f.teams.away;
+      out.push(`### ${f.homeName} v ${f.awayName}${f.kickoff ? ' · ' + packKickoff(f.kickoff) : ''}`, '',
+        packRefLine(f), '',
+        `| per game | ${f.homeName} | ${f.awayName} |`,
+        '|:--|--:|--:|',
+        `| Games | ${h.played} | ${a.played} |`,
+        `| Yellows for / against | ${packFA(h.yellowsFor, h.yellowsAgainst)} | ${packFA(a.yellowsFor, a.yellowsAgainst)} |`,
+        `| Fouls for / against | ${packFA(h.foulsFor, h.foulsAgainst)} | ${packFA(a.foulsFor, a.foulsAgainst)} |`,
+        `| Corners for / against | ${packFA(h.cornersFor, h.cornersAgainst)} | ${packFA(a.cornersFor, a.cornersAgainst)} |`,
+        '', packModelLine(f), '', packTopLine(f), '');
+    }
+    out.push('---', '', `*${pack.footer}*`);
+    return out.join('\n');
+  }
+
+  /* Discord: no tables (Discord does not render them) and messages of at most
+     2,000 characters, so the pack is split into numbered parts. */
+  function statPackDiscord(pack, limit) {
+    const max = limit || DISCORD_LIMIT;
+    const blocks = (pack.fixtures || []).map((f) => {
+      const h = f.teams.home, a = f.teams.away;
+      return [
+        `**${f.homeName} v ${f.awayName}**${f.kickoff ? ' · ' + packKickoff(f.kickoff) : ''}`,
+        packRefLine(f),
+        `Yellows for / against: ${f.home} ${packFA(h.yellowsFor, h.yellowsAgainst)} · ${f.away} ${packFA(a.yellowsFor, a.yellowsAgainst)}`,
+        `Fouls for / against: ${f.home} ${packFA(h.foulsFor, h.foulsAgainst)} · ${f.away} ${packFA(a.foulsFor, a.foulsAgainst)}`,
+        `Corners for / against: ${f.home} ${packFA(h.cornersFor, h.cornersAgainst)} · ${f.away} ${packFA(a.cornersFor, a.cornersAgainst)}`,
+        packModelLine(f),
+        packTopLine(f),
+      ].join('\n');
+    });
+    const head = `**${packTitle(pack)}**\n${packAvgLine(pack)}`;
+    const foot = `*${pack.footer}*`;
+    /* Reserve room for the "(n/N)" prefix and the footer on every part, so
+       the split never has to be redone once the count is known. */
+    const room = max - 12 - foot.length - 2;
+    const parts = [];
+    let cur = head;
+    for (const b of blocks) {
+      if ((cur + '\n\n' + b).length > room && cur !== head) { parts.push(cur); cur = b; }
+      else cur = cur + '\n\n' + b;
+    }
+    parts.push(cur);
+    return parts.map((p, i) => (parts.length > 1 ? `(${i + 1}/${parts.length}) ` : '') + p + '\n\n' + foot);
+  }
+
   const PLDCore = {
     clock, dayClock, dateClock, CLOCK,
     rotationRisk, rotationBand,
@@ -2326,6 +2584,8 @@
     leagueRate90, twoStageHazard, leagueHazard, sumNegBin,
     matchLegOptions, simLegOptions, accaAllocate, accaPrice,
     bookedForm, bookedFormHtml, foulForm, FORM_MIN, refSeason,
+    statPack, packTeamForm, packLeagueAvg, statPackMarkdown, statPackDiscord, packKickoff,
+    statPackCardRows, packAvgLine, packTitle, PACK_PER_CARD, PACK_TOP, DISCORD_LIMIT, PACK_FOOTER,
   };
 
   if (typeof module !== 'undefined' && module.exports) module.exports = PLDCore;
