@@ -15,6 +15,9 @@ const CORS = {
 };
 const json = (c, o) => ({ statusCode: c, headers: { ...CORS, 'Content-Type': 'application/json' }, body: JSON.stringify(o) });
 
+/* The league rule lives in PLDCore (mergeWatch), unit-tested beside the
+   sender that reads the same keys. */
+const PLDCore = require('../../assets/core.js');
 const SUPABASE_URL = (process.env.SUPABASE_URL || 'https://knodunjnsxelmpziupwk.supabase.co').replace(/\/+$/, '');
 
 /* FPL element ids for the same players, where the client knows them. Ints
@@ -67,13 +70,36 @@ exports.handler = async (event) => {
   try { host = new URL(s.endpoint); } catch (_) { return json(400, { error: 'Invalid endpoint' }); }
   if (host.protocol !== 'https:') return json(400, { error: 'Invalid endpoint' });
 
+  /* ONE BROWSER, FOUR DESKS. Each desk sends its own league's stars; the
+     others already stored for this endpoint are kept. Without the merge, a
+     Championship sign-up would wipe the same browser's Premier League list.
+     The Premier League desk sends no league and is read as 'PL', which is
+     what every existing subscriber is. */
+  const league = PLDCore.WATCH_LEAGUES.indexOf(b.league) >= 0 ? b.league : 'PL';
+  /* A failed read refuses the save rather than merging into nothing: saving
+     over an unread row would drop the other desks' stars without a trace.
+     The client re-syncs on the next star, so a refusal costs one retry. */
+  let prior = null;
+  try {
+    const g = await fetch(SUPABASE_URL + '/rest/v1/plb_push_subs?endpoint=eq.' + encodeURIComponent(s.endpoint)
+      + '&select=watch,els,prefs', { headers: { apikey: srv, Authorization: 'Bearer ' + srv } });
+    if (!g.ok) return json(502, { error: 'Could not read subscription' });
+    const rows = await g.json();
+    prior = rows && rows[0] ? rows[0] : null;
+  } catch (_) {
+    return json(502, { error: 'Could not read subscription' });
+  }
+
   const row = {
     endpoint: s.endpoint,
     p256dh: s.keys.p256dh,
     auth: s.keys.auth,
-    watch: cleanWatch(b.watch),
-    els: cleanEls(b.els),
-    prefs: (b.prefs && typeof b.prefs === 'object') ? b.prefs : { appointment: true, ban: true },
+    watch: PLDCore.mergeWatch(prior && prior.watch, cleanWatch(b.watch), league),
+    /* FPL element ids belong to the Premier League desk's ban alert: only it
+       sends them, and another desk's sync must not clear them. */
+    els: league === 'PL' ? cleanEls(b.els) : cleanEls(prior && prior.els),
+    prefs: (b.prefs && typeof b.prefs === 'object') ? b.prefs
+      : (prior && prior.prefs && typeof prior.prefs === 'object') ? prior.prefs : { appointment: true, ban: true },
     user_id: (typeof b.userId === 'string' && b.userId) ? b.userId : null,
     updated_at: new Date().toISOString(),
   };

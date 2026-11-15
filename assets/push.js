@@ -78,6 +78,9 @@
         subscription: sub.toJSON ? sub.toJSON() : sub,
         watch: watchKeys(),
         els: watchEls(),
+        /* Which desk is speaking, so the server replaces only that league's
+           stars. The Premier League desk sends none and is read as 'PL'. */
+        league: o.league || undefined,
         userId: o.userId ? o.userId() : null,
       };
     }

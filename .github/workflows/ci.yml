@@ -288,6 +288,12 @@ jobs:
       - name: Why this price
         run: node scripts/check-why.mjs
 
+      # Referee alerts: all four leagues' files load, every named referee makes
+      # a clean alert with the league figure, and four desks' stars survive
+      # each other's re-syncs on one browser.
+      - name: Referee alerts
+        run: node scripts/check-alerts.mjs
+
       # Are the three desks pricing the same thing? A calibration check, not a
       # same-numbers check: each must land within a tenth of the card rate its
       # own division produced. They answered different questions for a year,
