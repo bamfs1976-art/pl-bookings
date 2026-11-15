@@ -88,16 +88,8 @@ function appointmentNews(prev, fixtures, nowMs) {
    first bar. Returns the matching player names, so the notification can say
    WHO rather than "a player you follow", which is the difference between a
    notification someone acts on and one they dismiss. */
-function watchedIn(watch, fixture) {
-  const hit = [];
-  for (const k of watch || []) {
-    if (typeof k !== 'string') continue;
-    const bar = k.indexOf('|');
-    if (bar < 1) continue;
-    const club = k.slice(0, bar);
-    if (club === fixture.h || club === fixture.a) hit.push(k.slice(bar + 1));
-  }
-  return hit;
+function watchedIn(watch, fixture, league) {
+  return PLDCore.watchedFor(watch, fixture, league || 'PL');
 }
 
 /* ── pure: one caution from a ban ──────────────────────────────────────
@@ -180,23 +172,27 @@ function banText(w) {
 }
 
 /* ── pure: the words ───────────────────────────────────────────────────
-   `ypg` is the official's cards per game where the desk knows it, and the
-   league average, so the number carries its own comparison. "3.51 c/g" alone
-   means nothing to most readers; "3.51 c/g, league 3.70" is a judgement. */
+   PLDCore.refAlertText, shared and unit-tested: the official's yellow cards a
+   game with the league figure beside it, so the number is a comparison. */
 function alertText(news, names, ypg, leagueYpg) {
-  const who = names.length === 1 ? names[0]
-    : names.length === 2 ? names[0] + ' and ' + names[1]
-      : names[0] + ' and ' + (names.length - 1) + ' others';
-  const rate = (ypg == null) ? '' :
-    ' · ' + ypg.toFixed(2) + ' cards a game' +
-    (leagueYpg == null ? '' : (ypg > leagueYpg ? ' (strict)' : ypg < leagueYpg ? ' (lenient)' : ''));
-  return {
-    title: news.changed
-      ? 'Referee changed: ' + news.h + ' v ' + news.a
-      : 'Referee appointed: ' + news.h + ' v ' + news.a,
-    body: (news.changed ? news.ref + ' replaces ' + news.was : news.ref) + rate + ' — affects ' + who,
-  };
+  return PLDCore.refAlertText(news, names, ypg, leagueYpg);
 }
+
+/* ── the four leagues ───────────────────────────────────────────────────
+   Each league reads its own deployed fixture and referee files and keeps its
+   own memory of who was appointed, so one league's first run (which records
+   and sends nothing) never replays another's. The Premier League keeps the
+   state key it has always had. */
+const LEAGUES = [
+  { code: 'PL', fixtures: ['/data/pl_fixtures.js', 'PL_FIXTURES'], refs: ['/data/pl_data.js', 'REFS'],
+    state: 'appointments', url: '/#p=gameweek', tag: (id) => 'appointment-' + id },
+  { code: 'EFLC', fixtures: ['/data/eflc_fixtures.js', 'EFLC_FIXTURES'], refs: ['/data/eflc_data.js', 'REFS'],
+    state: 'appointments_EFLC', url: '/eflc.html', tag: (id) => 'appointment-EFLC-' + id },
+  { code: 'LL', fixtures: ['/data/laliga_fixtures.js', 'LALIGA_FIXTURES'], refs: ['/data/laliga_data.js', 'REFS'],
+    state: 'appointments_LL', url: '/laliga.html', tag: (id) => 'appointment-LL-' + id },
+  { code: 'SA', fixtures: ['/data/seriea_fixtures.js', 'SERIEA_FIXTURES'], refs: ['/data/seriea_data.js', 'REFS'],
+    state: 'appointments_SA', url: '/seriea.html', tag: (id) => 'appointment-SA-' + id },
+];
 
 /* ── Supabase over REST ───────────────────────────────────────────────── */
 function srvHeaders(srv, extra) {
@@ -242,25 +238,22 @@ exports.handler = async () => {
   const origin = (process.env.URL || process.env.DEPLOY_PRIME_URL || '').replace(/\/+$/, '');
   if (!origin) return { statusCode: 200, body: 'no site origin' };
 
-  let fixtures, refs = [];
-  try {
-    fixtures = await loadDataFile(origin, '/data/pl_fixtures.js', 'PL_FIXTURES');
-  } catch (e) {
-    /* An unreachable data file must not advance the state — doing so would
-       mark unseen appointments as already-told and lose them permanently. */
-    return { statusCode: 200, body: 'fixtures unavailable: ' + e.message };
+  /* ── ALERT 1: appointments, per league ───────────────────────────────
+     An unreachable fixture file skips THAT league and leaves its state where
+     it was: advancing it would mark unseen appointments as already-told and
+     lose them for good. The referee file is optional; without it the alert
+     says the official has no card record yet. */
+  const leagues = [];
+  for (const L of LEAGUES) {
+    let fixtures;
+    try { fixtures = await loadDataFile(origin, L.fixtures[0], L.fixtures[1]); } catch (_) { continue; }
+    let refs = [];
+    try { refs = await loadDataFile(origin, L.refs[0], L.refs[1]) || []; } catch (_) { refs = []; }
+    const leagueYpg = refs.length ? PLDCore.leagueRates(refs).avgYpg : null;
+    const state = {};
+    (fixtures || []).forEach((f) => { if (f && f.id != null && f.ref) state[f.id] = f.ref; });
+    leagues.push({ L, fixtures, refs, leagueYpg, state, prev: await getState(srv, L.state) });
   }
-  try { refs = await loadDataFile(origin, '/data/pl_data.js', 'REFS') || []; } catch (_) { /* rate is optional */ }
-
-  const rate = {};
-  refs.forEach((r) => { if (r && r.n && r.ypg != null) rate[r.n] = r.ypg; });
-  const rated = Object.values(rate);
-  const leagueYpg = rated.length ? rated.reduce((a, b) => a + b, 0) / rated.length : null;
-
-  /* ── ALERT 1: appointments ─────────────────────────────────────────── */
-  const prevAppt = await getState(srv, 'appointments');
-  const apptState = {};
-  (fixtures || []).forEach((f) => { if (f && f.id != null && f.ref) apptState[f.id] = f.ref; });
 
   /* ── ALERT 2: one caution from a ban ───────────────────────────────────
      Needs this season's cautions and each club's completed match count, both
@@ -289,24 +282,30 @@ exports.handler = async () => {
      feature would ever do is notify every subscriber about all of them.
      Seeded per alert, so switching the second one on later does not replay
      the first. */
-  if (!prevAppt || (scheme && !prevBan)) {
-    const seeded = [];
-    if (!prevAppt) { await setState(srv, 'appointments', apptState); seeded.push(Object.keys(apptState).length + ' appointments'); }
-    if (scheme && !prevBan) { await setState(srv, 'banwatch', banState); seeded.push(banNow.length + ' on the ban edge'); }
-    return { statusCode: 200, body: 'seeded ' + seeded.join(' and ') + ', sent nothing' };
+  const seeded = [];
+  for (const g of leagues) {
+    if (g.prev) continue;
+    await setState(srv, g.L.state, g.state);
+    seeded.push(g.L.code + ' ' + Object.keys(g.state).length + ' appointments');
   }
+  const banSeeded = !!(scheme && !prevBan);
+  if (banSeeded) { await setState(srv, 'banwatch', banState); seeded.push(banNow.length + ' on the ban edge'); }
 
-  const apptNews = appointmentNews(prevAppt, fixtures);
-  const banNewsList = scheme ? banNews(prevBan, banNow) : [];
+  const live = leagues.filter((g) => g.prev);
+  const apptNews = [];
+  for (const g of live) {
+    for (const n of appointmentNews(g.prev, g.fixtures)) apptNews.push({ g, n });
+  }
+  const banNewsList = (scheme && !banSeeded) ? banNews(prevBan, banNow) : [];
 
   const advance = async () => {
-    await setState(srv, 'appointments', apptState);
-    if (scheme) await setState(srv, 'banwatch', banState);
+    for (const g of live) await setState(srv, g.L.state, g.state);
+    if (scheme && !banSeeded) await setState(srv, 'banwatch', banState);
   };
 
   if (!apptNews.length && !banNewsList.length) {
     await advance();
-    return { statusCode: 200, body: 'nothing new' };
+    return { statusCode: 200, body: seeded.length ? 'seeded ' + seeded.join(', ') + ', nothing new elsewhere' : 'nothing new' };
   }
 
   const sr = await fetch(SUPABASE_URL + '/rest/v1/plb_push_subs?select=endpoint,p256dh,auth,watch,els,prefs',
@@ -328,13 +327,14 @@ exports.handler = async () => {
     } catch (_) { /* one bad endpoint must not stop the round */ }
   };
 
-  for (const n of apptNews) {
+  for (const { g, n } of apptNews) {
     const targets = (subs || []).filter((s) => !s.prefs || s.prefs.appointment !== false);
+    const ypg = PLDCore.refRateFor(n.ref, g.refs);
     await Promise.allSettled(targets.map(async (s) => {
-      const names = watchedIn(s.watch, n);
+      const names = watchedIn(s.watch, n, g.L.code);
       if (!names.length) return;                     /* not their fixture */
-      const { title, body } = alertText(n, names, rate[n.ref], leagueYpg);
-      await deliver(s, { title, body, url: '/#p=gameweek', tag: 'appointment-' + n.id });
+      const { title, body } = alertText(n, names, ypg, g.leagueYpg);
+      await deliver(s, { title, body, url: g.L.url, tag: g.L.tag(n.id) });
     }));
   }
 
@@ -368,6 +368,7 @@ exports.handler = async () => {
       + banNewsList.length + ' ban-edge change(s), pruned ' + gone };
 };
 
+module.exports.LEAGUES = LEAGUES;
 module.exports.appointmentNews = appointmentNews;
 module.exports.watchedIn = watchedIn;
 module.exports.alertText = alertText;

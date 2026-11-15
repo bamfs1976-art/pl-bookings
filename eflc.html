@@ -198,6 +198,7 @@
         <span class="spacer"></span>
         <span class="faint" id="count" style="font-size:12.5px"></span>
       </div>
+      <div id="refAlerts" hidden></div>
       <div id="apCards" class="ap-grid" hidden></div>
       <div class="tablewrap" id="tableWrap">
         <table id="tblPlayers">
@@ -457,6 +458,8 @@
 <script src="assets/linelog.js"></script>
 <script src="assets/inplay.js"></script>
 <script src="assets/why.js"></script>
+<script src="assets/push.js"></script>
+<script src="assets/refalerts.js"></script>
 <script src="assets/suspension.js"></script>
 <script src="assets/a11y.js"></script>
 <script src="assets/price.js"></script>
@@ -511,7 +514,22 @@
   function toggleStar(k) {
     if (starred[k]) delete starred[k]; else starred[k] = 1;
     try { localStorage.setItem(STAR_KEY, JSON.stringify(starred)); } catch (e) {}
+    if (REF_ALERTS) REF_ALERTS.sync();
   }
+
+  /* REFEREE ALERTS for the starred players above, through the same push
+     subscription as every other desk (assets/refalerts.js). Mounted once the
+     page has drawn, so the card sits under the players toolbar. */
+  var REF_ALERTS = null;
+  window.addEventListener('DOMContentLoaded', function () {
+    if (!window.PLDRefAlerts) return;
+    REF_ALERTS = window.PLDRefAlerts.mount({
+      el: document.getElementById('refAlerts'), league: 'EFLC',
+      keys: function () { return Object.keys(starred).filter(function (k) { return starred[k]; }); },
+      caveat: null,
+      toast: function (m) { if (typeof toastLite === 'function') toastLite(m); }
+    });
+  });
 
   /* ---- model ------------------------------------------------------------ */
   /* Rates are SHRUNK toward a positional prior before they are priced.

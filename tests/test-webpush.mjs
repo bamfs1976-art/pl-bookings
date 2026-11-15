@@ -150,6 +150,7 @@ t('expiry is inside the 24 hours the spec allows', () => {
    Pure functions out of netlify/functions/push-cron.js. Everything here
    guards against one of two opposite failures: never telling anyone, or
    telling everyone about everything every hour. */
+const core = require('../assets/core.js');
 const cron = require(join(root, 'netlify', 'functions', 'push-cron.js'));
 const FUT = '2099-01-01T15:00:00+00:00';
 
@@ -206,22 +207,59 @@ t('names the players, and the rate carries its own comparison', () => {
   const m = cron.alertText({ h: 'CHE', a: 'TOT', ref: 'C Kavanagh', changed: false }, ['Cucurella'], 3.9, 3.7);
   assert.equal(m.title, 'Referee appointed: CHE v TOT');
   assert.match(m.body, /C Kavanagh/);
-  assert.match(m.body, /3\.90 cards a game \(strict\)/);
+  assert.match(m.body, /3\.90 yellow cards a game \(league 3\.70, stricter\)/);
   assert.match(m.body, /affects Cucurella/);
 });
 t('a lenient official is described as lenient', () => {
   const m = cron.alertText({ h: 'CHE', a: 'TOT', ref: 'X', changed: false }, ['A'], 3.1, 3.7);
-  assert.match(m.body, /\(lenient\)/);
+  assert.match(m.body, /\(league 3\.70, more lenient\)/);
 });
 t('a change says what it replaced', () => {
   const m = cron.alertText({ h: 'CHE', a: 'TOT', ref: 'C Kavanagh', changed: true, was: 'A Taylor' }, ['A'], null, null);
   assert.equal(m.title, 'Referee changed: CHE v TOT');
   assert.match(m.body, /C Kavanagh replaces A Taylor/);
 });
-t('an unrated official still produces a sentence rather than "undefined"', () => {
+t('an unrated official says so, rather than printing "undefined"', () => {
   const m = cron.alertText({ h: 'CHE', a: 'TOT', ref: 'New Official', changed: false }, ['A', 'B', 'C'], null, 3.7);
   assert.ok(!/undefined|NaN|null/.test(m.body), m.body);
   assert.match(m.body, /A and 2 others/);
+  assert.match(m.body, /no card record yet/);
+});
+
+console.log('appointments: four leagues, one browser');
+t('stars from other desks carry their league and only match that league', () => {
+  const W = ['MIL|PL man', 'EFLC:MIL|J. Laurent', 'LL:RMA|Valverde', 'SA:INT|Barella'];
+  assert.deepEqual(cron.watchedIn(W, { h: 'MIL', a: 'QPR' }), ['PL man']);
+  assert.deepEqual(cron.watchedIn(W, { h: 'MIL', a: 'QPR' }, 'EFLC'), ['J. Laurent']);
+  assert.deepEqual(cron.watchedIn(W, { h: 'BAR', a: 'RMA' }, 'LL'), ['Valverde']);
+  assert.deepEqual(cron.watchedIn(W, { h: 'INT', a: 'JUV' }, 'SA'), ['Barella']);
+  assert.deepEqual(cron.watchedIn(W, { h: 'INT', a: 'JUV' }, 'LL'), []);
+});
+t('a desk re-syncing replaces only its own league, never another desk\'s stars', () => {
+  const stored = ['ARS|Gabriel', 'EFLC:BUR|Laurent', 'LL:RMA|Valverde'];
+  assert.deepEqual(core.mergeWatch(stored, ['EFLC:MIL|Metcalfe'], 'EFLC'),
+    ['EFLC:MIL|Metcalfe', 'ARS|Gabriel', 'LL:RMA|Valverde']);
+  assert.deepEqual(core.mergeWatch(stored, ['CHE|Cucurella'], 'PL'),
+    ['CHE|Cucurella', 'EFLC:BUR|Laurent', 'LL:RMA|Valverde']);
+  assert.deepEqual(core.mergeWatch(stored, [], 'LL'), ['ARS|Gabriel', 'EFLC:BUR|Laurent']);
+  assert.deepEqual(core.mergeWatch(stored, ['LL:X|y', 'ARS|sneaky'], 'LL'),
+    ['LL:X|y', 'ARS|Gabriel', 'EFLC:BUR|Laurent'], 'a key for another league is dropped, not stored');
+  assert.deepEqual(core.mergeWatch(null, ['SA:INT|B'], 'nonsense'), [], 'an unknown league is read as PL');
+});
+t('every league has its own state key, page and tag, and the PL keeps its originals', () => {
+  const codes = cron.LEAGUES.map((L) => L.code);
+  assert.deepEqual(codes, ['PL', 'EFLC', 'LL', 'SA']);
+  assert.equal(new Set(cron.LEAGUES.map((L) => L.state)).size, 4);
+  const pl = cron.LEAGUES[0];
+  assert.equal(pl.state, 'appointments');
+  assert.equal(pl.tag(7), 'appointment-7');
+  assert.equal(cron.LEAGUES[1].tag(7), 'appointment-EFLC-7');
+});
+t('the official is rated by the same name rule the desks use', () => {
+  const refs = [{ n: 'Christopher Kavanagh', ypg: 3.9, matches: 10 }, { n: 'Anthony Taylor', ypg: 3.5, matches: 10 }];
+  assert.equal(core.refRateFor('C. Kavanagh', refs), 3.9);
+  assert.equal(core.refRateFor('Nobody Known', refs), null);
+  assert.equal(core.refRateFor(null, refs), null);
 });
 
 /* ── one caution from a ban ────────────────────────────────────────────

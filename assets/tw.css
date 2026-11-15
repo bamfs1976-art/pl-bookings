@@ -1753,3 +1753,9 @@ tr[data-club]:focus-visible{outline:3px solid var(--ring);outline-offset:-3px}
 /* The way into the in-play view, sat beside the chip it expands. Small, like
    the chip, but a full tap target in height. */
 .fx-live-view{min-height:32px;padding:0 10px;font-size:12px;margin-left:.3rem}
+/* The referee-alerts card on the Championship, La Liga and Serie A desks,
+   shaped like the Premier League desk's watchlist-alerts card. */
+.pushcard{display:flex;gap:.8rem;align-items:center;flex-wrap:wrap;background:var(--surface);
+  border:1px solid var(--border);border-radius:12px;padding:.75rem .9rem;margin:.6rem 0}
+.pushcard b{font-size:.95rem}
+@media (max-width:420px){.pushcard>button{width:100%}}

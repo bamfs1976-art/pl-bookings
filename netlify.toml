@@ -19,7 +19,8 @@
 
 [functions]
   directory = "netlify/functions"
-  # push-cron requires ../lib/webpush.js and ../../assets/core.js — the second
+  # push-cron requires ../lib/webpush.js and ../../assets/core.js (push-subscribe
+  # requires core.js too, for the per-league watchlist merge) — the second
   # reaches OUTSIDE netlify/, for the suspension ladder the page itself prices
   # with rather than a second copy of the rule that could drift from it.
   # The bundler traces relative requires, but a traced dependency that silently

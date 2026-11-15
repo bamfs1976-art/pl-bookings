@@ -2887,6 +2887,91 @@
     return { ok, final, price: s.price, steps, versus, note };
   }
 
+  /* ---- referee appointment alerts, every league ---------------------------
+   *
+   * ONE BROWSER, ONE SUBSCRIPTION, ONE STARRED LIST ON THE SERVER. The four
+   * desks each keep their own stars, so the keys that travel with the
+   * subscription carry their league: "EFLC:BUR|J. Laurent", "LL:…", "SA:…".
+   * Premier League keys keep the form they have always had ("ARS|Gabriel"),
+   * so no existing subscriber loses an alert. Club codes are only unique
+   * WITHIN a league, which is why the prefix is needed at all.
+   *
+   * A desk that signs up or re-syncs replaces only its own league's keys
+   * (mergeWatch); without that, starring a Championship player would wipe
+   * the same browser's Premier League list. */
+  const WATCH_LEAGUES = ['PL', 'EFLC', 'LL', 'SA'];
+  const WATCH_PREFIX = /^(EFLC|LL|SA):/;
+  const WATCH_MAX = 200;
+
+  function watchLeague(key) {
+    if (typeof key !== 'string') return null;
+    const m = WATCH_PREFIX.exec(key);
+    return m ? m[1] : 'PL';
+  }
+  function watchKeyFor(league, key) {
+    return league === 'PL' || !league ? key : league + ':' + key;
+  }
+  function watchBody(key) {
+    return String(key).replace(WATCH_PREFIX, '');
+  }
+
+  function mergeWatch(existing, incoming, league) {
+    const lg = WATCH_LEAGUES.indexOf(league) >= 0 ? league : 'PL';
+    const out = [], seen = {};
+    const add = (k) => { if (!seen[k] && out.length < WATCH_MAX) { seen[k] = true; out.push(k); } };
+    for (const k of incoming || []) if (typeof k === 'string' && watchLeague(k) === lg) add(k);
+    for (const k of existing || []) if (typeof k === 'string' && watchLeague(k) !== lg) add(k);
+    return out;
+  }
+
+  /* The starred names at either club in one fixture, for one league. A key is
+     "CLUB|Player": the club is matched whole, so CHE never matches MCHE. */
+  function watchedFor(watch, fixture, league) {
+    const lg = league || 'PL', hit = [];
+    for (const k of watch || []) {
+      if (typeof k !== 'string' || watchLeague(k) !== lg) continue;
+      const body = watchBody(k), bar = body.indexOf('|');
+      if (bar < 1) continue;
+      const club = body.slice(0, bar);
+      if (club === fixture.h || club === fixture.a) hit.push(body.slice(bar + 1));
+    }
+    return hit;
+  }
+
+  /* The official's yellow cards a game, joined by the same name rule the
+     desks use, and the league average the desks weigh referees against. */
+  function refRateFor(name, refs) {
+    if (!name) return null;
+    const list = (refs || []).filter((r) => r && r.n);
+    const hit = matchRefName(name, list.map((r) => r.n));
+    const r = hit ? list.find((x) => x.n === hit) : null;
+    return r && r.ypg != null && isFinite(Number(r.ypg)) ? Number(r.ypg) : null;
+  }
+
+  /* The words. The number says what it is (yellow cards, not all cards) and
+     carries the league figure beside it, so it is a comparison and not a
+     bare statistic. */
+  function refAlertText(news, names, ypg, leagueYpg) {
+    const n = names || [];
+    const who = n.length === 1 ? n[0]
+      : n.length === 2 ? n[0] + ' and ' + n[1]
+        : n[0] + ' and ' + (n.length - 1) + ' others';
+    let rate = '';
+    if (ypg != null && isFinite(ypg)) {
+      rate = ' · ' + ypg.toFixed(2) + ' yellow cards a game';
+      if (leagueYpg != null && isFinite(leagueYpg)) {
+        rate += ' (league ' + leagueYpg.toFixed(2)
+          + (ypg > leagueYpg ? ', stricter' : ypg < leagueYpg ? ', more lenient' : '') + ')';
+      }
+    } else {
+      rate = ' · no card record yet';
+    }
+    return {
+      title: (news.changed ? 'Referee changed: ' : 'Referee appointed: ') + news.h + ' v ' + news.a,
+      body: (news.changed ? news.ref + ' replaces ' + news.was : news.ref) + rate + ' · affects ' + who,
+    };
+  }
+
   const PLDCore = {
     clock, dayClock, dateClock, CLOCK,
     rotationRisk, rotationBand,
@@ -2917,6 +3002,7 @@
     lineEntry, settleLine, lineSummary, LINE_STATUSES,
     cardClock, clockShare, inPlayChance, inPlayStates, inPlayFixture, CLOCK_MIN_CARDS,
     priceSteps,
+    WATCH_LEAGUES, watchLeague, watchKeyFor, mergeWatch, watchedFor, refRateFor, refAlertText,
   };
 
   if (typeof module !== 'undefined' && module.exports) module.exports = PLDCore;
