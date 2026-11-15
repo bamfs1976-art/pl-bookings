@@ -1762,6 +1762,7 @@ License: MIT
 <script src="assets/share.js"></script>
 <script src="assets/statpack.js"></script>
 <script src="assets/linelog.js"></script>
+<script src="assets/inplay.js"></script>
 <script src="assets/rotation.js"></script>
 <script src="assets/core.js"></script>
 <script src="assets/save.js"></script>
@@ -4417,7 +4418,10 @@ function rolesFor(fid,club){
   if(!sheet||!sheet[club]) return null;
   return PLDCore.lineupRoles(sheet[club],PL_PLAYERS.filter(p=>p.c===club).map(p=>p.n));
 }
-function teamCardBoard(h,a,ref,derby,fid){
+/* The per-player chances the match lines are built from, kept beside the
+   players they belong to. teamCardBoard prices off exactly these, and the
+   in-play view reads them, so the two cannot describe different teams. */
+function plBoardSides(h,a,ref,derby,fid){
   const cands=gwCandidates(h,a,ref,derby);
   if(!cands.length) return null;
   /* BOTH SIDES OR NEITHER — the match total is the sum of the two halves, and
@@ -4443,6 +4447,12 @@ function teamCardBoard(h,a,ref,derby,fid){
      squads, which is how two cells on one strip come to describe different
      teams. */
   const hp=side(h,rh), ap=side(a,ra);
+  return {cands,hp,ap,hc:cands.filter(x=>x.p.c===h),ac:cands.filter(x=>x.p.c===a),rh,ra};
+}
+function teamCardBoard(h,a,ref,derby,fid){
+  const S=plBoardSides(h,a,ref,derby,fid);
+  if(!S) return null;
+  const {cands,hp,ap,rh,ra}=S;
   const board=PLDCore.teamCardMarkets(hp,ap,[3.5,4.5,5.5]);
   /* The same weighted lambdas, plus the referee's red rate. */
   board.bp=PLDCore.bookingPointsMarkets(hp,ap,
@@ -5158,8 +5168,45 @@ function liveTickerHtml(M){
     <span class="fx-live-n" style="color:${tone}"><b>${t.yellows}</b> yellow${t.yellows===1?"":"s"}${reds}</span>
     <span class="faint fx-live-exp">of ~${exp.toFixed(1)} forecast</span>${scope}
     <span class="fx-live-split faint mono">${esc(M.h)} ${t.home.yc}${t.home.rc?"+"+t.home.rc+"R":""} · ${esc(M.a)} ${t.away.yc}${t.away.rc?"+"+t.away.rc+"R":""}</span>
+    <button class="btn fx-live-view" type="button" data-inplay="${esc(String(M.f.id))}" title="Live view: the forecast against the cards so far. 18+ research, not advice.">Live view</button>
   </div>`;
 }
+/* THE IN-PLAY VIEW for one fixture: the board's own per-player chances, the
+   FPL live cards and the season foul averages, handed to assets/inplay.js,
+   which adds only the league's card clock. Each player row shows the chance
+   the desk prints for him; the match lines use the minute-weighted chances
+   the board is built from. Rebuilt on every poll. */
+function plInPlayState(id){
+  if(!LIVE||!LIVECARDS) return null;
+  const f=(LIVE.fixtures||[]).find(x=>String(x.id)===String(id));
+  const M=f&&fixtureMeta(f);
+  if(!M) return null;
+  const t=LIVECARDS.ticker(M.h,M.a,{finished:!!f.finished,
+    fixturesFor:c=>(LIVE.gwFixtureCount&&LIVE.gwFixtureCount[c])||1});
+  if(!t) return null;
+  const S=plBoardSides(M.h,M.a,M.ref,M.derby,f.id);
+  if(!S) return null;
+  const el={};
+  const players=[];
+  S.hc.forEach((c,i)=>{ players.push({name:c.p.n,club:c.p.c,pre:c.prob,match:S.hp[i]}); el[c.p.c+"|"+c.p.n]=c.p.el; });
+  S.ac.forEach((c,i)=>{ players.push({name:c.p.n,club:c.p.c,pre:c.prob,match:S.ap[i]}); el[c.p.c+"|"+c.p.n]=c.p.el; });
+  const fx=typeof PL_FIXTURES!=="undefined"?PL_FIXTURES:[], st=typeof PL_FXSTATS!=="undefined"?PL_FXSTATS:{};
+  return {
+    home:M.h, away:M.a, homeName:clubName(M.h), awayName:clubName(M.a),
+    players, minute:t.minute, finished:t.finished, scope:t.scope,
+    cards:{home:t.home,away:t.away},
+    state:(c,n)=>{ const s=LIVECARDS.state(el[c+"|"+n]); return s==="booked"||s==="sent-off"?s:null; },
+    form:{home:PLDCore.packTeamForm(fx,st,M.h),away:PLDCore.packTeamForm(fx,st,M.a)},
+    updatedAt:LIVECARDS.updatedAt()
+  };
+}
+document.addEventListener("click",e=>{
+  const b=e.target.closest&&e.target.closest("[data-inplay]");
+  if(!b||!window.PLDInPlay) return;
+  e.preventDefault(); e.stopPropagation();
+  const id=b.getAttribute("data-inplay");
+  window.PLDInPlay.open({league:"PL",build:()=>plInPlayState(id)});
+});
 function fixtureCardHtml(f,opts){
   opts=opts||{};
   const M=fixtureMeta(f); if(!M) return "";
@@ -5725,6 +5772,7 @@ const LIVECARDS=(typeof LiveCards!=="undefined"&&LiveCards)?LiveCards.create({
      is unusable, and the ticker being one minute late is a smaller cost than
      that. */
   onUpdate:()=>{
+    try{ if(window.PLDInPlay) window.PLDInPlay.refresh(); }catch(e){}
     try{
       const render=currentPanel==="panel-gameweek"?renderGameweek
         :currentPanel==="panel-fixtures"?renderFixtures:null;

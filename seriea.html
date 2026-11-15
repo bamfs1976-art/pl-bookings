@@ -489,6 +489,7 @@
 <script src="assets/share.js"></script>
 <script src="assets/statpack.js"></script>
 <script src="assets/linelog.js"></script>
+<script src="assets/inplay.js"></script>
 <script src="assets/suspension.js"></script>
 <script src="assets/a11y.js"></script>
 <script src="assets/price.js"></script>
@@ -1209,7 +1210,9 @@
     });
     return {
       ps: rows.map(function (r) { return r.prob; }),
-      top: rows.slice().sort(function (a, b) { return b.prob - a.prob; }).slice(0, 4)
+      top: rows.slice().sort(function (a, b) { return b.prob - a.prob; }).slice(0, 4),
+      /* Every priced player, in the order of ps: the live view lists them all. */
+      all: rows
     };
   }
 
@@ -1351,8 +1354,51 @@
       + t.reds + ' red, ' + esc(clock)
       + ' — from the match events feed, refreshed about once a minute">'
       + '<span class="fx-live-dot"></span>' + esc(clock) + ' · ' + esc(label)
-      + '</span>';
+      + '</span>'
+      + '<button class="btn fx-live-view" type="button" data-inplay="' + esc(String(f.id)) + '"'
+      + ' title="Live view: the forecast against the cards so far. 18+ research, not advice.">Live view</button>';
   }
+
+  /* THE IN-PLAY VIEW for one fixture: this desk's own priced players, its own
+     live cards and its season foul averages, handed to assets/inplay.js,
+     which adds only the league's card clock. Rebuilt on every poll. */
+  function inPlayState(id) {
+    var f = FIXTURES.filter(function (x) { return String(x.id) === String(id); })[0];
+    if (!f || !LIVE.fixtures) return null;
+    var row = LIVE.fixtures[String(f.id)];
+    if (!row) return null;
+    var t = liveFor(f);
+    if (!t) return null;
+    var got = LiveCards.indexApiLive(row, liveResolve);
+    var x = priceFixture(f);
+    var squads = {};
+    [f.h, f.a].forEach(function (c) {
+      squads[c] = PLAYERS.filter(function (p) { return p.c === c; }).map(function (p) { return p.n; });
+    });
+    var states = C.inPlayStates(got.idx, got.elClub, squads);
+    var fx = typeof SERIEA_FXSTATS !== 'undefined' ? SERIEA_FXSTATS : {};
+    var name = function (c) { return (clubBy[c] || {}).name || c; };
+    return {
+      home: f.h, away: f.a, homeName: name(f.h), awayName: name(f.a),
+      players: x.home.all.concat(x.away.all).map(function (r) {
+        return { name: r.p.n, club: r.p.c, pre: r.prob }; }),
+      minute: t.minute, finished: t.finished, scope: t.scope,
+      cards: { home: t.home, away: t.away },
+      state: function (c, n) { return states[c + '|' + n] || null; },
+      form: { home: C.packTeamForm(FIXTURES, fx, f.h), away: C.packTeamForm(FIXTURES, fx, f.a) },
+      updatedAt: LIVE.at
+    };
+  }
+  function openInPlay(id) {
+    if (!window.PLDInPlay) return;
+    window.PLDInPlay.open({ league: 'SA', build: function () { return inPlayState(id); } });
+  }
+  document.addEventListener('click', function (e) {
+    var b = e.target.closest && e.target.closest('[data-inplay]');
+    if (!b) return;
+    e.preventDefault(); e.stopPropagation();
+    openInPlay(b.getAttribute('data-inplay'));
+  });
 
   function liveApply(d) {
     /* A FAILED POLL IS NOT NEWS THAT THE CARDS WERE RESCINDED — the previous
@@ -1360,6 +1406,7 @@
     if (d && d.live === false) { LIVE.fixtures = null; }
     else if (d && d.fixtures) { LIVE.fixtures = d.fixtures; LIVE.at = Date.now(); }
     renderFixtures();
+    if (window.PLDInPlay) window.PLDInPlay.refresh();
   }
 
   function liveStart() {
