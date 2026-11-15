@@ -1956,4 +1956,118 @@ t('unavailable: one fixture at a time, repeated rows still join', () => {
   assert.equal(core.unavailable('David Brooks', 'BOU', inj, 10), null);
 });
 
+/* ---- the weekly stat pack ---- */
+console.log('stat pack');
+{
+  const FX = [
+    { id: 1, d: '2026-08-10T14:00:00Z', h: 'AAA', a: 'BBB', st: 'FT' },
+    { id: 2, d: '2026-08-17T14:00:00Z', h: 'CCC', a: 'AAA', st: 'FT' },
+    { id: 3, d: '2026-08-24T14:00:00Z', h: 'BBB', a: 'CCC', st: 'FT' },
+    { id: 4, d: '2026-08-31T14:00:00Z', h: 'AAA', a: 'CCC', st: 'NS' },
+    { id: 5, d: '2026-09-07T14:00:00Z', h: 'BBB', a: 'AAA', st: 'NS' },
+  ];
+  const ST = {
+    1: { AAA: { fouls: 10, yc: 2, rc: 0, corners: 6 }, BBB: { fouls: 14, yc: 3, rc: 0, corners: 4 } },
+    2: { CCC: { fouls: 12, yc: 1, rc: 0, corners: null }, AAA: { fouls: 8, yc: 4, rc: 0, corners: 5 } },
+    3: { BBB: { fouls: 11, yc: 2, rc: 1 }, CCC: { fouls: 9, yc: 0, rc: 0 } },
+  };
+  t('a club averages its finished fixtures, for and against', () => {
+    const f = core.packTeamForm(FX, ST, 'AAA');
+    assert.equal(f.played, 2);
+    assert.equal(f.yellowsFor, 3);      // (2 + 4) / 2
+    assert.equal(f.yellowsAgainst, 2);  // (3 + 1) / 2
+    assert.equal(f.foulsFor, 9);
+    assert.equal(f.foulsAgainst, 13);
+  });
+  t('a missing corner count is not zero corners: it leaves that match out of the corner average', () => {
+    const f = core.packTeamForm(FX, ST, 'AAA');
+    assert.equal(f.cornersPlayed, 1);
+    assert.equal(f.cornersFor, 6);
+    assert.equal(f.cornersAgainst, 4);
+    assert.equal(core.packTeamForm(FX, ST, 'CCC').cornersFor, null);
+  });
+  t('a club with no recorded match has no averages, never zeros', () => {
+    const f = core.packTeamForm(FX, ST, 'ZZZ');
+    assert.equal(f.played, 0);
+    assert.equal(f.yellowsFor, null);
+  });
+  t('the league average adds both sides and says how far the data runs', () => {
+    const a = core.packLeagueAvg(FX, ST);
+    assert.equal(a.matches, 3);
+    assert.equal(a.yellows, 4);          // (5 + 5 + 2) / 3
+    assert.equal(a.cornerMatches, 1);
+    assert.equal(a.corners, 10);
+    assert.equal(a.dataTo, '2026-08-24');
+  });
+
+  const row = (id, d, h, a, exp, top, ref) => ({
+    fx: { id, d, h, a }, m: { expected: exp, over: { 3.5: 0.6 }, bothCarded: 0.8 },
+    ref: ref || {}, factor: ref && ref.ref ? 1.1 : 1,
+    home: { top: top.filter((x) => x.c === h).map((x) => ({ p: { n: x.n, c: x.c }, prob: x.p })) },
+    away: { top: top.filter((x) => x.c === a).map((x) => ({ p: { n: x.n, c: x.c }, prob: x.p })) },
+  });
+  const ROWS = [
+    row(5, '2026-09-07T14:00:00Z', 'BBB', 'AAA', 3.9,
+      [{ n: 'B1', c: 'BBB', p: 0.31 }, { n: 'A1', c: 'AAA', p: 0.42 }, { n: 'A2', c: 'AAA', p: 0.2 }, { n: 'B2', c: 'BBB', p: 0.25 }]),
+    row(4, '2026-08-31T14:00:00Z', 'AAA', 'CCC', 4.4, [{ n: 'C1', c: 'CCC', p: 0.3 }],
+      { ref: { n: 'J Smith', matches: 40, ypg: 4.1 }, appointed: true }),
+  ];
+  const PACK = core.statPack({ league: 'PL', leagueName: 'Test League', round: 4, roundWord: 'Gameweek',
+    rows: ROWS, fixtures: FX, fxstats: ST, clubName: { AAA: 'Alpha', BBB: 'Beta', CCC: 'Gamma' } });
+
+  t('the pack carries the desk\'s own prices untouched, in kick-off order', () => {
+    assert.deepEqual(PACK.fixtures.map((f) => f.id), [4, 5]);
+    assert.equal(PACK.fixtures[0].model.expectedCards, 4.4);
+    assert.equal(PACK.fixtures[1].model.over35, 0.6);
+    assert.equal(PACK.fixtures[1].model.bothCarded, 0.8);
+  });
+  t('the highest-priced players come from both sides, highest first, three of them', () => {
+    assert.deepEqual(PACK.fixtures[1].top.map((t2) => t2.name), ['A1', 'B1', 'B2']);
+    assert.equal(PACK.fixtures[1].top[0].club, 'AAA');
+  });
+  t('an appointed referee carries his record and the factor the desk priced with; none is null', () => {
+    assert.deepEqual(PACK.fixtures[0].referee,
+      { name: 'J Smith', matches: 40, yellowsPerGame: 4.1, factor: 1.1, appointed: true });
+    assert.equal(PACK.fixtures[1].referee, null);
+  });
+  const MD = core.statPackMarkdown(PACK);
+  t('the Reddit block prints every pack number, formatted, and the 18+ footer', () => {
+    assert.ok(MD.includes('## Test League · Gameweek 4 · card stats pack'));
+    assert.ok(MD.includes('| Yellows for / against | 3.0 / 2.0 |'), MD);
+    assert.ok(MD.includes('Referee: J Smith · 4.10 yellows a game over 40 matches · priced ×1.10'));
+    assert.ok(MD.includes('Referee: not yet appointed'));
+    assert.ok(MD.includes('Model: 3.9 expected cards · over 3.5 cards 60.0% · both teams carded 80.0%'));
+    assert.ok(MD.includes('A1 (AAA) 42.0%'));
+    assert.ok(MD.includes('| Corners for / against | 6.0 / 4.0 | — / — |'));
+    assert.ok(MD.includes('Mon 31 Aug 15:00 UK'));      // BST in August
+    assert.ok(MD.includes('18+ only'));
+  });
+  t('the Discord parts stay under 2,000 characters, numbered, each with the footer', () => {
+    const many = core.statPack({ league: 'PL', leagueName: 'Test League', round: 4, fixtures: FX, fxstats: ST,
+      rows: Array.from({ length: 12 }, (_, i) => row(100 + i, '2026-09-07T14:00:00Z', 'BBB', 'AAA', 4,
+        [{ n: 'Somebody With A Long Name ' + i, c: 'AAA', p: 0.3 }])) });
+    const parts = core.statPackDiscord(many);
+    assert.ok(parts.length > 1);
+    for (const [i, part] of parts.entries()) {
+      assert.ok(part.length <= core.DISCORD_LIMIT, `part ${i + 1} is ${part.length} characters`);
+      assert.ok(part.startsWith(`(${i + 1}/${parts.length}) `));
+      assert.ok(part.includes('18+ only'));
+      assert.ok(!part.includes('|:--'), 'Discord does not render tables');
+    }
+    const joined = parts.join('\n');
+    for (let i = 0; i < 12; i++) assert.ok(joined.includes('Somebody With A Long Name ' + i));
+  });
+  t('a name the feed sent HTML-encoded prints as plain text', () => {
+    const p = core.statPack({ rows: [row(9, '2026-09-07T14:00:00Z', 'AAA', 'BBB', 3,
+      [{ n: 'L. O&apos;Nien', c: 'AAA', p: 0.3 }])], fixtures: FX, fxstats: ST });
+    assert.equal(p.fixtures[0].top[0].name, "L. O'Nien");
+    assert.ok(!core.statPackMarkdown(p).includes('&apos;'));
+  });
+  t('a one-part Discord pack carries no part number', () => {
+    const parts = core.statPackDiscord(PACK);
+    assert.equal(parts.length, 1);
+    assert.ok(parts[0].startsWith('**Test League'));
+  });
+}
+
 console.log(`\n${passed} tests passed`);

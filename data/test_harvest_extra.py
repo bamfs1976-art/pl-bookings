@@ -253,9 +253,25 @@ check("fxstats: both sides", sorted(fs), ["ARS", "CHE"])
 check("fxstats: fouls", fs["ARS"]["fouls"], 12)
 check("fxstats: a null red count reads as none shown, not as missing",
       fs["ARS"]["rc"], 0)
-check("fxstats: corners are not collected — this is a card desk",
-      "corners" in fs["ARS"], False)
+check("fxstats: corners are read from the same response",
+      fs["ARS"]["corners"], 7)
+check("fxstats: a side the feed sent no corner count for reads None, not 0",
+      fs["CHE"]["corners"], None)
 refuses("fxstats", lambda: X.parse_fixture_stats({"response": [{"team": {}}]}, "PL", 1))
+
+# Rows recorded before corners existed are re-fetched once; a row whose
+# corners came back None is done, or it would be re-fetched every run.
+import tempfile as _tf
+from pathlib import Path as _P
+with _tf.TemporaryDirectory() as _d:
+    _p = _P(_d) / "x_fxstats.js"
+    _p.write_text('const X_FXSTATS = {"1": {"ARS": {"fouls": 1}, "CHE": {"fouls": 2}}, '
+                  '"2": {"ARS": {"corners": 4}, "CHE": {"corners": null}}, '
+                  '"3": {"ARS": {"corners": 4}, "CHE": {"fouls": 9}}};', encoding="utf-8")
+    check("fxstats: rows without a corners key are the backfill, a None is done",
+          sorted(X.without_corners(_p, "X_FXSTATS")), ["1", "3"])
+check("fxstats: the corner backfill is capped per run",
+      0 < X.CORNER_BACKFILL_PER_RUN <= 200, True)
 
 # ── head to head ─────────────────────────────────────────────────────────
 HH = {"response": [

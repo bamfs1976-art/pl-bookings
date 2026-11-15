@@ -162,6 +162,7 @@
         <span class="faint" id="mdWhen" style="font-size:12.5px"></span>
         <span class="spacer"></span>
         <button class="btn primary" id="mdShareBtn" type="button">&#8681; Share matchday</button>
+        <button class="btn" id="mdPackBtn" type="button" title="Stats pack for this matchday: image cards plus text for Reddit and Discord">Stats pack</button>
       </div>
       <div id="mdList"></div>
       <p class="note" id="mdNote"></p>
@@ -231,6 +232,7 @@
           <option value="time">By kick-off</option>
         </select>
         <button class="btn" id="fxShareBtn" type="button" title="Download a shareable card of this matchday ranked by booking heat">⬇ Share matchday</button>
+        <button class="btn" id="fxPackBtn" type="button" title="Stats pack for this matchday: image cards plus text for Reddit and Discord">Stats pack</button>
         <span class="spacer"></span>
         <span class="faint" id="fxCount" style="font-size:12.5px"></span>
       </div>
@@ -450,6 +452,7 @@
 <script src="assets/leaguebar.js"></script>
 <script src="assets/clubcolours.js"></script>
 <script src="assets/share.js"></script>
+<script src="assets/statpack.js"></script>
 <script src="assets/suspension.js"></script>
 <script src="assets/a11y.js"></script>
 <script src="assets/price.js"></script>
@@ -1725,6 +1728,23 @@
       .then(function () { shareBusy(btn, false); });
   }
 
+  /* THE WEEKLY STATS PACK. Built from the same priced rows the matchday card
+     uses, so every price in it is this page's own; PLDCore.statPack adds the
+     season's per-game averages from the feed's per-fixture counts. */
+  function openPack(round) {
+    if (!S || !window.PLDStatPack || !S.statPackCard) return;
+    var rows = FIXTURES.filter(function (f) { return f.r === round; }).map(priceFixture);
+    if (!rows.length) return;
+    var names = {};
+    Object.keys(clubBy).forEach(function (k) { names[k] = (clubBy[k] || {}).name || k; });
+    var pack = C.statPack({
+      league: 'EFLC', leagueName: 'Championship', round: round, roundWord: 'Matchday',
+      season: SHARE_CTX.seasonLabel, rows: rows, fixtures: FIXTURES,
+      fxstats: typeof EFLC_FXSTATS !== 'undefined' ? EFLC_FXSTATS : {}, clubName: names
+    });
+    window.PLDStatPack.open({ pack: pack, C: C, S: S, palette: SHARE_CTX.palette });
+  }
+
   /* TWO GRIDS DRAW THE SAME CARD, SO BOTH NEED THE SAME WIRING. fixtureCard()
      renders a "Share match" button, and it is drawn into #fxList (Fixtures)
      AND #mdList (This Matchday). The delegation used to be bound to #fxList
@@ -1764,6 +1784,8 @@
        round is the one SELECTED here, which is why it is read at click time
        rather than captured: #mdShareBtn shares a different round. */
     rb.addEventListener('click', function () { shareRound(Number($('#fxRound').value), rb); });
+    var pb = $('#fxPackBtn');
+    if (pb) pb.addEventListener('click', function () { openPack(Number($('#fxRound').value)); });
   }
 
   /* ---- provenance ------------------------------------------------------- */
@@ -2000,6 +2022,8 @@
 
     var b = $('#mdShareBtn');
     if (b && !b._wired) { b._wired = true; b.addEventListener('click', function () { shareRound(r, b); }); }
+    var pk = $('#mdPackBtn');
+    if (pk) pk.onclick = function () { openPack(r); };
   }
 
   $('#prov').textContent = 'Dataset: ' + PLAYERS.length + ' players across ' + CLUBLIST.length

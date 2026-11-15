@@ -265,6 +265,12 @@ jobs:
       - name: Share cards
         run: node scripts/check-share.mjs
 
+      # The weekly stats pack: prices pass through untouched, every average
+      # equals a recount of the feed's per-fixture counts, the image card and
+      # both text formats print the same numbers, and none uses tipping language.
+      - name: Stats pack
+        run: node scripts/check-statpack.mjs
+
       # Are the three desks pricing the same thing? A calibration check, not a
       # same-numbers check: each must land within a tenth of the card rate its
       # own division produced. They answered different questions for a year,
