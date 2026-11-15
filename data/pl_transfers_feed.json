@@ -1,6 +1,6 @@
 {
   "note": "PROPOSALS from API-Football /transfers, for a person to read. data/transfers.json is the hand-curated overlay that is actually applied; this is not.",
-  "since": "2026-07-17",
+  "since": "2026-07-18",
   "moves": [
     {
       "n": "B. Williams",
@@ -4105,42 +4105,6 @@
       "toCode": "SUN",
       "date": "2026-07-19",
       "type": "-"
-    },
-    {
-      "n": "Rodrigo Miguel Ferreira Rêgo",
-      "from": "Brighton",
-      "to": "Castellón",
-      "fromCode": "BHA",
-      "toCode": null,
-      "date": "2026-07-17",
-      "type": "Loan"
-    },
-    {
-      "n": "Reigan Heskey",
-      "from": "Manchester City",
-      "to": "1. FC Köln",
-      "fromCode": "MCI",
-      "toCode": null,
-      "date": "2026-07-17",
-      "type": "Transfer"
-    },
-    {
-      "n": "Alexei Rojas Fedorushchenko",
-      "from": "Arsenal",
-      "to": "Penafiel",
-      "fromCode": "ARS",
-      "toCode": null,
-      "date": "2026-07-17",
-      "type": "Free agent"
-    },
-    {
-      "n": "Alex Marciniak",
-      "from": "Arsenal",
-      "to": "Cracovia Krakow",
-      "fromCode": "ARS",
-      "toCode": null,
-      "date": "2026-07-17",
-      "type": "Transfer"
     }
   ]
 }
