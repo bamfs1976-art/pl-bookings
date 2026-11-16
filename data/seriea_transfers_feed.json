@@ -1,6 +1,6 @@
 {
   "note": "PROPOSALS from API-Football /transfers, for a person to read. data/transfers.json is the hand-curated overlay that is actually applied; this is not.",
-  "since": "2026-07-18",
+  "since": "2026-07-19",
   "moves": [
     {
       "n": "T. De Nipoti",
@@ -4573,33 +4573,6 @@
       "toCode": null,
       "date": "2026-07-19",
       "type": "Loan"
-    },
-    {
-      "n": "M. Elia",
-      "from": "Fiorentina",
-      "to": "Bari",
-      "fromCode": "FIO",
-      "toCode": null,
-      "date": "2026-07-18",
-      "type": "Loan"
-    },
-    {
-      "n": "Daniel Ndulue",
-      "from": "Genoa",
-      "to": "Treviso",
-      "fromCode": "GEN",
-      "toCode": null,
-      "date": "2026-07-18",
-      "type": "Loan"
-    },
-    {
-      "n": "C. Inao Oulaï",
-      "from": "Trabzonspor",
-      "to": "Fiorentina",
-      "fromCode": null,
-      "toCode": "FIO",
-      "date": "2026-07-18",
-      "type": "Transfer"
     }
   ]
 }

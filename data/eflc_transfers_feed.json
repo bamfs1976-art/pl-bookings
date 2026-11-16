@@ -1,6 +1,6 @@
 {
   "note": "PROPOSALS from API-Football /transfers, for a person to read. data/transfers.json is the hand-curated overlay that is actually applied; this is not.",
-  "since": "2026-07-18",
+  "since": "2026-07-19",
   "moves": [
     {
       "n": "Sydney Agina",
@@ -244,6 +244,15 @@
       "toCode": "CHA",
       "date": "2026-09-29",
       "type": "Return from loan"
+    },
+    {
+      "n": "I. Jones",
+      "from": "Swansea",
+      "to": "Briton Ferry",
+      "fromCode": "SWA",
+      "toCode": null,
+      "date": "2026-09-29",
+      "type": "Free agent"
     },
     {
       "n": "H. Rylah",
@@ -829,6 +838,15 @@
       "toCode": null,
       "date": "2026-09-01",
       "type": "Loan"
+    },
+    {
+      "n": "J. Cotterill",
+      "from": "Swansea",
+      "to": "ST Johnstone",
+      "fromCode": "SWA",
+      "toCode": null,
+      "date": "2026-09-01",
+      "type": "Transfer"
     },
     {
       "n": "A. Forson",
@@ -1560,6 +1578,15 @@
       "type": "Loan"
     },
     {
+      "n": "Tom Wright",
+      "from": "Swansea",
+      "to": "Ammanford AFC",
+      "fromCode": "SWA",
+      "toCode": null,
+      "date": "2026-08-30",
+      "type": "-"
+    },
+    {
       "n": "Tom Iorpenda",
       "from": "Huddersfield",
       "to": "Swansea",
@@ -1783,6 +1810,15 @@
       "toCode": "CHA",
       "date": "2026-08-29",
       "type": "Loan"
+    },
+    {
+      "n": "Tom Iorpenda",
+      "from": "Huddersfield",
+      "to": "Swansea",
+      "fromCode": null,
+      "toCode": "SWA",
+      "date": "2026-08-29",
+      "type": "Transfer"
     },
     {
       "n": "Tobias Christopher Collyer",
@@ -2179,6 +2215,15 @@
       "toCode": null,
       "date": "2026-08-26",
       "type": "-"
+    },
+    {
+      "n": "S. Eustáquio",
+      "from": "FC Porto",
+      "to": "Swansea",
+      "fromCode": null,
+      "toCode": "SWA",
+      "date": "2026-08-25",
+      "type": "Transfer"
     },
     {
       "n": "Raphael London",
@@ -3504,6 +3549,15 @@
       "type": "Transfer"
     },
     {
+      "n": "Kyrell Wilson",
+      "from": "Swansea",
+      "to": "Gent",
+      "fromCode": "SWA",
+      "toCode": null,
+      "date": "2026-08-03",
+      "type": "Transfer"
+    },
+    {
       "n": "F. Tattum",
       "from": "Birmingham",
       "to": "Alfreton Town",
@@ -3673,6 +3727,15 @@
       "toCode": "MIL",
       "date": "2026-08-01",
       "type": "Free agent"
+    },
+    {
+      "n": "C. Congreve",
+      "from": "Swansea",
+      "to": "KVC Westerlo",
+      "fromCode": "SWA",
+      "toCode": null,
+      "date": "2026-08-01",
+      "type": "Transfer"
     },
     {
       "n": "W. Burrell",
@@ -3898,6 +3961,15 @@
       "toCode": null,
       "date": "2026-07-29",
       "type": "Loan"
+    },
+    {
+      "n": "L. Cullen",
+      "from": "Swansea",
+      "to": "Leicester",
+      "fromCode": "SWA",
+      "toCode": null,
+      "date": "2026-07-29",
+      "type": "Transfer"
     },
     {
       "n": "K. Sylvanus",
@@ -4251,6 +4323,15 @@
       "type": "Free agent"
     },
     {
+      "n": "Kit Margetson",
+      "from": "Swansea",
+      "to": "Manchester United U21",
+      "fromCode": "SWA",
+      "toCode": null,
+      "date": "2026-07-25",
+      "type": "-"
+    },
+    {
       "n": "K. Lisbie",
       "from": "Peterborough",
       "to": "Millwall",
@@ -4494,6 +4575,15 @@
       "type": "Transfer"
     },
     {
+      "n": "Joseph Okopu",
+      "from": "Zulte Waregem",
+      "to": "Swansea",
+      "fromCode": null,
+      "toCode": "SWA",
+      "date": "2026-07-21",
+      "type": "Transfer"
+    },
+    {
       "n": "F. Bilbija",
       "from": "SC Paderborn 07",
       "to": "Derby",
@@ -4584,6 +4674,15 @@
       "type": "Transfer"
     },
     {
+      "n": "E. Just",
+      "from": "Motherwell",
+      "to": "Swansea",
+      "fromCode": null,
+      "toCode": "SWA",
+      "date": "2026-07-20",
+      "type": "Transfer"
+    },
+    {
       "n": "C. Dillon",
       "from": "QPR",
       "to": "Dundalk",
@@ -4618,33 +4717,6 @@
       "toCode": null,
       "date": "2026-07-19",
       "type": "Transfer"
-    },
-    {
-      "n": "K. Ahearne-Grant",
-      "from": "West Brom",
-      "to": "Charlton",
-      "fromCode": "WBA",
-      "toCode": "CHA",
-      "date": "2026-07-18",
-      "type": "Free agent"
-    },
-    {
-      "n": "G. McCormick",
-      "from": "Middlesbrough",
-      "to": "McCormick George",
-      "fromCode": "MID",
-      "toCode": null,
-      "date": "2026-07-18",
-      "type": "Free agent"
-    },
-    {
-      "n": "B. Mitchell",
-      "from": "Millwall",
-      "to": "Sheffield Wednesday",
-      "fromCode": "MIL",
-      "toCode": null,
-      "date": "2026-07-18",
-      "type": "Free agent"
     }
   ]
 }
