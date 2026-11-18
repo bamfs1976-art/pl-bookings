@@ -44,6 +44,7 @@
   "https://rfef.es/sites/default/files/designaciones_1a_division_masculina_-_temp_2026-27_-_jornada_9_viernes.pdf",
   "https://www.aia-figc.it/news/serie-a-enilive-designazioni-10a-giornata-28806/",
   "https://www.aia-figc.it/news/serie-a-enilive-designazioni-11a-giornata-28822/",
+  "https://www.aia-figc.it/news/serie-a-enilive-designazioni-12a-giornata-28854/",
   "https://www.aia-figc.it/news/serie-a-enilive-designazioni-4a-giornata-27632/",
   "https://www.aia-figc.it/news/serie-a-enilive-designazioni-5a-giornata-27667/",
   "https://www.aia-figc.it/news/serie-a-enilive-designazioni-6a-giornata-28755/",
@@ -3443,6 +3444,50 @@
    "refResolved": "Luca Pairetto",
    "resolvedBy": "surname",
    "source": "https://www.aia-figc.it/news/serie-a-enilive-designazioni-11a-giornata-28822/"
+  },
+  {
+   "league": "SA",
+   "date": "2026-11-21",
+   "h": "LAZ",
+   "a": "LEC",
+   "ko": "15:00",
+   "ref": "MARCENARO",
+   "refResolved": "Matteo Marcenaro",
+   "resolvedBy": "surname",
+   "source": "https://www.aia-figc.it/news/serie-a-enilive-designazioni-12a-giornata-28854/"
+  },
+  {
+   "league": "SA",
+   "date": "2026-11-21",
+   "h": "NAP",
+   "a": "TOR",
+   "ko": "20:45",
+   "ref": "RAPUANO",
+   "refResolved": "Antonio Rapuano",
+   "resolvedBy": "surname",
+   "source": "https://www.aia-figc.it/news/serie-a-enilive-designazioni-12a-giornata-28854/"
+  },
+  {
+   "league": "SA",
+   "date": "2026-11-21",
+   "h": "PAR",
+   "a": "ROM",
+   "ko": "18:00",
+   "ref": "SOZZA",
+   "refResolved": "Simone Sozza",
+   "resolvedBy": "surname",
+   "source": "https://www.aia-figc.it/news/serie-a-enilive-designazioni-12a-giornata-28854/"
+  },
+  {
+   "league": "SA",
+   "date": "2026-11-23",
+   "h": "MON",
+   "a": "FIO",
+   "ko": "20:45",
+   "ref": "DOVERI",
+   "refResolved": "Daniele Doveri",
+   "resolvedBy": "surname",
+   "source": "https://www.aia-figc.it/news/serie-a-enilive-designazioni-12a-giornata-28854/"
   }
  ]
 }
