@@ -5,37 +5,37 @@ const CARD_MODEL = {
   "basis": "match-fit",
   "fitRows": 3084,
   "slope": 1.1,
-  "baseRate": 0.1888,
+  "baseRate": 0.1891,
   "recencyDecay": 0.97,
   "shrink": {
     "strengthMatches": 6,
     "ycMean": {
       "GK": 0.0352,
       "DF": 0.1958,
-      "MF": 0.2115,
-      "FW": 0.1976
+      "MF": 0.2118,
+      "FW": 0.1986
     },
     "foulMean": {
       "GK": 0.0101,
       "DF": 0.9949,
-      "MF": 1.2454,
-      "FW": 1.4105
+      "MF": 1.2437,
+      "FW": 1.3919
     },
-    "ycLeague": 0.1888,
-    "foulLeague": 1.0858
+    "ycLeague": 0.1892,
+    "foulLeague": 1.0853
   },
   "glm": {
-    "intercept": -3.7388,
+    "intercept": -3.7374,
     "weights": {
-      "yc90": -0.0304,
-      "foul90": 0.3338,
+      "yc90": -0.0303,
+      "foul90": 0.3335,
       "DF": 1.5998,
       "MF": 1.3705,
-      "FW": 1.0287
+      "FW": 1.0286
     }
   },
   "twoStage": {
-    "baseHazard": 0.1927,
+    "baseHazard": 0.1932,
     "refPivotYpg": 3.705
   },
   "nbFouls": {

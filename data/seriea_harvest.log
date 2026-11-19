@@ -1,4 +1,4 @@
-Serie A harvest, run 241
+Serie A harvest, run 242
 == discover ==
 Serie A: API-Football league 135, season 2026
 
@@ -24,7 +24,7 @@ seriea_clubs.json written (20 clubs)
     UDI  Udinese
     VEN  Venezia
 
-API-Football: 1 call(s) this run; 403 of 7500 used today (5%), 7097 left
+API-Football: 1 call(s) this run; 455 of 7500 used today (6%), 7045 left
 == squads ==
 Serie A: API-Football league 135, season 2026
   fetching 20 squads
@@ -51,7 +51,7 @@ Serie A: API-Football league 135, season 2026
 
 seriea_players.json written (655 players from 20 clubs, API-Football, SA season 2026)
 
-API-Football: 41 call(s) this run; 207 of 7500 used today (3%), 7293 left
+API-Football: 41 call(s) this run; 496 of 7500 used today (7%), 7004 left
 == rosters ==
 Serie A: API-Football league 135, season 2026
     AC Milan                    34 players
@@ -77,7 +77,7 @@ Serie A: API-Football league 135, season 2026
 
 sa_squads.json written (637 players from 20 clubs, API-Football current rosters)
 
-API-Football: 21 call(s) this run; 228 of 7500 used today (3%), 7272 left
+API-Football: 21 call(s) this run; 517 of 7500 used today (7%), 6983 left
 == season-cards ==
 Serie A: API-Football league 135, season 2026
   fetching 20 squads
@@ -104,7 +104,7 @@ Serie A: API-Football league 135, season 2026
 
 seriea_season_cards.json written (655 players from 20 clubs, API-Football, SA season 2026)
 
-API-Football: 41 call(s) this run; 269 of 7500 used today (4%), 7231 left
+API-Football: 41 call(s) this run; 319 of 7500 used today (4%), 7181 left
 == serie-b ==
 Serie B: API-Football league 136, season 2025
   not in this desk's club list (17): Avellino, Bari, Carrarese, Catanzaro, Cesena, Empoli, Juve Stabia, Mantova, Modena, Padova, Palermo, Pescara, Reggiana, Sampdoria, Spezia, Sudtirol, Virtus Entella
@@ -115,15 +115,16 @@ Serie B: API-Football league 136, season 2025
 
 serieb_players.json written (116 players from 3 clubs, API-Football, SERB season 2025)
 
-API-Football: 8 call(s) this run; 277 of 7500 used today (4%), 7223 left
+API-Football: 8 call(s) this run; 327 of 7500 used today (4%), 7173 left
 == ref-fixtures ==
 Serie A: API-Football league 135, season 2025
 
 seriea_ref_fixtures.js written (380 matches over 20 clubs, 380 with an official named)
 
-API-Football: 1 call(s) this run; 278 of 7500 used today (4%), 7222 left
+API-Football: 1 call(s) this run; 328 of 7500 used today (4%), 7172 left
 == fixtures ==
 Serie A: API-Football league 135, season 2026
+  SA appointments overlay: 1 applied, 2 already harvested
   CHANGED: VEN v FIO: harvested 'F. Fourneau', published 'Francesco Fourneau' — the harvested name stands
   CHANGED: ATA v CAG: harvested 'A. Arena', published 'Alberto Ruben Arena' — the harvested name stands
   CHANGED: GEN v FRO: harvested 'A. Rapuano', published 'Antonio Rapuano' — the harvested name stands
@@ -186,6 +187,7 @@ Serie A: API-Football league 135, season 2026
   CHANGED: INT v COM: harvested 'D. Chiffi', published 'Daniele Chiffi' — the harvested name stands
   CHANGED: MON v ATA: harvested 'C. G. Allegretta', published 'ALLEGRETTA' — the harvested name stands
   CHANGED: NAP v LAZ: harvested 'L. Pairetto', published 'Luca Pairetto' — the harvested name stands
+  CHANGED: NAP v TOR: harvested 'Rapuano Andrea', published 'Antonio Rapuano' — the harvested name stands
   NOTE: no card record for SACCHI J. L. (SAS v JUV) — priced at the league rate
   NOTE: no card record for PERENZONI (MON v SAS) — priced at the league rate
   NOTE: no card record for TREMOLADA (ATA v VEN) — priced at the league rate
@@ -196,9 +198,9 @@ Serie A: API-Football league 135, season 2026
   NOTE: no card record for SACCHI J.L. (VEN v UDI) — priced at the league rate
   NOTE: no card record for ALLEGRETTA (MON v ATA) — priced at the league rate
 
-seriea_fixtures.js written (380 fixtures over 38 matchdays, 110 with a referee appointed)
+seriea_fixtures.js written (380 fixtures over 38 matchdays, 115 with a referee appointed)
 
-API-Football: 1 call(s) this run; 279 of 7500 used today (4%), 7221 left
+API-Football: 1 call(s) this run; 329 of 7500 used today (4%), 7171 left
 == build ==
 Division: 17 clubs were in it last season, 3 came up
   promoted: Frosinone, Monza, Venezia
@@ -207,13 +209,11 @@ Division: 17 clubs were in it last season, 3 came up
   NEW    87 players from the squad fill feed
 Reusing the previous build for sources that did not harvest:
   - seriea_squads.json (87 players kept from the previous build)
-    15 duplicate row(s) collapsed after the moves, keeping the row with a rate on it
-Squads reconciled against the FPL feed: 17 moved, 0 joined, 112 left the division, 10 left alone as ambiguous (762 rows in, 635 out).
+    13 duplicate row(s) collapsed after the moves, keeping the row with a rate on it
+Squads reconciled against the FPL feed: 15 moved, 4 joined, 112 left the division, 10 left alone as ambiguous (756 rows in, 635 out).
     A. Dembélé TOR -> LEC
-    A. Guðmundsson FIO -> LAZ
     A. Njie TOR -> FIO
     A. Sherri FRO -> CAG
-    G. Fabbian FIO -> PAR
     G. Oristanio VEN -> TOR
     H. Nicolussi VEN -> PAR
     I. Sulemana ATA -> SAS
@@ -236,14 +236,14 @@ Squads reconciled against the FPL feed: 17 moved, 0 joined, 112 left the divisio
     AMBIGUOUS, left at NAP: Amir Rrahmani
     AMBIGUOUS, left at MON: M. Pessina
     AMBIGUOUS, left at MON: L. Colombo
-Photographs: filled 0 from sa_squads.json; 635 of 635 rows carry a face.
+Photographs: filled 4 from sa_squads.json; 635 of 635 rows carry a face.
 
 club rates from mirror (380 matches)
-players: 635  by basis: NEW=87, SA=502, SB=46
+players: 635  by basis: NEW=91, SA=498, SB=46
 form: SA=2026-27, SB=2025-26
 clubs with players: 20 of 20
 club rates from match records: 17 of 20
-season cautions (2026-27): 589 players
+season cautions (2026-27): 585 players
 referees: 32
 RESULT: WRITTEN seriea_data.js
 == referee-join ==
