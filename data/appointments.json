@@ -21,6 +21,7 @@
   "https://rfef.es/sites/default/files/designaciones_1a_division_masculina_-_temp_2026-27_-_jornada_12_domingo.pdf",
   "https://rfef.es/sites/default/files/designaciones_1a_division_masculina_-_temp_2026-27_-_jornada_12_sabado.pdf",
   "https://rfef.es/sites/default/files/designaciones_1a_division_masculina_-_temp_2026-27_-_jornada_12_viernes.pdf",
+  "https://rfef.es/sites/default/files/designaciones_1a_division_masculina_-_temp_2026-27_-_jornada_13_sabado.pdf",
   "https://rfef.es/sites/default/files/designaciones_1a_division_masculina_-_temp_2026-27_-_jornada_13_viernes.pdf",
   "https://rfef.es/sites/default/files/designaciones_1a_division_masculina_-_temp_2026-27_-_jornada_1_domingo16.pdf",
   "https://rfef.es/sites/default/files/designaciones_1a_division_masculina_-_temp_2026-27_-_jornada_1_lunes17.pdf",
@@ -2653,6 +2654,50 @@
    "refResolved": "Mateo Busquets Ferrer",
    "resolvedBy": "run",
    "source": "https://rfef.es/sites/default/files/designaciones_1a_division_masculina_-_temp_2026-27_-_jornada_13_viernes.pdf"
+  },
+  {
+   "league": "LL",
+   "date": "2026-11-21",
+   "h": "ALA",
+   "a": "DEP",
+   "ko": "14:00",
+   "ref": "Víctor García",
+   "refResolved": "Victor Garcia Verdura",
+   "resolvedBy": "run",
+   "source": "https://rfef.es/sites/default/files/designaciones_1a_division_masculina_-_temp_2026-27_-_jornada_13_sabado.pdf"
+  },
+  {
+   "league": "LL",
+   "date": "2026-11-21",
+   "h": "RAY",
+   "a": "VAL",
+   "ko": "16:15",
+   "ref": "José Luis Munuera",
+   "refResolved": "José Luis Munuera Montero",
+   "resolvedBy": "run",
+   "source": "https://rfef.es/sites/default/files/designaciones_1a_division_masculina_-_temp_2026-27_-_jornada_13_sabado.pdf"
+  },
+  {
+   "league": "LL",
+   "date": "2026-11-21",
+   "h": "RMA",
+   "a": "CEL",
+   "ko": "21:00",
+   "ref": "Adrián Cordero",
+   "refResolved": "Adrian Cordero Vega",
+   "resolvedBy": "run",
+   "source": "https://rfef.es/sites/default/files/designaciones_1a_division_masculina_-_temp_2026-27_-_jornada_13_sabado.pdf"
+  },
+  {
+   "league": "LL",
+   "date": "2026-11-21",
+   "h": "SEV",
+   "a": "BET",
+   "ko": "18:30",
+   "ref": "José María Sánchez",
+   "refResolved": "José María Sánchez Martínez",
+   "resolvedBy": "run",
+   "source": "https://rfef.es/sites/default/files/designaciones_1a_division_masculina_-_temp_2026-27_-_jornada_13_sabado.pdf"
   },
   {
    "league": "PL",
