@@ -5,7 +5,7 @@ const CARD_MODEL = {
   "basis": "match-fit",
   "fitRows": 3084,
   "slope": 1.1,
-  "baseRate": 0.1891,
+  "baseRate": 0.1892,
   "recencyDecay": 0.97,
   "shrink": {
     "strengthMatches": 6,
@@ -19,10 +19,10 @@ const CARD_MODEL = {
       "GK": 0.0101,
       "DF": 0.9949,
       "MF": 1.2437,
-      "FW": 1.3919
+      "FW": 1.3923
     },
     "ycLeague": 0.1892,
-    "foulLeague": 1.0853
+    "foulLeague": 1.0854
   },
   "glm": {
     "intercept": -3.7374,

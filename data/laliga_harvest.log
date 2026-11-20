@@ -1,4 +1,4 @@
-La Liga harvest — run 242
+La Liga harvest — run 243
 == discover ==
 La Liga: API-Football league 140, season 2026
 
@@ -24,7 +24,7 @@ laliga_clubs.json written (20 clubs)
     VAL  Valencia
     VIL  Villarreal
 
-API-Football: 1 call(s) this run; 172 of 7500 used today (2%), 7328 left
+API-Football: 1 call(s) this run; 148 of 7500 used today (2%), 7352 left
 == squads ==
 La Liga: API-Football league 140, season 2026
   fetching 20 squads
@@ -51,7 +51,7 @@ La Liga: API-Football league 140, season 2026
 
 laliga_players.json written (611 players from 20 clubs, API-Football, LL season 2026)
 
-API-Football: 41 call(s) this run; 383 of 7500 used today (5%), 7117 left
+API-Football: 41 call(s) this run; 189 of 7500 used today (3%), 7311 left
 == rosters ==
 La Liga: API-Football league 140, season 2026
     Athletic Club               32 players
@@ -77,7 +77,7 @@ La Liga: API-Football league 140, season 2026
 
 ll_squads.json written (654 players from 20 clubs, API-Football current rosters)
 
-API-Football: 21 call(s) this run; 404 of 7500 used today (5%), 7096 left
+API-Football: 21 call(s) this run; 210 of 7500 used today (3%), 7290 left
 == season-cards ==
 La Liga: API-Football league 140, season 2026
   fetching 20 squads
@@ -104,7 +104,7 @@ La Liga: API-Football league 140, season 2026
 
 laliga_season_cards.json written (611 players from 20 clubs, API-Football, LL season 2026)
 
-API-Football: 41 call(s) this run; 445 of 7500 used today (6%), 7055 left
+API-Football: 41 call(s) this run; 251 of 7500 used today (3%), 7249 left
 == segunda ==
 Segunda División: API-Football league 141, season 2025
   not in this desk's club list (19): AD Ceuta FC, Albacete, Almeria, Burgos, Cadiz, Castellón, Cordoba, Cultural Leonesa, Eibar, FC Andorra, Granada CF, Huesca, Las Palmas, Leganes, Mirandes, Real Sociedad II, Sporting Gijon, Valladolid, Zaragoza
@@ -115,15 +115,16 @@ Segunda División: API-Football league 141, season 2025
 
 segunda_players.json written (110 players from 3 clubs, API-Football, SEG season 2025)
 
-API-Football: 7 call(s) this run; 452 of 7500 used today (6%), 7048 left
+API-Football: 7 call(s) this run; 258 of 7500 used today (3%), 7242 left
 == ref-fixtures ==
 La Liga: API-Football league 140, season 2025
 
 laliga_ref_fixtures.js written (380 matches over 20 clubs, 380 with an official named)
 
-API-Football: 1 call(s) this run; 453 of 7500 used today (6%), 7047 left
+API-Football: 1 call(s) this run; 259 of 7500 used today (3%), 7241 left
 == fixtures ==
 La Liga: API-Football league 140, season 2026
+  LL appointments overlay: 0 applied, 1 already harvested
   CLARIFIED: RAY v ALA: harvested 'J. Munuera' is the same official as 'José Luis Munuera Montero', which the card table carries — the published spelling stands
   CLARIFIED: GET v RAC: harvested 'J. Martinez' is the same official as 'Juan Martinez Munuera', which the card table carries — the published spelling stands
   CLARIFIED: RMA v MAL: harvested 'J. Martinez' is the same official as 'Juan Martinez Munuera', which the card table carries — the published spelling stands
@@ -266,9 +267,9 @@ La Liga: API-Football league 140, season 2026
   NOTE: no card record for Luis Bestard (SEV v ALA) — priced at the league rate
   NOTE: no card record for Carlos Muñiz (VIL v GET) — priced at the league rate
 
-laliga_fixtures.js written (380 fixtures over 38 matchdays, 120 with a referee appointed)
+laliga_fixtures.js written (380 fixtures over 38 matchdays, 121 with a referee appointed)
 
-API-Football: 1 call(s) this run; 454 of 7500 used today (6%), 7046 left
+API-Football: 1 call(s) this run; 260 of 7500 used today (3%), 7240 left
 == build ==
 Division: 17 clubs were in it last season, 3 came up
   promoted: Deportivo La Coruna, Malaga, Racing Santander
@@ -278,10 +279,9 @@ Division: 17 clubs were in it last season, 3 came up
 Reusing the previous build for sources that did not harvest:
   - laliga_squads.json (105 players kept from the previous build)
     5 duplicate row(s) collapsed after the moves, keeping the row with a rate on it
-Squads reconciled against the FPL feed: 11 moved, 5 joined, 67 left the division, 25 left alone as ambiguous (720 rows in, 653 out).
+Squads reconciled against the FPL feed: 10 moved, 7 joined, 63 left the division, 25 left alone as ambiguous (713 rows in, 652 out).
     D. Diaz RAC -> RSO
     J. Giménez ATM -> DEP
-    José Ángel ESP -> SEV
     Juanpe MAL -> RAY
     Luismi MAL -> DEP
     M. Santos LEV -> ATH
@@ -315,14 +315,14 @@ Squads reconciled against the FPL feed: 11 moved, 5 joined, 67 left the division
     AMBIGUOUS, left at CEL: J. Lopez
     AMBIGUOUS, left at RMA: Jesús Fortea
     AMBIGUOUS, left at VAL: M. Martinez
-Photographs: filled 5 from ll_squads.json; 653 of 653 rows carry a face.
+Photographs: filled 7 from ll_squads.json; 652 of 652 rows carry a face.
 
 club rates from mirror (380 matches)
-players: 653  by basis: LL=483, NEW=105, SEG=65
+players: 652  by basis: LL=475, NEW=112, SEG=65
 form: LL=2026-27, SEG=2025-26
 clubs with players: 20 of 20
 club rates from match records: 17 of 20
-season cautions (2026-27): 566 players
+season cautions (2026-27): 559 players
 referees: 20
 RESULT: WRITTEN laliga_data.js
 == referee-join ==
