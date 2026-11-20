@@ -1,6 +1,6 @@
 {
   "note": "PROPOSALS from API-Football /transfers, for a person to read. data/transfers.json is the hand-curated overlay that is actually applied; this is not.",
-  "since": "2026-07-22",
+  "since": "2026-07-23",
   "moves": [
     {
       "n": "B. Williams",
@@ -5004,96 +5004,6 @@
       "fromCode": null,
       "toCode": "NEW",
       "date": "2026-07-23",
-      "type": "Transfer"
-    },
-    {
-      "n": "Á. Pécsi",
-      "from": "Liverpool",
-      "to": "TSV Hartberg",
-      "fromCode": "LIV",
-      "toCode": null,
-      "date": "2026-07-22",
-      "type": "Loan"
-    },
-    {
-      "n": "X. Schlager",
-      "from": "RB Leipzig",
-      "to": "Nottingham Forest",
-      "fromCode": null,
-      "toCode": "NFO",
-      "date": "2026-07-22",
-      "type": "Free agent"
-    },
-    {
-      "n": "M. Targett",
-      "from": "Newcastle",
-      "to": "Hull City",
-      "fromCode": "NEW",
-      "toCode": "HUL",
-      "date": "2026-07-22",
-      "type": "Free agent"
-    },
-    {
-      "n": "Harrison Bettoni",
-      "from": "Wigan",
-      "to": "Chelsea",
-      "fromCode": null,
-      "toCode": "CHE",
-      "date": "2026-07-22",
-      "type": "Free agent"
-    },
-    {
-      "n": "H. Morita",
-      "from": "Sporting CP",
-      "to": "Hull City",
-      "fromCode": null,
-      "toCode": "HUL",
-      "date": "2026-07-22",
-      "type": "Free agent"
-    },
-    {
-      "n": "Finley Taylor",
-      "from": "Brighton",
-      "to": "Blackburn Rovers U21",
-      "fromCode": "BHA",
-      "toCode": null,
-      "date": "2026-07-22",
-      "type": "-"
-    },
-    {
-      "n": "Ciaran Thompson",
-      "from": "Newcastle",
-      "to": "Darlington 1883",
-      "fromCode": "NEW",
-      "toCode": null,
-      "date": "2026-07-22",
-      "type": "Free agent"
-    },
-    {
-      "n": "C. Tzolis",
-      "from": "Club Brugge KV",
-      "to": "Arsenal",
-      "fromCode": null,
-      "toCode": "ARS",
-      "date": "2026-07-22",
-      "type": "Transfer"
-    },
-    {
-      "n": "A. Garnacho",
-      "from": "Chelsea",
-      "to": "Aston Villa",
-      "fromCode": "CHE",
-      "toCode": "AVL",
-      "date": "2026-07-22",
-      "type": "Loan"
-    },
-    {
-      "n": "A. Bamba",
-      "from": "Monaco",
-      "to": "Newcastle",
-      "fromCode": null,
-      "toCode": "NEW",
-      "date": "2026-07-22",
       "type": "Transfer"
     }
   ]

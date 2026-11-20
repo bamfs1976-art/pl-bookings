@@ -1,6 +1,6 @@
 {
   "note": "PROPOSALS from API-Football /transfers, for a person to read. data/transfers.json is the hand-curated overlay that is actually applied; this is not.",
-  "since": "2026-07-22",
+  "since": "2026-07-23",
   "moves": [
     {
       "n": "Dani Carvajal",
@@ -3412,60 +3412,6 @@
       "toCode": null,
       "date": "2026-07-23",
       "type": "Loan"
-    },
-    {
-      "n": "S. Samuyiwa",
-      "from": "Real Sociedad",
-      "to": "Start",
-      "fromCode": "RSO",
-      "toCode": null,
-      "date": "2026-07-22",
-      "type": "Free agent"
-    },
-    {
-      "n": "Oier Gastesi",
-      "from": "Athletic Club",
-      "to": "Tenerife II",
-      "fromCode": "ATH",
-      "toCode": null,
-      "date": "2026-07-22",
-      "type": "-"
-    },
-    {
-      "n": "K. Adeyemi",
-      "from": "Borussia Dortmund",
-      "to": "Barcelona",
-      "fromCode": null,
-      "toCode": "BAR",
-      "date": "2026-07-22",
-      "type": "Transfer"
-    },
-    {
-      "n": "Ebrahima Drammeh",
-      "from": "La Canada U19",
-      "to": "Getafe",
-      "fromCode": null,
-      "toCode": "GET",
-      "date": "2026-07-22",
-      "type": "Free agent"
-    },
-    {
-      "n": "E. Gomez",
-      "from": "Real Madrid",
-      "to": "Zamora",
-      "fromCode": "RMA",
-      "toCode": null,
-      "date": "2026-07-22",
-      "type": "Free agent"
-    },
-    {
-      "n": "Ander Astralaga",
-      "from": "Barcelona",
-      "to": "Atlético Madrid II",
-      "fromCode": "BAR",
-      "toCode": null,
-      "date": "2026-07-22",
-      "type": "-"
     }
   ]
 }
