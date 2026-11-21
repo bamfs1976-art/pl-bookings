@@ -114,7 +114,7 @@ const SERIEA_FIXTURES = [
   {id:1550200,d:"2026-11-21T14:00:00+00:00",r:12,h:"COM",a:"CAG",ref:"Andrea Calzavara",st:"NS"},
   {id:1550202,d:"2026-11-21T14:00:00+00:00",r:12,h:"LAZ",a:"LEC",ref:"Matteo Marcenaro",st:"NS"},
   {id:1550205,d:"2026-11-21T17:00:00+00:00",r:12,h:"PAR",a:"ROM",ref:"Simone Sozza",st:"NS"},
-  {id:1550204,d:"2026-11-21T19:45:00+00:00",r:12,h:"NAP",a:"TOR",ref:"Rapuano Andrea",st:"NS"},
+  {id:1550204,d:"2026-11-21T19:45:00+00:00",r:12,h:"NAP",a:"TOR",ref:"Marco Di Bello",st:"NS"},
   {id:1550201,d:"2026-11-22T11:30:00+00:00",r:12,h:"JUV",a:"VEN",ref:"Alberto Ruben Arena",st:"NS"},
   {id:1550199,d:"2026-11-22T14:00:00+00:00",r:12,h:"BGN",a:"UDI",ref:"Livio Marinelli",st:"NS"},
   {id:1550206,d:"2026-11-22T14:00:00+00:00",r:12,h:"SAS",a:"GEN",ref:"Maria Sole Ferrieri Caputi",st:"NS"},
