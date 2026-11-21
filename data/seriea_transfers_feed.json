@@ -1,6 +1,6 @@
 {
   "note": "PROPOSALS from API-Football /transfers, for a person to read. data/transfers.json is the hand-curated overlay that is actually applied; this is not.",
-  "since": "2026-07-23",
+  "since": "2026-07-24",
   "moves": [
     {
       "n": "T. De Nipoti",
@@ -975,15 +975,6 @@
       "type": "Loan"
     },
     {
-      "n": "L. Oldenstam",
-      "from": "Como",
-      "to": "Jong PSV U21",
-      "fromCode": "COM",
-      "toCode": null,
-      "date": "2026-08-31",
-      "type": "Transfer"
-    },
-    {
       "n": "L. Jovanović",
       "from": "VfB Stuttgart",
       "to": "Udinese",
@@ -1371,15 +1362,6 @@
       "type": "Free agent"
     },
     {
-      "n": "S. Ghidotti",
-      "from": "Sampdoria",
-      "to": "Parma",
-      "fromCode": null,
-      "toCode": "PAR",
-      "date": "2026-08-30",
-      "type": "Transfer"
-    },
-    {
       "n": "Rui Modesto",
       "from": "Udinese",
       "to": "Vancouver Whitecaps",
@@ -1441,15 +1423,6 @@
       "toCode": null,
       "date": "2026-08-30",
       "type": "Free agent"
-    },
-    {
-      "n": "M. Braunöder",
-      "from": "Como",
-      "to": "Carrarese",
-      "fromCode": "COM",
-      "toCode": null,
-      "date": "2026-08-30",
-      "type": "Transfer"
     },
     {
       "n": "M. Bakker",
@@ -1569,15 +1542,6 @@
       "type": "Transfer"
     },
     {
-      "n": "E. Zeballos",
-      "from": "Boca Juniors",
-      "to": "Monza",
-      "fromCode": null,
-      "toCode": "MON",
-      "date": "2026-08-30",
-      "type": "Transfer"
-    },
-    {
       "n": "Dinis Rodrigues",
       "from": "FC Sion",
       "to": "Napoli",
@@ -1641,15 +1605,6 @@
       "type": "Free agent"
     },
     {
-      "n": "B. Balogh",
-      "from": "Parma",
-      "to": "KVC Westerlo",
-      "fromCode": "PAR",
-      "toCode": null,
-      "date": "2026-08-30",
-      "type": "Transfer"
-    },
-    {
       "n": "Arthur",
       "from": "Juventus",
       "to": "Santos",
@@ -1663,15 +1618,6 @@
       "from": "Genoa",
       "to": "Racing Santander",
       "fromCode": "GEN",
-      "toCode": null,
-      "date": "2026-08-30",
-      "type": "Transfer"
-    },
-    {
-      "n": "A. Ottaviano",
-      "from": "Monza",
-      "to": "PRO Vercelli",
-      "fromCode": "MON",
       "toCode": null,
       "date": "2026-08-30",
       "type": "Transfer"
@@ -1837,15 +1783,6 @@
       "toCode": "CAG",
       "date": "2026-08-28",
       "type": "Loan"
-    },
-    {
-      "n": "P. Amoran",
-      "from": "Parma",
-      "to": "Vasteras SK FK",
-      "fromCode": "PAR",
-      "toCode": null,
-      "date": "2026-08-28",
-      "type": "Transfer"
     },
     {
       "n": "Mario David",
@@ -2361,15 +2298,6 @@
       "type": "Transfer"
     },
     {
-      "n": "Tommaso Fumagalli",
-      "from": "Como",
-      "to": "Inter U23",
-      "fromCode": "COM",
-      "toCode": null,
-      "date": "2026-08-23",
-      "type": "-"
-    },
-    {
       "n": "M. Osmajić",
       "from": "Preston",
       "to": "Genoa",
@@ -2649,15 +2577,6 @@
       "type": "Transfer"
     },
     {
-      "n": "I. Touré",
-      "from": "Pisa",
-      "to": "Monza",
-      "fromCode": null,
-      "toCode": "MON",
-      "date": "2026-08-19",
-      "type": "Transfer"
-    },
-    {
       "n": "Haris Kozarac",
       "from": "Lecce",
       "to": "Dugopolje",
@@ -2707,15 +2626,6 @@
       "from": "Monza",
       "to": "Pisa",
       "fromCode": "MON",
-      "toCode": null,
-      "date": "2026-08-19",
-      "type": "Transfer"
-    },
-    {
-      "n": "A. Joujou",
-      "from": "Parma",
-      "to": "Nantes",
-      "fromCode": "PAR",
       "toCode": null,
       "date": "2026-08-19",
       "type": "Transfer"
@@ -2820,15 +2730,6 @@
       "type": "Loan"
     },
     {
-      "n": "A. Petagna",
-      "from": "Monza",
-      "to": "Pisa",
-      "fromCode": "MON",
-      "toCode": null,
-      "date": "2026-08-18",
-      "type": "Transfer"
-    },
-    {
       "n": "A. Kostić",
       "from": "AC Milan",
       "to": "Sparta Rotterdam",
@@ -2844,15 +2745,6 @@
       "fromCode": "PAR",
       "toCode": null,
       "date": "2026-08-18",
-      "type": "Transfer"
-    },
-    {
-      "n": "Z. Suzuki",
-      "from": "Parma",
-      "to": "Aston Villa",
-      "fromCode": "PAR",
-      "toCode": null,
-      "date": "2026-08-17",
       "type": "Transfer"
     },
     {
@@ -3009,15 +2901,6 @@
       "type": "Transfer"
     },
     {
-      "n": "A. Circati",
-      "from": "Parma",
-      "to": "Benfica",
-      "fromCode": "PAR",
-      "toCode": null,
-      "date": "2026-08-17",
-      "type": "Transfer"
-    },
-    {
       "n": "A. Brorsson",
       "from": "Monza",
       "to": "Raków Częstochowa",
@@ -3068,15 +2951,6 @@
       "to": "Juventus",
       "fromCode": "BGN",
       "toCode": "JUV",
-      "date": "2026-08-16",
-      "type": "Transfer"
-    },
-    {
-      "n": "A. Brorsson",
-      "from": "Monza",
-      "to": "Raków Częstochowa",
-      "fromCode": "MON",
-      "toCode": null,
       "date": "2026-08-16",
       "type": "Transfer"
     },
@@ -3302,15 +3176,6 @@
       "to": "VPS",
       "fromCode": "PAR",
       "toCode": null,
-      "date": "2026-08-12",
-      "type": "Transfer"
-    },
-    {
-      "n": "D. Romero",
-      "from": "Tigre",
-      "to": "Parma",
-      "fromCode": null,
-      "toCode": "PAR",
       "date": "2026-08-12",
       "type": "Transfer"
     },
@@ -3675,15 +3540,6 @@
       "type": "Loan"
     },
     {
-      "n": "Z. Kennedy",
-      "from": "Mjallby AIF",
-      "to": "Como",
-      "fromCode": null,
-      "toCode": "COM",
-      "date": "2026-08-06",
-      "type": "Transfer"
-    },
-    {
       "n": "S. Ascione",
       "from": "Venezia",
       "to": "Vis Pesaro",
@@ -3853,15 +3709,6 @@
       "toCode": null,
       "date": "2026-08-05",
       "type": "Loan"
-    },
-    {
-      "n": "Timurs Azarovs",
-      "from": "Monza",
-      "to": "Foggia",
-      "fromCode": "MON",
-      "toCode": null,
-      "date": "2026-08-04",
-      "type": "Transfer"
     },
     {
       "n": "S. Sazonov",
@@ -4611,15 +4458,6 @@
       "type": "Transfer"
     },
     {
-      "n": "A. Gemello",
-      "from": "Parma",
-      "to": "Savoia",
-      "fromCode": "PAR",
-      "toCode": null,
-      "date": "2026-07-29",
-      "type": "Transfer"
-    },
-    {
       "n": "A. Dovbyk",
       "from": "AS Roma",
       "to": "Bologna",
@@ -4818,15 +4656,6 @@
       "type": "Loan"
     },
     {
-      "n": "A. Benedyczak",
-      "from": "Parma",
-      "to": "Kasımpaşa",
-      "fromCode": "PAR",
-      "toCode": null,
-      "date": "2026-07-26",
-      "type": "Transfer"
-    },
-    {
       "n": "P. Parmiggiani",
       "from": "Atalanta",
       "to": "Ospitaletto",
@@ -4861,141 +4690,6 @@
       "toCode": null,
       "date": "2026-07-24",
       "type": "Loan"
-    },
-    {
-      "n": "Ricardo Mangas",
-      "from": "Sporting CP",
-      "to": "Monza",
-      "fromCode": null,
-      "toCode": "MON",
-      "date": "2026-07-23",
-      "type": "Loan"
-    },
-    {
-      "n": "O. Nordvall",
-      "from": "Bologna",
-      "to": "IF Elfsborg",
-      "fromCode": "BGN",
-      "toCode": null,
-      "date": "2026-07-23",
-      "type": "Transfer"
-    },
-    {
-      "n": "Nicola Pintus",
-      "from": "Cagliari",
-      "to": "Pianese",
-      "fromCode": "CAG",
-      "toCode": null,
-      "date": "2026-07-23",
-      "type": "Loan"
-    },
-    {
-      "n": "N. Romanelli",
-      "from": "Lazio",
-      "to": "Lazio U18",
-      "fromCode": "LAZ",
-      "toCode": null,
-      "date": "2026-07-23",
-      "type": "-"
-    },
-    {
-      "n": "Marco Pirro",
-      "from": "Monza",
-      "to": "Monza",
-      "fromCode": "MON",
-      "toCode": "MON",
-      "date": "2026-07-23",
-      "type": "Free agent"
-    },
-    {
-      "n": "L. Kjerrumgaard",
-      "from": "Udinese",
-      "to": "Watford",
-      "fromCode": "UDI",
-      "toCode": null,
-      "date": "2026-07-23",
-      "type": "Transfer"
-    },
-    {
-      "n": "L. Hasa",
-      "from": "Napoli",
-      "to": "Frosinone",
-      "fromCode": "NAP",
-      "toCode": "FRO",
-      "date": "2026-07-23",
-      "type": "Transfer"
-    },
-    {
-      "n": "Jacopo Grossi",
-      "from": "Genoa",
-      "to": "Trento",
-      "fromCode": "GEN",
-      "toCode": null,
-      "date": "2026-07-23",
-      "type": "Loan"
-    },
-    {
-      "n": "J. Italeng",
-      "from": "Atalanta",
-      "to": "Renate",
-      "fromCode": "ATA",
-      "toCode": null,
-      "date": "2026-07-23",
-      "type": "Transfer"
-    },
-    {
-      "n": "Iker Bravo",
-      "from": "Udinese",
-      "to": "Watford",
-      "fromCode": "UDI",
-      "toCode": null,
-      "date": "2026-07-23",
-      "type": "Transfer"
-    },
-    {
-      "n": "G. Scuderi",
-      "from": "Fiorentina",
-      "to": "Juve Stabia",
-      "fromCode": "FIO",
-      "toCode": null,
-      "date": "2026-07-23",
-      "type": "Loan"
-    },
-    {
-      "n": "Fabio Desole",
-      "from": "Torino",
-      "to": "Athletic Carpi",
-      "fromCode": "TOR",
-      "toCode": null,
-      "date": "2026-07-23",
-      "type": "Transfer"
-    },
-    {
-      "n": "E. Zaia",
-      "from": "Torino",
-      "to": "Pergolettese",
-      "fromCode": "TOR",
-      "toCode": null,
-      "date": "2026-07-23",
-      "type": "Loan"
-    },
-    {
-      "n": "D. Baroncioni",
-      "from": "Bologna",
-      "to": "Lumezzane",
-      "fromCode": "BGN",
-      "toCode": null,
-      "date": "2026-07-23",
-      "type": "Transfer"
-    },
-    {
-      "n": "A. Zerbin",
-      "from": "Napoli",
-      "to": "Frosinone",
-      "fromCode": "NAP",
-      "toCode": "FRO",
-      "date": "2026-07-23",
-      "type": "Transfer"
     }
   ]
 }
