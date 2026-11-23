@@ -5,6 +5,7 @@ import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
 import vm from 'node:vm';
+import { createRequire } from 'node:module';
 import assert from 'node:assert/strict';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
@@ -68,8 +69,23 @@ assert.equal(inconsistent.length, 0,
    had 3 yellows in 204 minutes and Jacob Murphy 3 in 182, both confirmed round
    by round in the bookings ledger. Five full matches at that rate is still the
    parsing fault this exists to catch. */
+/* UNLESS THE LEDGER SAYS IT HAPPENED. On 23 November 2026 Matt Crooks reached
+   5 yellows in exactly 450 minutes, 1.00 a 90, and the bookings ledger
+   confirms all five, round by round (1, 4, 5, 6 and 9). A parsing fault is a
+   rate the match record does not back up; a rate it does back up is a
+   footballer. So a high rate passes when the ledger, joined through the same
+   unique-or-nothing name rule the desks use, holds at least that many cards
+   for him at his club. The ledger can hold one man under two spellings, so
+   every matching row counts. */
+const ledgerCtx = vm.createContext({});
+vm.runInContext(readFileSync(join(root, 'data', 'pl_bookings.js'), 'utf8') + ';this.L=PL_BOOKINGS;', ledgerCtx);
+const LEDGER = ledgerCtx.L || { players: [] };
+const C = createRequire(import.meta.url)('../assets/core.js');
+const ledgerCards = (p) => (LEDGER.players || [])
+  .filter((r) => r.c === p.c && (r.n === p.n || C.matchSquadName(r.n, [p.n]) === p.n))
+  .reduce((s, r) => s + Object.values(r.rds || {}).reduce((a, b) => a + (Number(b) || 0), 0), 0);
 const unflagged = PL_PLAYERS.filter((p) => p.y != null && Number(p.y) >= 1 && !p.ls
-  && Number(p.min) >= 450);
+  && Number(p.min) >= 450 && ledgerCards(p) < Number(p.yc));
 assert.equal(unflagged.length, 0,
   `${unflagged.length} player(s) card more than once per 90 without a ` +
   'low-sample flag — either the rate is wrong or the flag is (' +
