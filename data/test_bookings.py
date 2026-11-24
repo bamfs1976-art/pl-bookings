@@ -334,6 +334,20 @@ with tempfile.TemporaryDirectory() as d:
     except SystemExit:
         pass
 
+# ---- and the shipped ledgers are already folded ----------------------------
+# Every build folds, so a committed ledger holding two rows for one man means
+# the fold was skipped or broken. Checked against the real files.
+for lg, (fname, _konst) in B.OUT_FOR.items():
+    path = Path(__file__).resolve().parent / fname
+    if not path.exists():
+        continue
+    led = B.load_shipped(path)
+    keys = sorted({(p["c"], p["n"]) for p in led.get("players") or []}
+                  | {(a["c"], a["n"]) for a in led.get("apps") or []})
+    canon = B.identities(keys, {(p["c"], p["n"]): p["id"] for p in led.get("players") or [] if p.get("id") is not None})
+    unfolded = sorted(f"{c} {n} -> {canon[(c, n)]}" for c, n in keys if canon[(c, n)] != n)
+    check(f"{fname} holds one row per player", unfolded[:3], [])
+
 if FAIL:
     print("FAIL")
     for f in FAIL:
@@ -378,7 +392,7 @@ check("different feed ids never join by name", len(apart["players"]), 2)
 clubs = B.merge(EMPTY, [row(61, 1, "ARS", "Ben White"), row(62, 2, "BHA", "B. White")], "2026-27")
 check("the same name at two clubs stays two rows", len(clubs["players"]), 2)
 
-print(f"bookings ledger OK: {5 + 21 + 33 + 14} checks — second yellows counted once, the "
+print(f"bookings ledger OK: {5 + 21 + 33 + 14 + 4} checks — second yellows counted once, the "
       "merge keeps earlier rounds and never doubles a fixture, unbooked players "
       "stay out, the last-five window slices on rounds, a face is attached "
       "only to the man it belongs to, appearances survive a re-walk, the "
