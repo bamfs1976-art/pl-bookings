@@ -125,14 +125,101 @@ def load_shipped(path):
         sys.exit(f"ERROR: {path.name} will not parse: {e}")
 
 
+def identities(names, ids):
+    """Which spellings at a club are one player. Returns {(club, name): canonical name}.
+
+    THE FEED SPELLS ONE MAN TWO WAYS. API-Football writes "Matt Crooks" in one
+    round and "M. Crooks" in the next, and a ledger keyed on the name gives him
+    two rows: his cards split, and the last-5 badge, which refuses a squad name
+    matching two feed rows, disappears. On 24 November 2026 the four ledgers
+    held 286 such pairs among the booked rows.
+
+    Two kinds of evidence, strongest first:
+      1. the feed's own player id, which every harvest from 24 November 2026
+         carries (map_fixture_player);
+      2. the name, through build_pl_data.same_tokens, and only when the match
+         is MUTUAL AND UNIQUE: each spelling matches the other and nobody else
+         at the club. "J. Smith" beside "James Smith" and "John Smith" joins
+         neither, and two written-out forenames never join ("Brennan Johnson",
+         "Ben Johnson"), so a wrong join costs a merge, never another man's cards.
+    Two rows with DIFFERENT ids are never joined by name.
+
+    NOT THE PHOTOGRAPH. Its URL carries a feed id too, but the photograph is
+    joined to the ledger by name (attach_photos), so it inherits any mistake
+    that join makes: in November 2026 Charlie Taylor at Derby carried Corey
+    Blackett-Taylor's face, and trusting it merged two players.
+
+    The canonical spelling is the fullest one (most letters), so the record
+    reads "Matt Crooks", and the choice is the same for a player's cards and his
+    appearances because both are resolved here together.
+    """
+    parent = {k: k for k in names}
+
+    def find(k):
+        while parent[k] != k:
+            parent[k] = parent[parent[k]]
+            k = parent[k]
+        return k
+
+    def union(a, b):
+        ra, rb = find(a), find(b)
+        if ra == rb:
+            return
+        ia, ib = group_id(ra), group_id(rb)
+        if ia is not None and ib is not None and ia != ib:
+            return
+        parent[rb] = ra
+
+    members = {}
+
+    def group_id(root):
+        for k in names:
+            if find(k) == root and ids.get(k) is not None:
+                return ids[k]
+        return None
+
+    by_id = {}
+    for k in names:
+        if ids.get(k) is not None:
+            by_id.setdefault((k[0], ids[k]), []).append(k)
+    for ks in by_id.values():
+        for k in ks[1:]:
+            parent[find(k)] = find(ks[0])
+
+    by_club = {}
+    for k in names:
+        by_club.setdefault(k[0], []).append((k, P.name_tokens(k[1])))
+    for club, rows in by_club.items():
+        hits = {}
+        for k, t in rows:
+            hits[k] = [j for j, u in rows if j != k and P.same_tokens(t, u)]
+        for k, t in rows:
+            if len(hits[k]) == 1:
+                j = hits[k][0]
+                if hits[j] == [k]:
+                    union(k, j)
+
+    for k in names:
+        members.setdefault(find(k), []).append(k)
+    canon = {}
+    for root, ks in members.items():
+        best = max(ks, key=lambda k: (len("".join(P.name_tokens(k[1]))), len(k[1]), k[1]))
+        for k in ks:
+            canon[k] = best[1]
+    return canon
+
+
 def merge(shipped, rows, season):
     """Fold a player-matches harvest into the shipped ledger."""
     by_key = {}
+    ids = {}
     for p in shipped.get("players") or []:
         by_key[(p["c"], p["n"])] = {
             "n": p["n"], "c": p["c"],
             "rds": {int(k): int(v) for k, v in (p.get("rds") or {}).items()},
         }
+        if p.get("id") is not None:
+            ids[(p["c"], p["n"])] = int(p["id"])
     fixtures = {int(f) for f in (shipped.get("fixtures") or [])}
     # round -> fouls committed in it, per player. None where the ledger was
     # written before fouls were kept; a full re-walk fills those in.
@@ -141,6 +228,8 @@ def merge(shipped, rows, season):
         fl = a.get("f") or [None] * len(a.get("r") or [])
         apps[(a["c"], a["n"])] = {int(x): (None if v is None else int(v))
                                   for x, v in zip(a.get("r") or [], fl)}
+        if a.get("id") is not None:
+            ids.setdefault((a["c"], a["n"]), int(a["id"]))
 
     seen_fixtures = set()
     for r in rows:
@@ -149,6 +238,8 @@ def merge(shipped, rows, season):
         if fid is None or rd is None:
             continue
         seen_fixtures.add(int(fid))
+        if r.get("club") and r.get("player") and r.get("player_id") is not None:
+            ids[(r["club"], r["player"])] = int(r["player_id"])
         # Appearances before the card check, and before the already-recorded
         # skip: a set of rounds cannot double, and the first run after this
         # field arrived has to re-walk fixtures the cards already hold.
@@ -181,8 +272,36 @@ def merge(shipped, rows, season):
     apps_fouls = bool(shipped.get("apps_fouls")) or (
         bool(seen_fixtures) and len(fixtures & seen_fixtures) >= 0.9 * len(fixtures))
     fixtures |= seen_fixtures
+
+    # ONE ROW PER PLAYER. Every spelling in the cards and the appearances is
+    # resolved together (identities), then folded onto its canonical name. A
+    # round held under both spellings keeps the larger count: the same booking
+    # read twice is still one booking. Runs on every build, so the shipped
+    # ledgers heal on their next run and stay healed.
+    canon = identities(sorted(set(by_key) | set(apps)), ids)
+    folded = {}
+    for (c, n), e in by_key.items():
+        cn = canon[(c, n)]
+        f = folded.setdefault((c, cn), {"n": cn, "c": c, "rds": {}})
+        for rd, v in e["rds"].items():
+            f["rds"][rd] = max(f["rds"].get(rd, 0), v)
+    by_key = folded
+    fapps = {}
+    for (c, n), rs in apps.items():
+        cn = canon[(c, n)]
+        f = fapps.setdefault((c, cn), {})
+        for rd, v in rs.items():
+            if rd not in f or f[rd] is None:
+                f[rd] = v
+    apps = fapps
+    pid_of = {}
+    for (c, n), pid in ids.items():
+        if (c, n) in canon:
+            pid_of.setdefault((c, canon[(c, n)]), pid)
+
     players = sorted(
-        ({"n": e["n"], "c": e["c"], "rds": {str(k): v for k, v in sorted(e["rds"].items())}}
+        (dict({"n": e["n"], "c": e["c"], "rds": {str(k): v for k, v in sorted(e["rds"].items())}},
+              **({"id": pid_of[(e["c"], e["n"])]} if (e["c"], e["n"]) in pid_of else {}))
          for e in by_key.values() if e["rds"]),
         key=lambda p: (-sum(p["rds"].values()), p["c"], p["n"]))
     rounds = max([int(k) for p in players for k in p["rds"]] or [0])

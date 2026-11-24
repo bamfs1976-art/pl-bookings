@@ -670,8 +670,13 @@ def map_fixture_player(entry, club_of):
     name = ((entry.get("player") or {}).get("name") or "").strip()
     if not name:
         return None
+    pid = (entry.get("player") or {}).get("id")
     return {
         "player": name,
+        # The feed's own id for him. The name alone is not an identity: the
+        # same man arrives as "Matt Crooks" one round and "M. Crooks" the
+        # next, and build_bookings.py joins the two by this first.
+        "player_id": int(pid) if isinstance(pid, int) or (isinstance(pid, str) and pid.isdigit()) else None,
         "club": club_of,
         "pos": AF_POS.get((games.get("position") or "").upper()[:1]),
         "min": int(mins),
