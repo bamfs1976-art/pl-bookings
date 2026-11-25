@@ -334,13 +334,67 @@ with tempfile.TemporaryDirectory() as d:
     except SystemExit:
         pass
 
+# ---- and the shipped ledgers are already folded ----------------------------
+# Every build folds, so a committed ledger holding two rows for one man means
+# the fold was skipped or broken. Checked against the real files.
+for lg, (fname, _konst) in B.OUT_FOR.items():
+    path = Path(__file__).resolve().parent / fname
+    if not path.exists():
+        continue
+    led = B.load_shipped(path)
+    keys = sorted({(p["c"], p["n"]) for p in led.get("players") or []}
+                  | {(a["c"], a["n"]) for a in led.get("apps") or []})
+    canon = B.identities(keys, {(p["c"], p["n"]): p["id"] for p in led.get("players") or [] if p.get("id") is not None})
+    unfolded = sorted(f"{c} {n} -> {canon[(c, n)]}" for c, n in keys if canon[(c, n)] != n)
+    check(f"{fname} holds one row per player", unfolded[:3], [])
+
 if FAIL:
     print("FAIL")
     for f in FAIL:
         print("  -", f)
     sys.exit(1)
-print(f"bookings ledger OK: {5 + 21 + 33} checks — second yellows counted once, the "
+# ---- one row per player, however the feed spells him ---------------------
+# On 24 November 2026 the ledgers held 286 pairs like "Matt Crooks" and
+# "M. Crooks": one man, two rows, his cards split and his badge refused.
+spell = B.merge(EMPTY, [row(11, 1, "HUL", "Matt Crooks"), row(12, 4, "HUL", "M. Crooks"),
+                        row(13, 5, "HUL", "M. Crooks")], "2026-27")
+check("two spellings fold into one row", [p["n"] for p in spell["players"]], ["Matt Crooks"])
+check("and keep every card", sum(spell["players"][0]["rds"].values()), 3)
+check("his appearances fold under the same name", [a["n"] for a in spell["apps"]], ["Matt Crooks"])
+check("all three appearances survive", spell["apps"][0]["r"], [1, 4, 5])
+again = B.merge(spell, [], "2026-27")
+check("folding is stable on a rebuild", again["players"], spell["players"])
+# A shipped ledger that already holds both spellings heals on its next build.
+split = {"season": "2026-27", "rounds": 5, "fixtures": [11, 12],
+         "players": [{"n": "M. Crooks", "c": "HUL", "rds": {"1": 1, "6": 1}},
+                     {"n": "Matt Crooks", "c": "HUL", "rds": {"4": 1, "5": 1}}],
+         "apps": [{"c": "HUL", "n": "M. Crooks", "r": [1, 6], "f": [2, 1]},
+                  {"c": "HUL", "n": "Matt Crooks", "r": [4, 5], "f": [3, 0]}]}
+healed = B.merge(split, [], "2026-27")
+check("a split ledger heals", [(p["n"], p["rds"]) for p in healed["players"]],
+      [("Matt Crooks", {"1": 1, "4": 1, "5": 1, "6": 1})])
+check("with its fouls in round order", healed["apps"][0]["f"], [2, 3, 0, 1])
+# AMBIGUITY JOINS NOBODY. "J. Smith" could be either written-out Smith.
+amb = B.merge(EMPTY, [row(21, 1, "BOU", "J. Smith"), row(22, 2, "BOU", "James Smith"),
+                      row(23, 3, "BOU", "John Smith")], "2026-27")
+check("an initial matching two players joins neither", len(amb["players"]), 3)
+# Two written-out forenames are two people.
+two = B.merge(EMPTY, [row(31, 1, "NFO", "Brennan Johnson"), row(32, 2, "NFO", "Ben Johnson")], "2026-27")
+check("Brennan and Ben Johnson stay apart", len(two["players"]), 2)
+# The feed's id joins spellings the name rule cannot, and different ids never join.
+idr = lambda fid, rd, n, pid: dict(row(fid, rd, "BIR", n), player_id=pid)
+byid = B.merge(EMPTY, [idr(41, 1, "Paik Seung-Ho", 7), idr(42, 2, "Seung Ho Paik", 7)], "2026-27")
+check("the same feed id is one player", len(byid["players"]), 1)
+check("and the row keeps the id", byid["players"][0].get("id"), 7)
+apart = B.merge(EMPTY, [idr(51, 1, "J. Smith", 8), idr(52, 2, "James Smith", 9)], "2026-27")
+check("different feed ids never join by name", len(apart["players"]), 2)
+# Different clubs are different players, whatever the name.
+clubs = B.merge(EMPTY, [row(61, 1, "ARS", "Ben White"), row(62, 2, "BHA", "B. White")], "2026-27")
+check("the same name at two clubs stays two rows", len(clubs["players"]), 2)
+
+print(f"bookings ledger OK: {5 + 21 + 33 + 14 + 4} checks — second yellows counted once, the "
       "merge keeps earlier rounds and never doubles a fixture, unbooked players "
       "stay out, the last-five window slices on rounds, a face is attached "
       "only to the man it belongs to, appearances survive a re-walk, the "
-      "last-5 badge joins one man or none, and the harvest can read the ledger")
+      "last-5 badge joins one man or none, one player is one row however the feed "
+      "spells him (and an ambiguous name joins nobody), and the harvest can read the ledger")
