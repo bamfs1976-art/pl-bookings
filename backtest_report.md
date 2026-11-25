@@ -4,7 +4,7 @@
      of this file is that every number in it came out of a real run. -->
 
 **Premier League** · 2161 out-of-sample predictions over 11 rounds
-· source `data/match_history.json` · generated 2026-11-24T15:15:53.014Z
+· source `data/match_history.json` · generated 2026-11-25T14:15:26.010Z
 
 ## Headline
 
@@ -13,8 +13,8 @@ The refit **beats** the naive base rate.
 | model | Brier | log loss |
 |---|---|---|
 | base | 0.1135 | 0.3875 |
-| prior | 0.1123 | 0.3811 |
-| fit | 0.1127 | 0.3832 |
+| prior | 0.1123 | 0.3810 |
+| fit | 0.1126 | 0.3831 |
 
 Lower is better. `base` is the league base rate for every player — the naive
 baseline the model has to beat to justify itself. `prior` is the shipped
@@ -23,8 +23,8 @@ is what a live model would have known at the time.
 
 ## Is the difference real?
 
-- fit vs base: **BEATS** — mean Brier difference -0.00084 ± 0.00067 (2 s.e.)
-- fit vs prior: **is indistinguishable from** — mean Brier difference 0.00036 ± 0.00036 (2 s.e.)
+- fit vs base: **BEATS** — mean Brier difference -0.00086 ± 0.00067 (2 s.e.)
+- fit vs prior: **is indistinguishable from** — mean Brier difference 0.00036 ± 0.00037 (2 s.e.)
 
 The predictions are paired — same rows, same order — so the difference in
 squared error has a standard error of its own, and an interval spanning zero
@@ -42,7 +42,7 @@ score suggests.
 | 0–10% | 199 | 4.8% | 6.0% | +1.2pp |
 | 10–20% | 1957 | 13.3% | 13.8% | +0.5pp |
 | 20–30% | 3 | 23.2% | 0.0% | -23.2pp |
-| 30–40% | 2 | 34.2% | 0.0% | -34.2pp |
+| 30–40% | 2 | 34.8% | 0.0% | -34.8pp |
 | 40–50% | 0 | — | — | — |
 | 50–60% | 0 | — | — | — |
 | 60–70% | 0 | — | — | — |
