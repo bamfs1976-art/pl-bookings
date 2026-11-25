@@ -1,6 +1,6 @@
 {
   "note": "PROPOSALS from API-Football /transfers, for a person to read. data/transfers.json is the hand-curated overlay that is actually applied; this is not.",
-  "since": "2026-07-27",
+  "since": "2026-07-28",
   "moves": [
     {
       "n": "R. Clayton",
@@ -1839,6 +1839,15 @@
       "type": "Free agent"
     },
     {
+      "n": "E. King",
+      "from": "Cardiff",
+      "to": "Gillingham",
+      "fromCode": "CAR",
+      "toCode": null,
+      "date": "2026-08-30",
+      "type": "Transfer"
+    },
+    {
       "n": "E. Austbö",
       "from": "Viking",
       "to": "West Ham",
@@ -1864,6 +1873,15 @@
       "toCode": null,
       "date": "2026-08-30",
       "type": "Free agent"
+    },
+    {
+      "n": "D. Ozoh",
+      "from": "Crystal Palace",
+      "to": "Derby",
+      "fromCode": null,
+      "toCode": "DER",
+      "date": "2026-08-30",
+      "type": "Transfer"
     },
     {
       "n": "D. Oyegoke",
@@ -2442,6 +2460,15 @@
       "type": "Transfer"
     },
     {
+      "n": "K. Bielik",
+      "from": "West Brom",
+      "to": "Cardiff",
+      "fromCode": "WBA",
+      "toCode": "CAR",
+      "date": "2026-08-24",
+      "type": "Transfer"
+    },
+    {
       "n": "J. Nelson",
       "from": "Austin",
       "to": "Bolton",
@@ -2746,6 +2773,15 @@
       "toCode": null,
       "date": "2026-08-18",
       "type": "Loan"
+    },
+    {
+      "n": "R. Hedges",
+      "from": "Blackburn",
+      "to": "Derby",
+      "fromCode": "BLB",
+      "toCode": "DER",
+      "date": "2026-08-18",
+      "type": "Free agent"
     },
     {
       "n": "J. Piroe",
@@ -3196,6 +3232,15 @@
       "toCode": null,
       "date": "2026-08-12",
       "type": "Loan"
+    },
+    {
+      "n": "A. Mowatt",
+      "from": "West Brom",
+      "to": "Derby",
+      "fromCode": "WBA",
+      "toCode": "DER",
+      "date": "2026-08-12",
+      "type": "Transfer"
     },
     {
       "n": "S. Walker",
@@ -3765,6 +3810,15 @@
       "type": "Free agent"
     },
     {
+      "n": "Joshua Beecher",
+      "from": "Cardiff",
+      "to": "Cambrian & Clydach",
+      "fromCode": "CAR",
+      "toCode": null,
+      "date": "2026-08-04",
+      "type": "Free agent"
+    },
+    {
       "n": "J. Moylan",
       "from": "Lincoln",
       "to": "Cardiff",
@@ -3842,6 +3896,15 @@
       "to": "Middlesbrough",
       "fromCode": null,
       "toCode": "MID",
+      "date": "2026-08-03",
+      "type": "Transfer"
+    },
+    {
+      "n": "L. Thompson",
+      "from": "Derby",
+      "to": "Mansfield Town",
+      "fromCode": "DER",
+      "toCode": null,
       "date": "2026-08-03",
       "type": "Transfer"
     },
@@ -4033,6 +4096,15 @@
       "toCode": "DER",
       "date": "2026-08-01",
       "type": "Return from loan"
+    },
+    {
+      "n": "L. Wheeldon",
+      "from": "Derby",
+      "to": "Boston United",
+      "fromCode": "DER",
+      "toCode": null,
+      "date": "2026-08-01",
+      "type": "Free agent"
     },
     {
       "n": "J. Zemura",
@@ -4447,114 +4519,6 @@
       "toCode": null,
       "date": "2026-07-28",
       "type": "Transfer"
-    },
-    {
-      "n": "U. Raghouber",
-      "from": "Lille",
-      "to": "Burnley",
-      "fromCode": null,
-      "toCode": "BUR",
-      "date": "2026-07-27",
-      "type": "Transfer"
-    },
-    {
-      "n": "Sam Parker",
-      "from": "Swansea",
-      "to": "Wycombe",
-      "fromCode": "SWA",
-      "toCode": null,
-      "date": "2026-07-27",
-      "type": "Loan"
-    },
-    {
-      "n": "S. Berhalter",
-      "from": "Vancouver Whitecaps",
-      "to": "Middlesbrough",
-      "fromCode": null,
-      "toCode": "MID",
-      "date": "2026-07-27",
-      "type": "Transfer"
-    },
-    {
-      "n": "N. Mawene",
-      "from": "Preston",
-      "to": "Fleetwood Town",
-      "fromCode": "PRE",
-      "toCode": null,
-      "date": "2026-07-27",
-      "type": "Free agent"
-    },
-    {
-      "n": "N. Galves",
-      "from": "Rodez",
-      "to": "West Brom",
-      "fromCode": null,
-      "toCode": "WBA",
-      "date": "2026-07-27",
-      "type": "Transfer"
-    },
-    {
-      "n": "L. Vázquez",
-      "from": "Anderlecht",
-      "to": "Birmingham",
-      "fromCode": null,
-      "toCode": "BIR",
-      "date": "2026-07-27",
-      "type": "Transfer"
-    },
-    {
-      "n": "J. Pradic",
-      "from": "Preston",
-      "to": "Fleetwood Town",
-      "fromCode": "PRE",
-      "toCode": null,
-      "date": "2026-07-27",
-      "type": "Free agent"
-    },
-    {
-      "n": "J. Gauci",
-      "from": "Aston Villa",
-      "to": "Lincoln",
-      "fromCode": null,
-      "toCode": "LIN",
-      "date": "2026-07-27",
-      "type": "Loan"
-    },
-    {
-      "n": "J. Fevrier",
-      "from": "Stockport County",
-      "to": "Blackburn",
-      "fromCode": null,
-      "toCode": "BLB",
-      "date": "2026-07-27",
-      "type": "Transfer"
-    },
-    {
-      "n": "J. Buyabu",
-      "from": "Sheffield Utd",
-      "to": "Rotherham",
-      "fromCode": "SHU",
-      "toCode": null,
-      "date": "2026-07-27",
-      "type": "Loan"
-    },
-    {
-      "n": "E. Dixon-Bonner",
-      "from": "QPR",
-      "to": "Dixon-Bonner Elijah",
-      "fromCode": "QPR",
-      "toCode": null,
-      "date": "2026-07-27",
-      "type": "Free agent"
-    },
-    {
-      "n": "C. Chibueze",
-      "from": "Stoke City",
-      "to": "South Shields",
-      "fromCode": "STK",
-      "toCode": null,
-      "date": "2026-07-27",
-      "type": "Loan"
     }
   ]
 }
