@@ -25,6 +25,7 @@
   "https://rfef.es/sites/default/files/designaciones_1a_division_masculina_-_temp_2026-27_-_jornada_13_lunes.pdf",
   "https://rfef.es/sites/default/files/designaciones_1a_division_masculina_-_temp_2026-27_-_jornada_13_sabado.pdf",
   "https://rfef.es/sites/default/files/designaciones_1a_division_masculina_-_temp_2026-27_-_jornada_13_viernes.pdf",
+  "https://rfef.es/sites/default/files/designaciones_1a_division_masculina_-_temp_2026-27_-_jornada_14_viernes.pdf",
   "https://rfef.es/sites/default/files/designaciones_1a_division_masculina_-_temp_2026-27_-_jornada_1_domingo16.pdf",
   "https://rfef.es/sites/default/files/designaciones_1a_division_masculina_-_temp_2026-27_-_jornada_1_lunes17.pdf",
   "https://rfef.es/sites/default/files/designaciones_1a_division_masculina_-_temp_2026-27_-_jornada_1_sabado15.pdf",
@@ -49,6 +50,7 @@
   "https://www.aia-figc.it/news/serie-a-enilive-designazioni-10a-giornata-28806/",
   "https://www.aia-figc.it/news/serie-a-enilive-designazioni-11a-giornata-28822/",
   "https://www.aia-figc.it/news/serie-a-enilive-designazioni-12a-giornata-28854/",
+  "https://www.aia-figc.it/news/serie-a-enilive-designazioni-13a-giornata-28879/",
   "https://www.aia-figc.it/news/serie-a-enilive-designazioni-4a-giornata-27632/",
   "https://www.aia-figc.it/news/serie-a-enilive-designazioni-5a-giornata-27667/",
   "https://www.aia-figc.it/news/serie-a-enilive-designazioni-6a-giornata-28755/",
@@ -2757,6 +2759,17 @@
    "source": "https://rfef.es/sites/default/files/designaciones_1a_division_masculina_-_temp_2026-27_-_jornada_13_lunes.pdf"
   },
   {
+   "league": "LL",
+   "date": "2026-11-27",
+   "h": "LEV",
+   "a": "RAC",
+   "ko": "21:00",
+   "ref": "Miguel Sesma",
+   "refResolved": "Miguel Sesma Espinosa",
+   "resolvedBy": "run",
+   "source": "https://rfef.es/sites/default/files/designaciones_1a_division_masculina_-_temp_2026-27_-_jornada_14_viernes.pdf"
+  },
+  {
    "league": "PL",
    "date": "2026-09-12",
    "h": "AVL",
@@ -3602,6 +3615,61 @@
    "refResolved": "Daniele Doveri",
    "resolvedBy": "surname",
    "source": "https://www.aia-figc.it/news/serie-a-enilive-designazioni-12a-giornata-28854/"
+  },
+  {
+   "league": "SA",
+   "date": "2026-11-27",
+   "h": "VEN",
+   "a": "BGN",
+   "ko": "20:45",
+   "ref": "COLOMBO",
+   "refResolved": "Andrea Colombo",
+   "resolvedBy": "surname",
+   "source": "https://www.aia-figc.it/news/serie-a-enilive-designazioni-13a-giornata-28879/"
+  },
+  {
+   "league": "SA",
+   "date": "2026-11-28",
+   "h": "FRO",
+   "a": "PAR",
+   "ko": "15:00",
+   "ref": "BONACINA",
+   "refResolved": "Kevin Bonacina",
+   "resolvedBy": "surname",
+   "source": "https://www.aia-figc.it/news/serie-a-enilive-designazioni-13a-giornata-28879/"
+  },
+  {
+   "league": "SA",
+   "date": "2026-11-28",
+   "h": "INT",
+   "a": "GEN",
+   "ko": "20:45",
+   "ref": "AYROLDI",
+   "refResolved": "Giovanni Ayroldi",
+   "resolvedBy": "surname",
+   "source": "https://www.aia-figc.it/news/serie-a-enilive-designazioni-13a-giornata-28879/"
+  },
+  {
+   "league": "SA",
+   "date": "2026-11-30",
+   "h": "CAG",
+   "a": "ACM",
+   "ko": "20:45",
+   "ref": "DI BELLO",
+   "refResolved": "Marco Di Bello",
+   "resolvedBy": "surname",
+   "source": "https://www.aia-figc.it/news/serie-a-enilive-designazioni-13a-giornata-28879/"
+  },
+  {
+   "league": "SA",
+   "date": "2026-11-30",
+   "h": "LEC",
+   "a": "ATA",
+   "ko": "18:30",
+   "ref": "DRIGO",
+   "refResolved": null,
+   "resolvedBy": null,
+   "source": "https://www.aia-figc.it/news/serie-a-enilive-designazioni-13a-giornata-28879/"
   }
  ]
 }
