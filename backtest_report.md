@@ -4,7 +4,7 @@
      of this file is that every number in it came out of a real run. -->
 
 **Premier League** · 2161 out-of-sample predictions over 11 rounds
-· source `data/match_history.json` · generated 2026-11-25T14:15:26.010Z
+· source `data/match_history.json` · generated 2026-11-26T13:51:41.624Z
 
 ## Headline
 
