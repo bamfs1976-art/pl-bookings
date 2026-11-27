@@ -5,7 +5,7 @@
 // through PLDCore.matchSquadName. A fixture absent from here prices off
 // squad minute-weights exactly as it always has — that is the normal
 // state until about an hour before kick-off, not a failure.
-// Fetched 2026-11-25T19:17Z.
+// Fetched 2026-11-27T18:59Z.
 //
 // THE GLOBAL IS NOT CALLED `LINEUPS`, and that is deliberate. index.html
 // already declares a top-level `const LINEUPS` for assets/lineup.js (the
@@ -14,9 +14,6 @@
 // a parse error, not a shadow: the whole inline script fails and the desk
 // renders blank. Read `window.LINEUP_SHEETS`.
 var __LINEUP_SHEETS = {
-  "1563283":{"BOL":{start:["G. Bazunu", "Luca Stephenson", "L. Brunt", "A. Famewo", "M. Conway", "X. Simons", "J. Sheehan", "Gaizka Larrazabal", "A. Ito", "S. Iling-Junior", "T. Bair"],sub:["J. Bonham", "S. Dalby", "B. Davies", "K. Dong", "C. Forino-Joseph", "T. Gale", "Ruben Rodrigues", "D. Watson", "Max Lott"]},"WBA":{start:["M. O’Leary", "B. Pereira", "C. Mepham", "G. Campbell", "C. Styles", "K. Tunde", "J. Molumby", "R. Nzingoula", "Harry Whitwell", "F. Myhre", "A. Heggebø"],sub:["J. Morgan", "N. Phillips", "B. Stewart", "C. Townsend", "M. Ingram", "T. Bany", "M. Crowther", "A. Maughan", "R. Parmar"]}},
-  "1563284":{"BIR":{start:["J. Beadle", "B. Osayi-Samuel", "P. Neumann", "D. Fry", "A. Cochrane", "T. Iwata", "J. Solis", "Carlos Vicente", "J. Stansfield", "L. Millar", "A. Priske"],sub:["T. Gardner-Hickman", "D. Gray", "Paik Seung-Ho", "P. Roberts", "L. Vázquez", "M. Ducksch", "L. Buchanan", "M. Bird", "R. Allsop"]},"BUR":{start:["M. Weiß", "K. Walker", "Max Alleyne", "Igor", "Lucas Pires", "J. Cullen", "R. Hatate", "L. Ramazani", "A. Ramsey", "J. Banel", "Z. Amdouni"],sub:["A. Ahmedhodžić", "G. Coudert", "M. Edwards", "H. Ekdal", "A. Hountondji", "U. Raghouber", "O. Sonne", "J. Vardy", "Delfim Betuela Luwawu"]}},
-  "1563286":{"BLB":{start:["A. Pears", "Gady Beyuku", "H. Carter", "S. McLoughlin", "H. Pickering", "M. Baradji", "Kristi Montgomery", "J. Fevrier", "T. Cantwell", "O. Afolayan", "A. Guðjohnsen"],sub:["J. Garrett", "Felix Goddard", "A. Kargbo", "M. Litherland", "R. Morishita", "Y. Ohashi", "Yuri Ribeiro", "D. De Neve", "Michael Decandia"]},"WAT":{start:["F. Ravaglia", "O. Traoré", "M. Pollock", "S. Coulibaly", "J. Zemura", "E. Bove", "H. Kyprianou", "Amin Nabizada", "Iker Bravo", "S. Mavididi", "M. Doumbia"],sub:["Branimir Mlačić", "K. Keben", "O. Maamma", "L. Kjerrumgaard", "J. Grieves", "R. Vata", "M. Bola", "D. Bachmann", "E. Kayembe"]}},
 };
 if (typeof module !== "undefined" && module.exports) module.exports = __LINEUP_SHEETS;
 if (typeof window !== "undefined") window.LINEUP_SHEETS = __LINEUP_SHEETS;
