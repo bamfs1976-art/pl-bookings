@@ -25,6 +25,7 @@
   "https://rfef.es/sites/default/files/designaciones_1a_division_masculina_-_temp_2026-27_-_jornada_13_lunes.pdf",
   "https://rfef.es/sites/default/files/designaciones_1a_division_masculina_-_temp_2026-27_-_jornada_13_sabado.pdf",
   "https://rfef.es/sites/default/files/designaciones_1a_division_masculina_-_temp_2026-27_-_jornada_13_viernes.pdf",
+  "https://rfef.es/sites/default/files/designaciones_1a_division_masculina_-_temp_2026-27_-_jornada_14_domingo.pdf",
   "https://rfef.es/sites/default/files/designaciones_1a_division_masculina_-_temp_2026-27_-_jornada_14_sabado.pdf",
   "https://rfef.es/sites/default/files/designaciones_1a_division_masculina_-_temp_2026-27_-_jornada_14_viernes.pdf",
   "https://rfef.es/sites/default/files/designaciones_1a_division_masculina_-_temp_2026-27_-_jornada_1_domingo16.pdf",
@@ -2813,6 +2814,50 @@
    "refResolved": "César Soto Grado",
    "resolvedBy": "run",
    "source": "https://rfef.es/sites/default/files/designaciones_1a_division_masculina_-_temp_2026-27_-_jornada_14_sabado.pdf"
+  },
+  {
+   "league": "LL",
+   "date": "2026-11-29",
+   "h": "CEL",
+   "a": "VIL",
+   "ko": "18:30",
+   "ref": "Jon Ander González",
+   "refResolved": null,
+   "resolvedBy": null,
+   "source": "https://rfef.es/sites/default/files/designaciones_1a_division_masculina_-_temp_2026-27_-_jornada_14_domingo.pdf"
+  },
+  {
+   "league": "LL",
+   "date": "2026-11-29",
+   "h": "DEP",
+   "a": "BAR",
+   "ko": "16:15",
+   "ref": "Isidro Díaz De Mera",
+   "refResolved": "Isidro Diaz de Mera Escuderos",
+   "resolvedBy": "run",
+   "source": "https://rfef.es/sites/default/files/designaciones_1a_division_masculina_-_temp_2026-27_-_jornada_14_domingo.pdf"
+  },
+  {
+   "league": "LL",
+   "date": "2026-11-29",
+   "h": "RSO",
+   "a": "SEV",
+   "ko": "21:00",
+   "ref": "Carlos Muñiz",
+   "refResolved": null,
+   "resolvedBy": null,
+   "source": "https://rfef.es/sites/default/files/designaciones_1a_division_masculina_-_temp_2026-27_-_jornada_14_domingo.pdf"
+  },
+  {
+   "league": "LL",
+   "date": "2026-11-29",
+   "h": "VAL",
+   "a": "OSA",
+   "ko": "14:00",
+   "ref": "Javier Alberola",
+   "refResolved": "Javier Alberola Rojas",
+   "resolvedBy": "run",
+   "source": "https://rfef.es/sites/default/files/designaciones_1a_division_masculina_-_temp_2026-27_-_jornada_14_domingo.pdf"
   },
   {
    "league": "PL",
