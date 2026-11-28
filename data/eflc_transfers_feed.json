@@ -1,6 +1,6 @@
 {
   "note": "PROPOSALS from API-Football /transfers, for a person to read. data/transfers.json is the hand-curated overlay that is actually applied; this is not.",
-  "since": "2026-07-30",
+  "since": "2026-07-31",
   "moves": [
     {
       "n": "R. Clayton",
@@ -4951,123 +4951,6 @@
       "toCode": "DER",
       "date": "2026-07-31",
       "type": "-"
-    },
-    {
-      "n": "V. Joseph",
-      "from": "Blackburn",
-      "to": "Brighton U21",
-      "fromCode": "BLB",
-      "toCode": null,
-      "date": "2026-07-30",
-      "type": "-"
-    },
-    {
-      "n": "S. Silvera",
-      "from": "Middlesbrough",
-      "to": "Milton Keynes Dons",
-      "fromCode": "MID",
-      "toCode": null,
-      "date": "2026-07-30",
-      "type": "Free agent"
-    },
-    {
-      "n": "S. Nzonzi",
-      "from": "Stoke City",
-      "to": "Dunkerque",
-      "fromCode": "STK",
-      "toCode": null,
-      "date": "2026-07-30",
-      "type": "Free agent"
-    },
-    {
-      "n": "N. Mendy",
-      "from": "Watford",
-      "to": "Metz",
-      "fromCode": "WAT",
-      "toCode": null,
-      "date": "2026-07-30",
-      "type": "Free agent"
-    },
-    {
-      "n": "N. Anyadike",
-      "from": "Cardiff",
-      "to": "Cardiff",
-      "fromCode": "CAR",
-      "toCode": "CAR",
-      "date": "2026-07-30",
-      "type": "Raise"
-    },
-    {
-      "n": "M. Payero",
-      "from": "Udinese",
-      "to": "Watford",
-      "fromCode": null,
-      "toCode": "WAT",
-      "date": "2026-07-30",
-      "type": "Transfer"
-    },
-    {
-      "n": "L. Cullen",
-      "from": "Swansea",
-      "to": "Leicester",
-      "fromCode": "SWA",
-      "toCode": null,
-      "date": "2026-07-30",
-      "type": "Transfer"
-    },
-    {
-      "n": "L. Chiwome",
-      "from": "Wolves",
-      "to": "Colchester",
-      "fromCode": "WOL",
-      "toCode": null,
-      "date": "2026-07-30",
-      "type": "Loan"
-    },
-    {
-      "n": "Jamie Knight-Lebel",
-      "from": "Bristol City",
-      "to": "Motherwell",
-      "fromCode": "BRC",
-      "toCode": null,
-      "date": "2026-07-30",
-      "type": "Loan"
-    },
-    {
-      "n": "H. Wood",
-      "from": "Blackburn",
-      "to": "Rylands",
-      "fromCode": "BLB",
-      "toCode": null,
-      "date": "2026-07-30",
-      "type": "Free agent"
-    },
-    {
-      "n": "G. Wynne",
-      "from": "Birmingham",
-      "to": "Georgia State Lions",
-      "fromCode": "BIR",
-      "toCode": null,
-      "date": "2026-07-30",
-      "type": "Free agent"
-    },
-    {
-      "n": "F. Ravaglia",
-      "from": "Bologna",
-      "to": "Watford",
-      "fromCode": null,
-      "toCode": "WAT",
-      "date": "2026-07-30",
-      "type": "Transfer"
-    },
-    {
-      "n": "C. Nwachukwu",
-      "from": "Sheffield Utd",
-      "to": "Sabah FA",
-      "fromCode": "SHU",
-      "toCode": null,
-      "date": "2026-07-30",
-      "type": "Transfer"
     }
   ]
 }

@@ -1,6 +1,6 @@
 {
   "note": "PROPOSALS from API-Football /transfers, for a person to read. data/transfers.json is the hand-curated overlay that is actually applied; this is not.",
-  "since": "2026-07-30",
+  "since": "2026-07-31",
   "moves": [
     {
       "n": "B. Williams",
@@ -4779,78 +4779,6 @@
       "fromCode": null,
       "toCode": "BOU",
       "date": "2026-07-31",
-      "type": "Transfer"
-    },
-    {
-      "n": "T. Wingate",
-      "from": "Fulham",
-      "to": "Wingate Tom",
-      "fromCode": "FUL",
-      "toCode": null,
-      "date": "2026-07-30",
-      "type": "Free agent"
-    },
-    {
-      "n": "Oakley William Cannonier",
-      "from": "Liverpool",
-      "to": "Hougang United",
-      "fromCode": "LIV",
-      "toCode": null,
-      "date": "2026-07-30",
-      "type": "Free agent"
-    },
-    {
-      "n": "O. Harrison",
-      "from": "Chelsea",
-      "to": "AFC Wimbledon",
-      "fromCode": "CHE",
-      "toCode": null,
-      "date": "2026-07-30",
-      "type": "Loan"
-    },
-    {
-      "n": "O. Gofford",
-      "from": "Fulham",
-      "to": "Gofford Oliver",
-      "fromCode": "FUL",
-      "toCode": null,
-      "date": "2026-07-30",
-      "type": "Free agent"
-    },
-    {
-      "n": "Mason Paul James Burstow",
-      "from": "Hull City",
-      "to": "Sheffield Wednesday",
-      "fromCode": "HUL",
-      "toCode": null,
-      "date": "2026-07-30",
-      "type": "Loan"
-    },
-    {
-      "n": "J. Brayson",
-      "from": "Newcastle",
-      "to": "Brayson Joe",
-      "fromCode": "NEW",
-      "toCode": null,
-      "date": "2026-07-30",
-      "type": "Free agent"
-    },
-    {
-      "n": "H. Sands",
-      "from": "Chelsea",
-      "to": "Dulwich Hamlet",
-      "fromCode": "CHE",
-      "toCode": null,
-      "date": "2026-07-30",
-      "type": "Loan"
-    },
-    {
-      "n": "António Silva",
-      "from": "Benfica",
-      "to": "Bournemouth",
-      "fromCode": null,
-      "toCode": "BOU",
-      "date": "2026-07-30",
       "type": "Transfer"
     }
   ]
